@@ -282,6 +282,24 @@ void RegimeGraphicsItem::setRegimeName(QString n)
     regime->name = n;
     //rename the gv node
     renameGVNode(n);
+    //update the dst regime name in any onconditions
+    for (uint i=0;i<root->al->RegimeList.size();i++)
+    {
+        Regime *r = root->al->RegimeList[i];
+        for (uint c=0;c<r->OnConditionList.size();c++)
+        {
+            OnCondition *oc = r->OnConditionList[c];
+            if (oc->target_regime == this->regime)
+                oc->target_regime_name = n;
+        }
+        for (uint e=0;e<r->OnEventList.size();e++)
+        {
+            OnEvent *oe = r->OnEventList[e];
+            if (oe->target_regime == this->regime)
+                oe->target_regime_name = n;
+        }
+    }
+
     updateContent();
     root->notifyDataChange();
     if (qobject_cast < QLineEdit *> (sender()))
