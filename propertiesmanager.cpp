@@ -699,7 +699,7 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
             var->addItem(root->al->AliasList[i]->getName());
             if (ap->getVariable() != NULL){
                 if (root->al->AliasList[i]->getName().compare(ap->getVariable()->getName()) == 0)
-                    var->setCurrentIndex(i);
+                    var->setCurrentIndex(i+root->al->StateVariableList.size());
             }
         }
         if (ap->getVariable() == NULL)
