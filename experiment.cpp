@@ -444,12 +444,14 @@ void experiment::updateChanges(NineMLComponentData * ptr) {
             for (uint j = 0; j < ptr->ParameterList.size(); ++j)
                 if (ptr->ParameterList[j]->name == change->par->name) {
                     propFound = true;
-                    change->par = ptr->ParameterList[j];
+                    delete change->par;
+                    change->par = new ParameterData(ptr->ParameterList[j]);
                 }
             for (uint j = 0; j < ptr->StateVariableList.size(); ++j)
                 if (ptr->StateVariableList[j]->name == change->par->name){
                     propFound = true;
-                    change->par = ptr->StateVariableList[j];
+                    delete change->par;
+                    change->par = new StateVariableData(ptr->StateVariableList[j]);
                 }
 
             // if not found
