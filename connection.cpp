@@ -495,6 +495,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
     if (BinaryFileList.count() == 1) {
 
+        qDebug() << "moo";
+
         // is a binary file so load accordingly
 
         // set number of connections

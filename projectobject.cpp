@@ -919,6 +919,9 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         return;
     }
 
+    QSettings settings;
+    settings.setValue("files/currentFileName", project_dir.absolutePath());
+
     // we have loaded the XML file - discard the file handle
     file.close();
 
