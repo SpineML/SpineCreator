@@ -31,7 +31,6 @@
 #include "mainwindow.h"
 #include "nineml_rootcomponentitem.h"
 #include "projectobject.h"
-//#include "stringify.h"
 
 // ######## DELETE SELECTION #################
 
@@ -102,12 +101,14 @@ delSelection::delSelection(rootData * data, vector <systemObject * > list, QUndo
     }
 }
 
-void delSelection::undo() {
+void delSelection::undo()
+{
     // do children by calling parent class function:
     QUndoCommand::undo();
 }
 
-void delSelection::redo() {
+void delSelection::redo()
+{
     // do children by calling parent class function:
     QUndoCommand::redo();
 }
@@ -124,7 +125,8 @@ addPopulationCmd::addPopulationCmd(rootData * data, population* pop, QUndoComman
     isDeleted = true;
 }
 
-void addPopulationCmd::undo() {
+void addPopulationCmd::undo()
+{
     pop->isDeleted = true;
     isDeleted = true;
     // remove from system:
@@ -145,11 +147,10 @@ void addPopulationCmd::undo() {
     }
     // do children by calling parent class function:
     QUndoCommand::undo();
-    //data->reDrawAll();
 }
 
-void addPopulationCmd::redo() {
-
+void addPopulationCmd::redo()
+{
     // add to system
     data->system.push_back(pop);
 
@@ -162,7 +163,6 @@ void addPopulationCmd::redo() {
     }
     // do children by calling parent class function:
     QUndoCommand::redo();
-    //data->reDrawAll();
 }
 
 // ######## DELETE POPULATION #################
@@ -216,7 +216,8 @@ delPopulation::delPopulation(rootData * data, population* pop, QUndoCommand *par
     isDeleted = true;
 }
 
-void delPopulation::undo() {
+void delPopulation::undo()
+{
     pop->isDeleted = false;
     // MUST HAVE A LOCAL COPY OR INCOMING UNDOS CAN CHANGE STATE BEFORE OUTGOING DESTRUCTOR CALLED
     isDeleted = false;
@@ -230,10 +231,10 @@ void delPopulation::undo() {
     }
     // do children by calling parent class function:
     QUndoCommand::undo();
-    //data->reDrawAll();
 }
 
-void delPopulation::redo() {
+void delPopulation::redo()
+{
     // remove from system
     for (uint i = 0; i < data->system.size(); ++i) {
         if (pop == data->system[i]) {
@@ -256,7 +257,6 @@ void delPopulation::redo() {
     isDeleted = true;
     // do children by calling parent class function:
     QUndoCommand::redo();
-    //data->reDrawAll();
 }
 
 // ######## MOVE POPULATION #################
@@ -301,7 +301,8 @@ addProjection::addProjection(rootData * data, projection* proj, QUndoCommand *pa
     isDeleted = true;
 }
 
-void addProjection::undo() {
+void addProjection::undo()
+{
     proj->disconnect();
     proj->isDeleted = true;
     isDeleted = true;
@@ -318,10 +319,10 @@ void addProjection::undo() {
     }
     // do children by calling parent class function:
     QUndoCommand::undo();
-    //data->reDrawAll();
 }
 
-void addProjection::redo() {
+void addProjection::redo()
+{
 
     proj->connect();
     proj->isDeleted = false;
@@ -333,7 +334,6 @@ void addProjection::redo() {
     }
     // do children by calling parent class function:
     QUndoCommand::redo();
-    //data->reDrawAll();
 }
 
 // ######## DELETE PROJECTION #################
@@ -354,7 +354,8 @@ delProjection::delProjection(rootData * data, projection* proj, QUndoCommand *pa
     isDeleted = true;
 }
 
-void delProjection::undo() {
+void delProjection::undo()
+{
     proj->connect();
     proj->isDeleted = false;
     isDeleted = false;
@@ -365,10 +366,10 @@ void delProjection::undo() {
     }
     // do children by calling parent class function:
     QUndoCommand::undo();
-    //data->reDrawAll();
 }
 
-void delProjection::redo() {
+void delProjection::redo()
+{
     proj->disconnect();
     proj->isDeleted = true;
     isDeleted = true;
@@ -385,7 +386,6 @@ void delProjection::redo() {
     }
     // do children by calling parent class function:
     QUndoCommand::redo();
-    //data->reDrawAll();
 }
 
 // ######## ADD SYNAPSE #################
@@ -503,7 +503,6 @@ void delSynapse::redo()
             proj->synapses.erase(proj->synapses.begin()+i);
             projPos = i;
         }
-
     }
     isUndone = false;
     // do children by calling parent class function:
@@ -518,7 +517,6 @@ void delSynapse::redo()
 addInput::addInput(rootData * data, NineMLComponentData * src, NineMLComponentData * dst, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
-    //this->proj = proj;
     this->data = data;
     this->src = src;
     this->dst = dst;
@@ -532,8 +530,6 @@ void addInput::undo()
     // delete input (must disconnect it first!)
     input->disconnect();
     isDeleted = true;
-    //qDebug() << "ADD INPUT UNDO";
-    //data->reDrawAll();
 }
 
 void addInput::redo()
@@ -541,8 +537,6 @@ void addInput::redo()
     // create new Synapse on projection
     input->connect();
     isDeleted = false;
-    //qDebug() << "ADD INPUT REDO";
-    //data->reDrawAll();
 }
 
 // ######## DELETE GENERIC INPUT #################
@@ -576,7 +570,6 @@ void delInput::undo()
         data->cursor.x = -100000;
         data->cursor.y = -100000;
     }
-    //data->reDrawAll();
 }
 
 void delInput::redo()
@@ -596,8 +589,6 @@ void delInput::redo()
     }
     input->isDeleted = true;
     isDeleted = true;
-    //qDebug() << "Delete input redo";
-    //data->reDrawAll();
 }
 
 // ######## CHANGE CONNECTION #################
@@ -705,16 +696,16 @@ setSizeUndo::setSizeUndo(rootData * data, population * ptr, int value, QUndoComm
     this->setText("Set " + this->ptr->getName() + " size to " + QString::number(value));
 }
 
-void setSizeUndo::undo() {
+void setSizeUndo::undo()
+{
     ptr->numNeurons = oldValue;
     data->main->viewVZ.OpenGLWidget->parsChangedProjections();
-    //data->reDrawAll();
 }
 
-void setSizeUndo::redo() {
+void setSizeUndo::redo()
+{
     ptr->numNeurons = value;
     data->main->viewVZ.OpenGLWidget->parsChangedProjections();
-    //data->reDrawAll();
 }
 
 // ######## SET LOC 3D #################
@@ -740,24 +731,24 @@ setLoc3Undo::setLoc3Undo(rootData * data, population * ptr, int index, int value
         this->setText("Set " + this->ptr->getName() + " z location to " + QString::number(value));
 }
 
-void setLoc3Undo::undo() {
+void setLoc3Undo::undo()
+{
     if (index == 0)
         ptr->loc3.x = oldValue;
     if (index == 1)
         ptr->loc3.y = oldValue;
     if (index == 2)
         ptr->loc3.z = oldValue;
-    //data->reDrawAll();
 }
 
-void setLoc3Undo::redo() {
+void setLoc3Undo::redo()
+{
     if (index == 0)
         ptr->loc3.x = value;
     if (index == 1)
         ptr->loc3.y = value;
     if (index == 2)
         ptr->loc3.z = value;
-    //data->reDrawAll();
 }
 
 // ######## UPDATE PAR #################
@@ -774,13 +765,15 @@ updateParUndo::updateParUndo(rootData * data, ParameterData * ptr, int index, fl
     this->firstRedo = true;
 }
 
-void updateParUndo::undo() {
+void updateParUndo::undo()
+{
     ptr->value[index] = oldValue;
-    //data->reDrawAll();
 }
 
-void updateParUndo::redo() {
+void updateParUndo::redo()
+{
     ptr->value[index] = value;
+    // FIXME.
     if (!firstRedo)
         //data->reDrawAll();
     firstRedo = false;
@@ -799,14 +792,16 @@ updateConnProb::updateConnProb(rootData * data, fixedProb_connection * ptr, floa
     firstRedo = true;
 }
 
-void updateConnProb::undo() {
+void updateConnProb::undo()
+{
     ptr->p = oldValue;
-    //data->reDrawAll();
     data->setTitle();
 }
 
-void updateConnProb::redo() {
+void updateConnProb::redo()
+{
     ptr->p = value;
+    // FIXME: Probable that this code is not doing what is expected.
     if (!firstRedo)
         //data->reDrawAll();
     firstRedo = false;
@@ -826,17 +821,16 @@ updateConnEquation::updateConnEquation(rootData * data, distanceBased_connection
     firstRedo = true;
 }
 
-void updateConnEquation::undo() {
+void updateConnEquation::undo()
+{
     ptr->equation = oldValue;
-    //data->reDrawAll();
     ptr->setUnchanged(false);
     data->setTitle();
 }
 
-void updateConnEquation::redo() {
+void updateConnEquation::redo()
+{
     ptr->equation = value;
-    //if (!firstRedo)
-        //data->reDrawAll();
     firstRedo = false;
     ptr->setUnchanged(false);
     data->setTitle();
@@ -855,16 +849,15 @@ updateConnDelayEquation::updateConnDelayEquation(rootData * data, distanceBased_
     firstRedo = true;
 }
 
-void updateConnDelayEquation::undo() {
+void updateConnDelayEquation::undo()
+{
     ptr->delayEquation = oldValue;
-    //data->reDrawAll();
     data->setTitle();
 }
 
-void updateConnDelayEquation::redo() {
+void updateConnDelayEquation::redo()
+{
     ptr->delayEquation = value;
-    //if (!firstRedo)
-        //data->reDrawAll();
     firstRedo = false;
     data->setTitle();
 }
@@ -875,13 +868,17 @@ updateParType::updateParType(rootData * data, ParameterData * ptr, QString newTy
     QUndoCommand(parent)
 {
     if (newType == "FixedValue") {
-        this->newType = FixedValue;}
+        this->newType = FixedValue;
+    }
     if (newType == "Statistical") {
-        this->newType = Statistical;}
+        this->newType = Statistical;
+    }
     if (newType == "Explicit") {
-        this->newType = ExplicitList;}
+        this->newType = ExplicitList;
+    }
     if (newType == "Undefined") {
-        this->newType = Undefined;}
+        this->newType = Undefined;
+    }
     this->oldValues = ptr->value;
     this->oldType = ptr->currType;
     this->ptr = ptr;
@@ -889,23 +886,28 @@ updateParType::updateParType(rootData * data, ParameterData * ptr, QString newTy
     this->setText("Set " + this->ptr->name + " to type: " + newType);
 }
 
-void updateParType::undo() {
+void updateParType::undo()
+{
     ptr->currType = oldType;
     ptr->value = oldValues;
     data->reDrawAll();
 }
 
-void updateParType::redo() {
+void updateParType::redo()
+{
     ptr->value.clear();
     ptr->currType = newType;
     if (this->newType == FixedValue) {
-        ptr->value.resize(1,0);}
+        ptr->value.resize(1,0);
+    }
     if (this->newType == Statistical) {
-        ptr->value.resize(1,0);}
+        ptr->value.resize(1,0);
+    }
     if (this->newType == ExplicitList) {
         ptr->value.resize(1,0);
         ptr->indices.resize(1);
-        ptr->indices[0] = 0;}
+        ptr->indices[0] = 0;
+    }
     data->reDrawAll();
 }
 
@@ -920,12 +922,14 @@ updateTitle::updateTitle(rootData * data, population * ptr, QString newName, QSt
     this->setText("Rename " + oldName + " to " + newName);
 }
 
-void updateTitle::undo() {
+void updateTitle::undo()
+{
     // set name
     ptr->name = oldName;
 }
 
-void updateTitle::redo() {
+void updateTitle::redo()
+{
     // set name
     ptr->name = newName;
 }
@@ -944,7 +948,8 @@ updateModelTitle::updateModelTitle(rootData * data, QString newName, projectObje
     this->project = project;
 }
 
-void updateModelTitle::undo() {
+void updateModelTitle::undo()
+{
     // set name
     QSettings settings;
     settings.setValue("model/model_name", oldName);
@@ -953,7 +958,8 @@ void updateModelTitle::undo() {
 
 }
 
-void updateModelTitle::redo() {
+void updateModelTitle::redo()
+{
     // set name
     QSettings settings;
     settings.setValue("model/model_name", newName);
@@ -990,10 +996,9 @@ updateComponentType::updateComponentType(rootData * data, NineMLComponentData * 
 
 }
 
-updateComponentType::~updateComponentType() {
-
+updateComponentType::~updateComponentType()
+{
     // clear up the lists!
-
     if (isRedone) {
         // delete old parDatas
         for (uint i = 0; i < oldParDatas.size(); ++i)
@@ -1012,10 +1017,10 @@ updateComponentType::~updateComponentType() {
         for (uint i = 0; i < newSVDatas.size(); ++i)
             delete newSVDatas[i];
     }
-
 }
 
-void updateComponentType::undo() {
+void updateComponentType::undo()
+{
     // copy old versions across
     componentData->ParameterList = oldParDatas;
     componentData->StateVariableList = oldSVDatas;
@@ -1033,7 +1038,8 @@ void updateComponentType::undo() {
     isRedone = false;
 }
 
-void updateComponentType::redo() {
+void updateComponentType::redo()
+{
     // copy new component across
     componentData->ParameterList = newParDatas;
     componentData->StateVariableList = newSVDatas;
@@ -1055,14 +1061,14 @@ updateLayoutMinDist::updateLayoutMinDist(rootData * data, NineMLLayoutData * ptr
     this->setText("Set " + this->ptr->component->name + " min distance to " + QString::number(value));
 }
 
-void updateLayoutMinDist::undo() {
+void updateLayoutMinDist::undo()
+{
     ptr->minimumDistance = oldValue;
-    //data->reDrawAll();
 }
 
-void updateLayoutMinDist::redo() {
+void updateLayoutMinDist::redo()
+{
     ptr->minimumDistance = value;
-    //data->reDrawAll();
 }
 
 // ######## UPDATE LAYOUT SEED #################
@@ -1077,14 +1083,14 @@ updateLayoutSeed::updateLayoutSeed(rootData * data, NineMLLayoutData * ptr, floa
     this->setText("Set " + this->ptr->component->name + " seed to " + QString::number(value));
 }
 
-void updateLayoutSeed::undo() {
+void updateLayoutSeed::undo()
+{
     ptr->seed = oldValue;
-    //data->reDrawAll();
 }
 
-void updateLayoutSeed::redo() {
+void updateLayoutSeed::redo()
+{
     ptr->seed = value;
-    //data->reDrawAll();
 }
 
 // ######## PASTE PARS #################
@@ -1100,12 +1106,14 @@ pastePars::pastePars(rootData * data, NineMLComponentData * source, NineMLCompon
     this->setText("Paste properties");
 }
 
-void pastePars::undo() {
+void pastePars::undo()
+{
     this->dest->copyParsFrom(oldData);
     data->reDrawAll();
 }
 
-void pastePars::redo() {
+void pastePars::redo()
+{
     this->dest->copyParsFrom(source);
     data->reDrawAll();
 }
@@ -1122,7 +1130,8 @@ changeComponent::changeComponent(RootComponentItem * root, NineMLComponent * old
     first_redo = true;
 }
 
-void changeComponent::undo() {
+void changeComponent::undo()
+{
     // load the old version, copying across the pointer to the source component
     NineMLComponent * alPtr = this->viewCL->root->alPtr;
     this->viewCL->mainWindow->initialiseModel(this->unChangedComponent);
@@ -1134,7 +1143,8 @@ void changeComponent::undo() {
     viewCL->mainWindow->updateTitle(true);
 }
 
-void changeComponent::redo() {
+void changeComponent::redo()
+{
     if (!first_redo) {
         // load the new version, copying across the pointer to the source component
         NineMLComponent * alPtr = this->viewCL->root->alPtr;
@@ -1162,7 +1172,8 @@ changeComponentType::changeComponentType(RootComponentItem * root, vector <NineM
     first_redo = true;
 }
 
-void changeComponentType::undo() {
+void changeComponentType::undo()
+{
     // move from new to old
     // find new:
     for (uint i = 0; i < new_lib->size(); ++i) {
@@ -1178,7 +1189,8 @@ void changeComponentType::undo() {
     viewCL->mainWindow->updateTitle(true);
 }
 
-void changeComponentType::redo() {
+void changeComponentType::redo()
+{
     // find old:
     for (uint i = 0; i < old_lib->size(); ++i) {
         qDebug() << (*old_lib)[i]->name;
@@ -1192,5 +1204,4 @@ void changeComponentType::redo() {
     QObject::connect(viewCL->fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), viewCL->root->main, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
 
     viewCL->mainWindow->updateTitle(true);
-
 }

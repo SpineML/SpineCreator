@@ -145,7 +145,6 @@ private:
     bool isDeleted;
 };
 
-
 class addSynapse : public QUndoCommand
 {
 public:
@@ -159,7 +158,6 @@ private:
     rootData * data;
     projection * proj;
     synapse * syn;
-    //int oldCurrTarget;
     bool isDeleted;
 };
 
@@ -179,8 +177,6 @@ private:
     int projPos;
     bool isUndone;
     bool isChild;
-    //int oldCurrTarget;
-
 };
 
 class addInput : public QUndoCommand
@@ -194,12 +190,10 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    //projection * proj;
     genericInput * input;
     NineMLComponentData * src;
     NineMLComponentData * dst;
     bool isDeleted;
-
 };
 
 class delInput : public QUndoCommand
@@ -234,7 +228,6 @@ private:
     int index;
     connection * oldConn;
     bool isUndone;
-
 };
 
 class setSizeUndo : public QUndoCommand
@@ -250,7 +243,6 @@ private:
     population * ptr;
     int oldValue;
     int value;
-
 };
 
 class setLoc3Undo : public QUndoCommand
@@ -267,7 +259,6 @@ private:
     int oldValue;
     int value;
     int index;
-
 };
 
 class updateParUndo : public QUndoCommand
@@ -335,7 +326,6 @@ private:
     bool firstRedo;
 };
 
-
 class updateParType : public QUndoCommand
 {
 public:
@@ -349,9 +339,7 @@ private:
     ParameterData * ptr;
     ParameterType oldType;
     ParameterType newType;
-    vector < float> oldValues;
-
-
+    vector<float> oldValues;
 };
 
 class updateTitle : public QUndoCommand
