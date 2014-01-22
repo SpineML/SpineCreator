@@ -1860,7 +1860,8 @@ void rootData::endDragSelection() {
     this->dragSelection = QRect(-1,-1,0,0);
 }
 
-void rootData::selectByGLMouseUp(float xGL, float yGL, float GLscale) {
+void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
+{
 
     // are we adding or reselecting?
     bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
@@ -2024,13 +2025,45 @@ void rootData::selectByGLMouseUp(float xGL, float yGL, float GLscale) {
 
 }
 
-void rootData::selectByGL(float xGL, float yGL, float GLscale)
+void rootData::itemWasMoved(float xGL, float yGL, float GLscale)
+{
+    if (!selList.empty()) {
+        // We have a pointer to the moved item. Check its type to see what to do with it.
+        if (selList[0]->type == populationObject) {
+            this->populationMoved();
+        } // else do nothing.
+    }
+}
+
+void rootData::populationMoved()
+{
+    // We don't need to record that the population moved here - the
+    // mouseMove events already handle that (allowing the population
+    // widget to be re-drawn as it's moved. However, what we DO need
+    // to do is to record that the population moved in the undo stack.
+    population * pop = this->currSelPopulation();
+    if (pop == NULL) {
+        return;
+    }
+
+    // oldPos needs to be the one that was stored at the START of the
+    // move. That's stored in this->lastSelectionPosition by
+    // rootData::selectCoord.
+    pair<float, float> newPos = make_pair(pop->x, pop->y);
+    currProject->undoStack->push(new movePopulation(this, pop, this->lastSelectionPosition, newPos));
+}
+
+void rootData::selectCoord(float xGL, float yGL, float GLscale)
 {
 
-    // are we adding or reselecting?
+    // are we adding or reselecting? NB: Move this into the glwidget class (todo: seb)
     bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
 
     if (!addSelection) {
+
+        // Record the position of the selection.
+        this->lastSelectionPosition.first = xGL;
+        this->lastSelectionPosition.second = yGL;
 
         // prioritise the handles of a selected projection:
         if (this->selList.size() == 1) {
@@ -2459,71 +2492,70 @@ void rootData::abortProjection() {
 void rootData::mouseMoveGL(float xGL, float yGL)
 {
     selectionMoved = true;
-   // cout << "pos = " << float(xGL) << " " << float(yGL) << endl;
-    if (this->selList.size() > 0) {
+    // qDebug() << "pos = " << float(xGL) << " " << float(yGL);
 
-        // revised move code for multiple objects
-
-        // if grid is on, snap to grid
-        GLWidget * source = (GLWidget *) sender();
-        if (source->gridSelect) {
-            xGL = round(xGL/source->gridScale)*source->gridScale;
-            yGL = round(yGL/source->gridScale)*source->gridScale;
-        }
-
-        if (selList.size() > 1) {
-            for (uint i = 0; i < selList.size(); ++i) {
-                selList[i]->move(xGL, yGL);
-            }
-        } else {
-
-            // if only one thing
-
-            if (this->selList[0]->type == populationObject)
-            {
-                bool collision = false;
-                population * pop = (population *) selList[0];
-
-                // avoid collisions
-                for (unsigned int i = 0; i < system.size(); ++i) {
-                    if (system[i]->getName() != pop->getName()) {
-                        if (system[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->topBound(yGL)-0.01)) collision = true;
-                        if (system[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->topBound(yGL)-0.01)) collision = true;
-                        if (system[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->bottomBound(yGL)+0.01)) collision = true;
-                        if (system[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->bottomBound(yGL)+0.01)) collision = true;
-                    }
-                }
-
-                // snap to grid:
-                if (source->gridSelect)
-                    selList[0]->relativeLocation = QPointF(0,0);
-
-                if (!collision)
-                {
-                    selList[0]->move(xGL, yGL);
-                }
-            }
-            // if it is not a population...
-            else if (this->selList[0]->type == projectionObject) {
-
-                 //int selEdge = this->selected.edge;
-                ((projection*) selList[0])->moveSelectedControlPoint(xGL, yGL);
-
-            }
-            // if it is not a population...
-            else if (this->selList[0]->type == inputObject) {
-
-                //cerr << "moo\n";
-                ((genericInput*) selList[0])->moveSelectedControlPoint(xGL, yGL);
-
-            }
-        }
-
-
-    } else {
-        // move viewpoint
+    if (this->selList.empty()) {
+        // move viewpoint only, then return.
         GLWidget * source = (GLWidget *) sender();
         source->move(xGL+source->viewX-cursor.x,yGL-source->viewY-cursor.y);
+        return;
+    }
+
+    // revised move code for multiple objects
+
+    // if grid is on, snap to grid
+    GLWidget * source = (GLWidget *) sender();
+    if (source->gridSelect) {
+        xGL = round(xGL/source->gridScale)*source->gridScale;
+        yGL = round(yGL/source->gridScale)*source->gridScale;
+    }
+
+    if (selList.size() > 1) {
+        for (uint i = 0; i < selList.size(); ++i) {
+            selList[i]->move(xGL, yGL);
+        }
+    } else {
+
+        // if only one thing
+
+        if (this->selList[0]->type == populationObject)
+        {
+            bool collision = false;
+            population * pop = (population *) selList[0];
+
+            // avoid collisions
+            for (unsigned int i = 0; i < system.size(); ++i) {
+                if (system[i]->getName() != pop->getName()) {
+                    if (system[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->topBound(yGL)-0.01)) collision = true;
+                    if (system[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->topBound(yGL)-0.01)) collision = true;
+                    if (system[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->bottomBound(yGL)+0.01)) collision = true;
+                    if (system[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->bottomBound(yGL)+0.01)) collision = true;
+                }
+            }
+
+            // snap to grid:
+            if (source->gridSelect)
+                selList[0]->relativeLocation = QPointF(0,0);
+
+            if (!collision)
+            {
+                selList[0]->move(xGL, yGL);
+            }
+        }
+        // if it is not a population...
+        else if (this->selList[0]->type == projectionObject) {
+
+            //int selEdge = this->selected.edge;
+            ((projection*) selList[0])->moveSelectedControlPoint(xGL, yGL);
+
+        }
+        // if it is not a population...
+        else if (this->selList[0]->type == inputObject) {
+
+            //cerr << "moo\n";
+            ((genericInput*) selList[0])->moveSelectedControlPoint(xGL, yGL);
+
+        }
     }
 }
 
@@ -2710,7 +2742,7 @@ void rootData::updatePar() {
         int kernel_size = ((QComboBox *) sender())->currentIndex() * 2 + 3;
         // only add undo if value has changed
             conn->setKernelSize(kernel_size);
-            emit updatePanelView2("");        
+            emit updatePanelView2("");
             //undoStack->push(new updateConnEquation(this, conn, newEq));
     }
 
@@ -2764,13 +2796,22 @@ void rootData::updatePar(int value) {
     updatePanel(this);
 }
 
+population* rootData::currSelPopulation()
+{
+    // get the currently selected population
+    population* currSel = NULL;
+    if (this->selList.size() == 1) {
+        if (this->selList[0]->type == populationObject) {
+            currSel = (population*) this->selList[0];
+        }
+    }
+    return currSel;
+}
+
 void rootData::updateLayoutPar() {
 
     // get the currently selected population
-    population * currSel = NULL;
-    if (this->selList.size() == 1)
-        if (this->selList[0]->type == populationObject)
-            currSel = (population *)  this->selList[0];
+    population * currSel = this->currSelPopulation();
 
     if (currSel == NULL)
         return;
@@ -2801,10 +2842,7 @@ void rootData::updateLayoutPar() {
 void rootData::setSize() {
 
     // get the currently selected population
-    population * currSel = NULL;
-    if (this->selList.size() == 1)
-        if (this->selList[0]->type == populationObject)
-            currSel = (population *)  this->selList[0];
+    population * currSel = this->currSelPopulation();
 
     if (currSel == NULL)
         return;
@@ -2823,10 +2861,7 @@ void rootData::setSize() {
 void rootData::setLoc3() {
 
     // get the currently selected population
-    population * currSel = NULL;
-    if (this->selList.size() == 1)
-        if (this->selList[0]->type == populationObject)
-            currSel = (population *)  this->selList[0];
+    population * currSel = this->currSelPopulation();
 
     if (currSel == NULL)
         return;
@@ -2840,10 +2875,7 @@ void rootData::setLoc3() {
 void rootData::renamePopulation() {
 
     // get the currently selected population
-    population * currSel = NULL;
-    if (this->selList.size() == 1)
-        if (this->selList[0]->type == populationObject)
-            currSel = (population *)  this->selList[0];
+    population * currSel = this->currSelPopulation();
 
     if (currSel == NULL)
         return;
@@ -2977,11 +3009,8 @@ void rootData::changeSynapse() {
 
 void rootData::selectColour() {
 
-    // get the currently selected projection
-    population * currSel = NULL;
-    if (this->selList.size() == 1)
-        if (this->selList[0]->type == populationObject)
-            currSel = (population *)  this->selList[0];
+    // get the currently selected population
+    population * currSel = this->currSelPopulation();
 
     if (currSel == NULL)
         return;

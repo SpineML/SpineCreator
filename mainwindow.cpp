@@ -164,8 +164,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // join up the components of the program
     QObject::connect(ui->viewport, SIGNAL(reDraw(QPainter*, float, float, float, int, int, drawStyle)), &(data), SLOT(reDrawAll(QPainter*, float, float, float, int, int, drawStyle)));
-    QObject::connect(ui->viewport, SIGNAL(selectCoord(float,float,float)), &(data), SLOT(selectByGL(float,float,float)));
-    QObject::connect(ui->viewport, SIGNAL(selectCoordMouseUp(float,float,float)), &(data), SLOT(selectByGLMouseUp(float,float,float)));
+    QObject::connect(ui->viewport, SIGNAL(selectCoord(float,float,float)), &(data), SLOT(selectCoord(float,float,float)));
+    QObject::connect(ui->viewport, SIGNAL(selectCoordMouseUp(float,float,float)), &(data), SLOT(selectCoordMouseUp(float,float,float)));
+    QObject::connect(ui->viewport, SIGNAL(itemWasMoved(float,float,float)), &(data), SLOT(itemWasMoved(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(selectRMBCoord(float,float,float)), &(data), SLOT(rightClickByGL(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(mouseMove(float,float)), &(data), SLOT(mouseMoveGL(float,float)));
     QObject::connect(ui->viewport, SIGNAL(drawSynapse(float,float)), &(data), SLOT(startAddBezier(float,float)));

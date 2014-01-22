@@ -131,7 +131,20 @@ signals:
 public slots:
     void saveImage(QString);
     void reDrawAll(QPainter *, float, float, float, int, int, drawStyle style);
-    void selectByGL(float xGL, float yGL, float GLscale);
+    void selectCoord(float xGL, float yGL, float GLscale);
+
+    /*
+     * \brief React to an item having been moved
+     *
+     * The itemWasMoved slot will accept a GLWidget::itemWasMoved
+     * signal which says "an item in the user interface was moved"
+     *
+     * This will then check the type of the object which was moved and
+     * react accordingly - that means putting a new entry on the
+     * undostack.
+     */
+    void itemWasMoved(float xGL, float yGL, float GLscale);
+
     void rightClickByGL(float xGL, float yGL, float GLscale);
     void mouseMoveGL(float, float);
     void import_csv(QString);
@@ -160,7 +173,7 @@ public slots:
     void setCurrConnectionModelSig(csv_connectionModel *);
     void launchComponentSorter();
     void getNeuronLocationsSrc(vector < vector <loc> >*, vector <QColor> *, QString name);
-    void selectByGLMouseUp(float xGL, float yGL, float GLscale);
+    void selectCoordMouseUp(float xGL, float yGL, float GLscale);
     void setSelectionbyName(QString);
     void returnPointerToSelf(rootData * * data);
     void addgenericInput();
@@ -178,6 +191,21 @@ public slots:
     void selectProject(QAction *);
 
 private:
+    /*!
+     * \brief A population moved, so add it to the undostack
+     *
+     * This is called from the "itemWasMoved" slot when the item in
+     * question is a population. This doesn't need to move the
+     * population (that already happened), but it does need to record
+     * this event in the undo stack.
+     */
+    void populationMoved();
+
+    /*!
+     * Obtain the currently selected population.
+     */
+    population* currSelPopulation();
+
     QString getUniquePopName(QString newName);
     bool selChange;
     QPointF dragListStart;
@@ -185,6 +213,13 @@ private:
     QDomDocument doc;
     QDomDocument tempDoc;
 
+    /*!
+     * This holds the position of the item BEFORE it was moved. it's
+     * used for "undo move item position" - you need to know where the
+     * item used to be so that you can restore it back to that
+     * position. These are the "xGL,yGL" coordinates.
+     */
+    pair<float, float> lastSelectionPosition;
 };
 
 #endif // ROOTDATA_H

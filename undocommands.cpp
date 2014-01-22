@@ -259,6 +259,32 @@ void delPopulation::redo() {
     //data->reDrawAll();
 }
 
+// ######## MOVE POPULATION #################
+movePopulation::movePopulation(rootData * data, population* pop, std::pair<float, float> oldPos, std::pair<float, float> newPos, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->pop = pop;
+    this->data = data;
+    this->setText("Move population");
+    this->oldPos = oldPos;
+    this->newPos = newPos;
+}
+
+void movePopulation::undo()
+{
+    pop->move (this->oldPos.first, this->oldPos.second);
+    data->redrawViews();
+    // undo children by calling parent class function:
+    QUndoCommand::undo();
+}
+
+void movePopulation::redo()
+{
+    pop->move (this->newPos.first, this->newPos.second);
+    data->redrawViews();
+    QUndoCommand::redo();
+}
+
 // ######## ADD PROJECTION #################
 
 addProjection::addProjection(rootData * data, projection* proj, QUndoCommand *parent) :
@@ -888,8 +914,6 @@ void updateParType::redo() {
 updateTitle::updateTitle(rootData * data, population * ptr, QString newName, QString oldName, QLabel * label, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
-    this->data = data;
-    this->label = label;
     this->ptr = ptr;
     this->oldName = oldName;
     this->newName = newName;
@@ -899,17 +923,11 @@ updateTitle::updateTitle(rootData * data, population * ptr, QString newName, QSt
 void updateTitle::undo() {
     // set name
     ptr->name = oldName;
-    // set panel title
-    //label->setText("<u><b>" + oldName + "</b></u>");
-    ////data->reDrawAll();
 }
 
 void updateTitle::redo() {
     // set name
     ptr->name = newName;
-    // set panel title
-    //label->setText("<u><b>" + oldName + "</b></u>");
-    //data->reDrawAll();
 }
 
 

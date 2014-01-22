@@ -63,6 +63,7 @@ signals:
     void addBezierOrProjection(float xGL, float yGL);
     void abortProjection();
     void selectCoordMouseUp(float xGL, float yGL, float GLscale);
+    void itemWasMoved(float xGL, float yGL, float GLscale);
     void dragSelect(float xGL, float yGL);
     void endDragSelect();
 
@@ -95,6 +96,12 @@ private:
     float targGLscale;
     bool connectMode;
 
+    /*!
+     * Is an item being dragged around the screen? Used in combination
+     * with mouseReleaseEvents. Currently, the value of this attribute
+     * is only effective when connectMode==false
+     */
+    bool itemMoving;
 };
 
 #endif // GLWIDGET_H

@@ -26,6 +26,7 @@
 #define UNDOCOMMANDS_H
 
 #include <QUndoCommand>
+#include <utility>
 #include "globalHeader.h"
 #include "projections.h"
 #include "genericinput.h"
@@ -76,6 +77,41 @@ private:
     bool isDeleted;
 };
 
+class movePopulation : public QUndoCommand
+{
+public:
+    movePopulation(rootData * data, population * pop,
+                   std::pair<float,float>oldPos, std::pair<float,float>newPos,
+                   QUndoCommand *parent = 0);
+    ~movePopulation() {}
+    void undo();
+    void redo();
+
+private:
+
+    /*!
+     * The rootData object, which is included so that the screen can
+     * be re-drawn after restoring the position of the population with
+     * the undo/redo methods.
+     */
+    rootData * data;
+
+    /*!
+     * Pointer to the population which has been moved
+     */
+    population * pop;
+
+    /*!
+     * The old position of the population, before the move.
+     */
+    pair<float, float> oldPos;
+
+    /*!
+     * The new position of the population, after the move.
+     */
+    pair<float, float> newPos;
+};
+
 class addProjection : public QUndoCommand
 {
 public:
@@ -117,7 +153,7 @@ public:
     ~addSynapse() {if (isDeleted) delete syn;}
     void undo();
     void redo();
-    
+
 private:
     // these references are needed for the redo and undo
     rootData * data;
@@ -327,9 +363,7 @@ public:
 
 private:
     // these references are needed for the redo and undo
-    rootData * data;
     population * ptr;
-    QLabel * label;
     QString oldName;
     QString newName;
 };

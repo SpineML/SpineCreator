@@ -64,6 +64,8 @@ GLWidget::GLWidget(QWidget *parent):QWidget(parent)
     // accept both tab and click focus
     this->setFocusPolicy(Qt::StrongFocus);
 
+    // Nothing is moving to begin with.
+    this->itemMoving = false;
 }
 
 
@@ -133,10 +135,14 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
     float yGL = -(float((event->y()*RETINA_SUPPORT)-(this->height()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewY);
 
     // select under the mouse
-    //cout << "coords " << float(xGL) << " " << float(yGL) << endl;
+    //qDebug() << "coords: " << float(xGL) << " " << float(yGL) << endl;
     if (this->connectMode == false) {
-        if (event->button() == Qt::LeftButton) {
+        if (event->button() == Qt::LeftButton && !this->itemMoving) {
             emit selectCoordMouseUp(xGL, yGL, this->GLscale);
+        } else if (event->button() == Qt::LeftButton && this->itemMoving) {
+            // Item was released after moving.
+            emit itemWasMoved(xGL, yGL, this->GLscale);
+            this->itemMoving = false;
         }
         if (event->button() == Qt::RightButton) {
             emit endDragSelect();
@@ -195,8 +201,12 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event)
 
     if (this->connectMode == false) {
         if (this->button == Qt::LeftButton) {
+            this->itemMoving = true;
             emit mouseMove(xGL, yGL);
+        } else {
+            this->itemMoving = false;
         }
+
         if (this->button == Qt::RightButton) {
             emit dragSelect(xGL, yGL);
         }
