@@ -773,9 +773,6 @@ void updateParUndo::undo()
 void updateParUndo::redo()
 {
     ptr->value[index] = value;
-    // FIXME.
-    if (!firstRedo)
-        //data->reDrawAll();
     firstRedo = false;
 }
 
@@ -801,9 +798,6 @@ void updateConnProb::undo()
 void updateConnProb::redo()
 {
     ptr->p = value;
-    // FIXME: Probable that this code is not doing what is expected.
-    if (!firstRedo)
-        //data->reDrawAll();
     firstRedo = false;
     data->setTitle();
 }
