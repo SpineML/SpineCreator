@@ -209,8 +209,6 @@ public slots:
     void actionRepLog_triggered();
     void actionRescanVCS_triggered();
 
-    //void storeNineMLComponent();
-
     void updateTitle(bool);
     void updateTitle();
 

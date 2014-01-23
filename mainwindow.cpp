@@ -52,7 +52,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-
     data.main = this;
     this->setWindowTitle("SpineCreator - Graphical SNN creation");
 
@@ -93,7 +92,6 @@ MainWindow::MainWindow(QWidget *parent) :
         settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", QDir::toNativeSeparators(qgetenv("PATH") + ":" + qgetenv("HOME") + "/SpineML_2_BRAHMS/temp/Namespace/"));
 #endif
         settings.setValue("simulators/BRAHMS/envVar/REBUILD", "false");
-
     }
 
     // some default settings
@@ -103,7 +101,6 @@ MainWindow::MainWindow(QWidget *parent) :
     if (settings.value("glOptions/detail", -30).toInt() == -30) {
         settings.setValue("glOptions/detail", 5);
     }
-
 
     // setup undo / redo
     undoStacks = new QUndoGroup(this);
@@ -134,7 +131,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // check for version control
     configureVCSMenu();
-
 
     // EXPERIMENT EDITOR initialisation
     initViewEL();
@@ -194,22 +190,16 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->tab3, SIGNAL(clicked()), this, SLOT(viewCLshow()));
     QObject::connect(ui->tab4, SIGNAL(clicked()), this, SLOT(viewGVshow()));
 
-    //for animation
+    // for animation
     QTimer *timer = new QTimer( this );
-    //this creates a Qt timer event
+    // this creates a Qt timer event
     connect( timer, SIGNAL(timeout()), ui->viewport, SLOT(animate()) );
 
     QObject::connect(&(data), SIGNAL(updatePanel(rootData*)), layoutRoot, SLOT(updatePanel(rootData*)));
     QObject::connect(&(data), SIGNAL(updatePanel(rootData*)), this, SLOT(updateNetworkButtons(rootData*)));
     QObject::connect(this, SIGNAL(updatePanel(rootData*)), layoutRoot, SLOT(updatePanel(rootData*)));
 
-    /*QObject::connect(this, SIGNAL(import_model_xml(QString)), &(data), SLOT(import_model_xml(QString)));
-    QObject::connect(this, SIGNAL(import_component_xml(QStringList)), &(data), SLOT(import_component_xml(QStringList)));
-    QObject::connect(this, SIGNAL(import_layout_xml(QStringList)), &(data), SLOT(import_layout_xml(QStringList)));*/
     QObject::connect(this, SIGNAL(import_csv_signal(QString)), &(data), SLOT(import_csv(QString)));
-   /* QObject::connect(this, SIGNAL(export_model_xml(QString)), &(data), SLOT(export_model_xml(QString)));
-    QObject::connect(this, SIGNAL(export_component_xml(QString, NineMLComponent *)), &(data), SLOT(export_component_xml(QString, NineMLComponent *)));
-    QObject::connect(this, SIGNAL(export_layout_xml(QString,NineMLLayout*)), &(data), SLOT(export_layout_xml(QString,NineMLLayout*)));*/
     QObject::connect(layoutRoot, SIGNAL(setCurrConnectionModel(csv_connectionModel*)), &(data), SLOT(setCurrConnectionModelSig(csv_connectionModel*)));
     QObject::connect(layoutRoot, SIGNAL(getRootDataPointer(rootData**)), &(data), SLOT(returnPointerToSelf(rootData**)));
     QObject::connect(layoutRoot, SIGNAL(setCaption(QString)), &(data), SLOT(setModelTitle(QString)));
@@ -264,19 +254,19 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&fix, SIGNAL(timeout()), this, SLOT(osxHack()));
     fix.start(200);
 #endif
-
 }
 
 #ifdef Q_OS_MAC
-void MainWindow::osxHack() {
+void MainWindow::osxHack()
+{
     // make sure gl context is initialised correctly
     viewVZshow();
     viewNLshow();
 }
 #endif
 
-bool MainWindow::isChanged() {
-
+bool MainWindow::isChanged()
+{
     //
     for (uint i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i]->isChanged(&data))
@@ -284,11 +274,10 @@ bool MainWindow::isChanged() {
     }
 
     return false;
-
 }
 
-void MainWindow::setProjectMenu() {
-
+void MainWindow::setProjectMenu()
+{
     ui->menuProject->clear();
     if (data.projectActions != NULL)
         delete data.projectActions;
@@ -299,11 +288,10 @@ void MainWindow::setProjectMenu() {
     data.currProject->menuAction->setChecked(true);
     ui->menuProject->addActions(data.projectActions->actions());
     connect(data.projectActions, SIGNAL(triggered(QAction*)), &data, SLOT(selectProject(QAction*)));
-
 }
 
-bool MainWindow::promptToSave() {
-
+bool MainWindow::promptToSave()
+{
     // check what the user wants to do
     QMessageBox msgBox(this);
     msgBox.setIcon(QMessageBox::Warning);
@@ -326,12 +314,10 @@ bool MainWindow::promptToSave() {
     }
 
     return true;
-
 }
 
 void MainWindow::closeEvent(QCloseEvent * event)
 {
-
     // if there are changes
     for (uint i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i]->isChanged(&data)) {
@@ -351,11 +337,10 @@ void MainWindow::closeEvent(QCloseEvent * event)
     undoStacks->disconnect();
     //data.undoStack->clear();
     event->accept();
-
 }
 
-void MainWindow::clearComponents() {
-
+void MainWindow::clearComponents()
+{
     // delete catalog components
     for (uint i = 0; i < this->data.catalogLayout.size(); ++i) {
         delete this->data.catalogLayout[i];
@@ -385,7 +370,6 @@ void MainWindow::clearComponents() {
 
 MainWindow::~MainWindow()
 {
-
     QSettings settings;
 
     settings.setValue("mainwindow/size", size());
@@ -427,11 +411,10 @@ MainWindow::~MainWindow()
     delete this->viewVZ.layout;
 
     delete ui;
-
 }
 
-void MainWindow::initViewGV() {
-
+void MainWindow::initViewGV()
+{
     // add ref to this
     viewGV.mainwindow = this;
 
@@ -483,15 +466,14 @@ void MainWindow::initViewGV() {
 
     // hide to start with
     viewGV.subWin->hide();
-
 }
 
-void MainWindow::connectViewGV() {
-
-
+void MainWindow::connectViewGV()
+{
 }
 
-void MainWindow::initViewEL() {
+void MainWindow::initViewEL()
+{
     // adding viewEL (experiments) ####################
 
     // add horizontal layout
@@ -587,15 +569,14 @@ void MainWindow::initViewEL() {
 
     // internal connections
     connect(run, SIGNAL(clicked()), this->viewELhandler, SLOT(run()));
-
 }
 
-void MainWindow::connectViewEL() {
-
+void MainWindow::connectViewEL()
+{
 }
 
-void MainWindow::initViewCL() {
-
+void MainWindow::initViewCL()
+{
     // store a pointer to the main window
     viewCL.mainWindow = this;
 
@@ -747,18 +728,17 @@ void MainWindow::initViewCL() {
     connect(deleteShortcut, SIGNAL(activated()), this, SLOT(actionDeleteItems_triggered()));
 }
 
-void MainWindow::connectViewCL() {
-
+void MainWindow::connectViewCL()
+{
     // connect file list toggle
     connect(viewCL.toggleFileBox, SIGNAL(clicked()), this, SLOT(fileListToggle()));
 
     // connect file list changed
     connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
 }
 
-void MainWindow::initViewVZ() {
-
+void MainWindow::initViewVZ()
+{
     // adding VIEWVZ (populations and projections) ####################################################################################
     this->viewVZ.layout = new NineMLLayout(this->data.catalogLayout[0]);
 
@@ -849,18 +829,17 @@ void MainWindow::initViewVZ() {
     splitter->setSizes(sizes);
 }
 
-void MainWindow::connectViewVZ() {
-
+void MainWindow::connectViewVZ()
+{
     // viewVZ
     QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(setSelectionbyName(QString)), &(data), SLOT(setSelectionbyName(QString)));
     QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(getNeuronLocationsSrc(vector< vector<loc> >*,vector <QColor>*, QString)), &(data), SLOT(getNeuronLocationsSrc(vector< vector<loc> >*,vector <QColor>*, QString)));
     QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(updatePanel(QString)), this->viewVZhandler, SLOT(redrawFromObject(QString)));
     QObject::connect(&(data), SIGNAL(updatePanelView2(QString)), this->viewVZhandler, SLOT(redrawFromObject(QString)));
-
 }
 
-void MainWindow::fileListToggle() {
-
+void MainWindow::fileListToggle()
+{
     if (viewCL.fileList->isHidden()) {
         QLayoutItem * item;
         for (int i = 0; i < viewCL.fileListLayout->count(); ++i) {
@@ -881,11 +860,10 @@ void MainWindow::fileListToggle() {
         viewCL.fileList->hide();
         viewCL.toggleFileBox->setText(">");
     }
-
 }
 
-void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem *) {
-
+void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem *)
+{
     // ok - need to be a bit careful here...
 
     if (current == NULL) {
@@ -975,8 +953,8 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
     updateTitle(true);
 }
 
-void MainWindow::addComponentsToFileList() {
-
+void MainWindow::addComponentsToFileList()
+{
     // remove existing components in the list:
     QListWidgetItem * item;
     item = viewCL.fileList->takeItem(0);
@@ -1064,10 +1042,10 @@ void MainWindow::addComponentsToFileList() {
                     newItem->setBackgroundColor(QColor(255,255,255,255));
         }
     }
-
 }
 
-void MainWindow::undoOrRedoPerformed(int) {
+void MainWindow::undoOrRedoPerformed(int)
+{
     updateTitle();
 }
 
@@ -1090,8 +1068,6 @@ void MainWindow::createActions()
     connect(ui->actionNew_model, SIGNAL(triggered()), this, SLOT(new_project()));
     connect(ui->actionSave_Image, SIGNAL(triggered()), this, SLOT(saveImageAction()));
     connect(ui->actionEdit_Simulators, SIGNAL(triggered()), this, SLOT(launchSimulatorEditor()));
-    //connect(ui->actionSelectComponent, SIGNAL(triggered()), this, SLOT(selectNineMLComponent()));
-    //connect(ui->actionValidate_component_for_use, SIGNAL(triggered()), this, SLOT(storeNineMLComponent()));
     connect(ui->actionNew, SIGNAL(triggered()), this, SLOT(actionNew_triggered()));
     connect(ui->action_Close_project, SIGNAL(triggered()), this, SLOT(close_project()));
 
@@ -1107,8 +1083,7 @@ void MainWindow::createActions()
 
 void MainWindow::new_project()
 {
-    /*if (isChanged())
-        promptToSave();*/
+    // check for unsaved changes?: if (isChanged()) { promptToSave(); }
 
     // create new project
     projectObject * newProject = new projectObject();
@@ -1135,7 +1110,6 @@ void MainWindow::new_project()
     undoStacks->addStack(newProject->undoStack);
 
     // move to viewNL
-
     updateNetworkButtons(&data);
 
     setProjectMenu();
@@ -1144,16 +1118,12 @@ void MainWindow::new_project()
         ui->action_Close_project->setEnabled(true);
     else
         ui->action_Close_project->setEnabled(false);
-
 }
 
 
 void MainWindow::import_project()
 {
-
-    // check for unsaved changes
-    /*if (isChanged())
-        promptToSave();*/
+    // check for unsaved changes?: if (isChanged()) { promptToSave(); }
 
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose the Project to load"), qgetenv("HOME"), tr("Project files (*.proj);; All files (*)"));
 
@@ -1208,7 +1178,6 @@ void MainWindow::import_project()
 
 void MainWindow::export_project()
 {
-
     QString path = data.currProject->filePath;
     QString fileName = path;
     if (path.size() == 0)
@@ -1221,12 +1190,10 @@ void MainWindow::export_project()
 
     // enable / disable menus
     configureVCSMenu();
-
 }
 
 void MainWindow::export_project_as()
 {
-
     QString path = data.currProject->filePath;
     QString fileName = path;
     if (path.size() == 0)
@@ -1240,11 +1207,10 @@ void MainWindow::export_project_as()
 
     // enable / disable menus
     configureVCSMenu();
-
 }
 
-void MainWindow::close_project() {
-
+void MainWindow::close_project()
+{
     // check
     if (data.currProject->isChanged(&data)) {
         if (!promptToSave()) {
@@ -1254,7 +1220,7 @@ void MainWindow::close_project() {
     }
 
     // close the current project
-    //find current project
+    // find current project
     for (uint i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i] == data.currProject) {
 
@@ -1277,12 +1243,10 @@ void MainWindow::close_project() {
         ui->action_Close_project->setEnabled(false);
 
     data.redrawViews();
-
 }
 
 void MainWindow::import_network()
 {
-
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose the network file"), qgetenv("HOME"), tr("XML files (*.xml);; All files (*)"));
 
     if (fileName.isEmpty())
@@ -1308,7 +1272,6 @@ void MainWindow::import_network()
         // check for version control
         data.currProject->version.setupVersion();
 
-
     } else {
 
         // failure - delete
@@ -1316,14 +1279,10 @@ void MainWindow::import_network()
 
         // go straight to jail, do not pass GO, do not collect £200
         return;
-
     }
 
     // clear viewVZ
     viewVZ.OpenGLWidget->clear();
-
-    // model to viewNL
-    //this->viewNLshow();
 
     // redraw
     this->ui->viewport->changed = 1;
@@ -1337,7 +1296,6 @@ void MainWindow::import_network()
 
 void MainWindow::export_network()
 {
-
     QSettings settings;
     QString path = settings.value("files/currentFileName", qgetenv("HOME")).toString();
     QString fileName = path;
@@ -1364,7 +1322,6 @@ void MainWindow::import_csv()
 
 void MainWindow::duplicate_component()
 {
-
     // find which catalog we are saving to
     vector < NineMLComponent * > * curr_lib;
     if (viewCL.root->al->type == "neuron_body")
@@ -1408,7 +1365,6 @@ void MainWindow::duplicate_component()
 
 void MainWindow::import_component()
 {
-
     // sync everything so we don't lose changes
     data.currProject->copy_back_data(&data);
 
@@ -1437,8 +1393,8 @@ void MainWindow::import_component()
 
 }
 
-void MainWindow::delete_component() {
-
+void MainWindow::delete_component()
+{
     if (viewCL.root != NULL)
         viewCL.root->deleteComponent();
 
@@ -1488,7 +1444,6 @@ void MainWindow::export_component()
 
 void MainWindow::import_layout()
 {
-
     // sync everything so we don't lose changes
     data.currProject->copy_back_data(&data);
 
@@ -1512,7 +1467,6 @@ void MainWindow::import_layout()
 
 void MainWindow::export_layout()
 {
-
     // get layout to export
 
     // dialog
@@ -1571,16 +1525,16 @@ void MainWindow::export_layout()
 
 }
 
-void MainWindow::runInBRAHMS() {
-
+void MainWindow::runInBRAHMS()
+{
     BRAHMS_dialog * dialog  = new BRAHMS_dialog(&(this->data));
 
     dialog->show();
 
 }
 
-void MainWindow::saveImageAction() {
-
+void MainWindow::saveImageAction()
+{
     if (viewCL.frame->isVisible()) {
         // components
         actionAs_Image_triggered();
@@ -1599,8 +1553,8 @@ void MainWindow::saveImageAction() {
 
 }
 
-void MainWindow::viewGVshow() {
-
+void MainWindow::viewGVshow()
+{
     // reset all view buttons to 'inactive' look
     this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
@@ -1634,17 +1588,14 @@ void MainWindow::viewGVshow() {
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
 
-void MainWindow::viewELshow() {
-
+void MainWindow::viewELshow()
+{
     // reset all view buttons to 'inactive' look
     this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab2->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-
-    // get source button handle
-    //QToolButton * srcBut =  (QToolButton *) sender();
 
     // make sure open component is replaced in the network
     if (viewCL.root != NULL) {
@@ -1680,7 +1631,6 @@ void MainWindow::viewELshow() {
 
     // show current view
     this->viewEL.view->show();
-    //this->viewEL.view->adjustSize();
 
     // titlebar
     updateTitle();
@@ -1688,17 +1638,14 @@ void MainWindow::viewELshow() {
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
 
-void MainWindow::viewNLshow() {
-
+void MainWindow::viewNLshow()
+{
     // reset all view buttons to 'inactive' look
     this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab2->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-
-    // get source button handle
-    //QToolButton * srcBut =  (QToolButton *) sender();
 
     // make sure open component is replaced in the network
     if (viewCL.root != NULL) {
@@ -1748,8 +1695,8 @@ void MainWindow::viewNLshow() {
 }
 
 
-void MainWindow::viewVZshow() {
-
+void MainWindow::viewVZshow()
+{
     // correct issues due to editing
     viewVZ.OpenGLWidget->refreshAll();
 
@@ -1760,8 +1707,6 @@ void MainWindow::viewVZshow() {
     this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
 
-    // get source button handle
-    //QToolButton * srcBut =  (QToolButton *) sender();
     // make sure open component is replaced in the network
     if (viewCL.root != NULL) {
         viewCL.root->alPtr->updateFrom(viewCL.root->al);
@@ -1820,7 +1765,6 @@ void MainWindow::viewVZshow() {
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 
-
     // fix annoying OSX bug where opengl context hangs (hopefully!)
 #ifdef Q_OS_MAC
     QList<int> sizes = viewVZ.view->sizes();
@@ -1828,12 +1772,10 @@ void MainWindow::viewVZshow() {
     sizes[1] += 1;
     viewVZ.view->setSizes(sizes);
 #endif
-
-
 }
 
-void MainWindow::viewCLshow() {
-
+void MainWindow::viewCLshow()
+{
     // reset all view buttons to 'inactive' look
     this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
     this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
@@ -1887,16 +1829,16 @@ void MainWindow::viewCLshow() {
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
 
-void MainWindow::setCaption(QString caption) {
+void MainWindow::setCaption(QString caption)
+{
     ui->caption->setText(caption);
 }
 
-void MainWindow::launchSimulatorEditor() {
-
+void MainWindow::launchSimulatorEditor()
+{
     editSimulators * dialog  = new editSimulators(this);
 
     dialog->show();
-
 }
 
 
@@ -1905,14 +1847,13 @@ void MainWindow::launchSimulatorEditor() {
 void MainWindow::initialiseModel(NineMLComponent * component)
 {
     //todo: cleanup any old scene and root stuff
-    if (viewCL.root != NULL){
+    if (viewCL.root != NULL) {
         delete viewCL.root;
         viewCL.root = NULL;
     }
 
     viewCL.root = new RootComponentItem(this, ui, component);
     viewCL.root->rootDataPtr = &data;
-    //connect(viewCL.root, SIGNAL(validateAndStoreSignal()), this, SLOT(storeNineMLComponent()));
 
     if (!viewCL.frame->isVisible()) {
         viewCL.root->toolbar->hide();
@@ -1932,523 +1873,12 @@ void MainWindow::initialiseModel(NineMLComponent * component)
     //update layout
     viewCL.root->gvlayout->updateLayout();
 
-    // set library pointer to current component
-    //viewCL.root->alPtr = component;
-
     //set initial toolbar buttons for empty selection
     viewCL.root->properties->createEmptySelectionProperties();
 
     //connect to update title to notify of any unsaved changes
     connect(viewCL.root, SIGNAL(unsavedChange(bool)), this, SLOT(updateTitle(bool)));
-
-
 }
-
-
-/*
-void MainWindow::storeNineMLComponent()
-{
-    if (!data.isValidPointer(viewCL.root->alPtr)) {
-
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("We have a bad pointer here - this WILL be a problem. This is a bug!");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        return;
-
-    }
-
-    // if undo is clean there is nothing to save - exit
-    if (viewCL.root->alPtr->undoStack.isClean())
-        return;
-
-    // things you can't do:
-    if (data.isComponentInUse(viewCL.root->alPtr) && (viewCL.root->alPtr->type != viewCL.root->al->type)) {
-        // we can't change the type of an in-use component. It doesn't make sense.
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("Attempting to change the type of an in-use component.");
-        msgBox.setInformativeText("This is not permitted - duplicate the component or remove from the current network before changing the type.");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        return;
-    }
-
-
-
-    // validate component before storing - do not store if it fails
-    QStringList errs = viewCL.root->al->validateComponent();
-    errs.clear();
-
-    // check for errors:
-    QSettings settings;
-    int num_errs = settings.beginReadArray("errors");
-    settings.endArray();
-
-    num_errs += settings.beginReadArray("warnings");
-    settings.endArray();
-
-    QString errors;
-
-    if (num_errs != 0) {
-
-        errors = errors + "<b>Errors found in current component:</b><br/><br/>";
-
-        // list errors
-        settings.beginReadArray("errors");
-        for (int j = 1; j < num_errs; ++j) {
-            settings.setArrayIndex(j);
-            errors = errors + settings.value("errorText", "").toString();
-            errors = errors + "<br/>";
-        }
-        settings.endArray();
-        settings.beginReadArray("warnings");
-        for (int j = 1; j < num_errs; ++j) {
-            settings.setArrayIndex(j);
-            errors = errors + settings.value("warnText", "").toString();
-            errors = errors + "<br/>";
-        }
-        settings.endArray();
-
-        errors = errors + "/n<b>Component not stored</b><br/><br/>";
-
-        // clear errors
-        settings.remove("errors");
-        settings.remove("warnings");
-
-    }
-
-    if (!errors.isEmpty()) {
-        // display errors
-        QMessageBox msgBox;
-        msgBox.setText("<P><b>Component validation failed</b></P>" + errors);
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setTextFormat(Qt::RichText);
-        msgBox.setModal(false);
-        msgBox.exec();
-        return;
-    }
-
-    // find which catalog we are saving to
-    vector < NineMLComponent * > * curr_lib;
-    if (viewCL.root->al->type == "neuron_body")
-        curr_lib = &data.catalogNrn;
-    if (viewCL.root->al->type == "weight_update")
-        curr_lib = &data.catalogWU;
-    if (viewCL.root->al->type == "postsynapse")
-        curr_lib = &data.catalogPS;
-
-    NineMLComponent * targetComponent = NULL;
-
-    // see if there is a match to the name and path in the catalog
-    for (uint i = 0; i < curr_lib->size(); ++i) {
-        if (viewCL.root->al->name == (*curr_lib)[i]->name && viewCL.root->al->path == (*curr_lib)[i]->path) {
-            targetComponent = (*curr_lib)[i];
-        }
-    }
-
-
-    // target has same type, name and path and is in-use (can be overwriting the original or a new component)
-    if (data.isComponentInUse(targetComponent)) {
-
-        // offer to duplicate
-
-        QMessageBox msgBox;
-        QPushButton * dupBut = msgBox.addButton("Save as &new",QMessageBox::AcceptRole);
-        QPushButton * owBut = msgBox.addButton("&Overwrite",QMessageBox::AcceptRole);
-        QPushButton * cancelBut = msgBox.addButton("&Cancel",QMessageBox::RejectRole);
-        msgBox.setEscapeButton(cancelBut);
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("Modifying in-use component          ");
-        msgBox.setInformativeText("This process will modify an in-use component, are you sure? This may require changes to the current network and CANNOT be undone. 'Save as new' will create a new component instead.");
-        msgBox.setDefaultButton(dupBut);
-        msgBox.exec();
-        if (msgBox.clickedButton() == dupBut) {
-
-            // duplicate component
-
-            // find unique name
-            int val = 1;
-            bool unique = false;
-            // see if there is a component with the same name
-            while (!unique) {
-                unique = true;
-                for (uint i = 0; i < curr_lib->size(); ++i) {
-                    if ((*curr_lib)[i]->name == viewCL.root->al->name + QString::number(float(val)))
-                        unique = false;
-                }
-                if (!unique)
-                    ++val;
-            }
-
-            // set the name
-            viewCL.root->al->name += QString::number(float(val));
-
-            // add to catalog
-            curr_lib->push_back(new NineMLComponent(viewCL.root->al));
-            undoStacks->addStack(&curr_lib->back()->undoStack);
-            curr_lib->back()->undoStack.setActive(true);
-
-            // clean old undo stack
-            viewCL.root->alPtr->undoStack.setClean();
-
-            // change over the pointer
-            viewCL.root->alPtr = curr_lib->back();
-            curr_lib->back()->filePath = "";
-
-            // and save to disk
-            if (curr_lib->back()->path == "lib")
-                saveLibrary();
-            if (curr_lib->back()->path == "temp" || curr_lib->back()->path == "model") {
-                this->export_component();
-                // copy across the new filePath
-                viewCL.root->alPtr->filePath = viewCL.root->al->filePath;
-            }
-
-            // update the file list
-            viewCL.fileList->disconnect();
-            addComponentsToFileList();
-            connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-            updateTitle();
-
-            // all done!
-            viewNL.layout->updatePanel(&data);
-            return;
-
-        } else if (msgBox.clickedButton() == owBut) {
-
-            // overwrite component
-
-            // chnage over undo stack
-            if (targetComponent == viewCL.root->alPtr)
-                targetComponent->undoStack.setClean();
-            else {
-                undoStacks->addStack(&targetComponent->undoStack);
-                targetComponent->undoStack.clear();
-                targetComponent->undoStack.setActive(true);
-            }
-
-            // change over component in model
-            //data.replaceComponent(targetComponent, curr_lib->back());
-            targetComponent->updateFrom(viewCL.root->al);
-
-            // change over alPtr in model (but not if we are the same) (if not in use this will have no effect)
-            data.replaceComponent(viewCL.root->alPtr, targetComponent);
-            if (targetComponent != viewCL.root->alPtr) {
-                 // remove old component
-                if (!data.removeComponent(viewCL.root->alPtr))
-                    qDebug() << "Error removing component from catalogs: THIS IS A BUG: FIND USING #1457";
-            }
-
-
-            // change over the pointer
-            viewCL.root->alPtr = targetComponent;
-
-            // and save to disk
-            if (targetComponent->path == "lib")
-                saveLibrary();
-            if (targetComponent->path == "temp" || targetComponent->path == "model") {
-                this->export_component();
-                // copy across the new filePath
-                viewCL.root->alPtr->filePath = viewCL.root->al->filePath;
-            }
-
-            // update the file list
-            viewCL.fileList->disconnect();
-            addComponentsToFileList();
-            connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-            updateTitle();
-
-            // all done!
-            viewNL.layout->updatePanel(&data);
-            return;
-
-        } else if (msgBox.clickedButton() == cancelBut) {
-            return;
-        }
-
-    // if overwriting original but NOT in use (as this is handled by the first if)
-    } else if (targetComponent == viewCL.root->alPtr && viewCL.root->alPtr != NULL) {
-
-        // just do it - we can always undo if we made a mistake!
-
-        // change the component
-        viewCL.root->alPtr->updateFrom(viewCL.root->al);
-        viewCL.root->alPtr->undoStack.setClean();
-
-        // and save to disk
-        if (viewCL.root->alPtr->path == "lib")
-            saveLibrary();
-        if (viewCL.root->alPtr->path == "temp" && !viewCL.root->alPtr->filePath.isEmpty())
-            data.export_component_xml(viewCL.root->alPtr->filePath, viewCL.root->alPtr);
-        if (viewCL.root->alPtr->path == "temp" && viewCL.root->alPtr->filePath.isEmpty()) {
-            this->export_component();
-            // copy across the new filePath
-            viewCL.root->alPtr->filePath = viewCL.root->al->filePath;
-        }
-
-        // update the file list
-        viewCL.fileList->disconnect();
-        addComponentsToFileList();
-        connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-        updateTitle();
-
-        // all done!
-        viewNL.layout->updatePanel(&data);
-        return;
-
-    // if source not in use and destination is unique
-    } else if (targetComponent == NULL && !data.isComponentInUse(viewCL.root->alPtr)) {
-
-        // ask if we want to create a new component
-        QMessageBox msgBox;
-        QPushButton * dupBut = msgBox.addButton("Save as &new",QMessageBox::AcceptRole);
-        QPushButton * owBut = msgBox.addButton("&Move",QMessageBox::AcceptRole);
-        QPushButton * cancelBut = msgBox.addButton("&Cancel",QMessageBox::RejectRole);
-        msgBox.setEscapeButton(cancelBut);
-        msgBox.setIcon(QMessageBox::Warning);
-        msgBox.setText("Move / save as new                ");
-        msgBox.setInformativeText("Do you want to move this component or save a new component?");
-        msgBox.setDefaultButton(dupBut);
-        msgBox.exec();
-        if (msgBox.clickedButton() == dupBut) {
-
-            // add to catalog
-            curr_lib->push_back(new NineMLComponent(viewCL.root->al));
-            undoStacks->addStack(&curr_lib->back()->undoStack);
-            curr_lib->back()->undoStack.setActive(true);
-
-            // clean old undo stack
-            viewCL.root->alPtr->undoStack.setClean();
-
-            // change over the pointer
-            viewCL.root->alPtr = curr_lib->back();
-            curr_lib->back()->filePath = "";
-
-            // and save to disk
-            if (curr_lib->back()->path == "lib")
-                saveLibrary();
-            if (curr_lib->back()->path == "temp" || curr_lib->back()->path == "model") {
-                this->export_component();
-                // copy across the new filePath
-                viewCL.root->alPtr->filePath = viewCL.root->al->filePath;
-            }
-
-            // update the file list
-            viewCL.fileList->disconnect();
-            addComponentsToFileList();
-            connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-            updateTitle();
-
-            // all done!
-            viewNL.layout->updatePanel(&data);
-            return;
-
-        } else if (msgBox.clickedButton() == owBut) {
-
-            // move between catalogs if necessary
-            if (viewCL.root->alPtr->type != viewCL.root->al->type) {
-
-                // find which catalog we are coming from
-                vector < NineMLComponent * > * old_lib;
-                if (viewCL.root->alPtr->type == "neuron_body")
-                    old_lib = &data.catalogNrn;
-                if (viewCL.root->alPtr->type == "weight_update")
-                    old_lib = &data.catalogWU;
-                if (viewCL.root->alPtr->type == "postsynapse")
-                    old_lib = &data.catalogPS;
-
-                // add to new catalog
-                curr_lib->push_back(viewCL.root->alPtr);
-
-                // remove from old catalog
-                for (uint i = 0; i < old_lib->size(); ++i)
-                    if ((*old_lib)[i] == viewCL.root->alPtr)
-                        old_lib->erase(old_lib->begin()+i);
-
-            }
-
-            // clean old undo stack
-            viewCL.root->alPtr->undoStack.setClean();
-
-            // update the component
-            viewCL.root->alPtr->updateFrom(viewCL.root->al);
-            viewCL.root->alPtr->undoStack.setClean();
-
-            // and save to disk
-            if (viewCL.root->alPtr->path == "lib")
-                saveLibrary();
-            if (viewCL.root->alPtr->path == "temp" && !viewCL.root->alPtr->filePath.isEmpty())
-                data.export_component_xml(viewCL.root->alPtr->filePath, viewCL.root->alPtr);
-            if (viewCL.root->alPtr->path == "temp" && viewCL.root->alPtr->filePath.isEmpty()) {
-                this->export_component();
-                // copy across the new filePath
-                viewCL.root->alPtr->filePath = viewCL.root->al->filePath;
-            }
-
-            // update the file list
-            viewCL.fileList->disconnect();
-            addComponentsToFileList();
-            connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-            updateTitle();
-
-            // all done!
-            viewNL.layout->updatePanel(&data);
-            return;
-
-        } else if (msgBox.clickedButton() == cancelBut) {
-            return;
-        }
-
-    // all that is left is the source in use -> taken (but not in use) or not taken names AND the source not in use to taken (but not in use) names
-    } else {
-
-        // offer to duplicate
-
-        QMessageBox msgBox;
-        QPushButton * dupBut = msgBox.addButton("Save as &new",QMessageBox::AcceptRole);
-        QPushButton * owBut;
-        if (targetComponent != NULL)
-            owBut = msgBox.addButton("&Overwrite",QMessageBox::AcceptRole);
-        else
-            owBut = msgBox.addButton("&Replace",QMessageBox::AcceptRole);
-        QPushButton * cancelBut = msgBox.addButton("&Cancel",QMessageBox::RejectRole);
-        msgBox.setEscapeButton(cancelBut);
-        msgBox.setIcon(QMessageBox::Warning);
-        if (data.isComponentInUse(viewCL.root->alPtr)) {
-            msgBox.setText("Modifying in-use component          ");
-            msgBox.setInformativeText("This process will modify an in-use component, are you sure? This may require changes to the current network and CANNOT be undone. 'Save as new' will create a new component instead.");
-        } else {
-            msgBox.setText("Overwriting component               ");
-            msgBox.setInformativeText("This process will overwrite an existing component, are you sure? 'Save as new' will create a new component instead.");
-        }
-        msgBox.setDefaultButton(dupBut);
-        msgBox.exec();
-        if (msgBox.clickedButton() == dupBut) {
-
-            // duplicate component
-
-            // if we are moving to a taken name
-            if (targetComponent != NULL) {
-                // find unique name
-                int val = 1;
-                bool unique = false;
-                // see if there is a component with the same name
-                while (!unique) {
-                    unique = true;
-                    for (uint i = 0; i < curr_lib->size(); ++i) {
-                        if ((*curr_lib)[i]->name == viewCL.root->al->name + QString::number(float(val)))
-                            unique = false;
-                    }
-                    if (!unique)
-                        ++val;
-                }
-
-                // set the name
-                viewCL.root->al->name += QString::number(float(val));
-            }
-
-            // add to catalog
-            curr_lib->push_back(new NineMLComponent(viewCL.root->al));
-            undoStacks->addStack(&curr_lib->back()->undoStack);
-            curr_lib->back()->undoStack.setActive(true);
-
-            // change over the pointer
-            viewCL.root->alPtr = curr_lib->back();
-            curr_lib->back()->filePath = "";
-
-            // and save to disk
-            if (curr_lib->back()->path == "lib")
-                saveLibrary();
-            if (curr_lib->back()->path == "temp" || curr_lib->back()->path == "model") {
-                this->export_component();
-                // copy across the new filePath
-                viewCL.root->alPtr->filePath = viewCL.root->al->filePath;
-            }
-
-            // update the file list
-            viewCL.fileList->disconnect();
-            addComponentsToFileList();
-            connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-            updateTitle();
-
-            // all done!
-            viewNL.layout->updatePanel(&data);
-            return;
-
-        } else if (msgBox.clickedButton() == owBut) {
-
-            // overwrite component
-
-            if (data.isComponentInUse(viewCL.root->alPtr)) {
-
-                // add to catalog
-                curr_lib->push_back(new NineMLComponent(viewCL.root->al));
-                undoStacks->addStack(&curr_lib->back()->undoStack);
-                curr_lib->back()->undoStack.setActive(true);
-
-                // change over component in model
-                data.replaceComponent(targetComponent, curr_lib->back());
-
-                // remove old components
-                if (!data.removeComponent(targetComponent))
-                    qDebug() << "Error removing component from catalogs: THIS IS A BUG: FIND USING #1126";
-
-                // change over the pointer
-                viewCL.root->alPtr = curr_lib->back();
-
-            } else {
-
-                // update target component
-                targetComponent->updateFrom(viewCL.root->al);
-                targetComponent->undoStack.clear();
-                undoStacks->addStack(&targetComponent->undoStack);
-                targetComponent->undoStack.setActive(true);
-                delete targetComponent->editedVersion;
-
-                // remove old component
-                if (data.removeComponent(viewCL.root->alPtr))
-                    qDebug() << "Error removing component from catalogs: THIS IS A BUG: FIND USING #1677";
-
-                // change over the pointer
-                viewCL.root->alPtr = targetComponent;
-
-            }
-
-            // and save to disk
-            if (curr_lib->back()->path == "lib")
-                saveLibrary();
-            if (curr_lib->back()->path == "temp" || curr_lib->back()->path == "model") {
-                this->export_component();
-                // copy across the new filePath
-                viewCL.root->alPtr->filePath = viewCL.root->al->filePath;
-            }
-
-            // update the file list
-            viewCL.fileList->disconnect();
-            addComponentsToFileList();
-            connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-            updateTitle();
-
-            // all done!
-            viewNL.layout->updatePanel(&data);
-            return;
-
-        } else if (msgBox.clickedButton() == cancelBut) {
-            return;
-        }
-    }
-
-}*/
-
 
 void MainWindow::actionAddParamater_triggered()
 {
@@ -2556,14 +1986,11 @@ void MainWindow::actionDeleteItems_triggered()
 
 void MainWindow::actionAddTimeDerivative_triggered()
 {
-    if (viewCL.root)
-    {
+    if (viewCL.root) {
         QList <QGraphicsItem*> selected = viewCL.root->scene->selectedItems();
-        if (selected.size() > 0)
-        {
+        if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
-            if (g->type() == RegimeGraphicsItem::Type)
-            {
+            if (g->type() == RegimeGraphicsItem::Type) {
                 NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
                 RegimeGraphicsItem *rgi = ((RegimeGraphicsItem*)g);
                 TimeDerivative * td = new TimeDerivative();
@@ -2576,9 +2003,7 @@ void MainWindow::actionAddTimeDerivative_triggered()
                 viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Add TimeDerivative"));
                 updateTitle(true);
             }
-        }
-        else
-        {
+        } else {
             qDebug() << "Regime item should be selected during add time derivative!";
         }
     }
@@ -2604,13 +2029,11 @@ void MainWindow::actionAddAnalogePort_triggered()
         viewCL.root->gvlayout->updateLayout();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Add Analog Port"));
     }
-
 }
 
 void MainWindow::actionAddEventPort_triggered()
 {
-    if (viewCL.root!= NULL)
-    {
+    if (viewCL.root!= NULL) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         EventPort *ep = new EventPort();
@@ -2624,8 +2047,7 @@ void MainWindow::actionAddEventPort_triggered()
 
 void MainWindow::actionAddImpulsePort_triggered()
 {
-    if (viewCL.root!= NULL)
-    {
+    if (viewCL.root!= NULL) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         ImpulsePort *ip = new ImpulsePort();
@@ -2638,21 +2060,19 @@ void MainWindow::actionAddImpulsePort_triggered()
 
 void MainWindow::actionAddStateVariable_triggered()
 {
-    if (viewCL.root != NULL)
-    {
+    if (viewCL.root != NULL) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         StateVariable * sv = new StateVariable();
         sv->name = "New_State_Var_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->StateVariableList.size(); i++)
-        {
+        for (uint i=0; i< viewCL.root->al->StateVariableList.size(); i++) {
             QString name = viewCL.root->al->StateVariableList[i]->getName();
-            if (name.startsWith("New_State_Var_"))
-            {
+            if (name.startsWith("New_State_Var_")) {
                 QString temp = name.remove(0,14);
                 int t = temp.toInt();
-                if (t >= n)
+                if (t >= n) {
                     n = t+1;
+                }
             }
         }
         char num[4];
@@ -2879,32 +2299,29 @@ void MainWindow::actionAs_Dotty_Graph_triggered()
 void MainWindow::actionNew_triggered()
 {
     //if (warnSave()) { // warnsave isn't needed as multiple files can be edited
-        int val = 1;
-        bool unique = false;
-        // see if there is a component with the same name
-        while (!unique) {
-            unique = true;
-            for (uint i = 0; i < data.catalogNrn.size(); ++i) {
-                if (data.catalogNrn[i]->name == "New Component " + QString::number(float(val)))
-                    unique = false;
-            }
-            if (!unique)
-                ++val;
+    int val = 1;
+    bool unique = false;
+    // see if there is a component with the same name
+    while (!unique) {
+        unique = true;
+        for (uint i = 0; i < data.catalogNrn.size(); ++i) {
+            if (data.catalogNrn[i]->name == "New Component " + QString::number(float(val)))
+                unique = false;
         }
+        if (!unique)
+            ++val;
+    }
 
-        // add the new component
-        data.catalogNrn.push_back(new NineMLComponent());
-        data.catalogNrn.back()-> name = "New Component " + QString::number(float(val));
-        initialiseModel(data.catalogNrn.back());
-        viewCL.root->alPtr = data.catalogNrn.back();
+    // add the new component
+    data.catalogNrn.push_back(new NineMLComponent());
+    data.catalogNrn.back()-> name = "New Component " + QString::number(float(val));
+    initialiseModel(data.catalogNrn.back());
+    viewCL.root->alPtr = data.catalogNrn.back();
 
-        // redraw the file list
-        viewCL.fileList->disconnect();
-        addComponentsToFileList();
-        connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
-
-
-    //}
+    // redraw the file list
+    viewCL.fileList->disconnect();
+    addComponentsToFileList();
+    connect(viewCL.fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
 }
 
 void MainWindow::actionShowHideParams_triggered(bool checked)
@@ -2942,37 +2359,45 @@ void MainWindow::actionMove_Down_triggered()
     }
 }
 
-void MainWindow::actionCommitModel_triggered() {
+void MainWindow::actionCommitModel_triggered()
+{
     data.currProject->version.commitVersion();
 }
 
-void MainWindow::actionUpdateModel_triggered() {
+void MainWindow::actionUpdateModel_triggered()
+{
     data.currProject->version.updateVersion();
 }
 
-void MainWindow::actionRevertModel_triggered() {
+void MainWindow::actionRevertModel_triggered()
+{
     data.currProject->version.revertVersion();
 }
 
-void MainWindow::actionRepStatus_triggered() {
+void MainWindow::actionRepStatus_triggered()
+{
     data.currProject->version.showVersionStatus();
 }
 
-void MainWindow::actionRepLog_triggered() {
+void MainWindow::actionRepLog_triggered()
+{
     data.currProject->version.showVersionLog();
 }
 
-void MainWindow::actionRescanVCS_triggered() {
+void MainWindow::actionRescanVCS_triggered()
+{
     data.currProject->version.detectVCSes();
     configureVCSMenu();
 }
 
-void MainWindow::about() {
+void MainWindow::about()
+{
     AboutDialog win;
     win.exec();
 }
 
-void MainWindow::configureVCSMenu() {
+void MainWindow::configureVCSMenu()
+{
     // show or hide menus
     if (data.currProject->version.haveVersion())
         ui->menuVersion_control->setEnabled(true);
@@ -3052,8 +2477,8 @@ void MainWindow::updateTitle()
     }
 }
 
-void MainWindow::updateNetworkButtons(rootData * data) {
-
+void MainWindow::updateNetworkButtons(rootData * data)
+{
     if (data->selList.size() == 0) {
         ui->butA->setDisabled(false);
         ui->butB->setDisabled(true);
@@ -3080,8 +2505,3 @@ void MainWindow::updateNetworkButtons(rootData * data) {
         ui->butC->setDisabled(false);
     }
 }
-
-
-
-// /Users/alex/Documents/xml/
-// /home/alex/NineML_to_BRAHMS/
