@@ -41,6 +41,17 @@
 #include "nineml_alview.h"
 #include "versioncontrol.h"
 
+/*!
+ * paths used to store the last used directory for file open/save
+ * dialogs in QSettings.
+ */
+//@{
+#define MAINWINDOW_LASTPROJECTDIR   "mainwindow/lastProjectDirectory"
+#define MAINWINDOW_LASTNETWORKDIR   "mainwindow/lastNetworkDirectory"
+#define MAINWINDOW_LASTCOMPONENTDIR "mainwindow/lastComponentDirectory"
+#define MAINWINDOW_LASTLAYOUTDIR    "mainwindow/lastLayoutDirectory"
+//@}
+
 namespace Ui {
     class MainWindow;
 }
@@ -269,9 +280,11 @@ protected:
     void export_project(const QString& filePath);
 
     /*!
-     * Get the last save/load directory.
+     * Get the last directory for the passed-in settings path
+     * (e.g. mainwindow/lastProjectDirectory). If this is empty,
+     * return the current user's HOME.
      */
-    QString getLastDirectory();
+    QString getLastDirectory (const QString& settingsPath);
 };
 
 #endif // MAINWINDOW_H

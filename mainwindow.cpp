@@ -70,9 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QString currFileName = settings.value("files/currentFileName", "").toString();
 
     if (currFileName.size() != 0) {
-
         qDebug() << "oops - program crashed. Handle? (could be multiple programs open - but that could be a problem too...)";
-
     }
 
     // add the default simulators if it isn't done already
@@ -280,7 +278,7 @@ MainWindow::updateRecentProjects(const QString& filePath)
     // open with that location:
     QDir lastDirectory (filePath);
     lastDirectory.cdUp();
-    settings.setValue ("mainwindow/lastDirectory", lastDirectory.absolutePath());
+    settings.setValue (MAINWINDOW_LASTPROJECTDIR, lastDirectory.absolutePath());
 
     // Now we modify the recents list to remove any existing entry for filePath
     QList<QString>::iterator iter = recents.begin();
@@ -1221,10 +1219,10 @@ void MainWindow::import_recent_project()
     this->import_project (sndr->text());
 }
 
-QString MainWindow::getLastDirectory()
+QString MainWindow::getLastDirectory(const QString& settingsPath)
 {
     QSettings settings;
-    QString lastDirectory = settings.value ("mainwindow/lastDirectory").toString();
+    QString lastDirectory = settings.value (settingsPath).toString();
     if (lastDirectory.length() == 0) { lastDirectory = qgetenv("HOME"); }
     return lastDirectory;
 }
@@ -1232,7 +1230,7 @@ QString MainWindow::getLastDirectory()
 void MainWindow::import_project()
 {
     // check for unsaved changes?: if (isChanged()) { promptToSave(); }
-    QString lastDirectory = this->getLastDirectory();
+    QString lastDirectory = this->getLastDirectory(MAINWINDOW_LASTPROJECTDIR);
     QString filePath = QFileDialog::getOpenFileName(this,
                                                     tr("Choose the Project to load"),
                                                     lastDirectory,
@@ -1311,7 +1309,7 @@ void MainWindow::export_project()
     QString path = data.currProject->filePath;
     QString fileName = path;
     if (path.size() == 0) {
-        path = this->getLastDirectory(); // defaults to HOME.
+        path = this->getLastDirectory(MAINWINDOW_LASTPROJECTDIR); // defaults to HOME.
         fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
     }
     this->export_project (fileName);
@@ -1322,7 +1320,7 @@ void MainWindow::export_project_as()
     QString path = data.currProject->filePath;
     QString fileName = path;
     if (path.size() == 0) {
-        path = this->getLastDirectory(); // defaults to HOME.
+        path = this->getLastDirectory(MAINWINDOW_LASTPROJECTDIR); // defaults to HOME.
     }
     fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
     this->export_project (fileName);
@@ -1366,7 +1364,8 @@ void MainWindow::close_project()
 
 void MainWindow::import_network()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Choose the network file"), qgetenv("HOME"), tr("XML files (*.xml);; All files (*)"));
+    QString lastDir = this->getLastDirectory (MAINWINDOW_LASTNETWORKDIR);
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Choose the network file"), lastDir, tr("XML files (*.xml);; All files (*)"));
 
     if (fileName.isEmpty())
         return;
@@ -1410,25 +1409,31 @@ void MainWindow::import_network()
     updateNetworkButtons(&data);
 
     setProjectMenu();
-
 }
 
 void MainWindow::export_network()
 {
     QSettings settings;
-    QString path = settings.value("files/currentFileName", qgetenv("HOME")).toString();
+    QString lastDir = this->getLastDirectory (MAINWINDOW_LASTNETWORKDIR);
+    QString path = settings.value("files/currentFileName", lastDir).toString();
     QString fileName = path;
-    if (path == qgetenv("HOME"))
+    if (path == lastDir) {
         fileName = QFileDialog::getExistingDirectory(this, "Choose the Directory to save network in", path);
+    }
 
-    if (fileName.isEmpty())
+    if (fileName.isEmpty()) {
         return;
+    }
 
     emit export_model_xml(fileName);
 
     // enable / disable menus
     configureVCSMenu();
 
+    // Save lastDir
+    QDir lastDirectory (fileName);
+    lastDirectory.cdUp();
+    settings.setValue (MAINWINDOW_LASTNETWORKDIR, lastDirectory.absolutePath());
 }
 
 
@@ -1436,7 +1441,6 @@ void MainWindow::import_csv()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open CSV file for import"), qgetenv("HOME"), tr("CSV files (*.csv *.txt);; All files (*)"));
     emit import_csv_signal(fileName);
-
 }
 
 void MainWindow::duplicate_component()
@@ -1459,11 +1463,13 @@ void MainWindow::duplicate_component()
     while (!unique) {
         unique = true;
         for (uint i = 0; i < curr_lib->size(); ++i) {
-            if ((*curr_lib)[i]->name == viewCL.root->al->name + QString::number(float(val)))
+            if ((*curr_lib)[i]->name == viewCL.root->al->name + QString::number(float(val))) {
                 unique = false;
+            }
         }
-        if (!unique)
+        if (!unique) {
             ++val;
+        }
     }
 
     // duplicate
@@ -1478,7 +1484,6 @@ void MainWindow::duplicate_component()
 
     // update other lists
     viewNL.layout->updatePanel(&data);
-
 }
 
 
@@ -1487,10 +1492,12 @@ void MainWindow::import_component()
     // sync everything so we don't lose changes
     data.currProject->copy_back_data(&data);
 
-    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Open SpineML"), qgetenv("HOME"), tr("XML files (*.xml *.9ml);; All files (*)"));
+    QString lastDir = this->getLastDirectory (MAINWINDOW_LASTCOMPONENTDIR);
+    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Open SpineML"), lastDir, tr("XML files (*.xml *.9ml);; All files (*)"));
 
-    if (fileNames.isEmpty())
+    if (fileNames.isEmpty()) {
         return;
+    }
 
     for (int i = 0; i < fileNames.size(); ++i) {
         data.currProject->import_component(fileNames[i]);
@@ -1509,49 +1516,23 @@ void MainWindow::import_component()
     // update other lists
     viewNL.layout->updatePanel(&data);
 
-
+    // Save directory from the first of the fileNames.
+    QDir lastDirectory (fileNames[0]);
+    lastDirectory.cdUp();
+    QSettings settings;
+    settings.setValue (MAINWINDOW_LASTCOMPONENTDIR, lastDirectory.absolutePath());
 }
 
 void MainWindow::delete_component()
 {
-    if (viewCL.root != NULL)
+    if (viewCL.root != NULL) {
         viewCL.root->deleteComponent();
-
+    }
 }
 
 void MainWindow::export_component()
 {
-    if (viewCL.root!= NULL){
-        QString fileName = QFileDialog::getSaveFileName(this, "Save component " + viewCL.root->al->name + " as SpineML", qgetenv("HOME"), tr("XML files (*.xml *.9ml);; All files (*)"));
-
-        if (fileName.isEmpty())
-            return;
-
-        if (!fileName.contains("."))
-            fileName.append(".xml");
-
-        QFile file(fileName);
-        if (!file.open( QIODevice::WriteOnly)) {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText("Error creating file!           ");
-            msgBox.exec();
-            return;
-        }
-
-        // get the 9ML description
-        QDomDocument * doc = new QDomDocument( "SpineML" );
-        viewCL.root->al->write(doc);
-
-
-        // write out to files
-        QTextStream stream( &file );
-        stream << doc->toString();
-        delete doc;
-        doc = NULL;
-
-        updateTitle(false);
-    } else {
+    if (viewCL.root== NULL) {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setText("<P><b>No component selected for Export                  </b></P>");
@@ -1559,6 +1540,44 @@ void MainWindow::export_component()
         msgBox.exec();
         return;
     }
+
+    QString lastDir = this->getLastDirectory (MAINWINDOW_LASTCOMPONENTDIR);
+    QString fileName = QFileDialog::getSaveFileName(this, "Save component " + viewCL.root->al->name + " as SpineML", lastDir, tr("XML files (*.xml *.9ml);; All files (*)"));
+
+    if (fileName.isEmpty()) {
+        return;
+    }
+
+    if (!fileName.contains(".")) {
+        fileName.append(".xml");
+    }
+
+    QFile file(fileName);
+    if (!file.open( QIODevice::WriteOnly)) {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Error creating file!           ");
+        msgBox.exec();
+        return;
+    }
+
+    // get the 9ML description
+    QDomDocument * doc = new QDomDocument( "SpineML" );
+    viewCL.root->al->write(doc);
+
+    // write out to files
+    QTextStream stream( &file );
+    stream << doc->toString();
+    delete doc;
+    doc = NULL;
+
+    updateTitle(false);
+
+    // Save lastDir
+    QDir lastDirectory (fileName);
+    lastDirectory.cdUp();
+    QSettings settings;
+    settings.setValue (MAINWINDOW_LASTCOMPONENTDIR, lastDirectory.absolutePath());
 }
 
 void MainWindow::import_layout()
@@ -1566,10 +1585,12 @@ void MainWindow::import_layout()
     // sync everything so we don't lose changes
     data.currProject->copy_back_data(&data);
 
-    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Open SpineML layout"), qgetenv("HOME"), tr("XML files (*.xml *.9ml);; All files (*)"));
+    QString lastDir = this->getLastDirectory (MAINWINDOW_LASTLAYOUTDIR);
+    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Open SpineML layout"), lastDir, tr("XML files (*.xml *.9ml);; All files (*)"));
 
-    if (fileNames.isEmpty())
+    if (fileNames.isEmpty()) {
         return;
+    }
 
     for (int i = 0; i < fileNames.size(); ++i) {
         data.currProject->import_layout(fileNames[i]);
@@ -1582,6 +1603,11 @@ void MainWindow::import_layout()
 
     viewVZhandler->updateLayoutList(&data);
 
+    // Save the directory from the first of the fileNames
+    QDir lastDirectory (fileNames[0]);
+    lastDirectory.cdUp();
+    QSettings settings;
+    settings.setValue (MAINWINDOW_LASTLAYOUTDIR, lastDirectory.absolutePath());
 }
 
 void MainWindow::export_layout()
@@ -1595,8 +1621,9 @@ void MainWindow::export_layout()
 
     // add layouts to list and add to dialog
     QStringList options;
-    for (uint i = 1; i < data.catalogLayout.size(); ++i)
+    for (uint i = 1; i < data.catalogLayout.size(); ++i) {
         options <<  data.catalogLayout[i]->name;
+    }
     dialog->setComboBoxItems(options);
 
     int index = -1;
@@ -1605,23 +1632,29 @@ void MainWindow::export_layout()
     dialog->setModal(true);
 
     if (dialog->exec()) {
-        for (uint i = 1; i < data.catalogLayout.size(); ++i)
-            if (dialog->textValue() == data.catalogLayout[i]->name)
+        for (uint i = 1; i < data.catalogLayout.size(); ++i) {
+            if (dialog->textValue() == data.catalogLayout[i]->name) {
                 index = i;
-     } else
+            }
+        }
+    } else {
         return;
+    }
 
-
-    if (index == -1)
+    if (index == -1) {
         return;
+    }
 
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save layout as NineML"), qgetenv("HOME"), tr("XML files (*.xml *.9ml);; All files (*)"));
+    QString lastDir = this->getLastDirectory (MAINWINDOW_LASTLAYOUTDIR);
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save layout as NineML"), lastDir, tr("XML files (*.xml *.9ml);; All files (*)"));
 
-    if (fileName.isEmpty())
+    if (fileName.isEmpty()) {
         return;
+    }
 
-    if (!fileName.contains("."))
+    if (!fileName.contains(".")) {
         fileName.append(".xml");
+    }
 
     QFile file(fileName);
     if (!file.open( QIODevice::WriteOnly)) {
@@ -1642,14 +1675,17 @@ void MainWindow::export_layout()
     delete doc;
     doc = NULL;
 
+    // Save lastDir
+    QDir lastDirectory (fileName);
+    lastDirectory.cdUp();
+    QSettings settings;
+    settings.setValue (MAINWINDOW_LASTLAYOUTDIR, lastDirectory.absolutePath());
 }
 
 void MainWindow::runInBRAHMS()
 {
     BRAHMS_dialog * dialog  = new BRAHMS_dialog(&(this->data));
-
     dialog->show();
-
 }
 
 void MainWindow::saveImageAction()
@@ -1669,7 +1705,6 @@ void MainWindow::saveImageAction()
         QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
         data.saveImage(fileName);
     }
-
 }
 
 void MainWindow::viewGVshow()
@@ -1813,7 +1848,6 @@ void MainWindow::viewNLshow()
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
 
-
 void MainWindow::viewVZshow()
 {
     // correct issues due to editing
@@ -1852,8 +1886,9 @@ void MainWindow::viewVZshow()
     this->viewVZ.OpenGLWidget->clear();
 
     // configure TreeView
-    if (!(viewVZ.sysModel == NULL))
+    if (!(viewVZ.sysModel == NULL)) {
         delete viewVZ.sysModel;
+    }
     viewVZ.sysModel = new systemmodel(&data);
     viewVZ.treeView->setModel(viewVZ.sysModel);
     // connect for function
@@ -1941,9 +1976,9 @@ void MainWindow::viewCLshow()
 
 
     // set the current component's undoStack to active
-    if (this->viewCL.root != NULL)
-        if (this->viewCL.root->alPtr != NULL)
-            this->viewCL.root->alPtr->undoStack.setActive(true);
+    if (this->viewCL.root != NULL && this->viewCL.root->alPtr != NULL) {
+        this->viewCL.root->alPtr->undoStack.setActive(true);
+    }
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
@@ -1956,7 +1991,6 @@ void MainWindow::setCaption(QString caption)
 void MainWindow::launchSimulatorEditor()
 {
     editSimulators * dialog  = new editSimulators(this);
-
     dialog->show();
 }
 
@@ -1981,8 +2015,7 @@ void MainWindow::initialiseModel(NineMLComponent * component)
 
     viewCL.display->setScene(viewCL.root->scene);
     viewCL.display->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::HighQualityAntialiasing);
-    if (viewCL.propertiesContents->layout())
-    {
+    if (viewCL.propertiesContents->layout()) {
         delete viewCL.propertiesContents->layout();
     }
     viewCL.propertiesContents->setLayout(viewCL.root->properties);
@@ -2001,21 +2034,19 @@ void MainWindow::initialiseModel(NineMLComponent * component)
 
 void MainWindow::actionAddParamater_triggered()
 {
-    if (viewCL.root != NULL)
-    {
+    if (viewCL.root != NULL) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         Parameter *p = new Parameter();
         p->name = "New_Parameter_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->ParameterList.size(); i++)
-        {
+        for (uint i=0; i< viewCL.root->al->ParameterList.size(); i++) {
             QString name = viewCL.root->al->ParameterList[i]->getName();
-            if (name.startsWith("New_Parameter_"))
-            {
+            if (name.startsWith("New_Parameter_")) {
                 QString temp = name.remove(0,14);
                 int t = temp.toInt();
-                if (t >= n)
+                if (t >= n) {
                     n = t+1;
+                }
             }
         }
         char num[4];
@@ -2031,8 +2062,7 @@ void MainWindow::actionAddParamater_triggered()
 
 void MainWindow::actionAddRegime_triggered()
 {
-    if (viewCL.root != NULL)
-    {
+    if (viewCL.root != NULL) {
         // store previous iteration for undo / redo
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         Regime *r = new Regime();
@@ -2066,27 +2096,31 @@ void MainWindow::actionAddRegime_triggered()
 
 void MainWindow::actionAddOnCondition_triggered()
 {
-    if(viewCL.root)
+    if(viewCL.root) {
         viewCL.root->setSelectionMode(ModeInsertOnCondition);
+    }
 }
 
 void MainWindow::actionAddOnEvent_triggered()
 {
-    if (viewCL.root)
+    if (viewCL.root) {
         viewCL.root->setSelectionMode(ModeInsertOnEvent);
+    }
 }
 
 void MainWindow::actionAddOnImpulse_triggered()
 {
-    if (viewCL.root)
+    if (viewCL.root) {
         viewCL.root->setSelectionMode(ModeInsertOnImpulse);
+    }
 }
 
 
 void MainWindow::actionSelectMode_triggered()
 {
-    if (viewCL.root)
+    if (viewCL.root) {
         viewCL.root->setSelectionMode(ModeSelect);
+    }
 }
 
 void MainWindow::actionDeleteItems_triggered()
@@ -2096,8 +2130,9 @@ void MainWindow::actionDeleteItems_triggered()
         viewCL.root->scene->deleteSelectedItem();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Delete selected"));
     }
-    if (ui->view1->isVisible())
+    if (ui->view1->isVisible()) {
         data.deleteCurrentSelection();
+    }
     if (viewGV.subWin->isVisible()) {
         viewGV.properties->deleteCurrentLog();
     }
@@ -2130,8 +2165,7 @@ void MainWindow::actionAddTimeDerivative_triggered()
 
 void MainWindow::actionAddAnalogePort_triggered()
 {
-    if (viewCL.root!= NULL)
-    {
+    if (viewCL.root!= NULL) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         AnalogPort *ap = new AnalogPort();
@@ -2207,17 +2241,14 @@ void MainWindow::actionAddStateVariable_triggered()
 
 void MainWindow::actionAddAlias_triggered()
 {
-    if (viewCL.root != NULL)
-    {
+    if (viewCL.root != NULL) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         Alias * a = new Alias();
         a->name = "New_Alias_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->AliasList.size(); i++)
-        {
+        for (uint i=0; i< viewCL.root->al->AliasList.size(); i++) {
             QString name = viewCL.root->al->AliasList[i]->name;
-            if (name.startsWith("New_Alias_"))
-            {
+            if (name.startsWith("New_Alias_")) {
                 QString temp = name.remove(0,10);
                 int t = temp.toInt();
                 if (t >= n)
@@ -2237,30 +2268,23 @@ void MainWindow::actionAddAlias_triggered()
 
 void MainWindow::actionAddStateAssignment_triggered()
 {
-    if (viewCL.root!= NULL)
-    {
+    if (viewCL.root!= NULL) {
         QList <QGraphicsItem*> selected = viewCL.root->scene->selectedItems();
-        if (selected.size() > 0)
-        {
+        if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             StateAssignment *sa = new StateAssignment();
             NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
 
-            if (g->type() == OnConditionGraphicsItem::Type)
-            {
+            if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
                 oci->on_condition->StateAssignList.push_back(sa);
                 oci->addStateAssignment(sa);
 
-            }
-            else if (g->type() == OnEventGraphicsItem::Type)
-            {
+            } else if (g->type() == OnEventGraphicsItem::Type) {
                 OnEventGraphicsItem *oei = ((OnEventGraphicsItem*)g);
                 oei->on_event->StateAssignList.push_back(sa);
                 oei->addStateAssignment(sa);
-            }
-            else if (g->type() == OnImpulseGraphicsItem::Type)
-            {
+            } else if (g->type() == OnImpulseGraphicsItem::Type) {
                 OnImpulseGraphicsItem *oii = ((OnImpulseGraphicsItem*)g);
                 oii->on_impulse->StateAssignList.push_back(sa);
                 oii->addStateAssignment(sa);
@@ -2268,9 +2292,7 @@ void MainWindow::actionAddStateAssignment_triggered()
             viewCL.root->gvlayout->updateLayout();
             viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Add State Assignment"));
             updateTitle(true);
-        }
-        else
-        {
+        } else {
             qDebug() << "Transition item should be selected during add state assignment!";
         }
     }
@@ -2278,30 +2300,22 @@ void MainWindow::actionAddStateAssignment_triggered()
 
 void MainWindow::actionAddEventOut_triggered()
 {
-    if (viewCL.root!= NULL)
-    {
+    if (viewCL.root!= NULL) {
         QList <QGraphicsItem*> selected = viewCL.root->scene->selectedItems();
-        if (selected.size() > 0)
-        {
+        if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             EventOut *eo = new EventOut();
             NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
 
-            if (g->type() == OnConditionGraphicsItem::Type)
-            {
+            if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
                 oci->on_condition->eventOutList.push_back(eo);
                 oci->addEventOut(eo);
-
-            }
-            else if (g->type() == OnEventGraphicsItem::Type)
-            {
+            } else if (g->type() == OnEventGraphicsItem::Type) {
                 OnEventGraphicsItem *oei = ((OnEventGraphicsItem*)g);
                 oei->on_event->eventOutList.push_back(eo);
                 oei->addEventOut(eo);
-            }
-            else if (g->type() == OnImpulseGraphicsItem::Type)
-            {
+            } else if (g->type() == OnImpulseGraphicsItem::Type) {
                 OnImpulseGraphicsItem *oii = ((OnImpulseGraphicsItem*)g);
                 oii->on_impulse->eventOutList.push_back(eo);
                 oii->addEventOut(eo);
@@ -2309,9 +2323,7 @@ void MainWindow::actionAddEventOut_triggered()
             viewCL.root->gvlayout->updateLayout();
             viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Add EventOut"));
             updateTitle(true);
-        }
-        else
-        {
+        } else {
             qDebug() << "Transition item should be selected during add event out!";
         }
     }
@@ -2319,30 +2331,22 @@ void MainWindow::actionAddEventOut_triggered()
 
 void MainWindow::actionAddImpulseOut_triggered()
 {
-    if (viewCL.root!= NULL)
-    {
+    if (viewCL.root!= NULL) {
         QList <QGraphicsItem*> selected = viewCL.root->scene->selectedItems();
-        if (selected.size() > 0)
-        {
+        if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             ImpulseOut *io = new ImpulseOut();
             NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
 
-            if (g->type() == OnConditionGraphicsItem::Type)
-            {
+            if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
                 oci->on_condition->impulseOutList.push_back(io);
                 oci->addImpulseOut(io);
-
-            }
-            else if (g->type() == OnEventGraphicsItem::Type)
-            {
+            } else if (g->type() == OnEventGraphicsItem::Type) {
                 OnEventGraphicsItem *oei = ((OnEventGraphicsItem*)g);
                 oei->on_event->impulseOutList.push_back(io);
                 oei->addImpulseOut(io);
-            }
-            else if (g->type() == OnImpulseGraphicsItem::Type)
-            {
+            } else if (g->type() == OnImpulseGraphicsItem::Type) {
                 OnImpulseGraphicsItem *oii = ((OnImpulseGraphicsItem*)g);
                 oii->on_impulse->impulseOutList.push_back(io);
                 oii->addImpulseOut(io);
@@ -2350,9 +2354,7 @@ void MainWindow::actionAddImpulseOut_triggered()
             viewCL.root->gvlayout->updateLayout();
             viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Add Impulse Out"));
             updateTitle(true);
-        }
-        else
-        {
+        } else {
             qDebug() << "Transition item should be selected during add Impulse out!";
         }
     }
@@ -2370,17 +2372,14 @@ void MainWindow::actionZoomOut_triggered()
 
 void MainWindow::actionAs_Image_triggered()
 {
-    if (viewCL.root != NULL)
-    {
+    if (viewCL.root != NULL) {
         QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
 
-        if (!fileName.isEmpty())
-        {
+        if (!fileName.isEmpty()) {
             QRectF view = viewCL.root->scene->itemsBoundingRect();
             ExportImageDialog image_dialog(view.width(), view.height(), this);
             int result = image_dialog.exec();
-            if (result)
-            {
+            if (result) {
                 QImage image = QImage(image_dialog.getWidth(), image_dialog.getHeight(), QImage::Format_ARGB32_Premultiplied);
                 QPainter p(&image);
                 if (image_dialog.getAliasing())
@@ -2391,25 +2390,21 @@ void MainWindow::actionAs_Image_triggered()
                 image.save(fileName, "png");
             }
         }
-    }else
-    {
+    } else {
         QMessageBox::critical( 0, "Export As Image Error:", QString("No File Open!"));
     }
 }
 
 void MainWindow::actionAs_Dotty_Graph_triggered()
 {
-    if (viewCL.root != NULL)
-    {
+    if (viewCL.root != NULL) {
         QString fileName = QFileDialog::getSaveFileName(this, tr("Export Dot Graph"), "", tr("Dot (*.dot)"));
 
-        if (!fileName.isEmpty())
-        {
+        if (!fileName.isEmpty()) {
             DotWriter dot(viewCL.root);
             dot.writeDotFile(fileName);
         }
-    }else
-    {
+    } else {
         QMessageBox::critical( 0, "Export As Dot Graph Error:", QString("No File Open!"));
     }
 }
@@ -2445,7 +2440,7 @@ void MainWindow::actionNew_triggered()
 
 void MainWindow::actionShowHideParams_triggered(bool checked)
 {
-    if (viewCL.root){
+    if (viewCL.root) {
         viewCL.root->scene->setParamsVisibility(!checked);
     }
 }
@@ -2453,14 +2448,14 @@ void MainWindow::actionShowHideParams_triggered(bool checked)
 
 void MainWindow::actionShowHidePorts_triggered(bool checked)
 {
-    if (viewCL.root){
+    if (viewCL.root) {
         viewCL.root->scene->setPortsVisibility(!checked);
     }
 }
 
 void MainWindow::actionMove_Up_triggered()
 {
-    if (viewCL.root){
+    if (viewCL.root) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         viewCL.root->scene->moveItemUp();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
@@ -2470,7 +2465,7 @@ void MainWindow::actionMove_Up_triggered()
 
 void MainWindow::actionMove_Down_triggered()
 {
-    if (viewCL.root){
+    if (viewCL.root) {
         NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
         viewCL.root->scene->moveItemDown();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
@@ -2518,10 +2513,11 @@ void MainWindow::about()
 void MainWindow::configureVCSMenu()
 {
     // show or hide menus
-    if (data.currProject->version.haveVersion())
+    if (data.currProject->version.haveVersion()) {
         ui->menuVersion_control->setEnabled(true);
-    else
+    } else {
         ui->menuVersion_control->setEnabled(false);
+    }
     // enable or disable menu items
     if (data.currProject->version.isModelUnderVersion()) {
         QList < QAction * > actions = ui->menuVersion_control->actions();
@@ -2546,11 +2542,13 @@ void MainWindow::updateTitle(bool unsaved)
         if(viewCL.root) {
             if (viewCL.root->alPtr != NULL) {
                 title = title.prepend(" - ");
-                if (viewCL.root->alPtr->path == "temp")
+                if (viewCL.root->alPtr->path == "temp") {
                     title = title.prepend(" (" + viewCL.root->alPtr->filePath + ")");
+                }
                 title = title.prepend(viewCL.root->alPtr->name);
-                if (!viewCL.root->alPtr->undoStack.isClean())
+                if (!viewCL.root->alPtr->undoStack.isClean()) {
                     title = title.append("*");
+                }
             }
         }
         //if (unsaved_changes)
@@ -2574,8 +2572,9 @@ void MainWindow::updateTitle()
         QSettings settings;
         title = title.prepend(" - ");
         title = title.prepend(settings.value("model/model_name", "err").toString());
-        if (!data.currProject->undoStack->isClean())
+        if (!data.currProject->undoStack->isClean()) {
             title = title.append("*");
+        }
         this->setWindowTitle(title);
     }
     if (viewEL.view->isVisible()) {
@@ -2588,8 +2587,9 @@ void MainWindow::updateTitle()
             if (viewCL.root->alPtr != NULL) {
                 title = title.prepend(" - ");
                 title = title.prepend(viewCL.root->alPtr->name);
-                if (!viewCL.root->alPtr->undoStack.isClean())
+                if (!viewCL.root->alPtr->undoStack.isClean()) {
                     title = title.append("*");
+                }
             }
         }
         this->setWindowTitle(title);
@@ -2603,8 +2603,7 @@ void MainWindow::updateNetworkButtons(rootData * data)
         ui->butB->setDisabled(true);
         ui->butSS->setDisabled(false);
         ui->butC->setDisabled(true);
-    }
-    else if (data->selList.size() == 1) {
+    } else if (data->selList.size() == 1) {
         if (data->selList[0]->type == populationObject) {
             ui->butA->setDisabled(true);
             ui->butB->setDisabled(false);
@@ -2616,8 +2615,7 @@ void MainWindow::updateNetworkButtons(rootData * data)
             ui->butSS->setDisabled(true);
             ui->butC->setDisabled(false);
         }
-    }
-    else if (data->selList.size() > 1) {
+    } else if (data->selList.size() > 1) {
         ui->butA->setDisabled(true);
         ui->butB->setDisabled(true);
         ui->butSS->setDisabled(true);
