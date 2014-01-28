@@ -213,3 +213,23 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+################
+# QTCreator
+################
+
+# User config file
+neuralNetworks.pro.user.*
+
+################
+# SpineCreator
+################
+Makefile
+*.o
+spineCreator
+# QT Meta Object Code (auto generated)
+moc_*.cpp
+# QT UI code (auto generated)
+ui_*.h
+# QT Resource object code (auto generated)
+qrc_*.cpp
