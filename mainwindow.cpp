@@ -43,14 +43,13 @@
 #include <QStandardPaths>
 #endif
 
-//#include "stringify.h"
-
 #include "qdebug.h"
 #include "aboutdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    maxRecentFiles(12) // Number of files which show in the recent projects menu
 {
     data.main = this;
     this->setWindowTitle("SpineCreator - Graphical SNN creation");
@@ -214,13 +213,16 @@ MainWindow::MainWindow(QWidget *parent) :
     timer->start(16);
 
     // force nice startup
-    // menus
+    // Construct the menus
     ui->menuBar->clear();
     ui->menuBar->addMenu(ui->menuFile);
     ui->menuBar->addMenu(ui->menuEdit);
     ui->menuBar->addMenu(ui->menuProject);
     ui->menuBar->addMenu(ui->menuModel); // actually version control
     ui->menuBar->addMenu(ui->menuHelp);
+
+    // Recent projects
+    this->setupRecentProjectsMenu(&settings);
 
     // default
     ui->action_Close_project->setEnabled(false);
@@ -256,6 +258,88 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
 }
 
+void
+MainWindow::updateRecentProjects(const QString& filePath)
+{
+    // Last job having successfully loaded the project is to update
+    // the "recent projects" menu.
+    QList <QString> recents; // holding just the filePath
+    // First we load existing recent files list.
+    QSettings settings;
+    int size = settings.beginReadArray("mainwindow/recentprojects");
+    int i = 0;
+    for (i = 0; i < size; ++i) {
+        settings.setArrayIndex(i);
+        qDebug() << "Have read a filePath " << settings.value("filePath").toString()
+                 << " from QSettings";
+        recents.push_back(settings.value("filePath").toString());
+    }
+    settings.endArray();
+
+    // Save the last-used directory so the dialog box can conveniently
+    // open with that location:
+    QDir lastDirectory (filePath);
+    lastDirectory.cdUp();
+    settings.setValue ("mainwindow/lastDirectory", lastDirectory.absolutePath());
+
+    // Now we modify the recents list to remove any existing entry for filePath
+    QList<QString>::iterator iter = recents.begin();
+    while (iter != recents.end()) {
+        if (*iter == filePath) {
+            recents.erase (iter);
+            break;
+        }
+        ++iter;
+    }
+    // and then finally stick filePath in at the front of the list.
+    recents.push_front(filePath);
+
+    // Now write it back to QSettings.
+    settings.beginWriteArray("mainwindow/recentprojects");
+    // Hmm, QHash seems to be disordered, and not by "when inserted".
+    QList<QString>::const_iterator citer = recents.constBegin();
+    i = 0;
+    while (i < MainWindow::maxRecentFiles && citer != recents.constEnd()) {
+        settings.setArrayIndex(i);
+        qDebug() << "Writing index " << i << " with filePath " << *citer;
+        settings.setValue("filePath", *citer);
+        ++citer; ++i;
+    }
+    settings.endArray();
+
+    // Lastly update the recent projects menu:
+    this->setupRecentProjectsMenu (&settings);
+}
+
+void MainWindow::setupRecentProjectsMenu(QSettings* settings)
+{
+    QMenu* recents = ui->menuFile->findChild<QMenu*>("menuRecent_projects");
+    if (recents != NULL) {
+        // Clear the contents set up in the UI editor.
+        recents->clear();
+
+        // For each member of the recent files list:
+        int size = settings->beginReadArray("mainwindow/recentprojects");
+        for (int i = 0; i < size; ++i) {
+            settings->setArrayIndex(i);
+            QAction* actionTest;
+            actionTest = new QAction(settings->value("filePath").toString(), this);
+            recents->addAction(actionTest);
+            // connect this action to the slot someslot():
+            connect(actionTest, SIGNAL(triggered()), this, SLOT(import_recent_project()));
+        }
+        settings->endArray();
+
+        // Finally add separator and the Clear list action
+        recents->addSeparator();
+        QAction* actionClear;
+        actionClear = new QAction("&Clear list", this);
+        //actionClear->setShortcut(Qt::Key_C); // shortcuts not used within this app
+        recents->addAction(actionClear);
+        connect(actionClear, SIGNAL(triggered()), this, SLOT(clear_recent_projects()));
+    }
+}
+
 #ifdef Q_OS_MAC
 void MainWindow::osxHack()
 {
@@ -267,7 +351,6 @@ void MainWindow::osxHack()
 
 bool MainWindow::isChanged()
 {
-    //
     for (uint i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i]->isChanged(&data))
             return true;
@@ -1120,19 +1203,54 @@ void MainWindow::new_project()
         ui->action_Close_project->setEnabled(false);
 }
 
+void MainWindow::clear_recent_projects()
+{
+    QSettings settings;
+    settings.beginGroup("mainwindow/recentprojects");
+    settings.remove("");
+    settings.endGroup();
+
+    this->setupRecentProjectsMenu (&settings);
+}
+
+void MainWindow::import_recent_project()
+{
+    // Get filename from the sender action:
+    QAction* sndr = (QAction*)QObject::sender();
+    // And import:
+    this->import_project (sndr->text());
+}
+
+QString MainWindow::getLastDirectory()
+{
+    QSettings settings;
+    QString lastDirectory = settings.value ("mainwindow/lastDirectory").toString();
+    if (lastDirectory.length() == 0) { lastDirectory = qgetenv("HOME"); }
+    return lastDirectory;
+}
 
 void MainWindow::import_project()
 {
     // check for unsaved changes?: if (isChanged()) { promptToSave(); }
+    QString lastDirectory = this->getLastDirectory();
+    QString filePath = QFileDialog::getOpenFileName(this,
+                                                    tr("Choose the Project to load"),
+                                                    lastDirectory,
+                                                    tr("Project files (*.proj);; All files (*)"));
+    this->import_project (filePath);
+}
 
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Choose the Project to load"), qgetenv("HOME"), tr("Project files (*.proj);; All files (*)"));
-
-    if (fileName.isEmpty())
+void MainWindow::import_project(const QString& filePath)
+{
+    if (filePath.isEmpty()) {
         return;
+    }
+
+    qDebug() << "filePath for loading: " << filePath;
 
     projectObject * newProject = new projectObject();
 
-    if (newProject->open_project(fileName)) {
+    if (newProject->open_project(filePath)) {
 
         // success!
         data.projects.push_back(newProject);
@@ -1145,15 +1263,11 @@ void MainWindow::import_project()
         // add to undostacks
         undoStacks->addStack(newProject->undoStack);
 
-
     } else {
-
         // failure - delete
         delete newProject;
-
         // go straight to jail, do not pass GO, do not collect £200
         return;
-
     }
 
     // clear viewVZ
@@ -1170,43 +1284,48 @@ void MainWindow::import_project()
 
     setProjectMenu();
 
-    if (data.projects.size() > 1)
+    if (data.projects.size() > 1) {
         ui->action_Close_project->setEnabled(true);
-    else
+    } else {
         ui->action_Close_project->setEnabled(false);
+    }
+
+    // Update the recent projects menu
+    this->updateRecentProjects(filePath);
+}
+
+void MainWindow::export_project(const QString& filePath)
+{
+    if (filePath.isEmpty()) {
+        return;
+    }
+    this->data.currProject->save_project(filePath, &data);
+    // enable / disable menus
+    this->configureVCSMenu();
+    // Update the recent projects menu
+    this->updateRecentProjects(filePath);
 }
 
 void MainWindow::export_project()
 {
     QString path = data.currProject->filePath;
     QString fileName = path;
-    if (path.size() == 0)
-        fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", qgetenv("HOME"), tr("Project files (*.proj);; All files (*)"));
-
-    if (fileName.isEmpty())
-        return;
-
-    data.currProject->save_project(fileName, &data);
-
-    // enable / disable menus
-    configureVCSMenu();
+    if (path.size() == 0) {
+        path = this->getLastDirectory(); // defaults to HOME.
+        fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
+    }
+    this->export_project (fileName);
 }
 
 void MainWindow::export_project_as()
 {
     QString path = data.currProject->filePath;
     QString fileName = path;
-    if (path.size() == 0)
-        path = qgetenv("HOME");
+    if (path.size() == 0) {
+        path = this->getLastDirectory(); // defaults to HOME.
+    }
     fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
-
-    if (fileName.isEmpty())
-        return;
-
-    data.currProject->save_project(fileName, &data);
-
-    // enable / disable menus
-    configureVCSMenu();
+    this->export_project (fileName);
 }
 
 void MainWindow::close_project()

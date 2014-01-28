@@ -40,16 +40,7 @@
     </size>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>0</number>
     </property>
     <property name="spacing">
@@ -101,16 +92,7 @@
        <number>0</number>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>0</number>
        </property>
        <property name="spacing">
@@ -414,8 +396,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>435</width>
-            <height>573</height>
+            <width>433</width>
+            <height>576</height>
            </rect>
           </property>
          </widget>
@@ -763,15 +745,23 @@
      <x>0</x>
      <y>0</y>
      <width>1060</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <widget class="QMenu" name="menuRecent_projects">
+     <property name="title">
+      <string>Recent projects</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionClear_list"/>
+    </widget>
     <addaction name="actionNew_model"/>
     <addaction name="actionImport_model"/>
+    <addaction name="menuRecent_projects"/>
     <addaction name="actionExport_model"/>
     <addaction name="actionSave_project_as"/>
     <addaction name="separator"/>
@@ -1055,6 +1045,11 @@
   <action name="action_Close_project">
    <property name="text">
     <string>&amp;Close project</string>
+   </property>
+  </action>
+  <action name="actionClear_list">
+   <property name="text">
+    <string>Clear list</string>
    </property>
   </action>
  </widget>

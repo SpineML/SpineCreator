@@ -145,6 +145,8 @@ private:
 
 public slots:
     void import_project();
+    void import_recent_project();
+    void clear_recent_projects();
     void export_project();
     void export_project_as();
     void close_project();
@@ -233,12 +235,43 @@ signals:
     void updatePanel(rootData *);
     void saveImage();
 
-
-
 protected:
     void closeEvent(QCloseEvent *event);
 
+    /*!
+     * Update the recent projects list, storing it with QSettings,
+     * then re-generate the menu with setupRecentProjectsMenu.
+     *
+     * This also saves the mainwindow/lastDirectory QSetting, which is
+     * used as the starting point for load/save project dialogs.
+     */
+    void updateRecentProjects(const QString& filePath);
 
+    /*!
+     * Generate the recent projects menu.
+     */
+    void setupRecentProjectsMenu(QSettings* settings);
+
+    /*!
+     * The maximum number of recent files to show in the recent files menu.
+     */
+    const int maxRecentFiles;
+
+    /*!
+     * The guts of the import_project slot. TODO Make this an overload of import_project.
+     */
+    void import_project(const QString& filePath);
+
+    /*!
+     * Export the project at filePath. Shared code between
+     * export_project and export_project_as slots.
+     */
+    void export_project(const QString& filePath);
+
+    /*!
+     * Get the last save/load directory.
+     */
+    QString getLastDirectory();
 };
 
 #endif // MAINWINDOW_H
