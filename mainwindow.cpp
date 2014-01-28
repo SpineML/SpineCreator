@@ -259,26 +259,23 @@ MainWindow::MainWindow(QWidget *parent) :
 void
 MainWindow::updateRecentProjects(const QString& filePath)
 {
-    // Last job having successfully loaded the project is to update
-    // the "recent projects" menu.
-    QList <QString> recents; // holding just the filePath
-    // First we load existing recent files list.
-    QSettings settings;
-    int size = settings.beginReadArray("mainwindow/recentprojects");
-    int i = 0;
-    for (i = 0; i < size; ++i) {
-        settings.setArrayIndex(i);
-        qDebug() << "Have read a filePath " << settings.value("filePath").toString()
-                 << " from QSettings";
-        recents.push_back(settings.value("filePath").toString());
-    }
-    settings.endArray();
-
     // Save the last-used directory so the dialog box can conveniently
     // open with that location:
     QDir lastDirectory (filePath);
     lastDirectory.cdUp();
+    QSettings settings;
     settings.setValue (MAINWINDOW_LASTPROJECTDIR, lastDirectory.absolutePath());
+
+    // To hold a list of the recent filePaths used.
+    QList <QString> recents;
+    // First we load existing recent files list:
+    int size = settings.beginReadArray("mainwindow/recentprojects");
+    int i = 0;
+    for (i = 0; i < size; ++i) {
+        settings.setArrayIndex(i);
+        recents.push_back(settings.value("filePath").toString());
+    }
+    settings.endArray();
 
     // Now we modify the recents list to remove any existing entry for filePath
     QList<QString>::iterator iter = recents.begin();
@@ -299,7 +296,6 @@ MainWindow::updateRecentProjects(const QString& filePath)
     i = 0;
     while (i < MainWindow::maxRecentFiles && citer != recents.constEnd()) {
         settings.setArrayIndex(i);
-        qDebug() << "Writing index " << i << " with filePath " << *citer;
         settings.setValue("filePath", *citer);
         ++citer; ++i;
     }
@@ -1244,8 +1240,6 @@ void MainWindow::import_project(const QString& filePath)
         return;
     }
 
-    qDebug() << "filePath for loading: " << filePath;
-
     projectObject * newProject = new projectObject();
 
     if (newProject->open_project(filePath)) {
@@ -1367,8 +1361,9 @@ void MainWindow::import_network()
     QString lastDir = this->getLastDirectory (MAINWINDOW_LASTNETWORKDIR);
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose the network file"), lastDir, tr("XML files (*.xml);; All files (*)"));
 
-    if (fileName.isEmpty())
+    if (fileName.isEmpty()) {
         return;
+    }
 
     projectObject * newProject = data.currProject;
 
@@ -1379,36 +1374,31 @@ void MainWindow::import_network()
     QString name = newProject->name;
 
     if (newProject->import_network(fileName)) {
-
         // success!
         // put new data back
         newProject->copy_out_data(&data);
-
         // put back old name
         newProject->name = name;
-
         // check for version control
         data.currProject->version.setupVersion();
+        // clear viewVZ
+        viewVZ.OpenGLWidget->clear();
+        // redraw
+        this->ui->viewport->changed = 1;
+        configureVCSMenu();
+        updateNetworkButtons(&data);
+        setProjectMenu();
 
     } else {
-
-        // failure - delete
-        //delete newProject;
-
-        // go straight to jail, do not pass GO, do not collect £200
-        return;
+        // failure - delete newProject was commented out here.
     }
 
-    // clear viewVZ
-    viewVZ.OpenGLWidget->clear();
-
-    // redraw
-    this->ui->viewport->changed = 1;
-    configureVCSMenu();
-
-    updateNetworkButtons(&data);
-
-    setProjectMenu();
+    // Regardless of success or failure, save the directory in which
+    // the user chose the file.
+    QDir lastDirectory (fileName);
+    lastDirectory.cdUp();
+    QSettings settings;
+    settings.setValue (MAINWINDOW_LASTNETWORKDIR, lastDirectory.absolutePath());
 }
 
 void MainWindow::export_network()
@@ -1548,6 +1538,12 @@ void MainWindow::export_component()
         return;
     }
 
+    // Save lastDir, regardless of whether the file is successfully imported
+    QDir lastDirectory (fileName);
+    lastDirectory.cdUp();
+    QSettings settings;
+    settings.setValue (MAINWINDOW_LASTCOMPONENTDIR, lastDirectory.absolutePath());
+
     if (!fileName.contains(".")) {
         fileName.append(".xml");
     }
@@ -1572,12 +1568,6 @@ void MainWindow::export_component()
     doc = NULL;
 
     updateTitle(false);
-
-    // Save lastDir
-    QDir lastDirectory (fileName);
-    lastDirectory.cdUp();
-    QSettings settings;
-    settings.setValue (MAINWINDOW_LASTCOMPONENTDIR, lastDirectory.absolutePath());
 }
 
 void MainWindow::import_layout()
@@ -1652,6 +1642,12 @@ void MainWindow::export_layout()
         return;
     }
 
+    // Save lastDir
+    QDir lastDirectory (fileName);
+    lastDirectory.cdUp();
+    QSettings settings;
+    settings.setValue (MAINWINDOW_LASTLAYOUTDIR, lastDirectory.absolutePath());
+
     if (!fileName.contains(".")) {
         fileName.append(".xml");
     }
@@ -1674,12 +1670,6 @@ void MainWindow::export_layout()
     stream << doc->toString();
     delete doc;
     doc = NULL;
-
-    // Save lastDir
-    QDir lastDirectory (fileName);
-    lastDirectory.cdUp();
-    QSettings settings;
-    settings.setValue (MAINWINDOW_LASTLAYOUTDIR, lastDirectory.absolutePath());
 }
 
 void MainWindow::runInBRAHMS()
