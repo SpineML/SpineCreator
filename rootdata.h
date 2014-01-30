@@ -218,8 +218,14 @@ private:
      * used for "undo move item position" - you need to know where the
      * item used to be so that you can restore it back to that
      * position. These are the "xGL,yGL" coordinates.
+     *
+     * Note that this is the last position of the *mouse* and to get
+     * the last position of the object, you'll have to work out the
+     * mouse offset (which you can get by calculating the mouse offset
+     * at the end of the object movement).
      */
-    pair<float, float> lastSelectionPosition;
+    //pair<float, float> lastSelectionPosition;
+    QPointF lastSelectionPosition;
 };
 
 #endif // ROOTDATA_H

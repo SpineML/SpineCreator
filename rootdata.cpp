@@ -2027,6 +2027,7 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
 
 void rootData::itemWasMoved(float xGL, float yGL, float GLscale)
 {
+    qDebug() << "xGL,yGL: " << xGL << "," << yGL;
     if (!selList.empty()) {
         // We have a pointer to the moved item. Check its type to see what to do with it.
         if (selList[0]->type == populationObject) {
@@ -2046,11 +2047,16 @@ void rootData::populationMoved()
         return;
     }
 
-    // oldPos needs to be the one that was stored at the START of the
-    // move. That's stored in this->lastSelectionPosition by
-    // rootData::selectCoord.
-    pair<float, float> newPos = make_pair(pop->x, pop->y);
-    currProject->undoStack->push(new movePopulation(this, pop, this->lastSelectionPosition, newPos));
+    // New position of the population, which it already has a record of.
+    QPointF newPos(pop->targx, pop->targy);
+
+    // The last position of the population is the
+    // lastSelectionPosition (which is the *mouse* position) offset by
+    // the current offset in the population (as the population moves,
+    // the mouse remains in the same location on the object).
+    QPointF lastPopulationPosition = lastSelectionPosition + pop->getLocationOffset();
+
+    currProject->undoStack->push(new movePopulation(this, pop, lastPopulationPosition, newPos));
 }
 
 void rootData::selectCoord(float xGL, float yGL, float GLscale)
@@ -2062,8 +2068,8 @@ void rootData::selectCoord(float xGL, float yGL, float GLscale)
     if (!addSelection) {
 
         // Record the position of the selection.
-        this->lastSelectionPosition.first = xGL;
-        this->lastSelectionPosition.second = yGL;
+        this->lastSelectionPosition.setX(xGL);
+        this->lastSelectionPosition.setY(yGL);
 
         // prioritise the handles of a selected projection:
         if (this->selList.size() == 1) {
@@ -2096,7 +2102,7 @@ void rootData::selectCoord(float xGL, float yGL, float GLscale)
                     emit updatePanel(this);
                     for (uint i = 0; i < selList.size(); ++i) {
                         // register locations relative to cursor:
-                        selList[i]->setRelativeLocation(xGL, yGL);
+                        selList[i]->setLocationOffsetRelTo(xGL, yGL);
                     }
 
                     // selection complete, move on
@@ -2123,7 +2129,7 @@ void rootData::selectCoord(float xGL, float yGL, float GLscale)
                     emit updatePanel(this);
                     for (uint i = 0; i < selList.size(); ++i) {
                         // register locations relative to cursor:
-                        selList[i]->setRelativeLocation(xGL, yGL);
+                        selList[i]->setLocationOffsetRelTo(xGL, yGL);
                     }
 
                     // selection complete, move on
@@ -2153,7 +2159,7 @@ void rootData::selectCoord(float xGL, float yGL, float GLscale)
                             emit updatePanel(this);
                             for (uint i = 0; i < selList.size(); ++i) {
                                 // register locations relative to cursor:
-                                selList[i]->setRelativeLocation(xGL, yGL);
+                                selList[i]->setLocationOffsetRelTo(xGL, yGL);
                             }
 
                             // selection complete, move on
@@ -2179,7 +2185,7 @@ void rootData::selectCoord(float xGL, float yGL, float GLscale)
                             emit updatePanel(this);
                             for (uint i = 0; i < selList.size(); ++i) {
                                 // register locations relative to cursor:
-                                selList[i]->setRelativeLocation(xGL, yGL);
+                                selList[i]->setLocationOffsetRelTo(xGL, yGL);
                             }
 
                             // selection complete, move on
@@ -2206,7 +2212,7 @@ void rootData::selectCoord(float xGL, float yGL, float GLscale)
                 emit updatePanel(this);
                 for (uint i = 0; i < selList.size(); ++i) {
                     // register locations relative to cursor:
-                    selList[i]->setRelativeLocation(xGL, yGL);
+                    selList[i]->setLocationOffsetRelTo(xGL, yGL);
                 }
 
                 // selection complete, move on
@@ -2227,7 +2233,7 @@ void rootData::selectCoord(float xGL, float yGL, float GLscale)
 
         for (uint i = 0; i < selList.size(); ++i) {
             // register locations relative to cursor:
-            selList[i]->setRelativeLocation(xGL, yGL);
+            selList[i]->setLocationOffsetRelTo(xGL, yGL);
         }
         selectionMoved = false;
     }
@@ -2535,7 +2541,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
 
             // snap to grid:
             if (source->gridSelect)
-                selList[0]->relativeLocation = QPointF(0,0);
+                selList[0]->setLocationOffset (QPointF(0,0));
 
             if (!collision)
             {

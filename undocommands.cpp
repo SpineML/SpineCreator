@@ -260,7 +260,7 @@ void delPopulation::redo()
 }
 
 // ######## MOVE POPULATION #################
-movePopulation::movePopulation(rootData * data, population* pop, std::pair<float, float> oldPos, std::pair<float, float> newPos, QUndoCommand *parent) :
+movePopulation::movePopulation(rootData * data, population* pop, const QPointF& oldPos, const QPointF& newPos, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->pop = pop;
@@ -272,7 +272,7 @@ movePopulation::movePopulation(rootData * data, population* pop, std::pair<float
 
 void movePopulation::undo()
 {
-    pop->move (this->oldPos.first, this->oldPos.second);
+    pop->move (this->oldPos.x(), this->oldPos.y());
     data->redrawViews();
     // undo children by calling parent class function:
     QUndoCommand::undo();
@@ -280,7 +280,11 @@ void movePopulation::undo()
 
 void movePopulation::redo()
 {
-    pop->move (this->newPos.first, this->newPos.second);
+    // This zeroes the relative location, as newPos has been extracted
+    // from the population's targx, targy, which are absolution and
+    // not mouse positions.
+    pop->setLocationOffset(0, 0);
+    pop->move (this->newPos.x(), this->newPos.y());
     data->redrawViews();
     QUndoCommand::redo();
 }

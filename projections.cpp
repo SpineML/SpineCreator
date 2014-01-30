@@ -276,18 +276,18 @@ void projection::move(float x, float y) {
     if (curves.size() > 1) {
 
         // move mid points:
-        this->curves[0].C2 = (this->curves[0].C2 - this->start) + QPointF(x,y) + relativeLocation;
-        this->curves[0].end = (this->curves[0].end - this->start) + QPointF(x,y) + relativeLocation;
+        this->curves[0].C2 = (this->curves[0].C2 - this->start) + QPointF(x,y) + locationOffset;
+        this->curves[0].end = (this->curves[0].end - this->start) + QPointF(x,y) + locationOffset;
 
         for (uint i = 1; i < this->curves.size() -1; ++i) {
 
-            this->curves[i].C1 = (this->curves[i].C1 - this->start) + QPointF(x,y) + relativeLocation;
-            this->curves[i].C2 = (this->curves[i].C2 - this->start) + QPointF(x,y) + relativeLocation;
-            this->curves[i].end = (this->curves[i].end - this->start) + QPointF(x,y) + relativeLocation;
+            this->curves[i].C1 = (this->curves[i].C1 - this->start) + QPointF(x,y) + locationOffset;
+            this->curves[i].C2 = (this->curves[i].C2 - this->start) + QPointF(x,y) + locationOffset;
+            this->curves[i].end = (this->curves[i].end - this->start) + QPointF(x,y) + locationOffset;
 
         }
 
-    this->curves.back().C1 = (this->curves.back().C1 - this->start) + QPointF(x,y) + relativeLocation;
+    this->curves.back().C1 = (this->curves.back().C1 - this->start) + QPointF(x,y) + locationOffset;
     }
 
 

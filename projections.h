@@ -115,10 +115,10 @@ public:
     void insertControlPoint(float xGL, float yGL, float GLscale);
     QPointF currentLocation();
 
-    virtual void setRelativeLocation(float x, float y)
+    virtual void setLocationOffsetRelTo(float x, float y)
 
     {
-        relativeLocation =  this->start - QPointF(x,y);
+        locationOffset =  this->start - QPointF(x,y);
     }
 
     trans tempTrans;

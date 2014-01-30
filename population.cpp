@@ -847,17 +847,15 @@ bool population::connectsTo(population * pop) {
 
 }
 
-QPointF population::currentLocation() {
-
+QPointF population::currentLocation()
+{
     return QPointF(this->targx, this->targy);
-
 }
 
-void population::move(float x, float y) {
-
-    this->targx = x + this->relativeLocation.x();
-    this->targy = y + this->relativeLocation.y();
-
+void population::move(float x, float y)
+{
+    this->targx = x + this->locationOffset.x();
+    this->targy = y + this->locationOffset.y();
 }
 
 void population::write_population_xml(QXmlStreamWriter &xmlOut) {

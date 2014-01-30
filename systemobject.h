@@ -49,15 +49,41 @@ public:
     virtual void remove(rootData *) {delete this;}
     virtual void delAll(rootData *) {delete this;}
 
-    virtual void setRelativeLocation(float x, float y)
-
+    /*!
+     * Set location offset for the object relative to the points x and
+     * y (which is probably the mouse x,y), using the currentLocation
+     * as a starting point.
+     */
+    virtual void setLocationOffsetRelTo(float x, float y)
     {
-
-        relativeLocation =  currentLocation() - QPointF(x,y);
-
+        this->locationOffset =  currentLocation() - QPointF(x,y);
     }
 
-    virtual QPointF currentLocation() {
+    /*!
+     * Plain setter for the location offset.
+     */
+    virtual void setLocationOffset(float x, float y)
+    {
+        this->locationOffset = QPointF(x,y);
+    }
+
+    /*!
+     * Plain setter for the location offset.
+     */
+    virtual void setLocationOffset(QPointF offset)
+    {
+        this->locationOffset = offset;
+    }
+    /*!
+     * Plain getter for the location offset.
+     */
+    virtual QPointF getLocationOffset()
+    {
+        return this->locationOffset;
+    }
+
+    virtual QPointF currentLocation()
+    {
         return QPointF(0,0);
     }
 
@@ -68,8 +94,12 @@ public:
     systemObject();
     virtual ~systemObject() {}
 
-    QPointF relativeLocation;
-
+    /*!
+     * The offset between (probably) the mouse which is
+     * holding/dragging the object and the "real" currentLocation of
+     * the object.
+     */
+    QPointF locationOffset;
 };
 
 #endif // SYSTEMOBJECT_H

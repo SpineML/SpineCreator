@@ -81,7 +81,7 @@ class movePopulation : public QUndoCommand
 {
 public:
     movePopulation(rootData * data, population * pop,
-                   std::pair<float,float>oldPos, std::pair<float,float>newPos,
+                   const QPointF& oldPos, const QPointF& newPos,
                    QUndoCommand *parent = 0);
     ~movePopulation() {}
     void undo();
@@ -104,12 +104,12 @@ private:
     /*!
      * The old position of the population, before the move.
      */
-    pair<float, float> oldPos;
+    QPointF oldPos;
 
     /*!
      * The new position of the population, after the move.
      */
-    pair<float, float> newPos;
+    QPointF newPos;
 };
 
 class addProjection : public QUndoCommand
