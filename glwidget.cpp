@@ -23,8 +23,6 @@
 ****************************************************************************/
 
 #include "glwidget.h"
-//#include "GL/glu.h"
-//#include "stringify.h"
 
 #ifdef Q_OS_MAC
 GLWidget::GLWidget(QWidget *parent)
@@ -43,9 +41,7 @@ GLWidget::GLWidget(QWidget *parent):QWidget(parent)
   #endif
 #endif
 {
-
     // variable for making sure we don't redraw the openGL when we don't need to
-
     changed = 100;
 
     currSelType = 0;
@@ -59,7 +55,6 @@ GLWidget::GLWidget(QWidget *parent):QWidget(parent)
     gridSelect = false;
     gridScale = 0.5;
     this->button = Qt::NoButton;
-    //this->setMouseTracking(true);
 
     // accept both tab and click focus
     this->setFocusPolicy(Qt::StrongFocus);
@@ -85,19 +80,16 @@ void GLWidget::animate()
 
     GLscale += (targGLscale - GLscale)*animSpeed;
 
-     // only redraw the openGL when we need to
-     if (changed) {
-         --changed;
-         repaint();
-         //updateGL();
-     }
+    // only redraw the openGL when we need to
+    if (changed) {
+        --changed;
+        repaint();
+    }
 }
 
 void GLWidget::mousePressEvent(QMouseEvent* event)
 {
     this->button = event->button();
-
-    //this->setMouseTracking(true);
 
     // convert the incoming x and y into the openGL coordinates
     float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewX;
@@ -125,11 +117,9 @@ void GLWidget::mousePressEvent(QMouseEvent* event)
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-
     changed = 100;
     this->button = Qt::NoButton;
     setCursor(Qt::ArrowCursor);
-    //this->setMouseTracking(false);
     // convert the incoming x and y into the openGL coordinates
     float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewX;
     float yGL = -(float((event->y()*RETINA_SUPPORT)-(this->height()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewY);
@@ -157,13 +147,12 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
         }
     }
     event->setAccepted(true);
-
 }
 
-void GLWidget::wheelEvent(QWheelEvent* event) {
+void GLWidget::wheelEvent(QWheelEvent* event)
+{
     changed = 100;
     float val = float(event->delta()) / 320.0;
-
 
     val = pow(2.0f,val);
     if (event->orientation() == Qt::Vertical) {
@@ -188,12 +177,7 @@ void GLWidget::wheelEvent(QWheelEvent* event) {
 
 void GLWidget::mouseMoveEvent(QMouseEvent* event)
 {
-
     changed = 100;
-
-    // get focus regardless
-    //this->setFocus(Qt::MouseFocusReason);
-
 
     // convert mouse event into openGL coordinates
     float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewX;
@@ -214,68 +198,51 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event)
         emit drawSynapse(xGL, yGL);
     }
     repaint();
-    //updateGL();
     event->setAccepted(true);
 }
 
-void GLWidget::keyPressEvent(QKeyEvent * event) {
-
+void GLWidget::keyPressEvent(QKeyEvent * event)
+{
     changed = 100;
 
     if (event->type() == QEvent::KeyPress) {
-
         if (event->key() == Qt::Key_Control) {
-
             this->gridSelect = true;
-
         }
-    }
-    /*
+        /*
         if (event->key() == Qt::Key_Shift) {
-
             this->addSelection = true;
-
         }
-
-    }*/
+        */
+    }
     event->setAccepted(true);
-
 }
 
-void GLWidget::keyReleaseEvent(QKeyEvent * event) {
-
+void GLWidget::keyReleaseEvent(QKeyEvent * event)
+{
     changed = 100;
 
     if (event->type() == QEvent::KeyRelease) {
-
         if (event->key() == Qt::Key_Control) {
-
             this->gridSelect = false;
-
         }
+        /*
+        if (event->key() == Qt::Key_Shift) {
+            this->addSelection = false;
+        }
+        */
     }
     event->setAccepted(true);
-/*
-        if (event->key() == Qt::Key_Shift) {
-
-            this->addSelection = false;
-
-        }
-
-    }*/
-
 }
 
 void GLWidget::initializeGL()
 {
     //QColor qtCol = QColor::fromCmykF(0.5, 0.5, 0.5, 0.0);
     //qglClearColor(qtCol.light());
-
 }
 
 void GLWidget::resizeGL(int, int)
 {
-
 }
 
 void GLWidget::paintEvent(QPaintEvent * event)
@@ -296,7 +263,6 @@ void GLWidget::paintEvent(QPaintEvent * event)
     QPainter painter(this);
 #endif
 
-
     //painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.setRenderHint(QPainter::Antialiasing,true);
     painter.setRenderHint( QPainter::TextAntialiasing,true);
@@ -304,8 +270,7 @@ void GLWidget::paintEvent(QPaintEvent * event)
 
     QRect fillRectangle(event->rect().x()*RETINA_SUPPORT, event->rect().y()*RETINA_SUPPORT, event->rect().width()*RETINA_SUPPORT, event->rect().height()*RETINA_SUPPORT);
     painter.fillRect(fillRectangle, Qt::white);
-
-   // painter.beginNativePainting();
+    // painter.beginNativePainting();
 
     // setup the painter
 #ifdef Q_OS_MAC
@@ -318,8 +283,6 @@ void GLWidget::paintEvent(QPaintEvent * event)
     font.setStyleHint(QFont::TypeWriter);
     painter.setPen(QColor(0,0,0,255));
     painter.setFont(font);
-
-
 
     // if grid then draw it up:
 #ifndef Q_OS_MAC
@@ -358,8 +321,6 @@ void GLWidget::paintEvent(QPaintEvent * event)
     }
 #endif
 
-
-
     // send the painter, and the transforms needed to paint to the right place
     emit reDraw(&painter, GLscale, viewX, viewY, (this->width()*RETINA_SUPPORT), (this->height()*RETINA_SUPPORT), standardDrawStyle);
 
@@ -367,12 +328,10 @@ void GLWidget::paintEvent(QPaintEvent * event)
     painter.end();
 
 #ifdef Q_OS_MAC
-
     QImage gldata = QGLWidget::convertToGLFormat(workaround_for_slow_osx_drawing);
     glDrawPixels((this->width()*RETINA_SUPPORT), (this->height()*RETINA_SUPPORT), GL_RGBA, GL_UNSIGNED_BYTE, gldata.bits());
 
     glSwapAPPLE();
-
 #endif
 }
 
@@ -383,32 +342,34 @@ void GLWidget::move(GLfloat x, GLfloat y)
     //emit reDraw();
 }
 
-void GLWidget::zoomOut() {
+void GLWidget::zoomOut()
+{
     this->targGLscale *= 2.0;
 }
 
-void GLWidget::zoomIn() {
+void GLWidget::zoomIn()
+{
     this->targGLscale /= 2.0;
 }
 
-void GLWidget::startConnect() {
+void GLWidget::startConnect()
+{
     this->connectMode = true;
     this->setMouseTracking(true);
 }
 
-void GLWidget::finishConnect() {
+void GLWidget::finishConnect()
+{
     this->connectMode = false;
     this->setMouseTracking(false);
 
     changed = 100;
 }
 
-void GLWidget::saveImage(){
-
+void GLWidget::saveImage()
+{
     //this->makeCurrent();
-
     //QPixmap pic = this->renderPixmap((this->width()*RETINA_SUPPORT)*4,(this->height()*RETINA_SUPPORT)*4, false);
-
     //QImage image = pic.toImage();
     //image.save("/home/mp/test_image.png","png");
 }

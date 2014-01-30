@@ -67,7 +67,6 @@ signals:
     void dragSelect(float xGL, float yGL);
     void endDragSelect();
 
-
 public slots:
     void animate();
     void zoomOut();
@@ -79,7 +78,6 @@ public slots:
 
 protected:
     void initializeGL();
-    //void paintGL();
     void paintEvent(QPaintEvent * event);
     void resizeGL(int, int);
     void mousePressEvent(QMouseEvent *event);
