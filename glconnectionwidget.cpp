@@ -342,7 +342,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
         // draw the connections:
         glDisable(GL_LIGHTING);
-        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);
 
         //qDebug() << "Doing conns!";
 
@@ -435,6 +435,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
 
             // draw selected connections on top
+            glDisable(GL_DEPTH_TEST);
             if (selectedConns[targNum] == selectedObject) {
                 for (uint i = 0; i < connections[targNum].size(); ++i) {
 
@@ -501,6 +502,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     }
                 }
             }
+            glEnable(GL_DEPTH_TEST);
             connGenerationMutex->unlock();
 
         }

@@ -3356,6 +3356,7 @@ void TVGraph::paintEvent(QPaintEvent *) {
 
             // find extent of the time and value
             for (uint i = 1; i < vals.size(); i += 2) {
+                if (vals[i-1] == -1) continue;
                 if (vals[i] > maxVal) maxVal = vals[i];
             }
             for (uint i = 0; i < vals.size(); i += 2) {

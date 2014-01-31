@@ -3092,7 +3092,7 @@ void NineMLComponentData::matchPorts() {
 
         }
 
-        if (inputs[i]->srcPort.isEmpty() || inputs[i]->dstPort.isEmpty()) {
+        else {
 
             // now we have all the matches select the first one:
             if (portPairs.size() > 0) {

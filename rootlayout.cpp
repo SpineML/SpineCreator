@@ -1380,7 +1380,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                         currInput->dstPort.clear();
                     }
 
-                    connect(portMatches, SIGNAL(currentIndexChanged(QString)), data, SLOT(updatePortMap(QString)));
+                    connect(portMatches, SIGNAL(activated(QString)), data, SLOT(updatePortMap(QString)));
 
                     inputLay->addWidget(portMatches);
 

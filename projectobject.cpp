@@ -48,9 +48,14 @@ projectObject::~projectObject() {
         delete experimentList[i];
     }
 
-    // now destroy the system
     for (uint i = 0; i < network.size(); ++i) {
-        network[i]->delAll(this);
+        for (uint j = 0; j < network[i]->projections.size(); ++j) {
+            for (uint k = 0; k < network[i]->projections[j]->synapses.size(); ++k) {
+                delete network[i]->projections[j]->synapses[k];
+            }
+            delete network[i]->projections[j];
+        }
+        delete network[i];
     }
 
     // delete catalog components

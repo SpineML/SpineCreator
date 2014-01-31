@@ -2572,6 +2572,8 @@ void rootData::updatePortMap(QString var) {
     genericInput * ptr = (genericInput *) sender()->property("ptr").value<void *>();
     //QString type = sender()->property("type").toString();
 
+    qDebug() << var;
+
     QStringList ports = var.split("->");
     // for safety
     if (ports.size()>1) {
