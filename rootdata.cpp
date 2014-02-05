@@ -26,10 +26,8 @@
 #include "connectionlistdialog.h"
 #include "experiment.h"
 #include "undocommands.h"
-//#include "QtSvg/QtSvg"
 #include "savenetworkimage_dialog.h"
 #include "mainwindow.h"
-//#include "stringify.h"
 #include "projectobject.h"
 #include "systemmodel.h"
 #include "nineml_rootcomponentitem.h"
@@ -74,8 +72,6 @@ rootData::rootData(QObject *parent) :
     this->catalogPS[0]->type = "postsynapse";
     this->catalogLayout.push_back((new NineMLLayout()));
     this->catalogLayout[0]->name = "none";
-    //this->catalogConn.push_back((new connection()));
-    //this->catalogConn[0]->name = "none";
     this->selectionMoved = false;
 
     this->selChange = false;
@@ -86,15 +82,11 @@ rootData::rootData(QObject *parent) :
     setCaption(settings.value("model/model_name", "err").toString());
 
     clipboardCData = NULL;
-
     projectActions = NULL;
-
-    //connect(undoStack, SIGNAL(indexChanged(int)), this, SLOT(undoOrRedoPerformed(int)));
-
 }
 
-void rootData::redrawViews() {
-
+void rootData::redrawViews()
+{
     // redraw the network
     reDrawAll();
     redrawGLview();
@@ -119,8 +111,9 @@ void rootData::redrawViews() {
     main->viewVZhandler->clearAll();
     main->viewVZ.OpenGLWidget->clear();
     // configure TreeView
-    if (!(main->viewVZ.sysModel == NULL))
+    if (!(main->viewVZ.sysModel == NULL)) {
         delete main->viewVZ.sysModel;
+    }
     main->viewVZ.sysModel = new systemmodel(this);
     main->viewVZ.treeView->setModel(main->viewVZ.sysModel);
     // connect for function
@@ -129,29 +122,20 @@ void rootData::redrawViews() {
     connect(main->viewVZ.sysModel, SIGNAL(dataChanged(QModelIndex,QModelIndex)), main->viewVZ.OpenGLWidget, SLOT(sysSelectionChanged(QModelIndex,QModelIndex)));
     main->viewVZhandler->redrawHeaders(0);
     main->viewVZ.OpenGLWidget->sysSelectionChanged(QModelIndex(), QModelIndex());
-
 }
 
-void rootData::selectProject(QAction * action) {
-
+void rootData::selectProject(QAction * action)
+{
     currProject->deselect_project(this);
-
     projects[action->property("number").toInt()]->select_project(this);
-
     redrawViews();
-
-    // clear loaded component
-    /*if (main->viewCL.root != NULL){
-        delete main->viewCL.root;
-        main->viewCL.root = NULL;
-    }*/
 }
 
-void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * newComp) {
+void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * newComp)
+{
+    for (uint p = 0; p < populations.size(); ++p) {
 
-    for (uint p = 0; p < system.size(); ++p) {
-
-        population * pop = system[p];
+        population * pop = populations[p];
 
         // replace references
         if (pop->neuronType->component == oldComp) {
@@ -214,9 +198,7 @@ void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * new
                         }
                     }
                 }
-
             }
-
         }
 
         // also fix experiments with bad pointers to PORTS and PARS & COMPONENTS
@@ -231,17 +213,17 @@ void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * new
     this->currProject->undoStack->clear();
 }
 
-
 // centralised function for finding if a component is in the model
-bool rootData::isComponentInUse(NineMLComponent * oldComp) {
+bool rootData::isComponentInUse(NineMLComponent * oldComp)
+{
+    for (uint p = 0; p < populations.size(); ++p) {
 
-    for (uint p = 0; p < system.size(); ++p) {
-
-        population * pop = system[p];
+        population * pop = populations[p];
 
         // replace references
-        if (pop->neuronType->component == oldComp)
+        if (pop->neuronType->component == oldComp) {
             return true;
+        }
 
         for (uint pr = 0; pr < pop->projections.size(); ++pr) {
 
@@ -252,20 +234,17 @@ bool rootData::isComponentInUse(NineMLComponent * oldComp) {
                 synapse * syn = proj->synapses[sy];
 
                 // replace references
-                if (syn->weightUpdateType->component == oldComp)
+                if (syn->weightUpdateType->component == oldComp) {
                     return true;
+                }
 
                 // replace references
-                if (syn->postsynapseType->component == oldComp)
+                if (syn->postsynapseType->component == oldComp) {
                     return true;
-
+                }
             }
-
         }
-
         // also fix experiments with bad pointers:
-
-
     }
 
     // component not found
@@ -273,21 +252,26 @@ bool rootData::isComponentInUse(NineMLComponent * oldComp) {
 }
 
 // centralised function for finding if a component is in the model
-bool rootData::removeComponent(NineMLComponent * oldComp) {
-
-    if (isComponentInUse(oldComp))
+bool rootData::removeComponent(NineMLComponent * oldComp)
+{
+    if (isComponentInUse(oldComp)) {
         return false;
+    }
 
-    if (oldComp == NULL)
+    if (oldComp == NULL) {
         return true;
+    }
 
     vector < NineMLComponent * > * curr_lib;
-    if (oldComp->type == "neuron_body")
+    if (oldComp->type == "neuron_body") {
         curr_lib = &this->catalogNrn;
-    if (oldComp->type == "weight_update")
+    }
+    if (oldComp->type == "weight_update") {
         curr_lib = &this->catalogWU;
-    if (oldComp->type == "postsynapse")
+    }
+    if (oldComp->type == "postsynapse") {
         curr_lib = &this->catalogPS;
+    }
 
     for (uint i = 0; i < curr_lib->size(); ++i) {
         if ((*curr_lib)[i] == oldComp) {
@@ -301,37 +285,37 @@ bool rootData::removeComponent(NineMLComponent * oldComp) {
     return false;
 }
 
-void rootData::updateStatusBar(QString in_string, int time) {
+void rootData::updateStatusBar(QString in_string, int time)
+{
     emit statusBarUpdate(in_string, time);
 }
 
-void rootData::reDrawPanel() {
+void rootData::reDrawPanel()
+{
     emit updatePanel(this);
 }
 
-void rootData::callRedrawGLview() {
+void rootData::callRedrawGLview()
+{
     emit redrawGLview();
 }
 
-void rootData::saveImage(QString fileName) {
-
+void rootData::saveImage(QString fileName)
+{
     if (!fileName.isEmpty()) {
-
         saveNetworkImageDialog svImDiag(this, fileName);
         svImDiag.exec();
     }
-
-    return;
 }
 
-void rootData::reDrawAll() {
+void rootData::reDrawAll()
+{
     // update panel - we don't always want to do this as it loses focus from widgets
     emit updatePanel(this);
 }
 
 void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
 {
-
     if (style == standardDrawStyle) {
         for (uint i = 0; i < selList.size(); ++i) {
             if (selList[i]->type == populationObject) {
@@ -360,29 +344,22 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                         painter->drawRect(rectangle);
                     }
                 }
-
             }
         }
     }
 
     // populations
-    for (unsigned int i = 0; i < this->system.size(); ++i) {
-
-        this->system[i]->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, style);
-
+    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+        this->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, style);
     }
-    for (unsigned int i = 0; i < this->system.size(); ++i) {
-
-        this->system[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
-
+    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+        this->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
     }
-    for (unsigned int i = 0; i < this->system.size(); ++i) {
-
+    for (unsigned int i = 0; i < this->populations.size(); ++i) {
         QPen pen(QColor(100,0,0,100));
         pen.setWidthF(float(1));
         painter->setPen(pen);
-        this->system[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
-
+        this->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
     }
 
     // selected object
@@ -399,10 +376,10 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                     painter->setPen(pen);
                     col->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
                     // only draw handles if we aren't using multiple selection
-                    if (selList.size() == 1)
+                    if (selList.size() == 1) {
                         col->drawHandles(painter, GLscale, viewX, viewY, width, height);
+                    }
                 }
-
             }
 
             if (selList[i]->type == inputObject) {
@@ -415,13 +392,11 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                     painter->setPen(pen);
                     input->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
                     // only draw handles if we aren't using multiple selection
-                    if (selList.size() == 1)
+                    if (selList.size() == 1) {
                         input->drawHandles(painter, GLscale, viewX, viewY, width, height);
+                    }
                 }
-
             }
-
-
         }
     }
 
@@ -437,10 +412,8 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
     painter->drawLine(QLineF(x-14.0f, y, x+14.0f, y));
 
     // update positions
-    for (unsigned int i = 0; i < this->system.size(); ++i) {
-
-        this->system[i]->animate();
-
+    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+        this->populations[i]->animate();
     }
 
     // draw dragselect if present
@@ -467,10 +440,10 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
         painter->drawRect(dragSelectionScreen);
         painter->restore();
     }
-
 }
 
-void destroyDom(QDomNode &node) {
+void destroyDom(QDomNode &node)
+{
     QDomNodeList childList = node.childNodes();
     QDomNode child;
     for (int i = 0; i < childList.count(); ++i) {
@@ -494,1244 +467,24 @@ void rootData::import_csv(QString fileName)
     updatePanel(this);
 }
 
-/*
-bool rootData::import_project_xml(QString fileName)
+void rootData::onRightMouseDown(float xGL, float yGL, float GLscale)
 {
-    // open file and load SpineML
-    if (fileName.size() == 0) {
-        // user cancelled - do nothing
-        return false;
-    }
-
-    // clear the selList
-    this->selList.clear();
-
-    // and the experiments
-    for (unsigned int i = 0; i < this->experiments.size(); ++i) {
-        delete this->experiments[i];
-    }
-    this->experiments.clear();
-
-    // remove old model components
-    this->loadedComponents.clear();
-
-
-    // get dir path in QT form
-
-    QDir lib_dir(fileName);
-
-    //////////////// LOAD SYSTEM
-
-    QFile file( lib_dir.absoluteFilePath("model.xml") );
-    if( !file.open( QIODevice::ReadOnly ) ) {
-        QMessageBox msgBox;
-        msgBox.setText("Could not open the model file - is it named model.xml?");
-        msgBox.exec();
-        //delete doc;
-        return false;}
-    if( !doc.setContent( &file ) )
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Could not load model file XML - is the selected file correctly formed XML?");
-        msgBox.exec();
-        file.close();
-        //delete doc;
-        return false;
-    }
-
-    // store the file name
-    QSettings settings;
-    settings.setValue("files/currentFileName", fileName);
-
-    // we have loaded the XML file - discard the file handle
-    file.close();
-
-    // confirm root tag is correct
-    QDomElement root = doc.documentElement();
-    if( root.tagName() != "LL:SpineML" ) {
-        QMessageBox msgBox;
-        msgBox.setText("File is not valid SpineML Low Level Network Layer description");
-        msgBox.exec();
-        //delete doc;
-        return false;
-    }
-
-    // get the model name
-    settings.setValue("model/model_name", root.toElement().attribute("name", "Unnamed model"));
-
-    bool no_meta_data = false;
-    QDomDocument *meta = new QDomDocument;
-    QString metaFileName = lib_dir.absoluteFilePath("metaData.xml");
-    QFile fileMeta( metaFileName );
-    if( !fileMeta.open( QIODevice::ReadOnly ) ) {
-        no_meta_data = true;
-        }
-    if( !meta->setContent( &fileMeta ) && !no_meta_data)
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Could not load metaData XML - is the selected file correctly formed XML?");
-        msgBox.exec();
-        fileMeta.close();
-        delete meta;
-        return false;
-    }
-    // we have loaded the XML file - discard the file handle
-    fileMeta.close();
-
-    // confirm root tag is correct
-    root = meta->documentElement();
-    if( root.tagName() != "modelMetaData"  && !no_meta_data) {
-        QMessageBox msgBox;
-        msgBox.setText("File is not valid model metadata description");
-        msgBox.exec();
-        delete meta;
-        return false;
-    }
-
-    //////////////// LOAD POPULATIONS
-    QDomNode n = doc.documentElement().firstChild();
-    while( !n.isNull() )
-    {
-
-        QDomElement e = n.toElement();
-        if( e.tagName() == "LL:Population" )
-        {
-            // add population from population xml:
-            this->system.push_back(new population(e, &doc, meta, this));
-
-            // check for errors:
-            QSettings settings;
-            int num_errs = settings.beginReadArray("errors");
-            settings.endArray();
-
-            if (num_errs != 0) {
-
-                QString errors = "";
-
-                // list errors
-                settings.beginReadArray("errors");
-                for (int j = 1; j < num_errs; ++j) {
-                    settings.setArrayIndex(j);
-                    errors = errors + settings.value("errorText", "").toString();
-                    errors = errors + "<br/>";
-                }
-                settings.endArray();
-
-                // clear errors
-                settings.remove("errors");
-                settings.remove("warnings");
-
-                // display errors
-                QMessageBox msgBox;
-                msgBox.setText("<P><b>Errors found loading model</b></P>" + errors);
-                msgBox.setIcon(QMessageBox::Critical);
-                msgBox.setTextFormat(Qt::RichText);
-                msgBox.exec();
-
-                // no dice - give up!
-                return false;
-
-            }
-
-            this->system.back()->tag = this->getIndex();
-
-        }
-        n = n.nextSibling();
-    }
-
-    //////////////// LOAD PROJECTIONS
-    n = doc.documentElement().firstChild();
-    int counter = 0;
-    while( !n.isNull() )
-    {
-
-        QDomElement e = n.toElement();
-        if( e.tagName() == "LL:Population" )
-        {
-            // with all the populations added, add the projections and join them up:
-            this->system[counter]->load_projections_from_xml(e, &doc, meta, this);
-
-            // check for errors:
-            QSettings settings;
-            int num_errs = settings.beginReadArray("errors");
-            settings.endArray();
-
-            if (num_errs != 0) {
-
-                QString errors = "";
-
-                // list errors
-                settings.beginReadArray("errors");
-                for (int j = 1; j < num_errs; ++j) {
-                    settings.setArrayIndex(j);
-                    errors = errors + settings.value("errorText", "").toString();
-                    errors = errors + "<br/>";
-                }
-                settings.endArray();
-
-                // clear errors
-                settings.remove("errors");
-
-                // display errors
-                QMessageBox msgBox;
-                msgBox.setText("<P><b>Errors found loading model</b></P>" + errors);
-                msgBox.setIcon(QMessageBox::Critical);
-                msgBox.setTextFormat(Qt::RichText);
-                msgBox.exec();
-
-                // no dice - give up!
-                return false;
-
-            }
-
-            counter++;
-
-        }
-        n = n.nextSibling();
-    }
-
-    ///////////////// LOAD INPUTS
-    counter = 0;
-    n = doc.documentElement().firstChild();
-    while( !n.isNull() )
-    {
-
-        QDomElement e = n.toElement();
-        if( e.tagName() == "LL:Population" )
-        {
-            // add inputs
-            this->system[counter]->read_inputs_from_xml(e, meta, this);
-
-            int projCount = 0;
-            QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
-            for (uint i = 0; i < (uint) n2.size(); ++i)
-            {
-                QDomElement e = n2.item(i).toElement();
-                this->system[counter]->projections[projCount]->read_inputs_from_xml(e, meta, this);
-                ++projCount;
-            }
-            ++counter;
-        }
-        n = n.nextSibling();
-
-    }
-
-    delete meta;
-
-    //////////////// LOAD EXPERIMENTS:
-
-    QDir lib_dir_expt(fileName);
-
-    QStringList filters;
-    filters << "experiment*.xml";
-
-    lib_dir_expt.setNameFilters(filters);
-
-    QStringList files;
-
-    files = lib_dir_expt.entryList();
-
-    for (unsigned int i = 0; i < (uint) files.count(); ++i) {
-
-        QFile file( lib_dir_expt.filePath(files[i]) );
-        if( !file.open( QIODevice::ReadOnly ) ) {
-            continue;}
-
-        QXmlStreamReader * reader = new QXmlStreamReader;
-
-        reader->setDevice( &file );
-
-        // load experiment:
-
-        experiment * newExperiment = new experiment;
-        newExperiment->readXML(reader, this);
-
-        // check for errors:
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-
-        if (num_errs == 0)
-            this->experiments.push_back(newExperiment);
-        else {
-            // list errors
-            QString errors;
-            settings.beginReadArray("errors");
-            for (int j = 1; j < num_errs; ++j) {
-                settings.setArrayIndex(j);
-                errors = errors + settings.value("errorText", "").toString();
-                errors = errors + "<br/>";
-            }
-            settings.endArray();
-            // clear errors
-            settings.remove("errors");
-
-            // display errors
-            QMessageBox msgBox;
-            msgBox.setText("<P><b>Errors found loading experiment file '" + files[i] + "</b></P><br/>" + errors);
-            msgBox.exec();
-        }
-
-        // we have loaded the XML file - discard the file handle
-        file.close();
-
-        // kill off the XML reader
-        delete reader;
-
-    }
-
-    if (no_meta_data) {
-
-        // add some meta data to make the system work
-
-        // place populations
-        for (uint i = 0; i < this->system.size(); ++i) {
-            population * p = this->system[i];
-            p->x = i*2.0; p->targx = i*2.0;
-            p->y = i*2.0; p->targy = i*2.0;
-            p->size = 1.0;
-            p->aspect_ratio = 5.0/3.0;
-            p->setupBounds();
-        }
-
-        // make projection curves
-        for (uint i = 0; i < this->system.size(); ++i) {
-            population * p = this->system[i];
-            for (uint j = 0; j < p->projections.size(); ++j) {
-                projection * pr = p->projections[j];
-                pr->add_curves();
-            }
-        }
-
-    }
-
-    updatePanel(this);
-
-    // print out:
-
-    return true;
-}
-
-void rootData::import_component_xml(QStringList fileNames)
-{
-
-    QString errors;
-
-    // open file and load SpineML
-    if (fileNames.size() == 0) {
-        // user cancelled - do nothing
-        return;
-    }
-
-    for (unsigned int fileNum = 0; fileNum < (uint) fileNames.size(); ++fileNum) {
-
-        NineMLRootObject * newComponent = import_component_xml_single(fileNames[fileNum]);
-        // add loaded components to 'temp' path, (?) unless they exist already in the library (?)
-
-        if (newComponent != NULL) {
-            if (newComponent->path == "lib") {
-                // do nothing
-            }
-            else
-                newComponent->path = "temp";
-
-            // store path so we can save it later
-            newComponent->filePath = fileNames[fileNum];
-        }
-
-        // check for errors:
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-
-        if (num_errs != 0) {
-
-            errors = errors + "<b>In file " + fileNames[fileNum] + ":</b><br/>";
-
-            // list errors
-            settings.beginReadArray("errors");
-            for (int j = 1; j < num_errs; ++j) {
-                settings.setArrayIndex(j);
-                errors = errors + settings.value("errorText", "").toString();
-                errors = errors + "<br/>";
-            }
-            settings.endArray();
-
-            // clear errors
-            settings.remove("errors");
-
-        }
-
-    }
-
-    if (!errors.isEmpty()) {
-        // display errors
-        QMessageBox msgBox;
-        msgBox.setText("<P><b>Error loading some components</b></P>" + errors);
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setTextFormat(Qt::RichText);
-        msgBox.exec();
-    }
-}
-
-NineMLRootObject * rootData::import_component_xml_single(QString fileName)
-{
-
-    NineMLRootObject * returnPtr = NULL;
-
-    QDomDocument *doc = new QDomDocument( "SpineML" );
-
-    QFile file( fileName );
-    if( !file.open( QIODevice::ReadOnly ) ) {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error opening file");
-        settings.endArray();
-        return NULL;}
-    if( !doc->setContent( &file ) )
-    {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "Could not load XML - is the selected file correctly formed XML?");
-        settings.endArray();
-        file.close();
-        return NULL;
-    }
-    // we have loaded the XML file - discard the file handle
-    file.close();
-    // confirm root tag is correct
-    QDomElement root = doc->documentElement();
-    if( root.tagName() != "SpineML" ) {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "File is not valid SpineML");
-        settings.endArray();
-        return NULL;
-    }
-
-    // if a componentclass
-    QDomElement classType = root.firstChildElement();
-    if (classType.tagName() == "ComponentClass") {
-
-        // HANDLE SPINEML COMPONENTS ////////////////
-
-        // create a new AL class instance and populate it from the data
-        NineMLComponent *tempALobject = new NineMLComponent();
-
-        tempALobject->load(doc);
-
-        // check for errors:
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-
-        if (num_errs != 0) {
-            return NULL;
-        }
-
-        versionNumber testVersion;
-        testVersion.fromFileString(fileName);
-
-        // get lib to add component to
-        vector < NineMLComponent * > * curr_lib;
-        if (tempALobject->type == "neuron_body")
-            curr_lib = &catalogNrn;
-        else if (tempALobject->type == "weight_update")
-            curr_lib = &catalogWU;
-        else if (tempALobject->type == "postsynapse")
-            curr_lib = &catalogPS;
-        else
-            curr_lib = &catalogUnsorted;
-
-
-        // get md5 checksum for component
-        tempDoc.clear();
-        tempALobject->write(&tempDoc);
-        QByteArray outputNew = tempDoc.toByteArray();
-        QString md5StringNew = QString(QCryptographicHash::hash((outputNew),QCryptographicHash::Md5).toHex());
-
-        // get a unique name if not an existing component
-        bool name_updated = true;
-        while (name_updated) {
-            name_updated = false;
-            for (uint i = 0; i < curr_lib->size(); ++i) {
-                // get md5 checksum for component
-                tempDoc.clear();
-                (*curr_lib)[i]->write(&tempDoc);
-                QByteArray outputOld = tempDoc.toByteArray();
-                QString md5StringOld = QString(QCryptographicHash::hash((outputOld),QCryptographicHash::Md5).toHex());
-                if ((*curr_lib)[i]->name == tempALobject->name && (*curr_lib)[i]->path == tempALobject->path && md5StringNew != md5StringOld) {
-                    // same name but different component
-                    QString text = "";
-                    bool ok = false;
-                    while (text == "" && !ok) {
-                        text = QInputDialog::getText((QWidget *)this->parent(), tr("Name conflict"),
-                                                         tr("New component name:"), QLineEdit::Normal,
-                                                         tempALobject->name, &ok);
-                    }
-                    name_updated = true;
-                    tempALobject->name = text.replace('_', ' ');
-                }
-                if (md5StringNew == md5StringOld) {
-                    // existing component - return that component
-                    delete doc;
-                    return (NineMLRootObject *) (*curr_lib)[i];
-                }
-            }
-        }
-
-        // add to the correct catalog
-        if (tempALobject->type == "neuron_body") {
-            this->catalogNrn.push_back(tempALobject);
-            this->catalogNrn.back()->version.fromFileString(fileName);
-        }
-        else if (tempALobject->type == "weight_update") {
-            this->catalogWU.push_back(tempALobject);
-            this->catalogWU.back()->version.fromFileString(fileName);
-        }
-        else if (tempALobject->type == "postsynapse") {
-            this->catalogPS.push_back(tempALobject);
-            this->catalogPS.back()->version.fromFileString(fileName);
-        }
-        else {//if (tempALobject->type == "unsorted") {
-            this->catalogUnsorted.push_back(tempALobject);
-            this->catalogUnsorted.back()->version.fromFileString(fileName);
-        }
-
-        returnPtr = tempALobject;
-
-    } else if (classType.tagName() == "LayoutClass") {
-
-        // HANDLE LAYOUTS ////////////////////
-
-        // create a new AL class instance and populate it from the data
-        NineMLLayout *tempALobject = new NineMLLayout();
-
-        tempALobject->load(doc);
-
-        // check for errors:
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-
-        if (num_errs != 0) {
-            return NULL;
-        }
-
-        for (unsigned int i = 0; i < this->catalogLayout.size(); ++i) {
-            if (this->catalogLayout[i]->name.compare(tempALobject->name) == 0) {
-                delete doc;
-                delete tempALobject;
-                return (NineMLRootObject *) this->catalogLayout[i];
-            }
-        }
-
-        returnPtr = tempALobject;
-
-    } else {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "File is unknown SpineML type");
-        settings.endArray();
-    }
-
-    // kill off the DOM document
-    delete doc;
-
-    return returnPtr;
-}
-
-void rootData::import_layout_xml(QStringList fileNames)
-{
-
-    for (unsigned int fileNum = 0; fileNum < (uint) fileNames.size(); ++fileNum) {
-
-        QString fileName = fileNames[fileNum];
-
-
-        // open file and load NineML
-        if (fileName.size() == 0) {
-            // user cancelled - do nothing
-            return;
-        }
-        QDomDocument *doc = new QDomDocument( "SpineML" );
-        QFile file( fileName );
-        if( !file.open( QIODevice::ReadOnly ) ) {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText("Could not open the selected file " + fileName);
-            msgBox.exec();
-            return;}
-        if( !doc->setContent( &file ) )
-        {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText("Could not load XML - is the selected file correctly formed XML?");
-            msgBox.exec();
-            file.close();
-            return;
-        }
-        // we have loaded the XML file - discard the file handle
-        file.close();
-        // confirm root tag is correct
-        QDomElement root = doc->documentElement();
-        if( root.tagName() != "SpineML" ) {
-            QMessageBox msgBox;
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText("File is not valid NineML");
-            msgBox.exec();
-            return;
-        }
-        // create a new AL class instance and populate it from the data
-        NineMLLayout *tempALobject = new NineMLLayout();
-
-        tempALobject->load(doc);
-
-        // find if component exists already in catalogs, in which case rename
-        bool unique = false;
-        QString baseName = tempALobject->name;
-        int num = 1;
-        while(!unique) {
-            unique = true;
-            for (unsigned int i = 0; i < this->catalogLayout.size(); ++i) {
-                if (this->catalogLayout[i]->name.compare(tempALobject->name) == 0) {
-                    unique = false;
-                }
-            }
-            if (!unique) {
-                tempALobject->name = baseName + "_" + QString::number(float(num));
-                num++;
-            }
-        }
-
-        // add to the correct catalog
-        this->catalogLayout.push_back(tempALobject);
-
-        // kill off the DOM document
-        delete doc;
-
-    }
-    main->viewNL.layout->updatePanel(this);
-}
-
-
-
-void rootData::export_component_xml(QString fileName, NineMLComponent * component)
-{
-    // get ready to write
-    if (fileName.size() == 0) {
-        // user cancelled - do nothing
-        return;
-    }
-
-    // if no extension then append a .xml
-    if (!fileName.contains("."))
-        fileName.append(".xml");
-
-    QFile file( fileName );
-    if (!file.open( QIODevice::WriteOnly)) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Error creating file - is there sufficient disk space?");
-        msgBox.exec();
-        return;
-    }
-
-    // get the 9ML description
-    QDomDocument * doc = new QDomDocument( "SpineML" );
-    component->write(doc);
-
-    // write out to file
-    QTextStream tsFromFile( &file );
-    tsFromFile << doc->toString();
-    tsFromFile.flush();
-    file.close();
-
-    // store filename in component is not a library component
-    if (component->path != "lib")
-        component->filePath = fileName;
-
-    // kill off the DOM document
-    delete doc;
-}
-
-void rootData::export_layout_xml(QString fileName, NineMLLayout * component)
-{
-
-    // get ready to write
-    if (fileName.size() == 0) {
-        // user cancelled - do nothing
-        return;
-    }
-
-    QFile file( fileName );
-    if (!file.open( QIODevice::WriteOnly)) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Error creating file - is there sufficient disk space?");
-        msgBox.exec();
-        return;
-    }
-
-    // get the 9ML description
-    QDomDocument * doc = new QDomDocument( "SpineML" );
-    component->write(doc);
-
-    // write out to file
-    QTextStream tsFromFile( &file );
-    tsFromFile << doc->toString();
-
-    // kill off the DOM document
-    delete doc;
-}
-
-bool rootData::export_model_for_simulator(QString fileName)
-{
-    QSettings settings;
-
-    settings.setValue("export_for_simulation", QString::number((float) true));
-
-    // fetch current experiment
-    experiment * currentExperiment = NULL;
-
-    // find currentExperiment
-    for (uint i = 0; i < this->experiments.size(); ++i) {
-        if (this->experiments[i]->selected) {currentExperiment = this->experiments[i]; break;}
-    }
-
-    if (currentExperiment == NULL) return false;
-
-    // get ready to write
-    if (fileName.size() == 0) {
-        // user cancelled - do nothing
-        settings.remove("export_for_simulation");
-        return false;
-    }
-
-    QString model_file = QDir::toNativeSeparators(fileName + "/model.xml");
-    QString meta_file = QDir::toNativeSeparators(fileName + "/metaData.xml");
-
-    QFile fileModel( model_file );
-    if (!fileModel.open( QIODevice::WriteOnly)) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Error creating file - is there sufficient disk space?");
-        msgBox.exec();
-        settings.remove("export_for_simulation");
-        return false;
-    }
-
-    QFile fileMeta( meta_file );
-    if (!fileMeta.open( QIODevice::WriteOnly)) {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Error creating file - is there sufficient disk space?");
-        msgBox.exec();
-        settings.remove("export_for_simulation");
-        return false;
-    }
-
-    // use stream writing for model UL file
-    QXmlStreamWriter xmlOut;
-
-    xmlOut.setDevice(&(fileModel));
-
-    this->get_model_xml(xmlOut);
-
-
-    // check for errors:
-    int num_errs = settings.beginReadArray("errors");
-    settings.endArray();
-    int num_warn = settings.beginReadArray("warnings");
-    settings.endArray();
-
-    if (num_errs != 0 || num_warn != 0) {
-
-        QString errors = "";
-
-        // list errors
-        settings.beginReadArray("errors");
-        for (int j = 1; j < num_errs; ++j) {
-            settings.setArrayIndex(j);
-            errors = errors + settings.value("errorText", "").toString();
-            errors = errors + "<br/>";
-        }
-        settings.endArray();
-
-        settings.beginReadArray("warnings");
-        for (int j = 1; j < num_warn; ++j) {
-            settings.setArrayIndex(j);
-            errors = errors + settings.value("warnText", "").toString();
-            errors = errors + "<br/>";
-        }
-        settings.endArray();
-
-        // clear errors
-        settings.remove("errors");
-        settings.remove("warnings");
-
-        // display errors
-        QMessageBox msgBox;
-        msgBox.setText("<P><b>Errors found exporting model for simulation</b></P>" + errors);
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setTextFormat(Qt::RichText);
-        msgBox.exec();
-
-        // no dice - give up!
-        settings.remove("export_for_simulation");
-        return false;
-
-    }
-
-
-   // get the 9ML description
-     QDomDocument * meta = new QDomDocument( "MetaData" );
-    this->get_model_meta_xml(*meta);
-
-    QTextStream tsFromFileMeta( &fileMeta );
-    tsFromFileMeta << meta->toString();
-
-    //delete doc;
-    delete meta;
-
-    // output the experiment
-
-
-    QString exptFile = QDir::toNativeSeparators(fileName + "/experiment.xml");
-
-    QFile file ( exptFile );
-    if (!file.open( QIODevice::WriteOnly)) {
-        QMessageBox msgBox;
-        msgBox.setText("Error creating file - is there sufficient disk space?");
-        msgBox.exec();
-        settings.remove("export_for_simulation");
-        return false;
-    }
-
-    // use stream writer
-    QXmlStreamWriter * xmlOutExpt = new QXmlStreamWriter;
-    xmlOutExpt->setDevice(&(file));
-
-    currentExperiment->writeXML(xmlOutExpt, this);
-
-    delete xmlOutExpt;
-
-
-
-    // also output the components:
-    vector < NineMLComponent * > outList;
-    for (uint i = 0; i < this->system.size(); ++i) {
-        // NEURONS
-        NineMLComponent * comp = this->system[i]->neuronType->component;
-        bool exists = false;
-        for (uint j = 0; j < outList.size(); ++j) {
-            if (outList[j]->name == comp->name)
-                exists = true;
-        }
-        if (!exists)
-            outList.push_back(comp);
-
-        for (uint p = 0; p < system[i]->projections.size(); ++p) {
-            for (uint c = 0; c < system[i]->projections[p]->synapses.size(); ++c) {
-                // SYNAPSES
-                comp = system[i]->projections[p]->synapses[c]->weightUpdateType->component;
-                exists = false;
-                for (uint j = 0; j < outList.size(); ++j) {
-                    if (outList[j]->name == comp->name)
-                        exists = true;
-                }
-                if (!exists)
-                    outList.push_back(comp);
-
-                // PSPS
-                comp = system[i]->projections[p]->synapses[c]->postsynapseType->component;
-                exists = false;
-                for (uint j = 0; j < outList.size(); ++j) {
-                    if (outList[j]->name == comp->name)
-                        exists = true;
-                }
-                if (!exists)
-                    outList.push_back(comp);
-            }
-        }
-    }
-    for (uint j = 0; j < outList.size(); ++j) {
-
-        QString outName = outList[j]->name;
-        outName.replace( " ", "_" );
-        QString comp_file = QDir::toNativeSeparators(fileName + "/" + outName + outList[j]->version.toFileString() + ".xml");
-
-        //cerr << fileName.toStdString() << "\n";
-
-        QFile fileComp( comp_file );
-        if (!fileComp.open( QIODevice::WriteOnly)) {
-            QMessageBox msgBox;
-            msgBox.setText("Error creating file - is there sufficient disk space?");
-            msgBox.exec();
-            settings.remove("export_for_simulation");
-            return false;
-        }
-
-        QDomDocument * doc = new QDomDocument( "SpineML" );
-        outList[j]->write(doc);
-
-        // write out to file
-        QTextStream tsFromFileComp( &fileComp );
-        tsFromFileComp << doc->toString();
-
-        // kill off the DOM document
-        delete doc;
-    }
-
-    settings.remove("export_for_simulation");
-
-    // success!
-    return true;
-}
-
-void rootData::export_project_xml(QString fileName)
-{
-    // get ready to write
-    if (fileName.size() == 0) {
-        // user cancelled - do nothing
-        return;
-    }
-
-    QString model_file = QDir::toNativeSeparators(fileName + "/model.xml");
-    QString meta_file = QDir::toNativeSeparators(fileName + "/metaData.xml");
-
-    // get files to remove from directory
-    QDir model_dir(QDir::toNativeSeparators(fileName));
-    model_dir.setNameFilters(QStringList()<< "*.bin");
-    QStringList files = model_dir.entryList(QDir::Files);
-    for (int i = 0; i < files.size(); ++i) {
-        model_dir.remove(files[i]);
-        // and remove from version control
-        if (version->isModelUnderVersion())
-            version->removeFromVersion(files[i]);
-    }
-    model_dir.setNameFilters(QStringList() << "*.xml");
-    files = model_dir.entryList(QDir::Files);
-
-    QFile fileModel( model_file );
-    if (!fileModel.open( QIODevice::WriteOnly)) {
-        QMessageBox msgBox;
-        msgBox.setText("Error creating file - is there sufficient disk space?");
-        msgBox.exec();
-        return;
-    }
-
-    QFile fileMeta( meta_file );
-    if (!fileMeta.open( QIODevice::WriteOnly)) {
-        QMessageBox msgBox;
-        msgBox.setText("Error creating file - is there sufficient disk space?");
-        msgBox.exec();
-        return;
-    }
-
-    // store the new file name
-    QSettings settings;
-    settings.setValue("files/currentFileName", fileName);
-
-    // check for version control
-    version->setupVersion();
-
-    // use stream writing for model UL file
-    QXmlStreamWriter xmlOut;
-
-    xmlOut.setAutoFormatting(true);
-
-    xmlOut.setDevice(&(fileModel));
-
-    this->get_model_xml(xmlOut);
-
-    // add to version control
-    if (version->isModelUnderVersion())
-        version->addToVersion(fileModel.fileName());
-    files.removeAt(files.indexOf("model.xml"));
-
-    QDomDocument * meta = new QDomDocument( "MetaData" );
-    this->get_model_meta_xml(*meta);
-
-    QTextStream tsFromFileMeta( &fileMeta );
-    tsFromFileMeta << meta->toString();
-
-    // add to version control
-    if (version->isModelUnderVersion())
-        version->addToVersion(fileMeta.fileName());
-    files.removeAt(files.indexOf("metaData.xml"));
-
-    delete meta;
-
-    // output the experiments:
-    for (uint i = 0; i < experiments.size(); ++i) {
-
-        QString exptFile = QDir::toNativeSeparators(fileName + "/experiment" + QString::number(float(i)) + ".xml");
-
-        QFile file ( exptFile );
-        if (!file.open( QIODevice::WriteOnly)) {
-            QMessageBox msgBox;
-            msgBox.setText("Error creating file - is there sufficient disk space?");
-            msgBox.exec();
-            return;
-        }
-
-        // use stream writer
-        QXmlStreamWriter * xmlOutExpt = new QXmlStreamWriter;
-        xmlOutExpt->setDevice(&(file));
-
-        experiments[i]->writeXML(xmlOutExpt, this);
-
-        delete xmlOutExpt;
-
-        // add to version control
-        QStringList fileBits = file.fileName().split(QDir::separator());
-        if (version->isModelUnderVersion())
-            version->addToVersion(fileBits.back());
-        files.removeAt(files.indexOf(fileBits.back()));
-    }
-
-    // also output the components:
-    vector < NineMLComponent * > outList;
-    vector < NineMLLayout * > layoutOutList;
-    for (uint i = 0; i < this->system.size(); ++i) {
-        // NEURONS
-        NineMLComponent * comp = this->system[i]->neuronType->component;
-        bool exists = false;
-        for (uint j = 0; j < outList.size(); ++j) {
-            if (outList[j]->name == comp->name)
-                exists = true;
-        }
-        if (!exists)
-            outList.push_back(comp);
-
-        NineMLLayout * lay = this->system[i]->layoutType->component;
-        exists = false;
-        for (uint j = 0; j < layoutOutList.size(); ++j) {
-            if (layoutOutList[j]->name == lay->name)
-                exists = true;
-        }
-        if (!exists)
-            layoutOutList.push_back(lay);
-
-        for (uint p = 0; p < system[i]->projections.size(); ++p) {
-            for (uint c = 0; c < system[i]->projections[p]->synapses.size(); ++c) {
-                // SYNAPSES
-                comp = system[i]->projections[p]->synapses[c]->weightUpdateType->component;
-                exists = false;
-                for (uint j = 0; j < outList.size(); ++j) {
-                    if (outList[j]->name == comp->name)
-                        exists = true;
-                }
-                if (!exists)
-                    outList.push_back(comp);
-
-                // PSPS
-                comp = system[i]->projections[p]->synapses[c]->postsynapseType->component;
-                exists = false;
-                for (uint j = 0; j < outList.size(); ++j) {
-                    if (outList[j]->name == comp->name)
-                        exists = true;
-                }
-                if (!exists)
-                    outList.push_back(comp);
-            }
-        }
-    }
-    for (uint j = 0; j < outList.size(); ++j) {
-
-        QString outName = outList[j]->name;
-        outName.replace( " ", "_" );
-        QString comp_file = QDir::toNativeSeparators(fileName + "/" + outName + outList[j]->version.toFileString() + ".xml");
-
-        //cerr << fileName.toStdString() << "\n";
-
-        QFile fileComp( comp_file );
-        if (!fileComp.open( QIODevice::WriteOnly)) {
-            QMessageBox msgBox;
-            msgBox.setText("Error creating file - is there sufficient disk space?");
-            msgBox.exec();
-            return;
-        }
-
-        // clear errors
-        settings.remove("errors");
-        settings.remove("warnings");
-
-        QDomDocument * doc = new QDomDocument( "SpineML" );
-        outList[j]->write(doc);
-
-        // write out to file
-        QTextStream tsFromFileComp( &fileComp );
-        tsFromFileComp << doc->toString();
-
-        // kill off the DOM document
-        delete doc;
-
-
-        // add to version control
-        QStringList fileBits = fileComp.fileName().split(QDir::separator());
-        if (version->isModelUnderVersion())
-            version->addToVersion(fileBits.back());
-        files.removeAt(files.indexOf(fileBits.back()));
-
-    }
-
-    for (uint j = 0; j < layoutOutList.size(); ++j) {
-
-        QString outName = layoutOutList[j]->name;
-        outName.replace( " ", "_" );
-        QString comp_file = QDir::toNativeSeparators(fileName + "/" + outName + ".xml");
-
-        //cerr << fileName.toStdString() << "\n";
-
-        QFile fileComp( comp_file );
-        if (!fileComp.open( QIODevice::WriteOnly)) {
-            QMessageBox msgBox;
-            msgBox.setText("Error creating file - is there sufficient disk space?");
-            msgBox.exec();
-            return;
-        }
-
-        QDomDocument * doc = new QDomDocument( "SpineML" );
-        layoutOutList[j]->write(doc);
-
-        // write out to file
-        QTextStream tsFromFileComp( &fileComp );
-        tsFromFileComp << doc->toString();
-
-        // kill off the DOM document
-        delete doc;
-
-
-        // add to version control
-        QStringList fileBits = fileComp.fileName().split(QDir::separator());
-        if (version->isModelUnderVersion())
-            version->addToVersion(fileBits.back());
-        files.removeAt(files.indexOf(fileBits.back()));
-
-    }
-
-    // remove any files still in list
-    for (int i = 0; i < files.size(); ++i) {
-        model_dir.remove(files[i]);
-        if (version->isModelUnderVersion())
-            version->removeFromVersion(files[i]);
-    }
-
-    // add binary files to version
-    model_dir.setNameFilters(QStringList()<< "*.bin");
-    files = model_dir.entryList(QDir::Files);
-    for (int i = 0; i < files.size(); ++i) {
-        // add to version control
-        if (version->isModelUnderVersion())
-            version->addToVersion(files[i]);
-    }
-
-
-    // all done - set the undo stack to clean
-    currProject->undoStack->setClean();
-    // clear the astrix
-    emit setWindowTitle();
-}
-
-void rootData::get_model_meta_xml(QDomDocument &meta) {
-
-   // create the root of the file:
-   QDomElement root = meta.createElement( "modelMetaData" );
-   meta.appendChild(root);
-
-   // iterate through the populations and get the xml
-   for (unsigned int i = 0; i < system.size(); ++i) {
-       system[i]->write_model_meta_xml(meta, root);
-   }
-
-}
-
-void rootData::get_model_xml(QXmlStreamWriter &xmlOut) {
-
-
-    QSettings settings;
-
-    // create the root of the file:
-    //xmlOut.writeProcessingInstruction("xml", "version=\"1.0\"");
-    xmlOut.writeStartDocument();
-    xmlOut.writeStartElement("LL:SpineML");
-    xmlOut.writeAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-    xmlOut.writeAttribute("xmlns", "http://www.shef.ac.uk/SpineMLNetworkLayer");
-    xmlOut.writeAttribute("xmlns:LL", "http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer");
-    xmlOut.writeAttribute("xsi:schemaLocation", "http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer SpineMLLowLevelNetworkLayer.xsd http://www.shef.ac.uk/SpineMLNetworkLayer SpineMLNetworkLayer.xsd");
-    xmlOut.writeAttribute("name", settings.value("model/model_name", "err").toString());
-
-    // create a node for each population with the variables set
-    for (unsigned int pop = 0; pop < this->system.size(); ++pop) {
-
-        //// WE NEED TO HAVE A PROPER MODEL NAME!
-        this->system[pop]->write_population_xml(xmlOut);
-
-    }
-
-    xmlOut.writeEndDocument();
-
-    // check for errors:
-    int num_errs = settings.beginReadArray("errors");
-    settings.endArray();
-
-    if (num_errs != 0) {
-        // list errors
-        QString errors;
-        settings.beginReadArray("errors");
-        for (int j = 1; j < num_errs; ++j) {
-            settings.setArrayIndex(j);
-            errors = errors + settings.value("errorText", "").toString();
-            errors = errors + "<br/>";
-        }
-        settings.endArray();
-        // clear errors
-        settings.remove("errors");
-        settings.remove("warnings");
-
-        // display errors
-        QMessageBox msgBox;
-        msgBox.setText("<P><b>Errors found writing model file:</b></P><br/>" + errors);
-        msgBox.exec();
-    }
-
-}*/
-
-void rootData::rightClickByGL(float xGL, float yGL, float GLscale)
-{
-
     // insert new point into projection
     if (selList.size() == 1) {
         if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {
             // try to delete control point, if that fails then add one!
             projection * proj = (projection *) selList[0];
             if (!proj->deleteControlPoint(xGL, yGL, GLscale)) {
-                proj->insertControlPoint(xGL, yGL, GLscale);}
-
+                proj->insertControlPoint(xGL, yGL, GLscale);
+            }
         }
     }
     // log the co-ordinates for drag select
     this->dragListStart = QPointF(xGL, yGL);
-
 }
 
 void rootData::dragSelect(float xGL, float yGL)
 {
-
     bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
 
     // setup the QRect for the selection
@@ -1740,22 +493,25 @@ void rootData::dragSelect(float xGL, float yGL)
     vector <systemObject *> oldSel = selList;
 
     // clear slection list if shift not held
-    if (!addSelection)
+    if (!addSelection) {
         selList.clear();
+    }
 
     // add selected objects to list
-    for (uint i = 0; i < this->system.size(); ++i) {
-        population * pop = system[i];
+    for (uint i = 0; i < this->populations.size(); ++i) {
+        population * pop = populations[i];
 
         if (dragSelection.contains(pop->x, pop->y)) {
             // if not already selected
             bool alreadySelected = false;
             for (uint s = 0; s < this->selList.size(); ++s) {
-                if (selList[s] == pop)
+                if (selList[s] == pop) {
                     alreadySelected = true;
+                }
             }
-            if (!alreadySelected)
+            if (!alreadySelected) {
                 selList.push_back(pop);
+            }
         }
 
         for (uint j = 0; j < pop->neuronType->inputs.size(); ++j) {
@@ -1766,14 +522,15 @@ void rootData::dragSelect(float xGL, float yGL)
                     // if not already selected
                     bool alreadySelected = false;
                     for (uint s = 0; s < this->selList.size(); ++s) {
-                        if (selList[s] == in)
+                        if (selList[s] == in) {
                             alreadySelected = true;
+                        }
                     }
-                    if (!alreadySelected)
+                    if (!alreadySelected) {
                         selList.push_back(in);
+                    }
                 }
             }
-
         }
 
         for (uint j = 0; j < pop->projections.size(); ++j) {
@@ -1784,11 +541,13 @@ void rootData::dragSelect(float xGL, float yGL)
                     // if not already selected
                     bool alreadySelected = false;
                     for (uint s = 0; s < this->selList.size(); ++s) {
-                        if (selList[s] == proj)
+                        if (selList[s] == proj) {
                             alreadySelected = true;
+                        }
                     }
-                    if (!alreadySelected)
+                    if (!alreadySelected) {
                         selList.push_back(proj);
+                    }
                 }
             }
 
@@ -1807,11 +566,13 @@ void rootData::dragSelect(float xGL, float yGL)
                             // if not already selected
                             bool alreadySelected = false;
                             for (uint s = 0; s < this->selList.size(); ++s) {
-                                if (selList[s] == in)
+                                if (selList[s] == in) {
                                     alreadySelected = true;
+                                }
                             }
-                            if (!alreadySelected)
+                            if (!alreadySelected) {
                                 selList.push_back(in);
+                            }
                         }
                     }
                 }
@@ -1826,57 +587,60 @@ void rootData::dragSelect(float xGL, float yGL)
                             // if not already selected
                             bool alreadySelected = false;
                             for (uint s = 0; s < this->selList.size(); ++s) {
-                                if (selList[s] == in)
+                                if (selList[s] == in) {
                                     alreadySelected = true;
+                                }
                             }
-                            if (!alreadySelected)
+                            if (!alreadySelected) {
                                 selList.push_back(in);
+                            }
                         }
                     }
                 }
-
             }
-
         }
-
     }
 
     // check if the selection has changed to prevent unecessary redrawing
     bool selectionChanged = false;
     if (oldSel.size() == selList.size()) {
         for (uint i = 0; i < oldSel.size(); ++i) {
-            if (oldSel[i] != selList[i])
+            if (oldSel[i] != selList[i]) {
                 selectionChanged = true;
+            }
         }
-    } else
+    } else {
         selectionChanged = true;
+    }
 
-    if (selectionChanged)
+    if (selectionChanged) {
         reDrawAll();
-
+    }
 }
 
-void rootData::endDragSelection() {
+void rootData::endDragSelection()
+{
     this->dragSelection = QRect(-1,-1,0,0);
 }
 
 void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
 {
-
     // are we adding or reselecting?
     bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
 
     // we don't select on mouseup for drag events
-    if (selectionMoved) return;
+    if (this->selectionMoved) {
+        return;
+    }
 
     vector < genericInput * > allInputs;
 
     if (addSelection) {
 
-        for (unsigned int i = 0; i < this->system.size(); ++i) {
+        for (unsigned int i = 0; i < this->populations.size(); ++i) {
 
             // select if under the cursor - no two objects should overlap!
-            if (this->system[i]->is_clicked(xGL, yGL, GLscale))
+            if (this->populations[i]->is_clicked(xGL, yGL, GLscale))
             {
                 this->cursor.x = -100000;
                 this->cursor.y = -100000;
@@ -1884,10 +648,9 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
 
                 bool removed = false;
 
-
                 // if in list, then remove
                 for (uint j = 0; j < selList.size(); ++j) {
-                    if (this->system[i]->getName() == selList[j]->getName()) {
+                    if (this->populations[i]->getName() == selList[j]->getName()) {
                         selList.erase(selList.begin()+j, selList.begin()+j+1);
                         removed = true;
                     }
@@ -1912,7 +675,7 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
                 }
 
                 // if not removed, then add
-                if (!removed) this->selList.push_back(this->system[i]);
+                if (!removed) this->selList.push_back(this->populations[i]);
 
                 emit updatePanel(this);
 
@@ -1921,14 +684,14 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
             }
 
             // add inputs to list for population
-            for (unsigned int in = 0; in < this->system[i]->neuronType->inputs.size(); ++in)
-                allInputs.push_back(this->system[i]->neuronType->inputs[in]);
+            for (unsigned int in = 0; in < this->populations[i]->neuronType->inputs.size(); ++in)
+                allInputs.push_back(this->populations[i]->neuronType->inputs[in]);
 
             // check projections
-            for (unsigned int j = 0; j < this->system[i]->projections.size(); ++j) {
+            for (unsigned int j = 0; j < this->populations[i]->projections.size(); ++j) {
 
                 // find if an edge of the projection is hit
-                if (this->system[i]->projections[j]->is_clicked(xGL, yGL, GLscale)) {
+                if (this->populations[i]->projections[j]->is_clicked(xGL, yGL, GLscale)) {
 
                     this->cursor.x = -100000;
                     this->cursor.y = -100000;
@@ -1939,7 +702,7 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
 
                     // if in list, then remove
                     for (uint k = 0; k < selList.size(); ++k) {
-                        if (this->system[i]->projections[j]->getName() == selList[k]->getName()) {
+                        if (this->populations[i]->projections[j]->getName() == selList[k]->getName()) {
                             selList.erase(selList.begin()+k, selList.begin()+k+1);
                             removed = true;
                         }
@@ -1952,11 +715,11 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
                         bool targIn = false;
                         bool destIn = false;
                         for (uint k = 0; k < selList.size(); ++k) {
-                            if (this->system[i]->projections[j]->source->tag == selList[k]->tag) targIn = true;
-                            if (this->system[i]->projections[j]->destination->tag == selList[k]->tag) destIn = true;
+                            if (this->populations[i]->projections[j]->source->tag == selList[k]->tag) targIn = true;
+                            if (this->populations[i]->projections[j]->destination->tag == selList[k]->tag) destIn = true;
                         }
                         if (targIn && destIn)
-                            this->selList.push_back(this->system[i]->projections[j]);
+                            this->selList.push_back(this->populations[i]->projections[j]);
 
                     }
 
@@ -1967,17 +730,15 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
                 }
 
                 // add inputs to list for projection
-                for (unsigned int pt = 0; pt < this->system[i]->projections[j]->synapses.size(); ++pt) {
-                    for (unsigned int in = 0; in < this->system[i]->projections[j]->synapses[pt]->weightUpdateType->inputs.size(); ++in)
-                        allInputs.push_back(this->system[i]->projections[j]->synapses[pt]->weightUpdateType->inputs[in]);
-                    for (unsigned int in = 0; in < this->system[i]->projections[j]->synapses[pt]->postsynapseType->inputs.size(); ++in)
-                        allInputs.push_back(this->system[i]->projections[j]->synapses[pt]->postsynapseType->inputs[in]);
+                for (unsigned int pt = 0; pt < this->populations[i]->projections[j]->synapses.size(); ++pt) {
+                    for (unsigned int in = 0; in < this->populations[i]->projections[j]->synapses[pt]->weightUpdateType->inputs.size(); ++in)
+                        allInputs.push_back(this->populations[i]->projections[j]->synapses[pt]->weightUpdateType->inputs[in]);
+                    for (unsigned int in = 0; in < this->populations[i]->projections[j]->synapses[pt]->postsynapseType->inputs.size(); ++in)
+                        allInputs.push_back(this->populations[i]->projections[j]->synapses[pt]->postsynapseType->inputs[in]);
                 }
             }
-
-
-
         }
+
         // for all generic inputs
         for (unsigned int i = 0; i < allInputs.size(); ++i) {
 
@@ -1998,7 +759,6 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
                     }
                 }
 
-
                 // if not removed, and src and dest are in the list, then add
                 if (!removed) {
 
@@ -2018,11 +778,8 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
                 // selection complete, move on
                 return;
             }
-
         }
-
     }
-
 }
 
 void rootData::itemWasMoved(float xGL, float yGL, float GLscale)
@@ -2054,190 +811,223 @@ void rootData::populationMoved()
     // lastSelectionPosition (which is the *mouse* position) offset by
     // the current offset in the population (as the population moves,
     // the mouse remains in the same location on the object).
-    QPointF lastPopulationPosition = lastSelectionPosition + pop->getLocationOffset();
+    QPointF lastPopulationPosition = lastLeftMouseDownPos + pop->getLocationOffset();
 
     currProject->undoStack->push(new movePopulation(this, pop, lastPopulationPosition, newPos));
 }
 
-void rootData::selectCoord(float xGL, float yGL, float GLscale)
+// An action carried out when the left mouse is pressed with shift held.
+void rootData::onLeftMouseDownWithShift(float xGL, float yGL, float GLscale)
 {
+    qDebug() << __FUNCTION__ << " called";
+    // Record the position of the selection.
+    this->lastLeftMouseDownPos.setX(xGL);
+    this->lastLeftMouseDownPos.setY(yGL);
 
-    // are we adding or reselecting? NB: Move this into the glwidget class (todo: seb)
-    bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
+    for (uint i = 0; i < selList.size(); ++i) {
+        // register locations relative to cursor:
+        selList[i]->setLocationOffsetRelTo(xGL, yGL);
+    }
+    this->selectionMoved = false;
+}
 
-    if (!addSelection) {
+void rootData::onNewSelections (float xGL, float yGL)
+{
+    emit updatePanel(this);
+    for (uint i = 0; i < this->selList.size(); ++i) {
+        // register locations relative to cursor:
+        this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
+    }
+}
 
-        // Record the position of the selection.
-        this->lastSelectionPosition.setX(xGL);
-        this->lastSelectionPosition.setY(yGL);
+bool rootData::selListContains (const vector<systemObject*>& objectList)
+{
+    vector<systemObject*>::const_iterator i = objectList.begin();
+    while (i != objectList.end()) {
+        if (std::find (this->selList.begin(), this->selList.end(), *i) != this->selList.end()) {
+            return true;
+        }
+        ++i;
+    }
+    return false;
+}
 
-        // prioritise the handles of a selected projection:
-        if (this->selList.size() == 1) {
-            if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {
-                if (((projection *) selList[0])->selectControlPoint(xGL, yGL, GLscale)) {
-                    return;
-                }
-            }
+// When the "left" mouse goes down, select what's underneath, if anything.
+void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown)
+{
+    qDebug() << __FUNCTION__ << " called";
+
+    // Record the position of the selection.
+    this->lastLeftMouseDownPos.setX(xGL);
+    this->lastLeftMouseDownPos.setY(yGL);
+
+    // A list of things which have been selected with this left mouse
+    // down click. Will be added to this->selList after the logic in
+    // this method.
+    vector<systemObject*> newlySelectedList;
+    this->findSelection (xGL, yGL, GLscale, newlySelectedList);
+
+    // Possibilities:
+    // 1. Nothing previously selected, user clicked on new object, shift OR no shift -> new selection
+    // 3. Nothing previously selected, user unselected, shift OR no shift -> do nothing
+    //
+    // 4. Something previously selected, user clicked on new object, no shift -> switch selection
+    // 5. Something previously selected, user clicked on new object, WITH shift -> add to selection
+    // 6. Something previously selected, user unselected, WITH shift -> do nothing
+    // 7. Something previously selected, user unselected, no shift -> clear selection
+
+    // 8. FIXME: Something(s) were previously selected, user clicked on one of them -> User is moving selection.
+
+    qDebug() << "prev. selected: " << this->selList.size();
+    qDebug() << "newly selected: " << newlySelectedList.size();
+    qDebug() << "Shift is " << (shiftDown ? "Down" : "Up");
+
+    if (this->selList.empty()) { // Nothing previously selected.
+        qDebug() << "Nothing prev. selected...";
+        if (newlySelectedList.empty()) {
+            // Nothing selected now, do nothing but show the cursor.
+            qDebug() << "Nothing selected now, so show cursor.";
+            cursor.x = xGL;
+            cursor.y = yGL;
+            emit updatePanel(this);
+        } else {
+            // Have new selection, selList is empty, swap the contents
+            // of newlySelectedList into selList.
+            qDebug() << "New selection, swap new selection into selList.";
+            this->selList.swap (newlySelectedList);
+            this->onNewSelections(xGL, yGL);
         }
 
-        for (unsigned int i = 0; i < this->system.size(); ++i) {
-
-
-            // check pop inputs:
-            for (unsigned int j = 0; j < this->system[i]->neuronType->inputs.size(); ++j) {
-
-                // find if an edge of the input is hit
-                if (this->system[i]->neuronType->inputs[j]->is_clicked(xGL, yGL, GLscale)) {
-
-                    this->cursor.x = -100000;
-                    this->cursor.y = -100000;
-                    this->selChange = true;
-
-                    this->selList.clear();
-
-                    //  add to selection list
-                    this->selList.push_back(this->system[i]->neuronType->inputs[j]);
-
-
-                    emit updatePanel(this);
-                    for (uint i = 0; i < selList.size(); ++i) {
-                        // register locations relative to cursor:
-                        selList[i]->setLocationOffsetRelTo(xGL, yGL);
-                    }
-
-                    // selection complete, move on
-                    return;
-                }
+    } else { // We have a previous selection.
+        qDebug() << "We have a previous selection...";
+        if (newlySelectedList.empty()) {
+            // Nothing selected now.
+            qDebug() << "Nothing is newly selected...";
+            if (shiftDown) {
+                // User still has shift down; do nothing. Show cursor?
+                qDebug() << "User has shift down. Show cursor.";
+                cursor.x = xGL;
+                cursor.y = yGL;
+                // If we selected nothing, then just this:
+                emit updatePanel(this);
+            } else {
+                // Clear selection and show cursor:
+                qDebug() << "User doesn't have shift down, so clear selection and show cursor.";
+                this->cursor.x = xGL;
+                this->cursor.y = yGL;
+                this->selList.clear();
+                this->onNewSelections(xGL, yGL);
             }
-
-            // check projections
-            for (unsigned int j = 0; j < this->system[i]->projections.size(); ++j) {
-
-                // find if an edge of the projection is hit
-                if (this->system[i]->projections[j]->is_clicked(xGL, yGL, GLscale)) {
-
-                    this->cursor.x = -100000;
-                    this->cursor.y = -100000;
-                    this->selChange = true;
-
-                    this->selList.clear();
-
-                    //  add to selection list
-                    this->selList.push_back(this->system[i]->projections[j]);
-
-
-                    emit updatePanel(this);
-                    for (uint i = 0; i < selList.size(); ++i) {
-                        // register locations relative to cursor:
-                        selList[i]->setLocationOffsetRelTo(xGL, yGL);
-                    }
-
-                    // selection complete, move on
-                    return;
-                }
-
-                // check proj inputs:
-                for (unsigned int k = 0; k < this->system[i]->projections[j]->synapses.size(); ++k) {
-
-                    synapse * col = this->system[i]->projections[j]->synapses[k];
-
-                    for (unsigned int l = 0; l < col->weightUpdateType->inputs.size(); ++l) {
-
-                        // find if an edge of the input is hit
-                        if (col->weightUpdateType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
-
-                            this->cursor.x = -100000;
-                            this->cursor.y = -100000;
-                            this->selChange = true;
-
-                            this->selList.clear();
-
-                            //  add to selection list
-                            this->selList.push_back(col->weightUpdateType->inputs[l]);
-
-
-                            emit updatePanel(this);
-                            for (uint i = 0; i < selList.size(); ++i) {
-                                // register locations relative to cursor:
-                                selList[i]->setLocationOffsetRelTo(xGL, yGL);
-                            }
-
-                            // selection complete, move on
-                            return;
-                        }
-                    }
-
-                    for (unsigned int l = 0; l < col->postsynapseType->inputs.size(); ++l) {
-
-                        // find if an edge of the input is hit
-                        if (col->postsynapseType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
-
-                            this->cursor.x = -100000;
-                            this->cursor.y = -100000;
-                            this->selChange = true;
-
-                            this->selList.clear();
-
-                            //  add to selection list
-                            this->selList.push_back(col->postsynapseType->inputs[l]);
-
-
-                            emit updatePanel(this);
-                            for (uint i = 0; i < selList.size(); ++i) {
-                                // register locations relative to cursor:
-                                selList[i]->setLocationOffsetRelTo(xGL, yGL);
-                            }
-
-                            // selection complete, move on
-                            return;
-                        }
-                    }
-                }
-
-            }
-
-            // select if under the cursor - no two objects should overlap!
-            if (this->system[i]->is_clicked(xGL, yGL, GLscale))
-            {
-
+        } else {
+            // Have new selection
+            qDebug() << "We have a new selection...";
+            if (shiftDown) {
+                // User still has shift down; append
+                qDebug() << "User has shift down, so append newlySelected onto selList";
                 this->cursor.x = -100000;
                 this->cursor.y = -100000;
-                this->selChange = true;
-
-                this->selList.clear();
-
-                //  add to selection list
-                this->selList.push_back(this->system[i]);
-
-                emit updatePanel(this);
+                this->selList.insert (this->selList.end(),
+                                      newlySelectedList.begin(), newlySelectedList.end());
+            } else {
+                // Shift not down, user wishes to switch selection OR move several selected items
+                qDebug() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
+                if (this->selListContains (newlySelectedList)) {
+                    qDebug() << "selList contains newly selected; user wishes to MOVE selected items.";
+                    // Nothing further to do here, in fact.
+                } else {
+                    qDebug() << "newly selected not in selList. user wishes to switch selection. Swap newly selected into selList";
+                    this->cursor.x = -100000;
+                    this->cursor.y = -100000;
+                    this->selList.swap (newlySelectedList);
+                }
+#if 0
+                // Or maybe:?
                 for (uint i = 0; i < selList.size(); ++i) {
                     // register locations relative to cursor:
-                    selList[i]->setLocationOffsetRelTo(xGL, yGL);
+                    this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
                 }
+                this->selectionMoved = false;
+#endif
+            }
+            // As we selected something do this:
+            this->onNewSelections(xGL, yGL);
+        }
+    }
+}
 
+void rootData::findSelection (float xGL, float yGL, float GLscale, vector<systemObject*>& newlySelectedList)
+{
+    // prioritise the handles of a selected projection:
+    if (newlySelectedList.size() == 1) {
+        if (newlySelectedList[0]->type == projectionObject || newlySelectedList[0]->type == inputObject) {
+            if (((projection *) newlySelectedList[0])->selectControlPoint(xGL, yGL, GLscale)) {
+                qDebug() << "Got projection handle";
+                return;
+            }
+        }
+    }
+
+    // Now look at populations and their inputs.
+    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+
+        // check population inputs:
+        for (unsigned int j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j) {
+            // find if an edge of the input is hit
+            if (this->populations[i]->neuronType->inputs[j]->is_clicked(xGL, yGL, GLscale)) {
+                // add the input to the selection list
+                newlySelectedList.push_back(this->populations[i]->neuronType->inputs[j]);
+                // selection complete, move on
+                return;
+            }
+        } // for loop checking population inputs
+
+        // check projections
+        for (unsigned int j = 0; j < this->populations[i]->projections.size(); ++j) {
+
+            // find if an edge of the projection is hit
+            if (this->populations[i]->projections[j]->is_clicked(xGL, yGL, GLscale)) {
+                // add to selection list
+                newlySelectedList.push_back(this->populations[i]->projections[j]);
                 // selection complete, move on
                 return;
             }
 
-        }
+            // check proj inputs:
+            for (unsigned int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
 
-        // if nothing new selected
-        if (!addSelection)
-        {
-            cursor.x = xGL;
-            cursor.y = yGL;
-            this->selList.clear();
-        }
-        emit updatePanel(this);
-    } else {
+                synapse * col = this->populations[i]->projections[j]->synapses[k];
 
-        for (uint i = 0; i < selList.size(); ++i) {
-            // register locations relative to cursor:
-            selList[i]->setLocationOffsetRelTo(xGL, yGL);
-        }
-        selectionMoved = false;
-    }
+                for (unsigned int l = 0; l < col->weightUpdateType->inputs.size(); ++l) {
 
+                    // find if an edge of the input is hit
+                    if (col->weightUpdateType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
+                        //  add to selection list
+                        newlySelectedList.push_back(col->weightUpdateType->inputs[l]);
+                        // selection complete, move on
+                        return;
+                    }
+                }
+
+                for (unsigned int l = 0; l < col->postsynapseType->inputs.size(); ++l) {
+                    // find if an edge of the input is hit
+                    if (col->postsynapseType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
+                        //  add to selection list
+                        newlySelectedList.push_back(col->postsynapseType->inputs[l]);
+                        // selection complete, move on
+                        return;
+                    }
+                }
+            } // for loop checking projection inputs.
+        } // for-loop over projections
+
+        // select if under the cursor - no two objects should overlap!
+        if (this->populations[i]->is_clicked(xGL, yGL, GLscale)) {
+            //  add to selection list
+            newlySelectedList.push_back(this->populations[i]);
+            // selection complete, move on
+            return;
+        }
+    } // for-loop over populations
 }
 
 QColor rootData::getColor(QColor initCol) {
@@ -2323,16 +1113,16 @@ void rootData::addBezierOrProjection(float xGL, float yGL)
                 population * pop = proj->source;
 
                 // find if we have hit a population:
-                for (unsigned int i = 0; i < this->system.size(); ++i) {
+                for (unsigned int i = 0; i < this->populations.size(); ++i) {
 
                     // ignore spike sources
-                    if (this->system[i]->isSpikeSource) continue;
+                    if (this->populations[i]->isSpikeSource) continue;
 
                     QPainterPath box;
-                    if (this->system[i]->addToPath(&box)->contains(QPointF(xGL,yGL))) {
+                    if (this->populations[i]->addToPath(&box)->contains(QPointF(xGL,yGL))) {
 
                         // we have a collision, so fix up the connection and return:
-                        population * dest = this->system[i];
+                        population * dest = this->populations[i];
 
                         // first check for an existing connection...
                         if (dest->connectsTo(pop)) {
@@ -2419,18 +1209,18 @@ void rootData::startAddBezier(float xGL, float yGL)
 
                 // see if any of the other populations are under the mouse cursor
                 int selPop = -1;
-                for (unsigned int i = 0; i < this->system.size(); ++i) {
+                for (unsigned int i = 0; i < this->populations.size(); ++i) {
                     // ignore spike sources
-                    if (this->system[i]->isSpikeSource) continue;
+                    if (this->populations[i]->isSpikeSource) continue;
                     QPainterPath * tempPP = new QPainterPath;
-                    if (this->system[i]->addToPath(tempPP)->contains(QPointF(xGL, yGL)))
+                    if (this->populations[i]->addToPath(tempPP)->contains(QPointF(xGL, yGL)))
                         selPop = i;
                     delete tempPP;
                 }
 
                 if (selPop != -1) {
 
-                    population * dest = this->system[selPop];
+                    population * dest = this->populations[selPop];
 
                     if (col->curves.size() == 1) {
                         // if first curve then setup start point
@@ -2530,12 +1320,12 @@ void rootData::mouseMoveGL(float xGL, float yGL)
             population * pop = (population *) selList[0];
 
             // avoid collisions
-            for (unsigned int i = 0; i < system.size(); ++i) {
-                if (system[i]->getName() != pop->getName()) {
-                    if (system[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->topBound(yGL)-0.01)) collision = true;
-                    if (system[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->topBound(yGL)-0.01)) collision = true;
-                    if (system[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->bottomBound(yGL)+0.01)) collision = true;
-                    if (system[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->bottomBound(yGL)+0.01)) collision = true;
+            for (unsigned int i = 0; i < populations.size(); ++i) {
+                if (populations[i]->getName() != pop->getName()) {
+                    if (populations[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->topBound(yGL)-0.01)) collision = true;
+                    if (populations[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->topBound(yGL)-0.01)) collision = true;
+                    if (populations[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->bottomBound(yGL)+0.01)) collision = true;
+                    if (populations[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->bottomBound(yGL)+0.01)) collision = true;
                 }
             }
 
@@ -2685,8 +1475,8 @@ void rootData::updatePanelView2Accessor() {
     emit updatePanelView2("");
 }
 
-void rootData::updatePar() {
-
+void rootData::updatePar()
+{
     QString action = sender()->property("action").toString();
 
     // update the type of parameter
@@ -2709,8 +1499,9 @@ void rootData::updatePar() {
         int index = sender()->property("valToChange").toInt();
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
-        if (value != par->value[index])
+        if (value != par->value[index]) {
             currProject->undoStack->push(new updateParUndo(this, par, index, value));
+        }
     }
 
     if (action == "changeConnProb") {
@@ -2719,8 +1510,9 @@ void rootData::updatePar() {
         fixedProb_connection * conn = (fixedProb_connection *) sender()->property("ptr").value<void *>();
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
-        if (value != conn->p)
+        if (value != conn->p) {
             currProject->undoStack->push(new updateConnProb(this, conn, value));
+        }
     }
 
     if (action == "changeConnEq") {
@@ -2749,9 +1541,9 @@ void rootData::updatePar() {
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
         int kernel_size = ((QComboBox *) sender())->currentIndex() * 2 + 3;
         // only add undo if value has changed
-            conn->setKernelSize(kernel_size);
-            emit updatePanelView2("");
-            //undoStack->push(new updateConnEquation(this, conn, newEq));
+        conn->setKernelSize(kernel_size);
+        emit updatePanelView2("");
+        //undoStack->push(new updateConnEquation(this, conn, newEq));
     }
 
     if (action == "changeConnKerScale") {
@@ -2761,7 +1553,7 @@ void rootData::updatePar() {
         float kernel_scale = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
         conn->setKernelScale(kernel_scale);
-            //undoStack->push(new updateConnEquation(this, conn, newEq));
+        //undoStack->push(new updateConnEquation(this, conn, newEq));
     }
 
     if (action == "changeConnKernel") {
@@ -2772,14 +1564,13 @@ void rootData::updatePar() {
         int i = sender()->property("i").toInt();
         int j = sender()->property("j").toInt();
         // only add undo if value has changed
-            conn->setKernel(i,j,kernel_value);
-            //undoStack->push(new updateConnEquation(this, conn, newEq));
+        conn->setKernel(i,j,kernel_value);
+        //undoStack->push(new updateConnEquation(this, conn, newEq));
     }
-
-    //updatePanel(this);
 }
 
-void rootData::updatePar(int value) {
+void rootData::updatePar(int value)
+{
     // Update the parameter value
     ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
     par->value[0] = value;
@@ -2816,13 +1607,14 @@ population* rootData::currSelPopulation()
     return currSel;
 }
 
-void rootData::updateLayoutPar() {
-
+void rootData::updateLayoutPar()
+{
     // get the currently selected population
     population * currSel = this->currSelPopulation();
 
-    if (currSel == NULL)
+    if (currSel == NULL) {
         return;
+    }
 
     int type = sender()->property("type").toInt();
     switch (type) {
@@ -2843,36 +1635,34 @@ void rootData::updateLayoutPar() {
         break;
     }
     }
-
-
 }
 
-void rootData::setSize() {
-
+void rootData::setSize()
+{
     // get the currently selected population
     population * currSel = this->currSelPopulation();
 
-    if (currSel == NULL)
+    if (currSel == NULL) {
         return;
+    }
 
     // get value
     int value = ((QSpinBox *) sender())->value();
 
     // only update if we have a change
-    if (value != currSel->numNeurons)
+    if (value != currSel->numNeurons) {
         currProject->undoStack->push(new setSizeUndo(this, currSel, value));
-
-    // redraw view
-    //emit redrawGLview();
+    }
 }
 
-void rootData::setLoc3() {
-
+void rootData::setLoc3()
+{
     // get the currently selected population
     population * currSel = this->currSelPopulation();
 
-    if (currSel == NULL)
+    if (currSel == NULL) {
         return;
+    }
 
     int index = sender()->property("type").toInt();
     int value = ((QSpinBox *) sender())->value();
@@ -2880,13 +1670,14 @@ void rootData::setLoc3() {
     currProject->undoStack->push(new setLoc3Undo(this, currSel, index, value));
 }
 
-void rootData::renamePopulation() {
-
+void rootData::renamePopulation()
+{
     // get the currently selected population
     population * currSel = this->currSelPopulation();
 
-    if (currSel == NULL)
+    if (currSel == NULL) {
         return;
+    }
 
     // get the title label so we can update it with the new name
     QLabel * titleLabel = (QLabel *) sender()->property("ptrTitle").value<void *>();
@@ -2914,21 +1705,21 @@ void rootData::renamePopulation() {
 }
 
 
-QString rootData::getUniquePopName(QString newName) {
-
+QString rootData::getUniquePopName(QString newName)
+{
     // are we the selected pop, or not?
     int ind = 0;
     if (selList.size() == 0) {
         ind = -1;
     } else if (selList.size() == 1) {
-        for (uint i = 0; i < system.size(); ++i) {
-            if (system[i]->getName() == selList[0]->getName()) ind = i;
+        for (uint i = 0; i < populations.size(); ++i) {
+            if (populations[i]->getName() == selList[0]->getName()) ind = i;
         }
     }
 
     // is the root name used? If not we can just pass it back
-    for (unsigned int i = 0; i < this->system.size(); ++i) {
-        if (this->system[i]->name.compare(newName) == 0 && (int) i != ind) {
+    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+        if (this->populations[i]->name.compare(newName) == 0 && (int) i != ind) {
 
             // name in use - find the lowest number we can add to make a unique name
             bool nameGood = false;
@@ -2941,13 +1732,13 @@ QString rootData::getUniquePopName(QString newName) {
                 testName.append(" " + stringify(j));
 
                 // check name against populations
-                for (unsigned int k = 0; k < this->system.size(); ++k) {
+                for (unsigned int k = 0; k < this->populations.size(); ++k) {
                     if (ind == -1) {
-                        if (this->system[k]->name.compare(testName) == 0) {
+                        if (this->populations[k]->name.compare(testName) == 0) {
                             nameGood = false;
                         }
                     } else {
-                        if (this->system[k]->name.compare(testName) == 0 && system[i]->getName() != selList[0]->getName()) {
+                        if (this->populations[k]->name.compare(testName) == 0 && populations[i]->getName() != selList[0]->getName()) {
                             nameGood = false;
                         }
                     }
@@ -2962,24 +1753,28 @@ QString rootData::getUniquePopName(QString newName) {
 
 
 
-int rootData::getIndex() {
+int rootData::getIndex()
+{
     ++(this->largestIndex);
     return this->largestIndex;
 }
 
-void rootData::changeSynapse() {
-
+void rootData::changeSynapse()
+{
     QPushButton * source = (QPushButton *) sender();
     QString dir = source->property("direction").toString();
 
     // get the currently selected projection
     projection * currSel = NULL;
-    if (this->selList.size() == 1)
-        if (this->selList[0]->type == projectionObject)
+    if (this->selList.size() == 1) {
+        if (this->selList[0]->type == projectionObject) {
             currSel = (projection *)  this->selList[0];
+        }
+    }
 
-    if (currSel == NULL)
+    if (currSel == NULL) {
         return;
+    }
 
     // change the current Synapse of the projection accordingly
 
@@ -2990,72 +1785,65 @@ void rootData::changeSynapse() {
         } else {
             --currTarg;
         }
+
     } else if (dir.compare("right") == 0) {
         if (currTarg == (int) currSel->synapses.size() - 1) {
             currTarg = 0;
         } else {
             ++currTarg;
         }
-    } else if (dir.compare("add") == 0) {
 
+    } else if (dir.compare("add") == 0) {
         // add the Synapse
         currProject->undoStack->push(new addSynapse(this, currSel));
 
     } else if (dir.compare("rem") == 0) {
-
         // remove the Synapse
         currProject->undoStack->push(new delSynapse(this, currSel, currSel->synapses[currTarg]));
-
     }
     currSel->currTarg = currTarg;
 
     // force complete redraw of the parameters panels;
     emit updatePanel(this);
-    //emit updatePanelView2(currSel->getName());
-
 }
 
-void rootData::selectColour() {
-
+void rootData::selectColour()
+{
     // get the currently selected population
     population * currSel = this->currSelPopulation();
 
-    if (currSel == NULL)
+    if (currSel == NULL) {
         return;
+    }
 
     // change the current Synapse of the projection accordingly
     currSel->colour = this->getColor(currSel->colour);
 
     // redraw GL
     emit redrawGLview();
-
 }
 
-void rootData::setCurrConnectionModel(csv_connectionModel *connModel) {
-
+void rootData::setCurrConnectionModel(csv_connectionModel *connModel)
+{
     if (this->catalogConn.size() > 1) {
         connModel->setConnection((csv_connection *) this->catalogConn.back());
     }
-
 }
 
-void rootData::setCurrConnectionModelSig(csv_connectionModel *connModel) {
-
+void rootData::setCurrConnectionModelSig(csv_connectionModel *connModel)
+{
     this->setCurrConnectionModel(connModel);
-
 }
 
 
-void rootData::launchComponentSorter() {
-
+void rootData::launchComponentSorter()
+{
     NineMLSortingDialog * dialog  = new NineMLSortingDialog(this);
-
     dialog->show();
-
 }
 
-void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QColor> * cols, QString name) {
-
+void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QColor> * cols, QString name)
+{
     vector <loc> tempLoc;
     cols->clear();
 
@@ -3077,25 +1865,17 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                     for (unsigned int i = 0; i < (uint) pop->numNeurons; ++i) {
 
                         loc newLoc;
-                        /*newLoc.x = i;
-                        newLoc.y = 0;
-                        newLoc.z = 0;
-                        locations->push_back(newLoc);*/
-
                         //do a square:
                         newLoc.x = i%10;
                         newLoc.y = floor(float(i) / 10.0);
                         newLoc.z = 0;
                         tempLoc.push_back(newLoc);
-
                     }
 
                     locations->push_back(tempLoc);
                     cols->push_back(pop->colour);
 
-                }
-
-                else {
+                } else {
 
                     population * pop = (population *) selList[0];
 
@@ -3106,21 +1886,21 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                     QString err = "";
                     locations->resize(1);
                     pop->layoutType->generateLayout(pop->numNeurons, &(locations->at(0)), err);
-                    if (err != "") emit statusBarUpdate(err, 2000);
+                    if (err != "") {
+                        emit statusBarUpdate(err, 2000);
+                    }
                     return;
                 }
             }
         }
-    }
-    else
-    {
 
+    } else {
 
         // find what has that name, and send back the details
-        for (unsigned int ind = 0; ind < this->system.size(); ++ind) {
-            if (this->system[ind]->name == name) {
+        for (unsigned int ind = 0; ind < this->populations.size(); ++ind) {
+            if (this->populations[ind]->name == name) {
 
-                if (this->system[ind]->layoutType->component->name == "none") {
+                if (this->populations[ind]->layoutType->component->name == "none") {
 
                     for (uint i = 0; i < locations->size(); ++i) {
                         locations[i].clear();
@@ -3128,41 +1908,39 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                     locations->clear();
 
                     // linear layout by default:
-                    for (unsigned int i = 0; i < (uint) this->system[ind]->numNeurons; ++i) {
-
+                    for (unsigned int i = 0; i < (uint) this->populations[ind]->numNeurons; ++i) {
                         loc newLoc;
-
                         //do a square:
                         newLoc.x = i%10;
                         newLoc.y = floor(float(i) / 10.0);
                         newLoc.z = 0;
                         tempLoc.push_back(newLoc);
-
                     }
                     locations->push_back(tempLoc);
-                    cols->push_back(this->system[ind]->colour);
+                    cols->push_back(this->populations[ind]->colour);
                     return;
-                }
-                else
-                {
+
+                } else {
 
                     for (uint i = 0; i < locations->size(); ++i) {
                         locations[i].clear();
                     }
                     locations->clear();
-                    cols->push_back(this->system[ind]->colour);
+                    cols->push_back(this->populations[ind]->colour);
                     // generate the locations!
                     QString err = "";
                     locations->resize(1);
-                    this->system[ind]->layoutType->generateLayout(this->system[ind]->numNeurons, &(locations->at(0)), err);
-                    if (err != "") emit statusBarUpdate(err, 2000);
+                    this->populations[ind]->layoutType->generateLayout(this->populations[ind]->numNeurons, &(locations->at(0)), err);
+                    if (err != "") {
+                        emit statusBarUpdate(err, 2000);
+                    }
                     return;
-
                 }
             }
-            for (unsigned int cInd = 0; cInd < this->system[ind]->projections.size(); ++cInd) {
 
-                if (this->system[ind]->projections[cInd]->getName() == name) {
+            for (unsigned int cInd = 0; cInd < this->populations[ind]->projections.size(); ++cInd) {
+
+                if (this->populations[ind]->projections[cInd]->getName() == name) {
 
                     for (uint i = 0; i < locations->size(); ++i) {
                         locations[i].clear();
@@ -3173,38 +1951,35 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                     // SOURCE
                     QString err = "";
                     locations->resize(2);
-                    if (this->system[ind]->projections[cInd]->source->layoutType->component->name != "none") {
-                        this->system[ind]->projections[cInd]->source->layoutType->generateLayout(this->system[ind]->projections[cInd]->source->numNeurons, &(locations->at(0)), err);
-                        cols->push_back(this->system[ind]->projections[cInd]->source->colour);
-                    }
-                    else {
+                    if (this->populations[ind]->projections[cInd]->source->layoutType->component->name != "none") {
+                        this->populations[ind]->projections[cInd]->source->layoutType->generateLayout(this->populations[ind]->projections[cInd]->source->numNeurons, &(locations->at(0)), err);
+                        cols->push_back(this->populations[ind]->projections[cInd]->source->colour);
+                    } else {
                         // linear layout by default:
                         tempLoc.clear();
-                        for (unsigned int i = 0; i < (uint) this->system[ind]->projections[cInd]->source->numNeurons; ++i) {
-
+                        for (unsigned int i = 0; i < (uint) this->populations[ind]->projections[cInd]->source->numNeurons; ++i) {
                             loc newLoc;
-
                             //do a square:
                             newLoc.x = i%10;
                             newLoc.y = floor(float(i) / 10.0);
                             newLoc.z = 0;
                             tempLoc.push_back(newLoc);
-
                         }
                         locations->at(0) = tempLoc;
-                        cols->push_back(this->system[ind]->projections[cInd]->source->colour);
+                        cols->push_back(this->populations[ind]->projections[cInd]->source->colour);
                     }
-                    if (err != "") emit statusBarUpdate(err, 2000);
+                    if (err != "") {
+                        emit statusBarUpdate(err, 2000);
+                    }
 
                     // DESTINATION
-                    if (this->system[ind]->projections[cInd]->destination->layoutType->component->name != "none") {
-                        this->system[ind]->projections[cInd]->destination->layoutType->generateLayout(this->system[ind]->projections[cInd]->destination->numNeurons, &(locations->at(1)), err);
-                        cols->push_back(this->system[ind]->projections[cInd]->destination->colour);
-                    }
-                    else {
+                    if (this->populations[ind]->projections[cInd]->destination->layoutType->component->name != "none") {
+                        this->populations[ind]->projections[cInd]->destination->layoutType->generateLayout(this->populations[ind]->projections[cInd]->destination->numNeurons, &(locations->at(1)), err);
+                        cols->push_back(this->populations[ind]->projections[cInd]->destination->colour);
+                    } else {
                         // linear layout by default:
                         tempLoc.clear();
-                        for (unsigned int i = 0; i < (uint) this->system[ind]->projections[cInd]->destination->numNeurons; ++i) {
+                        for (unsigned int i = 0; i < (uint) this->populations[ind]->projections[cInd]->destination->numNeurons; ++i) {
 
                             loc newLoc;
 
@@ -3216,38 +1991,33 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
 
                         }
                         locations->at(1) = tempLoc;
-                        cols->push_back(this->system[ind]->projections[cInd]->destination->colour);
+                        cols->push_back(this->populations[ind]->projections[cInd]->destination->colour);
                     }
-                    if (err != "") emit statusBarUpdate(err, 2000);
-
+                    if (err != "") {
+                        emit statusBarUpdate(err, 2000);
+                    }
                     return;
-
                 }
-
             }
         }
-
     }
-
 }
 
-systemObject * rootData::getObjectFromName(QString name) {
-
+systemObject * rootData::getObjectFromName(QString name)
+{
     systemObject * currObject = (systemObject *)0;
 
     // find the pop / projection that is being displayed
-    for (uint i = 0; i < this->system.size(); ++i) {
-
-        if (this->system[i]->getName() == name)
-        {currObject = this->system[i];
-            break;}
-
-        for (uint j = 0; j < this->system[i]->projections.size(); ++j) {
-
-            if (this->system[i]->projections[j]->getName() == name)
-            {currObject = this->system[i]->projections[j];
-                break;}
-
+    for (uint i = 0; i < this->populations.size(); ++i) {
+        if (this->populations[i]->getName() == name) {
+            currObject = this->populations[i];
+            break;
+        }
+        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+            if (this->populations[i]->projections[j]->getName() == name) {
+                currObject = this->populations[i]->projections[j];
+                break;
+            }
         }
     }
 
@@ -3256,44 +2026,42 @@ systemObject * rootData::getObjectFromName(QString name) {
 
 
 // allow safe usage of systemObject pointers
-bool rootData::isValidPointer(systemObject * ptr) {
-
+bool rootData::isValidPointer(systemObject * ptr)
+{
     // find the pop / projection / input reference
-    for (uint i = 0; i < this->system.size(); ++i) {
+    for (uint i = 0; i < this->populations.size(); ++i) {
 
-        if (this->system[i] == ptr)
+        if (this->populations[i] == ptr) {
             return true;
+        }
 
-        for (uint j = 0; j < this->system[i]->neuronType->inputs.size(); ++j)
-            if (this->system[i]->neuronType->inputs[j] == ptr)
+        for (uint j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j)
+            if (this->populations[i]->neuronType->inputs[j] == ptr) {
                 return true;
-
-        for (uint j = 0; j < this->system[i]->projections.size(); ++j) {
-
-            if (this->system[i]->projections[j] == ptr)
-                return true;
-
-            for (uint k = 0; k < this->system[i]->projections[j]->synapses.size(); ++k) {
-
-                if (this->system[i]->projections[j]->synapses[k] == ptr)
-                    return true;
-
-                for (uint l = 0; l < this->system[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
-
-                    if (this->system[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l] == ptr)
-                        return true;
-
-                }
-
-                for (uint l = 0; l < this->system[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
-
-                    if (this->system[i]->projections[j]->synapses[k]->postsynapseType->inputs[l] == ptr)
-                        return true;
-
-                }
-
             }
 
+        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+
+            if (this->populations[i]->projections[j] == ptr) {
+                return true;
+            }
+
+            for (uint k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (this->populations[i]->projections[j]->synapses[k] == ptr) {
+                    return true;
+                }
+                for (uint l = 0; l < this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l] == ptr) {
+                        return true;
+                    }
+                }
+
+                for (uint l = 0; l < this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l] == ptr) {
+                        return true;
+                    }
+                }
+            }
         }
     }
 
@@ -3302,27 +2070,24 @@ bool rootData::isValidPointer(systemObject * ptr) {
 }
 
 // allow safe usage of NineMLComponentData pointers
-bool rootData::isValidPointer(NineMLComponentData * ptr) {
-
+bool rootData::isValidPointer(NineMLComponentData * ptr)
+{
     // find the reference
-    for (uint i = 0; i < this->system.size(); ++i) {
+    for (uint i = 0; i < this->populations.size(); ++i) {
 
-        if (this->system[i]->neuronType == ptr)
+        if (this->populations[i]->neuronType == ptr) {
             return true;
+        }
 
-        for (uint j = 0; j < this->system[i]->projections.size(); ++j) {
-
-            for (uint k = 0; k < this->system[i]->projections[j]->synapses.size(); ++k) {
-
-                if (this->system[i]->projections[j]->synapses[k]->weightUpdateType == ptr)
+        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType == ptr) {
                     return true;
-
-                if (this->system[i]->projections[j]->synapses[k]->postsynapseType == ptr)
+                }
+                if (this->populations[i]->projections[j]->synapses[k]->postsynapseType == ptr) {
                         return true;
-
-
+                }
             }
-
         }
     }
 
@@ -3331,74 +2096,76 @@ bool rootData::isValidPointer(NineMLComponentData * ptr) {
 }
 
 // allow safe usage of NineMLComponent pointers
-bool rootData::isValidPointer(NineMLComponent * ptr) {
-
+bool rootData::isValidPointer(NineMLComponent * ptr)
+{
     for (uint i = 0; i < this->catalogNrn.size(); ++i)
-        if (catalogNrn[i] == ptr)
+        if (catalogNrn[i] == ptr) {
             return true;
+        }
     for (uint i = 0; i < this->catalogPS.size(); ++i)
-        if (catalogPS[i] == ptr)
+        if (catalogPS[i] == ptr) {
             return true;
+        }
     for (uint i = 0; i < this->catalogUnsorted.size(); ++i)
-        if (catalogUnsorted[i] == ptr)
+        if (catalogUnsorted[i] == ptr) {
             return true;
+        }
     for (uint i = 0; i < this->catalogWU.size(); ++i)
-        if (catalogWU[i] == ptr)
+        if (catalogWU[i] == ptr) {
             return true;
+        }
 
     // not found
     return false;
 }
 
-void rootData::setSelectionbyName(QString name) {
-
+void rootData::setSelectionbyName(QString name)
+{
     systemObject * currObject = (systemObject *)0;
 
     // find the pop / projection that is being displayed
-    for (uint i = 0; i < this->system.size(); ++i) {
+    for (uint i = 0; i < this->populations.size(); ++i) {
 
-        if (this->system[i]->getName() == name)
-        {currObject = this->system[i];
-            break;}
+        if (this->populations[i]->getName() == name) {
+            currObject = this->populations[i];
+            break;
+        }
 
-        for (uint j = 0; j < this->system[i]->projections.size(); ++j) {
-
-            if (this->system[i]->projections[j]->getName() == name)
-            {currObject = this->system[i]->projections[j];
-                break;}
-
+        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+            if (this->populations[i]->projections[j]->getName() == name) {
+                currObject = this->populations[i]->projections[j];
+                break;
+            }
         }
     }
 
     this->selList.clear();
     this->selList.push_back(currObject);
-
 }
 
-void rootData::returnPointerToSelf(rootData * * data) {
-
+void rootData::returnPointerToSelf(rootData * * data)
+{
     (*data) = this;
-
 }
 
-void rootData::addgenericInput() {
-
+void rootData::addgenericInput()
+{
     // input text
     QString text = ((QLineEdit *) sender())->text();
     NineMLComponentData * src = (NineMLComponentData *)0;
 
     // find source:
-    for (uint i = 0; i < this->system.size(); ++i) {
-        if (this->system[i]->neuronType->getXMLName() == text) {
-            src = this->system[i]->neuronType;
+    for (uint i = 0; i < this->populations.size(); ++i) {
+        if (this->populations[i]->neuronType->getXMLName() == text) {
+            src = this->populations[i]->neuronType;
         }
-        for (uint j = 0; j < this->system[i]->projections.size(); ++j) {
-            for (uint k = 0; k < this->system[i]->projections[j]->synapses.size(); ++k) {
-                if (this->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = this->system[i]->projections[j]->synapses[k]->weightUpdateType;
+        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
+                    src = this->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
-                if (this->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = this->system[i]->projections[j]->synapses[k]->postsynapseType;
+                if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
+                    src = this->populations[i]->projections[j]->synapses[k]->postsynapseType;
                 }
             }
         }
@@ -3424,22 +2191,18 @@ void rootData::addgenericInput() {
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
         ((QLineEdit *) sender())->setPalette(p);
     }
-
 }
 
-void rootData::delgenericInput() {
-
+void rootData::delgenericInput()
+{
     genericInput * ptr = (genericInput *) sender()->property("ptr").value<void *>();
-    //NineMLComponentData * ptrDst = (NineMLComponentData *) sender()->property("ptrDst").value<void *>();
-
     // delete the genericInput
     currProject->undoStack->push(new delInput(this, ptr));
-
     emit updatePanel(this);
-
 }
 
-void rootData::editConnections() {
+void rootData::editConnections()
+{
     // launch the list editor dialog
     csv_connection * conn = (csv_connection *) sender()->property("ptr").value<void *>();
     connectionListDialog * dialog  = new connectionListDialog(conn);
@@ -3447,22 +2210,25 @@ void rootData::editConnections() {
 
 }
 
-void rootData::setTitle() {
+void rootData::setTitle()
+{
     emit setWindowTitle();
 }
 
-void rootData::setModelTitle(QString model_name) {
-
+void rootData::setModelTitle(QString model_name)
+{
     currProject->undoStack->push(new updateModelTitle(this, model_name, currProject));
     setCaptionOut(model_name);
 }
 
-void rootData::setCaptionOut(QString model_name) {
+void rootData::setCaptionOut(QString model_name)
+{
     // update version and name caption
     emit setCaption(model_name + " <i>" + "</i>");
 }
 
-void rootData::undoOrRedoPerformed(int) {
+void rootData::undoOrRedoPerformed(int)
+{
     emit redrawGLview();
     QSettings settings;
     setCaptionOut(settings.value("model/model_name", "err").toString());
@@ -3470,16 +2236,17 @@ void rootData::undoOrRedoPerformed(int) {
     emit setWindowTitle();
 }
 
-void rootData::copyParsToClipboard() {
-
+void rootData::copyParsToClipboard()
+{
     // safety
     if (selList.size() == 1) {
 
         // if population
         if (selList[0]->type == populationObject) {
             if (sender()->property("source").toString() == "tab1") {
-                if (clipboardCData != NULL)
+                if (clipboardCData != NULL) {
                     delete clipboardCData;
+                }
                 clipboardCData = new NineMLComponentData(((population *) selList[0])->neuronType);
             }
         }
@@ -3487,13 +2254,15 @@ void rootData::copyParsToClipboard() {
         // if projection
         if (selList[0]->type == projectionObject) {
             if (sender()->property("source").toString() == "tab1") {
-                if (clipboardCData != NULL)
+                if (clipboardCData != NULL) {
                     delete clipboardCData;
+                }
                 clipboardCData = new NineMLComponentData(((projection *) selList[0])->synapses[((projection *) selList[0])->currTarg]->weightUpdateType);
             }
             if (sender()->property("source").toString() == "tab2") {
-                if (clipboardCData != NULL)
+                if (clipboardCData != NULL) {
                     delete clipboardCData;
+                }
                 clipboardCData = new NineMLComponentData(((projection *) selList[0])->synapses[((projection *) selList[0])->currTarg]->postsynapseType);
             }
         }
@@ -3501,8 +2270,8 @@ void rootData::copyParsToClipboard() {
     this->reDrawAll();
 }
 
-void rootData::pasteParsFromClipboard() {
-
+void rootData::pasteParsFromClipboard()
+{
     // safety
     if (selList.size() == 1) {
 

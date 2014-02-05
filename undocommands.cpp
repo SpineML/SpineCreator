@@ -130,9 +130,9 @@ void addPopulationCmd::undo()
     pop->isDeleted = true;
     isDeleted = true;
     // remove from system:
-    for (uint i = 0; i < data->system.size(); ++i) {
-        if (this->pop == data->system[i])
-            data->system.erase(data->system.begin()+i);
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        if (this->pop == data->populations[i])
+            data->populations.erase(data->populations.begin()+i);
     }
     // might be selected:
     for (uint i = 0; i < data->selList.size(); ++i) {
@@ -152,7 +152,7 @@ void addPopulationCmd::undo()
 void addPopulationCmd::redo()
 {
     // add to system
-    data->system.push_back(pop);
+    data->populations.push_back(pop);
 
     pop->isDeleted = false;
     isDeleted = false;
@@ -222,7 +222,7 @@ void delPopulation::undo()
     // MUST HAVE A LOCAL COPY OR INCOMING UNDOS CAN CHANGE STATE BEFORE OUTGOING DESTRUCTOR CALLED
     isDeleted = false;
     if (index != -1) {
-        data->system.insert(data->system.begin()+index, pop);
+        data->populations.insert(data->populations.begin()+index, pop);
     }
     if (selIndex != -1) {
         data->selList.push_back(pop);
@@ -236,9 +236,9 @@ void delPopulation::undo()
 void delPopulation::redo()
 {
     // remove from system
-    for (uint i = 0; i < data->system.size(); ++i) {
-        if (pop == data->system[i]) {
-            data->system.erase(data->system.begin()+i);
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        if (pop == data->populations[i]) {
+            data->populations.erase(data->populations.begin()+i);
             index = i;
         }
     }

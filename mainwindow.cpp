@@ -157,10 +157,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // join up the components of the program
     QObject::connect(ui->viewport, SIGNAL(reDraw(QPainter*, float, float, float, int, int, drawStyle)), &(data), SLOT(reDrawAll(QPainter*, float, float, float, int, int, drawStyle)));
-    QObject::connect(ui->viewport, SIGNAL(selectCoord(float,float,float)), &(data), SLOT(selectCoord(float,float,float)));
+    QObject::connect(ui->viewport, SIGNAL(onLeftMouseDown(float,float,float,bool)), &(data), SLOT(onLeftMouseDown(float,float,float,bool)));
+    QObject::connect(ui->viewport, SIGNAL(onLeftMouseDownWithShift(float,float,float)), &(data), SLOT(onLeftMouseDownWithShift(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(selectCoordMouseUp(float,float,float)), &(data), SLOT(selectCoordMouseUp(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(itemWasMoved(float,float,float)), &(data), SLOT(itemWasMoved(float,float,float)));
-    QObject::connect(ui->viewport, SIGNAL(selectRMBCoord(float,float,float)), &(data), SLOT(rightClickByGL(float,float,float)));
+    QObject::connect(ui->viewport, SIGNAL(onRightMouseDown(float,float,float)), &(data), SLOT(onRightMouseDown(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(mouseMove(float,float)), &(data), SLOT(mouseMoveGL(float,float)));
     QObject::connect(ui->viewport, SIGNAL(drawSynapse(float,float)), &(data), SLOT(startAddBezier(float,float)));
     QObject::connect(ui->viewport, SIGNAL(addBezierOrProjection(float,float)), &(data), SLOT(addBezierOrProjection(float,float)));
@@ -1291,6 +1292,11 @@ void MainWindow::export_project(const QString& filePath)
     if (filePath.isEmpty()) {
         return;
     }
+
+    // FIXME: Check here to see if there is already a project file in
+    // this directory, and warn the user that you can't save two
+    // projects in one directory.
+
     this->data.currProject->save_project(filePath, &data);
     // enable / disable menus
     this->configureVCSMenu();

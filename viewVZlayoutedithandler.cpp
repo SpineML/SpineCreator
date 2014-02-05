@@ -94,18 +94,18 @@ void viewVZLayoutEditHandler::deselectAll() {
 
 void viewVZLayoutEditHandler::setAllSelectState(bool selectState) {
 
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->system[i];
+        population * currPop = (population *) data->populations[i];
 
         // populations
         currPop->isVisualised = selectState;
 
         // population generic outputs:
 
-        for (uint output = 0; output < data->system[i]->neuronType->outputs.size(); ++output) {
+        for (uint output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
-            genericInput * currOutput = data->system[i]->neuronType->outputs[output];
+            genericInput * currOutput = data->populations[i]->neuronType->outputs[output];
 
             // add output if is not a projection input
             if (!currOutput->projInput) {
@@ -752,9 +752,9 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
     // sanity check
     bool found = false;
 
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->system[i];
+        population * currPop = (population *) data->populations[i];
 
         // populations
         if (currPop->getName() == item->name) {
@@ -763,9 +763,9 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
 
         // population generic outputs:
 
-        for (uint output = 0; output < data->system[i]->neuronType->outputs.size(); ++output) {
+        for (uint output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
-            genericInput * currOutput = data->system[i]->neuronType->outputs[output];
+            genericInput * currOutput = data->populations[i]->neuronType->outputs[output];
 
             // add output if is not a projection input
             if (!currOutput->projInput) {

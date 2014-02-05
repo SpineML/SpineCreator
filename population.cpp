@@ -25,7 +25,6 @@
 #include "population.h"
 #include "experiment.h"
 #include "projectobject.h"
-//#include "stringify.h"
 
 population::population(float x, float y, float size, float aspect_ratio, QString name)
 {
@@ -477,18 +476,17 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     this->neuronType->matchPorts();
 }
 
-void population::remove(rootData * data) {
-
+void population::remove(rootData * data)
+{
     // remove from experiment
     for (uint j = 0; j < data->experiments.size(); ++j) {
         data->experiments[j]->purgeBadPointer(this);
     }
     delete this;
-
 }
 
-void population::delAll(rootData * data) {
-
+void population::delAll(rootData * data)
+{
     // remove from experiment
     for (uint j = 0; j < data->experiments.size(); ++j) {
         data->experiments[j]->purgeBadPointer(this);
@@ -509,14 +507,13 @@ void population::delAll(rootData * data) {
     neuronType->removeReferences();
 
     delete this;
-
 }
 
 void population::delAll(projectObject * data) {
 
     // remove from experiment
     for (uint j = 0; j < data->experiments.size(); ++j) {
-        data->experimentList[j]->purgeBadPointer(this);
+        data->experimentList[j]->purgeBadPointer(this); // But purgeBadPointer will delete this!?
     }
 
     // remove the projections (they'll take themselves off the vector)
@@ -534,29 +531,29 @@ void population::delAll(projectObject * data) {
     neuronType->removeReferences();
 
     delete this;
-
 }
 
-population::~population() {
-
+population::~population()
+{
     //qDebug() << "Population Deleted " << this->getName();
     // remove componentData
 
-    if (isSpikeSource)
+    if (isSpikeSource) {
         delete this->neuronType->component;
+    }
 
     delete neuronType;
-
 }
 
 
-QString population::getName() {
+QString population::getName()
+{
     return this->name;
 }
 
-bool population::within_bounds(float x, float y) {
-
-   // cerr("v = %f %f %f %f %f %f", x, y, top, bottom, left, right);
+bool population::within_bounds(float x, float y)
+{
+    // cerr("v = %f %f %f %f %f %f", x, y, top, bottom, left, right);
     if (x > this->left && x < this->right && y > this->bottom && y < this->top) {
         return 1;
     } else {

@@ -1418,12 +1418,12 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 tabLayout->insertLayout(tabLayout->count()-1, addInput);
 
                 QStringList elementList;
-                for (uint i = 0; i < data->system.size(); ++i) {
-                    elementList << data->system[i]->neuronType->getXMLName();
-                    for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-                        for (uint k = 0; k < data->system[i]->projections[j]->synapses.size(); ++k) {
-                            elementList << data->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                            elementList << data->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                for (uint i = 0; i < data->populations.size(); ++i) {
+                    elementList << data->populations[i]->neuronType->getXMLName();
+                    for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+                        for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+                            elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                            elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
                         }
                     }
                 }

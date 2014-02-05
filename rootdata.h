@@ -67,7 +67,7 @@ public:
     vector < projectObject * > projects;
     projectObject * currProject;
 
-    vector < population *> system;
+    vector < population *> populations;
     vector < NineMLComponent *> catalogUnsorted;
     vector < NineMLComponent *> catalogNrn;
     vector < NineMLComponent *> catalogWU;
@@ -131,7 +131,8 @@ signals:
 public slots:
     void saveImage(QString);
     void reDrawAll(QPainter *, float, float, float, int, int, drawStyle style);
-    void selectCoord(float xGL, float yGL, float GLscale);
+    void onLeftMouseDownWithShift(float xGL, float yGL, float GLscale);
+    void onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown);
 
     /*
      * \brief React to an item having been moved
@@ -145,16 +146,9 @@ public slots:
      */
     void itemWasMoved(float xGL, float yGL, float GLscale);
 
-    void rightClickByGL(float xGL, float yGL, float GLscale);
+    void onRightMouseDown(float xGL, float yGL, float GLscale);
     void mouseMoveGL(float, float);
     void import_csv(QString);
-/*    bool import_project_xml(QString);
-    void import_component_xml(QStringList fileNames);
-    void import_layout_xml(QStringList fileNames);
-    void export_project_xml(QString);
-    bool export_model_for_simulator(QString);
-    void export_component_xml(QString, NineMLComponent *component);
-    void export_layout_xml(QString, NineMLLayout *component);*/
     void updatePortMap(QString);
     void updateType(int index);
     void updatePar();
@@ -206,7 +200,25 @@ private:
      */
     population* currSelPopulation();
 
+    /*!
+     * Find the object selected by the mouse (called by onLeftMouseDown)
+     */
+    void findSelection (float xGL, float yGL, float GLscale, vector<systemObject*>& newlySelectedList);
+
+    /*!
+     * Action to take when a mouse down event has changed selected objects.
+     */
+    void onNewSelections (float xGL, float yGL);
+
+    /*!
+     * \brief selListContains finds out if this->selList contains any of the members of objectList.
+     * \param objectList The vector of systemObject pointers to look for in selList
+     * \return true if selList contains anything from objectList, false otherwise.
+     */
+    bool selListContains (const vector<systemObject*>& objectList);
+
     QString getUniquePopName(QString newName);
+    // NB: This is unused. Refactor out.
     bool selChange;
     QPointF dragListStart;
     QRectF dragSelection;
@@ -214,18 +226,17 @@ private:
     QDomDocument tempDoc;
 
     /*!
-     * This holds the position of the item BEFORE it was moved. it's
+     * This helps determine the position of an item BEFORE it was moved. it's
      * used for "undo move item position" - you need to know where the
      * item used to be so that you can restore it back to that
      * position. These are the "xGL,yGL" coordinates.
      *
-     * Note that this is the last position of the *mouse* and to get
-     * the last position of the object, you'll have to work out the
-     * mouse offset (which you can get by calculating the mouse offset
+     * Note that this is the last position of the *mouse*. It's used to get
+     * the last position of the object by working out the
+     * mouse offset (which can be obtained by calculating the mouse offset
      * at the end of the object movement).
      */
-    //pair<float, float> lastSelectionPosition;
-    QPointF lastSelectionPosition;
+    QPointF lastLeftMouseDownPos;
 };
 
 #endif // ROOTDATA_H

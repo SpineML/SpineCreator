@@ -56,8 +56,9 @@ public:
 signals:
     void currElement(int type, int index);
     void reDraw(QPainter*, float, float, float, int, int, drawStyle);
-    void selectCoord(float xGL, float yGL, float GLscale);
-    void selectRMBCoord(float xGL, float yGL, float GLscale);
+    void onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown);
+    void onLeftMouseDownWithShift(float xGL, float yGL, float GLscale);
+    void onRightMouseDown(float xGL, float yGL, float GLscale);
     void mouseMove(float xGL, float yGL);
     void drawSynapse(float xGL, float yGL);
     void addBezierOrProjection(float xGL, float yGL);

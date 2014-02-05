@@ -100,11 +100,24 @@ void GLWidget::mousePressEvent(QMouseEvent* event)
     if (this->connectMode == false) {
         if (event->button() == Qt::LeftButton) {
             setCursor(Qt::ClosedHandCursor);
-            emit selectCoord(xGL, yGL, this->GLscale);
+#ifdef USE_SHIFT_FOR_MOVE_MULTIPLE
+            bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
+            // are we adding or reselecting? NB: Move this into the glwidget class (todo: seb)
+            if (addSelection) {
+                emit onLeftMouseDownWithShift(xGL, yGL, this->GLscale);
+            } else {
+#endif
+                // Rather than using the shift modifier, lets use logic in
+                // onLeftMouseDown to see if we should select the object or drag the group.
+                bool shiftDown = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
+                emit onLeftMouseDown(xGL, yGL, this->GLscale, shiftDown);
+#ifdef USE_SHIFT_FOR_MOVE_MULTIPLE
+            }
+#endif
         }
         if (event->button() == Qt::RightButton) {
             setCursor(Qt::CrossCursor);
-            emit selectRMBCoord(xGL, yGL, this->GLscale);
+            emit onRightMouseDown(xGL, yGL, this->GLscale);
         }
     } else {
         if (event->button() == Qt::LeftButton) {

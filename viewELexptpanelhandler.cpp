@@ -688,17 +688,17 @@ void viewELExptPanelHandler::setInputComponent() {
     NineMLComponentData * src = (NineMLComponentData *)0;
 
     // find source:
-    for (uint i = 0; i < data->system.size(); ++i) {
-        if (data->system[i]->neuronType->getXMLName() == text) {
-            src = data->system[i]->neuronType;
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        if (data->populations[i]->neuronType->getXMLName() == text) {
+            src = data->populations[i]->neuronType;
         }
-        for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->system[i]->projections[j]->synapses.size(); ++k) {
-                if (data->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->system[i]->projections[j]->synapses[k]->weightUpdateType;
+        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
-                if (data->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->system[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
                 }
             }
         }
@@ -1061,17 +1061,17 @@ void viewELExptPanelHandler::setOutputComponent() {
     NineMLComponentData * src = (NineMLComponentData *)0;
 
     // find source:
-    for (uint i = 0; i < data->system.size(); ++i) {
-        if (data->system[i]->neuronType->getXMLName() == text) {
-            src = data->system[i]->neuronType;
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        if (data->populations[i]->neuronType->getXMLName() == text) {
+            src = data->populations[i]->neuronType;
         }
-        for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->system[i]->projections[j]->synapses.size(); ++k) {
-                if (data->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->system[i]->projections[j]->synapses[k]->weightUpdateType;
+        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
-                if (data->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->system[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
                 }
             }
         }
@@ -1245,10 +1245,10 @@ void viewELExptPanelHandler::setLesionProjection() {
     projection * lesionedProj = (projection *)0;
 
     // find source:
-    for (uint i = 0; i < data->system.size(); ++i) {
-        for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-            if (data->system[i]->projections[j]->getName() == text)
-                lesionedProj = data->system[i]->projections[j];
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+            if (data->populations[i]->projections[j]->getName() == text)
+                lesionedProj = data->populations[i]->projections[j];
         }
     }
 
@@ -1320,17 +1320,17 @@ void viewELExptPanelHandler::setChangeParComponent() {
     NineMLComponentData * src = (NineMLComponentData *)0;
 
     // find source:
-    for (uint i = 0; i < data->system.size(); ++i) {
-        if (data->system[i]->neuronType->getXMLName() == text) {
-            src = data->system[i]->neuronType;
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        if (data->populations[i]->neuronType->getXMLName() == text) {
+            src = data->populations[i]->neuronType;
         }
-        for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->system[i]->projections[j]->synapses.size(); ++k) {
-                if (data->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->system[i]->projections[j]->synapses[k]->weightUpdateType;
+        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
-                if (data->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->system[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
                 }
             }
         }

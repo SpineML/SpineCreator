@@ -1016,9 +1016,9 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
     QModelIndexList indices = top.indexes();
     TreeItem *item = static_cast<TreeItem*>(indices[0].internalPointer());
 
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->system[i];
+        population * currPop = (population *) data->populations[i];
 
         // populations
         if (currPop->getName() == item->name) {
@@ -1030,9 +1030,9 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
         }
 
         // population inputs
-        for (uint output = 0; output < data->system[i]->neuronType->outputs.size(); ++output) {
+        for (uint output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
-            genericInput * currOutput = data->system[i]->neuronType->outputs[output];
+            genericInput * currOutput = data->populations[i]->neuronType->outputs[output];
 
             // add Synapse
             if (!currOutput->projInput)
@@ -1469,9 +1469,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
 
     // this is fired when an item is checked or unchecked
 
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->system[i];
+        population * currPop = (population *) data->populations[i];
 
         // populations
         if (currPop->isVisualised) {
