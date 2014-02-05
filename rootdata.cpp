@@ -875,8 +875,8 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
     // 5. Something previously selected, user clicked on new object, WITH shift -> add to selection
     // 6. Something previously selected, user unselected, WITH shift -> do nothing
     // 7. Something previously selected, user unselected, no shift -> clear selection
-
-    // 8. FIXME: Something(s) were previously selected, user clicked on one of them -> User is moving selection.
+    //
+    // 8. Something(s) were previously selected, user clicked on one of them -> User is moving selection.
 
     qDebug() << "prev. selected: " << this->selList.size();
     qDebug() << "newly selected: " << newlySelectedList.size();
@@ -922,22 +922,20 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
             // Have new selection
             qDebug() << "We have a new selection...";
             if (shiftDown) {
-                // User still has shift down; append
-                qDebug() << "User has shift down, so append newlySelected onto selList";
-                this->cursor.x = -100000;
-                this->cursor.y = -100000;
-                this->selList.insert (this->selList.end(),
-                                      newlySelectedList.begin(), newlySelectedList.end());
+                // User still has shift down; append, leaving cursor unchanged
+                if (!this->selListContains (newlySelectedList)) {
+                    qDebug() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
+                    this->selList.insert (this->selList.end(), newlySelectedList.begin(), newlySelectedList.end());
+                } // else user has shift down,. but newlySelected is already in selList.
             } else {
                 // Shift not down, user wishes to switch selection OR move several selected items
                 qDebug() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
                 if (this->selListContains (newlySelectedList)) {
                     qDebug() << "selList contains newly selected; user wishes to MOVE selected items.";
-                    // Nothing further to do here, in fact.
+                    // Nothing further to do here?
                 } else {
+                    // Swap selection, leave cursor unchanged.
                     qDebug() << "newly selected not in selList. user wishes to switch selection. Swap newly selected into selList";
-                    this->cursor.x = -100000;
-                    this->cursor.y = -100000;
                     this->selList.swap (newlySelectedList);
                 }
 #if 0
