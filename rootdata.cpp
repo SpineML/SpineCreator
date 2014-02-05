@@ -799,21 +799,26 @@ void rootData::populationMoved()
     // mouseMove events already handle that (allowing the population
     // widget to be re-drawn as it's moved. However, what we DO need
     // to do is to record that the population moved in the undo stack.
-    population * pop = this->currSelPopulation();
-    if (pop == NULL) {
+    vector<population*> pops = this->currSelPopulations();
+    if (pops.empty()) {
         return;
     }
 
-    // New position of the population, which it already has a record of.
-    QPointF newPos(pop->targx, pop->targy);
+    vector<population*>::const_iterator popsi = pops.begin();
+    while (popsi != pops.end()) {
+        // New position of the population, which it already has a record of.
+        QPointF newPos((*popsi)->targx, (*popsi)->targy);
 
-    // The last position of the population is the
-    // lastSelectionPosition (which is the *mouse* position) offset by
-    // the current offset in the population (as the population moves,
-    // the mouse remains in the same location on the object).
-    QPointF lastPopulationPosition = lastLeftMouseDownPos + pop->getLocationOffset();
+        // The last position of the population is the
+        // lastSelectionPosition (which is the *mouse* position) offset by
+        // the current offset in the population (as the population moves,
+        // the mouse remains in the same location on the object).
+        QPointF lastPopulationPosition = lastLeftMouseDownPos + (*popsi)->getLocationOffset();
 
-    currProject->undoStack->push(new movePopulation(this, pop, lastPopulationPosition, newPos));
+        currProject->undoStack->push(new movePopulation(this, (*popsi), lastPopulationPosition, newPos));
+
+        ++popsi;
+    }
 }
 
 // An action carried out when the left mouse is pressed with shift held.
@@ -1055,7 +1060,6 @@ void rootData::deleteCurrentSelection()
             currProject->undoStack->push(new delInput(this,(genericInput *) selList[0]));
 
     }
-
 }
 
 void rootData::addPopulation()
@@ -1075,7 +1079,6 @@ void rootData::addPopulation()
 
         emit updatePanel(this);
         emit redrawGLview();
-
     }
 }
 
@@ -1591,6 +1594,20 @@ void rootData::updatePar(int value)
 
     // update panel
     updatePanel(this);
+}
+
+vector<population*> rootData::currSelPopulations()
+{
+    // get the currently selected populations (ALL of them)
+    vector<population*> currSel;
+    vector<systemObject*>::const_iterator i = this->selList.begin();
+    while (i != this->selList.end()) {
+        if ((*i)->type == populationObject) {
+            currSel.push_back (static_cast<population*>(*i));
+        }
+        ++i;
+    }
+    return currSel;
 }
 
 population* rootData::currSelPopulation()

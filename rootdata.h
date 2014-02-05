@@ -196,7 +196,22 @@ private:
     void populationMoved();
 
     /*!
-     * Obtain the currently selected population.
+     * \brief Obtain the currently selected populations
+     *
+     * \return A vector of pointers to all currently selected
+     * populations.
+     */
+    vector<population*> currSelPopulations();
+
+    /*!
+     * \brief Obtain the currently selected population.
+     *
+     * Obtain the currently selected population if only a single
+     * population is selected. If no populations are selected, return
+     * NULL. If more than one population is selected, return NULL.
+     *
+     * \return pointer to the selected population, if only a single
+     * population is selected; otherwise NULL.
      */
     population* currSelPopulation();
 
