@@ -703,13 +703,17 @@ setSizeUndo::setSizeUndo(rootData * data, population * ptr, int value, QUndoComm
 void setSizeUndo::undo()
 {
     ptr->numNeurons = oldValue;
-    data->main->viewVZ.OpenGLWidget->parsChangedProjections();
+    if (data->main->viewVZ.OpenGLWidget != NULL) {
+        data->main->viewVZ.OpenGLWidget->parsChangedProjections();
+    }
 }
 
 void setSizeUndo::redo()
 {
     ptr->numNeurons = value;
-    data->main->viewVZ.OpenGLWidget->parsChangedProjections();
+    if (data->main->viewVZ.OpenGLWidget != NULL) {
+        data->main->viewVZ.OpenGLWidget->parsChangedProjections();
+    }
 }
 
 // ######## SET LOC 3D #################
