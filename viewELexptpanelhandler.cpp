@@ -35,6 +35,7 @@
 #include "projectobject.h"
 //#include "stringify.h"
 
+#define NEW_EXPERIMENT_VIEW
 
 viewELExptPanelHandler::viewELExptPanelHandler(QObject *parent) :
     QObject(parent)
@@ -54,14 +55,21 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, rootData *
     this->cursor = QPointF(0,0);
 
     // visual experiments test code - all looks good but not right now...
-    if (0) {
-        GLWidget * gl = new GLWidget;
-        connect(gl, SIGNAL(reDraw(QPainter*,float,float,float,int,int,drawStyle)),this,SLOT(reDrawModel(QPainter*,float,float,float,int,int,drawStyle)));
-        connect(gl, SIGNAL(mouseMove(float,float)), this, SLOT(mouseMove(float,float)));
-        connect(gl, SIGNAL(selectCoord(float,float,float)), this, SLOT(selectByMouseDown(float,float,float)));
+#ifdef NEW_EXPERIMENT_VIEW
+    gl = new GLWidget;
+    connect(gl, SIGNAL(reDraw(QPainter*,float,float,float,int,int,drawStyle)),this,SLOT(reDrawModel(QPainter*,float,float,float,int,int,drawStyle)));
+    connect(gl, SIGNAL(mouseMove(float,float)), this, SLOT(mouseMove(float,float)));
+    connect(gl, SIGNAL(onLeftMouseDown(float,float,float, bool)), this, SLOT(selectByMouseDown(float,float,float)));
 
-        ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(gl);
-    }
+    ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(gl);
+
+    // for animation
+    QTimer *timer = new QTimer( this );
+    // this creates a Qt timer event
+    connect( timer, SIGNAL(timeout()), this->gl, SLOT(animate()) );
+    // launch the timer
+    timer->start(16);
+#endif
 
     this->exptSetup->setContentsMargins(4,4,4,4);
     this->exptInputs->setContentsMargins(4,4,4,4);
@@ -173,47 +181,16 @@ void viewELExptPanelHandler::redraw(double) {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::redrawExpt() {
-
-    // clear old stuff
-    while(forDeleting.size() > 0) {
-        forDeleting[0]->deleteLater();
-        forDeleting.erase(forDeleting.begin());
-    }
-
-    recursiveDeleteExpt(exptSetup);
-    recursiveDeleteExpt(exptInputs);
-    recursiveDeleteExpt(exptOutputs);
-    recursiveDeleteExpt(exptChanges);
-
-    experiment * currentExperiment = NULL;
-
-    // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
-        if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
-    }
-
-    if (currentExperiment == NULL) return;
-
-    if (currentExperiment->editing)
-        return;
+void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperiment)
+{
 
     QFont titleFont("Helvetica [Cronyx]", 12);
-    QFont mainFont("Helvetica [Cronyx]", 10);
+    //QFont mainFont("Helvetica [Cronyx]", 10);
 
     QLabel * title;
     title = new QLabel(tr("Setup Simulator"));
     title->setFont(titleFont);
     exptSetup->addWidget(title);
-    title = new QLabel(tr("Add model inputs"));
-    title->setFont(titleFont);
-    exptInputs->addWidget(title);
-    title = new QLabel(tr("Add model outputs"));
-    title->setFont(titleFont);
-    exptOutputs->addWidget(title);
-    title = new QLabel(tr("Add model changes"));
-    title->setFont(titleFont);
-    exptChanges->addWidget(title);
 
     // redraw SIMULATOR SETUP
 
@@ -279,6 +256,44 @@ void viewELExptPanelHandler::redrawExpt() {
         connect(solverOrd, SIGNAL(valueChanged(int)), this, SLOT(changedSolverOrder(int)));
         formSim->addRow("Solver order:",solverOrd);
     }
+
+}
+
+void viewELExptPanelHandler::redrawExpt() {
+
+    // clear old stuff
+    while(forDeleting.size() > 0) {
+        forDeleting[0]->deleteLater();
+        forDeleting.erase(forDeleting.begin());
+    }
+
+    recursiveDeleteExpt(exptSetup);
+    recursiveDeleteExpt(exptInputs);
+    recursiveDeleteExpt(exptOutputs);
+    recursiveDeleteExpt(exptChanges);
+
+    experiment * currentExperiment = NULL;
+
+    // find currentExperiment
+    for (uint i = 0; i < data->experiments.size(); ++i) {
+        if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
+    }
+
+    if (currentExperiment == NULL) return;
+
+    if (currentExperiment->editing)
+        return;
+
+#ifdef NEW_EXPERIMENT_VIEW
+
+    if (this->data->isValidPointer(this->currSystemObject) == false) {
+        this->redrawSimulatorParams(currentExperiment);
+    }
+
+#else
+
+    // redraw SIMULATOR PARAMETERS
+    redrawSimulatorParams()
 
     // redraw MODEL INPUTS
 
@@ -398,6 +413,8 @@ void viewELExptPanelHandler::redrawExpt() {
     exptInputs->addStretch();
     exptOutputs->addStretch();
     exptChanges->addStretch();
+
+#endif
 
 }
 
@@ -1555,7 +1572,9 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     data->main->viewGV.properties->loadDataFiles(logs.entryList(), &logs);
 
     // and insert logs into visualiser
-    data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV.properties->logs);
+    if (data->main->viewVZ.OpenGLWidget != NULL) {
+        data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV.properties->logs);
+    }
 
     // get status
     if (status == QProcess::CrashExit) {
@@ -1605,14 +1624,12 @@ void viewELExptPanelHandler::mouseMove(float xGL, float yGL)
     // first get a pointer the the GLWidget
     GLWidget * source = (GLWidget *) sender();
     // now update the widget location to the new offset
-    //source->move(xGL+source->viewX-cursor.x(),yGL-source->viewY-cursor.y());
     source->move(xGL+source->viewX-cursor.x(),yGL-source->viewY-cursor.y());
 }
 
 
 void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
 {
-
     // draw the populations
     for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
 
@@ -1634,10 +1651,74 @@ void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float 
         this->data->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
 
     }
+
+    // redraw selected object to highlight, if it is not deleted pointer:
+    if (data->isValidPointer(this->currSystemObject) == true) {
+        if (this->currSystemObject->type == populationObject) {
+            population * pop = (population *) this->currSystemObject;
+
+            float left = ((pop->getLeft()+viewX)*GLscale+float(width))/2;
+            float right = ((pop->getRight()+viewX)*GLscale+float(width))/2;
+            float top = ((-pop->getTop()+viewY)*GLscale+float(height))/2;
+            float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
+
+            if (pop->isSpikeSource) {
+                for (unsigned int i = 5; i > 1; --i) {
+                    QPen pen(QColor(0,0,0,50/i));
+                    pen.setWidthF(float(i*2));
+                    painter->setPen(pen);
+                    painter->drawEllipse(QPointF((right+left)/2.0, (top+bottom)/2.0),0.5*GLscale/2.0,0.5*GLscale/2.0);
+                }
+
+            } else {
+
+                for (unsigned int i = 5; i > 1; --i) {
+                    QPen pen(QColor(0,0,0,50/i));
+                    pen.setWidthF(float(i*2));
+                    painter->setPen(pen);
+                    QRectF rectangle(left, top, right-left, bottom-top);
+                    painter->drawRect(rectangle);
+                }
+            }
+        }
+        if (this->currSystemObject->type == projectionObject) {
+
+            projection * col = (projection *) this->currSystemObject;
+
+            for (unsigned int i = 5; i > 1; --i) {
+                QPen pen(QColor(0,0,0,30/i));
+                pen.setWidthF(float(i*2));
+                painter->setPen(pen);
+                col->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, standardDrawStyle);
+            }
+        }
+    }
 }
 
 void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLScale)
 {
-    // need the selection code here - but only for single selections?
+    // store the location selected for use when dragging around the viewport
     this->cursor = QPointF(xGL,yGL);
+
+    // A list of things which have been selected with this left mouse
+    // down click. Will be added to this->selList after the logic in
+    // this method.
+    vector<systemObject*> newlySelectedList;
+    this->data->findSelection (xGL, yGL, GLScale, newlySelectedList);
+
+    // if we have an object selected
+    if (newlySelectedList.size() == 1) {
+        // we have selected a new object - set the current selection to this object if it is a Population or a Projection
+        if (newlySelectedList[0]->type == populationObject || newlySelectedList[0]->type == projectionObject) {
+            this->currSystemObject = newlySelectedList[0];
+            // update the UI
+            gl->redrawGLview();
+            this->redraw();
+        }
+    } else {
+        this->currSystemObject = NULL;
+        // update the UI
+        gl->redrawGLview();
+        this->redraw();
+    }
 }

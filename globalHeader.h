@@ -59,8 +59,6 @@ class kernel_connection;
 class versionControl;
 class projectObject;
 
-using namespace std;
-
 // include headers:
 
 // library
@@ -98,6 +96,8 @@ using namespace std;
 #define acosh(x) log(x + sqrt(x*x - 1.0))
 #define atanh(x) (log(1.0+x) - log(1.0-x))/2.0
 #endif
+
+using namespace std;
 
 class versionNumber
 {

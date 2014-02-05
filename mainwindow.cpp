@@ -171,7 +171,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(&(data), SIGNAL(finishDrawingSynapse()), ui->viewport, SLOT(finishConnect()));
     QObject::connect(&(data), SIGNAL(redrawGLview()), ui->viewport, SLOT(redrawGLview()));
-    QObject::connect(&(data), SIGNAL(redrawGLview()), viewVZ.OpenGLWidget, SLOT(redraw()));
+    //QObject::connect(&(data), SIGNAL(redrawGLview()), viewVZ.OpenGLWidget, SLOT(redraw()));
     QObject::connect(&(data), SIGNAL(setCaption(QString)), this, SLOT(setCaption(QString)));
     QObject::connect(&(data), SIGNAL(setWindowTitle()), this, SLOT(updateTitle()));
 
@@ -1170,7 +1170,9 @@ void MainWindow::new_project()
 
     // deselect current project
     data.currProject->deselect_project(&data);
-    this->viewVZ.OpenGLWidget->clear();
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        this->viewVZ.OpenGLWidget->clear();
+    }
 
     // add & select new project
     data.projects.push_back(newProject);
@@ -1264,7 +1266,9 @@ void MainWindow::import_project(const QString& filePath)
     }
 
     // clear viewVZ
-    viewVZ.OpenGLWidget->clear();
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        viewVZ.OpenGLWidget->clear();
+    }
 
     // model to viewNL
     //this->viewNLshow();
@@ -1388,7 +1392,9 @@ void MainWindow::import_network()
         // check for version control
         data.currProject->version.setupVersion();
         // clear viewVZ
-        viewVZ.OpenGLWidget->clear();
+        if (this->viewVZ.OpenGLWidget != NULL) {
+            viewVZ.OpenGLWidget->clear();
+        }
         // redraw
         this->ui->viewport->changed = 1;
         configureVCSMenu();

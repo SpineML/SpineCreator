@@ -116,6 +116,11 @@ public:
 
     void redrawViews();
 
+    /*!
+     * Find the object selected by the mouse (called by onLeftMouseDown)
+     */
+    void findSelection (float xGL, float yGL, float GLscale, vector<systemObject*>& newlySelectedList);
+
 
 signals:
     void undoRenameBox();
@@ -215,11 +220,6 @@ private:
      * population is selected; otherwise NULL.
      */
     population* currSelPopulation();
-
-    /*!
-     * Find the object selected by the mouse (called by onLeftMouseDown)
-     */
-    void findSelection (float xGL, float yGL, float GLscale, vector<systemObject*>& newlySelectedList);
 
     /*!
      * Action to take when a mouse down event has changed selected objects.
