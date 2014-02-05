@@ -27,6 +27,7 @@
 
 #include "globalHeader.h"
 #include "nineML_classes.h"
+#include "viewELexptpanelhandler.h"
 
 class exptBox : public QFrame
 {

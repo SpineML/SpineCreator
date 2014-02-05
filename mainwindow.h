@@ -134,7 +134,7 @@ private:
     GLWidget *glWidget;
     void createActions();
     bool unsaved_changes;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC111
     QTimer fix;
 #endif
 
@@ -227,7 +227,7 @@ public slots:
 
     void fileListToggle();
     void fileListItemChanged(QListWidgetItem *current, QListWidgetItem *);
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC111
     // init gl for osx
     void osxHack();
 #endif
