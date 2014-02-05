@@ -162,8 +162,6 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 settings.endArray();
             }
 
-            versionNumber tempVer;
-            tempVer.fromFileString(this->neuronTypeName );
             QStringList tempName = this->neuronTypeName.split('.');
             // first section will hold the name
             if (tempName.size() > 0)
@@ -512,7 +510,7 @@ void population::delAll(rootData * data)
 void population::delAll(projectObject * data) {
 
     // remove from experiment
-    for (uint j = 0; j < data->experiments.size(); ++j) {
+    for (int j = 0; j < data->experiments.size(); ++j) {
         data->experimentList[j]->purgeBadPointer(this); // But purgeBadPointer will delete this!?
     }
 

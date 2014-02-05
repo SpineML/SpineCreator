@@ -131,7 +131,6 @@ signals:
 public slots:
     void saveImage(QString);
     void reDrawAll(QPainter *, float, float, float, int, int, drawStyle style);
-    void onLeftMouseDownWithShift(float xGL, float yGL, float GLscale);
     void onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown);
 
     /*
@@ -144,7 +143,7 @@ public slots:
      * react accordingly - that means putting a new entry on the
      * undostack.
      */
-    void itemWasMoved(float xGL, float yGL, float GLscale);
+    void itemWasMoved();
 
     void onRightMouseDown(float xGL, float yGL, float GLscale);
     void mouseMoveGL(float, float);
@@ -192,8 +191,10 @@ private:
      * question is a population. This doesn't need to move the
      * population (that already happened), but it does need to record
      * this event in the undo stack.
+     *
+     * \param pops A vector of the populations which are on the move.
      */
-    void populationMoved();
+    void populationMoved(const vector<population*>& pops);
 
     /*!
      * \brief Obtain the currently selected populations

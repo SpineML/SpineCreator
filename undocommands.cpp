@@ -911,7 +911,7 @@ void updateParType::redo()
 
 // ######## CHANGE TITLE #################
 
-updateTitle::updateTitle(rootData * data, population * ptr, QString newName, QString oldName, QLabel * label, QUndoCommand *parent) :
+updateTitle::updateTitle(population * ptr, QString newName, QString oldName, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->ptr = ptr;

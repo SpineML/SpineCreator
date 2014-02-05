@@ -158,9 +158,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // join up the components of the program
     QObject::connect(ui->viewport, SIGNAL(reDraw(QPainter*, float, float, float, int, int, drawStyle)), &(data), SLOT(reDrawAll(QPainter*, float, float, float, int, int, drawStyle)));
     QObject::connect(ui->viewport, SIGNAL(onLeftMouseDown(float,float,float,bool)), &(data), SLOT(onLeftMouseDown(float,float,float,bool)));
-    QObject::connect(ui->viewport, SIGNAL(onLeftMouseDownWithShift(float,float,float)), &(data), SLOT(onLeftMouseDownWithShift(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(selectCoordMouseUp(float,float,float)), &(data), SLOT(selectCoordMouseUp(float,float,float)));
-    QObject::connect(ui->viewport, SIGNAL(itemWasMoved(float,float,float)), &(data), SLOT(itemWasMoved(float,float,float)));
+    QObject::connect(ui->viewport, SIGNAL(itemWasMoved()), &(data), SLOT(itemWasMoved()));
     QObject::connect(ui->viewport, SIGNAL(onRightMouseDown(float,float,float)), &(data), SLOT(onRightMouseDown(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(mouseMove(float,float)), &(data), SLOT(mouseMoveGL(float,float)));
     QObject::connect(ui->viewport, SIGNAL(drawSynapse(float,float)), &(data), SLOT(startAddBezier(float,float)));
@@ -1906,7 +1905,7 @@ void MainWindow::viewVZshow()
 
     // unhide the current view
     this->viewVZ.view->show();
-    this->viewVZhandler->redrawHeaders(0);
+    this->viewVZhandler->redrawHeaders();
 
     // titlebar
     updateTitle();

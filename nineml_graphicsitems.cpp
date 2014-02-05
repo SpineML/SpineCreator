@@ -235,8 +235,8 @@ void NineMLTransitionItem::removeMember(GroupedTextItem *item)
 
 
 /* NineMLTextItem */
-NineMLTextItem::NineMLTextItem(GVItem *gv_item, TextItemGroup *parent, QGraphicsScene *scene)
-    :GroupedTextItem(parent, scene)
+NineMLTextItem::NineMLTextItem(GVItem *gv_item, TextItemGroup *parent)
+    :GroupedTextItem(parent)
 {
     this->gv_item = gv_item;
 }

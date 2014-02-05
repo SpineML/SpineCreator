@@ -877,6 +877,7 @@ float interpretMaths(vector <valop> stack) {
             return *tempStack.back().ptr;
     }
 
+    return 0.0;
 }
 
 QString createStack(QString equation, vector <lookup> &varList, vector <valop> * returnStack) {

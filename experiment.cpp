@@ -29,11 +29,6 @@
 
 experiment::experiment()
 {
-
-    QSettings settings;
-    QString localName = settings.value("versioning/localName", QHostInfo::localHostName()).toString();
-    version.setVersion(0,0,1,localName);
-
     // defaults
     setup.dt = 0.1;
     setup.duration = 1;
@@ -67,9 +62,7 @@ experiment::~experiment() {
 
 experiment::experiment(experiment * /*exptToCopy*/)
 {
-
- // add copy constructor here
-
+    // add copy constructor here
 }
 
 exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
@@ -327,7 +320,7 @@ void experiment::purgeBadPointer(NineMLComponentData * ptr)
         // are we using the component?
         if (change->component == ptr) {
             changes.erase(changes.begin()+i);
-            qDebug() << "Deleting this (change)";            
+            qDebug() << "Deleting this (change)";
             delete change;
             --i;
 

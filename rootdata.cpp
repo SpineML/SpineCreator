@@ -120,7 +120,7 @@ void rootData::redrawViews()
     connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZhandler, SLOT(selectionChanged(QItemSelection,QItemSelection)));
     connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZ.OpenGLWidget, SLOT(selectionChanged(QItemSelection,QItemSelection)));
     connect(main->viewVZ.sysModel, SIGNAL(dataChanged(QModelIndex,QModelIndex)), main->viewVZ.OpenGLWidget, SLOT(sysSelectionChanged(QModelIndex,QModelIndex)));
-    main->viewVZhandler->redrawHeaders(0);
+    main->viewVZhandler->redrawHeaders();
     main->viewVZ.OpenGLWidget->sysSelectionChanged(QModelIndex(), QModelIndex());
 }
 
@@ -782,27 +782,25 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
     }
 }
 
-void rootData::itemWasMoved(float xGL, float yGL, float GLscale)
+void rootData::itemWasMoved()
 {
-    qDebug() << "xGL,yGL: " << xGL << "," << yGL;
     if (!selList.empty()) {
-        // We have a pointer to the moved item. Check its type to see what to do with it.
-        if (selList[0]->type == populationObject) {
-            this->populationMoved();
-        } // else do nothing.
+        // We have a pointer(s) to the moved item(s). Check types to
+        // see what to do with it/them.  If ANY object in selList is a
+        // population, then call populationMoved.
+        vector<population*> pops = this->currSelPopulations();
+        if (!pops.empty()) {
+            this->populationMoved (pops);
+        } // else do nothing
     }
 }
 
-void rootData::populationMoved()
+void rootData::populationMoved(const vector<population*>& pops)
 {
     // We don't need to record that the population moved here - the
     // mouseMove events already handle that (allowing the population
     // widget to be re-drawn as it's moved. However, what we DO need
     // to do is to record that the population moved in the undo stack.
-    vector<population*> pops = this->currSelPopulations();
-    if (pops.empty()) {
-        return;
-    }
 
     vector<population*>::const_iterator popsi = pops.begin();
     while (popsi != pops.end()) {
@@ -819,21 +817,6 @@ void rootData::populationMoved()
 
         ++popsi;
     }
-}
-
-// An action carried out when the left mouse is pressed with shift held.
-void rootData::onLeftMouseDownWithShift(float xGL, float yGL, float GLscale)
-{
-    qDebug() << __FUNCTION__ << " called";
-    // Record the position of the selection.
-    this->lastLeftMouseDownPos.setX(xGL);
-    this->lastLeftMouseDownPos.setY(yGL);
-
-    for (uint i = 0; i < selList.size(); ++i) {
-        // register locations relative to cursor:
-        selList[i]->setLocationOffsetRelTo(xGL, yGL);
-    }
-    this->selectionMoved = false;
 }
 
 void rootData::onNewSelections (float xGL, float yGL)
@@ -1680,7 +1663,7 @@ void rootData::renamePopulation()
     // update name (undo-able)
     if (finalName != currSel->name) {
         titleLabel->setText("<u><b>" + finalName + "</b></u>");
-        currProject->undoStack->push(new updateTitle(this, currSel, finalName, currSel->name, titleLabel));
+        currProject->undoStack->push(new updateTitle(currSel, finalName, currSel->name));
     }
 
     // redraw view

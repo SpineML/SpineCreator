@@ -57,14 +57,13 @@ signals:
     void currElement(int type, int index);
     void reDraw(QPainter*, float, float, float, int, int, drawStyle);
     void onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown);
-    void onLeftMouseDownWithShift(float xGL, float yGL, float GLscale);
     void onRightMouseDown(float xGL, float yGL, float GLscale);
     void mouseMove(float xGL, float yGL);
     void drawSynapse(float xGL, float yGL);
     void addBezierOrProjection(float xGL, float yGL);
     void abortProjection();
     void selectCoordMouseUp(float xGL, float yGL, float GLscale);
-    void itemWasMoved(float xGL, float yGL, float GLscale);
+    void itemWasMoved();
     void dragSelect(float xGL, float yGL);
     void endDragSelect();
 

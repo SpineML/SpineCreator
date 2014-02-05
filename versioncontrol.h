@@ -71,14 +71,16 @@ private:
     QString stdErrText;
     bool isMercurialThere;
     versionType version;
-    
+
 signals:
-    
+
 public slots:
+#ifdef NEED_VERSIONCONTROL_FINISHED
     void finished(int, QProcess::ExitStatus status);
+#endif
     void standardOutput();
     void standardError();
-    
+
 };
 
-#endif // VERIONCONTROL_H
+#endif // VERSIONCONTROL_H

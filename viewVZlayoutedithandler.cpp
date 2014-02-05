@@ -606,20 +606,21 @@ void viewVZLayoutEditHandler::redrawFromObject(QString name) {
     if (name == "comboboxOSXfix") {
 #ifdef Q_OS_OSX
         // don't clear layout
-        redrawHeaders(1);
+        redrawHeaders();
 #else
-        // clear layout
-        redrawHeaders(0);
+        // clear layout (note this used to have a "mode" argument, but that's no longer used and hence this does the same as the Q_OS_MAC case above.
+        redrawHeaders();
 #endif
     } else {
-        redrawHeaders(0);
+        redrawHeaders();
     }
 }
 
-void viewVZLayoutEditHandler::redrawHeaders(int mode) {
-
-    if (this->viewVZ->treeView == NULL)
+void viewVZLayoutEditHandler::redrawHeaders()
+{
+    if (this->viewVZ->treeView == NULL) {
         return;
+    }
 
     emit deleteProperties();
     emit hideAll();
@@ -634,11 +635,9 @@ void viewVZLayoutEditHandler::redrawHeaders(int mode) {
     }
 
     if (this->viewVZ->currObject != (systemObject *)0) {
-
         // draw the parameters
         redrawProperties();
         drawDeletables();
-
     }
 }
 
@@ -808,7 +807,7 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
     data->selList.clear();
     data->selList.push_back(viewVZ->currObject);
 
-    this->redrawHeaders(0);
+    this->redrawHeaders();
 
 }
 
@@ -1099,27 +1098,17 @@ void viewVZLayoutEditHandler::drawDeletables() {
         // for now we only handle discrete tables, so leave this blank
 
         // HACK - quick table:
-
         connection * currConn;
-        int srcDims;
-
         if (this->viewVZ->currObject->type == synapseObject) {
             synapse * currSyn = (synapse *) this->viewVZ->currObject;
             currConn = currSyn->connectionType;
-            srcDims = currSyn->proj->source->numNeurons;
-
-
-        }
-        else
-        {
+        } else {
             genericInput * currIn = (genericInput *) this->viewVZ->currObject;
             currConn = currIn->connectionType;
-            srcDims = ((population *) currIn->source)->numNeurons;
         }
 
         // change display options based on type of connection
         if (currConn->type == CSV) {
-
 
                 QTableView *tableView = new QTableView();
                 connect(this, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));

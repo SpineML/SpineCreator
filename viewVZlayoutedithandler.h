@@ -87,7 +87,7 @@ private:
 
     // kernel
     QComboBox * kernelComboBox;
-    
+
 signals:
     void hideAll();
     void hideTree();
@@ -104,10 +104,10 @@ signals:
     void setSeed(int);
 
     void deleteProperties();
-    
+
 public slots:
     void redrawFromObject(QString name);
-    void redrawHeaders(int );
+    void redrawHeaders();
     void redrawLayoutEdit();
 
     void deleteTransform();
@@ -133,7 +133,7 @@ public slots:
 
     void togglePlay();
     void playBackTimeout();
-    
+
 };
 
 #endif // VIEW2LAYOUTEDITHANDLER_H

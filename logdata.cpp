@@ -103,7 +103,7 @@ vector < double > logData::getRow(int rowNum) {
 
         // if we skip to the end of the file
         if (data.atEnd())
-                return rowData;
+            return rowData;
 
         // check that all are same type
         dataType mainType;
@@ -126,14 +126,15 @@ vector < double > logData::getRow(int rowNum) {
                 // a good first guess
                 rowData.resize(columns.back().index+1, Q_INFINITY);
                 for (uint i = 0; i < columns.size(); ++i) {
-                    if (columns[i].index > rowData.size())
+                    if (static_cast<uint>(columns[i].index) > rowData.size()) {
                         rowData.resize(columns[i].index+1, Q_INFINITY);
+                    }
                     rowData[columns[i].index] = tempDbl[i];
                 }
             }
             return rowData;
         }
-            break;
+        break;
         case TYPE_FLOAT:
         {
             vector < float > tempFloat;
@@ -143,20 +144,21 @@ vector < double > logData::getRow(int rowNum) {
             // a good first guess
             rowData.resize(columns.back().index+1, Q_INFINITY);
             for (uint i = 0; i < columns.size(); ++i) {
-                if (columns[i].index > rowData.size())
+                if (static_cast<uint>(columns[i].index) > rowData.size()) {
                     rowData.resize(columns[i].index+1, Q_INFINITY);
+                }
                 rowData[columns[i].index] = tempFloat[i];
             }
             return rowData;
         }
-            break;
+        break;
         case TYPE_INT64:
         {
             // not supported currently
-                return rowData;
+            return rowData;
 
         }
-            break;
+        break;
         case TYPE_INT32:
         {
             vector < int > tempInt;
@@ -165,18 +167,25 @@ vector < double > logData::getRow(int rowNum) {
             // a good first guess
             rowData.resize(columns.back().index+1, Q_INFINITY);
             for (uint i = 0; i < columns.size(); ++i) {
-                if (columns[i].index > rowData.size())
+                if (static_cast<uint>(columns[i].index) > rowData.size()) {
                     rowData.resize(columns[i].index+1, Q_INFINITY);
+                }
                 rowData[columns[i].index] = tempInt[i];
             }
             return rowData;
         }
-            break;
+        break;
         case TYPE_STRING:
             return rowData;
-        }
+        } // end switch (columns[0].type)
     }
-    }
+    case CSVFormat:
+    case SSVFormat:
+    default:
+        // do nothing in these cases.
+        break;
+    } // end switch (dataFormat)
+
     return rowData;
 }
 
