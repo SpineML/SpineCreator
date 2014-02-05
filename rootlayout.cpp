@@ -819,8 +819,7 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
         }
     }
 
-    if(!connectionComboBox-disconnect(data))
-        qDebug() << "hmmm....";
+    connectionComboBox->disconnect(data);
     connectionComboBox->clear();
     connectionComboBox->setProperty("ptr", qVariantFromValue((void *) proj->synapses[proj->currTarg]));
     connectionComboBox->addItem("All to All");
@@ -839,7 +838,6 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
 
     emit deleteProperties();
     drawParamsLayout(data);
-
 }
 
 void rootLayout::inSelected(genericInput * in, rootData* data) {
@@ -1174,7 +1172,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
             // configure:
             QString parType;
             QString boxTitle;
-            int listSize = -1;            
+            int listSize = -1;
 
             if (!connectionBool) {
                 if (j == 0) {
