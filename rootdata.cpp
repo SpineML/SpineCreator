@@ -797,12 +797,20 @@ void rootData::itemWasMoved()
 
 void rootData::populationMoved(const vector<population*>& pops)
 {
+    if (pops.empty()) {
+        return;
+    }
+
     // We don't need to record that the population moved here - the
     // mouseMove events already handle that (allowing the population
     // widget to be re-drawn as it's moved. However, what we DO need
     // to do is to record that the population moved in the undo stack.
 
     vector<population*>::const_iterator popsi = pops.begin();
+
+    // A parent undocommand which will group together potentially multiple undos.
+    QUndoCommand* parentCmd = new QUndoCommand();
+
     while (popsi != pops.end()) {
         // New position of the population, which it already has a record of.
         QPointF newPos((*popsi)->targx, (*popsi)->targy);
@@ -812,11 +820,17 @@ void rootData::populationMoved(const vector<population*>& pops)
         // the current offset in the population (as the population moves,
         // the mouse remains in the same location on the object).
         QPointF lastPopulationPosition = lastLeftMouseDownPos + (*popsi)->getLocationOffset();
-
-        currProject->undoStack->push(new movePopulation(this, (*popsi), lastPopulationPosition, newPos));
-
+        new movePopulation(this, (*popsi), lastPopulationPosition, newPos, parentCmd);
         ++popsi;
     }
+
+    if (pops.size() > 1) {
+        parentCmd->setText ("move populations");
+    } else {
+        parentCmd->setText ("move population");
+    }
+
+    currProject->undoStack->push(parentCmd);
 }
 
 void rootData::onNewSelections (float xGL, float yGL)

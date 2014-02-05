@@ -39,7 +39,7 @@ delSelection::delSelection(rootData * data, vector <systemObject * > list, QUndo
 {
 
     this->data = data;
-    this->setText("Delete selection");
+    this->setText("delete selection");
 
     vector < systemObject * > populations;
     vector < systemObject * > projections;
@@ -119,7 +119,7 @@ addPopulationCmd::addPopulationCmd(rootData * data, population* pop, QUndoComman
 {
     this->pop = pop;
     this->data = data;
-    this->setText("Add population");
+    this->setText("add population");
 
     selIndex = 1;
     isDeleted = true;
@@ -172,7 +172,7 @@ delPopulation::delPopulation(rootData * data, population* pop, QUndoCommand *par
 {
     this->pop = pop;
     this->data = data;
-    this->setText("Delete population " + this->pop->getName());
+    this->setText("delete population " + this->pop->getName());
 
     // spawn children
     for (uint i = 0; i < this->pop->neuronType->inputs.size(); ++i) {
@@ -265,7 +265,7 @@ movePopulation::movePopulation(rootData * data, population* pop, const QPointF& 
 {
     this->pop = pop;
     this->data = data;
-    this->setText("Move population");
+    this->setText("move population");
     this->oldPos = oldPos;
     this->newPos = newPos;
 }
@@ -296,7 +296,7 @@ addProjection::addProjection(rootData * data, projection* proj, QUndoCommand *pa
 {
     this->proj = proj;
     this->data = data;
-    this->setText("Add projection " + this->proj->getName());
+    this->setText("add projection " + this->proj->getName());
 
     // spawn children
     new addSynapse(data, this->proj, this);
@@ -349,7 +349,7 @@ delProjection::delProjection(rootData * data, projection* proj, QUndoCommand *pa
     if (!parent==0 && parent->text() != "Delete selection") isChild = true;
     this->proj = proj;
     this->data = data;
-    this->setText("Delete projection " + this->proj->getName());
+    this->setText("delete projection " + this->proj->getName());
     // spawn children
     for (uint i = 0; i < this->proj->synapses.size(); ++i) {
         new delSynapse(data, this->proj, this->proj->synapses[i], this);
@@ -400,7 +400,7 @@ addSynapse::addSynapse(rootData * data, projection * proj, QUndoCommand *parent)
     this->syn = NULL;
     this->proj = proj;
     this->data = data;
-    this->setText("Add synapse to " + this->proj->getName());
+    this->setText("add synapse to " + this->proj->getName());
     syn = new synapse(proj, data, true);
     // spawn children for projInputs
     new addInput(data, proj->source->neuronType, this->syn->weightUpdateType, this);
@@ -437,7 +437,7 @@ delSynapse::delSynapse(rootData * data, projection * proj, synapse * syn, QUndoC
     this->syn = syn;
     this->data = data;
     this->proj = proj;
-    this->setText("Delete synapse from " + this->proj->getName());
+    this->setText("delete synapse from " + this->proj->getName());
     isUndone = false;
 
     // spawn children
@@ -524,7 +524,7 @@ addInput::addInput(rootData * data, NineMLComponentData * src, NineMLComponentDa
     this->data = data;
     this->src = src;
     this->dst = dst;
-    this->setText("Add Input from " + this->src->getXMLName() + " to " + this->dst->getXMLName());
+    this->setText("add Input from " + this->src->getXMLName() + " to " + this->dst->getXMLName());
     this->input = new genericInput(src, dst, !(parent==0));
     input->disconnect();
 }
@@ -552,7 +552,7 @@ delInput::delInput(rootData * data, genericInput * input, QUndoCommand *parent) 
     if (!parent==0 && parent->text() != "Delete selection") isChild = true;
     this->input = input;
     this->data = data;
-    this->setText("Delete Input from " + this->input->src->getXMLName() + " to " + this->input->dst->getXMLName());
+    this->setText("delete Input from " + this->input->src->getXMLName() + " to " + this->input->dst->getXMLName());
     input->isDeleted = true;
     isDeleted = true;
     selIndex = -1;
@@ -603,7 +603,7 @@ changeConnection:: changeConnection(rootData * data, systemObject * ptr, int ind
     this->index = index;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Change connection type on " + this->ptr->getName());
+    this->setText("change connection type on " + this->ptr->getName());
 }
 
 void changeConnection::undo()
@@ -697,7 +697,7 @@ setSizeUndo::setSizeUndo(rootData * data, population * ptr, int value, QUndoComm
     this->oldValue = ptr->numNeurons;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->getName() + " size to " + QString::number(value));
+    this->setText("set " + this->ptr->getName() + " size to " + QString::number(value));
 }
 
 void setSizeUndo::undo()
@@ -728,11 +728,11 @@ setLoc3Undo::setLoc3Undo(rootData * data, population * ptr, int index, int value
     this->ptr = ptr;
     this->data = data;
     if (index == 0)
-        this->setText("Set " + this->ptr->getName() + " x location to " + QString::number(value));
+        this->setText("set " + this->ptr->getName() + " x location to " + QString::number(value));
     if (index == 1)
-        this->setText("Set " + this->ptr->getName() + " y location to " + QString::number(value));
+        this->setText("set " + this->ptr->getName() + " y location to " + QString::number(value));
     if (index == 2)
-        this->setText("Set " + this->ptr->getName() + " z location to " + QString::number(value));
+        this->setText("set " + this->ptr->getName() + " z location to " + QString::number(value));
 }
 
 void setLoc3Undo::undo()
@@ -764,7 +764,7 @@ updateParUndo::updateParUndo(rootData * data, ParameterData * ptr, int index, fl
     this->oldValue = ptr->value[index];
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->name + " to " + QString::number(value));
+    this->setText("set " + this->ptr->name + " to " + QString::number(value));
     this->index = index;
     this->firstRedo = true;
 }
@@ -789,7 +789,7 @@ updateConnProb::updateConnProb(rootData * data, fixedProb_connection * ptr, floa
     this->oldValue = ptr->p;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->name + " to " + QString::number(value));
+    this->setText("set " + this->ptr->name + " to " + QString::number(value));
     firstRedo = true;
 }
 
@@ -815,7 +815,7 @@ updateConnEquation::updateConnEquation(rootData * data, distanceBased_connection
     this->oldValue = ptr->equation;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->name + " equation to " + value);
+    this->setText("set " + this->ptr->name + " equation to " + value);
     firstRedo = true;
 }
 
@@ -843,7 +843,7 @@ updateConnDelayEquation::updateConnDelayEquation(rootData * data, distanceBased_
     this->oldValue = ptr->delayEquation;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->name + " delay equation to " + value);
+    this->setText("set " + this->ptr->name + " delay equation to " + value);
     firstRedo = true;
 }
 
@@ -881,7 +881,7 @@ updateParType::updateParType(rootData * data, ParameterData * ptr, QString newTy
     this->oldType = ptr->currType;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->name + " to type: " + newType);
+    this->setText("set " + this->ptr->name + " to type: " + newType);
 }
 
 void updateParType::undo()
@@ -917,7 +917,7 @@ updateTitle::updateTitle(population * ptr, QString newName, QString oldName, QUn
     this->ptr = ptr;
     this->oldName = oldName;
     this->newName = newName;
-    this->setText("Rename " + oldName + " to " + newName);
+    this->setText("rename " + oldName + " to " + newName);
 }
 
 void updateTitle::undo()
@@ -942,7 +942,7 @@ updateModelTitle::updateModelTitle(rootData * data, QString newName, projectObje
     this->data = data;
     this->oldName = settings.value("model/model_name", "err").toString();
     this->newName = newName;
-    this->setText("Model rename " + oldName + " to " + newName);
+    this->setText("model rename " + oldName + " to " + newName);
     this->project = project;
 }
 
@@ -976,7 +976,7 @@ updateComponentType::updateComponentType(rootData * data, NineMLComponentData * 
     this->oldComponent = componentData->component;
     this->oldParDatas = componentData->ParameterList;
     this->oldSVDatas = componentData->StateVariableList;
-    this->setText("Change component from " + this->oldComponent->name + " to " + this->newComponent->name);
+    this->setText("change component from " + this->oldComponent->name + " to " + this->newComponent->name);
     // save port values
     for (uint i = 0; i < componentData->inputs.size(); ++i){
         srcPortsInputs.push_back(componentData->inputs[i]->srcPort);
@@ -1056,7 +1056,7 @@ updateLayoutMinDist::updateLayoutMinDist(rootData * data, NineMLLayoutData * ptr
     this->oldValue = ptr->minimumDistance;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->component->name + " min distance to " + QString::number(value));
+    this->setText("set " + this->ptr->component->name + " min distance to " + QString::number(value));
 }
 
 void updateLayoutMinDist::undo()
@@ -1078,7 +1078,7 @@ updateLayoutSeed::updateLayoutSeed(rootData * data, NineMLLayoutData * ptr, floa
     this->oldValue = ptr->seed;
     this->ptr = ptr;
     this->data = data;
-    this->setText("Set " + this->ptr->component->name + " seed to " + QString::number(value));
+    this->setText("set " + this->ptr->component->name + " seed to " + QString::number(value));
 }
 
 void updateLayoutSeed::undo()
@@ -1101,7 +1101,7 @@ pastePars::pastePars(rootData * data, NineMLComponentData * source, NineMLCompon
     this->dest = dest;
     // copy old stuff to here
     this->oldData = new NineMLComponentData(dest);
-    this->setText("Paste properties");
+    this->setText("paste properties");
 }
 
 void pastePars::undo()
