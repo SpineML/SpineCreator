@@ -838,9 +838,11 @@ void rootData::populationMoved(const vector<population*>& pops)
 
 void rootData::onNewSelections (float xGL, float yGL)
 {
+    qDebug() << __FUNCTION__ << " emitting updatePanel";
     emit updatePanel(this);
     for (uint i = 0; i < this->selList.size(); ++i) {
         // register locations relative to cursor:
+        qDebug() << "Setting a location offset...";
         this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
     }
 }
@@ -855,6 +857,28 @@ bool rootData::selListContains (const vector<systemObject*>& objectList)
         ++i;
     }
     return false;
+}
+
+void rootData::deleteFromSelList (const vector<systemObject*>& objectList)
+{
+    qDebug() << __FUNCTION__ << " called, at start selList has " << selList.size() << " entries";;
+    vector<systemObject*>::const_iterator i = objectList.begin();
+    while (i != objectList.end()) {
+        qDebug() << "Candidate object for deletion...";
+        vector<systemObject*>::iterator j = this->selList.begin();
+        while (j != this->selList.end()) {
+            qDebug() << "Is it in this member of selList?";
+            if (*i == *j) { // That is, selList contains a member of objectList
+                qDebug() << "Yes, erase";
+                j = this->selList.erase (j);
+            } else {
+                qDebug() << "No, skip";
+                ++j;
+            }
+        }
+        ++i;
+    }
+    qDebug() << "Return; selList has " << selList.size() << " entries";;
 }
 
 // When the "left" mouse goes down, select what's underneath, if anything.
@@ -937,7 +961,11 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
                 if (!this->selListContains (newlySelectedList)) {
                     qDebug() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
                     this->selList.insert (this->selList.end(), newlySelectedList.begin(), newlySelectedList.end());
-                } // else user has shift down,. but newlySelected is already in selList.
+                } else {
+                    // user has shift down,. but newlySelected is already in selList, so in this case REMOVE it!
+                    qDebug() << "user has shift down clicking on existing object, so delete";
+                    this->deleteFromSelList (newlySelectedList);
+                }
             } else {
                 // Shift not down, user wishes to switch selection OR move several selected items
                 qDebug() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
@@ -1269,16 +1297,18 @@ void rootData::abortProjection()
 void rootData::mouseMoveGL(float xGL, float yGL)
 {
     selectionMoved = true;
-    // qDebug() << "pos = " << float(xGL) << " " << float(yGL);
+    qDebug() << "pos = " << xGL << " " << yGL;
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
         GLWidget * source = (GLWidget *) sender();
+        qDebug() << "Moving viewport!";
         source->move(xGL+source->viewX-cursor.x,yGL-source->viewY-cursor.y);
         return;
     }
 
     // revised move code for multiple objects
+    qDebug() << "Into revised move code for multiple objects";
 
     // if grid is on, snap to grid
     GLWidget * source = (GLWidget *) sender();
@@ -1288,6 +1318,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
     }
 
     if (selList.size() > 1) {
+        qDebug() << "selList >1 entry; move everything";
         for (uint i = 0; i < selList.size(); ++i) {
             selList[i]->move(xGL, yGL);
         }
@@ -1297,6 +1328,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
 
         if (this->selList[0]->type == populationObject)
         {
+            qDebug() << "selList[0] type is population";
             bool collision = false;
             population * pop = (population *) selList[0];
 
@@ -1321,10 +1353,12 @@ void rootData::mouseMoveGL(float xGL, float yGL)
         }
         // if it is not a population...
         else if (this->selList[0]->type == projectionObject) {
+            qDebug() << "selList[0] type is projection";
             ((projection*) selList[0])->moveSelectedControlPoint(xGL, yGL);
         }
         // if it is not a population...
-        else if (this->selList[0]->type == inputObject) {
+        else if (this->selList[0]->type == inputObject)
+            qDebug() << "selList[0] type is input";{
             ((genericInput*) selList[0])->moveSelectedControlPoint(xGL, yGL);
         }
     }
