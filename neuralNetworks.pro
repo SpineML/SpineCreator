@@ -15,7 +15,6 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
-    nineml_al_object.cpp \
     population.cpp \
     rootdata.cpp \
     rootlayout.cpp \
@@ -49,7 +48,6 @@ SOURCES += main.cpp\
     undocommands.cpp \
     nineml_rootcomponentitem.cpp \
     nineml_alview.cpp \
-    global_classes.cpp \
     stringify.cpp \
     versionchange_dialog.cpp \
     savenetworkimage_dialog.cpp \
@@ -66,7 +64,6 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     glwidget.h \
-    nineml_al_object.h \
     population.h \
     rootdata.h \
     rootlayout.h \

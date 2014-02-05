@@ -463,9 +463,6 @@ class NineMLComponent: public NineMLObject, public NineMLRootObject
 {
 public:
 
-    // VERSIONING
-    versionNumber version;
-
     //temp name
     QString initial_regime_name;
 

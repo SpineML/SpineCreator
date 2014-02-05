@@ -81,7 +81,6 @@ projectObject::~projectObject() {
     catalogPS.clear();
     catalogWU.clear();
     catalogGC.clear();
-
 }
 
 bool projectObject::open_project(QString fileName) {
@@ -1215,7 +1214,7 @@ void projectObject::saveExperiment(QString fileName, QDir project_dir, experimen
 void projectObject::copy_back_data(rootData * data) {
 
     // copy data from rootData to project
-    network = data->system;
+    network = data->populations;
     catalogNB = data->catalogNrn;
     catalogWU = data->catalogWU;
     catalogPS = data->catalogPS;
@@ -1228,7 +1227,7 @@ void projectObject::copy_back_data(rootData * data) {
 void projectObject::copy_out_data(rootData * data) {
 
     // copy from project to rootData
-    data->system = network;
+    data->populations = network;
     data->catalogNrn = catalogNB;
     data->catalogWU = catalogWU;
     data->catalogPS = catalogPS;

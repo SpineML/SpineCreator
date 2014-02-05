@@ -550,13 +550,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
         simpleName = ((NineMLComponentData *) this)->component->name.simplified();
     }
     simpleName.replace( " ", "_" );
-    // add version to components but not layouts (for now)
-    if (this->type == NineMLComponentType) {
-        NineMLComponentData * compData = (NineMLComponentData *) this;
-        xmlOut.writeAttribute("url", simpleName + compData->component->version.toFileString() + ".xml");
-    } else {
-        xmlOut.writeAttribute("url", simpleName + ".xml");
-    }
+    xmlOut.writeAttribute("url", simpleName + ".xml");
 
     if (this->type == NineMLComponentType) {
         for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
@@ -1966,19 +1960,13 @@ Regime::~Regime()
 NineMLComponent::NineMLComponent()
 {
     initial_regime = NULL;
-    QSettings settings;
-    QString localName = settings.value("versioning/localName", QHostInfo::localHostName()).toString();
-    version.setVersion(0,0,1,localName);
     editedVersion = NULL;
     path = "temp";
     type = "neuron_body";
-
 }
 
 NineMLComponent::NineMLComponent(NineMLComponent *data)
 {
-    this->version = data->version;
-
     name = data->name;
     this->type = data->type;
     this->path = data->path;
@@ -2203,7 +2191,6 @@ NineMLComponent& NineMLComponent::operator=(const NineMLComponent& data)
         msgBox.setModal(false);
         msgBox.exec();
     }
-    this->version = data.version;
 
     return *this;
 }
@@ -2306,10 +2293,6 @@ void NineMLComponent::updateFrom(NineMLComponent* data)
     // clear errors if any
     settings.remove("errors");
     settings.remove("warnings");
-
-
-
-    this->version = data->version;
 }
 
 // copy constructor required for the base class

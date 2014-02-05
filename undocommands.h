@@ -345,7 +345,7 @@ private:
 class updateTitle : public QUndoCommand
 {
 public:
-    updateTitle(rootData * data, population * ptr, QString newName, QString oldName, QLabel * label, QUndoCommand *parent = 0);
+    updateTitle(population * ptr, QString newName, QString oldName, QUndoCommand *parent = 0);
     void undo();
     void redo();
 

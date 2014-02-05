@@ -201,10 +201,6 @@ class experiment : QObject
     Q_OBJECT
 
 public:
-
-    // VERSIONING
-    versionNumber version;
-
     experiment();
     experiment(experiment *);
     ~experiment();

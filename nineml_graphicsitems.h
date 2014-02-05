@@ -110,7 +110,7 @@ protected:
 class NineMLTextItem: public GroupedTextItem{
     Q_OBJECT
 public:
-    NineMLTextItem(GVItem *gv_item, TextItemGroup *parent = 0, QGraphicsScene *scene = 0);
+    NineMLTextItem(GVItem *gv_item, TextItemGroup *parent = 0);
     ~NineMLTextItem();
     void setPlainText(const QString &text);                             //overwite GroupTextItem (to ensure Call of updatedims)
 private:

@@ -1016,9 +1016,9 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
     QModelIndexList indices = top.indexes();
     TreeItem *item = static_cast<TreeItem*>(indices[0].internalPointer());
 
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->system[i];
+        population * currPop = (population *) data->populations[i];
 
         // populations
         if (currPop->getName() == item->name) {
@@ -1030,9 +1030,9 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
         }
 
         // population inputs
-        for (uint output = 0; output < data->system[i]->neuronType->outputs.size(); ++output) {
+        for (uint output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
-            genericInput * currOutput = data->system[i]->neuronType->outputs[output];
+            genericInput * currOutput = data->populations[i]->neuronType->outputs[output];
 
             // add Synapse
             if (!currOutput->projInput)
@@ -1201,8 +1201,9 @@ void glConnectionWidget::parsChangedProjections() {
                 // launch version increment dialog box:
                 generate_dialog generate(((distanceBased_connection *) conn), ((distanceBased_connection *) conn)->src, ((distanceBased_connection *) conn)->dst, connections[i], connGenerationMutex, this);
                 bool retVal = generate.exec();
-                if (!retVal)
+                if (!retVal) {
                     return;
+                }
                 ((distanceBased_connection *) conn)->connections = connections[i];
                 ((distanceBased_connection *) conn)->setUnchanged(true);
             }
@@ -1219,8 +1220,9 @@ void glConnectionWidget::parsChangedProjections() {
                 // launch version increment dialog box:
                 generate_dialog generate(((kernel_connection *) conn), ((kernel_connection *) conn)->src, ((kernel_connection *) conn)->dst, connections[i], connGenerationMutex, this);
                 bool retVal = generate.exec();
-                if (!retVal)
+                if (!retVal) {
                     return;
+                }
                 ((kernel_connection *) conn)->connections = connections[i];
                 ((kernel_connection *) conn)->setUnchanged(true);
             }
@@ -1283,14 +1285,13 @@ void glConnectionWidget::parsChangedProjection() {
                         // launch version increment dialog box:
                         generate_dialog generate(((distanceBased_connection *) conn), src, dst, connections[i], connGenerationMutex, this);
                         bool retVal = generate.exec();
-                        /*if (!retVal)
-                            return;*/
+                        if (!retVal) {
+                            qDebug() << "glConnectionWidget::parsChangedProjection: generate.exec() returned 0, but continuing in this case...";
+                        }
                         ((distanceBased_connection *) conn)->connections = connections[i];
                         ((distanceBased_connection *) conn)->setUnchanged(true);
                     }
-
                 }
-
             }
 
             // reconnect
@@ -1316,8 +1317,9 @@ void glConnectionWidget::parsChangedProjection() {
                         // launch version increment dialog box:
                         generate_dialog generate(((kernel_connection *) conn), src, dst, connections[i], connGenerationMutex, this);
                         bool retVal = generate.exec();
-                        if (!retVal)
+                        if (!retVal) {
                             return;
+                        }
                         ((kernel_connection *) conn)->connections = connections[i];
                         ((kernel_connection *) conn)->setUnchanged(true);
                     }
@@ -1469,9 +1471,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
 
     // this is fired when an item is checked or unchecked
 
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->system[i];
+        population * currPop = (population *) data->populations[i];
 
         // populations
         if (currPop->isVisualised) {
@@ -1537,8 +1539,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                     // launch version increment dialog box:
                                     generate_dialog generate(((kernel_connection *) currIn->connectionType), (population *) currIn->source, (population *) currIn->destination, connections.back(), connGenerationMutex, this);
                                     bool retVal = generate.exec();
-                                    if (!retVal)
+                                    if (!retVal) {
                                         return;
+                                    }
                                     ((kernel_connection *) currIn->connectionType)->connections = connections.back();
                                     ((kernel_connection *) currIn->connectionType)->setUnchanged(true);
                                 }
@@ -1550,8 +1553,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                     // launch version increment dialog box:
                                     generate_dialog generate(((distanceBased_connection *) currIn->connectionType), (population *) currIn->source, (population *) currIn->destination, connections.back(), connGenerationMutex, this);
                                     bool retVal = generate.exec();
-                                    if (!retVal)
+                                    if (!retVal) {
                                         return;
+                                    }
                                     ((distanceBased_connection *) currIn->connectionType)->connections = connections.back();
                                     ((distanceBased_connection *) currIn->connectionType)->setUnchanged(true);
                                 }
@@ -1605,8 +1609,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                 // launch version increment dialog box:
                                 generate_dialog generate(((kernel_connection *) currTarg->connectionType), currTarg->proj->source, currTarg->proj->destination, connections.back(), connGenerationMutex, this);
                                 bool retVal = generate.exec();
-                                if (!retVal)
+                                if (!retVal) {
                                     return;
+                                }
                                 ((kernel_connection *) currTarg->connectionType)->connections = connections.back();
                                 ((kernel_connection *) currTarg->connectionType)->setUnchanged(true);
                             }
@@ -1618,8 +1623,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                 // launch version increment dialog box:
                                 generate_dialog generate(((distanceBased_connection *) currTarg->connectionType), currTarg->proj->source, currTarg->proj->destination, connections.back(), connGenerationMutex, this);
                                 bool retVal = generate.exec();
-                                if (!retVal)
+                                if (!retVal) {
                                     return;
+                                }
                                 ((distanceBased_connection *) currTarg->connectionType)->connections = connections.back();
                                 ((distanceBased_connection *) currTarg->connectionType)->setUnchanged(true);
                             }

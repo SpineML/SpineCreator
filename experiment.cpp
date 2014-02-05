@@ -29,11 +29,6 @@
 
 experiment::experiment()
 {
-
-    QSettings settings;
-    QString localName = settings.value("versioning/localName", QHostInfo::localHostName()).toString();
-    version.setVersion(0,0,1,localName);
-
     // defaults
     setup.dt = 0.1;
     setup.duration = 1;
@@ -67,9 +62,7 @@ experiment::~experiment() {
 
 experiment::experiment(experiment * /*exptToCopy*/)
 {
-
- // add copy constructor here
-
+    // add copy constructor here
 }
 
 exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
@@ -289,8 +282,8 @@ void experiment::purgeBadPointer(systemObject * ptr) {
 
 }
 
-void experiment::purgeBadPointer(NineMLComponentData * ptr) {
-
+void experiment::purgeBadPointer(NineMLComponentData * ptr)
+{
     // inputs
     for (uint i = 0; i < ins.size(); ++i) {
 
@@ -298,13 +291,11 @@ void experiment::purgeBadPointer(NineMLComponentData * ptr) {
 
         // are we using the component?
         if (in->target == ptr) {
-
             ins.erase(ins.begin()+i);
+            qDebug() << "Deleting this (in)";
             delete in;
             --i;
-
         }
-
     }
 
     // outputs
@@ -314,13 +305,11 @@ void experiment::purgeBadPointer(NineMLComponentData * ptr) {
 
         // are we using the component?
         if (out->source == ptr) {
-
             outs.erase(outs.begin()+i);
-            delete out;
+            qDebug() << "Deleting this (out)";
+            delete out; // You're deleting the "this" that called purgeBadPointer.
             --i;
-
         }
-
     }
 
     // pars
@@ -330,15 +319,13 @@ void experiment::purgeBadPointer(NineMLComponentData * ptr) {
 
         // are we using the component?
         if (change->component == ptr) {
-
             changes.erase(changes.begin()+i);
+            qDebug() << "Deleting this (change)";
             delete change;
             --i;
 
         }
-
     }
-
 }
 
 void experiment::purgeBadPointer(NineMLComponent * ptr, NineMLComponent * newPtr) {
@@ -492,29 +479,29 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
     bool portsExist = false;
 
     QStringList elementList;
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
         portsExist = false;
-        for (uint p = 0; p < data->system[i]->neuronType->component->AnalogPortList.size(); ++p) {
-            if (data->system[i]->neuronType->component->AnalogPortList[p]->mode== AnalogRecvPort \
-                    || data->system[i]->neuronType->component->AnalogPortList[p]->mode== AnalogReducePort) {
+        for (uint p = 0; p < data->populations[i]->neuronType->component->AnalogPortList.size(); ++p) {
+            if (data->populations[i]->neuronType->component->AnalogPortList[p]->mode== AnalogRecvPort \
+                    || data->populations[i]->neuronType->component->AnalogPortList[p]->mode== AnalogReducePort) {
                 portsExist = true;
                 break;
             }
         }
         if (!portsExist) {
             // if it is a spike source we don't care about the component
-            if (data->system[i]->isSpikeSource) {
+            if (data->populations[i]->isSpikeSource) {
                 portsExist = true;
             }
         }
         if (portsExist)
-            elementList << data->system[i]->neuronType->getXMLName();
-        for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->system[i]->projections[j]->synapses.size(); ++k) {
+            elementList << data->populations[i]->neuronType->getXMLName();
+        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
-                for (uint p = 0; p < data->system[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
-                    if (data->system[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogRecvPort \
-                            || data->system[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogReducePort) {
+                for (uint p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogRecvPort \
+                            || data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogReducePort) {
                         portsExist = true;
                         break;
                     }
@@ -528,11 +515,11 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                     }
                 }*/
                 if (portsExist)
-                    elementList << data->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                 portsExist = false;
-                for (uint p = 0; p < data->system[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
-                    if (data->system[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogRecvPort \
-                            || data->system[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogReducePort) {
+                for (uint p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogRecvPort \
+                            || data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogReducePort) {
                         portsExist = true;
                         break;
                     }
@@ -546,7 +533,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                     }
                 }*/
                 if (portsExist)
-                    elementList << data->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
             }
         }
     }
@@ -1059,60 +1046,60 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
     bool portsExist = false;
 
     QStringList elementList;
-    for (uint i = 0; i < data->system.size(); ++i) {
+    for (uint i = 0; i < data->populations.size(); ++i) {
         portsExist = false;
-        for (uint p = 0; p < data->system[i]->neuronType->component->AnalogPortList.size(); ++p) {
-            if (data->system[i]->neuronType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+        for (uint p = 0; p < data->populations[i]->neuronType->component->AnalogPortList.size(); ++p) {
+            if (data->populations[i]->neuronType->component->AnalogPortList[p]->mode== AnalogSendPort) {
                 portsExist = true;
                 break;
             }
         }
         if (!portsExist) {
-            for (uint p = 0; p < data->system[i]->neuronType->component->EventPortList.size(); ++p) {
-                if (data->system[i]->neuronType->component->EventPortList[p]->mode== EventSendPort) {
+            for (uint p = 0; p < data->populations[i]->neuronType->component->EventPortList.size(); ++p) {
+                if (data->populations[i]->neuronType->component->EventPortList[p]->mode== EventSendPort) {
                     portsExist = true;
                     break;
                 }
             }
         }
         if (portsExist)
-            elementList << data->system[i]->neuronType->getXMLName();
-        for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->system[i]->projections[j]->synapses.size(); ++k) {
+            elementList << data->populations[i]->neuronType->getXMLName();
+        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
-                for (uint p = 0; p < data->system[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
-                    if (data->system[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                for (uint p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
-                    for (uint p = 0; p < data->system[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList.size(); ++p) {
-                        if (data->system[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList[p]->mode== EventSendPort) {
+                    for (uint p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList[p]->mode== EventSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
                 if (portsExist)
-                    elementList << data->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                 portsExist = false;
-                for (uint p = 0; p < data->system[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
-                    if (data->system[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                for (uint p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
-                    for (uint p = 0; p < data->system[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList.size(); ++p) {
-                        if (data->system[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList[p]->mode== EventSendPort) {
+                    for (uint p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList[p]->mode== EventSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
                 if (portsExist)
-                    elementList << data->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
             }
         }
     }
@@ -1355,9 +1342,9 @@ QVBoxLayout * exptLesion::drawLesion(rootData * data, viewELExptPanelHandler *ha
     QVBoxLayout * layout = new QVBoxLayout;
 
     QStringList elementList;
-    for (uint i = 0; i < data->system.size(); ++i) {
-        for (uint p = 0; p < data->system[i]->projections.size(); ++p) {
-            elementList << data->system[i]->projections[p]->getName();
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        for (uint p = 0; p < data->populations[i]->projections.size(); ++p) {
+            elementList << data->populations[i]->projections[p]->getName();
         }
     }
 
@@ -1460,12 +1447,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
     QVBoxLayout * layout = new QVBoxLayout;
 
     QStringList elementList;
-    for (uint i = 0; i < data->system.size(); ++i) {
-        elementList << data->system[i]->neuronType->getXMLName();
-        for (uint j = 0; j < data->system[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->system[i]->projections[j]->synapses.size(); ++k) {
-                elementList << data->system[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                elementList << data->system[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+    for (uint i = 0; i < data->populations.size(); ++i) {
+        elementList << data->populations[i]->neuronType->getXMLName();
+        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+                elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
             }
         }
     }

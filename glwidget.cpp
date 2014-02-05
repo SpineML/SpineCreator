@@ -100,11 +100,14 @@ void GLWidget::mousePressEvent(QMouseEvent* event)
     if (this->connectMode == false) {
         if (event->button() == Qt::LeftButton) {
             setCursor(Qt::ClosedHandCursor);
-            emit selectCoord(xGL, yGL, this->GLscale);
+            // Rather than using the shift modifier, lets use logic in
+            // onLeftMouseDown to see if we should select the object or drag the group.
+            bool shiftDown = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
+            emit onLeftMouseDown(xGL, yGL, this->GLscale, shiftDown);
         }
         if (event->button() == Qt::RightButton) {
             setCursor(Qt::CrossCursor);
-            emit selectRMBCoord(xGL, yGL, this->GLscale);
+            emit onRightMouseDown(xGL, yGL, this->GLscale);
         }
     } else {
         if (event->button() == Qt::LeftButton) {
@@ -131,7 +134,7 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
             emit selectCoordMouseUp(xGL, yGL, this->GLscale);
         } else if (event->button() == Qt::LeftButton && this->itemMoving) {
             // Item was released after moving.
-            emit itemWasMoved(xGL, yGL, this->GLscale);
+            emit itemWasMoved();
             this->itemMoving = false;
         }
         if (event->button() == Qt::RightButton) {

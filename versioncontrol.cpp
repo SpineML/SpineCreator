@@ -398,8 +398,9 @@ void versionControl::setupVersion() {
 }
 
 
-void versionControl::finished(int, QProcess::ExitStatus status) {
-
+#ifdef NEED_VERSIONCONTROL_FINISHED
+void versionControl::finished(int, QProcess::ExitStatus status)
+{
     // get status
     /*if (status == QProcess::CrashExit) {
         QMessageBox msgBox;
@@ -417,8 +418,8 @@ void versionControl::finished(int, QProcess::ExitStatus status) {
     }*/
 
     // collect logs
-
 }
+#endif
 
 void versionControl::standardOutput() {
 

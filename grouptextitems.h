@@ -51,7 +51,7 @@ class GroupedTextItem : public QGraphicsTextItem, public SelectableItem
 {
     Q_OBJECT
 public:
-    explicit GroupedTextItem(TextItemGroup *parent = 0, QGraphicsScene *scene = 0);
+    explicit GroupedTextItem(TextItemGroup *parent = 0);
     ~GroupedTextItem();
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
     QRectF boundingRect() const;

@@ -29,20 +29,16 @@
 #include "regimegraphicsitem.h"
 
 
-GroupedTextItem::GroupedTextItem(TextItemGroup *parent, QGraphicsScene *scene)
+GroupedTextItem::GroupedTextItem(TextItemGroup *parent)
     : QGraphicsTextItem(parent)
-
 {
     group = parent;
     setFlag(QGraphicsItem::ItemIsSelectable);
     colour = Qt::white;
     setDefaultTextColor(Qt::black);
-    //setAlignment(Qt::AlignCenter);
     QTextOption option = document()->defaultTextOption ();
     option.setAlignment (Qt::AlignCenter);
     document()->setDefaultTextOption ( option );
-
-    //connect(document(), SIGNAL(contentsChange(int, int, int)), parent, SLOT(updateItemDimensions()));
 }
 
 GroupedTextItem::~GroupedTextItem()
