@@ -46,7 +46,7 @@ private:
     versionNumber * minVer;
 
 public slots:
-    void done();
+    void complete();
     void changed(int);
 };
 

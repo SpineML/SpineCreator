@@ -108,7 +108,7 @@ public:
     void print();
     QPointF findBoxEdge(population * pop, float xGL, float yGL);
     void setAutoHandles(population * pop1, population *pop2, QPointF end);
-    virtual void animate(population * movingPop, QPointF delta);
+    virtual void animate(systemObject * movingObj, QPointF delta);
     virtual void moveSelectedControlPoint(float xGL, float yGL);
     bool selectControlPoint(float xGL, float yGL, float GLscale);
     bool deleteControlPoint(float xGL, float yGL, float GLscale);

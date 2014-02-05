@@ -94,6 +94,6 @@ void connectionListDialog::importCSV() {
 void connectionListDialog::updateValSize(int val) {
 
     /*bool returnVal;
-    returnVal = */this->vModel->insertRows(val);
+    returnVal = */this->vModel->insertConnRows(val);
 
 }

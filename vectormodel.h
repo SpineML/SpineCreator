@@ -39,7 +39,7 @@ public:
     void setPointer(ParameterData * currPar);
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     bool setData(const QModelIndex & index, const QVariant & value, int role);
-    bool insertRows(int row);
+    bool insertConnRows(int row);
     Qt::ItemFlags flags(const QModelIndex & /*index*/) const;
     void emitDataChanged();
 

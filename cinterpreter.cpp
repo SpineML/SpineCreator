@@ -783,7 +783,7 @@ float interpretMaths(vector <valop> stack) {
                     tempStack.pop_back();
                 }
                 // if stack top is operand then add it in
-                float val2;
+                float val2 = 0;
                 if (!stack[i].isUnary) {
                     if (tempStack.size()) {
                         if (tempStack.back().ptr != NULL)

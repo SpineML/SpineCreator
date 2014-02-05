@@ -293,7 +293,16 @@ void projection::move(float x, float y) {
 
 }
 
-void projection::animate(population * movingPop, QPointF delta) {
+void projection::animate(systemObject *movingObj, QPointF delta) {
+
+    population * movingPop;
+
+    if (movingObj->type == populationObject) {
+        movingPop = (population *) movingObj;
+    } else {
+        qDebug() << "Incorrect object fed to projection animation";
+        return;
+    }
 
     // if we are a self connection we get moved twice, so only move half as much each time
     if (!(this->destination == (population *)0)) {

@@ -35,7 +35,7 @@
 #include "projectobject.h"
 //#include "stringify.h"
 
-#define NEW_EXPERIMENT_VIEW
+#define NEW_EXPERIMENT_VIEW4
 
 viewELExptPanelHandler::viewELExptPanelHandler(QObject *parent) :
     QObject(parent)
@@ -185,7 +185,6 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
 {
 
     QFont titleFont("Helvetica [Cronyx]", 12);
-    //QFont mainFont("Helvetica [Cronyx]", 10);
 
     QLabel * title;
     title = new QLabel(tr("Setup Simulator"));
@@ -293,7 +292,7 @@ void viewELExptPanelHandler::redrawExpt() {
 #else
 
     // redraw SIMULATOR PARAMETERS
-    redrawSimulatorParams()
+    redrawSimulatorParams(currentExperiment);
 
     // redraw MODEL INPUTS
 

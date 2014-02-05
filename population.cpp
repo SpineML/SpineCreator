@@ -100,7 +100,7 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
     this->animspeed = 0.2;//0.1;
 #endif
     this->size = 1.0f;
-    this->aspect_ratio = aspect_ratio;
+    this->aspect_ratio = 3.0/4.0;
     this->left = this->x-this->size/(2.0)*this->aspect_ratio;
     this->right = this->x+this->size/(2.0)*this->aspect_ratio;
     this->top = this->y+this->size/2.0;

@@ -127,7 +127,7 @@ csv_connectionModel::csv_connectionModel(QObject *parent) :
      return Qt::ItemIsSelectable |  Qt::ItemIsEditable | Qt::ItemIsEnabled ;
  }
 
- bool csv_connectionModel::insertRows(int row) {
+ bool csv_connectionModel::insertConnRows(int row) {
 
      if (row > currentConnection->getNumRows()) {
          beginInsertRows(this->createIndex(currentConnection->getNumRows()-1, 0).parent(),currentConnection->getNumRows(),row-1);

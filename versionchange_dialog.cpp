@@ -48,7 +48,7 @@ versionChange_Dialog::versionChange_Dialog(versionNumber *ver, versionNumber *mi
 
     ui->buttonBox->button(QDialogButtonBox::Ok)->setDisabled(true);
 
-    connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(done()));
+    connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(complete()));
 
 }
 
@@ -57,7 +57,7 @@ versionChange_Dialog::~versionChange_Dialog()
     delete ui;
 }
 
-void versionChange_Dialog::done() {
+void versionChange_Dialog::complete() {
 
     ver->major = ui->majorNumberSpinBox->value();
     ver->minor = ui->minorNumberSpinBox->value();

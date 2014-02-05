@@ -167,6 +167,6 @@ void valueListDialog::import_csv(QString fileName) {
 void valueListDialog::updateValSize(int val) {
 
     /*bool returnVal;
-    returnVal = */this->vModel->insertRows(val);
+    returnVal = */this->vModel->insertConnRows(val);
 
 }

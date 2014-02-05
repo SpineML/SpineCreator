@@ -124,7 +124,7 @@ bool vectorModel::setData(const QModelIndex & index, const QVariant & value, int
 }
 
 
-bool vectorModel::insertRows(int row) {
+bool vectorModel::insertConnRows(int row) {
 
     if (row > (int) currPar->indices.size()) {
         beginInsertRows(this->createIndex(currPar->indices.size()-1, 0).parent(),currPar->indices.size(),row-1);
