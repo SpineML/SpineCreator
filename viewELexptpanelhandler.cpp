@@ -56,8 +56,9 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, rootData *
     // visual experiments test code - all looks good but not right now...
     if (0) {
         GLWidget * gl = new GLWidget;
-        connect(gl, SIGNAL(reDraw(QPainter*,float,float,float,int,int,drawStyle)),data,SLOT(reDrawAll(QPainter*,float,float,float,int,int,drawStyle)));
+        connect(gl, SIGNAL(reDraw(QPainter*,float,float,float,int,int,drawStyle)),this,SLOT(reDrawModel(QPainter*,float,float,float,int,int,drawStyle)));
         connect(gl, SIGNAL(mouseMove(float,float)), this, SLOT(mouseMove(float,float)));
+        connect(gl, SIGNAL(selectCoord(float,float,float)), this, SLOT(selectByMouseDown(float,float,float)));
 
         ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(gl);
     }
@@ -1577,7 +1578,8 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 
 }
 
-void viewELExptPanelHandler::simulatorStandardOutput() {
+void viewELExptPanelHandler::simulatorStandardOutput()
+{
 
     QByteArray data = ((QProcess *) sender())->readAllStandardOutput();
     simulatorStdOutText = simulatorStdOutText + QString().fromUtf8(data);
@@ -1587,7 +1589,8 @@ void viewELExptPanelHandler::simulatorStandardOutput() {
 
 }
 
-void viewELExptPanelHandler::simulatorStandardError() {
+void viewELExptPanelHandler::simulatorStandardError()
+{
 
     QByteArray data = ((QProcess *) sender())->readAllStandardError();
     simulatorStdOutText = simulatorStdOutText + QString().fromUtf8(data);
@@ -1596,8 +1599,45 @@ void viewELExptPanelHandler::simulatorStandardError() {
     }*/
 
 }
-void viewELExptPanelHandler::mouseMove(float xGL, float yGL) {
+void viewELExptPanelHandler::mouseMove(float xGL, float yGL)
+{
     // move viewpoint
+    // first get a pointer the the GLWidget
     GLWidget * source = (GLWidget *) sender();
+    // now update the widget location to the new offset
+    //source->move(xGL+source->viewX-cursor.x(),yGL-source->viewY-cursor.y());
     source->move(xGL+source->viewX-cursor.x(),yGL-source->viewY-cursor.y());
+}
+
+
+void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
+{
+
+    // draw the populations
+    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
+
+        this->data->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, style);
+
+    }
+    // draw the synapses
+    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
+
+        this->data->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
+
+    }
+    // draw the generic inputs
+    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
+
+        QPen pen(QColor(100,0,0,100));
+        pen.setWidthF(float(1));
+        painter->setPen(pen);
+        this->data->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
+
+    }
+}
+
+void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLScale)
+{
+    // need the selection code here - but only for single selections?
+    this->cursor = QPointF(xGL,yGL);
 }

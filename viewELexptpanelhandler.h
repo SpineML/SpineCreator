@@ -61,6 +61,8 @@ private:
 
     QPointF cursor;
 
+
+
 signals:
     
 public slots:
@@ -123,8 +125,32 @@ public slots:
     void simulatorStandardOutput();
     void simulatorStandardError();
 
+    /*!
+     * \brief Called when the mouse moves on the model view
+     * \param xGL
+     * \param yGL
+     */
     void mouseMove(float xGL, float yGL);
 
+    /*!
+     * \brief Redraw the model
+     * \param painter
+     * \param GLscale
+     * \param viewX
+     * \param viewY
+     * \param width
+     * \param height
+     * \param style
+     */
+    void reDrawModel(QPainter* painter,float GLscale, float viewX, float viewY, int width, int height, drawStyle style);
+
+    /*!
+     * \brief selectByMouseDown
+     * \param xGL
+     * \param yGL
+     * \param GLScale
+     */
+    void selectByMouseDown(float xGL, float yGL, float GLScale);
 };
 
 #endif // VIEWVISEXPTPANELHANDLER_H

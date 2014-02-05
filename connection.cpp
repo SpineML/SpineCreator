@@ -64,6 +64,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut) {
             xmlOut.writeEmptyElement("UniformDistribution");
             xmlOut.writeAttribute("minimum", QString::number(this->delay->value[1]));
             xmlOut.writeAttribute("maximum", QString::number(this->delay->value[2]));
+            xmlOut.writeAttribute("seed", QString::number(this->delay->value[2]));
         }
             break;
         case 2:
@@ -71,6 +72,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut) {
             xmlOut.writeEmptyElement("NormalDistribution");
             xmlOut.writeAttribute("mean", QString::number(this->delay->value[1]));
             xmlOut.writeAttribute("variance", QString::number(this->delay->value[2]));
+            xmlOut.writeAttribute("seed", QString::number(this->delay->value[2]));
          }
             break;
         }
@@ -131,18 +133,20 @@ void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -241,18 +245,20 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -495,8 +501,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
     if (BinaryFileList.count() == 1) {
 
-        qDebug() << "moo";
-
         // is a binary file so load accordingly
 
         // set number of connections
@@ -538,6 +542,20 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
         // copy the file across to the temporary file
         QFile savedData(filePath.absoluteFilePath(fileName));
+
+        // check that the data file exists!
+        if (!savedData.open(QIODevice::ReadOnly)) {
+            QSettings settings;
+            int num_errs = settings.beginReadArray("errors");
+            settings.endArray();
+            settings.beginWriteArray("errors");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
+            settings.endArray();
+            return;
+        }
+        savedData.close();
+
         savedData.copy(lib_dir.absoluteFilePath(this->filename));
 
         // restart the file
@@ -598,18 +616,20 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -1133,18 +1153,20 @@ void distanceBased_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -1527,18 +1549,20 @@ void kernel_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }

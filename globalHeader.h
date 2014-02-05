@@ -85,7 +85,7 @@ using namespace std;
 #include "qtimer.h"
 #include <QFileDialog>
 #include <QtGui>
-#include "viewELexptpanelhandler.h"
+//#include "viewELexptpanelhandler.h"
 #include <QHostInfo>
 
 

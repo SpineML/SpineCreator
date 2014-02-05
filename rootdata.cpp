@@ -36,7 +36,7 @@
  Alex Cope 2012
  The rootData class stores the 9ML description of the system -
  what populations there are, what projections, and the parameters of all these.
- It is a central Synapse for all changes to the system, and any changes made will
+ It is a central target for all changes to the system, and any changes made will
  propagate through here.
 */
 
@@ -104,24 +104,27 @@ void rootData::redrawViews()
     // redraw experiments
     main->viewELhandler->redraw();
 
-    // redraw viz
-    main->viewVZ.OpenGLWidget->refreshAll();
-    // clear away old stuff
-    main->viewVZ.currObject = (systemObject *)0;
-    main->viewVZhandler->clearAll();
-    main->viewVZ.OpenGLWidget->clear();
-    // configure TreeView
-    if (!(main->viewVZ.sysModel == NULL)) {
-        delete main->viewVZ.sysModel;
+    if ( main->viewVZ.OpenGLWidget != NULL) {
+        // redraw viz
+        main->viewVZ.OpenGLWidget->refreshAll();
+        // clear away old stuff
+        main->viewVZ.currObject = (systemObject *)0;
+        main->viewVZhandler->clearAll();
+        main->viewVZ.OpenGLWidget->clear();
+        // configure TreeView
+        if (!(main->viewVZ.sysModel == NULL)) {
+            delete main->viewVZ.sysModel;
+        }
+        main->viewVZ.sysModel = new systemmodel(this);
+        main->viewVZ.treeView->setModel(main->viewVZ.sysModel);
+        // connect for function
+        connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZhandler, SLOT(selectionChanged(QItemSelection,QItemSelection)));
+        connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZ.OpenGLWidget, SLOT(selectionChanged(QItemSelection,QItemSelection)));
+        connect(main->viewVZ.sysModel, SIGNAL(dataChanged(QModelIndex,QModelIndex)), main->viewVZ.OpenGLWidget, SLOT(sysSelectionChanged(QModelIndex,QModelIndex)));
+        main->viewVZhandler->redrawHeaders();
+        main->viewVZ.OpenGLWidget->sysSelectionChanged(QModelIndex(), QModelIndex());
     }
-    main->viewVZ.sysModel = new systemmodel(this);
-    main->viewVZ.treeView->setModel(main->viewVZ.sysModel);
-    // connect for function
-    connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZhandler, SLOT(selectionChanged(QItemSelection,QItemSelection)));
-    connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZ.OpenGLWidget, SLOT(selectionChanged(QItemSelection,QItemSelection)));
-    connect(main->viewVZ.sysModel, SIGNAL(dataChanged(QModelIndex,QModelIndex)), main->viewVZ.OpenGLWidget, SLOT(sysSelectionChanged(QModelIndex,QModelIndex)));
-    main->viewVZhandler->redrawHeaders();
-    main->viewVZ.OpenGLWidget->sysSelectionChanged(QModelIndex(), QModelIndex());
+
 }
 
 void rootData::selectProject(QAction * action)

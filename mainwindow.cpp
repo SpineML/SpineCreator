@@ -141,8 +141,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->butC->setEnabled(false);
 
     // VISUALISATION VIEWER initialisation
-    initViewVZ();
-    connectViewVZ();
+    this->viewVZ.OpenGLWidget = NULL;
 
     // COMPONENT EDITOR initialisation
     initViewCL();
@@ -249,7 +248,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // for now
     ui->actionE_xport_network->setEnabled(false);
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC111
     fix.setSingleShot(true);
     connect(&fix, SIGNAL(timeout()), this, SLOT(osxHack()));
     fix.start(200);
@@ -334,7 +333,7 @@ void MainWindow::setupRecentProjectsMenu(QSettings* settings)
     }
 }
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC111
 void MainWindow::osxHack()
 {
     // make sure gl context is initialised correctly
@@ -409,7 +408,9 @@ void MainWindow::closeEvent(QCloseEvent * event)
     }
 
     // clear some pointers
-    this->viewVZ.OpenGLWidget->clear();
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        this->viewVZ.OpenGLWidget->clear();
+    }
     // disconnect the undo signal
     undoStacks->disconnect();
     //data.undoStack->clear();
@@ -1723,7 +1724,9 @@ void MainWindow::viewGVshow()
     // hide the other views
     this->ui->view1->hide();
     this->viewEL.view->hide();
-    this->viewVZ.view->hide();
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        this->viewVZ.view->hide();
+    }
     this->viewCL.frame->hide();
     if (viewCL.root != NULL) {
         this->viewCL.root->toolbar->hide();
@@ -1761,7 +1764,9 @@ void MainWindow::viewELshow()
     // hide the other views
     this->viewGV.subWin->hide();
     this->ui->view1->hide();
-    this->viewVZ.view->hide();
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        this->viewVZ.view->hide();
+    }
     this->viewCL.frame->hide();
     if (viewCL.root != NULL) {
         this->viewCL.root->toolbar->hide();
@@ -1811,7 +1816,9 @@ void MainWindow::viewNLshow()
     // hide the other views
     this->viewGV.subWin->hide();
     this->viewEL.view->hide();
-    this->viewVZ.view->hide();
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        this->viewVZ.view->hide();
+    }
     this->viewCL.frame->hide();
     if (viewCL.root != NULL) {
         this->viewCL.root->toolbar->hide();
@@ -1845,6 +1852,12 @@ void MainWindow::viewNLshow()
 
 void MainWindow::viewVZshow()
 {
+
+    if (viewVZ.OpenGLWidget == NULL) {
+        initViewVZ();
+        connectViewVZ();
+    }
+
     // correct issues due to editing
     viewVZ.OpenGLWidget->refreshAll();
 
@@ -1942,7 +1955,9 @@ void MainWindow::viewCLshow()
     this->viewGV.subWin->hide();
     this->ui->view1->hide();
     this->viewEL.view->hide();
-    this->viewVZ.view->hide();
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        this->viewVZ.view->hide();
+    }
 
     // menus
     ui->menuBar->clear();
@@ -2560,10 +2575,19 @@ void MainWindow::updateTitle()
     if (ui->view1->isVisible()) {
         title = "SpineCreator: Network Editor";
     }
-    if (viewVZ.view->isVisible()) {
-        title = "SpineCreator: Visualiser";
+    if (this->viewVZ.OpenGLWidget != NULL) {
+        if (viewVZ.view->isVisible()) {
+            title = "SpineCreator: Visualiser";
+            QSettings settings;
+            title = title.prepend(" - ");
+            title = title.prepend(settings.value("model/model_name", "err").toString());
+            if (!data.currProject->undoStack->isClean()) {
+                title = title.append("*");
+            }
+            this->setWindowTitle(title);
+        }
     }
-    if (ui->view1->isVisible() || viewVZ.view->isVisible()) {
+    if (ui->view1->isVisible()) {
         QSettings settings;
         title = title.prepend(" - ");
         title = title.prepend(settings.value("model/model_name", "err").toString());
