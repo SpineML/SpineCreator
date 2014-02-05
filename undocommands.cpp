@@ -289,6 +289,31 @@ void movePopulation::redo()
     QUndoCommand::redo();
 }
 
+// ######## MOVE PROJECTION HANDLE #################
+moveProjectionHandle::moveProjectionHandle(rootData * data, projection* proj, const QPointF& oldPos, const QPointF& newPos, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->proj = proj;
+    this->data = data;
+    this->setText("move handle");
+    this->oldPos = oldPos;
+    this->newPos = newPos;
+}
+
+void moveProjectionHandle::undo()
+{
+    proj->moveSelectedControlPoint (this->oldPos.x(), this->oldPos.y());
+    data->redrawViews();
+    QUndoCommand::undo();
+}
+
+void moveProjectionHandle::redo()
+{
+    proj->moveSelectedControlPoint (this->newPos.x(), this->newPos.y());
+    data->redrawViews();
+    QUndoCommand::redo();
+}
+
 // ######## ADD PROJECTION #################
 
 addProjection::addProjection(rootData * data, projection* proj, QUndoCommand *parent) :

@@ -77,6 +77,39 @@ private:
     bool isDeleted;
 };
 
+class moveProjectionHandle : public QUndoCommand
+{
+public:
+    moveProjectionHandle(rootData * data, projection * proj,
+                         const QPointF& oldPos, const QPointF& newPos,
+                         QUndoCommand *parent = 0);
+    ~moveProjectionHandle() {};
+    void undo();
+    void redo();
+private:
+    /*!
+     * The rootData object, which is included so that the screen can
+     * be re-drawn after restoring the position of the handle with
+     * the undo/redo methods.
+     */
+    rootData * data;
+
+    /*!
+     * Pointer to the projection whose handle has been moved
+     */
+    projection * proj;
+
+    /*!
+     * The old position of the handle, before the move.
+     */
+    QPointF oldPos;
+
+    /*!
+     * The new position of the handle, after the move.
+     */
+    QPointF newPos;
+};
+
 class movePopulation : public QUndoCommand
 {
 public:
