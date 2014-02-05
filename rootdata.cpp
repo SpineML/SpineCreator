@@ -1033,32 +1033,34 @@ void rootData::findSelection (float xGL, float yGL, float GLscale, vector<system
     } // for-loop over populations
 }
 
-QColor rootData::getColor(QColor initCol) {
-
-    // launch the QT colorpicker, and get a colour - if cancel is pressed then the output fails .isValid(), and we return the input instead
+QColor rootData::getColor(QColor initCol)
+{
+    // launch the QT colorpicker, and get a colour - if cancel is
+    // pressed then the output fails .isValid(), and we return the
+    // input instead
     QColor out = QColorDialog::getColor(initCol);
     if (out.isValid()) {
         return out;
     } else {
         return initCol;
     }
-
 }
 
 void rootData::deleteCurrentSelection()
 {
-
     if (selList.size() > 1) {
         currProject->undoStack->push(new delSelection(this, selList));
     } else if (selList.size() == 1) {
-        // seperate out:
-        if (selList[0]->type == populationObject)
+        // separate out:
+        if (selList[0]->type == populationObject) {
             currProject->undoStack->push(new delPopulation(this,(population *) selList[0]));
-        if (selList[0]->type == projectionObject)
+        }
+        if (selList[0]->type == projectionObject) {
             currProject->undoStack->push(new delProjection(this, (projection *) selList[0]));
-        if (selList[0]->type == inputObject)
+        }
+        if (selList[0]->type == inputObject) {
             currProject->undoStack->push(new delInput(this,(genericInput *) selList[0]));
-
+        }
     }
 }
 
@@ -1100,7 +1102,6 @@ void rootData::addSpikeSource()
 
         emit updatePanel(this);
         emit redrawGLview();
-
     }
 }
 
@@ -1109,58 +1110,49 @@ void rootData::addBezierOrProjection(float xGL, float yGL)
     if (this->selList.size() == 1) {
         if (this->selList[0]->type == projectionObject) {
 
-                // shortcuts to the projection and population
+            // shortcuts to the projection and population
             projection * proj = (projection *) this->selList[0];
-                population * pop = proj->source;
+            population * pop = proj->source;
 
-                // find if we have hit a population:
-                for (unsigned int i = 0; i < this->populations.size(); ++i) {
+            // find if we have hit a population:
+            for (unsigned int i = 0; i < this->populations.size(); ++i) {
 
-                    // ignore spike sources
-                    if (this->populations[i]->isSpikeSource) continue;
+                // ignore spike sources
+                if (this->populations[i]->isSpikeSource) continue;
 
-                    QPainterPath box;
-                    if (this->populations[i]->addToPath(&box)->contains(QPointF(xGL,yGL))) {
+                QPainterPath box;
+                if (this->populations[i]->addToPath(&box)->contains(QPointF(xGL,yGL))) {
 
-                        // we have a collision, so fix up the connection and return:
-                        population * dest = this->populations[i];
+                    // we have a collision, so fix up the connection and return:
+                    population * dest = this->populations[i];
 
-                        // first check for an existing connection...
-                        if (dest->connectsTo(pop)) {
-                            // EXISTING CONNECTION - NOTIFY USER
-                            emit statusBarUpdate(tr("Connection exists already!"), 2000);
-                            return;
-                        } else {
-                            // new connection! finalise the connection...
-                            dest->reverseProjections.push_back(proj);
-                            proj->destination = dest;
-
-                            // add to undo stack
-                            currProject->undoStack->push(new addProjection(this, proj));
-
-                            // redraw the parameters panel
-                            emit updatePanel(this);
-
-                            // tell gl viewport to stop tracking the mouse
-                            emit finishDrawingSynapse();
-
-                            return;
-
-                        }
-
+                    // first check for an existing connection...
+                    if (dest->connectsTo(pop)) {
+                        // EXISTING CONNECTION - NOTIFY USER
+                        emit statusBarUpdate(tr("Connection exists already!"), 2000);
+                    } else {
+                        // new connection! finalise the connection...
+                        dest->reverseProjections.push_back(proj);
+                        proj->destination = dest;
+                        // add to undo stack
+                        currProject->undoStack->push(new addProjection(this, proj));
+                        // redraw the parameters panel
+                        emit updatePanel(this);
+                        // tell gl viewport to stop tracking the mouse
+                        emit finishDrawingSynapse();
                     }
-
+                    // In both cases above, we now want to return:
+                    return;
                 }
-
-                // no population hit, so add a curve:
-                emit statusBarUpdate(tr("Adding new point"), 2000);
-                // create new bezierCurve
-                bezierCurve newCurve;
-                proj->curves.push_back(newCurve);
-
             }
-    }
 
+            // no population hit, so add a curve:
+            emit statusBarUpdate(tr("Adding new point"), 2000);
+            // create new bezierCurve
+            bezierCurve newCurve;
+            proj->curves.push_back(newCurve);
+        }
+    }
 }
 
 void rootData::startAddBezier(float xGL, float yGL)
@@ -1214,8 +1206,9 @@ void rootData::startAddBezier(float xGL, float yGL)
                     // ignore spike sources
                     if (this->populations[i]->isSpikeSource) continue;
                     QPainterPath * tempPP = new QPainterPath;
-                    if (this->populations[i]->addToPath(tempPP)->contains(QPointF(xGL, yGL)))
+                    if (this->populations[i]->addToPath(tempPP)->contains(QPointF(xGL, yGL))) {
                         selPop = i;
+                    }
                     delete tempPP;
                 }
 
@@ -1233,14 +1226,11 @@ void rootData::startAddBezier(float xGL, float yGL)
                         // find where on the population box we should start the col
                         boxEdge = col->findBoxEdge(dest, boxEdge.x(), boxEdge.y());
                         col->curves.back().end = boxEdge;
-
                     } else {
-
                         // add end point
                         // find where on the population box we should start the col
                         QPointF boxEdge = col->findBoxEdge(dest, col->curves[col->curves.size()-2].end.x(), col->curves[col->curves.size()-2].end.y());
                         col->curves.back().end = boxEdge;
-
                     }
 
                     // set up handles
@@ -1252,26 +1242,22 @@ void rootData::startAddBezier(float xGL, float yGL)
                         // if first curve then setup start point
                         // find where on the population box we should start the col
                         QPointF boxEdge = col->findBoxEdge(pop, xGL, yGL);
-                        col->start = boxEdge;}
-
+                        col->start = boxEdge;
+                    }
                     // setup end point
                     col->curves.back().end = QPointF(xGL, yGL);
-
                     // set up handles
                     col->setAutoHandles(pop, pop, QPointF(xGL,yGL));
-
                 }
 
             }
             delete tempPP;
-
         }
     }
-
 }
 
-void rootData::abortProjection() {
-
+void rootData::abortProjection()
+{
     // the new projection should be the only one in the selList, but may not be...
     if (selList[0]->type == projectionObject) {
         projection * proj = (projection *) this->selList[0];
@@ -1282,9 +1268,7 @@ void rootData::abortProjection() {
         // remove from the system
         proj->remove(this);
     }
-
 }
-
 
 void rootData::mouseMoveGL(float xGL, float yGL)
 {
@@ -1341,29 +1325,19 @@ void rootData::mouseMoveGL(float xGL, float yGL)
         }
         // if it is not a population...
         else if (this->selList[0]->type == projectionObject) {
-
-            //int selEdge = this->selected.edge;
             ((projection*) selList[0])->moveSelectedControlPoint(xGL, yGL);
-
         }
         // if it is not a population...
         else if (this->selList[0]->type == inputObject) {
-
-            //cerr << "moo\n";
             ((genericInput*) selList[0])->moveSelectedControlPoint(xGL, yGL);
-
         }
     }
 }
 
-void rootData::updatePortMap(QString var) {
-
+void rootData::updatePortMap(QString var)
+{
     // update the variables to connect up the stages of the currently selected projection
-
     genericInput * ptr = (genericInput *) sender()->property("ptr").value<void *>();
-    //QString type = sender()->property("type").toString();
-
-    qDebug() << var;
 
     QStringList ports = var.split("->");
     // for safety
@@ -1371,23 +1345,24 @@ void rootData::updatePortMap(QString var) {
         ptr->srcPort = ports.at(0);
         ptr->dstPort = ports.at(1);
     }
-
 }
 
-void rootData::updateType(int index) {
-
+void rootData::updateType(int index)
+{
     // update the components of the currently selected object
     population * currSel;
     synapse * targSel;
     genericInput * inSel;
 
     systemObject * ptr = NULL;
-    //get ptr
-    if (selList.size() ==1)
+    // get ptr
+    if (selList.size() ==1) {
         ptr = selList[0];
+    }
 
-    if (ptr == NULL)
+    if (ptr == NULL) {
         return;
+    }
 
     // if projection we need the current synapse
     if (ptr->type == projectionObject) {
@@ -1466,13 +1441,12 @@ void rootData::updateType(int index) {
 
     // redraw GL view
     emit redrawGLview();
-    //emit updatePanel(this);
 
     emit updatePanelView2("comboboxOSXfix");
-
 }
 
-void rootData::updatePanelView2Accessor() {
+void rootData::updatePanelView2Accessor()
+{
     emit updatePanelView2("");
 }
 
@@ -1486,6 +1460,7 @@ void rootData::updatePar()
         QString newType = sender()->property("newType").toString();
         currProject->undoStack->push(new updateParType(this, par, newType));
     }
+
     // launch the list editor dialog
     if (action == "editList") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
@@ -1507,7 +1482,6 @@ void rootData::updatePar()
 
     if (action == "changeConnProb") {
         // Update the parameter value
-        //qDebug() << "change par";
         fixedProb_connection * conn = (fixedProb_connection *) sender()->property("ptr").value<void *>();
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
@@ -1518,55 +1492,49 @@ void rootData::updatePar()
 
     if (action == "changeConnEq") {
         // Update the parameter value
-        //qDebug() << "change par";
         distanceBased_connection * conn = (distanceBased_connection *) sender()->property("ptr").value<void *>();
         QString newEq = ((QLineEdit *) sender())->text();
         // only add undo if value has changed
-        if (newEq != conn->equation)
+        if (newEq != conn->equation) {
             currProject->undoStack->push(new updateConnEquation(this, conn, newEq));
+        }
     }
 
     if (action == "changeConnDelayEq") {
         // Update the parameter value
-        //qDebug() << "change par";
         distanceBased_connection * conn = (distanceBased_connection *) sender()->property("ptr").value<void *>();
         QString newEq = ((QLineEdit *) sender())->text();
         // only add undo if value has changed
-        if (newEq != conn->delayEquation)
+        if (newEq != conn->delayEquation) {
             currProject->undoStack->push(new updateConnDelayEquation(this, conn, newEq));
+        }
     }
 
     if (action == "changeConnKerSize") {
         // Update the parameter value
-        //qDebug() << "change par";
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
         int kernel_size = ((QComboBox *) sender())->currentIndex() * 2 + 3;
         // only add undo if value has changed
         conn->setKernelSize(kernel_size);
         emit updatePanelView2("");
-        //undoStack->push(new updateConnEquation(this, conn, newEq));
     }
 
     if (action == "changeConnKerScale") {
         // Update the parameter value
-        //qDebug() << "change par";
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
         float kernel_scale = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
         conn->setKernelScale(kernel_scale);
-        //undoStack->push(new updateConnEquation(this, conn, newEq));
     }
 
     if (action == "changeConnKernel") {
         // Update the parameter value
-        //qDebug() << "change par";
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
         int kernel_value = ((QDoubleSpinBox *) sender())->value();
         int i = sender()->property("i").toInt();
         int j = sender()->property("j").toInt();
         // only add undo if value has changed
         conn->setKernel(i,j,kernel_value);
-        //undoStack->push(new updateConnEquation(this, conn, newEq));
     }
 }
 
