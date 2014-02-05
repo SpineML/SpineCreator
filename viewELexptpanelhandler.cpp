@@ -1614,24 +1614,24 @@ void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float 
 {
 
     // draw the populations
-    for (unsigned int i = 0; i < this->data->system.size(); ++i) {
+    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
 
-        this->data->system[i]->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, style);
+        this->data->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, style);
 
     }
     // draw the synapses
-    for (unsigned int i = 0; i < this->data->system.size(); ++i) {
+    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
 
-        this->data->system[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
+        this->data->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
 
     }
     // draw the generic inputs
-    for (unsigned int i = 0; i < this->data->system.size(); ++i) {
+    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
 
         QPen pen(QColor(100,0,0,100));
         pen.setWidthF(float(1));
         painter->setPen(pen);
-        this->data->system[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
+        this->data->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
 
     }
 }

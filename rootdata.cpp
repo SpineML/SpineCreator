@@ -121,7 +121,7 @@ void rootData::redrawViews()
         connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZhandler, SLOT(selectionChanged(QItemSelection,QItemSelection)));
         connect(main->viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), main->viewVZ.OpenGLWidget, SLOT(selectionChanged(QItemSelection,QItemSelection)));
         connect(main->viewVZ.sysModel, SIGNAL(dataChanged(QModelIndex,QModelIndex)), main->viewVZ.OpenGLWidget, SLOT(sysSelectionChanged(QModelIndex,QModelIndex)));
-        main->viewVZhandler->redrawHeaders(0);
+        main->viewVZhandler->redrawHeaders();
         main->viewVZ.OpenGLWidget->sysSelectionChanged(QModelIndex(), QModelIndex());
     }
 
