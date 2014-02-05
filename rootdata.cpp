@@ -857,11 +857,21 @@ bool rootData::selListContains (const vector<systemObject*>& objectList)
 // When the "left" mouse goes down, select what's underneath, if anything.
 void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown)
 {
-    qDebug() << __FUNCTION__ << " called";
+    qDebug() << __FUNCTION__ << " called, shift is " << (shiftDown ? "Down" : "Up");
 
     // Record the position of the selection.
     this->lastLeftMouseDownPos.setX(xGL);
     this->lastLeftMouseDownPos.setY(yGL);
+
+    // Before finding selections, see if user has an already selected
+    // projection/input and if so, if user has clicked on a handle.
+    if (!this->selList.empty() && this->selList.size() == 1) {
+        if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {
+            if ( ((projection *)selList[0])->selectControlPoint(xGL, yGL, GLscale) ) {
+                return;
+            } // else no handle on the inputObject/projectionObject was selected
+        } // else the previously selected object was not an input or projection
+    }
 
     // A list of things which have been selected with this left mouse
     // down click. Will be added to this->selList after the logic in
@@ -879,10 +889,6 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
     // 7. Something previously selected, user unselected, no shift -> clear selection
     //
     // 8. Something(s) were previously selected, user clicked on one of them -> User is moving selection.
-
-    qDebug() << "prev. selected: " << this->selList.size();
-    qDebug() << "newly selected: " << newlySelectedList.size();
-    qDebug() << "Shift is " << (shiftDown ? "Down" : "Up");
 
     if (this->selList.empty()) { // Nothing previously selected.
         qDebug() << "Nothing prev. selected...";
@@ -957,16 +963,6 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
 
 void rootData::findSelection (float xGL, float yGL, float GLscale, vector<systemObject*>& newlySelectedList)
 {
-    // prioritise the handles of a selected projection:
-    if (newlySelectedList.size() == 1) {
-        if (newlySelectedList[0]->type == projectionObject || newlySelectedList[0]->type == inputObject) {
-            if (((projection *) newlySelectedList[0])->selectControlPoint(xGL, yGL, GLscale)) {
-                qDebug() << "Got projection handle";
-                return;
-            }
-        }
-    }
-
     // Now look at populations and their inputs.
     for (unsigned int i = 0; i < this->populations.size(); ++i) {
 
