@@ -485,8 +485,10 @@ MainWindow::~MainWindow()
     // delete catalogs:
     clearComponents();
 
-    delete this->viewVZ.errors;
-    delete this->viewVZ.layout;
+    if (viewVZ.OpenGLWidget != NULL) {
+        delete this->viewVZ.errors;
+        delete this->viewVZ.layout;
+    }
 
     delete ui;
 }
