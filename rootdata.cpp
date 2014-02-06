@@ -1357,8 +1357,8 @@ void rootData::mouseMoveGL(float xGL, float yGL)
             ((projection*) selList[0])->moveSelectedControlPoint(xGL, yGL);
         }
         // if it is not a population...
-        else if (this->selList[0]->type == inputObject)
-            qDebug() << "selList[0] type is input";{
+        else if (this->selList[0]->type == inputObject) {
+            qDebug() << "selList[0] type is input";
             ((genericInput*) selList[0])->moveSelectedControlPoint(xGL, yGL);
         }
     }
