@@ -1144,18 +1144,16 @@ void rootData::abortProjection()
 void rootData::mouseMoveGL(float xGL, float yGL)
 {
     selectionMoved = true;
-    qDebug() << "pos = " << xGL << " " << yGL;
+    //qDebug() << "pos = " << xGL << " " << yGL;
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
         GLWidget * source = (GLWidget *) sender();
-        qDebug() << "Moving viewport!";
         source->move(xGL+source->viewX-cursor.x,yGL-source->viewY-cursor.y);
         return;
     }
 
     // revised move code for multiple objects
-    qDebug() << "Into revised move code for multiple objects";
 
     // if grid is on, snap to grid
     GLWidget * source = (GLWidget *) sender();
