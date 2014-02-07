@@ -137,6 +137,10 @@ private:
 #ifdef Q_OS_MAC111
     QTimer fix;
 #endif
+    /*!
+     * If an error message needs to be displayed, do so with this.
+     */
+    QErrorMessage* emsg;
 
     QAction *undoAction;
     QAction *redoAction;
