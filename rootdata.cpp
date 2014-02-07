@@ -634,7 +634,7 @@ void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
 
 void rootData::itemWasMoved()
 {
-    if (!selList.empty()) {
+    if (!this->selList.empty()) {
         // We have a pointer(s) to the moved item(s). Check types to
         // see what to do with it/them.  If ANY object in selList is a
         // population, then call populationMoved.
@@ -642,6 +642,26 @@ void rootData::itemWasMoved()
         if (!pops.empty()) {
             this->populationMoved (pops);
         } // else do nothing
+
+        if (this->selList.size() == 1
+            && (this->selList[0]->type == projectionObject
+                || this->selList[0]->type == inputObject)) {
+            // The selected thing was moved.
+            this->projectionHandleMoved();
+        }
+    }
+}
+
+void rootData::projectionHandleMoved()
+{
+    // Already checked before call, but lets be safe
+    if (this->selList.size() == 1
+        && (this->selList[0]->type == projectionObject
+            || this->selList[0]->type == inputObject)) {
+        // New position of the handle
+        projection* projptr = static_cast<projection*>(this->selList[0]);
+        QPointF newPos = projptr->selectedControlPointLocation();
+        currProject->undoStack->push(new moveProjectionHandle(this, projptr, lastLeftMouseDownPos, newPos));
     }
 }
 

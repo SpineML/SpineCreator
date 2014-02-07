@@ -52,12 +52,13 @@ enum cPointType {
 
 struct cPoint {
     bool start;
-    int ind;
+    int ind; // A control point is in a curve. This is the index in projection::curves of the relevant curve.
     cPointType type;
 };
 
 
-class synapse : public systemObject{
+class synapse : public systemObject
+{
 public:
     synapse() {isVisualised=false;}
     synapse(projection * proj, projectObject * data, bool dontAddInputs = false);
@@ -74,8 +75,6 @@ public:
 
 class projection : public systemObject
 {
-
-
 public:
     projection();
     projection(QDomElement  &e, QDomDocument * , QDomDocument * meta, projectObject *data);
@@ -92,7 +91,7 @@ public:
     int currTarg;
     QString getName();
     virtual void remove(rootData *);
-    virtual void delAll(rootData *);    
+    virtual void delAll(rootData *);
     virtual void delAll(projectObject *);
     void move(float,float);
 
@@ -114,9 +113,9 @@ public:
     bool deleteControlPoint(float xGL, float yGL, float GLscale);
     void insertControlPoint(float xGL, float yGL, float GLscale);
     QPointF currentLocation();
+    QPointF selectedControlPointLocation();
 
     virtual void setLocationOffsetRelTo(float x, float y)
-
     {
         locationOffset =  this->start - QPointF(x,y);
     }
@@ -134,9 +133,6 @@ protected:
 private:
     int srcPos;
     int dstPos;
-
-
-
 };
 
 #endif // PROJECTIONS_H

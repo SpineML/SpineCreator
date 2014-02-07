@@ -202,6 +202,15 @@ private:
     void populationMoved(const vector<population*>& pops);
 
     /*!
+     * Add an entry to the undo stack for the move of a projection
+     * handle. The new location of the handle is obtained by querying
+     * it - the projection is in selList at this point. The old
+     * location of the handle is as near as makes no difference
+     * lastLeftMouseDownPos.
+     */
+    void projectionHandleMoved();
+
+    /*!
      * \brief Obtain the currently selected populations
      *
      * \return A vector of pointers to all currently selected

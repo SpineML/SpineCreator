@@ -139,7 +139,7 @@ projection::projection()
     this->destination = NULL;
     this->source = NULL;
 
-    currTarg = 0;    
+    currTarg = 0;
     this->start = QPointF(0,0);
 
     this->tempTrans.GLscale = 100;
@@ -262,13 +262,27 @@ void projection::delAll(projectObject *) {
 
 }
 
-QPointF projection::currentLocation() {
-
-    if (curves.size() > 0)
+QPointF projection::currentLocation()
+{
+    if (curves.size() > 0) {
         return this->curves.back().end;
-
+    }
     return start;
+}
 
+QPointF projection::selectedControlPointLocation()
+{
+    QPointF rtn(0,0);
+    if (this->selectedControlPoint.type == C1) {
+        rtn = this->curves[this->selectedControlPoint.ind].C1;
+    } else if (this->selectedControlPoint.type == C2) {
+        rtn = this->curves[this->selectedControlPoint.ind].C2;
+    } else if (this->selectedControlPoint.type == p_end) {
+        rtn = this->curves[this->selectedControlPoint.ind].end;
+    } else {
+        // error.
+    }
+    return rtn;
 }
 
 void projection::move(float x, float y) {
