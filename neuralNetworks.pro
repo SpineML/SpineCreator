@@ -141,9 +141,12 @@ win32:debug{
     DEPENDPATH += c:/graphviz/lib/debug/lib
 }
 linux-g++{
-    LIBS += -L/usr/local/lib/graphviz -L/usr/local/lib/ -L/usr/lib/graphviz -lgvplugin_core -lgvc -lgraph -lGLU
-    INCLUDEPATH += /usr/local/include/graphviz
-    INCLUDEPATH += /usr/local/include
+    LIBS += -L/usr/lib/graphviz -lgvplugin_core -lgvc -lgraph -lGLU
+    INCLUDEPATH += /usr/include/graphviz
+    DEPENDPATH += /usr/lib/graphviz
+}
+linux-g++-64{
+    LIBS += -L/usr/lib/graphviz -lgvplugin_core -lgvc -lgraph -lGLU
     INCLUDEPATH += /usr/include/graphviz
     DEPENDPATH += /usr/lib/graphviz
 }
