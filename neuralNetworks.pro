@@ -131,14 +131,14 @@ RESOURCES += \
     icons.qrc
 
 win32:release{
-    LIBS += -Lc:/graphviz/lib/release/lib -lgvplugin_core -lgvc -lgraph -lGLU32
-    INCLUDEPATH += c:/graphviz/include
-    DEPENDPATH += c:/graphviz/lib/release/lib
+    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/release/lib" -lgvplugin_core -lgvc -lgraph -lGLU32
+    INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
+    DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/release/lib"
 }
 win32:debug{
-    LIBS += -Lc:/graphviz/lib/debug/lib -lgvplugin_core -lgvc -lgraph -lGLU32
-    INCLUDEPATH += c:/graphviz/include
-    DEPENDPATH += c:/graphviz/lib/debug/lib
+    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/debug/lib" -lgvplugin_core -lgvc -lgraph -lGLU32
+    INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
+    DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/debug/lib"
 }
 linux-g++{
     LIBS += -L/usr/local/lib/graphviz -L/usr/local/lib/ -L/usr/lib/graphviz -lgvplugin_core -lgvc -lgraph -lGLU

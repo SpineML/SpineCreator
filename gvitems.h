@@ -27,6 +27,7 @@
 
 #include <QtGui>
 #include <graphviz/gvc.h>
+#include <graphviz/graph.h>
 #include <vector>
 #include <algorithm>
 #include "grouptextitems.h"
