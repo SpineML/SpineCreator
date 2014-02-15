@@ -186,7 +186,8 @@ Source: https://github.com/SpineML/SpineCreator
 # Upstream copyright:
 Files: *
 Copyright: 2013-2014 Alex Cope <a.cope@sheffield.ac.uk>
-           2014 Seb James <seb.james@sheffield.ac.uk>
+                     Paul Richmond <p.richmond@sheffield.ac.uk>
+                     Seb James <seb.james@sheffield.ac.uk>
 License: GPL
  This package is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
