@@ -168,7 +168,7 @@ copyin()
 copyin "changelog"
 
 # and the manpage
-copyin "manpage.1"
+copyin "spinecreator.1"
 
 # menu
 cat > debian/menu <<EOF
@@ -241,7 +241,43 @@ EOF
 cat > debian/rules <<EOF
 #!/usr/bin/make -f
 include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/qmake.mk
+
+# The following is:
+#  include /usr/share/cdbs/1/class/qmake.mk
+# with https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=695367 applied
+# and the comments stripped out.
+
+_cdbs_scripts_path ?= /usr/lib/cdbs
+_cdbs_rules_path ?= /usr/share/cdbs/1/rules
+_cdbs_class_path ?= /usr/share/cdbs/1/class
+
+ifndef _cdbs_class_qmake
+_cdbs_class_qmake = 1
+
+include \$(_cdbs_class_path)/makefile.mk\$(_cdbs_makefile_suffix)
+
+# FIXME: Restructure to allow early override
+DEB_MAKE_EXTRA_ARGS = \$(DEB_MAKE_PARALLEL)
+
+DEB_MAKE_INSTALL_TARGET = install INSTALL_ROOT=\$(DEB_DESTDIR)
+DEB_MAKE_CLEAN_TARGET = distclean
+
+QMAKE ?= qmake
+
+ifneq (,\$(filter nostrip,\$(DEB_BUILD_OPTIONS)))
+DEB_QMAKE_CONFIG_VAL ?= nostrip
+endif
+
+common-configure-arch common-configure-indep:: common-configure-impl
+common-configure-impl:: \$(DEB_BUILDDIR)/Makefile
+\$(DEB_BUILDDIR)/Makefile:
+	cd \$(DEB_BUILDDIR) && \$(QMAKE) \$(DEB_QMAKE_ARGS) \$(if \$(DEB_QMAKE_CONFIG_VAL),'CONFIG += \$(DEB_QMAKE_CONFIG_VAL)') 'QMAKE_CC = \$(CC)' 'QMAKE_CXX = \$(CXX)' 'QMAKE_CFLAGS_RELEASE = \$(CPPFLAGS) \$(CFLAGS)' 'QMAKE_CXXFLAGS_RELEASE = \$(CPPFLAGS) \$(CXXFLAGS)' 'QMAKE_LFLAGS_RELEASE = \$(LDFLAGS)'
+
+clean::
+	rm -f \$(DEB_BUILDDIR)/Makefile \$(DEB_BUILDDIR)/.qmake.internal.cache
+
+endif
+
 EOF
 
 popd
@@ -255,6 +291,13 @@ popd
 
 echo "unpacking $DEBORIG.tar.gz:"
 tar xvf $DEBORIG.tar.gz
+
+# Set up compiler dpkg-buildflags
+export CPPFLAGS=`dpkg-buildflags --get CPPFLAGS`
+export CFLAGS=`dpkg-buildflags --get CFLAGS`
+export CXXFLAGS=`dpkg-buildflags --get CXXFLAGS`
+export LDFLAGS=`dpkg-buildflags --get LDFLAGS`
+export DEB_BUILD_HARDENING=1
 
 echo "Ready to build..."
 pushd $DEBNAME
