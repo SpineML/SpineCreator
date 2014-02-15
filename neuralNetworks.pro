@@ -7,12 +7,16 @@
 VPATH += ../shared
 INCLUDEPATH += ../shared
 
-QT       += core gui opengl xml svg network printsupport
+QT       += core gui opengl xml svg network
 
-TARGET = spineCreator
+greaterThan(QT_MAJOR_VERSION, 4) {
+QT       += printsupport
+}
+
+TARGET = spinecreator
 TEMPLATE = app
 
-SOURCES += main.cpp\
+SOURCES += main.cpp \
         mainwindow.cpp \
     glwidget.cpp \
     population.cpp \
@@ -161,3 +165,5 @@ macx{
 OTHER_FILES += \
     neuralNetworks.pro.user
 
+target.path = /usr/bin
+INSTALLS += target
