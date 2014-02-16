@@ -1,8 +1,8 @@
 /***************************************************************************
 **                                                                        **
-**  This file is part of SpineCreator, an easy to use, GUI for            **
+**  This file is part of SpineCreator, an easy to use GUI for             **
 **  describing spiking neural network models.                             **
-**  Copyright (C) 2013 Alex Cope, Paul Richmond                           **
+**  Copyright (C) 2013-2014 Alex Cope, Paul Richmond, Seb James           **
 **                                                                        **
 **  This program is free software: you can redistribute it and/or modify  **
 **  it under the terms of the GNU General Public License as published by  **
@@ -18,7 +18,7 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Alex Cope                                            **
+**          Authors: Alex Cope, Seb James                                 **
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
@@ -139,7 +139,7 @@ projection::projection()
     this->destination = NULL;
     this->source = NULL;
 
-    currTarg = 0;    
+    currTarg = 0;
     this->start = QPointF(0,0);
 
     this->tempTrans.GLscale = 100;
@@ -262,13 +262,27 @@ void projection::delAll(projectObject *) {
 
 }
 
-QPointF projection::currentLocation() {
-
-    if (curves.size() > 0)
+QPointF projection::currentLocation()
+{
+    if (curves.size() > 0) {
         return this->curves.back().end;
-
+    }
     return start;
+}
 
+QPointF projection::selectedControlPointLocation()
+{
+    QPointF rtn(0,0);
+    if (this->selectedControlPoint.type == C1) {
+        rtn = this->curves[this->selectedControlPoint.ind].C1;
+    } else if (this->selectedControlPoint.type == C2) {
+        rtn = this->curves[this->selectedControlPoint.ind].C2;
+    } else if (this->selectedControlPoint.type == p_end) {
+        rtn = this->curves[this->selectedControlPoint.ind].end;
+    } else {
+        // error.
+    }
+    return rtn;
 }
 
 void projection::move(float x, float y) {

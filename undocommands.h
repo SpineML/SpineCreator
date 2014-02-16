@@ -1,8 +1,8 @@
 /***************************************************************************
 **                                                                        **
-**  This file is part of SpineCreator, an easy to use, GUI for            **
+**  This file is part of SpineCreator, an easy to use GUI for             **
 **  describing spiking neural network models.                             **
-**  Copyright (C) 2013 Alex Cope, Paul Richmond                           **
+**  Copyright (C) 2013-2014 Alex Cope, Paul Richmond, Seb James           **
 **                                                                        **
 **  This program is free software: you can redistribute it and/or modify  **
 **  it under the terms of the GNU General Public License as published by  **
@@ -18,7 +18,7 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Alex Cope                                            **
+**          Authors: Alex Cope, Seb James                                 **
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
@@ -75,6 +75,39 @@ private:
     int index;
     int selIndex;
     bool isDeleted;
+};
+
+class moveProjectionHandle : public QUndoCommand
+{
+public:
+    moveProjectionHandle(rootData * data, projection * proj,
+                         const QPointF& oldPos, const QPointF& newPos,
+                         QUndoCommand *parent = 0);
+    ~moveProjectionHandle() {};
+    void undo();
+    void redo();
+private:
+    /*!
+     * The rootData object, which is included so that the screen can
+     * be re-drawn after restoring the position of the handle with
+     * the undo/redo methods.
+     */
+    rootData * data;
+
+    /*!
+     * Pointer to the projection whose handle has been moved
+     */
+    projection * proj;
+
+    /*!
+     * The old position of the handle, before the move.
+     */
+    QPointF oldPos;
+
+    /*!
+     * The new position of the handle, after the move.
+     */
+    QPointF newPos;
 };
 
 class movePopulation : public QUndoCommand

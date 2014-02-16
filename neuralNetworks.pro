@@ -7,12 +7,17 @@
 VPATH += ../shared
 INCLUDEPATH += ../shared
 
-QT       += core gui opengl xml network printsupport
 
-TARGET = spineCreator
+QT       += core gui opengl xml network
+
+greaterThan(QT_MAJOR_VERSION, 4) {
+QT       += printsupport
+}
+
+TARGET = spinecreator
 TEMPLATE = app
 
-SOURCES += main.cpp\
+SOURCES += main.cpp \
         mainwindow.cpp \
     glwidget.cpp \
     population.cpp \
@@ -127,19 +132,22 @@ RESOURCES += \
     icons.qrc
 
 win32:release{
-    LIBS += -Lc:/graphviz/lib/release/lib -lgvplugin_core -lgvc -lgraph -lGLU32
-    INCLUDEPATH += c:/graphviz/include
-    DEPENDPATH += c:/graphviz/lib/release/lib
+    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/release/lib" -lgvc -lgraph -lGLU32
+    INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
+    DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/release/lib"
 }
 win32:debug{
-    LIBS += -Lc:/graphviz/lib/debug/lib -lgvplugin_core -lgvc -lgraph -lGLU32
-    INCLUDEPATH += c:/graphviz/include
-    DEPENDPATH += c:/graphviz/lib/debug/lib
+    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/debug/lib" -lgvc -lgraph -lGLU32
+    INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
+    DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/debug/lib"
 }
 linux-g++{
-    LIBS += -L/usr/local/lib/graphviz -L/usr/local/lib/ -L/usr/lib/graphviz -lgvplugin_core -lgvc -lgraph -lGLU
-    INCLUDEPATH += /usr/local/include/graphviz
-    INCLUDEPATH += /usr/local/include
+    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU
+    INCLUDEPATH += /usr/include/graphviz
+    DEPENDPATH += /usr/lib/graphviz
+}
+linux-g++-64{
+    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU
     INCLUDEPATH += /usr/include/graphviz
     DEPENDPATH += /usr/lib/graphviz
 }
@@ -155,3 +163,5 @@ macx{
 OTHER_FILES += \
     neuralNetworks.pro.user
 
+target.path = /usr/bin
+INSTALLS += target

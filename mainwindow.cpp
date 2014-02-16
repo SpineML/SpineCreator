@@ -1,8 +1,8 @@
 /***************************************************************************
 **                                                                        **
-**  This file is part of SpineCreator, an easy to use, GUI for            **
+**  This file is part of SpineCreator, an easy to use GUI for             **
 **  describing spiking neural network models.                             **
-**  Copyright (C) 2013 Alex Cope, Paul Richmond                           **
+**  Copyright (C) 2013-2014 Alex Cope, Paul Richmond, Seb James           **
 **                                                                        **
 **  This program is free software: you can redistribute it and/or modify  **
 **  it under the terms of the GNU General Public License as published by  **
@@ -18,7 +18,7 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Alex Cope, Paul Richmond                             **
+**          Authors: Alex Cope, Paul Richmond, Seb James                  **
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
@@ -63,6 +63,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // initialise GUI
     ui->setupUi(this);
+
+    this->emsg = (QErrorMessage*)0;
 
     toolbarStyleSheet = ui->toolbar_3->styleSheet();
 
@@ -504,14 +506,20 @@ MainWindow::~MainWindow()
     for (uint i = 0; i < (uint) connFiles.size(); ++i)
        QFile::remove(lib_dir.absoluteFilePath(connFiles[i]));
 
+    if (this->emsg != (QErrorMessage*)0) {
+        delete this->emsg;
+    }
+
     if (viewCL.root != NULL)
         delete viewCL.root;
 
     // delete catalogs:
     clearComponents();
 
-    delete this->viewVZ.errors;
-    delete this->viewVZ.layout;
+    if (viewVZ.OpenGLWidget != NULL) {
+        delete this->viewVZ.errors;
+        delete this->viewVZ.layout;
+    }
 
     delete ui;
 }
@@ -1322,11 +1330,39 @@ void MainWindow::export_project(const QString& filePath)
         return;
     }
 
-    // FIXME: Check here to see if there is already a project file in
-    // this directory, and warn the user that you can't save two
-    // projects in one directory.
+    // Check here to see if there is already a project file in this
+    // directory, and warn the user that you can't save two projects
+    // in one directory.
+    QDir d(filePath);
+    d.cdUp();
+    // Get all files in QDir
+    QStringList nf;
+    nf << "*.proj";
+    QStringList l = d.entryList(nf, QDir::Files);
 
-    this->data.currProject->save_project(filePath, &data);
+    QStringList::const_iterator iter = l.constBegin();
+    while (iter != l.constEnd()) {
+        QString testPath = d.path() + QDir::separator() + *iter;
+        if (testPath == filePath) {
+            // Skip this
+            // qDebug() << "This file is ok - it's going to be over-written: " << testPath;
+        } else {
+            // We have an alien project file here!
+            if (this->emsg == (QErrorMessage*)0) {
+                this->emsg = new QErrorMessage(this);
+                QSize sz(250,200);
+                this->emsg->setMinimumSize(sz);
+            }
+            this->emsg->setWindowTitle("Can't save two projects together");
+            this->emsg->showMessage(
+                tr("SpineCreator can't save more than one project in the each directory. A project consists of one .proj file and several .xml files. Two projects may have conflicting xml files, and hence we require that you save each project in a different directory.")
+                );
+            return;
+        }
+        ++iter;
+    }
+
+    this->data.currProject->save_project(filePath, &this->data);
     // enable / disable menus
     this->configureVCSMenu();
     // Update the recent projects menu

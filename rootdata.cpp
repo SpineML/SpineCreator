@@ -1,8 +1,8 @@
 /***************************************************************************
 **                                                                        **
-**  This file is part of SpineCreator, an easy to use, GUI for            **
+**  This file is part of SpineCreator, an easy to use GUI for             **
 **  describing spiking neural network models.                             **
-**  Copyright (C) 2013 Alex Cope, Paul Richmond                           **
+**  Copyright (C) 2013-2014 Alex Cope, Paul Richmond, Seb James           **
 **                                                                        **
 **  This program is free software: you can redistribute it and/or modify  **
 **  it under the terms of the GNU General Public License as published by  **
@@ -18,7 +18,7 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Alex Cope                                            **
+**          Authors: Alex Cope, Seb James                                 **
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
@@ -628,166 +628,13 @@ void rootData::endDragSelection()
 
 void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
 {
-    // are we adding or reselecting?
-    bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
-
-    // we don't select on mouseup for drag events
-    if (this->selectionMoved) {
-        return;
-    }
-
-    vector < genericInput * > allInputs;
-
-    if (addSelection) {
-
-        for (unsigned int i = 0; i < this->populations.size(); ++i) {
-
-            // select if under the cursor - no two objects should overlap!
-            if (this->populations[i]->is_clicked(xGL, yGL, GLscale))
-            {
-                this->cursor.x = -100000;
-                this->cursor.y = -100000;
-                this->selChange = true;
-
-                bool removed = false;
-
-                // if in list, then remove
-                for (uint j = 0; j < selList.size(); ++j) {
-                    if (this->populations[i]->getName() == selList[j]->getName()) {
-                        selList.erase(selList.begin()+j, selList.begin()+j+1);
-                        removed = true;
-                    }
-                }
-                // remove projections with only one end population selected
-                for (int j = 0; j < (int) selList.size(); ++j) {
-                    if (selList[j]->type == projectionObject) {
-                        bool targIn = false;
-                        bool destIn = false;
-                        for (uint k = 0; k < selList.size(); ++k) {
-                            if (((projection *) selList[j])->source->tag == selList[k]->tag) targIn = true;
-                            if (((projection *) selList[j])->destination->tag == selList[k]->tag) destIn = true;
-                        }
-                        if (!(targIn && destIn))
-                        {
-                            // if there are any projections which no longer have both src and dest selected, remove them
-                            selList.erase(selList.begin()+j, selList.begin()+j+1);
-                            j = j - 1;
-                        }
-
-                    }
-                }
-
-                // if not removed, then add
-                if (!removed) this->selList.push_back(this->populations[i]);
-
-                emit updatePanel(this);
-
-                // selection complete, move on
-                return;
-            }
-
-            // add inputs to list for population
-            for (unsigned int in = 0; in < this->populations[i]->neuronType->inputs.size(); ++in)
-                allInputs.push_back(this->populations[i]->neuronType->inputs[in]);
-
-            // check projections
-            for (unsigned int j = 0; j < this->populations[i]->projections.size(); ++j) {
-
-                // find if an edge of the projection is hit
-                if (this->populations[i]->projections[j]->is_clicked(xGL, yGL, GLscale)) {
-
-                    this->cursor.x = -100000;
-                    this->cursor.y = -100000;
-                    this->selChange = true;
-
-                    bool removed = false;
-
-
-                    // if in list, then remove
-                    for (uint k = 0; k < selList.size(); ++k) {
-                        if (this->populations[i]->projections[j]->getName() == selList[k]->getName()) {
-                            selList.erase(selList.begin()+k, selList.begin()+k+1);
-                            removed = true;
-                        }
-                    }
-
-
-                    // if not removed, and src and dest are in the list, then add
-                    if (!removed) {
-
-                        bool targIn = false;
-                        bool destIn = false;
-                        for (uint k = 0; k < selList.size(); ++k) {
-                            if (this->populations[i]->projections[j]->source->tag == selList[k]->tag) targIn = true;
-                            if (this->populations[i]->projections[j]->destination->tag == selList[k]->tag) destIn = true;
-                        }
-                        if (targIn && destIn)
-                            this->selList.push_back(this->populations[i]->projections[j]);
-
-                    }
-
-                    emit updatePanel(this);
-
-                    // selection complete, move on
-                    return;
-                }
-
-                // add inputs to list for projection
-                for (unsigned int pt = 0; pt < this->populations[i]->projections[j]->synapses.size(); ++pt) {
-                    for (unsigned int in = 0; in < this->populations[i]->projections[j]->synapses[pt]->weightUpdateType->inputs.size(); ++in)
-                        allInputs.push_back(this->populations[i]->projections[j]->synapses[pt]->weightUpdateType->inputs[in]);
-                    for (unsigned int in = 0; in < this->populations[i]->projections[j]->synapses[pt]->postsynapseType->inputs.size(); ++in)
-                        allInputs.push_back(this->populations[i]->projections[j]->synapses[pt]->postsynapseType->inputs[in]);
-                }
-            }
-        }
-
-        // for all generic inputs
-        for (unsigned int i = 0; i < allInputs.size(); ++i) {
-
-            // find if an edge of the projection is hit
-            if (allInputs[i]->is_clicked(xGL, yGL, GLscale)) {
-
-                this->cursor.x = -100000;
-                this->cursor.y = -100000;
-                this->selChange = true;
-
-                bool removed = false;
-
-                // if in list, then remove
-                for (uint k = 0; k < selList.size(); ++k) {
-                    if (allInputs[i] == selList[k]) {
-                        selList.erase(selList.begin()+k, selList.begin()+k+1);
-                        removed = true;
-                    }
-                }
-
-                // if not removed, and src and dest are in the list, then add
-                if (!removed) {
-
-                    bool targIn = false;
-                    bool destIn = false;
-                    for (uint k = 0; k < selList.size(); ++k) {
-                        if (allInputs[i]->source == selList[k]) targIn = true;
-                        if (allInputs[i]->destination == selList[k]) destIn = true;
-                    }
-                    if (targIn && destIn)
-                        this->selList.push_back(allInputs[i]);
-
-                }
-
-                emit updatePanel(this);
-
-                // selection complete, move on
-                return;
-            }
-        }
-    }
+    // All selection logic is in onLeftMouseDown(), so currently, this
+    // method is a no-op.
 }
 
 void rootData::itemWasMoved()
 {
-    if (!selList.empty()) {
+    if (!this->selList.empty()) {
         // We have a pointer(s) to the moved item(s). Check types to
         // see what to do with it/them.  If ANY object in selList is a
         // population, then call populationMoved.
@@ -795,6 +642,26 @@ void rootData::itemWasMoved()
         if (!pops.empty()) {
             this->populationMoved (pops);
         } // else do nothing
+
+        if (this->selList.size() == 1
+            && (this->selList[0]->type == projectionObject
+                || this->selList[0]->type == inputObject)) {
+            // The selected thing was moved.
+            this->projectionHandleMoved();
+        }
+    }
+}
+
+void rootData::projectionHandleMoved()
+{
+    // Already checked before call, but lets be safe
+    if (this->selList.size() == 1
+        && (this->selList[0]->type == projectionObject
+            || this->selList[0]->type == inputObject)) {
+        // New position of the handle
+        projection* projptr = static_cast<projection*>(this->selList[0]);
+        QPointF newPos = projptr->selectedControlPointLocation();
+        currProject->undoStack->push(new moveProjectionHandle(this, projptr, lastLeftMouseDownPos, newPos));
     }
 }
 
@@ -838,9 +705,11 @@ void rootData::populationMoved(const vector<population*>& pops)
 
 void rootData::onNewSelections (float xGL, float yGL)
 {
+    qDebug() << __FUNCTION__ << " emitting updatePanel";
     emit updatePanel(this);
     for (uint i = 0; i < this->selList.size(); ++i) {
         // register locations relative to cursor:
+        qDebug() << "Setting a location offset...";
         this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
     }
 }
@@ -855,6 +724,22 @@ bool rootData::selListContains (const vector<systemObject*>& objectList)
         ++i;
     }
     return false;
+}
+
+void rootData::deleteFromSelList (const vector<systemObject*>& objectList)
+{
+    vector<systemObject*>::const_iterator i = objectList.begin();
+    while (i != objectList.end()) {
+        vector<systemObject*>::iterator j = this->selList.begin();
+        while (j != this->selList.end()) {
+            if (*i == *j) { // That is, selList contains a member of objectList
+                j = this->selList.erase (j);
+            } else {
+                ++j;
+            }
+        }
+        ++i;
+    }
 }
 
 // When the "left" mouse goes down, select what's underneath, if anything.
@@ -937,7 +822,11 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
                 if (!this->selListContains (newlySelectedList)) {
                     qDebug() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
                     this->selList.insert (this->selList.end(), newlySelectedList.begin(), newlySelectedList.end());
-                } // else user has shift down,. but newlySelected is already in selList.
+                } else {
+                    // user has shift down,. but newlySelected is already in selList, so in this case REMOVE it!
+                    qDebug() << "user has shift down clicking on existing object, so delete";
+                    this->deleteFromSelList (newlySelectedList);
+                }
             } else {
                 // Shift not down, user wishes to switch selection OR move several selected items
                 qDebug() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
@@ -1269,7 +1158,7 @@ void rootData::abortProjection()
 void rootData::mouseMoveGL(float xGL, float yGL)
 {
     selectionMoved = true;
-    // qDebug() << "pos = " << float(xGL) << " " << float(yGL);
+    //qDebug() << "pos = " << xGL << " " << yGL;
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
@@ -1292,11 +1181,9 @@ void rootData::mouseMoveGL(float xGL, float yGL)
             selList[i]->move(xGL, yGL);
         }
     } else {
-
         // if only one thing
 
-        if (this->selList[0]->type == populationObject)
-        {
+        if (this->selList[0]->type == populationObject) {
             bool collision = false;
             population * pop = (population *) selList[0];
 
@@ -1311,20 +1198,20 @@ void rootData::mouseMoveGL(float xGL, float yGL)
             }
 
             // snap to grid:
-            if (source->gridSelect)
+            if (source->gridSelect) {
                 selList[0]->setLocationOffset (QPointF(0,0));
+            }
 
-            if (!collision)
-            {
+            if (!collision) {
                 selList[0]->move(xGL, yGL);
             }
-        }
-        // if it is not a population...
-        else if (this->selList[0]->type == projectionObject) {
+
+        } else if (this->selList[0]->type == projectionObject) {
+            // not a population in this case...
             ((projection*) selList[0])->moveSelectedControlPoint(xGL, yGL);
-        }
-        // if it is not a population...
-        else if (this->selList[0]->type == inputObject) {
+
+        } else if (this->selList[0]->type == inputObject) {
+            // not a population in this case either
             ((genericInput*) selList[0])->moveSelectedControlPoint(xGL, yGL);
         }
     }

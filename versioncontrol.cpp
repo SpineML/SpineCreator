@@ -1,8 +1,8 @@
 /***************************************************************************
 **                                                                        **
-**  This file is part of SpineCreator, an easy to use, GUI for            **
+**  This file is part of SpineCreator, an easy to use GUI for             **
 **  describing spiking neural network models.                             **
-**  Copyright (C) 2013 Alex Cope, Paul Richmond                           **
+**  Copyright (C) 2013-2014 Alex Cope, Paul Richmond, Seb James           **
 **                                                                        **
 **  This program is free software: you can redistribute it and/or modify  **
 **  it under the terms of the GNU General Public License as published by  **
@@ -52,7 +52,9 @@ void versionControl::detectVCSes() {
     mercurial->setWorkingDirectory(qgetenv("HOME"));
     mercurial->setProcessEnvironment(env);
 
+#ifdef NEED_VERSIONCONTROL_FINISHED
     connect(mercurial, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int, QProcess::ExitStatus)));
+#endif
     connect(mercurial, SIGNAL(readyReadStandardOutput()), this, SLOT(standardOutput()));
     connect(mercurial, SIGNAL(readyReadStandardError()), this, SLOT(standardError()));
 
