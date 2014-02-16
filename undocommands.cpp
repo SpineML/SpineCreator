@@ -698,6 +698,7 @@ setSizeUndo::setSizeUndo(rootData * data, population * ptr, int value, QUndoComm
     this->ptr = ptr;
     this->data = data;
     this->setText("set " + this->ptr->getName() + " size to " + QString::number(value));
+    firstRedo = true;
 }
 
 void setSizeUndo::undo()
@@ -706,6 +707,7 @@ void setSizeUndo::undo()
     if (data->main->viewVZ.OpenGLWidget != NULL) {
         data->main->viewVZ.OpenGLWidget->parsChangedProjections();
     }
+    data->reDrawPanel();
 }
 
 void setSizeUndo::redo()
@@ -714,6 +716,10 @@ void setSizeUndo::redo()
     if (data->main->viewVZ.OpenGLWidget != NULL) {
         data->main->viewVZ.OpenGLWidget->parsChangedProjections();
     }
+    if (!firstRedo) {
+        data->reDrawPanel();
+    }
+    firstRedo = false;
 }
 
 // ######## SET LOC 3D #################
@@ -776,10 +782,14 @@ updateParUndo::updateParUndo(rootData * data, ParameterData * ptr, int index, fl
 void updateParUndo::undo()
 {
     ptr->value[index] = oldValue;
+    data->reDrawPanel();
 }
 
 void updateParUndo::redo()
 {
+    if (!firstRedo) {
+        data->reDrawPanel();
+    }
     ptr->value[index] = value;
     firstRedo = false;
 }

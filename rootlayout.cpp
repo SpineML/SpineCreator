@@ -181,7 +181,7 @@ void rootLayout::initPopulationHeader(rootData * data) {
     tempBox->addWidget(sizeSpin);
 
     // connect to update size
-    connect(sizeSpin, SIGNAL(editingFinished()), data, SLOT (setSize()));
+    connect(sizeSpin, SIGNAL(valueChanged(int)), data, SLOT (setSize()));
 
     // connect for hide
     connect(this, SIGNAL(hideHeader()), sizeSpin, SLOT(hide()));
@@ -494,10 +494,11 @@ void rootLayout::initFinish(rootData * data) {
 
         // select tab
         QVBoxLayout * tabLayout;
-        if (i == 0)
+        if (i == 0) {
             tabLayout = (QVBoxLayout *) tab1->layout();
-        else
+        } else {
             tabLayout = (QVBoxLayout *) tab2->layout();
+        }
 
         // layout
         QHBoxLayout * cp = new QHBoxLayout();
@@ -506,19 +507,23 @@ void rootLayout::initFinish(rootData * data) {
         QPushButton * copy = new QPushButton("Copy");
 
         // set what the source is
-        if (i == 0)
+        if (i == 0) {
             copy->setProperty("source", "tab1");
-        if (i == 1)
+        }
+        if (i == 1) {
             copy->setProperty("source", "tab2");
+        }
         copy->setMaximumWidth(60);
 
         QPushButton * paste = new QPushButton("Paste");
 
         // set what the source is
-        if (i == 0)
+        if (i == 0) {
             paste->setProperty("source", "tab1");
-        if (i == 1)
+        }
+        if (i == 1) {
             paste->setProperty("source", "tab2");
+        }
         paste->setMaximumWidth(60);
 
         // tooltips
@@ -526,8 +531,9 @@ void rootLayout::initFinish(rootData * data) {
         paste->setToolTip("Paste Parameters and State Variables");
 
         // if no data hide paste
-        if (data->clipboardCData == NULL)
+        if (data->clipboardCData == NULL) {
             paste->setEnabled(false);
+        }
 
         // add to layout
         QLabel * propLabel = new QLabel("<b>Properties</b>");
@@ -596,10 +602,11 @@ void rootLayout::updateComponentLists(rootData * data) {
     // neuron
     neuronComboBox->clear();
     for (unsigned int i = 0; i < data->catalogNrn.size(); ++i) {
-        if (!(data->catalogNrn[i]->name == "none"))
-            neuronComboBox->addItem(data->catalogNrn[i]->path + "/" + data->catalogNrn[i]->name);
-        else
+        if (!(data->catalogNrn[i]->name == "none")) {
+            neuronComboBox->addItem(data->catalogNrn[i]->name);
+        } else {
             neuronComboBox->addItem("-select component-");
+        }
     }
     QModelIndex ind = neuronComboBox->model()->index(0,0);
     neuronComboBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
@@ -608,7 +615,7 @@ void rootLayout::updateComponentLists(rootData * data) {
     weightUpdateComboBox->clear();
     for (unsigned int i = 0; i < data->catalogWU.size(); ++i) {
         if (!(data->catalogWU[i]->name == "none"))
-            weightUpdateComboBox->addItem(data->catalogWU[i]->path + "/" + data->catalogWU[i]->name);
+            weightUpdateComboBox->addItem(data->catalogWU[i]->name);
         else
             weightUpdateComboBox->addItem("-select component-");
     }
@@ -619,7 +626,7 @@ void rootLayout::updateComponentLists(rootData * data) {
     postSynapseComboBox->clear();
     for (unsigned int i = 0; i < data->catalogPS.size(); ++i) {
         if (!(data->catalogPS[i]->name == "none"))
-            postSynapseComboBox->addItem(data->catalogPS[i]->path + "/" + data->catalogPS[i]->name);
+            postSynapseComboBox->addItem(data->catalogPS[i]->name);
         else
             postSynapseComboBox->addItem("-select component-");
     }
@@ -994,16 +1001,18 @@ QComboBox* rootLayout::addDropBox(QVBoxLayout  * lay, QString name, QString type
     QHBoxLayout * box = new QHBoxLayout();
     lay->insertLayout(lay->count() -1, box);
     QLabel * nameLabel = new QLabel("<b>" + name + ":</b>");
-    if (type == "layout" || type == "neuron")
+    if (type == "layout" || type == "neuron") {
         connect(this, SIGNAL(showPopulation()), nameLabel, SLOT(show()));
-    else if (type == "input")
+    } else if (type == "input") {
         connect(this, SIGNAL(showInput()), nameLabel, SLOT(show()));
-    else
+    } else {
         connect(this, SIGNAL(showProjection()), nameLabel, SLOT(show()));
+    }
     connect(this, SIGNAL(hideHeader()), nameLabel, SLOT(hide()));
     box->addWidget(nameLabel);
     QComboBox *select = new QComboBox();
-    select->setMaximumWidth(150);
+    select->setMaximumWidth(250);
+    select->setMinimumWidth(250);
     select->setProperty("type", type);
     box->addWidget(select);
     return select;
@@ -1582,7 +1591,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         varLayout->addRow(name, buttons);
         connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
 
-        connect(parSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
+        connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
         parSpin->setProperty("type",type + parType);
         varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type",type + parType);
         // add the full parameter name to the tooltip
@@ -1677,7 +1686,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setToolTip("mean value");
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
-            connect(parSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
+            connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);
 
@@ -1696,7 +1705,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setToolTip("standard deviation value");
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
-            connect(parSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
+            connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);}
             break;
@@ -1715,7 +1724,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         seedSpin->setToolTip("seed value");
         seedSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
         seedSpin->setProperty("action","changeVal");
-        connect(seedSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
+        connect(seedSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
         connect(this, SIGNAL(deleteProperties()), seedSpin, SLOT(deleteLater()));
         buttons->addWidget(seedSpin);
 

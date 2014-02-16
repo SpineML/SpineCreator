@@ -234,10 +234,12 @@ void editSimulators::recursiveDeleteLaterloop(QLayout * parentLayout) {
 
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
-        if (item->widget() != ui->addEnv)
+        if (item->widget() != ui->addEnv) {
             item->widget()->deleteLater();
-        if (item->layout())
+        }
+        if (item->layout()) {
             recursiveDeleteLaterloop(item->layout());
+        }
         delete item;
     }
     parentLayout->deleteLater();
@@ -248,10 +250,12 @@ void editSimulators::recursiveDeleteLater(QLayout * parentLayout) {
 
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
-        if (item->widget() && item->widget() != ui->addEnv)
+        if (item->widget() && item->widget() != ui->addEnv) {
             item->widget()->deleteLater();
-        if (item->layout())
+        }
+        if (item->layout()) {
             recursiveDeleteLaterloop(item->layout());
+        }
         delete item;
     }
 

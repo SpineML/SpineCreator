@@ -243,6 +243,7 @@ private:
     population * ptr;
     int oldValue;
     int value;
+    bool firstRedo;
 };
 
 class setLoc3Undo : public QUndoCommand

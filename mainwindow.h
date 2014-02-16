@@ -37,7 +37,6 @@
 #include "viewELexptpanelhandler.h"
 #include "viewVZlayoutedithandler.h"
 #include "viewGVpropertieslayout.h"
-#include "brahms_dialog.h"
 #include "nineml_alview.h"
 #include "versioncontrol.h"
 
@@ -176,7 +175,6 @@ public slots:
     void viewVZshow();
     void viewCLshow();
     void setCaption(QString);
-    void runInBRAHMS();
     void new_project();
     void saveImageAction();
     void launchSimulatorEditor();

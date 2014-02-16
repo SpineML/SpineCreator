@@ -35,7 +35,7 @@
 #include "projectobject.h"
 //#include "stringify.h"
 
-#define NEW_EXPERIMENT_VIEW4
+#define NEW_EXPERIMENT_VIEW11
 
 viewELExptPanelHandler::viewELExptPanelHandler(QObject *parent) :
     QObject(parent)
@@ -63,6 +63,8 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, rootData *
 
     ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(gl);
 
+    ((QHBoxLayout *) this->viewEL->expt->layout())->setContentsMargins(0,0,0,0);
+
     // for animation
     QTimer *timer = new QTimer( this );
     // this creates a Qt timer event
@@ -71,14 +73,14 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, rootData *
     timer->start(16);
 #endif
 
-    this->exptSetup->setContentsMargins(4,4,4,4);
+    this->exptSetup->setContentsMargins(14,14,14,14);
     this->exptInputs->setContentsMargins(4,4,4,4);
     this->exptOutputs->setContentsMargins(4,4,4,4);
     this->exptChanges->setContentsMargins(4,4,4,4);
 
     // add panel to expts
     ((QHBoxLayout *) this->viewEL->expt->layout())->addLayout(this->exptSetup);
-
+#ifndef NEW_EXPERIMENT_VIEW
     // add divider
     QFrame* lineA = new QFrame();
     lineA->setMaximumWidth(1);
@@ -109,6 +111,7 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, rootData *
     // add panel to expts
     ((QHBoxLayout *) this->viewEL->expt->layout())->addLayout(this->exptChanges);
 
+#endif
     this->viewEL->panel->setStyleSheet("background-color :white");
 
     redrawPanel();
@@ -184,7 +187,7 @@ void viewELExptPanelHandler::redraw(double) {
 void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperiment)
 {
 
-    QFont titleFont("Helvetica [Cronyx]", 12);
+    QFont titleFont("Helvetica [Cronyx]", 16);
 
     QLabel * title;
     title = new QLabel(tr("Setup Simulator"));
@@ -285,9 +288,61 @@ void viewELExptPanelHandler::redrawExpt() {
 
 #ifdef NEW_EXPERIMENT_VIEW
 
+    // if pointer is not valid it is either NULL or the selected object was deleted
     if (this->data->isValidPointer(this->currSystemObject) == false) {
+        // no selection, so draw up the simulator parameters to the panel
         this->redrawSimulatorParams(currentExperiment);
     }
+
+    // we are referencing a valid and not deleted object
+    if (this->data->isValidPointer(this->currSystemObject) == true) {
+        // check if we have a POPULATION
+        if (this->currSystemObject->type == populationObject) {
+            // ok, this is a population - draw up the population panel
+            // cast to a population
+            population * pop = (population *) this->currSystemObject;
+            // set up some fonts to use
+            QFont titleFont("Helvetica [Cronyx]", 16);
+            QFont sub1Font("Helvetica [Cronyx]", 14);
+            QFont sub2Font("Helvetica [Cronyx]", 12);
+            // write out some details about this population
+            // the name
+            QLabel * name;
+            name = new QLabel("<b>" + pop->name + "</b>");
+            name->setFont(titleFont);
+            exptSetup->addWidget(name);
+            // the size
+            QLabel * size;
+            size = new QLabel("Size = " + QString::number(pop->size));
+            size->setFont(sub1Font);
+            exptSetup->addWidget(size);
+            // check if we have a Component on the population
+            if (pop->neuronType->component->name != "none") {
+                // the component
+                QLabel * comp;
+                comp = new QLabel("Component is '" + pop->neuronType->component->name + "'");
+                comp->setFont(sub1Font);
+                exptSetup->addWidget(comp);
+                // first put up the input ports that we can send inputs to
+
+                // then put up the loggable output ports
+
+                // then allow variable overrides
+
+            } else {
+                // no Component, so say that is the issue
+                QLabel * comp;
+                comp = new QLabel(tr("No component selected"));
+                comp->setFont(sub1Font);
+                exptSetup->addWidget(comp);
+            }
+
+        }
+    }
+
+
+    // add a stretch to force the content to the top
+    exptSetup->addStretch();
 
 #else
 
@@ -371,9 +426,11 @@ void viewELExptPanelHandler::redrawExpt() {
     addLesion->setToolTip("Add a new lesion to the current model");
     addLesion->setFont(addFont);
     // grey out if editing:
-    for (uint i=0; i < currentExperiment->lesions.size(); ++i)
-        if (currentExperiment->lesions[i]->edit)
+    for (uint i=0; i < currentExperiment->lesions.size(); ++i) {
+        if (currentExperiment->lesions[i]->edit) {
             addLesion->setDisabled(true);
+        }
+    }
 
     connect(addLesion, SIGNAL(clicked()), this, SLOT(addLesion()));
 

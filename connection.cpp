@@ -285,9 +285,9 @@ csv_connection::csv_connection() {
     QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 #endif
     if (!lib_dir.exists()) {
-        if (!lib_dir.mkpath(lib_dir.absolutePath()))
+        if (!lib_dir.mkpath(lib_dir.absolutePath())) {
             qDebug() << "error creating library";
-
+        }
     }
 
     this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
@@ -331,8 +331,9 @@ csv_connection::csv_connection(QString fileName) {
     QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 #endif
     if (!lib_dir.exists()) {
-        if (!lib_dir.mkpath(lib_dir.absolutePath()))
+        if (!lib_dir.mkpath(lib_dir.absolutePath())) {
             qDebug() << "error creating library";
+        }
     }
 
     this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
@@ -536,8 +537,9 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
         QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
         #endif
         if (!lib_dir.exists()) {
-            if (!lib_dir.mkpath(lib_dir.absolutePath()))
+            if (!lib_dir.mkpath(lib_dir.absolutePath())) {
                 qDebug() << "error creating library";
+            }
         }
 
         // copy the file across to the temporary file
@@ -883,8 +885,9 @@ void csv_connection::setUniqueName() {
 #endif
     qDebug() << lib_dir.absolutePath();
     if (!lib_dir.exists()) {
-        if (!lib_dir.mkpath(lib_dir.absolutePath()))
+        if (!lib_dir.mkpath(lib_dir.absolutePath())) {
             qDebug() << "error creating library";
+        }
     }
 
     QStringList filters;
@@ -943,11 +946,11 @@ void csv_connection::setData(const QModelIndex & index, float value) {
 
     file.seek(seekTo*4); // seek to location in bytes
 
-    if (index.column() < 2)
+    if (index.column() < 2) {
         access << (quint32) value;
-    else
+    } else {
         access << (float) value;
-
+    }
     file.flush();
 }
 
@@ -972,11 +975,11 @@ void csv_connection::setData(int row, int col, float value) {
 
     file.seek(seekTo*4); // seek to location in bytes
 
-    if (col < 2)
+    if (col < 2) {
         access << (quint32) value;
-    else
+    } else {
         access << (float) value;
-
+    }
     file.flush();
 }
 
@@ -1000,20 +1003,22 @@ distanceBased_connection::~distanceBased_connection()
 }
 
 bool distanceBased_connection::changed() {
-    if (src->numNeurons != srcSize || dst->numNeurons != dstSize)
+    if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
         return true;
-    else
+    } else {
         return hasChanged;
+    }
 }
 
 bool distanceBased_connection::changed(QString newEquation) {
 
-    if (newEquation != equation && newEquation.size() > 0)
+    if (newEquation != equation && newEquation.size() > 0) {
         return true;
-    else if (src->numNeurons != srcSize || dst->numNeurons != dstSize)
+    } else if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
         return true;
-    else
+    } else {
         return hasChanged;
+    }
 }
 
 void distanceBased_connection::setUnchanged(bool state) {
@@ -1128,8 +1133,9 @@ void distanceBased_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
        }
 
 
-        if (this->delayEquation.isEmpty())
+        if (this->delayEquation.isEmpty()) {
             this->writeDelay(xmlOut);
+        }
 
         xmlOut.writeEndElement(); // ConnectionList
     }
@@ -1304,8 +1310,9 @@ void distanceBased_connection::generate_connections() {
                     varList[2].value = src->layoutType->locations[i].y;
                     varList[3].value = src->layoutType->locations[i].z;
                     // HACK!!! - no self connections for now
-                    if (varList[0].value < 0.0001 && !this->selfConnections)
+                    if (varList[0].value < 0.0001 && !this->selfConnections) {
                         continue;
+                    }
                     //qDebug() << src->name << " " << dst->name << " " << dst->layoutType->locations[j].x << " " << src->layoutType->locations[i].x;
                     float result = interpretMaths(stack);
                     //qDebug() << result;
@@ -1314,8 +1321,9 @@ void distanceBased_connection::generate_connections() {
                         conn newConn;
                         newConn.src = i;
                         newConn.dst = j;
-                        if (!delayEquation.isEmpty())
+                        if (!delayEquation.isEmpty()) {
                             newConn.metric = interpretMaths(delayStack);
+                        }
                         conns->push_back(newConn);
                         mutex->unlock();
                     }
@@ -1375,10 +1383,11 @@ kernel_connection::~kernel_connection()
 }
 
 bool kernel_connection::changed() {
-    if (src->numNeurons != srcSize || dst->numNeurons != dstSize)
+    if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
         return true;
-    else
+    } else {
         return hasChanged;
+    }
 }
 
 void kernel_connection::setUnchanged(bool state) {
@@ -1417,8 +1426,9 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     QSettings settings;
     QString sim = settings.value("export_for_simulation", "no").toString();
 
-    if (sim != "no")
+    if (sim != "no") {
         forSim = true;
+    }
 
     if (!this->isAList && !forSim) {
         xmlOut.writeStartElement("KernelConnection");
@@ -1448,8 +1458,9 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             connections.clear();
             generate_dialog generate(this, this->src, this->dst, connections, connGenerationMutex, (QWidget *)NULL);
             bool retVal = generate.exec();
-            if (!retVal)
+            if (!retVal) {
                 return;
+            }
         }
 
         if (connections.size() == 0) {
@@ -1576,13 +1587,15 @@ void kernel_connection::generate_connections() {
     QString errorLog;
     //if (src->layoutType->locations.size() == 0) {
             src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
-            if (!errorLog.isEmpty())
+            if (!errorLog.isEmpty()) {
                 return;
+            }
     //}
     //if (dst->layoutType->locations.size() == 0) {
             dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
-            if (!errorLog.isEmpty())
+            if (!errorLog.isEmpty()) {
                 return;
+            }
     //}
 
     float total_ops = src->layoutType->locations.size();

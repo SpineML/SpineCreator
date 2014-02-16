@@ -190,8 +190,9 @@ float getFuncVal(QString in) {
 
 bool isFuncUnary(QString in) {
 
-    if (in == "pow" || in == "atan2" || in == "mod" )
+    if (in == "pow" || in == "atan2" || in == "mod" ) {
         return false;
+    }
 
     return true;
 
@@ -776,20 +777,22 @@ float interpretMaths(vector <valop> stack) {
                 if (!tempStack.size())
                     val1 = INFINITY;
                 else {
-                    if (tempStack.back().ptr != NULL)
+                    if (tempStack.back().ptr != NULL) {
                         val1 = *tempStack.back().ptr;
-                    else
+                    } else {
                         val1 = tempStack.back().val;
+                    }
                     tempStack.pop_back();
                 }
                 // if stack top is operand then add it in
                 float val2 = 0;
                 if (!stack[i].isUnary) {
                     if (tempStack.size()) {
-                        if (tempStack.back().ptr != NULL)
+                        if (tempStack.back().ptr != NULL) {
                             val2 = *tempStack.back().ptr;
-                        else
+                        } else {
                             val2 = tempStack.back().val;
+                        }
                         tempStack.pop_back();
                     }
                 } else {
@@ -813,20 +816,22 @@ float interpretMaths(vector <valop> stack) {
                 // fetch first operand from stack
                 float val1;
                 if (tempStack.size()) {
-                    if (tempStack.back().ptr != NULL)
+                    if (tempStack.back().ptr != NULL) {
                         val1 = *tempStack.back().ptr;
-                    else
+                    } else {
                         val1 = tempStack.back().val;
+                    }
                     tempStack.pop_back();
                 }
                 // if stack top is operand then add it in
                 float val2 = 0;
                 if (!stack[i].isUnary) {
                     if (tempStack.size()) {
-                        if (tempStack.back().ptr != NULL)
+                        if (tempStack.back().ptr != NULL) {
                             val2 = *tempStack.back().ptr;
-                        else
+                        } else {
                             val2 = tempStack.back().val;
+                        }
                         tempStack.pop_back();
                     }
                 }
@@ -871,10 +876,11 @@ float interpretMaths(vector <valop> stack) {
     }
     //qDebug() << "Stacksize = " << (float) tempStack.size() << "\n";
     if (tempStack.size()) {
-        if (tempStack.back().ptr == NULL)
+        if (tempStack.back().ptr == NULL) {
             return tempStack.back().val;
-        else
+        } else {
             return *tempStack.back().ptr;
+        }
     }
 
     return 0.0;
@@ -902,10 +908,11 @@ QString createStack(QString equation, vector <lookup> &varList, vector <valop> *
         if (isOperation(equation)) {
             newValOp.val = float(getOpVal(equation));
             if (opstack.size() != 0) {
-                if (opstack.back().op != VAL && opstack.back().op != RBRACKET)
+                if (opstack.back().op != VAL && opstack.back().op != RBRACKET) {
                     newValOp.isUnary = true;
-                else
+                } else {
                     newValOp.isUnary = false;
+                }
             } else {
                 newValOp.isUnary = true;
             }

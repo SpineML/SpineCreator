@@ -1814,13 +1814,6 @@ void rootData::setCurrConnectionModelSig(csv_connectionModel *connModel)
     this->setCurrConnectionModel(connModel);
 }
 
-
-void rootData::launchComponentSorter()
-{
-    NineMLSortingDialog * dialog  = new NineMLSortingDialog(this);
-    dialog->show();
-}
-
 void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QColor> * cols, QString name)
 {
     vector <loc> tempLoc;

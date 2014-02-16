@@ -30,7 +30,6 @@
 #include "nineml_layout_classes.h"
 #include "connection.h"
 #include "population.h"
-#include "ninemlsortingdialog.h"
 #include "rootlayout.h"
 #include "glwidget.h"
 #include "connectionmodel.h"
@@ -169,7 +168,6 @@ public slots:
     void changeSynapse();
     void selectColour();
     void setCurrConnectionModelSig(csv_connectionModel *);
-    void launchComponentSorter();
     void getNeuronLocationsSrc(vector < vector <loc> >*, vector <QColor> *, QString name);
     void selectCoordMouseUp(float xGL, float yGL, float GLscale);
     void setSelectionbyName(QString);

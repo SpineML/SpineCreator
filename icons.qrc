@@ -59,6 +59,7 @@
         <file>Spineml_logo_large.png</file>
         <file>images/ortho.png</file>
         <file>images/indices.png</file>
+        <file>POP@2x.png</file>
     </qresource>
     <qresource prefix="/icons/objects">
         <file>icons/nrn.png</file>

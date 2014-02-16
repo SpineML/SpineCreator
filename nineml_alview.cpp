@@ -29,7 +29,11 @@ ALView::ALView(QWidget *parent) :
     QGraphicsView(parent)
 {
     setDragMode(QGraphicsView::NoDrag);
+#ifdef Q_OS_MAC
+    setTransformationAnchor(QGraphicsView::AnchorViewCenter);
+#else
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+#endif
     setCursor(Qt::ArrowCursor);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -38,7 +42,9 @@ ALView::ALView(QWidget *parent) :
 
 void ALView::zoomIn()
 {
+
     scale(ALView::ZOOM_FACTOR(), ALView::ZOOM_FACTOR());
+
 }
 
 void ALView::zoomOut()
@@ -72,6 +78,10 @@ void ALView::mouseReleaseEvent(QMouseEvent *event)
 
 qreal ALView::ZOOM_FACTOR()
 {
-    return (qreal) 1.5;
+    #ifdef Q_OS_MAC
+        return (qreal) 1.05;
+    #else
+        return (qreal) 1.5;
+    #endif
 }
 

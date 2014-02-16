@@ -46,11 +46,14 @@
 #include "qdebug.h"
 #include "aboutdialog.h"
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     maxRecentFiles(12) // Number of files which show in the recent projects menu
 {
+
+
     data.main = this;
     this->setWindowTitle("SpineCreator - Graphical SNN creation");
 
@@ -84,9 +87,31 @@ MainWindow::MainWindow(QWidget *parent) :
         settings.setValue("simulators/BRAHMS/envVar/PATH", QDir::toNativeSeparators(qgetenv("PATH") + ":/usr/local/SystemML/BRAHMS/bin/"));
         settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/temp/Namespace/"));
 #else
-        settings.setValue("simulators/BRAHMS/envVar/SYSTEMML_INSTALL_PATH", QDir::toNativeSeparators(qgetenv("HOME") + "/SystemML/"));
-        settings.setValue("simulators/BRAHMS/envVar/PATH", QDir::toNativeSeparators(qgetenv("PATH") + ":" + qgetenv("HOME") + "/SystemML/BRAHMS/bin/"));
-        settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", QDir::toNativeSeparators(qgetenv("PATH") + ":" + qgetenv("HOME") + "/SpineML_2_BRAHMS/temp/Namespace/"));
+        // BRAHMS should be packaged with the app by default
+        QDir brahmspath = qApp->applicationDirPath();
+        brahmspath.cd("SystemML");
+        // Initial code to try and find SpineML_2_BRAHMS - looks in the HOME and one level of sub-directories, should be expanded to be recursive
+        QDir simdir(qgetenv("HOME"));
+        QStringList correct_dir = simdir.entryList(QStringList("SpineML_2_BRAHMS"), QDir::Dirs);
+        if (correct_dir.isEmpty()) {
+            QStringList dirs = simdir.entryList(QDir::Dirs);
+            for (int i = 0; i < dirs.size(); ++i) {
+                simdir.cd(dirs[i]);
+                correct_dir = simdir.entryList(QStringList("SpineML_2_BRAHMS"), QDir::Dirs);
+                if (!correct_dir.isEmpty()) {
+                    break;
+                }
+                simdir.cdUp();
+            }
+        }
+
+        if (correct_dir.isEmpty()) {
+            correct_dir.push_back("SpineML_2_BRAHMS");
+        }
+
+        settings.setValue("simulators/BRAHMS/envVar/SYSTEMML_INSTALL_PATH", brahmspath.absolutePath());
+        settings.setValue("simulators/BRAHMS/envVar/PATH", QDir::toNativeSeparators(qgetenv("PATH") + ":" + brahmspath.absolutePath() + QDir::toNativeSeparators("/SystemML/BRAHMS/bin/")));
+        settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", simdir.absolutePath() + "/SpineML_2_BRAHMS/temp/Namespace/");
 #endif
         settings.setValue("simulators/BRAHMS/envVar/REBUILD", "false");
     }
@@ -1684,11 +1709,6 @@ void MainWindow::export_layout()
     doc = NULL;
 }
 
-void MainWindow::runInBRAHMS()
-{
-    BRAHMS_dialog * dialog  = new BRAHMS_dialog(&(this->data));
-    dialog->show();
-}
 
 void MainWindow::saveImageAction()
 {

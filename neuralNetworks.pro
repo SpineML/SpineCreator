@@ -7,7 +7,7 @@
 VPATH += ../shared
 INCLUDEPATH += ../shared
 
-QT       += core gui opengl xml svg network printsupport
+QT       += core gui opengl xml network printsupport
 
 TARGET = spineCreator
 TEMPLATE = app
@@ -22,7 +22,6 @@ SOURCES += main.cpp\
     projections.cpp \
     connection.cpp \
     connectionmodel.cpp \
-    ninemlsortingdialog.cpp \
     glconnectionwidget.cpp \
     nineml_layout_classes.cpp \
     cinterpreter.cpp \
@@ -31,7 +30,6 @@ SOURCES += main.cpp\
     layouteditpreviewdialog.cpp \
     vectormodel.cpp \
     valuelistdialog.cpp \
-    brahms_dialog.cpp \
     genericinput.cpp \
     connectionlistdialog.cpp \
     experiment.cpp \
@@ -66,13 +64,11 @@ HEADERS  += mainwindow.h \
     glwidget.h \
     population.h \
     rootdata.h \
-    rootlayout.h \
     nineML_classes.h \
     projections.h \
     stringify.h \
     connection.h \
     connectionmodel.h \
-    ninemlsortingdialog.h \
     glconnectionwidget.h \
     globalHeader.h \
     nineml_layout_classes.h \
@@ -84,7 +80,6 @@ HEADERS  += mainwindow.h \
     vectormodel.h \
     vectormodel.h \
     valuelistdialog.h \
-    brahms_dialog.h \
     genericinput.h \
     connectionlistdialog.h \
     experiment.h \
@@ -112,7 +107,8 @@ HEADERS  += mainwindow.h \
     qcustomplot.h \
     logdata.h \
     aboutdialog.h \
-    projectobject.h
+    projectobject.h \
+    rootlayout.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \
@@ -148,11 +144,12 @@ linux-g++{
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
-    LIBS += -L/usr/local/lib/graphviz -L/usr/local/lib/ -lgvplugin_core -lgvc -lgraph
+    LIBS += -L/usr/local/lib/ -L/usr/local/ -L/usr/local/lib/ -lgvc -lgraph
     INCLUDEPATH += /usr/local/include/graphviz
     INCLUDEPATH += /usr/local/include
     INCLUDEPATH += /usr/include/graphviz
-    DEPENDPATH += /usr/local/lib/graphviz
+    DEPENDPATH += /usr/local/lib/
+    DEPENDPATH += /usr/local/
 }
 
 OTHER_FILES += \

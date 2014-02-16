@@ -36,7 +36,6 @@ class csv_connectionModel;
 class glConnectionWidget;
 class GLWidget;
 class MainWindow;
-class NineMLSortingDialog;
 class population;
 class projection;
 class rootData;
