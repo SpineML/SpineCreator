@@ -1,8 +1,8 @@
 /***************************************************************************
 **                                                                        **
-**  This file is part of SpineCreator, an easy to use, GUI for            **
+**  This file is part of SpineCreator, an easy to use GUI for             **
 **  describing spiking neural network models.                             **
-**  Copyright (C) 2013 Alex Cope, Paul Richmond                           **
+**  Copyright (C) 2013-2014 Alex Cope, Paul Richmond, Seb James           **
 **                                                                        **
 **  This program is free software: you can redistribute it and/or modify  **
 **  it under the terms of the GNU General Public License as published by  **
@@ -18,7 +18,7 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Alex Cope, Paul Richmond                             **
+**          Authors: Alex Cope, Paul Richmond, Seb James                  **
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
