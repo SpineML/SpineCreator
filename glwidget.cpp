@@ -131,7 +131,9 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
     //qDebug() << "coords: " << float(xGL) << " " << float(yGL) << endl;
     if (this->connectMode == false) {
         if (event->button() == Qt::LeftButton && !this->itemMoving) {
-            emit selectCoordMouseUp(xGL, yGL, this->GLscale);
+#ifdef NEED_MOUSE_UP_LOGIC
+            emit onLeftMouseUp(xGL, yGL, this->GLscale);
+#endif
         } else if (event->button() == Qt::LeftButton && this->itemMoving) {
             // Item was released after moving.
             emit itemWasMoved();

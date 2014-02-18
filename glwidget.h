@@ -62,7 +62,9 @@ signals:
     void drawSynapse(float xGL, float yGL);
     void addBezierOrProjection(float xGL, float yGL);
     void abortProjection();
-    void selectCoordMouseUp(float xGL, float yGL, float GLscale);
+#ifdef NEED_MOUSE_UP_LOGIC
+    void onLeftMouseUp(float xGL, float yGL, float GLscale);
+#endif
     void itemWasMoved();
     void dragSelect(float xGL, float yGL);
     void endDragSelect();

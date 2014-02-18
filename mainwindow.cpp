@@ -184,7 +184,9 @@ MainWindow::MainWindow(QWidget *parent) :
     // join up the components of the program
     QObject::connect(ui->viewport, SIGNAL(reDraw(QPainter*, float, float, float, int, int, drawStyle)), &(data), SLOT(reDrawAll(QPainter*, float, float, float, int, int, drawStyle)));
     QObject::connect(ui->viewport, SIGNAL(onLeftMouseDown(float,float,float,bool)), &(data), SLOT(onLeftMouseDown(float,float,float,bool)));
-    QObject::connect(ui->viewport, SIGNAL(selectCoordMouseUp(float,float,float)), &(data), SLOT(selectCoordMouseUp(float,float,float)));
+#ifdef NEED_MOUSE_UP_LOGIC
+    QObject::connect(ui->viewport, SIGNAL(onLeftMouseUp(float,float,float)), &(data), SLOT(onLeftMouseUp(float,float,float)));
+#endif
     QObject::connect(ui->viewport, SIGNAL(itemWasMoved()), &(data), SLOT(itemWasMoved()));
     QObject::connect(ui->viewport, SIGNAL(onRightMouseDown(float,float,float)), &(data), SLOT(onRightMouseDown(float,float,float)));
     QObject::connect(ui->viewport, SIGNAL(mouseMove(float,float)), &(data), SLOT(mouseMoveGL(float,float)));

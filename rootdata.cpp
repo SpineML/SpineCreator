@@ -626,11 +626,13 @@ void rootData::endDragSelection()
     this->dragSelection = QRect(-1,-1,0,0);
 }
 
-void rootData::selectCoordMouseUp (float xGL, float yGL, float GLscale)
+#ifdef NEED_MOUSE_UP_LOGIC
+void rootData::onLeftMouseUp (float xGL, float yGL, float GLscale)
 {
     // All selection logic is in onLeftMouseDown(), so currently, this
     // method is a no-op.
 }
+#endif
 
 void rootData::itemWasMoved()
 {

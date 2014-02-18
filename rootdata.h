@@ -169,7 +169,9 @@ public slots:
     void selectColour();
     void setCurrConnectionModelSig(csv_connectionModel *);
     void getNeuronLocationsSrc(vector < vector <loc> >*, vector <QColor> *, QString name);
-    void selectCoordMouseUp(float xGL, float yGL, float GLscale);
+#ifdef NEED_MOUSE_UP_LOGIC
+    void onLeftMouseUp(float xGL, float yGL, float GLscale);
+#endif
     void setSelectionbyName(QString);
     void returnPointerToSelf(rootData * * data);
     void addgenericInput();
