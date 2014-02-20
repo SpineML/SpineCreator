@@ -116,6 +116,9 @@ private:
     int newLogTime;
     QTimer timer;
     bool orthoView;
+#if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
+    QImage renderQImage(int w, int h);
+#endif
 
 signals:
     void currElement(int type, int index);

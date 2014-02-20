@@ -69,6 +69,7 @@ struct viewELstruct {
     QWidget * selectionPanel;
     QWidget * panel;
     QWidget * expt;
+    QScrollArea * propertiesScrollArea;
 };
 
 struct viewNLstruct {

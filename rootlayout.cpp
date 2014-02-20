@@ -53,8 +53,8 @@ rootLayout::rootLayout(rootData * data, QWidget *parent) :
     emit hideHeader();
 
     // configure model panel
-    QSettings settings;
-    emit setModelName(settings.value("model/model_name", "err").toString());
+    //QSettings settings;
+    //emit setModelName(settings.value("model/model_name", "err").toString());
 
     // show model panel
     emit showModel();
@@ -69,11 +69,10 @@ rootLayout::~rootLayout() {
 }
 
 // add the stuff that we want
-void rootLayout::initModelHeader(rootData * ) {
+void rootLayout::initModelHeader(rootData * data) {
 
     // create model name dialog
-    QSettings settings;
-    QString model_name = settings.value("model/model_name", "err").toString();
+    QString model_name = data->currProject->name;
     QFormLayout * titleLayout = new QFormLayout();
     QLineEdit * name = new QLineEdit;
     name->setText(model_name);
@@ -90,6 +89,9 @@ void rootLayout::initModelHeader(rootData * ) {
     // connect for show
     connect(this, SIGNAL(showModel()), name, SLOT(show()));
     connect(this, SIGNAL(showModel()), titleLayout->itemAt(0)->widget(), SLOT(show()));
+
+    // connect for change
+    connect(this, SIGNAL(setModelName(QString)), name, SLOT(setText(QString)));
 
 }
 
@@ -586,7 +588,7 @@ void rootLayout::updateLayoutList(rootData * data) {
         layoutComboBox->addItem(data->catalogLayout[i]->name);
     }
 
-    connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+    connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
 }
 
@@ -633,9 +635,9 @@ void rootLayout::updateComponentLists(rootData * data) {
     ind = postSynapseComboBox->model()->index(0,0);
     postSynapseComboBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
 
-    connect(neuronComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
-    connect(weightUpdateComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
-    connect(postSynapseComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+    connect(neuronComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
+    connect(weightUpdateComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
+    connect(postSynapseComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
 }
 
@@ -706,8 +708,8 @@ void rootLayout::updatePanel(rootData* data) {
     if (data->selList.size() != 1) {
 
         // configure model panel
-        QSettings settings;
         emit setModelName(data->currProject->name);
+        data->setCaptionOut(data->currProject->name);
 
         // remove input properties
         emit deleteProperties();
@@ -841,7 +843,7 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
     connectionComboBox->addItem("Distance Based Probability");
     connectionComboBox->addItem("Kernel");
     connectionComboBox->setCurrentIndex(proj->synapses[proj->currTarg]->connectionType->type);
-    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     emit deleteProperties();
     drawParamsLayout(data);
@@ -905,7 +907,7 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
         inputConnectionComboBox->addItem("Kernel");
     }
     inputConnectionComboBox->setCurrentIndex(in->connectionType->type);
-    connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+    connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     QFormLayout * varLayout = new QFormLayout;
 

@@ -31,6 +31,7 @@
 #include "projections.h"
 #include "genericinput.h"
 #include "connection.h"
+#include "experiment.h"
 
 class delSelection : public QUndoCommand
 {
@@ -405,11 +406,11 @@ private:
     projectObject * project;
 };
 
-class updateComponentType : public QUndoCommand
+class updateComponentTypeUndo : public QUndoCommand
 {
 public:
-    updateComponentType(rootData * data, NineMLComponentData * componentData, NineMLComponent * newComponent, QUndoCommand *parent = 0);
-    ~updateComponentType();
+    updateComponentTypeUndo(rootData * data, NineMLComponentData * componentData, NineMLComponent * newComponent, QUndoCommand *parent = 0);
+    ~updateComponentTypeUndo();
     void undo();
     void redo();
 
@@ -511,6 +512,70 @@ private:
     vector <NineMLComponent *> * new_lib;
     NineMLComponent * component;
     bool first_redo;
+};
+
+class deleteOutputUndo: public QUndoCommand
+{
+public:
+    deleteOutputUndo(rootData *data, experiment * expt, exptOutput * output, QUndoCommand *parent = 0);
+    ~deleteOutputUndo() {}
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    experiment * expt;
+    exptOutput * output;
+    int location;
+};
+
+class deleteInputUndo: public QUndoCommand
+{
+public:
+    deleteInputUndo(rootData *data, experiment * expt, exptInput * input, QUndoCommand *parent = 0);
+    ~deleteInputUndo() {}
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    experiment * expt;
+    exptInput * input;
+    int location;
+};
+
+class deleteChangePropUndo: public QUndoCommand
+{
+public:
+    deleteChangePropUndo(rootData *data, experiment * expt, exptChangeProp * prop, QUndoCommand *parent = 0);
+    ~deleteChangePropUndo() {}
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    experiment * expt;
+    exptChangeProp * prop;
+    int location;
+};
+
+class deleteLesionUndo: public QUndoCommand
+{
+public:
+    deleteLesionUndo(rootData *data, experiment * expt, exptLesion * lesion, QUndoCommand *parent = 0);
+    ~deleteLesionUndo() {}
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    experiment * expt;
+    exptLesion * lesion;
+    int location;
 };
 
 #endif // UNDOCOMMANDS_H

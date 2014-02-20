@@ -33,6 +33,7 @@
 #include "nineML_classes.h"
 #include "experiment.h"
 #include "projectobject.h"
+#include "undocommands.h"
 //#include "stringify.h"
 
 #define NEW_EXPERIMENT_VIEW11
@@ -172,16 +173,22 @@ void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout) {
 void viewELExptPanelHandler::redraw() {
     redrawPanel();
     redrawExpt();
+    // update title in case of undo / redo so the * accurately reflects unsaved changes
+    this->data->main->updateTitle();
 }
 
 void viewELExptPanelHandler::redraw(int) {
     redrawPanel();
     redrawExpt();
+    // update title in case of undo / redo so the * accurately reflects unsaved changes
+    this->data->main->updateTitle();
 }
 
 void viewELExptPanelHandler::redraw(double) {
     redrawPanel();
     redrawExpt();
+    // update title in case of undo / redo so the * accurately reflects unsaved changes
+    this->data->main->updateTitle();
 }
 
 void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperiment)
@@ -262,6 +269,18 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
 }
 
 void viewELExptPanelHandler::redrawExpt() {
+
+    int vert_scroll = 0;
+    int horiz_scroll = 0;
+
+    QScrollArea * scroll = this->viewEL->propertiesScrollArea;
+
+    if (scroll) {
+        // store the scroll location so we can replace it later
+        horiz_scroll = scroll->horizontalScrollBar()->value();
+        vert_scroll = scroll->verticalScrollBar()->value();
+        qDebug() << horiz_scroll << vert_scroll;
+    }
 
     // clear old stuff
     while(forDeleting.size() > 0) {
@@ -457,9 +476,11 @@ void viewELExptPanelHandler::redrawExpt() {
     addChange->setToolTip("Add a changed property to the current model");
     addChange->setFont(addFont);
     // grey out if editing:
-    for (uint i=0; i < currentExperiment->changes.size(); ++i)
-        if (currentExperiment->changes[i]->edit)
+    for (uint i=0; i < currentExperiment->changes.size(); ++i) {
+        if (currentExperiment->changes[i]->edit) {
             addChange->setDisabled(true);
+        }
+    }
 
     connect(addChange, SIGNAL(clicked()), this, SLOT(addChangedProp()));
 
@@ -469,6 +490,12 @@ void viewELExptPanelHandler::redrawExpt() {
     exptInputs->addStretch();
     exptOutputs->addStretch();
     exptChanges->addStretch();
+
+    if (scroll) {
+        // replace scroll bar location (currently does not work)
+        scroll->horizontalScrollBar()->setValue(horiz_scroll);
+        scroll->verticalScrollBar()->setValue(vert_scroll);
+    }
 
 #endif
 
@@ -881,12 +908,15 @@ void viewELExptPanelHandler::delInput() {
 
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
-    for (uint i = 0; i < currentExperiment->ins.size(); ++i) {
+    // push the command onto the undo stack
+    this->data->currProject->undoStack->push(new deleteInputUndo(this->data, currentExperiment, in));
+
+    /*for (uint i = 0; i < currentExperiment->ins.size(); ++i) {
         if (currentExperiment->ins[i] == in) {
             delete in;
             currentExperiment->ins.erase(currentExperiment->ins.begin()+i);
         }
-    }
+    }*/
 
     // redraw to update the selection
     redrawExpt();
@@ -1261,12 +1291,15 @@ void viewELExptPanelHandler::delOutput() {
 
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
 
-    for (uint i = 0; i < currentExperiment->outs.size(); ++i) {
+    // push the command onto the undo stack
+    this->data->currProject->undoStack->push(new deleteOutputUndo(this->data, currentExperiment, out));
+
+    /*for (uint i = 0; i < currentExperiment->outs.size(); ++i) {
         if (currentExperiment->outs[i] == out) {
             delete out;
             currentExperiment->outs.erase(currentExperiment->outs.begin()+i);
         }
-    }
+    }*/
 
     // redraw to update the selection
     redrawExpt();
@@ -1376,12 +1409,15 @@ void viewELExptPanelHandler::delLesion() {
 
     exptLesion * lesion = (exptLesion *) sender()->property("ptr").value<void *>();
 
-    for (uint i = 0; i < currentExperiment->lesions.size(); ++i) {
+    // push the command onto the undo stack
+    this->data->currProject->undoStack->push(new deleteLesionUndo(this->data, currentExperiment, lesion));
+
+    /*for (uint i = 0; i < currentExperiment->lesions.size(); ++i) {
         if (currentExperiment->lesions[i] == lesion) {
             delete lesion;
             currentExperiment->lesions.erase(currentExperiment->lesions.begin()+i);
         }
-    }
+    }*/
 
     // redraw to update the selection
     redrawExpt();
@@ -1509,12 +1545,15 @@ void viewELExptPanelHandler::delChangedProp() {
 
     exptChangeProp * prop = (exptChangeProp *) sender()->property("ptr").value<void *>();
 
-    for (uint i = 0; i < currentExperiment->changes.size(); ++i) {
+    // push the command onto the undo stack
+    this->data->currProject->undoStack->push(new deleteChangePropUndo(this->data, currentExperiment, prop));
+
+    /*for (uint i = 0; i < currentExperiment->changes.size(); ++i) {
         if (currentExperiment->changes[i] == prop) {
             delete prop;
             currentExperiment->changes.erase(currentExperiment->changes.begin()+i);
         }
-    }
+    }*/
 
     // redraw to update the selection
     redrawExpt();

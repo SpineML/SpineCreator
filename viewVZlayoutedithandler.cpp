@@ -398,7 +398,7 @@ void viewVZLayoutEditHandler::initPopulation() {
     // connect for show
     connect(this, SIGNAL(showPopulation()), layoutComboBox, SLOT(show()));
     // connect for function
-    connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+    connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     QHBoxLayout * extraBox = new QHBoxLayout();
     panelLayout->addLayout(extraBox);
@@ -461,7 +461,7 @@ void viewVZLayoutEditHandler::initConnection() {
     connectionComboBox->addItem("Explicit List");
     connectionComboBox->addItem("Distance Based Probability");
     connectionComboBox->addItem("Kernel");
-    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     // connect for hide
     connect(this, SIGNAL(hideAll()), connectionComboBox, SLOT(hide()));
@@ -499,7 +499,7 @@ void viewVZLayoutEditHandler::updateLayoutList(rootData * data) {
                     layoutComboBox->setCurrentIndex(i);
     }
 
-    connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+    connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
 }
 
@@ -707,7 +707,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
         // set index
         connectionComboBox->disconnect(data);
         connectionComboBox->setCurrentIndex(input->connectionType->type);
-        connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+        connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     }
 
@@ -736,7 +736,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
         // set index
         connectionComboBox->disconnect(data);
         connectionComboBox->setCurrentIndex(syn->connectionType->type);
-        connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateType(int)));
+        connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     }
 

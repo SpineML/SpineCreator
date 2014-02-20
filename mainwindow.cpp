@@ -138,7 +138,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->menuEdit->addAction(undoAction);
     ui->menuEdit->addAction(redoAction);
 
-    settings.setValue("model/model_name", "Untitled Project");
+    //settings.setValue("model/model_name", "Untitled Project");
 
     projectObject * newProject = new projectObject();
 
@@ -383,14 +383,21 @@ bool MainWindow::isChanged()
 
 void MainWindow::setProjectMenu()
 {
+    // clear existing
     ui->menuProject->clear();
-    if (data.projectActions != NULL)
+    // if we have the action group
+    if (data.projectActions != NULL) {
         delete data.projectActions;
+    }
+    // create a new action group
     data.projectActions = new QActionGroup(this);
+    // add actions to select projects to the action group
     for (uint i = 0; i < data.projects.size(); ++i) {
         data.projectActions->addAction(data.projects[i]->action(i));
     }
+    // select the current project
     data.currProject->menuAction->setChecked(true);
+    // add the action group to the menu
     ui->menuProject->addActions(data.projectActions->actions());
     connect(data.projectActions, SIGNAL(triggered(QAction*)), &data, SLOT(selectProject(QAction*)));
 }
@@ -609,7 +616,7 @@ void MainWindow::initViewEL()
     expt->setLineWidth(1);
     expt->setFrameStyle(1);
 
-    QWidget * exptContent = new QWidget;
+    QWidget * exptContent = new QWidget(expt);
     expt->setWidget(exptContent);
     expt->setWidgetResizable(true);
 
@@ -619,6 +626,7 @@ void MainWindow::initViewEL()
     splitter->addWidget(expt);
 
     this->viewEL.expt = exptContent;
+    this->viewEL.propertiesScrollArea = expt;
 
     // add the view
     QScrollArea *selection = new QScrollArea();
@@ -1233,6 +1241,8 @@ void MainWindow::new_project()
         ui->action_Close_project->setEnabled(true);
     else
         ui->action_Close_project->setEnabled(false);
+
+    this->updateTitle();
 }
 
 void MainWindow::clear_recent_projects()
@@ -1314,7 +1324,7 @@ void MainWindow::import_project(const QString& filePath)
 
     updateNetworkButtons(&data);
 
-    setProjectMenu();
+    this->setProjectMenu();
 
     if (data.projects.size() > 1) {
         ui->action_Close_project->setEnabled(true);
@@ -1324,6 +1334,7 @@ void MainWindow::import_project(const QString& filePath)
 
     // Update the recent projects menu
     this->updateRecentProjects(filePath);
+    this->updateTitle();
 }
 
 void MainWindow::export_project(const QString& filePath)
@@ -1426,7 +1437,9 @@ void MainWindow::close_project()
     else
         ui->action_Close_project->setEnabled(false);
 
-    data.redrawViews();
+    this->data.redrawViews();
+
+    this->updateTitle();
 }
 
 void MainWindow::import_network()
@@ -1907,7 +1920,8 @@ void MainWindow::viewNLshow()
     // redraw panel
     viewNL.layout->updatePanel(&data);
 
-    data.currProject->undoStack->setActive(true);
+    //data.currProject->undoStack->setActive(true);
+    this->undoStacks->setActiveStack(data.currProject->undoStack);
 
     // redraw
     this->ui->viewport->changed = 1;
@@ -2638,27 +2652,23 @@ void MainWindow::updateTitle()
     QString title;
     if (ui->view1->isVisible()) {
         title = "SpineCreator: Network Editor";
+        title = title.prepend(" - ");
+        title = title.prepend(data.currProject->name);
+        if (!data.currProject->undoStack->isClean()) {
+            title = title.append("*");
+        }
+        this->setWindowTitle(title);
     }
     if (this->viewVZ.OpenGLWidget != NULL) {
         if (viewVZ.view->isVisible()) {
             title = "SpineCreator: Visualiser";
-            QSettings settings;
             title = title.prepend(" - ");
-            title = title.prepend(settings.value("model/model_name", "err").toString());
+            title = title.prepend(data.currProject->name);
             if (!data.currProject->undoStack->isClean()) {
                 title = title.append("*");
             }
             this->setWindowTitle(title);
         }
-    }
-    if (ui->view1->isVisible()) {
-        QSettings settings;
-        title = title.prepend(" - ");
-        title = title.prepend(settings.value("model/model_name", "err").toString());
-        if (!data.currProject->undoStack->isClean()) {
-            title = title.append("*");
-        }
-        this->setWindowTitle(title);
     }
     if (viewEL.view->isVisible()) {
         title = "SpineCreator: Experiment Editor";

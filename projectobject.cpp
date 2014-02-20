@@ -10,6 +10,8 @@ projectObject::projectObject(QObject *parent) :
     QObject(parent)
 {
 
+    this->name = "New Project";
+
     menuAction = new QAction(this);
 
     undoStack = new QUndoStack(this);
@@ -204,6 +206,8 @@ bool projectObject::save_project(QString fileName, rootData * data) {
         settings.remove("export_for_simulation");
         return false;
     }
+
+    this->undoStack->setClean();
 
     return true;
 
@@ -1261,6 +1265,16 @@ void projectObject::select_project(rootData * data) {
     data->main->undoStacks->setActiveStack(this->undoStack);
 
     data->currProject = this;
+
+    // update GUI
+    // experiment view
+    data->main->viewELhandler->redraw();
+
+    // update title on button bar
+    data->setCaptionOut(this->name);
+
+    // redraw everything
+    data->reDrawAll();
 
 }
 

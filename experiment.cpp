@@ -431,14 +431,16 @@ void experiment::updateChanges(NineMLComponentData * ptr) {
             for (uint j = 0; j < ptr->ParameterList.size(); ++j)
                 if (ptr->ParameterList[j]->name == change->par->name) {
                     propFound = true;
-                    delete change->par;
-                    change->par = new ParameterData(ptr->ParameterList[j]);
+                    // This code is bad as there is no need to do this
+                    //delete change->par;
+                    //change->par = new ParameterData(ptr->ParameterList[j]);
                 }
             for (uint j = 0; j < ptr->StateVariableList.size(); ++j)
                 if (ptr->StateVariableList[j]->name == change->par->name){
                     propFound = true;
-                    delete change->par;
-                    change->par = new StateVariableData(ptr->StateVariableList[j]);
+                    // This code is bad as there is no need to do this
+                    //delete change->par;
+                    //change->par = new StateVariableData(ptr->StateVariableList[j]);
                 }
 
             // if not found
@@ -956,6 +958,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
 
         // check for badness
         if (!data->isValidPointer(this->target)) {
+            qDebug() << "input refers to target that can't be found";
             this->set = false;
             this->edit = true;
             return this->drawInput(data, handler);
@@ -1142,7 +1145,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
         QCompleter *completer = new QCompleter(elementList, this);
         completer->setCaseSensitivity(Qt::CaseInsensitive);
         lineEdit->setCompleter(completer);
-        lineEdit->setMaximumWidth(220);
+        lineEdit->setMinimumWidth(200);
         lineEdit->setProperty("ptr", qVariantFromValue((void *) this));
         connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setOutputComponent()));
         nameAndPort->addWidget(lineEdit);
@@ -1208,6 +1211,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             indices->addWidget(new QLabel("Indices:"));
             QLineEdit * indicesString = new QLineEdit();
             indicesString->setText(this->indices);
+            indicesString->setMinimumWidth(200);
             indicesString->setProperty("ptr", qVariantFromValue((void *) this));
             indicesString->setToolTip("Indices to log - 'all' for all indices or comma seperated list of indices (first index is index 0)");
             connect(indicesString, SIGNAL(editingFinished()), handler, SLOT(setOutputIndices()));
@@ -3264,7 +3268,7 @@ QWidget* NTableDelegate::createEditor(QWidget* parent,const QStyleOptionViewItem
 {
     QLineEdit* editor = new QLineEdit(parent);
     QDoubleValidator* val = new QDoubleValidator(editor);
-    val->setBottom(0);
+    //val->setBottom(0); // doesn't allow negative inputs
     val->setNotation(QDoubleValidator::StandardNotation);
     editor->setValidator(val);
     return editor;

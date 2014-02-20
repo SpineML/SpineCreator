@@ -153,7 +153,7 @@ public slots:
     void mouseMoveGL(float, float);
     void import_csv(QString);
     void updatePortMap(QString);
-    void updateType(int index);
+    void updateComponentType(int index);
     void updatePar();
     void updatePar(int);
     void updateLayoutPar();

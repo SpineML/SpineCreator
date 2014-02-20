@@ -32,6 +32,7 @@
 #endif
 #include "generate_dialog.h"
 #include "mainwindow.h"
+#include <QOpenGLFramebufferObject>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   #define RETINA_SUPPORT 1.0
@@ -230,7 +231,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
     }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glClearColor(0.0,0.0,0.0,1.0);
+    //glClearColor(0.0,0.0,0.0,1.0);
 
     // setup
     glEnable(GL_BLEND);
@@ -1736,6 +1737,26 @@ void glConnectionWidget::selectedNrnChanged(int index) {
 
 }
 
+#if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
+QImage glConnectionWidget:: renderQImage(int w, int h)
+{
+    // Set the rendering engine to the size of the image to render
+    // Also set the format so that the depth buffer will work
+    QOpenGLFramebufferObjectFormat format;
+    //format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    QOpenGLFramebufferObject qfb(w,h,format);
+    qfb.bind();
+    // If the frame buffer does not work then return an empty image
+    if(!qfb.isValid()) return(QImage());
+    resizeGL(w,h);
+    // Draw the scene to the buffer
+    this->repaint();
+    qfb.release();
+    resizeGL(width(),height());
+    return(qfb.toImage());
+}
+#endif
+
 QPixmap glConnectionWidget::renderImage(int width, int height) {
 
     QPixmap pix;
@@ -1743,7 +1764,19 @@ QPixmap glConnectionWidget::renderImage(int width, int height) {
     imageSaveWidth = width;
     imageSaveMode = true;
 
-    pix = this->renderPixmap(width, height);
+// renderPixmap is broken in Qt > 5.0 - this fix doesn't currently work correctly, but is better than nothing
+#if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
+    QImage img = renderQImage(width, height);
+
+    if (img.isNull()) {
+        qDebug() << "renderQimage returned a dud";
+    }
+
+    pix = QPixmap::fromImage(img);
+#else
+
+   pix = this->renderPixmap(width, height);
+#endif
 
     QPainter painter(&pix);
     painter.setRenderHint(QPainter::Antialiasing);

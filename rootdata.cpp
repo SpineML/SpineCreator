@@ -79,7 +79,7 @@ rootData::rootData(QObject *parent) :
     if (!popImage.load( ":/icons/objects/icons/nrn.png" )) std::cerr << "warn" << endl;
 
     // update version and name
-    setCaption(settings.value("model/model_name", "err").toString());
+    setCaption("");
 
     clipboardCData = NULL;
     projectActions = NULL;
@@ -129,9 +129,12 @@ void rootData::redrawViews()
 
 void rootData::selectProject(QAction * action)
 {
+    // deselect the current project
     currProject->deselect_project(this);
+    // select the new project
     projects[action->property("number").toInt()]->select_project(this);
     redrawViews();
+    main->updateTitle();
 }
 
 void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * newComp)
@@ -1232,7 +1235,7 @@ void rootData::updatePortMap(QString var)
     }
 }
 
-void rootData::updateType(int index)
+void rootData::updateComponentType(int index)
 {
     // update the components of the currently selected object
     population * currSel;
@@ -1277,7 +1280,7 @@ void rootData::updateType(int index)
                 if (index >= 0) {
                     if (currSel->neuronType->component->name != this->catalogNrn[index]->name || \
                         currSel->neuronType->component->path != this->catalogNrn[index]->path) {
-                        currProject->undoStack->push(new updateComponentType(this, currSel->neuronType, this->catalogNrn[index]));
+                        currProject->undoStack->push(new updateComponentTypeUndo(this, currSel->neuronType, this->catalogNrn[index]));
                     }
                 }
             }
@@ -1288,7 +1291,7 @@ void rootData::updateType(int index)
                 if (index >= 0) {
                     if (targSel->weightUpdateType->component->name != this->catalogWU[index]->name || \
                         targSel->weightUpdateType->component->path != this->catalogWU[index]->path) {
-                        currProject->undoStack->push(new updateComponentType(this, targSel->weightUpdateType, this->catalogWU[index]));
+                        currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->weightUpdateType, this->catalogWU[index]));
                     }
                 }
             }
@@ -1296,7 +1299,7 @@ void rootData::updateType(int index)
                 if (index >= 0) {
                     if (targSel->postsynapseType->component->name != this->catalogPS[index]->name || \
                         targSel->postsynapseType->component->path != this->catalogPS[index]->path) {
-                        currProject->undoStack->push(new updateComponentType(this, targSel->postsynapseType, this->catalogPS[index]));
+                        currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->postsynapseType, this->catalogPS[index]));
                     }
                 }
             }
@@ -2091,8 +2094,7 @@ void rootData::setCaptionOut(QString model_name)
 void rootData::undoOrRedoPerformed(int)
 {
     emit redrawGLview();
-    QSettings settings;
-    setCaptionOut(settings.value("model/model_name", "err").toString());
+    setCaptionOut(this->currProject->name);
     // update file list for components
     emit setWindowTitle();
 }

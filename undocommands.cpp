@@ -211,6 +211,35 @@ delPopulation::delPopulation(rootData * data, population* pop, QUndoCommand *par
         if (!source_deleted)
             new delProjection(data, this->pop->reverseProjections[i], this);
     }
+    // go into experiments and delete all referencing objects
+    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+        // for each experiment
+        experiment * currExpt = this->data->experiments[i];
+        // loop through inputs
+        for (uint j = 0; j < currExpt->ins.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptInput * in = currExpt->ins[j];
+            if (in->target == this->pop->neuronType) {
+                new deleteInputUndo(data, currExpt, in, this);
+            }
+        }
+        // loop through outputs
+        for (uint j = 0; j < currExpt->outs.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptOutput * out = currExpt->outs[j];
+            if (out->source == this->pop->neuronType) {
+                new deleteOutputUndo(data, currExpt, out, this);
+            }
+        }
+        // loop through chnaged properties
+        for (uint j = 0; j < currExpt->changes.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptChangeProp * prop = currExpt->changes[j];
+            if (prop->component == this->pop->neuronType) {
+                new deleteChangePropUndo(data, currExpt, prop, this);
+            }
+        }
+    }
     index = -1;
     selIndex = -1;
     isDeleted = true;
@@ -235,6 +264,9 @@ void delPopulation::undo()
 
 void delPopulation::redo()
 {
+    // do children by calling parent class function:
+    QUndoCommand::redo();
+
     // remove from system
     for (uint i = 0; i < data->populations.size(); ++i) {
         if (pop == data->populations[i]) {
@@ -255,8 +287,7 @@ void delPopulation::redo()
     }
     pop->isDeleted = true;
     isDeleted = true;
-    // do children by calling parent class function:
-    QUndoCommand::redo();
+
 }
 
 // ######## MOVE POPULATION #################
@@ -379,6 +410,19 @@ delProjection::delProjection(rootData * data, projection* proj, QUndoCommand *pa
     for (uint i = 0; i < this->proj->synapses.size(); ++i) {
         new delSynapse(data, this->proj, this->proj->synapses[i], this);
     }
+    // go into experiments and delete all referencing objects
+    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+        // for each experiment
+        experiment * currExpt = this->data->experiments[i];
+        // loop through lesions
+        for (uint j = 0; j < currExpt->lesions.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptLesion * lesion = currExpt->lesions[j];
+            if (lesion->proj == this->proj) {
+                new deleteLesionUndo(data, currExpt, lesion, this);
+            }
+        }
+    }
     selIndex = -1;
     isDeleted = true;
 }
@@ -399,6 +443,9 @@ void delProjection::undo()
 
 void delProjection::redo()
 {
+    // do children by calling parent class function:
+    QUndoCommand::redo();
+
     proj->disconnect();
     proj->isDeleted = true;
     isDeleted = true;
@@ -413,8 +460,7 @@ void delProjection::redo()
             }
         }
     }
-    // do children by calling parent class function:
-    QUndoCommand::redo();
+
 }
 
 // ######## ADD SYNAPSE #################
@@ -507,8 +553,38 @@ delSynapse::delSynapse(rootData * data, projection * proj, synapse * syn, QUndoC
                         destination_deleted = true;
             }
         }
-        if (!destination_deleted)
+        if (!destination_deleted) {
             new delInput(data, this->syn->weightUpdateType->outputs[i], this);
+        }
+    }
+    // go into experiments and delete all referencing objects
+    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+        // for each experiment
+        experiment * currExpt = this->data->experiments[i];
+        // loop through inputs
+        for (uint j = 0; j < currExpt->ins.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptInput * in = currExpt->ins[j];
+            if (in->target == this->syn->weightUpdateType || in->target == this->syn->postsynapseType) {
+                new deleteInputUndo(data, currExpt, in, this);
+            }
+        }
+        // loop through outputs
+        for (uint j = 0; j < currExpt->outs.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptOutput * out = currExpt->outs[j];
+            if (out->source == this->syn->weightUpdateType || out->source == this->syn->postsynapseType) {
+                new deleteOutputUndo(data, currExpt, out, this);
+            }
+        }
+        // loop through changed properties
+        for (uint j = 0; j < currExpt->changes.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptChangeProp * prop = currExpt->changes[j];
+            if (prop->component == this->syn->weightUpdateType || prop->component == this->syn->postsynapseType) {
+                new deleteChangePropUndo(data, currExpt, prop, this);
+            }
+        }
     }
     projPos = -1;
 }
@@ -526,6 +602,9 @@ void delSynapse::undo()
 
 void delSynapse::redo()
 {
+    // do children by calling parent class function:
+    QUndoCommand::redo();
+
     // remove from projection
     for (uint i = 0; i < proj->synapses.size(); ++i) {
         if (proj->synapses[i] == syn) {
@@ -534,8 +613,7 @@ void delSynapse::redo()
         }
     }
     isUndone = false;
-    // do children by calling parent class function:
-    QUndoCommand::redo();
+
     data->reDrawAll();
 
 }
@@ -979,7 +1057,7 @@ updateModelTitle::updateModelTitle(rootData * data, QString newName, projectObje
 {
     QSettings settings;
     this->data = data;
-    this->oldName = settings.value("model/model_name", "err").toString();
+    this->oldName = data->currProject->name;
     this->newName = newName;
     this->setText("model rename " + oldName + " to " + newName);
     this->project = project;
@@ -988,25 +1066,22 @@ updateModelTitle::updateModelTitle(rootData * data, QString newName, projectObje
 void updateModelTitle::undo()
 {
     // set name
-    QSettings settings;
-    settings.setValue("model/model_name", oldName);
     project->name = oldName;
     data->main->setProjectMenu();
-
+    data->setCaptionOut(project->name);
 }
 
 void updateModelTitle::redo()
 {
     // set name
-    QSettings settings;
-    settings.setValue("model/model_name", newName);
     project->name = newName;
     data->main->setProjectMenu();
+    data->setCaptionOut(project->name);
 }
 
 // ######## CHANGE POP/PROJ COMPONENT #################
 
-updateComponentType::updateComponentType(rootData * data, NineMLComponentData * componentData, NineMLComponent * newComponent, QUndoCommand *parent) :
+updateComponentTypeUndo::updateComponentTypeUndo(rootData * data, NineMLComponentData * componentData, NineMLComponent * newComponent, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->data = data;
@@ -1031,9 +1106,38 @@ updateComponentType::updateComponentType(rootData * data, NineMLComponentData * 
     this->newParDatas = this->componentData->ParameterList;
     this->newSVDatas = this->componentData->StateVariableList;
 
+    // find experimental references and update
+    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+        // for each experiment
+        experiment * currExpt = this->data->experiments[i];
+        // loop through chnaged properties
+        for (uint j = 0; j < currExpt->changes.size(); ++j) {
+            // if input references deleted pop the push a delete
+            exptChangeProp * prop = currExpt->changes[j];
+            // search for parameter name in new component
+            if (prop->component == this->componentData) {
+                bool found = false;
+                for (uint k = 0; k < this->newComponent->ParameterList.size(); ++k) {
+                    if (prop->par->name == this->newComponent->ParameterList[k]->name) {
+                        found = true;
+                    }
+                }
+                for (uint k = 0; k < this->newComponent->StateVariableList.size(); ++k) {
+                    if (prop->par->name == this->newComponent->StateVariableList[k]->name) {
+                        found = true;
+                    }
+                }
+                // if we can't find the parameter then add a delete for the changed prop
+                if (!found) {
+                    new deleteChangePropUndo(this->data, currExpt, prop, this);
+                }
+            }
+        }
+    }
+
 }
 
-updateComponentType::~updateComponentType()
+updateComponentTypeUndo::~updateComponentTypeUndo()
 {
     // clear up the lists!
     if (isRedone) {
@@ -1056,7 +1160,7 @@ updateComponentType::~updateComponentType()
     }
 }
 
-void updateComponentType::undo()
+void updateComponentTypeUndo::undo()
 {
     // copy old versions across
     componentData->ParameterList = oldParDatas;
@@ -1073,17 +1177,22 @@ void updateComponentType::undo()
     }
     data->reDrawAll();
     isRedone = false;
+    // do children by calling parent class function:
+    QUndoCommand::undo();
 }
 
-void updateComponentType::redo()
+void updateComponentTypeUndo::redo()
 {
     // copy new component across
     componentData->ParameterList = newParDatas;
     componentData->StateVariableList = newSVDatas;
     componentData->component = newComponent;
     componentData->matchPorts();
+
     data->reDrawAll();
     isRedone = true;
+    // do children by calling parent class function:
+    QUndoCommand::redo();
 }
 
 // ######## UPDATE LAYOUT MIN DIST #################
@@ -1241,4 +1350,134 @@ void changeComponentType::redo()
     QObject::connect(viewCL->fileList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), viewCL->root->main, SLOT(fileListItemChanged(QListWidgetItem*,QListWidgetItem*)));
 
     viewCL->mainWindow->updateTitle(true);
+}
+
+// ######## EXPERIMENT #################
+
+// delete an output - the output has no dependencies so is easy to remove and add back
+deleteOutputUndo::deleteOutputUndo(rootData * data, experiment * expt, exptOutput * output, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->data = data;
+    this->expt = expt;
+    this->output = output;
+    this->setText("Output removed from experiment");
+}
+
+void deleteOutputUndo::undo()
+{
+    // add the output back into the experiment
+    this->expt->outs.insert(this->expt->outs.begin()+this->location, this->output);
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+}
+
+void deleteOutputUndo::redo()
+{
+    // remove the reference to the output from the experiment list
+    for (uint i = 0; i < this->expt->outs.size(); ++i) {
+        if (this->expt->outs[i] == this->output) {
+            this->expt->outs.erase(this->expt->outs.begin()+i);
+            this->location = i;
+        }
+    }
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+
+}
+
+// delete an input - the output has no dependencies so is easy to remove and add back
+deleteInputUndo::deleteInputUndo(rootData * data, experiment * expt, exptInput * input, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->data = data;
+    this->expt = expt;
+    this->input = input;
+    this->setText("Input removed from experiment");
+}
+
+void deleteInputUndo::undo()
+{
+    // add the output back into the experiment
+    this->expt->ins.insert(this->expt->ins.begin()+this->location, this->input);
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+}
+
+void deleteInputUndo::redo()
+{
+    // remove the reference to the output from the experiment list
+    for (uint i = 0; i < this->expt->ins.size(); ++i) {
+        if (this->expt->ins[i] == this->input) {
+            this->expt->ins.erase(this->expt->ins.begin()+i);
+            this->location = i;
+        }
+    }
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+
+}
+
+// delete a changed property - the output has no dependencies so is easy to remove and add back
+deleteChangePropUndo::deleteChangePropUndo(rootData * data, experiment * expt, exptChangeProp * prop, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->data = data;
+    this->expt = expt;
+    this->prop = prop;
+    this->setText("Changed property removed from experiment");
+}
+
+void deleteChangePropUndo::undo()
+{
+    // add the output back into the experiment
+    this->expt->changes.insert(this->expt->changes.begin()+this->location, this->prop);
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+}
+
+void deleteChangePropUndo::redo()
+{
+    // remove the reference to the output from the experiment list
+    for (uint i = 0; i < this->expt->changes.size(); ++i) {
+        if (this->expt->changes[i] == this->prop) {
+            this->expt->changes.erase(this->expt->changes.begin()+i);
+            this->location = i;
+        }
+    }
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+
+}
+
+// delete a lesion - the output has no dependencies so is easy to remove and add back
+deleteLesionUndo::deleteLesionUndo(rootData * data, experiment * expt, exptLesion * lesion, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->data = data;
+    this->expt = expt;
+    this->lesion = lesion;
+    this->setText("Lesion removed from experiment");
+}
+
+void deleteLesionUndo::undo()
+{
+    // add the output back into the experiment
+    this->expt->lesions.insert(this->expt->lesions.begin()+this->location, this->lesion);
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+}
+
+void deleteLesionUndo::redo()
+{
+    // remove the reference to the output from the experiment list
+    for (uint i = 0; i < this->expt->lesions.size(); ++i) {
+        if (this->expt->lesions[i] == this->lesion) {
+            this->expt->lesions.erase(this->expt->lesions.begin()+i);
+            this->location = i;
+        }
+    }
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+
 }
