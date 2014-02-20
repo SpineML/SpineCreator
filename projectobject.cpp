@@ -638,6 +638,10 @@ bool projectObject::save_project_file(QString fileName) {
 
     writer->writeEndElement(); // SpineCreatorProject
 
+    // add to version control
+    if (version.isModelUnderVersion())
+        version.addToVersion(file.fileName());
+
     return true;
 
 }
@@ -1257,8 +1261,9 @@ void projectObject::select_project(rootData * data) {
 
     QSettings settings;
     settings.remove("files/currentFileName");
-    if (filePath != "")
+    if (filePath != "") {
         settings.setValue("files/currentFileName", filePath);
+    }
     settings.setValue("model/model_name", "New Project");
 
     // set the undostack

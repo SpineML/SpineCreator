@@ -45,7 +45,21 @@ void versionControl::detectVCSes() {
 
     // set up the environment for the spawned processes
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    //env.insert("PATH", qgetenv("PATH"));
+
+    // the path fetched by Qt on Mac may not include /usr/local/bin, so we need to check and add it
+#ifdef Q_OS_MAC
+    QString path = qgetenv("PATH");
+    if (!path.contains("/usr/local/bin")) {
+        path = path + ":/usr/local/bin";
+    }
+    qDebug() << path;
+    env.insert("PATH", path);
+    // in addition the environment of spineCreator on Mac may not include /usr/local/bin, which is needed to launch hg in the first place
+    qputenv("PATH", path.toStdString().c_str());
+#else
     env.insert("PATH", qgetenv("PATH"));
+#endif
 
     // make the QProcess
     QProcess * mercurial = new QProcess;
@@ -82,8 +96,15 @@ bool versionControl::isModelUnderMercurial() {
 
     QString path = settings.value("files/currentFileName", "No model").toString();
 
-    if (path == "No model")
+    if (path == "No model") {
         return false;
+    }
+
+    // strip the .proj from the end of the path, if has the .proj
+    if (path.contains(".proj")) {
+        int index = path.lastIndexOf(QDir::toNativeSeparators("/"));
+        path.chop(path.size()-index);
+    }
 
     // set up the environment for the spawned processes
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
@@ -102,13 +123,17 @@ bool versionControl::isModelUnderMercurial() {
 
     bool noerror = mercurial->waitForFinished(1000);
 
+    // tidy these up every so often...
+    stdOutText.clear();
+    stdErrText.clear();
+
     if (noerror) {
         // check output
-        if (mercurial->exitCode() == 0)
+        if (mercurial->exitCode() == 0) {
             return true;
-        else
+        } else {
             return false;
-
+        }
     }
     return false;
 }
@@ -116,13 +141,13 @@ bool versionControl::isModelUnderMercurial() {
 // add a file to the repository
 bool versionControl::addToMercurial(QString file) {
 
-    return runMercurial("add " + file);
+    return runMercurial("add \"" + file + "\"");
 }
 
 // remove a file from the repository
 bool versionControl::removeFromMercurial(QString file) {
 
-    return runMercurial("remove " + file);
+    return runMercurial("remove \"" + file + "\"");
 
 }
 
@@ -185,8 +210,15 @@ bool versionControl::runMercurial(QString options) {
 
     QString path = settings.value("files/currentFileName", "No model").toString();
 
-    if (path == "No model")
+    if (path == "No model") {
         return false;
+    }
+
+    // strip the .proj from the end of the path, if has the .proj
+    if (path.contains(".proj")) {
+        int index = path.lastIndexOf(QDir::toNativeSeparators("/"));
+        path.chop(path.size()-index);
+    }
 
     // set up the environment for the spawned processes
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
@@ -199,7 +231,7 @@ bool versionControl::runMercurial(QString options) {
     mercurial->setWorkingDirectory(QDir::toNativeSeparators(path));
     mercurial->setProcessEnvironment(env);
 
-    connect(mercurial, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int, QProcess::ExitStatus)));
+    //connect(mercurial, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int, QProcess::ExitStatus)));
     connect(mercurial, SIGNAL(readyReadStandardOutput()), this, SLOT(standardOutput()));
     connect(mercurial, SIGNAL(readyReadStandardError()), this, SLOT(standardError()));
 

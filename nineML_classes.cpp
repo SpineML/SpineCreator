@@ -2972,6 +2972,14 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
 
 QString NineMLComponent::getXMLName() {
 
+    QString nameSanitised = name;
+    nameSanitised.replace(" ", "_");
+    return nameSanitised + ".xml";
+
+}
+
+QString NineMLComponent::getName() {
+
     return name + ".xml";
 
 }

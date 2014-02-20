@@ -40,7 +40,16 @@
     </size>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <property name="margin">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
      <number>0</number>
     </property>
     <property name="spacing">
@@ -92,7 +101,16 @@
        <number>0</number>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <property name="spacing">
@@ -396,8 +414,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>433</width>
-            <height>576</height>
+            <width>432</width>
+            <height>577</height>
            </rect>
           </property>
          </widget>
@@ -852,6 +870,9 @@
    <property name="text">
     <string>&amp;Save project</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
   <action name="actionExport_Component">
    <property name="text">
@@ -862,10 +883,16 @@
    <property name="text">
     <string>Load &amp;project</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="actionNew_model">
    <property name="text">
     <string>&amp;New project</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
   <action name="actionImport_CSV">
