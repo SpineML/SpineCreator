@@ -24,6 +24,7 @@
 
 #include "rootlayout.h"
 #include "projectobject.h"
+#include "filteroutundoredoevents.h"
 
 /*
  Alex Cope 2012
@@ -75,6 +76,7 @@ void rootLayout::initModelHeader(rootData * data) {
     QString model_name = data->currProject->name;
     QFormLayout * titleLayout = new QFormLayout();
     QLineEdit * name = new QLineEdit;
+    name->installEventFilter(new FilterOutUndoRedoEvents);
     name->setText(model_name);
     titleLayout->addRow("Model name", name);
     this->addLayout(titleLayout);
@@ -1443,6 +1445,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 completer->setCaseSensitivity(Qt::CaseInsensitive);
                 lineEdit->setCompleter(completer);
                 lineEdit->setProperty("ptr", qVariantFromValue((void *) componentData));
+                lineEdit->installEventFilter(new FilterOutUndoRedoEvents);
 
                 // add connection:
                 connect(lineEdit, SIGNAL(editingFinished()), data, SLOT(addgenericInput()));
@@ -1570,6 +1573,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
         parSpin->setProperty("action","changeVal");
         connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
+        parSpin->installEventFilter(new FilterOutUndoRedoEvents);
 
         buttons->addWidget(parSpin);
 
@@ -1649,6 +1653,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setProperty("action","changeVal");
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
+            parSpin->installEventFilter(new FilterOutUndoRedoEvents);
             buttons->addWidget(parSpin);
 
             buttons->addStretch();
@@ -1665,6 +1670,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setToolTip("upper bound value");
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
+            parSpin->installEventFilter(new FilterOutUndoRedoEvents);
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);}
@@ -1688,6 +1694,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setToolTip("mean value");
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
+            parSpin->installEventFilter(new FilterOutUndoRedoEvents);
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);
@@ -1707,6 +1714,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setToolTip("standard deviation value");
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
+            parSpin->installEventFilter(new FilterOutUndoRedoEvents);
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);}
@@ -1726,7 +1734,8 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         seedSpin->setToolTip("seed value");
         seedSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
         seedSpin->setProperty("action","changeVal");
-        connect(seedSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
+        seedSpin->installEventFilter(new FilterOutUndoRedoEvents);
+        connect(seedSpin, SIGNAL(valueChanged(int)), data, SLOT (updatePar()));
         connect(this, SIGNAL(deleteProperties()), seedSpin, SLOT(deleteLater()));
         buttons->addWidget(seedSpin);
 

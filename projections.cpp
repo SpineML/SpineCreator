@@ -477,14 +477,21 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             // draw end marker
             QPainterPath endPoint;
 
+            QSettings settings;
+            float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+
+            // account for hidpi in line width
+            QPen linePen = painter->pen();
+            linePen.setWidthF(linePen.widthF()*dpi_ratio);
+            painter->setPen(linePen);
 
             if (this->type == projectionObject) {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),4,4);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),4*dpi_ratio,4*dpi_ratio);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,0,255,255));
             }
             else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),2,2);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),2*dpi_ratio,2*dpi_ratio);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,210,0,255));
             }
@@ -579,28 +586,31 @@ void projection::drawHandles(QPainter *painter, float GLscale, float viewX, floa
         QPainterPath path;
         QPainterPath lines;
 
-        path.addEllipse(this->transformPoint(this->start), 4, 4);
+        QSettings settings;
+        float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+
+        path.addEllipse(this->transformPoint(this->start), 4*dpi_ratio, 4*dpi_ratio);
         lines.moveTo(this->transformPoint(this->start));
 
         for (unsigned int i = 0; i < this->curves.size(); ++i) {
             lines.lineTo(this->transformPoint(this->curves[i].C1));
             lines.moveTo(this->transformPoint(this->curves[i].C2));
             lines.lineTo(this->transformPoint(this->curves[i].end));
-            path.addEllipse(this->transformPoint(this->curves[i].C1), 4, 4);
-            path.addEllipse(this->transformPoint(this->curves[i].C2), 4, 4);
-            path.addEllipse(this->transformPoint(this->curves[i].end), 4, 4);
+            path.addEllipse(this->transformPoint(this->curves[i].C1), 4*dpi_ratio, 4*dpi_ratio);
+            path.addEllipse(this->transformPoint(this->curves[i].C2), 4*dpi_ratio, 4*dpi_ratio);
+            path.addEllipse(this->transformPoint(this->curves[i].end), 4*dpi_ratio, 4*dpi_ratio);
         }
 
         painter->drawPath(path);
         painter->drawPath(lines);
-        path.addEllipse(this->transformPoint(this->curves.back().end),4,4);
+        path.addEllipse(this->transformPoint(this->curves.back().end),4*dpi_ratio,4*dpi_ratio);
         painter->drawPath(path);
         painter->fillPath(path,QColor(255,0,0,100));
 
         // redraw selected handle:
         if (this->selectedControlPoint.start) {
             QPainterPath sel;
-            sel.addEllipse(this->transformPoint(this->start), 4, 4);
+            sel.addEllipse(this->transformPoint(this->start), 4*dpi_ratio, 4*dpi_ratio);
             painter->drawPath(sel);
             painter->fillPath(sel,QColor(0,255,0,255));
         } else if (this->selectedControlPoint.ind != -1) {
@@ -609,15 +619,15 @@ void projection::drawHandles(QPainter *painter, float GLscale, float viewX, floa
             switch (this->selectedControlPoint.type) {
 
             case C1:
-                sel.addEllipse(this->transformPoint(this->curves[this->selectedControlPoint.ind].C1), 4, 4);
+                sel.addEllipse(this->transformPoint(this->curves[this->selectedControlPoint.ind].C1), 4*dpi_ratio, 4*dpi_ratio);
                 break;
 
             case C2:
-                sel.addEllipse(this->transformPoint(this->curves[this->selectedControlPoint.ind].C2), 4, 4);
+                sel.addEllipse(this->transformPoint(this->curves[this->selectedControlPoint.ind].C2), 4*dpi_ratio, 4*dpi_ratio);
                 break;
 
             case p_end:
-                sel.addEllipse(this->transformPoint(this->curves[this->selectedControlPoint.ind].end), 4, 4);
+                sel.addEllipse(this->transformPoint(this->curves[this->selectedControlPoint.ind].end), 4*dpi_ratio, 4*dpi_ratio);
                 break;
 
             default:
@@ -693,9 +703,12 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale) {
 
     QPointF cursor(xGL, yGL);
 
+    QSettings settings;
+    float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+
     // test start:
     QPainterPath test;
-    test.addEllipse(this->start, 6/GLscale, 6/GLscale);
+    test.addEllipse(this->start, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
     if (test.contains(cursor)) {
         this->selectedControlPoint.start = true;
         return true;
@@ -704,7 +717,7 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale) {
     // now check all the bezierCurves in turn:
     for (unsigned int i = 0; i < this->curves.size(); ++i) {
         QPainterPath testEnd;
-        testEnd.addEllipse(this->curves[i].end, 10.0/GLscale, 10.0/GLscale);
+        testEnd.addEllipse(this->curves[i].end, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
         if (testEnd.contains(cursor)) {
             this->selectedControlPoint.start = false;
             this->selectedControlPoint.type = p_end;
@@ -712,7 +725,7 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale) {
             return true;
         }
         QPainterPath testC1;
-        testC1.addEllipse(this->curves[i].C1, 10.0/GLscale, 10.0/GLscale);
+        testC1.addEllipse(this->curves[i].C1, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
         if (testC1.contains(cursor)) {
             this->selectedControlPoint.start = false;
             this->selectedControlPoint.type = C1;
@@ -720,7 +733,7 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale) {
             return true;
         }
         QPainterPath testC2;
-        testC2.addEllipse(this->curves[i].C2, 10.0/GLscale, 10.0/GLscale);
+        testC2.addEllipse(this->curves[i].C2, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
         if (testC2.contains(cursor)) {
             this->selectedControlPoint.start = false;
             this->selectedControlPoint.type = C2;

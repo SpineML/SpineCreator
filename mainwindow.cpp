@@ -53,7 +53,6 @@ MainWindow::MainWindow(QWidget *parent) :
     maxRecentFiles(12) // Number of files which show in the recent projects menu
 {
 
-
     data.main = this;
     this->setWindowTitle("SpineCreator - Graphical SNN creation");
 
@@ -64,11 +63,19 @@ MainWindow::MainWindow(QWidget *parent) :
     // initialise GUI
     ui->setupUi(this);
 
+   QSettings settings;
+
+#if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
+  #ifdef Q_OS_MAC
+
+   settings.setValue("dpi",this->windowHandle()->devicePixelRatio());
+
+  #endif
+#endif
+
     this->emsg = (QErrorMessage*)0;
 
     toolbarStyleSheet = ui->toolbar_3->styleSheet();
-
-    QSettings settings;
 
     resize(settings.value("mainwindow/size", QSize(1060, 622)).toSize());
     move(settings.value("mainwindow/pos", QPoint(0, 0)).toPoint());
@@ -149,6 +156,7 @@ MainWindow::MainWindow(QWidget *parent) :
     undoStacks->setActiveStack(newProject->undoStack);
 
     connect(undoStacks, SIGNAL(indexChanged(int)), this, SLOT(undoOrRedoPerformed(int)));
+    connect(undoStacks, SIGNAL(cleanChanged(bool)), this, SLOT(updateTitle()));
 
     // in case of crash
     settings.remove("export_for_simulation");
@@ -690,6 +698,7 @@ void MainWindow::initViewEL()
 
     // internal connections
     connect(run, SIGNAL(clicked()), this->viewELhandler, SLOT(run()));
+    connect(this->viewELhandler, SIGNAL(enableRun(bool)), run, SLOT(setEnabled(bool)));
 }
 
 void MainWindow::connectViewEL()
@@ -2648,6 +2657,8 @@ void MainWindow::updateTitle(bool unsaved)
 
 void MainWindow::updateTitle()
 {
+    qDebug() << "Triggered window title redraw";
+
     // TITLE UPDATE FOR NETWORK LAYER
     QString title;
     if (ui->view1->isVisible()) {

@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
     a.setAttribute(Qt::AA_DontCreateNativeWidgetSiblings, true);
     MainWindow w;
     w.show();
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps,true);
 
     return a.exec();
 }

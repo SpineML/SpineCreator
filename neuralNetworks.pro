@@ -63,7 +63,8 @@ SOURCES += main.cpp \
     qcustomplot.cpp \
     logdata.cpp \
     aboutdialog.cpp \
-    projectobject.cpp
+    projectobject.cpp \
+    filteroutundoredoevents.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -113,7 +114,8 @@ HEADERS  += mainwindow.h \
     logdata.h \
     aboutdialog.h \
     projectobject.h \
-    rootlayout.h
+    rootlayout.h \
+    filteroutundoredoevents.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \

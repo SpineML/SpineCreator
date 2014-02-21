@@ -515,7 +515,7 @@
         <string/>
        </property>
        <property name="statusTip">
-        <string>The systems-level view of the model</string>
+        <string>The network-level view of the model</string>
        </property>
        <property name="styleSheet">
         <string notr="true">border: 0px; color:white</string>
@@ -561,7 +561,7 @@
         <string/>
        </property>
        <property name="statusTip">
-        <string>Population and connection level views of the model</string>
+        <string>3D views of the model</string>
        </property>
        <property name="styleSheet">
         <string notr="true">border: 0px; color:white</string>
@@ -607,7 +607,7 @@
         <string/>
        </property>
        <property name="statusTip">
-        <string>Create and edit Abstraction Layer components</string>
+        <string>Create and edit components</string>
        </property>
        <property name="styleSheet">
         <string notr="true">border: 0px; color:white; background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(80, 80, 80, 255), stop:0.95 rgba(150, 150, 150, 255), stop:1 rgba(255,255,255,255))</string>

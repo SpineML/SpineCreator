@@ -556,6 +556,9 @@ void viewELExptPanelHandler::addExperiment() {
 
     data->experiments.back()->editing = true;
 
+    // disable run button
+    emit enableRun(false);
+
     // redraw to show the new experiment
     redrawPanel();
     redrawExpt();
@@ -567,6 +570,11 @@ void viewELExptPanelHandler::delExperiment() {
     uint index = sender()->property("index").toUInt();
 
     data->experiments.erase(data->experiments.begin() + index);
+
+    // if we delete the last experiment then disable the run button
+    if (data->experiments.size() == 0) {
+        emit enableRun(false);
+    }
 
     // redraw to updata the selection
     redrawPanel();
@@ -609,6 +617,9 @@ void viewELExptPanelHandler::editExperiment() {
 
     data->experiments[index]->editing = true;
 
+    // enable to run button
+    emit enableRun(false);
+
     // redraw to update the editBox
     redrawPanel();
     redrawExpt();
@@ -628,6 +639,9 @@ void viewELExptPanelHandler::doneEditExperiment() {
 
     data->experiments[index]->editing = false;
 
+    // enable to run button
+    emit enableRun(true);
+
     // redraw to update the editBox
     redrawPanel();
     redrawExpt();
@@ -640,6 +654,9 @@ void viewELExptPanelHandler::cancelEditExperiment() {
 
     data->experiments[index]->editing = false;
 
+    // enable to run button
+    emit enableRun(true);
+
     // redraw to update the editBox
     redrawPanel();
     redrawExpt();
@@ -649,6 +666,9 @@ void viewELExptPanelHandler::cancelEditExperiment() {
 void viewELExptPanelHandler::changeSelection() {
 
     uint index = sender()->property("index").toUInt();
+
+    // also make sure that the run button is enabled
+    emit enableRun(true);
 
     // check if this is the selected box - if it is then do nothing
     if (data->experiments[index]->selected)
@@ -1604,6 +1624,33 @@ void viewELExptPanelHandler::run() {
 
     QDir wk_dir(wk_dir_string);
 
+    // clear error message lookup
+    this->errorMessages.clear();
+    this->errorStrings.clear();
+
+    // try and find an error message lookup
+    QFile errorMsgLookup(wk_dir.absoluteFilePath("errorMsgLookup.txt"));
+    if (errorMsgLookup.open(QIODevice::ReadOnly)) {
+
+        // file exists! start parsing
+        // read a line
+        QByteArray line = errorMsgLookup.readLine();
+        while (!line.isEmpty()) {
+            // convert line to string
+            QString lineStr(line);
+            // seperate line by token
+            QStringList parts = lineStr.split("#->#");
+            // if we have two sides then the line is correctly formatted
+            if (parts.size() == 2) {
+                // formatted correctly - add to lists
+                this->errorStrings.push_back(parts[0]);
+                this->errorMessages.push_back(parts[1]);
+            }
+            // read next line
+            line = errorMsgLookup.readLine();
+        }
+    }
+
     // set up the environment for the spawned processes
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
 
@@ -1656,6 +1703,23 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     // update run button
     runButton->setEnabled(true);
 
+    // check for errors we can present
+    for (uint i = 0; i < (uint) errorStrings.size(); ++i) {
+
+        // check if error there
+        if (simulatorStdOutText.contains(errorStrings[i])) {
+            // error found
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Simulator Error");
+            msgBox.setIcon(QMessageBox::Critical);
+            msgBox.setText(errorMessages[i]);
+            msgBox.setDetailedText(simulatorStdOutText);
+            msgBox.exec();
+            return;
+        }
+
+    }
+
     // collect logs
     QDir logs(sender()->property("logpath").toString());
 
@@ -1683,7 +1747,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         QMessageBox msgBox;
         msgBox.setWindowTitle("Simulator Complete");
         msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText("Simulator has finished. See below for more details, or any errors.");
+        msgBox.setText("Simulator has finished. See below for more details.");
         msgBox.setDetailedText(simulatorStdOutText);
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();

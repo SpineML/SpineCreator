@@ -2978,12 +2978,6 @@ QString NineMLComponent::getXMLName() {
 
 }
 
-QString NineMLComponent::getName() {
-
-    return name + ".xml";
-
-}
-
 QString NineMLComponentData::getXMLName() {
 
     // generate a unique name in order to link up ports in the XML

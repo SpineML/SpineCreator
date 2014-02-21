@@ -488,7 +488,6 @@ public:
     QUndoStack undoStack;
     NineMLComponent * editedVersion;
     QString getXMLName();
-    QString getName();
 };
 
 

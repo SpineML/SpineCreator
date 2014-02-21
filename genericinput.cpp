@@ -278,6 +278,13 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             // draw end marker
             QPainterPath endPoint;
 
+            QSettings settings;
+            float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+
+            // account for hidpi in line width
+            QPen linePen = painter->pen();
+            linePen.setWidthF(linePen.widthF()*dpi_ratio);
+            painter->setPen(linePen);
 
             if (this->type == projectionObject) {
                 endPoint.addEllipse(this->transformPoint(this->curves.back().end),4,4);
@@ -285,7 +292,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                 painter->fillPath(endPoint, QColor(0,0,255,255));
             }
             else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),2,2);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),2*dpi_ratio,2*dpi_ratio);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,210,0,255));
             }

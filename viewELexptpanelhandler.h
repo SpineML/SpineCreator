@@ -53,6 +53,9 @@ private:
     QString simulatorStdOutText;
     QString simulatorStdErrText;
 
+    QStringList errorStrings;
+    QStringList errorMessages;
+
     vector <QWidget * > forDeleting;
 
     void recursiveDeleteLoop(QLayout * parentLayout);
@@ -72,6 +75,7 @@ private:
     GLWidget * gl;
 
 signals:
+    void enableRun(bool);
     
 public slots:
     void addExperiment();

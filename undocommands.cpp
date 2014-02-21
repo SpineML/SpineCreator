@@ -890,10 +890,10 @@ void updateParUndo::undo()
 
 void updateParUndo::redo()
 {
+    ptr->value[index] = value;
     if (!firstRedo) {
         data->reDrawPanel();
     }
-    ptr->value[index] = value;
     firstRedo = false;
 }
 
