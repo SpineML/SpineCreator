@@ -1670,6 +1670,555 @@ bool kernel_connection::isList() {
 
 
 
+pythonscript_connection::pythonscript_connection()
+{
+    type = Python;
+    this->isAList = false;
+    selfConnections = false;
+    rotation = 0;
+    hasChanged = true;
+}
+
+pythonscript_connection::~pythonscript_connection()
+{
+}
+
+bool pythonscript_connection::changed() {
+    if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
+        return true;
+    } else {
+        return hasChanged;
+    }
+}
+
+void pythonscript_connection::setUnchanged(bool state) {
+    if (state) {
+        srcSize = src->numNeurons;
+        dstSize = dst->numNeurons;
+    }
+    hasChanged = !state;
+}
+
+void pythonscript_connection::configureFromScript(QString script) {
+    // add the script to the class variable
+    this->scriptText = script;
+    // clear previous pars
+    this->parNames.clear();
+    this->parValues.clear();
+    this->parPos.clear();
+    // parse the script for parameter lines
+    QStringList lines = script.split("\n");
+    for (int i = 0; i < lines.size(); ++i) {
+        // find a par tag
+        if (lines[i].contains("#PARNAME=")) {
+            QStringList bits = lines[i].split("#PARNAME=");
+            // check if the end bit has location info
+            if (bits.last().contains("#LOC=")) {
+                // we have position info - so extract it
+                QStringList posbits = bits.last().split("#LOC=");
+                // pos are separated by commas, so split again
+                QStringList posvals = posbits.last().split(",");
+                if (posvals.size() == 2) {
+                    // correct formatting, add the position to the list
+                    this->parNames.push_back(posbits.first().replace(" ", ""));
+                    this->parValues.push_back(0);
+                    this->parPos.push_back(QPoint(posvals[0].toInt(), posvals[1].toInt()));
+                }
+            } else {
+                // add with just the name specified
+                this->parNames.push_back(bits.last().replace(" ", ""));
+                this->parValues.push_back(0);
+                this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
+            }
+        }
+    }
+}
+
+void pythonscript_connection::configureFromTextEdit() {
+    // grab a pointer to the source and use it to get the plain text script.
+    QTextEdit * edit = (QTextEdit *) sender();
+    this->configureFromScript(edit->toPlainText());
+    this->regenerateConnections();
+}
+
+void pythonscript_connection::regenerateConnections() {
+    // generate connections:
+    QMutex * connGenerationMutex = new QMutex();
+
+    //if (changed()) {
+        setUnchanged(false);
+        this->connections.clear();
+        generate_dialog generate(this, this->src, this->dst, this->connections, connGenerationMutex, (QWidget *)NULL);
+        bool retVal = generate.exec();
+        if (!retVal) {
+            return;
+        }
+    //}
+
+    if (connections.size() == 0) {
+        QMessageBox msgBox;
+        msgBox.setText("Error: no connections generated for Python Script Connection");
+        msgBox.exec();
+        return;
+    }
+
+    delete connGenerationMutex;
+}
+
+void pythonscript_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
+
+    // are we outputting for simulation
+    bool forSim = false;
+    QSettings settings;
+    QString sim = settings.value("export_for_simulation", "no").toString();
+
+    if (sim != "no") {
+        forSim = true;
+    }
+
+    if (!this->isAList && !forSim) {
+        xmlOut.writeStartElement("PythonScriptConnection");
+        // extra stuff
+        xmlOut.writeStartElement("Script");
+        xmlOut.writeAttribute("text", this->scriptText);
+        // parameter values for the script
+        for (int i = 0; i < this->parNames.size(); ++i) {
+            xmlOut.writeAttribute(this->parNames[i], QString::number(this->parValues[i]));
+        }
+        xmlOut.writeEndElement(); // Script
+        xmlOut.writeStartElement("Config");
+        // reference to a weight parameter
+        if (!this->weightProp.isEmpty()) {
+            xmlOut.writeAttribute("weightProperty", this->weightProp);
+        }
+        xmlOut.writeEndElement(); // Config
+        this->writeDelay(xmlOut);
+        xmlOut.writeEndElement(); // PythonScriptConnection
+    }
+
+    else {
+
+        xmlOut.writeStartElement("ConnectionList");
+
+        // generate connections:
+        QMutex * connGenerationMutex = new QMutex();
+
+        if (changed()) {
+            setUnchanged(true);
+            connections.clear();
+            generate_dialog generate(this, this->src, this->dst, connections, connGenerationMutex, (QWidget *)NULL);
+            bool retVal = generate.exec();
+            if (!retVal) {
+                return;
+            }
+        }
+
+        if (connections.size() == 0) {
+            QMessageBox msgBox;
+            msgBox.setText("Error: no connections generated for Python Script Connection");
+            msgBox.exec();
+            return;
+        }
+
+        delete connGenerationMutex;
+
+        // load path
+        bool exportBinary = false;
+        if (settings.value("export_for_simulation", "error").toBool()) {
+            exportBinary = settings.value("export_binary").toBool();
+        }
+
+        if (!exportBinary || connections.size() < 30) {
+
+            // loop through connections writing them out
+            for (uint i=0; i < connections.size(); ++i) {
+
+                xmlOut.writeEmptyElement("Connection");
+
+                xmlOut.writeAttribute("src_neuron", QString::number(float(connections[i].src)));
+                xmlOut.writeAttribute("dst_neuron", QString::number(float(connections[i].dst)));
+            }
+
+        } else {
+
+            // create a unique name for the binary connection file
+            QUuid uuid = QUuid::createUuid();
+            QString export_filename = uuid.toString();
+            export_filename.chop(1);
+            export_filename[0] = 'C';
+            export_filename += ".bin"; // need to generate a unique filename - preferably a descriptive one... but not for now!
+            QString saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + export_filename);
+
+            // add a tag to the binary file
+            xmlOut.writeEmptyElement("BinaryFile");
+            xmlOut.writeAttribute("file_name", export_filename);
+            xmlOut.writeAttribute("num_connections", QString::number(float(connections.size())));
+            xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(0)));
+
+            // re-write the data
+
+            // write out
+            QFile export_file(saveFileName);
+            if (!export_file.open( QIODevice::WriteOnly)) {
+                QMessageBox msgBox;
+                msgBox.setText("Error creating file - is there sufficient disk space?");
+                msgBox.exec();
+                return;
+            }
+
+            QDataStream access(&export_file);
+            for (uint i = 0; i < connections.size(); ++i) {
+                access.writeRawData((char*) &connections[i].src, sizeof(uint));
+                access.writeRawData((char*) &connections[i].dst, sizeof(uint));
+            }
+
+        }
+
+        this->writeDelay(xmlOut);
+
+        xmlOut.writeEndElement(); // ConnectionList
+    }
+
+
+}
+
+void pythonscript_connection::import_parameters_from_xml(QDomNode &e) {
+
+    QDomNodeList scriptNode = e.toElement().elementsByTagName("Script");
+    if (scriptNode.size() == 1) {
+        QDomNode n = scriptNode.item(0);
+        this->scriptText = n.toElement().attribute("text");
+        // parse the script
+        this->configureFromScript(this->scriptText);
+        // extract the referenced pars
+        for (int i = 0; i < this->parNames.size(); ++i) {
+            this->parValues[i] = n.toElement().attribute(parNames[i]).toFloat();
+        }
+    }
+    QDomNodeList configNode = e.toElement().elementsByTagName("Config");
+    if (configNode.size() == 1) {
+        QDomNode n = configNode.item(0);
+        // get reference to a weight parameter
+        if (n.toElement().hasAttribute("weightProperty")) {
+            this->weightProp = n.toElement().attribute("weightProperty");
+        }
+    }
+
+    QDomNodeList delayProp = e.toElement().elementsByTagName("Delay");
+    if (delayProp.size() == 1) {
+
+        QDomNode n = delayProp.item(0);
+
+        QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
+        if (propVal.size() == 1) {
+            this->delay->currType = FixedValue;
+            this->delay->value.resize(1,0);
+            this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
+        }
+        propVal = n.toElement().elementsByTagName("UniformDistribution");
+        if (propVal.size() == 1) {
+            this->delay->currType = Statistical;
+            this->delay->value.resize(4,0);
+            this->delay->value[0] = 1;
+            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+        }
+        propVal = n.toElement().elementsByTagName("NormalDistribution");
+        if (propVal.size() == 1) {
+            this->delay->currType = Statistical;
+            this->delay->value.resize(4,0);
+            this->delay->value[0] = 2;
+            this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
+            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+        }
+
+    }
+}
+
+/*!
+ * \brief vectorToList
+ * \param vect
+ * \return
+ * A simple function to take a QVector and put it into a Python List
+ */
+PyObject * vectorToList(QVector <float> * vect) {
+    PyObject * vectList = PyList_New(vect->size());
+    for (int i = 0; i < vect->size(); ++i) {
+        PyList_SetItem(vectList, i, PyFloat_FromDouble((double) (*vect)[i]));
+    }
+    return vectList;
+}
+
+/*!
+ * \brief vectorsToList
+ * \param vect1
+ * \param vect2
+ * \param vect3
+ * \return
+ * A simple function to take a vector of locations and pack them into a Python list of Python tuples
+ * each containing the three values (x,y,z)
+ */
+PyObject * vectorLocToList(vector <loc> * vect) {
+    // create the new PyList
+    PyObject * vectList = PyList_New(vect->size());
+    for (uint i = 0; i < vect->size(); ++i) {
+        // create a tuple from the three vector values
+        PyObject * tuple = PyTuple_New(3);
+        PyTuple_SetItem(tuple, 0, PyFloat_FromDouble((double) (*vect)[i].x));
+        PyTuple_SetItem(tuple, 1, PyFloat_FromDouble((double) (*vect)[i].y));
+        PyTuple_SetItem(tuple, 2, PyFloat_FromDouble((double) (*vect)[i].z));
+        // add the tuple to the list
+        PyList_SetItem(vectList, i, tuple);
+    }
+    return vectList;
+}
+
+/*!
+ * \brief listToVector
+ * \param list
+ * \return
+ * A simple function to take  Python list and extract it into a QVector
+ */
+QVector <float> listToVector(PyObject * list) {
+    QVector <float> vect;
+    if (PyList_Size(list) < 1) {
+        vect.push_back(-234.56);
+        return vect;
+    }
+    vect.resize(PyList_Size(list));
+    for (uint i = 0; i < PyList_Size(list); ++i) {
+        vect[i] = PyFloat_AsDouble(PyList_GetItem(list, i));
+    }
+    return vect;
+}
+
+struct outputUnPackaged {
+    vector <conn> connections;
+    vector <float> weights;
+};
+
+/*!
+ * \brief listToVector
+ * \param list
+ * \return
+ * A simple function to take the output of a connection function and unpack it
+ */
+outputUnPackaged extractOutput(PyObject * output) {
+    // create the structure to hold the unpacked output
+    outputUnPackaged outUnPacked;
+    if (PyList_Size(output) < 1) {
+        outUnPacked.weights.push_back(-234.56);
+        return outUnPacked;
+    }
+    outUnPacked.connections.resize(PyList_Size(output));
+    outUnPacked.weights.resize(PyList_Size(output));
+    for (uint i = 0; i < PyList_Size(output); ++i) {
+        // get the element
+        PyObject * element = PyList_GetItem(output,i);
+        // check it is a tuple
+        if (PyTuple_Check(element)) {
+            // if the tuple has enough items for a src index and dst index
+            if (PyTuple_Size(element) > 1) {
+                outUnPacked.connections[i].src = PyInt_AsLong(PyTuple_GetItem(element,0));
+                outUnPacked.connections[i].dst = PyInt_AsLong(PyTuple_GetItem(element,1));
+            }
+            // if we have a delay as well
+            if (PyTuple_Size(element) > 2) {
+                outUnPacked.connections[i].metric = PyFloat_AsDouble(PyTuple_GetItem(element,2));
+            }
+            // if we have a weight as well
+            if (PyTuple_Size(element) > 3) {
+                outUnPacked.weights[i] = PyFloat_AsDouble(PyTuple_GetItem(element,3));
+            }
+        }
+    }
+    return outUnPacked;
+}
+
+/*!
+ * \brief createPyFunc
+ * \param pymod
+ * \return
+ * A simple function to take a string and make it into a Python function which can then be called
+ */
+PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs) {
+
+    // get the default dict, so we have access to the built in modules
+    PyObject * main = PyImport_AddModule("__main__");
+    PyObject *pGlobal = PyModule_GetDict(main);
+
+    PyModule_AddStringConstant(pymod, "__file__", "");
+
+    //Get the dictionary object from my module so I can pass this to PyRun_String
+    PyObject * pLocal = PyModule_GetDict(pymod);
+
+    //Define my function in the newly created module
+    PyObject * pValue = PyRun_String((char *) text.toStdString().c_str(), Py_file_input, pGlobal, pLocal);
+    if (!pValue) {
+        PyObject * errtype, * errval, * errtrace;
+        PyErr_Fetch(&(errtype), &(errval), &(errtrace));
+
+        errs.append("ERROR ");
+
+        if (errtype) {
+            errs.append(PyString_AsString(errtype) + QString(". "));
+        }
+        if (errval) {
+            errs.append(PyString_AsString(errval) + QString(". "));
+        }
+        if (errtrace) {
+            PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;
+            while (errtraceObj->tb_next) {
+                errtraceObj = errtraceObj->tb_next;
+            }
+            errs.append("Line no: " + QString::number(errtraceObj->tb_lineno));
+        }
+        return NULL;
+    }
+    Py_DECREF(pValue);
+
+    //Get a pointer to the function I just defined
+    return PyObject_GetAttrString(pymod, "connectionFunc");
+}
+
+void pythonscript_connection::generate_connections() {
+
+    conns->clear();
+
+    this->pythonErrors.clear();
+
+    // regenerate src and dst locations
+    QString errorLog;
+    src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
+    if (!errorLog.isEmpty()) {
+        qDebug() << "no src locs";
+        this->moveToThread(QApplication::instance()->thread());
+        emit connectionsDone();
+        return;
+    }
+    dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
+    if (!errorLog.isEmpty()) {
+        qDebug() << "no dst locs";
+        this->moveToThread(QApplication::instance()->thread());
+        emit connectionsDone();
+        return;
+    }
+
+    // a tuple to hold the arguments to the Python Script - size of the scripts pars + the src and dst locations
+    PyObject * argsPy = PyTuple_New(this->parNames.size()+2/* 2 for the src and dst locations*/);
+
+    // convert the locations into Python Objects:
+    PyObject * srcPy = vectorLocToList(&src->layoutType->locations);
+    PyObject * dstPy = vectorLocToList(&dst->layoutType->locations);
+
+    // add them to the tuple
+    PyTuple_SetItem(argsPy,0,srcPy);
+    PyTuple_SetItem(argsPy,1,dstPy);
+
+    // convert the parameters into Python Objects and add them to the tuple
+    for (int i = 0; i < this->parNames.size(); ++i) {
+        PyTuple_SetItem(argsPy,i+2,PyFloat_FromDouble(parValues[i]));
+        qDebug() << "Adding" << parNames[i] << "=" << parValues[i];
+    }
+
+    // check the tuple is sound
+    if (!argsPy) {
+        qDebug() << "Bad args tuple";
+        this->moveToThread(QApplication::instance()->thread());
+        emit connectionsDone();
+        return;
+    }
+
+    // Set up the Python API
+    Py_SetProgramName((char *) qApp->applicationFilePath().toStdString().c_str());
+    Py_Initialize();
+
+    //Create a new module object
+    PyObject *pymod = PyModule_New("mymod");
+
+    // add the function to Python, and get a PyObject for it
+    PyObject * pyFunc = createPyFunc(pymod, this->scriptText, this->pythonErrors);
+
+    // check that function creation worked
+    if (!pyFunc) {
+        if (pythonErrors.isEmpty()) {
+            pythonErrors = "Python Error: Script function is not named connectionFunc.";
+        }
+        Py_Finalize();
+        this->moveToThread(QApplication::instance()->thread());
+        emit connectionsDone();
+        return;
+    }
+
+    //Call my function
+    PyImport_ImportModule("math");
+    PyObject * output = PyObject_CallObject(pyFunc, argsPy);
+    Py_DECREF(argsPy);
+    Py_DECREF(srcPy);
+    Py_DECREF(dstPy);
+
+    Py_XDECREF(pyFunc);
+    Py_DECREF(pymod);
+
+    if (!output) {
+        this->pythonErrors = "Python Error: ";
+        PyObject * errtype, * errval, * errtrace;
+        PyErr_Fetch(&(errtype), &(errval), &(errtrace));
+
+        if (errval) {
+            pythonErrors += PyString_AsString(errval);
+        }
+        if (errtrace) {
+            PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;
+            while (errtraceObj->tb_next) {
+                errtraceObj = errtraceObj->tb_next;
+            }
+            pythonErrors += QString("Error found on line:") + QString::number(errtraceObj->tb_lineno);
+        }
+        Py_Finalize();
+        this->moveToThread(QApplication::instance()->thread());
+        emit connectionsDone();
+        return;
+    }
+
+    // unpack the output into C++ forms
+    outputUnPackaged unpacked = extractOutput(output);
+
+    // transfer the unpacked output to the local storage location for connections
+    this->connections = unpacked.connections;
+
+    (*this->conns) = unpacked.connections;
+
+    // transfer the unpacked output to the local storage location for weights
+    this->weights = unpacked.weights;
+
+    Py_Finalize();
+
+    this->moveToThread(QApplication::instance()->thread());
+    emit connectionsDone();
+}
+
+void pythonscript_connection::convertToList(bool check) {
+
+    // instantiate the connection for simulators etc...
+    this->isAList = check;
+    systemObject * ptr;
+    ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
+    src = (population *) ptr;
+    ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
+    dst = (population *) ptr;
+
+}
+
+bool pythonscript_connection::isList() {
+
+    return this->isAList;
+
+}
+
+
 
 
 /*

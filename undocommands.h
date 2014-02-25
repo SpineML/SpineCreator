@@ -361,6 +361,23 @@ private:
     bool firstRedo;
 };
 
+class undoUpdatePythonConnectionScriptPar: public QUndoCommand
+{
+public:
+    undoUpdatePythonConnectionScriptPar(rootData * data, pythonscript_connection * ptr, float new_val, QString par_name, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    pythonscript_connection * ptr;
+    float oldValue;
+    float value;
+    QString par_name;
+    bool firstRedo;
+};
+
 class updateParType : public QUndoCommand
 {
 public:

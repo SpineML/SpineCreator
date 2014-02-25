@@ -65,6 +65,7 @@ public slots:
     void changedEnvVar(QString);
     void saveAsBinaryToggled(bool);
     void setGLDetailLevel(int);
+    void setDevMode(bool);
     void close();
     //void testFunc();
 };

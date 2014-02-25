@@ -750,6 +750,11 @@ void changeConnection::redo()
             ((kernel_connection *)((genericInput *) ptr)->connectionType)->src = (population *) ((genericInput *) ptr)->source;
             ((kernel_connection *)((genericInput *) ptr)->connectionType)->dst = (population *) ((genericInput *) ptr)->destination;
             break;
+        case Python:
+            ((genericInput *) ptr)->connectionType = new pythonscript_connection;
+            ((pythonscript_connection *)((genericInput *) ptr)->connectionType)->src = (population *) ((genericInput *) ptr)->source;
+            ((pythonscript_connection *)((genericInput *) ptr)->connectionType)->dst = (population *) ((genericInput *) ptr)->destination;
+            break;
         case CSA:
             break;
         case none:
@@ -780,6 +785,11 @@ void changeConnection::redo()
             ((synapse *) ptr)->connectionType = new kernel_connection;
             ((kernel_connection *)((synapse *) ptr)->connectionType)->src = (population *) ((synapse *) ptr)->proj->source;
             ((kernel_connection *)((synapse *) ptr)->connectionType)->dst = (population *) ((synapse *) ptr)->proj->destination;
+            break;
+        case Python:
+            ((synapse *) ptr)->connectionType = new pythonscript_connection;
+            ((pythonscript_connection *)((synapse *) ptr)->connectionType)->src = (population *) ((synapse *) ptr)->proj->source;
+            ((pythonscript_connection *)((synapse *) ptr)->connectionType)->dst = (population *) ((synapse *) ptr)->proj->destination;
             break;
         case CSA:
             break;
@@ -973,6 +983,60 @@ void updateConnDelayEquation::undo()
 void updateConnDelayEquation::redo()
 {
     ptr->delayEquation = value;
+    firstRedo = false;
+    data->setTitle();
+}
+
+// ######## UPDATE CONN PYTHON SCRIPT PAR #################
+
+undoUpdatePythonConnectionScriptPar::undoUpdatePythonConnectionScriptPar(rootData * data, pythonscript_connection * ptr, float new_val, QString par_name, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->value = new_val;
+    this->par_name = par_name;
+    int index = -1;
+    for (int i = 0; i < ptr->parNames.size();++i) {
+        if (ptr->parNames[i] == par_name) {
+            index = i;
+        }
+    }
+    if (index != -1) {
+        this->oldValue = ptr->parValues[index];
+    }
+    this->ptr = ptr;
+    this->data = data;
+    this->setText("set " + this->ptr->name + " parameter to " + QString::number(value));
+    firstRedo = true;
+}
+
+void undoUpdatePythonConnectionScriptPar::undo()
+{
+    int index = -1;
+    for (int i = 0; i < ptr->parNames.size();++i) {
+        if (ptr->parNames[i] == par_name) {
+            index = i;
+        }
+    }
+    if (index != -1) {
+        ptr->parValues[index] = this->oldValue;
+    }
+    data->setTitle();
+}
+
+void undoUpdatePythonConnectionScriptPar::redo()
+{
+    int index = -1;
+    for (int i = 0; i < ptr->parNames.size();++i) {
+        if (ptr->parNames[i] == par_name) {
+            index = i;
+        }
+    }
+    if (index != -1) {
+        qDebug() << "YAY";
+        ptr->parValues[index] = this->value;
+    } else {
+        qDebug() << "NOOOO!";
+    }
     firstRedo = false;
     data->setTitle();
 }

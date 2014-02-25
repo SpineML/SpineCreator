@@ -1186,6 +1186,13 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 ((kernel_connection *) newSynapse->connectionType)->src = (population *) this->source;
                 ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
             }
+            else if (n.toElement().tagName() == "PythonScriptConnection") {
+                delete newSynapse->connectionType;
+                newSynapse->connectionType = new pythonscript_connection;
+                newSynapse->connectionType->import_parameters_from_xml(n);
+                ((kernel_connection *) newSynapse->connectionType)->src = (population *) this->source;
+                ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
+            }
 
             else if (n.toElement().tagName() == "LL:PostSynapse") {
 

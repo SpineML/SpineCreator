@@ -1194,7 +1194,6 @@ void MainWindow::createActions()
     connect(ui->actionDelete_current_selection, SIGNAL(triggered()), this, SLOT(actionDeleteItems_triggered()));
     connect(ui->actionImport_CSV, SIGNAL(triggered()), this, SLOT(import_csv()));
     connect(ui->actionExit, SIGNAL(triggered()), this, SLOT(close()));
-    connect(ui->actionRun_in_BRAHMS, SIGNAL(triggered()), this, SLOT(runInBRAHMS()));
     connect(ui->actionNew_model, SIGNAL(triggered()), this, SLOT(new_project()));
     connect(ui->actionSave_Image, SIGNAL(triggered()), this, SLOT(saveImageAction()));
     connect(ui->actionEdit_Simulators, SIGNAL(triggered()), this, SLOT(launchSimulatorEditor()));

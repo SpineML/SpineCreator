@@ -454,6 +454,9 @@ void viewVZLayoutEditHandler::initConnection() {
     // draw up the panel for a connection
     QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
 
+    QSettings settings;
+    bool devMode = settings.value("dev_mode_on", "false").toBool();
+
     connectionComboBox = this->addDropBox(panelLayout, "Connectivity", "will_be_overriden");
     connectionComboBox->addItem("All to All");
     connectionComboBox->addItem("One to One");
@@ -461,6 +464,9 @@ void viewVZLayoutEditHandler::initConnection() {
     connectionComboBox->addItem("Explicit List");
     connectionComboBox->addItem("Distance Based Probability");
     connectionComboBox->addItem("Kernel");
+    if (devMode) {
+        connectionComboBox->addItem("Python Script");
+    }
     connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     // connect for hide
@@ -1352,9 +1358,125 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
         }
 
+        if (currConn->type == Python) {
+
+            // we have a python script to generate the connections
+            // get a better pointer to the connection
+            pythonscript_connection * currPyConn = (pythonscript_connection *) currConn;
+
+            // somewhere to add the script
+            QTextEdit * scriptEdit = new QTextEdit;
+            scriptEdit->setAcceptRichText(false);
+
+            // add the script we have in
+            scriptEdit->setText(currPyConn->scriptText);
+
+            // this is a temporary measure for convenience - it is not how we will do things when this is complete
+            connect(scriptEdit, SIGNAL(textChanged()), currPyConn, SLOT(configureFromTextEdit()));
+            // add the delete signal
+            connect(this, SIGNAL(deleteProperties()), scriptEdit, SLOT(deleteLater()));
+
+            // add the text edit to the main layout
+            panelLayout->insertWidget(panelLayout->count() -2, scriptEdit, 2);
+
+            // create the grid layout for the script parameters
+            QGridLayout * grid = new QGridLayout;
+            panelLayout->insertLayout(panelLayout->count() -2, grid, 2);
+            // add the delete signal
+            connect(this, SIGNAL(deleteProperties()), grid, SLOT(deleteLater()));
+
+            int maxCols = 1;
+
+            // first add the items that have locations
+            for (int i = 0; i < currPyConn->parNames.size(); ++i) {
+                // if we have a position
+                if (currPyConn->parPos[i].x() != -1) {
+                    if (grid->itemAtPosition(currPyConn->parPos[i].x(), currPyConn->parPos[i].y())) {
+                        // grid slot is taken! Get rid of Pos
+                        currPyConn->parPos[i] = QPoint(-1,-1);
+                    } else {
+                        // grid slot is free, so add the par
+                        QHBoxLayout * parBox = new QHBoxLayout;
+                        // add the delete signal
+                        connect(this, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
+                        QLabel * name = new QLabel;
+                        name->setText(currPyConn->parNames[i] + QString("="));
+                        // add the delete signal
+                        connect(this, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
+                        parBox->addWidget(name);
+                        QDoubleSpinBox * val = new QDoubleSpinBox;
+                        val->setMaximum(100000000.0);
+                        val->setMinimum(-100000000.0);
+                        val->setDecimals(5);
+                        val->setMinimumWidth(120);
+                        val->setValue(currPyConn->parValues[i]);
+                        val->setProperty("par_name", currPyConn->parNames[i]);
+                        val->setProperty("action", "changePythonScriptPar");
+                        val->setProperty("ptr", qVariantFromValue((void *) currConn));
+                        // add the delete signal
+                        connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                        // add the change signal
+                        connect(val, SIGNAL(valueChanged(double)), this->data, SLOT(updatePar()));
+                        parBox->addWidget(val);
+                        parBox->addStretch();
+                        // now add this to the grid
+                        grid->addLayout(parBox,currPyConn->parPos[i].x(), currPyConn->parPos[i].y(),1,1);
+                        // get our grid width
+                        if (currPyConn->parPos[i].y()>maxCols) {
+                            maxCols = currPyConn->parPos[i].y();
+                        }
+                    }
+                }
+            }
+            // then add the items that do not have locations
+            for (int i = 0; i < currPyConn->parNames.size(); ++i) {
+                // if we have a position
+                if (currPyConn->parPos[i].x() == -1) {
+                    bool inserted = false;
+                    int row = 0;
+                    // while we have not placed the par
+                    while (!inserted) {
+                        // for each column
+                        for (int col = 0; col < maxCols; ++col) {
+                            if (!grid->itemAtPosition(row, col)) {
+                                inserted = true;
+                                // grid slot is free, so add the par
+                                QHBoxLayout * parBox = new QHBoxLayout;
+                                // add the delete signal
+                                connect(this, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
+                                QLabel * name = new QLabel;
+                                name->setText(currPyConn->parNames[i] + QString("="));
+                                // add the delete signal
+                                connect(this, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
+                                parBox->addWidget(name);
+                                QDoubleSpinBox * val = new QDoubleSpinBox;
+                                val->setMaximum(100000000.0);
+                                val->setMinimum(-100000000.0);
+                                val->setDecimals(5);
+                                val->setMinimumWidth(120);
+                                val->setValue(currPyConn->parValues[i]);
+                                val->setProperty("par_name", currPyConn->parNames[i]);
+                                val->setProperty("action", "changePythonScriptPar");
+                                val->setProperty("ptr", qVariantFromValue((void *) currConn));
+                                // add the delete signal
+                                connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                                // add the change signal
+                                connect(val, SIGNAL(valueChanged(double)), this->data, SLOT(updatePar()));
+                                parBox->addWidget(val);
+                                parBox->addStretch();
+                                // now add this to the grid
+                                grid->addLayout(parBox,currPyConn->parPos[i].x(), currPyConn->parPos[i].y(),1,1);
+                            }
+                        }
+                        // increment the row
+                        ++row;
+                    }
+                }
+            }
+
+        }
+
         this->viewVZ->OpenGLWidget->setConnType(currConn->type);
-
-
 
     }
 

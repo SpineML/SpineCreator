@@ -236,4 +236,63 @@ signals:
 
 };
 
+class pythonscript_connection : public connection
+{
+        Q_OBJECT
+public:
+    pythonscript_connection();
+    ~pythonscript_connection();
+
+    void write_node_xml(QXmlStreamWriter &xmlOut);
+    void import_parameters_from_xml(QDomNode &);
+
+    float rotation;
+    QString errorLog;
+
+    population * src;
+    population * dst;
+    vector < conn > *conns;
+    QMutex * mutex;
+    bool isList();
+    bool selfConnections;
+    bool changed();
+    void setUnchanged(bool);
+    vector <conn> connections;
+
+    QString scriptText;
+    QStringList parNames;
+    QVector <float> parValues;
+    QVector < QPoint > parPos;
+
+    QString weightProp;
+    vector <float> weights;
+
+    QString pythonErrors;
+
+private:
+    void regenerateConnections();
+    csv_connection * explicitList;
+    bool isAList;
+    bool hasChanged;
+    int srcSize;
+    int dstSize;
+
+public slots:
+    void generate_connections();
+    void convertToList(bool);
+    /*!
+     * \brief configureFromScript
+     * Get a Python script as a string and parse it to set up the connection
+     * parameters. Is a slot so it can be triggered by events.
+     */
+    void configureFromScript(QString);
+
+    void configureFromTextEdit();
+
+signals:
+    void progress(int);
+    void connectionsDone();
+
+};
+
 #endif // CONNECTION_H

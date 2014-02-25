@@ -82,6 +82,11 @@ editSimulators::editSimulators(QWidget *parent) :
     ui->openGLDetailSpinBox->setValue(lod);
     connect(ui->openGLDetailSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setGLDetailLevel(int)));
 
+    // change dev stuff box
+    bool devMode = settings.value("dev_mode_on", "false").toBool();
+    ui->dev_mode_check->setChecked(devMode);
+    connect(ui->dev_mode_check, SIGNAL(toggled(bool)), this, SLOT(setDevMode(bool)));
+
     // TESTING:
     //connect(ui->test, SIGNAL(clicked()), this, SLOT(testFunc()));
 
@@ -102,6 +107,12 @@ void editSimulators::saveAsBinaryToggled(bool toggle) {
 void editSimulators::setGLDetailLevel(int value) {
     QSettings settings;
     settings.setValue("glOptions/detail", value);
+
+}
+
+void editSimulators::setDevMode(bool toggle) {
+    QSettings settings;
+    settings.setValue("dev_mode_on", toggle);
 
 }
 

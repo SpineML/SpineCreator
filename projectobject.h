@@ -38,6 +38,20 @@ public:
     // errors
     void printIssues(QString);
 
+    // general helpers
+    bool isChanged(rootData *);
+    bool isValidPointer(systemObject *);
+    bool isValidPointer(NineMLComponentData *);
+    bool isValidPointer(NineMLComponent *);
+    QAction * action(int);
+    /*!
+     * \brief getComponentDataFromName
+     * \param name
+     * \return
+     * Look up a ComponentData by its name - this is used to reconnect pointers after a project is loaded in
+     */
+    NineMLComponentData* getComponentDataFromName(QString name);
+
     // info
     QString name;
     QString filePath;
@@ -62,13 +76,6 @@ public:
     // features
     versionControl version;
     QUndoStack * undoStack;
-
-    // general helpers
-    bool isChanged(rootData *);
-    bool isValidPointer(systemObject *);
-    bool isValidPointer(NineMLComponentData *);
-    bool isValidPointer(NineMLComponent *);
-    QAction * action(int);
 
 private:
 

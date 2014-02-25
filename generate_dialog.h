@@ -39,6 +39,7 @@ class generate_dialog : public QDialog
 public:
     explicit generate_dialog(distanceBased_connection * currConn, population *src, population *dst, vector<conn> &conns, QMutex * mutex, QWidget *parent = 0);
     explicit generate_dialog(kernel_connection * currConn, population *src, population *dst, vector<conn> &conns, QMutex * mutex, QWidget *parent = 0);
+    explicit generate_dialog(pythonscript_connection * currConn, population *src, population *dst, vector<conn> &conns, QMutex * mutex, QWidget *parent = 0);
     ~generate_dialog();
     
 private:

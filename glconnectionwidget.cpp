@@ -395,7 +395,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             dstZ = dst->loc3.z;
         }
 
-        if (conn->type == CSV || conn->type == DistanceBased || conn->type == Kernel) {
+        if (conn->type == CSV || conn->type == DistanceBased || conn->type == Kernel || conn->type == Python) {
 
             if (!src->isVisualised && !dst->isVisualised) {
                 glEnable(GL_DEPTH_TEST);
@@ -1229,6 +1229,23 @@ void glConnectionWidget::parsChangedProjections() {
             }
         }
 
+        // regrab data for kernel based
+        if (conn->type == Python) {
+
+            // refresh the connections
+            if (((pythonscript_connection *) conn)->changed()) {
+                connections[i].clear();
+                // launch version increment dialog box:
+                generate_dialog generate(((pythonscript_connection *) conn), ((pythonscript_connection *) conn)->src, ((pythonscript_connection *) conn)->dst, connections[i], connGenerationMutex, this);
+                bool retVal = generate.exec();
+                if (!retVal) {
+                    return;
+                }
+                ((pythonscript_connection *) conn)->connections = connections[i];
+                ((pythonscript_connection *) conn)->setUnchanged(true);
+            }
+        }
+
 
     }
 
@@ -1329,6 +1346,35 @@ void glConnectionWidget::parsChangedProjection() {
             }
 
         }
+        // regrab data for python script based
+        if (conn->type == Python) {
+
+            // update the projection:
+
+
+            // find selected object
+            for (uint i = 0; i < this->selectedConns.size(); ++i) {
+
+                if (selectedObject == selectedConns[i]) {
+
+                    // refresh the connections
+                    if (((pythonscript_connection *) conn)->changed()) {
+                        connections[i].clear();
+                        // launch version increment dialog box:
+                        generate_dialog generate(((pythonscript_connection *) conn), src, dst, connections[i], connGenerationMutex, this);
+                        bool retVal = generate.exec();
+                        if (!retVal) {
+                            return;
+                        }
+                        ((pythonscript_connection *) conn)->connections = connections[i];
+                        ((pythonscript_connection *) conn)->setUnchanged(true);
+                    }
+                }
+
+            }
+
+        }
+
 
         // redraw:
         repaint();
@@ -1560,6 +1606,20 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                     ((distanceBased_connection *) currIn->connectionType)->connections = connections.back();
                                     ((distanceBased_connection *) currIn->connectionType)->setUnchanged(true);
                                 }
+                            } else if (currIn->connectionType->type == Python) {
+                                if (((pythonscript_connection *) currIn->connectionType)->connections.size() > 0 && !((pythonscript_connection *) currIn->connectionType)->changed()) {
+                                    connections.back() = ((pythonscript_connection *) currIn->connectionType)->connections;
+                                } else {
+                                    // generate
+                                    // launch version increment dialog box:
+                                    generate_dialog generate(((pythonscript_connection *) currIn->connectionType), (population *) currIn->source, (population *) currIn->destination, connections.back(), connGenerationMutex, this);
+                                    bool retVal = generate.exec();
+                                    if (!retVal) {
+                                        return;
+                                    }
+                                    ((pythonscript_connection *) currIn->connectionType)->connections = connections.back();
+                                    ((pythonscript_connection *) currIn->connectionType)->setUnchanged(true);
+                                }
                             }
 
                         }
@@ -1629,6 +1689,20 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                 }
                                 ((distanceBased_connection *) currTarg->connectionType)->connections = connections.back();
                                 ((distanceBased_connection *) currTarg->connectionType)->setUnchanged(true);
+                            }
+                        } else if (currTarg->connectionType->type == Python) {
+                            if (((pythonscript_connection *) currTarg->connectionType)->connections.size() > 0 && !((pythonscript_connection *) currTarg->connectionType)->changed()) {
+                                connections.back() = ((distanceBased_connection *) currTarg->connectionType)->connections;
+                            } else {
+                                // generate
+                                // launch version increment dialog box:
+                                generate_dialog generate(((pythonscript_connection *) currTarg->connectionType), currTarg->proj->source, currTarg->proj->destination, connections.back(), connGenerationMutex, this);
+                                bool retVal = generate.exec();
+                                if (!retVal) {
+                                    return;
+                                }
+                                ((pythonscript_connection *) currTarg->connectionType)->connections = connections.back();
+                                ((pythonscript_connection *) currTarg->connectionType)->setUnchanged(true);
                             }
                         }
 

@@ -55,12 +55,16 @@ class ParameterData;
 class fixedProb_connection;
 class distanceBased_connection;
 class kernel_connection;
+class pythonscript_connection;
 class versionControl;
 class projectObject;
 
 // include headers:
 
-// library
+// Python API
+#include "Python.h"
+
+// C++ Library
 #include <vector>
 #include <iostream>
 #include <sstream>
@@ -140,6 +144,7 @@ enum connectionType {
     CSV,
     DistanceBased,
     Kernel,
+    Python,
     CSA,
     none
 

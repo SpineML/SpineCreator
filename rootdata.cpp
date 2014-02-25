@@ -1418,11 +1418,20 @@ void rootData::updatePar()
     if (action == "changeConnKernel") {
         // Update the parameter value
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
-        int kernel_value = ((QDoubleSpinBox *) sender())->value();
+        float kernel_value = ((QDoubleSpinBox *) sender())->value();
         int i = sender()->property("i").toInt();
         int j = sender()->property("j").toInt();
         // only add undo if value has changed
         conn->setKernel(i,j,kernel_value);
+    }
+
+    if (action == "changePythonScriptPar") {
+        // Update the parameter value
+        pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();
+        float par_value = ((QDoubleSpinBox *) sender())->value();
+        QString par_name = ((QDoubleSpinBox *) sender())->property("par_name").toString();
+        // only add undo if value has changed
+        currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
     }
 }
 

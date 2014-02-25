@@ -1514,6 +1514,36 @@ bool projectObject::isValidPointer(NineMLComponent * ptr) {
     return false;
 }
 
+NineMLComponentData * projectObject::getComponentDataFromName(QString name)
+{
+    // find the ComponentData requested
+    for (uint i = 0; i < this->network.size(); ++i) {
+        if (this->network[i]->neuronType->getXMLName() == name) {
+            // found - return the ComponentData
+            return this->network[i]->neuronType;
+        }
+        for (uint j = 0; j < this->network[i]->projections.size(); ++j) {
+            // current projection
+            projection * proj = this->network[i]->projections[j];
+            for (uint k = 0; k < proj->synapses.size(); ++k) {
+                // current synapse
+                synapse * syn = proj->synapses[k];
+                if (syn->weightUpdateType->getXMLName() == name) {
+                    // found - return the ComponentData
+                    return syn->weightUpdateType;
+                }
+                if (syn->postsynapseType->getXMLName() == name) {
+                    // found - return the ComponentData
+                    return syn->postsynapseType;
+                }
+            }
+        }
+    }
+
+    // not found
+    return NULL;
+}
+
 QAction * projectObject::action(int i) {
 
     menuAction->setProperty("number", QString::number(i));
