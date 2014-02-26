@@ -134,6 +134,8 @@ public slots:
     void togglePlay();
     void playBackTimeout();
 
+    void disableButton();
+
 };
 
 #endif // VIEW2LAYOUTEDITHANDLER_H

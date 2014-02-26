@@ -1176,8 +1176,8 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new distanceBased_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
-                ((kernel_connection *) newSynapse->connectionType)->src = (population *) this->source;
-                ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
+                ((distanceBased_connection *) newSynapse->connectionType)->src = (population *) this->source;
+                ((distanceBased_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
             }
             else if (n.toElement().tagName() == "KernelConnection") {
                 delete newSynapse->connectionType;
@@ -1190,8 +1190,8 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new pythonscript_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
-                ((kernel_connection *) newSynapse->connectionType)->src = (population *) this->source;
-                ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
+                ((pythonscript_connection *) newSynapse->connectionType)->src = (population *) this->source;
+                ((pythonscript_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
             }
 
             else if (n.toElement().tagName() == "LL:PostSynapse") {

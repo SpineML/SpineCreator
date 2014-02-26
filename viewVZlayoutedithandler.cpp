@@ -1370,14 +1370,84 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
             // add the script we have in
             scriptEdit->setText(currPyConn->scriptText);
+            // set height
+            scriptEdit->setMinimumHeight(500);
 
             // this is a temporary measure for convenience - it is not how we will do things when this is complete
-            connect(scriptEdit, SIGNAL(textChanged()), currPyConn, SLOT(configureFromTextEdit()));
+            //connect(scriptEdit, SIGNAL(textChanged()), currPyConn, SLOT(configureFromTextEdit()));
             // add the delete signal
             connect(this, SIGNAL(deleteProperties()), scriptEdit, SLOT(deleteLater()));
 
-            // add the text edit to the main layout
-            panelLayout->insertWidget(panelLayout->count() -2, scriptEdit, 2);
+            QHBoxLayout * buttons = new QHBoxLayout;
+            // add the delete signal
+            connect(this, SIGNAL(deleteProperties()), buttons, SLOT(deleteLater()));
+            panelLayout->insertLayout(panelLayout->count() -2, buttons, 2);
+
+            // add 'Validate Script' button
+            QPushButton * val = new QPushButton("Validate Script");
+            // add a reference to the TextEdit
+            val->setProperty("textEdit", qVariantFromValue((void *) scriptEdit));
+            // connect up to the Connection object
+            connect(val, SIGNAL(clicked()), currPyConn, SLOT(configureFromTextEdit()));
+            // redraw to update parameters
+            connect(val, SIGNAL(clicked()), this, SLOT(redrawHeaders()));
+            // add the delete signal
+            connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+            // add to the HBoxLayout
+            buttons->addWidget(val);
+
+            // add a 'Generate connectivity' button
+            QPushButton * gen = new QPushButton("Generate");
+            // should we enable the button?
+            gen->setEnabled(currPyConn->scriptValidates);
+            // add a reference to the TextEdit
+            gen->setProperty("textEdit", qVariantFromValue((void *) scriptEdit));
+            // connect up to the Connection object
+            connect(gen, SIGNAL(clicked(bool)), currPyConn, SLOT(setUnchanged(bool)));
+            // redraw to update glview
+            connect(gen, SIGNAL(clicked()), this->viewVZ->OpenGLWidget, SLOT(parsChangedProjection()));
+            // add the delete signal
+            connect(this, SIGNAL(deleteProperties()), gen, SLOT(deleteLater()));
+            // add a connection so we can disable the button if the script changes
+            scriptEdit->setProperty("buttonToDisable", qVariantFromValue((void *) gen));
+            connect(scriptEdit, SIGNAL(textChanged()), this, SLOT(disableButton()));
+            // add to the HBoxLayout
+            buttons->addWidget(gen);
+
+            // if we have a weight produced the add a combobox (which is safe as it never deletes itself)
+            if (currPyConn->scriptValidates && currPyConn->hasWeight) {
+                QComboBox * weightTarget = new QComboBox;
+                // find the WeightUpdate for this Connection
+                QStringList list = currPyConn->getPropList();
+                list.push_front("-no weight set-");
+                // add the props to the combobox
+                weightTarget->addItems(list);
+                // now set the prop to the currently selected one
+                for (int i = 0; i < list.size();++i) {
+                    if (currPyConn->weightProp == list[i]) {
+                        // add one to the index as we have the -no weight set- index first
+                        weightTarget->setCurrentIndex(i+1);
+                    }
+                }
+                // add the delete signal
+                connect(this, SIGNAL(deleteProperties()), weightTarget, SLOT(deleteLater()));
+                // add the delete signal for when the script is changed
+                connect(scriptEdit, SIGNAL(textChanged()), weightTarget, SLOT(deleteLater()));
+                // connect up so we can change the par
+                weightTarget->setProperty("action", "changePythonScriptProp");
+                weightTarget->setProperty("ptr", qVariantFromValue((void *) currConn));
+                // add the change signal
+                connect(weightTarget, SIGNAL(currentIndexChanged(int)), this->data, SLOT(updatePar()));
+                // add to the HBoxLayout
+                buttons->addWidget(weightTarget);
+
+            }
+
+
+            // clean up the interface by adding an expanding spacer to the end of the line
+            buttons->addStretch();
+
+
 
             // create the grid layout for the script parameters
             QGridLayout * grid = new QGridLayout;
@@ -1473,6 +1543,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
                     }
                 }
             }
+            // add the text edit to the main layout
+            panelLayout->insertWidget(panelLayout->count() -2, scriptEdit, 2);
 
         }
 
@@ -1480,7 +1552,12 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
     }
 
+}
 
+void viewVZLayoutEditHandler::disableButton() {
+
+    QPushButton * button = (QPushButton *) sender()->property("buttonToDisable").value<void *>();
+    button->setEnabled(false);
 
 }
 

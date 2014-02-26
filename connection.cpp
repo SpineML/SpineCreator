@@ -1677,6 +1677,9 @@ pythonscript_connection::pythonscript_connection()
     selfConnections = false;
     rotation = 0;
     hasChanged = true;
+    this->scriptValidates = false;
+    this->hasWeight = false;
+    this->hasDelay = false;
 }
 
 pythonscript_connection::~pythonscript_connection()
@@ -1702,10 +1705,15 @@ void pythonscript_connection::setUnchanged(bool state) {
 void pythonscript_connection::configureFromScript(QString script) {
     // add the script to the class variable
     this->scriptText = script;
+    // store old pars
+    QStringList oldNames = this->parNames;
+    QVector <float> oldValues = this->parValues;
     // clear previous pars
     this->parNames.clear();
     this->parValues.clear();
     this->parPos.clear();
+    this->hasWeight = false;
+    this->hasDelay = false;
     // parse the script for parameter lines
     QStringList lines = script.split("\n");
     for (int i = 0; i < lines.size(); ++i) {
@@ -1732,16 +1740,37 @@ void pythonscript_connection::configureFromScript(QString script) {
             }
         }
     }
+    // place old values into new lists
+    for (int i = 0; i < this->parNames.size(); ++i) {
+        for (int j = 0; j < oldNames.size(); ++j) {
+            if (this->parNames[i] == oldNames[j]) {
+                this->parValues[i] = oldValues[j];
+            }
+        }
+    }
 }
 
 void pythonscript_connection::configureFromTextEdit() {
     // grab a pointer to the source and use it to get the plain text script.
-    QTextEdit * edit = (QTextEdit *) sender();
+    QTextEdit * edit = (QTextEdit *) sender()->property("textEdit").value<void *>();
     this->configureFromScript(edit->toPlainText());
+    // attempt to regenerate the connection in case we have an error
+    this->scriptValidates = false;
     this->regenerateConnections();
+    if (!this->scriptValidates) {
+        // failure
+        return;
+    }
+    // if we have lost the weight prop then clear any existing prop name...
+    if (!this->hasWeight) {
+        this->weightProp.clear();
+    }
 }
 
 void pythonscript_connection::regenerateConnections() {
+
+    this->setUnchanged(false);
+
     // generate connections:
     QMutex * connGenerationMutex = new QMutex();
 
@@ -1853,7 +1882,11 @@ void pythonscript_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             xmlOut.writeEmptyElement("BinaryFile");
             xmlOut.writeAttribute("file_name", export_filename);
             xmlOut.writeAttribute("num_connections", QString::number(float(connections.size())));
-            xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(0)));
+            if (!this->hasDelay) {
+                 xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(0)));
+            } else {
+                 xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(1)));
+            }
 
             // re-write the data
 
@@ -1870,16 +1903,72 @@ void pythonscript_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             for (uint i = 0; i < connections.size(); ++i) {
                 access.writeRawData((char*) &connections[i].src, sizeof(uint));
                 access.writeRawData((char*) &connections[i].dst, sizeof(uint));
+                if (this->hasDelay) {
+                    access.writeRawData((char*) &connections[i].metric, sizeof(float));
+                }
             }
 
         }
 
-        this->writeDelay(xmlOut);
+        if (!this->hasDelay) {
+            this->writeDelay(xmlOut);
+        }
 
         xmlOut.writeEndElement(); // ConnectionList
     }
 
 
+}
+
+ParameterData * pythonscript_connection::getPropPointer() {
+    for (uint i = 0; i < this->src->projections.size(); ++i) {
+        projection * proj = this->src->projections[i];
+        for (uint j = 0; j < proj->synapses.size(); ++j) {
+            synapse * syn = proj->synapses[j];
+            // if we have found the connection
+            if (syn->connectionType == this) {
+                // now we know which weight update we have to look at
+                for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
+                    if (syn->weightUpdateType->ParameterList[k]->name == this->weightProp) {
+                        // found the weight
+                        return syn->weightUpdateType->ParameterList[k];
+                    }
+                }
+                for (uint k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
+                    if (syn->weightUpdateType->StateVariableList[k]->name == this->weightProp) {
+                        // found the weight
+                        return syn->weightUpdateType->StateVariableList[k];
+                    }
+                }
+            }
+        }
+    }
+    // not found
+    return NULL;
+}
+
+QStringList pythonscript_connection::getPropList() {
+    QStringList list;
+    for (uint i = 0; i < this->src->projections.size(); ++i) {
+        projection * proj = this->src->projections[i];
+        for (uint j = 0; j < proj->synapses.size(); ++j) {
+            synapse * syn = proj->synapses[j];
+            // if we have found the connection
+            if (syn->connectionType == this) {
+                // now we know which weight update we have to look at
+                for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
+                    // found the weight
+                    list.push_back(syn->weightUpdateType->ParameterList[k]->name);
+                }
+                for (uint k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
+                    // found the weight
+                    list.push_back(syn->weightUpdateType->StateVariableList[k]->name);
+                }
+            }
+        }
+    }
+    // not found
+    return list;
 }
 
 void pythonscript_connection::import_parameters_from_xml(QDomNode &e) {
@@ -1952,10 +2041,8 @@ PyObject * vectorToList(QVector <float> * vect) {
 }
 
 /*!
- * \brief vectorsToList
- * \param vect1
- * \param vect2
- * \param vect3
+ * \brief vectorLocToList
+ * \param vect
  * \return
  * A simple function to take a vector of locations and pack them into a Python list of Python tuples
  * each containing the three values (x,y,z)
@@ -1964,13 +2051,9 @@ PyObject * vectorLocToList(vector <loc> * vect) {
     // create the new PyList
     PyObject * vectList = PyList_New(vect->size());
     for (uint i = 0; i < vect->size(); ++i) {
-        // create a tuple from the three vector values
-        PyObject * tuple = PyTuple_New(3);
-        PyTuple_SetItem(tuple, 0, PyFloat_FromDouble((double) (*vect)[i].x));
-        PyTuple_SetItem(tuple, 1, PyFloat_FromDouble((double) (*vect)[i].y));
-        PyTuple_SetItem(tuple, 2, PyFloat_FromDouble((double) (*vect)[i].z));
+        // create a tuple from the three vector values then
         // add the tuple to the list
-        PyList_SetItem(vectList, i, tuple);
+        PyList_SetItem(vectList, i, PyTuple_Pack(3,PyFloat_FromDouble((double) (*vect)[i].x), PyFloat_FromDouble((double) (*vect)[i].y), PyFloat_FromDouble((double) (*vect)[i].z)));
     }
     return vectList;
 }
@@ -2013,6 +2096,9 @@ outputUnPackaged extractOutput(PyObject * output) {
         return outUnPacked;
     }
     outUnPacked.connections.resize(PyList_Size(output));
+    if (outUnPacked.connections.size()>0) {
+        outUnPacked.connections[0].metric = NO_DELAY;
+    }
     outUnPacked.weights.resize(PyList_Size(output));
     for (uint i = 0; i < PyList_Size(output); ++i) {
         // get the element
@@ -2031,6 +2117,8 @@ outputUnPackaged extractOutput(PyObject * output) {
             // if we have a weight as well
             if (PyTuple_Size(element) > 3) {
                 outUnPacked.weights[i] = PyFloat_AsDouble(PyTuple_GetItem(element,3));
+            } else {
+                outUnPacked.weights.clear();
             }
         }
     }
@@ -2089,20 +2177,24 @@ void pythonscript_connection::generate_connections() {
 
     this->pythonErrors.clear();
 
+    // Set up the Python API
+    Py_SetProgramName((char *) qApp->applicationFilePath().toStdString().c_str());
+    Py_Initialize();
+
     // regenerate src and dst locations
     QString errorLog;
     src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         qDebug() << "no src locs";
-        this->moveToThread(QApplication::instance()->thread());
-        emit connectionsDone();
+        //this->moveToThread(QApplication::instance()->thread());
+        //emit connectionsDone();
         return;
     }
     dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         qDebug() << "no dst locs";
-        this->moveToThread(QApplication::instance()->thread());
-        emit connectionsDone();
+        //this->moveToThread(QApplication::instance()->thread());
+        //emit connectionsDone();
         return;
     }
 
@@ -2120,20 +2212,15 @@ void pythonscript_connection::generate_connections() {
     // convert the parameters into Python Objects and add them to the tuple
     for (int i = 0; i < this->parNames.size(); ++i) {
         PyTuple_SetItem(argsPy,i+2,PyFloat_FromDouble(parValues[i]));
-        qDebug() << "Adding" << parNames[i] << "=" << parValues[i];
     }
 
     // check the tuple is sound
     if (!argsPy) {
         qDebug() << "Bad args tuple";
-        this->moveToThread(QApplication::instance()->thread());
-        emit connectionsDone();
+        //this->moveToThread(QApplication::instance()->thread());
+        //emit connectionsDone();
         return;
     }
-
-    // Set up the Python API
-    Py_SetProgramName((char *) qApp->applicationFilePath().toStdString().c_str());
-    Py_Initialize();
 
     //Create a new module object
     PyObject *pymod = PyModule_New("mymod");
@@ -2147,8 +2234,8 @@ void pythonscript_connection::generate_connections() {
             pythonErrors = "Python Error: Script function is not named connectionFunc.";
         }
         Py_Finalize();
-        this->moveToThread(QApplication::instance()->thread());
-        emit connectionsDone();
+        //this->moveToThread(QApplication::instance()->thread());
+        //emit connectionsDone();
         return;
     }
 
@@ -2178,8 +2265,8 @@ void pythonscript_connection::generate_connections() {
             pythonErrors += QString("Error found on line:") + QString::number(errtraceObj->tb_lineno);
         }
         Py_Finalize();
-        this->moveToThread(QApplication::instance()->thread());
-        emit connectionsDone();
+        //this->moveToThread(QApplication::instance()->thread());
+        //emit connectionsDone();
         return;
     }
 
@@ -2194,10 +2281,27 @@ void pythonscript_connection::generate_connections() {
     // transfer the unpacked output to the local storage location for weights
     this->weights = unpacked.weights;
 
+    // configure bools to indicate what type of connection data is provided by the script
+    if (this->weights.size() == 0) {
+        this->hasWeight = false;
+    } else {
+        this->hasWeight = true;
+    }
+    if (this->connections.size() == 0) {
+        this->hasDelay = false;
+    } else if (this->connections[0].metric == NO_DELAY) {
+        this->hasDelay = false;
+    } else {
+        this->hasDelay = true;
+    }
+
     Py_Finalize();
 
-    this->moveToThread(QApplication::instance()->thread());
-    emit connectionsDone();
+    // if we get to the end then that's good enough
+    this->scriptValidates = true;
+
+    //this->moveToThread(QApplication::instance()->thread());
+    //emit connectionsDone();
 }
 
 void pythonscript_connection::convertToList(bool check) {

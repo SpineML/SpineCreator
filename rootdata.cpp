@@ -1433,6 +1433,14 @@ void rootData::updatePar()
         // only add undo if value has changed
         currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
     }
+
+    if (action == "changePythonScriptProp") {
+        // Update the property affected by the connection
+        pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();
+        QString par_name = ((QComboBox *) sender())->currentText();
+        // only add undo if value has changed
+        currProject->undoStack->push(new undoUpdatePythonConnectionScriptProp(this, conn, par_name));
+    }
 }
 
 void rootData::updatePar(int value)

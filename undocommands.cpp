@@ -987,7 +987,7 @@ void updateConnDelayEquation::redo()
     data->setTitle();
 }
 
-// ######## UPDATE CONN PYTHON SCRIPT PAR #################
+// ######## UPDATE CONN PYTHON SCRIPT PAR VALUE #################
 
 undoUpdatePythonConnectionScriptPar::undoUpdatePythonConnectionScriptPar(rootData * data, pythonscript_connection * ptr, float new_val, QString par_name, QUndoCommand *parent) :
     QUndoCommand(parent)
@@ -1032,11 +1032,37 @@ void undoUpdatePythonConnectionScriptPar::redo()
         }
     }
     if (index != -1) {
-        qDebug() << "YAY";
         ptr->parValues[index] = this->value;
-    } else {
-        qDebug() << "NOOOO!";
     }
+    firstRedo = false;
+    data->setTitle();
+}
+
+// ######## UPDATE CONN PYTHON SCRIPT PROP #################
+
+undoUpdatePythonConnectionScriptProp::undoUpdatePythonConnectionScriptProp(rootData * data, pythonscript_connection * ptr, QString par_name, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->par_name = par_name;
+    if (this->par_name == "-no weight set-") {
+        this->par_name = "";
+    }
+    this->oldProp = ptr->weightProp;
+    this->ptr = ptr;
+    this->data = data;
+    this->setText("set " + this->ptr->name + " weight property to " + par_name);
+    firstRedo = true;
+}
+
+void undoUpdatePythonConnectionScriptProp::undo()
+{
+    ptr->weightProp = oldProp;
+    data->setTitle();
+}
+
+void undoUpdatePythonConnectionScriptProp::redo()
+{
+    ptr->weightProp = par_name;
     firstRedo = false;
     data->setTitle();
 }

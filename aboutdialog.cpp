@@ -9,7 +9,6 @@ AboutDialog::AboutDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-
 }
 
 AboutDialog::~AboutDialog()

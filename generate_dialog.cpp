@@ -34,6 +34,8 @@ generate_dialog::generate_dialog(distanceBased_connection * currConn, population
 {
     ui->setupUi(this);
 
+    this->setWindowTitle("Generate connections using Distance");
+
     // generating connectivity
 
     this->currConn = currConn;
@@ -63,6 +65,8 @@ generate_dialog::generate_dialog(kernel_connection * currConn, population * src,
     ui(new Ui::generate_dialog)
 {
     ui->setupUi(this);
+
+    this->setWindowTitle("Generate connections using a Kernel");
 
     // generating connectivity
 
@@ -94,6 +98,8 @@ generate_dialog::generate_dialog(pythonscript_connection * currConn, population 
 {
     ui->setupUi(this);
 
+    this->setWindowTitle("Generate connections using Python");
+
     // generating connectivity
 
     this->currConn = currConn;
@@ -102,19 +108,52 @@ generate_dialog::generate_dialog(pythonscript_connection * currConn, population 
     currConn->conns = &conns;
     currConn->mutex = mutex;
 
-    workerThread = new QThread(this);
 
-    connect(workerThread, SIGNAL(started()), currConn, SLOT(generate_connections()));
+
+    // get rid of the dialog if we are successful
+    QTimer * timer = new QTimer;
+    timer->setSingleShot(true);
+    connect(timer, SIGNAL(timeout()), this, SLOT(doPython()));
+    timer->start(100);
+
+
+    //workerThread = new QThread(this);
+
+    //connect(workerThread, SIGNAL(started()), currConn, SLOT(generate_connections()));
     //connect(workerThread, SIGNAL(finished()), this, SLOT(moveFromThread()));
-    connect(currConn, SIGNAL(connectionsDone()), this, SLOT(moveFromThread()));
+    //connect(currConn, SIGNAL(connectionsDone()), this, SLOT(moveFromThread()));
 
-    connect(currConn, SIGNAL(progress(int)), ui->progressBar, SLOT(setValue(int)));
-    if (parent != NULL)
-        connect(currConn, SIGNAL(progress(int)), ((glConnectionWidget *)parent), SLOT(redraw()));
+    //connect(currConn, SIGNAL(progress(int)), ui->progressBar, SLOT(setValue(int)));
+    //if (parent != NULL)
+    //    connect(currConn, SIGNAL(progress(int)), ((glConnectionWidget *)parent), SLOT(redraw()));
 
-    currConn->moveToThread(workerThread);
+    //currConn->moveToThread(workerThread);
 
-    workerThread->start();
+    //workerThread->start();
+
+}
+
+void generate_dialog::doPython() {
+
+    ((pythonscript_connection *) currConn)->generate_connections();
+
+    if (!((pythonscript_connection *) currConn)->errorLog.isEmpty()) {
+        ui->errors->setText(((pythonscript_connection *) currConn)->errorLog);
+    } else if (!((pythonscript_connection *) currConn)->pythonErrors.isEmpty()) {
+        ui->errors->setText(((pythonscript_connection *) currConn)->pythonErrors);
+    } else {
+        // move the weights across
+        pythonscript_connection * currPyConn = (pythonscript_connection *) currConn;
+        ParameterData * par = currPyConn->getPropPointer();
+        if (par) {
+            par->currType = ExplicitList;
+            par->value = currPyConn->weights;
+            for (int i = 0; i < currPyConn->weights.size(); ++i) {
+                par->indices.push_back(i);
+            }
+        }
+        this->accept();
+    }
 
 }
 

@@ -116,6 +116,7 @@ private:
     int newLogTime;
     QTimer timer;
     bool orthoView;
+    bool repaintAllowed;
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
     QImage renderQImage(int w, int h);
 #endif
@@ -147,6 +148,7 @@ public slots:
     void updateLogDataTime(int index);
     void updateLogData();
     void toggleOrthoView(bool);
+    void allowRepaint();
 
 protected:
     void initializeGL();

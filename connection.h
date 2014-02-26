@@ -31,6 +31,8 @@
 #include "nineML_classes.h"
 #include "population.h"
 
+#define NO_DELAY -1 // used to determine if Python Scripts have delay data
+
 struct change {
     int row;
     int col;
@@ -256,7 +258,7 @@ public:
     bool isList();
     bool selfConnections;
     bool changed();
-    void setUnchanged(bool);
+
     vector <conn> connections;
 
     QString scriptText;
@@ -269,6 +271,13 @@ public:
 
     QString pythonErrors;
 
+    bool scriptValidates;
+    bool hasWeight;
+    bool hasDelay;
+
+    ParameterData *getPropPointer();
+    QStringList getPropList();
+
 private:
     void regenerateConnections();
     csv_connection * explicitList;
@@ -276,6 +285,7 @@ private:
     bool hasChanged;
     int srcSize;
     int dstSize;
+
 
 public slots:
     void generate_connections();
@@ -288,6 +298,8 @@ public slots:
     void configureFromScript(QString);
 
     void configureFromTextEdit();
+
+    void setUnchanged(bool);
 
 signals:
     void progress(int);

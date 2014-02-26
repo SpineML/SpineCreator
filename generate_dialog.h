@@ -49,6 +49,7 @@ private:
 
 public slots:
     void moveFromThread();
+    void doPython();
 };
 
 #endif // GENERATE_DIALOG_H

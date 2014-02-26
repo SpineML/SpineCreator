@@ -155,7 +155,7 @@ linux-g++-64{
 }
 macx{
     LIBS += -L/usr/local/lib/ -L/usr/local/ -L/usr/local/lib/ -lgvc -lgraph -lpython
-    INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
+    INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /usr/local/include/graphviz
     INCLUDEPATH += /usr/local/include
     INCLUDEPATH += /usr/include/graphviz

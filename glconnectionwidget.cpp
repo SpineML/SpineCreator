@@ -66,6 +66,8 @@ glConnectionWidget::glConnectionWidget(rootData * data, QWidget *parent) : QGLWi
     currentLogTime = 0;
 
     orthoView = false;
+
+    repaintAllowed = true;
 }
 
 void glConnectionWidget::initializeGL()
@@ -214,8 +216,23 @@ void glConnectionWidget::redraw(int)
 
 }
 
+void glConnectionWidget::allowRepaint() {
+    this->repaintAllowed = true;
+}
+
 void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 {
+
+    // avoid repainting too fast
+    if (this->repaintAllowed == false) {
+        return;
+    } else {
+        this->repaintAllowed = false;
+        QTimer * timer = new QTimer(this);
+        timer->setSingleShot(true);
+        connect(timer, SIGNAL(timeout()), this, SLOT(allowRepaint()));
+        timer->start(5);
+    }
 
     // don't try and repaint a hidden widget!
     if (!this->isVisible())
@@ -675,7 +692,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     }
                 }
             }
-            // redraw selected:
+            // redraw selected (over the top of everything else so no depth test):
+            glDisable(GL_DEPTH_TEST);
 
             for (uint i=0; i < redrawLocs.size(); i+=2) {
 
