@@ -1425,8 +1425,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
                 // now set the prop to the currently selected one
                 for (int i = 0; i < list.size();++i) {
                     if (currPyConn->weightProp == list[i]) {
-                        // add one to the index as we have the -no weight set- index first
-                        weightTarget->setCurrentIndex(i+1);
+                        // set index
+                        weightTarget->setCurrentIndex(i);
                     }
                 }
                 // add the delete signal

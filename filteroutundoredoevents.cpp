@@ -16,12 +16,12 @@ bool FilterOutUndoRedoEvents::eventFilter(QObject *, QEvent *event)
         case QEvent::Shortcut:
             {
         qDebug() << "moo";
-            QShortcutEvent * key = static_cast<QShortcutEvent *>(event);
-            if (key->key() == QKeySequence::Undo || key->key() == QKeySequence::Redo) {
+            //QShortcutEvent * key = static_cast<QShortcutEvent *>(event);
+            /*if (key->key() == QKeySequence::Undo || key->key() == QKeySequence::Redo) {
                 return true;
             } else {
                 return false;
-            }
+            }*/
     }
     case QEvent::ShortcutOverride:
         {

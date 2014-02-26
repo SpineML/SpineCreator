@@ -144,12 +144,14 @@ win32:debug{
     DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/debug/lib"
 }
 linux-g++{
-    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU
+    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU -lpython2.7
+    INCLUDEPATH += /usr/include/python2.7
     INCLUDEPATH += /usr/include/graphviz
     DEPENDPATH += /usr/lib/graphviz
 }
 linux-g++-64{
-    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU
+    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU -lpython2.7
+    INCLUDEPATH += /usr/include/python2.7
     INCLUDEPATH += /usr/include/graphviz
     DEPENDPATH += /usr/lib/graphviz
 }

@@ -2071,7 +2071,7 @@ QVector <float> listToVector(PyObject * list) {
         return vect;
     }
     vect.resize(PyList_Size(list));
-    for (uint i = 0; i < PyList_Size(list); ++i) {
+    for (int i = 0; i < PyList_Size(list); ++i) {
         vect[i] = PyFloat_AsDouble(PyList_GetItem(list, i));
     }
     return vect;
@@ -2100,7 +2100,7 @@ outputUnPackaged extractOutput(PyObject * output) {
         outUnPacked.connections[0].metric = NO_DELAY;
     }
     outUnPacked.weights.resize(PyList_Size(output));
-    for (uint i = 0; i < PyList_Size(output); ++i) {
+    for (int i = 0; i < PyList_Size(output); ++i) {
         // get the element
         PyObject * element = PyList_GetItem(output,i);
         // check it is a tuple
@@ -2171,6 +2171,11 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs) {
     return PyObject_GetAttrString(pymod, "connectionFunc");
 }
 
+/*!
+ * \brief pythonscript_connection::generate_connections
+ * function called to generate the connection into an explicit list -
+ * used to draw the connections in the 3D view or export for simulation
+ */
 void pythonscript_connection::generate_connections() {
 
     conns->clear();
