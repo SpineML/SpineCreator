@@ -299,6 +299,8 @@ public slots:
 
     void configureFromTextEdit();
 
+    void configureAfterLoad();
+
     void setUnchanged(bool);
 
 signals:

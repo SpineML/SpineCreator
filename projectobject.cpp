@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 #include "versioncontrol.h"
 #include "experiment.h"
+#include "systemmodel.h"
 
 projectObject::projectObject(QObject *parent) :
     QObject(parent)
@@ -1257,6 +1258,12 @@ void projectObject::deselect_project(rootData * data) {
 
 void projectObject::select_project(rootData * data) {
 
+    // store QTreeWidget state of previous Project
+    if (data->main->viewVZ.OpenGLWidget != NULL) {
+        data->main->viewVZhandler->saveTreeState();
+    }
+
+    // move project data into rootData
     copy_out_data(data);
 
     QSettings settings;
@@ -1274,6 +1281,17 @@ void projectObject::select_project(rootData * data) {
     // update GUI
     // experiment view
     data->main->viewELhandler->redraw();
+
+    // visualiser view
+    // configure TreeView
+    if (data->main->viewVZ.OpenGLWidget != NULL) {
+        if (!(data->main->viewVZ.sysModel == NULL)) {
+            delete data->main->viewVZ.sysModel;
+        }
+        data->main->viewVZ.sysModel = new systemmodel(data);
+        data->main->viewVZ.treeView->setModel(data->main->viewVZ.sysModel);
+        data->main->viewVZhandler->restoreTreeState();
+    }
 
     // update title on button bar
     data->setCaptionOut(this->name);

@@ -77,6 +77,9 @@ public:
     versionControl version;
     QUndoStack * undoStack;
 
+    // state of the visualizer QTreeWidget
+    QStringList treeWidgetState;
+
 private:
 
     // load helpers

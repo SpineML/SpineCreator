@@ -37,6 +37,10 @@ systemmodel::systemmodel(rootData * dataPtr, QObject *parent) :
     setupModelData(rootItem);
 }
 
+ QModelIndexList systemmodel::getPersistentIndexList()
+ {
+    return this->persistentIndexList();
+ }
 
  int systemmodel::rowCount(const QModelIndex & parent) const
  {

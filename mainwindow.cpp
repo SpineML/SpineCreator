@@ -1811,6 +1811,8 @@ void MainWindow::viewGVshow()
     this->viewEL.view->hide();
     if (this->viewVZ.OpenGLWidget != NULL) {
         this->viewVZ.view->hide();
+        // save the tree state
+        viewVZhandler->saveTreeState();
     }
     this->viewCL.frame->hide();
     if (viewCL.root != NULL) {
@@ -1851,6 +1853,8 @@ void MainWindow::viewELshow()
     this->ui->view1->hide();
     if (this->viewVZ.OpenGLWidget != NULL) {
         this->viewVZ.view->hide();
+        // save the tree state
+        viewVZhandler->saveTreeState();
     }
     this->viewCL.frame->hide();
     if (viewCL.root != NULL) {
@@ -1903,6 +1907,8 @@ void MainWindow::viewNLshow()
     this->viewEL.view->hide();
     if (this->viewVZ.OpenGLWidget != NULL) {
         this->viewVZ.view->hide();
+        // save the tree state
+        viewVZhandler->saveTreeState();
     }
     this->viewCL.frame->hide();
     if (viewCL.root != NULL) {
@@ -2009,6 +2015,9 @@ void MainWindow::viewVZshow()
     // titlebar
     updateTitle();
 
+    // put the tree state back
+    viewVZhandler->restoreTreeState();
+
     viewVZ.OpenGLWidget->sysSelectionChanged(QModelIndex(), QModelIndex());
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
@@ -2043,6 +2052,8 @@ void MainWindow::viewCLshow()
     this->viewEL.view->hide();
     if (this->viewVZ.OpenGLWidget != NULL) {
         this->viewVZ.view->hide();
+        // save the tree state
+        viewVZhandler->saveTreeState();
     }
 
     // menus

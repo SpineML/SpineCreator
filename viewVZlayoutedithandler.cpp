@@ -25,6 +25,8 @@
 #include "viewVZlayoutedithandler.h"
 #include "systemmodel.h"
 #include "experiment.h"
+#include "filteroutundoredoevents.h"
+#include "projectobject.h"
 
 viewVZLayoutEditHandler::viewVZLayoutEditHandler(rootData * data, viewNLstruct * viewNL, viewVZstruct * viewVZ, QObject *parent) :
     QObject(parent)
@@ -92,6 +94,61 @@ void viewVZLayoutEditHandler::deselectAll() {
     setAllSelectState(false);
 }
 
+/*!
+ * \brief viewVZLayoutEditHandler::saveTreeState
+ * Save the expanded state of the QTreeWidget
+ */
+void viewVZLayoutEditHandler::saveTreeState(void)
+{
+    QStringList List;
+
+    // prepare list
+    // PS: getPersistentIndexList() function is a simple `return this->persistentIndexList()` from TreeModel model class
+    foreach (QModelIndex index, this->viewVZ->sysModel->getPersistentIndexList())
+    {
+        if (this->viewVZ->treeView->isExpanded(index))
+        {
+            List << index.data(Qt::DisplayRole).toString();
+        }
+    }
+
+    // save list
+    this->data->currProject->treeWidgetState = List;
+}
+
+/*!
+ * \brief viewVZLayoutEditHandler::restoreTreeState
+ * Restore the expanded state of the QTreeWidget
+ */
+void viewVZLayoutEditHandler::restoreTreeState(void)
+{
+    QStringList List = this->data->currProject->treeWidgetState;
+
+    foreach (QString item, List)
+    {
+        // search `item` text in model
+        QModelIndexList Items = this->viewVZ->sysModel->match(this->viewVZ->sysModel->index(0, 0), Qt::DisplayRole, QVariant::fromValue(item));
+        if (!Items.isEmpty())
+        {
+            foreach (QModelIndex index, Items) {
+                // first level in QTreeWidget
+                this->viewVZ->treeView->setExpanded(index, true);
+                // now the second level (which is all we need)
+                foreach (QString item2, List)
+                {
+                    // search `item` text in model
+                    QModelIndexList Items2 = this->viewVZ->sysModel->match(this->viewVZ->sysModel->index(0, 0, index), Qt::DisplayRole, QVariant::fromValue(item2));
+                    if (!Items2.isEmpty())
+                    {
+                        // Second level of QTreeWidget
+                        this->viewVZ->treeView->setExpanded(Items2.first(), true);
+                    }
+                }
+            }
+        }
+    }
+}
+
 void viewVZLayoutEditHandler::setAllSelectState(bool selectState) {
 
     for (uint i = 0; i < data->populations.size(); ++i) {
@@ -146,7 +203,8 @@ void viewVZLayoutEditHandler::initGlobal() {
     viewVZ->treeView = new QTreeView;
     viewVZ->treeView->setMaximumHeight(300);
     viewVZ->treeView->setMinimumHeight(300);
-    viewVZ->treeView->setAnimated(true);
+    // animation looks ugly on OSX
+    viewVZ->treeView->setAnimated(false);
 
     // connect for hide
     connect(this, SIGNAL(hideTree()), viewVZ->treeView, SLOT(hide()));
@@ -284,6 +342,8 @@ void viewVZLayoutEditHandler::initPopulation() {
     sizeSpin = new QSpinBox;
     sizeSpin->setRange(1, 2000000);
     sizeSpin->setSingleStep(1);
+    sizeSpin->setFocusPolicy(Qt::StrongFocus);
+    sizeSpin->installEventFilter(new FilterOutUndoRedoEvents);
     tempBox->addWidget(sizeSpin);
 
     // connect for hide
@@ -319,6 +379,8 @@ void viewVZLayoutEditHandler::initPopulation() {
     xSpin->setRange(-10000, 10000);
     xSpin->setSingleStep(1);
     xSpin->setProperty("type", 0);
+    xSpin->setFocusPolicy(Qt::StrongFocus);
+    xSpin->installEventFilter(new FilterOutUndoRedoEvents);
     tempBox->addWidget(xSpin);
 
     // connect for hide
@@ -338,6 +400,8 @@ void viewVZLayoutEditHandler::initPopulation() {
     ySpin->setRange(-10000, 10000);
     ySpin->setSingleStep(1);
     ySpin->setProperty("type", 1);
+    ySpin->setFocusPolicy(Qt::StrongFocus);
+    ySpin->installEventFilter(new FilterOutUndoRedoEvents);
     tempBox->addWidget(ySpin);
 
     // connect for hide
@@ -357,6 +421,8 @@ void viewVZLayoutEditHandler::initPopulation() {
     zSpin->setRange(-10000, 10000);
     zSpin->setSingleStep(1);
     zSpin->setProperty("type", 2);
+    zSpin->setFocusPolicy(Qt::StrongFocus);
+    zSpin->installEventFilter(new FilterOutUndoRedoEvents);
     tempBox->addWidget(zSpin);
 
     // connect for hide
@@ -413,6 +479,8 @@ void viewVZLayoutEditHandler::initPopulation() {
     minDist->setRange(0, 10000);
     minDist->setSingleStep(1);
     minDist->setProperty("type", 0);
+    minDist->setFocusPolicy(Qt::StrongFocus);
+    minDist->installEventFilter(new FilterOutUndoRedoEvents);
     extraBox->addWidget(minDist);
     connect(minDist, SIGNAL(editingFinished()), this->data, SLOT (updateLayoutPar()));
     connect(minDist, SIGNAL(editingFinished()), this->viewVZ->OpenGLWidget, SLOT (redraw()));
@@ -434,6 +502,8 @@ void viewVZLayoutEditHandler::initPopulation() {
     seed->setRange(0, 10000);
     seed->setSingleStep(1);
     seed->setProperty("type", 1);
+    seed->setFocusPolicy(Qt::StrongFocus);
+    seed->installEventFilter(new FilterOutUndoRedoEvents);
     extraBox->addWidget(seed);
     connect(seed, SIGNAL(editingFinished()), this->data, SLOT (updateLayoutPar()));
     connect(seed, SIGNAL(editingFinished()), this->viewVZ->OpenGLWidget, SLOT (redraw()));
@@ -480,6 +550,8 @@ void viewVZLayoutEditHandler::initConnection() {
     kernelComboBox->setProperty("conn", "true");
     kernelComboBox->setToolTip("select kernel size");
     kernelComboBox->setProperty("action","changeConnKerSize");
+    kernelComboBox->setFocusPolicy(Qt::StrongFocus);
+    kernelComboBox->installEventFilter(new FilterOutUndoRedoEvents);
     for (uint i = 0; i < 5; ++i) {
         qint32 ksize = i *2 + 3;
         QString kstring = QString::number(ksize) + " x " + QString::number(ksize);
@@ -522,6 +594,8 @@ QComboBox* viewVZLayoutEditHandler::addDropBox(QVBoxLayout * layout, QString nam
         connect(this, SIGNAL(showConnection()), box->itemAt(0)->widget(), SLOT(show()));
     }
     QComboBox *select = new QComboBox();
+    select->setFocusPolicy(Qt::StrongFocus);
+    select->installEventFilter(new FilterOutUndoRedoEvents);
     select->setProperty("type", type);
     box->addWidget(select);
     if (type == "layout") {
@@ -1074,6 +1148,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
                     parSpin->setDecimals(4);
                     parSpin->setValue(value);
                     parSpin->setSuffix(" ");
+                    parSpin->setFocusPolicy(Qt::StrongFocus);
+                    parSpin->installEventFilter(new FilterOutUndoRedoEvents);
 
 
 
@@ -1159,6 +1235,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
             index->setRange(0, 10000000);
             index->setMaximumWidth(60);
             index->setProperty("type", "index");
+            index->setFocusPolicy(Qt::StrongFocus);
+            index->installEventFilter(new FilterOutUndoRedoEvents);
             connect(index, SIGNAL(valueChanged(int)), viewVZ->OpenGLWidget, SLOT (selectedNrnChanged(int)));
             connect(this, SIGNAL(deleteProperties()), index, SLOT(deleteLater()));
             hlay->addWidget(index);
@@ -1172,6 +1250,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
             from->setCurrentIndex(0);
             from->setMaximumWidth(200);
             from->setProperty("type", "from");
+            from->setFocusPolicy(Qt::StrongFocus);
+            from->installEventFilter(new FilterOutUndoRedoEvents);
             connect(from, SIGNAL(currentIndexChanged(int)), viewVZ->OpenGLWidget, SLOT (selectedNrnChanged(int)));
             connect(this, SIGNAL(deleteProperties()), from, SLOT(deleteLater()));
             hlay->addWidget(from);
@@ -1198,6 +1278,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
             pSpin->setToolTip("connection probability");
             pSpin->setProperty("ptr", qVariantFromValue((void *) currConn));
             pSpin->setProperty("action","changeConnProb");
+            pSpin->setFocusPolicy(Qt::StrongFocus);
+            pSpin->installEventFilter(new FilterOutUndoRedoEvents);
             connect(pSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
             connect(pSpin, SIGNAL(editingFinished()), viewVZ->OpenGLWidget, SLOT (parsChangedProjection()));
             connect(this, SIGNAL(deleteProperties()), pSpin, SLOT(deleteLater()));
@@ -1293,6 +1375,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
             scaleWidget->setValue(((kernel_connection *) currConn)->kernel_scale);
             scaleWidget->setProperty("ptr", qVariantFromValue((void *) currConn));
             scaleWidget->setProperty("action","changeConnKerScale");
+            scaleWidget->setFocusPolicy(Qt::StrongFocus);
+            scaleWidget->installEventFilter(new FilterOutUndoRedoEvents);
             connect(scaleWidget, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             //
 
@@ -1322,6 +1406,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
                     kernel->setMaximum(1.0);
                     kernel->setProperty("i",i);
                     kernel->setProperty("j",j);
+                    kernel->setFocusPolicy(Qt::StrongFocus);
+                    kernel->installEventFilter(new FilterOutUndoRedoEvents);
                     kernel->setProperty("ptr", qVariantFromValue((void *) currConn));
                     kernel->setProperty("action","changeConnKernel");
                     kernel->setValue(((kernel_connection *) currConn)->kernel[i][j]);
@@ -1417,6 +1503,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
             // if we have a weight produced the add a combobox (which is safe as it never deletes itself)
             if (currPyConn->scriptValidates && currPyConn->hasWeight) {
                 QComboBox * weightTarget = new QComboBox;
+                weightTarget->setFocusPolicy(Qt::StrongFocus);
+                weightTarget->installEventFilter(new FilterOutUndoRedoEvents);
                 // find the WeightUpdate for this Connection
                 QStringList list = currPyConn->getPropList();
                 list.push_front("-no weight set-");
@@ -1483,6 +1571,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
                         val->setProperty("par_name", currPyConn->parNames[i]);
                         val->setProperty("action", "changePythonScriptPar");
                         val->setProperty("ptr", qVariantFromValue((void *) currConn));
+                        val->setFocusPolicy(Qt::StrongFocus);
+                        val->installEventFilter(new FilterOutUndoRedoEvents);
                         // add the delete signal
                         connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
                         // add the change signal
@@ -1528,6 +1618,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
                                 val->setProperty("par_name", currPyConn->parNames[i]);
                                 val->setProperty("action", "changePythonScriptPar");
                                 val->setProperty("ptr", qVariantFromValue((void *) currConn));
+                                val->setFocusPolicy(Qt::StrongFocus);
+                                val->installEventFilter(new FilterOutUndoRedoEvents);
                                 // add the delete signal
                                 connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
                                 // add the change signal

@@ -179,6 +179,8 @@ void rootLayout::initPopulationHeader(rootData * data) {
     tempBox->addWidget(sizeLabel);
     tempBox->addWidget(SSsizeLabel);
     QSpinBox *sizeSpin = new QSpinBox;
+    sizeSpin->setFocusPolicy(Qt::StrongFocus);
+    sizeSpin->installEventFilter(new FilterOutUndoRedoEvents);
     sizeSpin->setRange(1, 2000000);
     sizeSpin->setSingleStep(1);
     sizeSpin->setValue(0);
@@ -844,6 +846,11 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
     connectionComboBox->addItem("Explicit List");
     connectionComboBox->addItem("Distance Based Probability");
     connectionComboBox->addItem("Kernel");
+    QSettings settings;
+    bool devMode = settings.value("dev_mode_on", "false").toBool();
+    if (devMode) {
+        connectionComboBox->addItem("Python Script");
+    }
     connectionComboBox->setCurrentIndex(proj->synapses[proj->currTarg]->connectionType->type);
     connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
@@ -965,6 +972,7 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
             connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
             break;
         case Kernel:
+        case Python:
             varLayout->addRow("", new QLabel("Configure in visualiser"));
             // add to delete props
             //connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
@@ -987,8 +995,15 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
             break;
         case DistanceBased:
             // add delay box:
-            if (((distanceBased_connection *)in->connectionType)->delayEquation == "")
+            if (((distanceBased_connection *)in->connectionType)->delayEquation == "") {
                 drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", NULL, in->connectionType);
+            }
+            break;
+        case Python:
+            // add delay box:
+            if (!((pythonscript_connection *)in->connectionType)->hasDelay) {
+                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", NULL, in->connectionType);
+            }
             break;
         case none:
             break;
@@ -1309,6 +1324,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                         connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
                         break;
                     case Kernel:
+                    case Python:
                         varLayout->addRow("", new QLabel("Configure in visualiser"));
                         //connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
                         connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
@@ -1574,6 +1590,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         parSpin->setProperty("action","changeVal");
         connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
         parSpin->installEventFilter(new FilterOutUndoRedoEvents);
+        parSpin->setFocusPolicy(Qt::StrongFocus);
 
         buttons->addWidget(parSpin);
 
@@ -1654,6 +1671,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             parSpin->installEventFilter(new FilterOutUndoRedoEvents);
+            parSpin->setFocusPolicy(Qt::StrongFocus);
             buttons->addWidget(parSpin);
 
             buttons->addStretch();
@@ -1671,6 +1689,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
             parSpin->installEventFilter(new FilterOutUndoRedoEvents);
+            parSpin->setFocusPolicy(Qt::StrongFocus);
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);}
@@ -1695,6 +1714,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
             parSpin->installEventFilter(new FilterOutUndoRedoEvents);
+            parSpin->setFocusPolicy(Qt::StrongFocus);
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);
@@ -1715,6 +1735,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
             parSpin->setProperty("action","changeVal");
             parSpin->installEventFilter(new FilterOutUndoRedoEvents);
+            parSpin->setFocusPolicy(Qt::StrongFocus);
             connect(parSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
             connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
             buttons->addWidget(parSpin);}
@@ -1735,6 +1756,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         seedSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
         seedSpin->setProperty("action","changeVal");
         seedSpin->installEventFilter(new FilterOutUndoRedoEvents);
+        seedSpin->setFocusPolicy(Qt::StrongFocus);
         connect(seedSpin, SIGNAL(valueChanged(int)), data, SLOT (updatePar()));
         connect(this, SIGNAL(deleteProperties()), seedSpin, SLOT(deleteLater()));
         buttons->addWidget(seedSpin);

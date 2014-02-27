@@ -56,6 +56,9 @@ public:
     QHBoxLayout * drawRegime(RegimeSpace * srcRegime);
     void clearAll();
 
+    // TreeWidget state saving/loading
+    void saveTreeState(void);
+    void restoreTreeState(void);
 
 private:
     QComboBox * addDropBox(QVBoxLayout *layout, QString name, QString type);
@@ -87,6 +90,7 @@ private:
 
     // kernel
     QComboBox * kernelComboBox;
+
 
 signals:
     void hideAll();

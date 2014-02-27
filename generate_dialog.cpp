@@ -148,7 +148,7 @@ void generate_dialog::doPython() {
         if (par) {
             par->currType = ExplicitList;
             par->value = currPyConn->weights;
-            for (int i = 0; i < currPyConn->weights.size(); ++i) {
+            for (uint i = 0; i < currPyConn->weights.size(); ++i) {
                 par->indices.push_back(i);
             }
         }

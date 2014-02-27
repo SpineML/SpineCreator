@@ -1767,6 +1767,26 @@ void pythonscript_connection::configureFromTextEdit() {
     }
 }
 
+/*!
+ * \brief pythonscript_connection::configureAfterLoad
+ * Configure the Python Script Connection after loading the file
+ */
+void pythonscript_connection::configureAfterLoad() {
+    this->configureFromScript(this->scriptText);
+    // attempt to regenerate the connection in case we have an error
+    this->scriptValidates = false;
+    this->regenerateConnections();
+    if (!this->scriptValidates) {
+        // failure
+        return;
+    }
+    // if we have lost the weight prop then clear any existing prop name...
+    if (!this->hasWeight) {
+        this->weightProp.clear();
+    }
+}
+
+
 void pythonscript_connection::regenerateConnections() {
 
     this->setUnchanged(false);

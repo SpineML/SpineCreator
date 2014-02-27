@@ -168,7 +168,12 @@ void glConnectionWidget::updateLogData() {
                 int val = ((logValues[j]-popLogs[i]->getMin())*255.0)/(popLogs[i]->getMax()-popLogs[i]->getMin());
                 //qDebug() << val << logValues[j] << popLogs[i]->getMin() << popLogs[i]->getMax();
                 //popColours[i][j] = QColor(val,val-256, val-512, 255);
-                popColours[i][j] = QColor(val,val, val, 255);
+                val *= 3;
+                int val1 = val > 255 ? 255 : val;
+                int val3 = val > 511 ? val - 512 : 0;
+                int val2 = val > 255 ? val - 256 : 0;
+                val2 = val2 > 255 ? val2 - 255 : val2;
+                popColours[i][j] = QColor(val1,val2, val3, 255);
             }
         }
     }
@@ -317,6 +322,14 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
         return;
     }
 
+    // draw with a level of detail dependant on the number on neurons we must draw
+    // sum neurons across all pops we'll draw
+    int totalNeurons = 0;
+    for (uint locNum = 0; locNum < selectedPops.size(); ++locNum) {
+        totalNeurons += selectedPops[locNum]->layoutType->locations.size();
+    }
+    int LoD = round(250.0f/float(totalNeurons)*pow(2,float(quality)));
+
     // normal drawing
     for (uint locNum = 0; locNum < selectedPops.size(); ++locNum) {
         population * currPop = selectedPops[locNum];
@@ -334,7 +347,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
 
             // draw with a level of detail dependant on the number on neurons we must draw
-            int LoD = round(250.0f/float(currPop->layoutType->locations.size())*pow(2,float(quality)));
             // put some bounds on
             if (LoD < 4) LoD = 4; if (LoD > 32) LoD = 32;
             if (imageSaveMode)

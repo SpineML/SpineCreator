@@ -1192,6 +1192,7 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 newSynapse->connectionType->import_parameters_from_xml(n);
                 ((pythonscript_connection *) newSynapse->connectionType)->src = (population *) this->source;
                 ((pythonscript_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
+                ((pythonscript_connection *) newSynapse->connectionType)->configureAfterLoad();
             }
 
             else if (n.toElement().tagName() == "LL:PostSynapse") {

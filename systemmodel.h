@@ -47,6 +47,7 @@ public:
     void emitDataChanged();
     QModelIndex parent( const QModelIndex & index ) const;
     QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+    QModelIndexList getPersistentIndexList();
 
 private:
     void setupModelData(TreeItem *parent);

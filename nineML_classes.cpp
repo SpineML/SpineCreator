@@ -552,6 +552,13 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     simpleName.replace( " ", "_" );
     xmlOut.writeAttribute("url", simpleName + ".xml");
 
+    // wriet the seed and minumum distance for the Layout
+    if (this->type == NineMLLayoutType) {
+        NineMLLayoutData * lay = (NineMLLayoutData *) this;
+        xmlOut.writeAttribute("seed", QString::number(lay->seed));
+        xmlOut.writeAttribute("minimum_distance", QString::number(lay->minimumDistance));
+    }
+
     if (this->type == NineMLComponentType) {
         for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
             if (((NineMLComponentData *) this)->inputs[i]->projInput == true) {
