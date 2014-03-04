@@ -166,13 +166,12 @@ void glConnectionWidget::updateLogData() {
         for (uint j = 0; j < logValues.size(); ++j) {
             if (logValues[j] < Q_INFINITY && (popLogs[i]->getMax()-popLogs[i]->getMin()) != 0) {
                 int val = ((logValues[j]-popLogs[i]->getMin())*255.0)/(popLogs[i]->getMax()-popLogs[i]->getMin());
-                //qDebug() << val << logValues[j] << popLogs[i]->getMin() << popLogs[i]->getMax();
-                //popColours[i][j] = QColor(val,val-256, val-512, 255);
                 val *= 3;
-                int val1 = val > 255 ? 255 : val;
-                int val3 = val > 511 ? val - 512 : 0;
-                int val2 = val > 255 ? val - 256 : 0;
-                val2 = val2 > 255 ? val2 - 255 : val2;
+                // complete the remap in just 4 ternarys
+                int val3 = val > 511 ? val-512 : 0;
+                int val2 = val3 > 0 ? 255 : val;
+                val2 = val2 > 255 ? val2 - 255 : 0;
+                int val1 = val2 > 0 ? 255 : val;
                 popColours[i][j] = QColor(val1,val2, val3, 255);
             }
         }
