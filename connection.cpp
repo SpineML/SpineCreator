@@ -2203,14 +2203,15 @@ void pythonscript_connection::generate_connections() {
     this->pythonErrors.clear();
 
     // Set up the Python API
-    Py_SetProgramName((char *) qApp->applicationFilePath().toStdString().c_str());
-    Py_Initialize();
+    //Py_SetProgramName((char *) qApp->applicationFilePath().toStdString().c_str());
+    //Py_Initialize();
 
     // regenerate src and dst locations
     QString errorLog;
     src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         qDebug() << "no src locs";
+        //Py_Finalize();
         //this->moveToThread(QApplication::instance()->thread());
         //emit connectionsDone();
         return;
@@ -2218,6 +2219,7 @@ void pythonscript_connection::generate_connections() {
     dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         qDebug() << "no dst locs";
+        //Py_Finalize();
         //this->moveToThread(QApplication::instance()->thread());
         //emit connectionsDone();
         return;
@@ -2244,6 +2246,7 @@ void pythonscript_connection::generate_connections() {
         qDebug() << "Bad args tuple";
         //this->moveToThread(QApplication::instance()->thread());
         //emit connectionsDone();
+        //Py_Finalize();
         return;
     }
 
@@ -2258,21 +2261,21 @@ void pythonscript_connection::generate_connections() {
         if (pythonErrors.isEmpty()) {
             pythonErrors = "Python Error: Script function is not named connectionFunc.";
         }
-        Py_Finalize();
+        //Py_Finalize();
         //this->moveToThread(QApplication::instance()->thread());
         //emit connectionsDone();
         return;
     }
 
     //Call my function
-    PyImport_ImportModule("math");
+    //PyImport_ImportModule("math");
     PyObject * output = PyObject_CallObject(pyFunc, argsPy);
-    Py_DECREF(argsPy);
-    Py_DECREF(srcPy);
-    Py_DECREF(dstPy);
+    Py_XDECREF(argsPy);
+    Py_XDECREF(srcPy);
+    Py_XDECREF(dstPy);
 
     Py_XDECREF(pyFunc);
-    Py_DECREF(pymod);
+    //Py_DECREF(pymod);
 
     if (!output) {
         this->pythonErrors = "Python Error: ";
@@ -2289,7 +2292,7 @@ void pythonscript_connection::generate_connections() {
             }
             pythonErrors += QString("Error found on line:") + QString::number(errtraceObj->tb_lineno);
         }
-        Py_Finalize();
+        //Py_Finalize();
         //this->moveToThread(QApplication::instance()->thread());
         //emit connectionsDone();
         return;
@@ -2320,7 +2323,7 @@ void pythonscript_connection::generate_connections() {
         this->hasDelay = true;
     }
 
-    Py_Finalize();
+    //Py_Finalize();
 
     // if we get to the end then that's good enough
     this->scriptValidates = true;

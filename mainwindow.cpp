@@ -63,6 +63,9 @@ MainWindow::MainWindow(QWidget *parent) :
     // initialise GUI
     ui->setupUi(this);
 
+    // initialise Python
+    Py_Initialize();
+
    QSettings settings;
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
@@ -537,6 +540,9 @@ MainWindow::~MainWindow()
         delete this->viewVZ.errors;
         delete this->viewVZ.layout;
     }
+
+    // clear up python
+    Py_Finalize();
 
     delete ui;
 }
