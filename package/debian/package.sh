@@ -31,7 +31,7 @@ fi
 VERSION="$1"
 
 # Get git revision information
-pushd ../SpineCreator
+pushd ~/greenbrain/SpineCreator
 GIT_BRANCH=`git branch| grep \*| awk -F' ' '{ print $2; }'`
 GIT_LAST_COMMIT_SHA=`git log -1 --oneline | awk -F' ' '{print $1;}'`
 GIT_LAST_COMMIT_DATE=`git log -1 | grep Date | awk -F 'Date:' '{print $2;}'| sed 's/^[ \t]*//'`
@@ -43,7 +43,7 @@ CORES_PER_PROC=`grep "^core id" /proc/cpuinfo | sort -u | wc -l`
 CORES=$((PROCESSORS * CORES_PER_PROC))
 
 # Ensure spec file exists
-pushd ../SpineCreator
+pushd ~/greenbrain/SpineCreator
 qmake-qt4 neuralNetworks.pro -r -spec linux-g++
 make clean
 popd
@@ -73,7 +73,7 @@ rm -f spinecreator_$VERSION-[0-9]_i386.deb
 
 # Create our "upstream" tarball from the git repo
 rm -rf ../$DEBNAME
-cp -Ra ../SpineCreator ../$DEBNAME # Note: SpineCreator tarball has to be spinecreator-0.9.3
+cp -Ra ~/greenbrain/SpineCreator ../$DEBNAME # Note: SpineCreator tarball has to be spinecreator-0.9.3
 tar czf $DEBNAME.tar.gz --exclude-vcs -C.. $DEBNAME
 
 # Clean up our source directory and then create it and pushd into it
@@ -88,25 +88,6 @@ dh_make -s -f ../$DEBNAME.tar.gz
 # Modifying the source. See http://www.debian.org/doc/manuals/maint-guide/modify.en.html
 #
 #
-
-# Set up quilt
-alias dquilt="quilt --quiltrc=${HOME}/.quiltrc-dpkg"
-complete -F _quilt_completion $_quilt_complete_opt dquilt
-QUILTRC_DPKG="$HOME/.quiltrc-dpkg"
-if [ ! -f $QUILTRC_DPKG ]; then
-    cat > $QUILTRC_DPKG <<EOF
-d=. ; while [ ! -d \$d/debian -a `readlink -e \$d` != / ]; do d=\$d/..; done
-if [ -d \$d/debian ] && [ -z \$QUILT_PATCHES ]; then
-    # if in Debian packaging tree with unset \$QUILT_PATCHES
-    QUILT_PATCHES="debian/patches"
-    QUILT_PATCH_OPTS="--reject-format=unified"
-    QUILT_DIFF_ARGS="-p ab --no-timestamps --no-index --color=auto"
-    QUILT_REFRESH_ARGS="-p ab --no-timestamps --no-index"
-    QUILT_COLORS="diff_hdr=1;32:diff_add=1;34:diff_rem=1;31:diff_hunk=1;33:diff_ctx=35:diff_cctx=33"
-    if ! [ -d \$d/debian/patches ]; then mkdir \$d/debian/patches; fi
-fi
-EOF
-fi
 
 # NB: We should have no upstream bugs to fix, as we ARE the upstream maintainers.
 
@@ -136,7 +117,7 @@ Source: spinecreator
 Section: x11
 Priority: optional
 Maintainer: $PACKAGE_MAINTAINER_GPG_IDENTITY
-Build-Depends: debhelper (>= 8.0.0), qt4-qmake, libc6-dev, libstdc++-dev, libglu1-mesa-dev, libqt4-dev, libqt4-opengl-dev, libgvc5, libgraph4
+Build-Depends: debhelper (>= 8.0.0), qt4-qmake, libc6-dev, libstdc++-dev, libglu1-mesa-dev, libqt4-dev, libqt4-opengl-dev, libgvc5, libgraph4, python2.7-dev
 Standards-Version: 3.9.3
 Homepage: http://bimpa.group.shef.ac.uk/SpineML/index.php/SpineCreator_-_A_Graphical_Tool
 
@@ -157,11 +138,11 @@ copyin()
         exit
     fi
     THEFILE="$1"
-    if [ ! -f ../../SpineCreator/package/debian/$THEFILE ]; then
+    if [ ! -f ~/greenbrain/SpineCreator/package/debian/$THEFILE ]; then
         echo "You need to create/update the $THEFILE file (in the SpineCreator source)"
         exit
     fi
-    cat ../../SpineCreator/package/debian/$THEFILE > debian/$THEFILE
+    cat ~/greenbrain/SpineCreator/package/debian/$THEFILE > debian/$THEFILE
 }
 
 # Copy in the changelog
