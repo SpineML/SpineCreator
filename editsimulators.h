@@ -43,7 +43,16 @@ public:
 private:
     Ui::editSimulators *ui;
 
+    /*!
+     * \brief path The absolute path to the current convert script.
+     */
     QString path;
+
+    /*!
+     * \brief working_dir The working directory for the current convert script.
+     */
+    QString working_dir;
+
     QStringList keys;
     QStringList values;
     bool edited;

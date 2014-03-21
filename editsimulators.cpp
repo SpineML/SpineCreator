@@ -25,7 +25,6 @@
 #include "editsimulators.h"
 #include "ui_editsimulators.h"
 #include "QSettings"
-//#include "stringify.h"
 
 editSimulators::editSimulators(QWidget *parent) :
     QDialog(parent),
@@ -66,7 +65,7 @@ editSimulators::editSimulators(QWidget *parent) :
     // cancel
     connect(ui->buttonBox->button(QDialogButtonBox::Reset), SIGNAL(clicked()), this, SLOT(cancelChanges()));
 
-    //close
+    // close
     connect(ui->buttonBox_2->button(QDialogButtonBox::Close), SIGNAL(clicked()), this, SLOT(close()));
 
     // change path
@@ -98,27 +97,26 @@ editSimulators::~editSimulators()
     delete ui;
 }
 
-void editSimulators::saveAsBinaryToggled(bool toggle) {
+void editSimulators::saveAsBinaryToggled(bool toggle)
+{
     QSettings settings;
     settings.setValue("fileOptions/saveBinaryConnections", QString::number((float) toggle));
-
 }
 
-void editSimulators::setGLDetailLevel(int value) {
+void editSimulators::setGLDetailLevel(int value)
+{
     QSettings settings;
     settings.setValue("glOptions/detail", value);
-
 }
 
-void editSimulators::setDevMode(bool toggle) {
+void editSimulators::setDevMode(bool toggle)
+{
     QSettings settings;
     settings.setValue("dev_mode_on", toggle);
-
 }
 
-/*void editSimulators::testFunc() {
-
-
+/*void editSimulators::testFunc()
+{
     QString fileName = QFileDialog::getOpenFileName(this, tr("Library is where?"), qgetenv("HOME"), tr("All files (*.*)"));
     QString log = "nrn";
     QString port = "v";
@@ -185,18 +183,17 @@ void editSimulators::setDevMode(bool toggle) {
 
 }*/
 
-void editSimulators::addEnvVar() {
-
+void editSimulators::addEnvVar()
+{
     keys.push_back("newVariable");
     values.push_back("newValue");
 
     this->edited = true;
     redrawEnvVars();
-
 }
 
-void editSimulators::delEnvVar() {
-
+void editSimulators::delEnvVar()
+{
     QLineEdit * envNameLineEdit = (QLineEdit *) sender()->property("ptr").value<void *>();
 
     // remove var
@@ -210,39 +207,29 @@ void editSimulators::delEnvVar() {
 
     this->edited = true;
     redrawEnvVars();
-
-
 }
 
-void editSimulators::changeEnvVar() {
-
+void editSimulators::changeEnvVar()
+{
     edited = true;
 
     if (sender()->property("type").toString() == "key") {
-
         keys[sender()->property("index").toInt()] = ((QLineEdit *) sender())->text();
-
     } else if (sender()->property("type").toString() == "value")  {
-
         values[sender()->property("index").toInt()] = ((QLineEdit *) sender())->text();
-
     }
-
-    //redrawEnvVars();
-
 }
 
-void editSimulators::changedEnvVar(QString) {
-
+void editSimulators::changedEnvVar(QString)
+{
     edited = true;
     ui->buttonBox_2->button(QDialogButtonBox::Close)->setEnabled(false);
     ui->comboBox->setEnabled(false);
     ui->addSim->setEnabled(false);
-
 }
 
-void editSimulators::recursiveDeleteLaterloop(QLayout * parentLayout) {
-
+void editSimulators::recursiveDeleteLaterloop(QLayout * parentLayout)
+{
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget() != ui->addEnv) {
@@ -254,11 +241,10 @@ void editSimulators::recursiveDeleteLaterloop(QLayout * parentLayout) {
         delete item;
     }
     parentLayout->deleteLater();
-
 }
 
-void editSimulators::recursiveDeleteLater(QLayout * parentLayout) {
-
+void editSimulators::recursiveDeleteLater(QLayout * parentLayout)
+{
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget() && item->widget() != ui->addEnv) {
@@ -269,11 +255,10 @@ void editSimulators::recursiveDeleteLater(QLayout * parentLayout) {
         }
         delete item;
     }
-
 }
 
-void editSimulators::redrawEnvVars() {
-
+void editSimulators::redrawEnvVars()
+{
     recursiveDeleteLater(((QHBoxLayout *) ui->scrollAreaWidgetContents->layout()));
 
     ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->addWidget(ui->addEnv);
@@ -310,8 +295,6 @@ void editSimulators::redrawEnvVars() {
         newEnv->addWidget(envDel);
 
         ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->insertLayout(((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->count()-1,newEnv);
-
-
     }
 
     ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->addStretch();
@@ -327,24 +310,22 @@ void editSimulators::redrawEnvVars() {
         ui->comboBox->setEnabled(true);
         ui->addSim->setEnabled(true);
     }
-
-    //ui->scriptLineEdit->setText(path);
-
 }
 
-void editSimulators::getScript() {
+void editSimulators::getScript()
+{
     QString fileName = QFileDialog::getOpenFileName(this, tr("Choose the simulator script"), qgetenv("HOME"), tr("All files (*)"));
 
     if (!fileName.isEmpty()) {
         this->ui->scriptLineEdit->setText(fileName);
-
         this->edited = true;
     }
 
     redrawEnvVars();
 }
 
-void editSimulators::getNewSimName() {
+void editSimulators::getNewSimName()
+{
     bool ok;
     QString simName = QInputDialog::getText(this,"Enter new simulator name", tr("Simulator name:"), QLineEdit::Normal, "", &ok);
     if (ok && !simName.isEmpty()) {
@@ -357,8 +338,8 @@ void editSimulators::getNewSimName() {
     redrawEnvVars();
 }
 
-void editSimulators::selectSimulator(QString simName) {
-
+void editSimulators::selectSimulator(QString simName)
+{
     // clear old sim
     this->keys.clear();
     this->values.clear();
@@ -367,7 +348,8 @@ void editSimulators::selectSimulator(QString simName) {
 
     // load path
     settings.beginGroup("simulators/" + simName);
-    path = settings.value("path").toString();
+    this->path = settings.value("path").toString();
+    this->working_dir = settings.value("working_dir").toString();
     ui->useBinary->setChecked(settings.value("binary").toBool());
     settings.endGroup();
 
@@ -383,19 +365,30 @@ void editSimulators::selectSimulator(QString simName) {
 
     settings.endGroup();
 
-    ui->scriptLineEdit->setText(path);
+    ui->scriptLineEdit->setText(this->path);
+    ui->scriptWDLineEdit->setText(this->working_dir);
 
     redrawEnvVars();
-
 }
 
-void editSimulators::applyChanges() {
-
+void editSimulators::applyChanges()
+{
     QSettings settings;
 
-    // add path:
+    // add a group for this simulator
     settings.beginGroup("simulators/" + ui->comboBox->currentText());
+
+    // Check newSim is an executable script. If not, issue warning.
+    QFile scriptfile (ui->scriptLineEdit->text());
+    if (!scriptfile.exists()) {
+        // warning - file doesn't exist.
+        QMessageBox::warning(this,
+                             QString("Script not found"),
+                             QString("The convert script wasn't found; simulations will not be able to execute."));
+    }
+
     settings.setValue("path", ui->scriptLineEdit->text());
+    settings.setValue("working_dir", ui->scriptWDLineEdit->text());
     settings.setValue("binary", ui->useBinary->isChecked());
     settings.endGroup();
 
@@ -418,26 +411,22 @@ void editSimulators::applyChanges() {
     ui->addSim->setEnabled(true);
 }
 
-void editSimulators::cancelChanges() {
-
+void editSimulators::cancelChanges()
+{
     selectSimulator(ui->comboBox->currentText());
-
     edited = false;
-
     redrawEnvVars();
 }
 
-void editSimulators::changeScript() {
-
+void editSimulators::changeScript()
+{
     path = ((QLineEdit *) sender())->text();
-
     edited = true;
-
     redrawEnvVars();
 }
 
-void editSimulators::close() {
-
+void editSimulators::close()
+{
     this->applyChanges();
     delete this;
 }

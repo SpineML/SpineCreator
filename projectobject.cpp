@@ -10,7 +10,6 @@
 projectObject::projectObject(QObject *parent) :
     QObject(parent)
 {
-
     this->name = "New Project";
 
     menuAction = new QAction(this);
@@ -36,12 +35,10 @@ projectObject::projectObject(QObject *parent) :
     this->catalogPS[0]->type = "postsynapse";
     this->catalogLAY.push_back((new NineMLLayout()));
     this->catalogLAY[0]->name = "none";
-
-
 }
 
-projectObject::~projectObject() {
-
+projectObject::~projectObject()
+{
     // clean up these
     delete undoStack;
     delete menuAction;
@@ -86,8 +83,8 @@ projectObject::~projectObject() {
     catalogGC.clear();
 }
 
-bool projectObject::open_project(QString fileName) {
-
+bool projectObject::open_project(QString fileName)
+{
     QDir project_dir(fileName);
 
     // remove filename
@@ -134,8 +131,8 @@ bool projectObject::open_project(QString fileName) {
     return true;
 }
 
-bool projectObject::save_project(QString fileName, rootData * data) {
-
+bool projectObject::save_project(QString fileName, rootData * data)
+{
     QDir project_dir(fileName);
 
     // remove filename
@@ -154,8 +151,9 @@ bool projectObject::save_project(QString fileName, rootData * data) {
         // delete
         project_dir.remove(files[i]);
         // and remove from version control
-        if (version.isModelUnderVersion())
+        if (version.isModelUnderVersion()) {
             version.removeFromVersion(files[i]);
+        }
     }
 
     // sync project
@@ -211,11 +209,10 @@ bool projectObject::save_project(QString fileName, rootData * data) {
     this->undoStack->setClean();
 
     return true;
-
 }
 
-bool projectObject::export_for_simulator(QString fileName, rootData * data) {
-
+bool projectObject::export_for_simulator(QString fileName, rootData * data)
+{
     QSettings settings;
 
     settings.setValue("export_for_simulation", QString::number((float) true));
@@ -231,6 +228,21 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data) {
     if (currentExperiment == NULL) return false;
 
     QDir project_dir(fileName);
+    // Before writing components out, ensure that the simulator working
+    // directory exists.
+    if (!project_dir.exists()) {
+        // Create directory.
+        if (project_dir.mkpath(fileName)) {
+            // fileName now exists.
+        } else {
+            // failure.
+            addError("export_for_simulator: Error creating working directory " + fileName);
+            if (printErrors("Errors found")) {
+                settings.remove("export_for_simulation");
+                return false;
+            }
+        }
+    }
 
     // remove old files
     project_dir.setNameFilters(QStringList() << "*");
@@ -239,8 +251,9 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data) {
         // delete
         project_dir.remove(files[i]);
         // and remove from version control
-        if (version.isModelUnderVersion())
+        if (version.isModelUnderVersion()) {
             version.removeFromVersion(files[i]);
+        }
     }
 
     // sync project
@@ -292,7 +305,6 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data) {
     settings.remove("export_for_simulation");
 
     return true;
-
 }
 
 bool projectObject::import_network(QString fileName) {
@@ -788,9 +800,10 @@ void projectObject::saveComponent(QString fileName, QDir project_dir, NineMLComp
     if (!fileName.contains("."))
         fileName.append(".xml");
 
-    QFile file( project_dir.absoluteFilePath(fileName) );
+    QString fname = project_dir.absoluteFilePath(fileName);
+    QFile file( fname );
     if (!file.open( QIODevice::WriteOnly)) {
-        addError("Error creating file for '" + fileName + "' - is there sufficient disk space?");
+        addError("saveComponent: Error creating file for '" + fname + "' - is there sufficient disk space?");
         return;
     }
 

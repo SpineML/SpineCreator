@@ -18,7 +18,7 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Alex Cope                                            **
+**          Authors: Alex Cope, Seb James                                 **
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
@@ -120,8 +120,8 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, rootData *
 
 }
 
-void viewELExptPanelHandler::recursiveDeleteLoop(QLayout * parentLayout) {
-
+void viewELExptPanelHandler::recursiveDeleteLoop(QLayout * parentLayout)
+{
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget()) {
@@ -134,11 +134,10 @@ void viewELExptPanelHandler::recursiveDeleteLoop(QLayout * parentLayout) {
         delete item;
     }
     parentLayout->deleteLater();
-
 }
 
-void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout) {
-
+void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
+{
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(2))) {
         if (item->widget()) {
@@ -150,12 +149,11 @@ void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout) {
             recursiveDeleteLoop(item->layout());
         delete item;
     }
-
 }
 
 
-void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout) {
-
+void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
+{
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget()) {
@@ -167,24 +165,26 @@ void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout) {
             recursiveDeleteLoop(item->layout());
         delete item;
     }
-
 }
 
-void viewELExptPanelHandler::redraw() {
+void viewELExptPanelHandler::redraw()
+{
     redrawPanel();
     redrawExpt();
     // update title in case of undo / redo so the * accurately reflects unsaved changes
     this->data->main->updateTitle();
 }
 
-void viewELExptPanelHandler::redraw(int) {
+void viewELExptPanelHandler::redraw(int)
+{
     redrawPanel();
     redrawExpt();
     // update title in case of undo / redo so the * accurately reflects unsaved changes
     this->data->main->updateTitle();
 }
 
-void viewELExptPanelHandler::redraw(double) {
+void viewELExptPanelHandler::redraw(double)
+{
     redrawPanel();
     redrawExpt();
     // update title in case of undo / redo so the * accurately reflects unsaved changes
@@ -193,7 +193,6 @@ void viewELExptPanelHandler::redraw(double) {
 
 void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperiment)
 {
-
     QFont titleFont("Helvetica [Cronyx]", 16);
 
     QLabel * title;
@@ -265,11 +264,10 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
         connect(solverOrd, SIGNAL(valueChanged(int)), this, SLOT(changedSolverOrder(int)));
         formSim->addRow("Solver order:",solverOrd);
     }
-
 }
 
-void viewELExptPanelHandler::redrawExpt() {
-
+void viewELExptPanelHandler::redrawExpt()
+{
     int vert_scroll = 0;
     int horiz_scroll = 0;
 
@@ -498,11 +496,10 @@ void viewELExptPanelHandler::redrawExpt() {
     }
 
 #endif
-
 }
 
-void viewELExptPanelHandler::redrawPanel() {
-
+void viewELExptPanelHandler::redrawPanel()
+{
     QVBoxLayout * panel = ((QVBoxLayout *) viewEL->panel->layout());
 
     // clear panel except toolbar
@@ -538,12 +535,10 @@ void viewELExptPanelHandler::redrawPanel() {
         panel->insertWidget(2, box);
 
     }
-
-
 }
 
-void viewELExptPanelHandler::addExperiment() {
-
+void viewELExptPanelHandler::addExperiment()
+{
     QVBoxLayout * panel = ((QVBoxLayout *) viewEL->panel->layout());
 
     // add experiment to list
@@ -562,11 +557,10 @@ void viewELExptPanelHandler::addExperiment() {
     // redraw to show the new experiment
     redrawPanel();
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::delExperiment() {
-
+void viewELExptPanelHandler::delExperiment()
+{
     uint index = sender()->property("index").toUInt();
 
     data->experiments.erase(data->experiments.begin() + index);
@@ -579,11 +573,10 @@ void viewELExptPanelHandler::delExperiment() {
     // redraw to updata the selection
     redrawPanel();
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::moveExperiment() {
-
+void viewELExptPanelHandler::moveExperiment()
+{
     uint index = sender()->property("index").toUInt();
     uint type = sender()->property("type").toUInt();
 
@@ -608,11 +601,10 @@ void viewELExptPanelHandler::moveExperiment() {
 
     // redraw to updata the selection
     redrawPanel();
-
 }
 
-void viewELExptPanelHandler::editExperiment() {
-
+void viewELExptPanelHandler::editExperiment()
+{
     uint index = sender()->property("index").toUInt();
 
     data->experiments[index]->editing = true;
@@ -623,11 +615,10 @@ void viewELExptPanelHandler::editExperiment() {
     // redraw to update the editBox
     redrawPanel();
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::doneEditExperiment() {
-
+void viewELExptPanelHandler::doneEditExperiment()
+{
     uint index = sender()->property("index").toUInt();
 
     // update the experiment
@@ -645,11 +636,10 @@ void viewELExptPanelHandler::doneEditExperiment() {
     // redraw to update the editBox
     redrawPanel();
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::cancelEditExperiment() {
-
+void viewELExptPanelHandler::cancelEditExperiment()
+{
     uint index = sender()->property("index").toUInt();
 
     data->experiments[index]->editing = false;
@@ -660,11 +650,10 @@ void viewELExptPanelHandler::cancelEditExperiment() {
     // redraw to update the editBox
     redrawPanel();
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::changeSelection() {
-
+void viewELExptPanelHandler::changeSelection()
+{
     uint index = sender()->property("index").toUInt();
 
     // also make sure that the run button is enabled
@@ -680,12 +669,11 @@ void viewELExptPanelHandler::changeSelection() {
     // redraw to update the selection
     redrawPanel();
     redrawExpt();
-
 }
 
 
-void viewELExptPanelHandler::changedEngine(QString sim) {
-
+void viewELExptPanelHandler::changedEngine(QString sim)
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -699,11 +687,10 @@ void viewELExptPanelHandler::changedEngine(QString sim) {
 
     // redraw to update the selection
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::changedDt() {
-
+void viewELExptPanelHandler::changedDt()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -714,14 +701,10 @@ void viewELExptPanelHandler::changedDt() {
     if (currentExperiment == NULL) return;
 
     currentExperiment->setup.dt = ((QDoubleSpinBox *) sender())->value();;
-
-    // redraw to update the selection
-    //redrawExpt();
-
 }
 
-void viewELExptPanelHandler::changedDuration() {
-
+void viewELExptPanelHandler::changedDuration()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -732,14 +715,10 @@ void viewELExptPanelHandler::changedDuration() {
     if (currentExperiment == NULL) return;
 
     currentExperiment->setup.duration = ((QDoubleSpinBox *) sender())->value();
-
-    // redraw to update the selection
-    //redrawExpt();
-
 }
 
-void viewELExptPanelHandler::changedSolver(int index) {
-
+void viewELExptPanelHandler::changedSolver(int index)
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -755,11 +734,10 @@ void viewELExptPanelHandler::changedSolver(int index) {
 
     // redraw to update the selection
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::changedSolverOrder(int val) {
-
+void viewELExptPanelHandler::changedSolverOrder(int val)
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -773,11 +751,10 @@ void viewELExptPanelHandler::changedSolverOrder(int val) {
 
     // redraw to update the selection
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::addInput() {
-
+void viewELExptPanelHandler::addInput()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -791,19 +768,16 @@ void viewELExptPanelHandler::addInput() {
 
     // redraw to update the selection
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::setInputName() {
-
+void viewELExptPanelHandler::setInputName()
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
-
     in->name = ((QLineEdit *) sender())->text();
-
 }
 
-void viewELExptPanelHandler::setInputComponent() {
-
+void viewELExptPanelHandler::setInputComponent()
+{
     // input text
     QString text = ((QLineEdit *) sender())->text();
     NineMLComponentData * src = (NineMLComponentData *)0;
@@ -852,8 +826,8 @@ void viewELExptPanelHandler::setInputComponent() {
     }
 }
 
-void viewELExptPanelHandler::setInputPort(int index) {
-
+void viewELExptPanelHandler::setInputPort(int index)
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
     // assign the port stored with the currentIndex onto the input
@@ -868,8 +842,8 @@ void viewELExptPanelHandler::setInputPort(int index) {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setInputType(int index) {
-
+void viewELExptPanelHandler::setInputType(int index)
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
     // assign the port stored with the currentIndex onto the input
@@ -884,8 +858,8 @@ void viewELExptPanelHandler::setInputType(int index) {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setInputRateDistributionType(int index) {
-
+void viewELExptPanelHandler::setInputRateDistributionType(int index)
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
     if (index == 0)
@@ -897,8 +871,8 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index) {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::acceptInput() {
-
+void viewELExptPanelHandler::acceptInput()
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     in->edit = false;
 
@@ -906,8 +880,8 @@ void viewELExptPanelHandler::acceptInput() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::editInput() {
-
+void viewELExptPanelHandler::editInput()
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     in->edit = true;
 
@@ -915,8 +889,8 @@ void viewELExptPanelHandler::editInput() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::delInput() {
-
+void viewELExptPanelHandler::delInput()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -931,30 +905,21 @@ void viewELExptPanelHandler::delInput() {
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteInputUndo(this->data, currentExperiment, in));
 
-    /*for (uint i = 0; i < currentExperiment->ins.size(); ++i) {
-        if (currentExperiment->ins[i] == in) {
-            delete in;
-            currentExperiment->ins.erase(currentExperiment->ins.begin()+i);
-        }
-    }*/
-
     // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setInputTypeData(double value) {
-
+void viewELExptPanelHandler::setInputTypeData(double value)
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
-    if (in->params.size() != 1)
+    if (in->params.size() != 1) {
         in->params.resize(1,0);
+    }
     in->params[0] = value;
-
-    // redraw to update the selection
-    //redrawExpt();
 }
 
-void viewELExptPanelHandler::setInputExternalData() {
-
+void viewELExptPanelHandler::setInputExternalData()
+{
     QString type = sender()->property("type").toString();
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
@@ -964,13 +929,10 @@ void viewELExptPanelHandler::setInputExternalData() {
         in->externalInput.port = ((QSpinBox *) sender())->value();
     else if (type == "size")
         in->externalInput.size = ((QSpinBox *) sender())->value();
-
-    // redraw to update the selection
-    //redrawExpt();
 }
 
-void viewELExptPanelHandler::setInputParams(int row, int col) {
-
+void viewELExptPanelHandler::setInputParams(int row, int col)
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     QTableWidget * table = (QTableWidget *) sender();
 
@@ -1003,13 +965,11 @@ void viewELExptPanelHandler::setInputParams(int row, int col) {
 
         in->params.swap(tempVec);
 
-    }
-    else if (in->inType == arrayConstant) {
+    } else if (in->inType == arrayConstant) {
 
         in->params[row] = value;
 
-    }
-    else if (in->inType == arrayTimevarying) {
+    } else if (in->inType == arrayTimevarying) {
 
         vector < float > curr;
 
@@ -1056,44 +1016,39 @@ void viewELExptPanelHandler::setInputParams(int row, int col) {
         // put back the index
         in->params.push_back(-1);
         in->params.push_back(in->currentIndex);
-        for (uint i = 0; i < tempVec.size(); ++i)
+        for (uint i = 0; i < tempVec.size(); ++i) {
             in->params.push_back(tempVec[i]);
-
+        }
     }
-
 
     // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::fillInputParams() {
-
+void viewELExptPanelHandler::fillInputParams()
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     QDoubleSpinBox * fillSpin = (QDoubleSpinBox *) sender()->property("ptrSpin").value<void *>();
 
     if (in->inType == arrayConstant) {
-
-        for (uint i = 0; i < in->params.size(); ++i)
+        for (uint i = 0; i < in->params.size(); ++i) {
             in->params[i] = fillSpin->value();
-
+        }
     }
 
     // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::changeInputIndex(int index) {
-
+void viewELExptPanelHandler::changeInputIndex(int index)
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
-
     in->currentIndex = index;
-
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::setInputAddTVRow() {
-
+void viewELExptPanelHandler::setInputAddTVRow()
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
     if (in->inType == timevarying) {
@@ -1122,8 +1077,8 @@ void viewELExptPanelHandler::setInputAddTVRow() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setInputDelTVRow() {
-
+void viewELExptPanelHandler::setInputDelTVRow()
+{
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
     if (in->inType == timevarying) {
@@ -1152,8 +1107,8 @@ void viewELExptPanelHandler::setInputDelTVRow() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::addOutput() {
-
+void viewELExptPanelHandler::addOutput()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -1167,19 +1122,16 @@ void viewELExptPanelHandler::addOutput() {
 
     // redraw to update the selection
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::setOutputName() {
-
+void viewELExptPanelHandler::setOutputName()
+{
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
-
     out->name = ((QLineEdit *) sender())->text();
-
 }
 
-void viewELExptPanelHandler::setOutputComponent() {
-
+void viewELExptPanelHandler::setOutputComponent()
+{
     // input text
     QString text = ((QLineEdit *) sender())->text();
     NineMLComponentData * src = (NineMLComponentData *)0;
@@ -1205,8 +1157,9 @@ void viewELExptPanelHandler::setOutputComponent() {
 
     if (src != (NineMLComponentData *)0) {
         // if no change
-        if (out->source == src)
+        if (out->source == src) {
             return;
+        }
         // else...
         out->source = src;
         // old port is no longer valid
@@ -1229,8 +1182,8 @@ void viewELExptPanelHandler::setOutputComponent() {
     }
 }
 
-void viewELExptPanelHandler::setOutputPort(int index) {
-
+void viewELExptPanelHandler::setOutputPort(int index)
+{
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
 
     // assign the port stored with the currentIndex onto the input
@@ -1242,13 +1195,14 @@ void viewELExptPanelHandler::setOutputPort(int index) {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setOutputType() {
+void viewELExptPanelHandler::setOutputType()
+{
     // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setOutputIndices() {
-
+void viewELExptPanelHandler::setOutputIndices()
+{
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     // sanity check
     QString text = ((QLineEdit *) sender())->text();
@@ -1277,11 +1231,10 @@ void viewELExptPanelHandler::setOutputIndices() {
         }
     }
     out->indices = text;
-
 }
 
-void viewELExptPanelHandler::acceptOutput() {
-
+void viewELExptPanelHandler::acceptOutput()
+{
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     out->edit = false;
 
@@ -1289,8 +1242,8 @@ void viewELExptPanelHandler::acceptOutput() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::editOutput() {
-
+void viewELExptPanelHandler::editOutput()
+{
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     out->edit = true;
 
@@ -1298,8 +1251,8 @@ void viewELExptPanelHandler::editOutput() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::delOutput() {
-
+void viewELExptPanelHandler::delOutput()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -1314,25 +1267,18 @@ void viewELExptPanelHandler::delOutput() {
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteOutputUndo(this->data, currentExperiment, out));
 
-    /*for (uint i = 0; i < currentExperiment->outs.size(); ++i) {
-        if (currentExperiment->outs[i] == out) {
-            delete out;
-            currentExperiment->outs.erase(currentExperiment->outs.begin()+i);
-        }
-    }*/
-
     // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::toggleExternalOutput(bool check) {
-
+void viewELExptPanelHandler::toggleExternalOutput(bool check)
+{
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     out->isExternal = check;
 }
 
-void viewELExptPanelHandler::setOutputExternalData() {
-
+void viewELExptPanelHandler::setOutputExternalData()
+{
     QString type = sender()->property("type").toString();
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
 
@@ -1342,13 +1288,10 @@ void viewELExptPanelHandler::setOutputExternalData() {
         out->externalOutput.port = ((QSpinBox *) sender())->value();
     else if (type == "size")
         out->externalOutput.size = ((QSpinBox *) sender())->value();
-
-    // redraw to update the selection
-    //redrawExpt();
 }
 
-void viewELExptPanelHandler::addLesion() {
-
+void viewELExptPanelHandler::addLesion()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -1362,11 +1305,10 @@ void viewELExptPanelHandler::addLesion() {
 
     // redraw to update the selection
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::setLesionProjection() {
-
+void viewELExptPanelHandler::setLesionProjection()
+{
     // input text
     QString text = ((QLineEdit *) sender())->text();
     projection * lesionedProj = (projection *)0;
@@ -1398,26 +1340,23 @@ void viewELExptPanelHandler::setLesionProjection() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::acceptLesion() {
-
+void viewELExptPanelHandler::acceptLesion()
+{
     exptLesion * lesion = (exptLesion *) sender()->property("ptr").value<void *>();
     lesion->edit = false;
-
     // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::editLesion() {
-
+void viewELExptPanelHandler::editLesion()
+{
     exptLesion * lesion = (exptLesion *) sender()->property("ptr").value<void *>();
     lesion->edit = true;
-
-    // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::delLesion() {
-
+void viewELExptPanelHandler::delLesion()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -1432,19 +1371,11 @@ void viewELExptPanelHandler::delLesion() {
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteLesionUndo(this->data, currentExperiment, lesion));
 
-    /*for (uint i = 0; i < currentExperiment->lesions.size(); ++i) {
-        if (currentExperiment->lesions[i] == lesion) {
-            delete lesion;
-            currentExperiment->lesions.erase(currentExperiment->lesions.begin()+i);
-        }
-    }*/
-
-    // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setChangeParComponent() {
-
+void viewELExptPanelHandler::setChangeParComponent()
+{
     // input text
     QString text = ((QLineEdit *) sender())->text();
     NineMLComponentData * src = (NineMLComponentData *)0;
@@ -1496,8 +1427,8 @@ void viewELExptPanelHandler::setChangeParComponent() {
     redrawExpt();
 }
 
-void viewELExptPanelHandler::setChangeProp(QString name) {
-
+void viewELExptPanelHandler::setChangeProp(QString name)
+{
     exptChangeProp * changeProp = (exptChangeProp *) sender()->property("ptr").value<void *>();
 
     for (uint i = 0; i < changeProp->component->ParameterList.size(); ++i) {
@@ -1513,11 +1444,10 @@ void viewELExptPanelHandler::setChangeProp(QString name) {
         }
     }
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::addChangedProp() {
-
+void viewELExptPanelHandler::addChangedProp()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -1531,29 +1461,24 @@ void viewELExptPanelHandler::addChangedProp() {
 
     // redraw to update the selection
     redrawExpt();
-
 }
 
-void viewELExptPanelHandler::acceptChangedProp() {
-
+void viewELExptPanelHandler::acceptChangedProp()
+{
     exptChangeProp * prop = (exptChangeProp *) sender()->property("ptr").value<void *>();
     prop->edit = false;
-
-    // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::editChangedProp() {
-
+void viewELExptPanelHandler::editChangedProp()
+{
     exptChangeProp * prop = (exptChangeProp *) sender()->property("ptr").value<void *>();
     prop->edit = true;
-
-    // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::delChangedProp() {
-
+void viewELExptPanelHandler::delChangedProp()
+{
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
@@ -1568,19 +1493,12 @@ void viewELExptPanelHandler::delChangedProp() {
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteChangePropUndo(this->data, currentExperiment, prop));
 
-    /*for (uint i = 0; i < currentExperiment->changes.size(); ++i) {
-        if (currentExperiment->changes[i] == prop) {
-            delete prop;
-            currentExperiment->changes.erase(currentExperiment->changes.begin()+i);
-        }
-    }*/
-
     // redraw to update the selection
     redrawExpt();
 }
 
-void viewELExptPanelHandler::run() {
-
+void viewELExptPanelHandler::run()
+{
     QSettings settings;
 
     runButton = (QPushButton *) sender();
@@ -1607,21 +1525,10 @@ void viewELExptPanelHandler::run() {
     // load path
     settings.beginGroup("simulators/" + simName);
     QString path = settings.value("path").toString();
+    // The convert_script takes the working directory as a script argument
+    QString wk_dir_string = settings.value("working_dir").toString();
     settings.endGroup();
-
-    QStringList pathComponents = path.split(QDir::toNativeSeparators("/"));
-
-    QString wk_dir_string = "";
-    QString file_to_run = "./";
-    file_to_run += pathComponents.back();
-
-
-    for (int i = 0; i < pathComponents.count()-1; ++i) {
-        wk_dir_string += "/" + pathComponents[i];
-    }
-
     wk_dir_string = QDir::toNativeSeparators(wk_dir_string);
-
     QDir wk_dir(wk_dir_string);
 
     // clear error message lookup
@@ -1631,14 +1538,12 @@ void viewELExptPanelHandler::run() {
     // try and find an error message lookup
     QFile errorMsgLookup(wk_dir.absoluteFilePath("errorMsgLookup.txt"));
     if (errorMsgLookup.open(QIODevice::ReadOnly)) {
-
-        // file exists! start parsing
-        // read a line
+        // file exists! start parsing line by line
         QByteArray line = errorMsgLookup.readLine();
         while (!line.isEmpty()) {
             // convert line to string
             QString lineStr(line);
-            // seperate line by token
+            // separate line by token
             QStringList parts = lineStr.split("#->#");
             // if we have two sides then the line is correctly formatted
             if (parts.size() == 2) {
@@ -1656,7 +1561,7 @@ void viewELExptPanelHandler::run() {
 
     settings.beginGroup("simulators/" + simName + "/envVar");
 
-    // load values
+    // load environment variable values for the simulator.
     QStringList keysTemp = settings.childKeys();
 
     for (int i = 0; i < keysTemp.size(); ++i) {
@@ -1691,15 +1596,15 @@ void viewELExptPanelHandler::run() {
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
 
-    simulator->start(file_to_run);
+    simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath());
 
     connect(simulator, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(simulatorFinished(int, QProcess::ExitStatus)));
     connect(simulator, SIGNAL(readyReadStandardOutput()), this, SLOT(simulatorStandardOutput()));
     connect(simulator, SIGNAL(readyReadStandardError()), this, SLOT(simulatorStandardError()));
 }
 
-void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status) {
-
+void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
+{
     // update run button
     runButton->setEnabled(true);
 
@@ -1717,7 +1622,6 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.exec();
             return;
         }
-
     }
 
     // collect logs
@@ -1743,6 +1647,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.exec();
         return;
     }
+
     if (status == QProcess::NormalExit) {
         QMessageBox msgBox;
         msgBox.setWindowTitle("Simulator Complete");
@@ -1753,30 +1658,20 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.exec();
         return;
     }
-
 }
 
 void viewELExptPanelHandler::simulatorStandardOutput()
 {
-
     QByteArray data = ((QProcess *) sender())->readAllStandardOutput();
     simulatorStdOutText = simulatorStdOutText + QString().fromUtf8(data);
-   /* while (simulatorStdOutText.size()>1000) {
-        simulatorStdOutText.remove(0,1);
-    }*/
-
 }
 
 void viewELExptPanelHandler::simulatorStandardError()
 {
-
     QByteArray data = ((QProcess *) sender())->readAllStandardError();
     simulatorStdOutText = simulatorStdOutText + QString().fromUtf8(data);
-    /*while (simulatorStdOutText.size()>1000) {
-        simulatorStdOutText.remove(0,1);
-    }*/
-
 }
+
 void viewELExptPanelHandler::mouseMove(float xGL, float yGL)
 {
     // move viewpoint
@@ -1786,29 +1681,24 @@ void viewELExptPanelHandler::mouseMove(float xGL, float yGL)
     source->move(xGL+source->viewX-cursor.x(),yGL-source->viewY-cursor.y());
 }
 
-
 void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
 {
     // draw the populations
     for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
-
         this->data->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, style);
-
     }
+
     // draw the synapses
     for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
-
         this->data->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
-
     }
+
     // draw the generic inputs
     for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
-
         QPen pen(QColor(100,0,0,100));
         pen.setWidthF(float(1));
         painter->setPen(pen);
         this->data->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
-
     }
 
     // redraw selected object to highlight, if it is not deleted pointer:
@@ -1840,10 +1730,9 @@ void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float 
                 }
             }
         }
+
         if (this->currSystemObject->type == projectionObject) {
-
             projection * col = (projection *) this->currSystemObject;
-
             for (unsigned int i = 5; i > 1; --i) {
                 QPen pen(QColor(0,0,0,30/i));
                 pen.setWidthF(float(i*2));
