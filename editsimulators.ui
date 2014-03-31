@@ -245,7 +245,7 @@ restart required)</string>
     <widget class="QPushButton" name="addSim">
      <property name="geometry">
       <rect>
-       <x>390</x>
+       <x>400</x>
        <y>0</y>
        <width>76</width>
        <height>27</height>
@@ -268,11 +268,17 @@ restart required)</string>
     <widget class="QPushButton" name="findFile">
      <property name="geometry">
       <rect>
-       <x>390</x>
-       <y>30</y>
+       <x>580</x>
+       <y>29</y>
        <width>76</width>
-       <height>27</height>
+       <height>21</height>
       </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
      <property name="text">
       <string>Find...</string>
@@ -283,7 +289,7 @@ restart required)</string>
       <rect>
        <x>5</x>
        <y>30</y>
-       <width>386</width>
+       <width>571</width>
        <height>61</height>
       </rect>
      </property>
@@ -305,13 +311,6 @@ restart required)</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="scriptLineEdit">
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Full path to the convert script (convert_script_s2b).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="0">
        <widget class="QLabel" name="scriptWDLabel">
         <property name="font">
@@ -328,6 +327,12 @@ restart required)</string>
       </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="scriptWDLineEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="toolTip">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The working directory for the convert script. Passed as an option to convert_script_s2b. SpineCreator will save its experiement files into this directory before running the experiement with the simulator.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
@@ -336,13 +341,26 @@ restart required)</string>
         </property>
        </widget>
       </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="scriptLineEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Full path to the convert script (convert_script_s2b).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
     <widget class="QCheckBox" name="useBinary">
      <property name="geometry">
       <rect>
-       <x>400</x>
-       <y>70</y>
+       <x>10</x>
+       <y>90</y>
        <width>271</width>
        <height>20</height>
       </rect>
@@ -367,6 +385,25 @@ restart required)</string>
      </property>
      <property name="text">
       <string>&lt;b&gt;Environment variables&lt;/b&gt;</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="findWorkingDir">
+     <property name="geometry">
+      <rect>
+       <x>580</x>
+       <y>55</y>
+       <width>76</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Find...</string>
      </property>
     </widget>
    </widget>
