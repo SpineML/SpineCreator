@@ -104,7 +104,9 @@ struct simulatorSetup {
 
 struct externalObject {
     int port;
+    QString host;
     QString commandline;
+    double timestep;
     int size;
 };
 
@@ -112,7 +114,8 @@ class exptInput : QObject {
     Q_OBJECT
 public:
 
-    exptInput() {edit = true; set=false; eventport.name="spike"; target = NULL; portIsAnalog = false; inType = constant; params.push_back(0); rate = false;currentIndex = 0; name = "New Input"; rateDistribution = Poisson; externalInput.size=1; externalInput.port = 50091;}
+    exptInput() {edit = true; set=false; eventport.name="spike"; target = NULL; portIsAnalog = false; inType = constant; params.push_back(0); rate = false;currentIndex = 0; name = "New Input"; rateDistribution = Poisson; \
+                 externalInput.size=1; externalInput.port = 50091; externalInput.host = "localhost"; externalInput.timestep = 0.0;}
 
     bool rate;
     int currentIndex;
@@ -139,7 +142,8 @@ class exptOutput : QObject {
     Q_OBJECT
 public:
 
-    exptOutput() {edit = true; set=false; isExternal = false; name = "New Output"; source = NULL; portIsAnalog = true; indices="all"; externalOutput.size=1; externalOutput.port = 50191;}
+    exptOutput() {edit = true; set=false; isExternal = false; name = "New Output"; source = NULL; portIsAnalog = true; indices="all"; \
+                  externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "localhost"; externalOutput.timestep = 0.0;}
 
     //exptOutput outType;
     //vector < float > params;

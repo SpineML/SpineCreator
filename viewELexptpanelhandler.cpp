@@ -923,12 +923,17 @@ void viewELExptPanelHandler::setInputExternalData()
     QString type = sender()->property("type").toString();
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
-    if (type == "command")
+    if (type == "command") {
         in->externalInput.commandline = ((QLineEdit *) sender())->text();
-    else if (type == "port")
+    } else if (type == "port") {
         in->externalInput.port = ((QSpinBox *) sender())->value();
-    else if (type == "size")
+    } else if (type == "size") {
         in->externalInput.size = ((QSpinBox *) sender())->value();
+    } else if (type == "timestep") {
+        in->externalInput.timestep = ((QDoubleSpinBox *) sender())->value();
+    } else if (type == "host") {
+        in->externalInput.host = ((QLineEdit *) sender())->text();
+    }
 }
 
 void viewELExptPanelHandler::setInputParams(int row, int col)
@@ -1282,12 +1287,17 @@ void viewELExptPanelHandler::setOutputExternalData()
     QString type = sender()->property("type").toString();
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
 
-    if (type == "command")
+    if (type == "command") {
         out->externalOutput.commandline = ((QLineEdit *) sender())->text();
-    else if (type == "port")
+    } else if (type == "port") {
         out->externalOutput.port = ((QSpinBox *) sender())->value();
-    else if (type == "size")
+    } else if (type == "size") {
         out->externalOutput.size = ((QSpinBox *) sender())->value();
+    } else if (type == "timestep") {
+        out->externalOutput.timestep = ((QDoubleSpinBox *) sender())->value();
+    } else if (type == "host") {
+        out->externalOutput.host = ((QLineEdit *) sender())->text();
+    }
 }
 
 void viewELExptPanelHandler::addLesion()

@@ -903,19 +903,41 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 command->setProperty("type", "command");
                 command->setText(externalInput.commandline);
                 QObject ::connect(command, SIGNAL(editingFinished()), handler, SLOT(setInputExternalData()));
+                command->setToolTip("A command to launch the external input (if required, otherwise leave blank)");
                 formlay->addRow("Command:", command);
 
-                // command line
+                // host ip
+                QLineEdit * host = new QLineEdit;
+                host->setProperty("ptr", qVariantFromValue((void *) this));
+                host->setProperty("type", "host");
+                host->setText(externalInput.host);
+                host->setToolTip("The host computer IP address, or localhost if the external input is on the same computer as the experiment");
+                QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setInputExternalData()));
+                formlay->addRow("Host IP:", host);
+
+                // host port
                 QSpinBox * port = new QSpinBox;
                 port->setProperty("ptr", qVariantFromValue((void *) this));
                 port->setProperty("type", "port");
                 port->setMinimum(49152);
                 port->setMaximum(65535);
                 port->setValue(externalInput.port);
+                port->setToolTip("The port that the external input will be expecting a connection on");
                 QObject ::connect(port, SIGNAL(valueChanged(int)), handler, SLOT(setInputExternalData()));
                 formlay->addRow("Port:", port);
 
-                // command line
+                // host timestep
+                QDoubleSpinBox * timestep = new QDoubleSpinBox;
+                timestep->setProperty("ptr", qVariantFromValue((void *) this));
+                timestep->setProperty("type", "timestep");
+                timestep->setMinimum(0.0);
+                timestep->setMaximum(1000);
+                timestep->setToolTip("The timestep in ms of the external source (0.0 locks the timestep to the current experiment timestep)");
+                timestep->setValue(externalInput.timestep);
+                QObject ::connect(timestep, SIGNAL(valueChanged(double)), handler, SLOT(setInputExternalData()));
+                formlay->addRow("dt:", timestep);
+
+                // size
                 QSpinBox * size = new QSpinBox;
                 size->setProperty("ptr", qVariantFromValue((void *) this));
                 size->setProperty("type", "size");
@@ -1011,9 +1033,9 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
         if (this->inType == external) {
 
             if (this->portIsAnalog)
-                desc += "External analog input.";
+                desc += "External analog input from " + this->externalInput.host + " on port " + QString::number(this->externalInput.port) + " with timestep " + QString::number(this->externalInput.timestep);
             else
-                desc += "External spike rate input";
+                desc += "External spike rate input from"  + this->externalInput.host + " on port " + QString::number(this->externalInput.port) + " with timestep " + QString::number(this->externalInput.timestep);
 
         }
 
@@ -1265,6 +1287,17 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), command, SLOT(setEnabled(bool)));
             formlay->addRow("Command:", command);
 
+            // host
+            QLineEdit * host = new QLineEdit;
+            host->setProperty("ptr", qVariantFromValue((void *) this));
+            host->setProperty("type", "host");
+            host->setText(externalOutput.host);
+            if (!isExternal)
+                host->setEnabled(false);
+            host->setToolTip("The host computer IP address, or localhost if the external output is on the same computer as the experiment");
+            QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setOutputExternalData()));
+            formlay->addRow("Host IP:", host);
+
             // port
             QSpinBox * port = new QSpinBox;
             port->setProperty("ptr", qVariantFromValue((void *) this));
@@ -1277,6 +1310,19 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             QObject ::connect(port, SIGNAL(valueChanged(int)), handler, SLOT(setOutputExternalData()));
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), port, SLOT(setEnabled(bool)));
             formlay->addRow("Port:", port);
+
+            // host timestep
+            QDoubleSpinBox * timestep = new QDoubleSpinBox;
+            timestep->setProperty("ptr", qVariantFromValue((void *) this));
+            timestep->setProperty("type", "timestep");
+            timestep->setMinimum(0.0);
+            timestep->setMaximum(1000);
+            timestep->setToolTip("The timestep in ms of the external target (0.0 locks the timestep to the current experiment timestep)");
+            timestep->setValue(externalOutput.timestep);
+            if (!isExternal)
+                timestep->setEnabled(false);
+            QObject ::connect(timestep, SIGNAL(valueChanged(double)), handler, SLOT(setOutputExternalData()));
+            formlay->addRow("dt:", timestep);
 
         }
 
@@ -1319,7 +1365,11 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
         if (!isExternal)
             desc->setText("Output from component <b>" + this->source->getXMLName() + "</b> port <b>" + this->portName + "</b>" + inds);
         else
-            desc->setText("Output from component <b>" + this->source->getXMLName() + "</b> port <b>" + this->portName + "</b>" + inds + " to external program on port " + QString::number(this->externalOutput.port));
+            desc->setText(QString("Output from component <b>") + this->source->getXMLName() + \
+                          QString("</b> port <b>") + this->portName + QString("</b>") + inds + \
+                          QString(" to external program at ") + this->externalOutput.host + \
+                          QString(" on port ") + QString::number(this->externalOutput.port) + \
+                    QString(" timestep ") + QString::number(externalOutput.timestep));
         desc->setMaximumWidth(200);
         desc->setWordWrap(true);
         descAndEdit->addWidget(desc, 1,0,1,1);
@@ -2156,6 +2206,8 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
             this->externalInput.size = ((population *)this->target->owner)->numNeurons;
         writer->writeAttribute("size",QString::number(this->externalInput.size));
         writer->writeAttribute("command", this->externalInput.commandline);
+        writer->writeAttribute("host", this->externalInput.host);
+        writer->writeAttribute("timestep", QString::number(this->externalInput.timestep));
     }
         break;
     case spikeList:
@@ -2216,6 +2268,8 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("tcp_port",QString::number(this->externalOutput.port));
         writer->writeAttribute("size",QString::number(this->externalOutput.size));
         writer->writeAttribute("command", this->externalOutput.commandline);
+        writer->writeAttribute("host", this->externalOutput.host);
+        writer->writeAttribute("timestep", QString::number(this->externalOutput.timestep));
     }
 
 }
@@ -2860,6 +2914,16 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
         }
 
+        // not required
+        if (reader->attributes().hasAttribute("host")) {
+            externalInput.host = reader->attributes().value("host").toString();
+        }
+
+        // not required
+        if (reader->attributes().hasAttribute("timestep")) {
+            externalInput.timestep = reader->attributes().value("timestep").toString().toDouble();
+        }
+
         if (reader->attributes().hasAttribute("size"))
             externalInput.size = reader->attributes().value("size").toString().toInt();
         else
@@ -2986,6 +3050,16 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
         this->isExternal = true;
 
         externalOutput.port = reader->attributes().value("tcp_port").toString().toInt();
+
+        // not required
+        if (reader->attributes().hasAttribute("host")) {
+            externalOutput.host = reader->attributes().value("host").toString();
+        }
+
+        // not required
+        if (reader->attributes().hasAttribute("timestep")) {
+            externalOutput.timestep = reader->attributes().value("timestep").toString().toDouble();
+        }
 
         if (reader->attributes().hasAttribute("size"))
             externalOutput.size = reader->attributes().value("size").toString().toInt();

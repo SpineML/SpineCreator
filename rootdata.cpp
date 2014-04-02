@@ -139,9 +139,9 @@ void rootData::selectProject(QAction * action)
 
 void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * newComp)
 {
-    for (uint p = 0; p < populations.size(); ++p) {
+    for (uint p = 0; p < this->populations.size(); ++p) {
 
-        population * pop = populations[p];
+        population * pop = this->populations[p];
 
         // replace references
         if (pop->neuronType->component == oldComp) {
