@@ -165,8 +165,8 @@ restart required)</string>
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>642</width>
-        <height>237</height>
+        <width>643</width>
+        <height>239</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -283,8 +283,8 @@ restart required)</string>
       <rect>
        <x>5</x>
        <y>30</y>
-       <width>386</width>
-       <height>61</height>
+       <width>391</width>
+       <height>77</height>
       </rect>
      </property>
      <layout class="QFormLayout" name="formLayout">
@@ -336,20 +336,14 @@ restart required)</string>
         </property>
        </widget>
       </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QCheckBox" name="useBinary">
+        <property name="text">
+         <string>Use binary files for lists and connections</string>
+        </property>
+       </widget>
+      </item>
      </layout>
-    </widget>
-    <widget class="QCheckBox" name="useBinary">
-     <property name="geometry">
-      <rect>
-       <x>400</x>
-       <y>70</y>
-       <width>271</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Use binary files for lists and connections</string>
-     </property>
     </widget>
     <widget class="QLabel" name="label">
      <property name="geometry">
