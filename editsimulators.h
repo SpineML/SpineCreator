@@ -67,6 +67,7 @@ public slots:
     void changeEnvVar();
     void selectSimulator(QString);
     void getScript();
+    void getWorkingDir();
     void getNewSimName();
     void applyChanges();
     void cancelChanges();

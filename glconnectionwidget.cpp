@@ -167,7 +167,7 @@ void glConnectionWidget::updateLogData() {
             if (logValues[j] < Q_INFINITY && (popLogs[i]->getMax()-popLogs[i]->getMin()) != 0) {
                 int val = ((logValues[j]-popLogs[i]->getMin())*255.0)/(popLogs[i]->getMax()-popLogs[i]->getMin());
                 val *= 3;
-                // complete the remap in just 4 ternarys
+                // complete the remap in just 4 ternarys 
                 int val3 = val > 511 ? val-512 : 0;
                 int val2 = val3 > 0 ? 255 : val;
                 val2 = val2 > 255 ? val2 - 255 : 0;

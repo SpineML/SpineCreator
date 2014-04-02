@@ -1525,6 +1525,34 @@ void viewELExptPanelHandler::run()
     // load path
     settings.beginGroup("simulators/" + simName);
     QString path = settings.value("path").toString();
+    // Check that path exists and is executable.
+    QFile the_script(path);
+    if (!the_script.exists()) {
+        // Error - convert_script file doesn't exist
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Simulator Error");
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("The simulator '" + path + "' does not exist.");
+        msgBox.exec();
+        runButton->setEnabled(true);
+        return;
+    } else {
+        // Path exists, check it's a file and is executable
+        // NB: In QT 5.x this would be QFileDevice::ExeOwner etc
+        if (the_script.permissions() & (QFile::ExeOwner|QFile::ExeGroup|QFile::ExeOther)) {
+            // Probably Ok - we have execute permission of some kind.
+        } else {
+            // Error - no execute permission on script
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Simulator Error");
+            msgBox.setIcon(QMessageBox::Critical);
+            msgBox.setText("The simulator '" + path + "' is not executable.");
+            msgBox.exec();
+            runButton->setEnabled(true);
+            return;
+        }
+    }
+
     // The convert_script takes the working directory as a script argument
     QString wk_dir_string = settings.value("working_dir").toString();
     settings.endGroup();
@@ -1536,6 +1564,7 @@ void viewELExptPanelHandler::run()
     this->errorStrings.clear();
 
     // try and find an error message lookup
+    // FIXME: Need to get this from installed version first, then look in working directory.
     QFile errorMsgLookup(wk_dir.absoluteFilePath("errorMsgLookup.txt"));
     if (errorMsgLookup.open(QIODevice::ReadOnly)) {
         // file exists! start parsing line by line
@@ -1591,12 +1620,36 @@ void viewELExptPanelHandler::run()
     settings.remove("export_binary");
 
     QProcess * simulator = new QProcess;
+    if (!simulator) {
+        // Really bad error - memory allocation error. The following will probably fail:
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Memory Allocation Error");
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("The simulator failed to start - you're out of RAM.");
+        msgBox.exec();
+        runButton->setEnabled(true);
+        return;
+    }
+
     simulator->setWorkingDirectory(wk_dir.absolutePath());
     simulator->setProcessEnvironment(env);
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
 
     simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath());
+
+    // Wait a couple of seconds for the process to start
+    if (!simulator->waitForStarted(5000)) {
+        // Error - simulator failed to start
+        QMessageBox msgBox;
+        msgBox.setWindowTitle("Simulator Error");
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("The simulator '" + path + "' failed to start.");
+        msgBox.exec();
+        runButton->setEnabled(true);
+        delete simulator;
+        return;
+    }
 
     connect(simulator, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(simulatorFinished(int, QProcess::ExitStatus)));
     connect(simulator, SIGNAL(readyReadStandardOutput()), this, SLOT(simulatorStandardOutput()));

@@ -57,6 +57,7 @@ editSimulators::editSimulators(QWidget *parent) :
     connect(ui->comboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(selectSimulator(QString)));
     // connect up buttons
     connect(this->ui->findFile, SIGNAL(clicked()), this, SLOT(getScript()));
+    connect(this->ui->findWorkingDir, SIGNAL(clicked()), this, SLOT(getWorkingDir()));
     connect(this->ui->addSim, SIGNAL(clicked()), this, SLOT(getNewSimName()));
 
     // accept
@@ -318,6 +319,20 @@ void editSimulators::getScript()
 
     if (!fileName.isEmpty()) {
         this->ui->scriptLineEdit->setText(fileName);
+        this->edited = true;
+    }
+
+    redrawEnvVars();
+}
+
+void editSimulators::getWorkingDir()
+{
+    QString wk_dir = QFileDialog::getExistingDirectory(this,
+                                                        tr("Choose the simulator's working directory"),
+                                                        qgetenv("HOME"));
+
+    if (!wk_dir.isEmpty()) {
+        this->ui->scriptWDLineEdit->setText(wk_dir);
         this->edited = true;
     }
 
