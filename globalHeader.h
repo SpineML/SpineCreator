@@ -61,9 +61,6 @@ class projectObject;
 
 // include headers:
 
-// Python API
-#include "Python.h"
-
 // C++ Library
 #include <vector>
 #include <iostream>
