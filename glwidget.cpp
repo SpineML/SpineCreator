@@ -124,11 +124,12 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
     this->button = Qt::NoButton;
     setCursor(Qt::ArrowCursor);
     // convert the incoming x and y into the openGL coordinates
+#ifdef NEED_MOUSE_UP_LOGIC
     float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewX;
     float yGL = -(float((event->y()*RETINA_SUPPORT)-(this->height()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewY);
-
-    // select under the mouse
     //qDebug() << "coords: " << float(xGL) << " " << float(yGL) << endl;
+#endif
+    // select under the mouse
     if (this->connectMode == false) {
         if (event->button() == Qt::LeftButton && !this->itemMoving) {
 #ifdef NEED_MOUSE_UP_LOGIC
