@@ -22,6 +22,8 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
+#include <Python.h>
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "editsimulators.h"

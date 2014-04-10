@@ -22,6 +22,8 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
+#include <Python.h>
+
 #include "connection.h"
 //#include "stringify.h"
 #include "cinterpreter.h"
