@@ -66,11 +66,9 @@ public:
     void get_model_meta_xml(QDomDocument &meta);
     QColor getColor(QColor);
     int getIndex();
-    void setCurrConnectionModel(csv_connectionModel *);
     bool selectionMoved;
     void reDrawPanel();
     systemObject* getObjectFromName(QString name);
-    void reDrawAll();
     void callRedrawGLview();
     void updateStatusBar(QString, int);
     void setTitle();
@@ -104,7 +102,7 @@ public:
     vector < NineMLComponent *> catalogPS;
 
     vector < NineMLLayout *> catalogLayout;
-    vector < connection *> catalogConn;
+    vector < QString > catalogConn;
     vector < experiment *> experiments;
 
     vector < loadedComponent > loadedComponents;
@@ -151,7 +149,6 @@ public slots:
 
     void onRightMouseDown(float xGL, float yGL, float GLscale);
     void mouseMoveGL(float, float);
-    void import_csv(QString);
     void updatePortMap(QString);
     void updateComponentType(int index);
     void updatePar();
@@ -167,13 +164,11 @@ public slots:
     void deleteCurrentSelection();
     void changeSynapse();
     void selectColour();
-    void setCurrConnectionModelSig(csv_connectionModel *);
     void getNeuronLocationsSrc(vector < vector <loc> >*, vector <QColor> *, QString name);
 #ifdef NEED_MOUSE_UP_LOGIC
     void onLeftMouseUp(float xGL, float yGL, float GLscale);
 #endif
     void setSelectionbyName(QString);
-    void returnPointerToSelf(rootData * * data);
     void addgenericInput();
     void delgenericInput();
     void editConnections();
@@ -187,6 +182,7 @@ public slots:
     void copyParsToClipboard();
     void pasteParsFromClipboard();
     void selectProject(QAction *);
+    void reDrawAll();
 
 private:
     /*!

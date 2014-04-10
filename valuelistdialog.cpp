@@ -24,7 +24,6 @@
 
 #include "valuelistdialog.h"
 #include "ui_valuelistdialog.h"
-//#include "stringify.h"
 
 valueListDialog::valueListDialog(ParameterData * par, NineMLComponent * /*comp*/, QWidget *parent) :
     QDialog(parent),

@@ -87,8 +87,34 @@ editSimulators::editSimulators(QWidget *parent) :
     ui->dev_mode_check->setChecked(devMode);
     connect(ui->dev_mode_check, SIGNAL(toggled(bool)), this, SLOT(setDevMode(bool)));
 
-    // TESTING:
-    //connect(ui->test, SIGNAL(clicked()), this, SLOT(testFunc()));
+    // populate script list
+    this->ui->scriptList->setSelectionMode(QAbstractItemView::SingleSelection);
+    settings.beginGroup("pythonscripts");
+    QStringList scripts = settings.childKeys();
+    this->ui->scriptList->addItems(scripts);
+    connect(this->ui->scriptList, SIGNAL(currentItemChanged(QListWidgetItem *,QListWidgetItem *)), this, SLOT(scriptSelectionChanged(QListWidgetItem *,QListWidgetItem *)));
+    if (scripts.size() > 0) {
+        // select first script
+        this->ui->scriptList->setCurrentRow(0);
+    }
+    settings.endGroup();
+
+    // setup text editor
+    QFont font;
+    font.setFamily("Courier");
+    font.setFixedPitch(true);
+    font.setPointSize(10);
+
+    ui->scriptTextBox->setFont(font);
+    ui->scriptTextBox->setTabStopWidth(20);
+
+    // connect buttons for script management
+    connect(this->ui->addScript, SIGNAL(clicked()), this, SLOT(addScript()));
+    connect(this->ui->removeScript, SIGNAL(clicked()), this, SLOT(removeScript()));
+    connect(this->ui->renameScript, SIGNAL(clicked()), this, SLOT(renameScript()));
+
+    // we are disabling renaming for now!
+    this->ui->renameScript->setVisible(false);
 
     redrawEnvVars();
 }
@@ -96,6 +122,134 @@ editSimulators::editSimulators(QWidget *parent) :
 editSimulators::~editSimulators()
 {
     delete ui;
+}
+
+void editSimulators::scriptSelectionChanged(QListWidgetItem * current, QListWidgetItem * previous)
+{
+
+    QSettings settings;
+    // enter the group of scripts (if valid)
+    settings.beginGroup("pythonscripts");
+    // store previous selected script
+    if (previous) {
+        //qDebug() << "storing! " << previous->text() << ": " << this->ui->scriptTextBox->toPlainText();
+        settings.setValue(previous->text(), this->ui->scriptTextBox->toPlainText());
+    }
+    // load current selected script (if valid)
+    this->ui->scriptTextBox->clear();
+    if (current) {
+        //qDebug() << "loading! " << current->text() << ": " << settings.value(current->text(),"error").toString();
+        this->ui->scriptTextBox->setPlainText(settings.value(current->text(),"error").toString());
+    }
+    settings.endGroup();
+}
+
+void editSimulators::addScript()
+{
+
+    QSettings settings;
+    // move into the group of scripts
+    settings.beginGroup("pythonscripts");
+    // save previously selected script
+    if (ui->scriptList->currentItem()) {
+        settings.setValue(ui->scriptList->currentItem()->text(), this->ui->scriptTextBox->toPlainText());
+    }
+
+    bool ok;
+    QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
+                                         tr("Script name"), QLineEdit::Normal,
+                                         "New Script", &ok);
+    // did the dialog return correctly and sensibly?
+    if (ok && !text.isEmpty()) {
+        // check for existing script with the same name
+        QStringList scripts = settings.childKeys();
+        if (scripts.contains(text)) {
+            // name exists - we do not add a script
+            QMessageBox::information(this, tr("Error"), "A script with that name exists", QMessageBox::Ok);
+            // exit the scripts group
+            settings.endGroup();
+            return;
+        }
+        // clear scriptTextBox as we are now adding a new script
+        this->ui->scriptTextBox->clear();
+        // add the script to the QSetting registry
+        settings.setValue(text, "");
+        // refetch the list of scripts
+        scripts = settings.childKeys();
+        // disconnect the scriptList to avoid issues when rewriting
+        disconnect(this->ui->scriptList, 0, 0, 0);
+        // add the new list of scripts
+        this->ui->scriptList->clear();
+        this->ui->scriptList->addItems(scripts);
+        // reconnect the scriptList
+        connect(this->ui->scriptList, SIGNAL(currentItemChanged(QListWidgetItem *,QListWidgetItem *)), this, SLOT(scriptSelectionChanged(QListWidgetItem *,QListWidgetItem *)));
+        // this should always be true as we just added a script, but doesn't hurt to check
+        if (scripts.size() > 0) {
+            // select added script
+            this->ui->scriptList->setCurrentRow(scripts.indexOf(text));
+        }
+
+    }
+    // exit the scripts group
+    settings.endGroup();
+}
+
+void editSimulators::removeScript()
+{
+    QSettings settings;
+    // enter group of scripts
+    settings.beginGroup("pythonscripts");
+    // remove key corresponding to selected script
+    settings.remove(this->ui->scriptList->currentItem()->text());
+    // fetch the new list of scripts
+    QStringList scripts = settings.childKeys();
+    // disconnect the scriptList to avoid issues
+    disconnect(this->ui->scriptList, 0, 0, 0);
+    // clear scripts, then add the updated list
+    this->ui->scriptList->clear();
+    this->ui->scriptList->addItems(scripts);
+    // reconnect the scriptList
+    connect(this->ui->scriptList, SIGNAL(currentItemChanged(QListWidgetItem *,QListWidgetItem *)), this, SLOT(scriptSelectionChanged(QListWidgetItem *,QListWidgetItem *)));
+    // select a new script if there is one (the last script)
+    if (scripts.size() > 0) {
+        // select added script
+        this->ui->scriptList->setCurrentRow(scripts.size() - 1);
+    }
+    // exit the scripts group
+    settings.endGroup();
+}
+
+void editSimulators::renameScript() {
+    bool ok;
+    QString oldName = this->ui->scriptList->currentItem()->text();
+    QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
+                                         tr("Script name"), QLineEdit::Normal,
+                                         this->ui->scriptList->currentItem()->text(), &ok);
+    if (ok && !text.isEmpty()) {
+        if (text == oldName) {
+            // nothing to do
+            return;
+        }
+        QSettings settings;
+        settings.beginGroup("pythonscripts");
+        // check for existing
+        QStringList scripts = settings.childKeys();
+        if (scripts.contains(text)) {
+            QMessageBox::information(this, tr("Error"), "A script with that name exists", QMessageBox::Ok);
+            return;
+        }
+        settings.setValue(text, this->ui->scriptTextBox->toPlainText());
+        scripts = settings.childKeys();
+        disconnect(this->ui->scriptList, 0, 0, 0);
+        this->ui->scriptList->clear();
+        this->ui->scriptList->addItems(scripts);
+        connect(this->ui->scriptList, SIGNAL(currentItemChanged(QListWidgetItem *,QListWidgetItem *)), this, SLOT(scriptSelectionChanged(QListWidgetItem *,QListWidgetItem *)));
+        if (scripts.size() > 0) {
+            // reselect script
+            this->ui->scriptList->setCurrentRow(scripts.indexOf(text));
+        }
+        settings.endGroup();
+    }
 }
 
 void editSimulators::saveAsBinaryToggled(bool toggle)
@@ -115,74 +269,6 @@ void editSimulators::setDevMode(bool toggle)
     QSettings settings;
     settings.setValue("dev_mode_on", toggle);
 }
-
-/*void editSimulators::testFunc()
-{
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Library is where?"), qgetenv("HOME"), tr("All files (*.*)"));
-    QString log = "nrn";
-    QString port = "v";
-    int index = 0;
-
-
-    QLibrary library(fileName);
-    if (!library.load()) {
-        qDebug() << "No dice on loading";
-        return;
-    }
-    typedef int(*testFunc)(int, int);
-
-    testFunc testf = (testFunc)library.resolve("test");
-
-    if (!testf) {
-        qDebug() << "no dice on resolving";
-        return;
-    }
-
-    int out;
-
-    out = testf(3,4);
-
-    qDebug() << out;
-
-    typedef double*(*getLogFunc)(const char*, const char*, const char*, const char*, int, const char*);
-
-    getLogFunc getL = (getLogFunc)library.resolve("getLog");
-
-    if (!getL) {
-        qDebug() << "no dice on resolving";
-        return;
-    }
-
-    QString dirName = QFileDialog::getExistingDirectory(this, "Choose rep dir", qgetenv("HOME"));
-
-    QString error;
-
-    double * data = getL(dirName.toStdString().c_str(), log.toStdString().c_str(), port.toStdString().c_str(), "analog", index, error.toStdString().c_str());
-
-
-    if (data == NULL) {
-        qDebug() << "no dice with return";
-        return;
-    }
-
-    qDebug() << data[0];
-
-    ui->plainTextEdit->appendPlainText("Logs");
-    ui->plainTextEdit->appendPlainText(error);
-
-    QString newLine;
-    if (data[0] > 0) {
-        for (uint i = 0; i < (int) data[0]; ++i) {
-            newLine = newLine.setNum(data[i]);
-            ui->plainTextEdit->appendPlainText(newLine);
-        }
-    }
-
-    free((void *) data);
-
-    library.unload();
-
-}*/
 
 void editSimulators::addEnvVar()
 {

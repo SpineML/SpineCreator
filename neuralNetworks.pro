@@ -51,7 +51,6 @@ SOURCES += main.cpp \
     undocommands.cpp \
     nineml_rootcomponentitem.cpp \
     nineml_alview.cpp \
-    stringify.cpp \
     versionchange_dialog.cpp \
     savenetworkimage_dialog.cpp \
     generate_dialog.cpp \
@@ -72,7 +71,6 @@ HEADERS  += mainwindow.h \
     rootdata.h \
     nineML_classes.h \
     projections.h \
-    stringify.h \
     connection.h \
     connectionmodel.h \
     glconnectionwidget.h \
@@ -83,7 +81,6 @@ HEADERS  += mainwindow.h \
     layoutaliaseditdialog.h \
     layouteditpreviewdialog.h \
     projections.h \
-    vectormodel.h \
     vectormodel.h \
     valuelistdialog.h \
     genericinput.h \
@@ -156,13 +153,13 @@ linux-g++-64{
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
-    LIBS += -L/usr/local/lib/ -L/usr/local/ -L/usr/local/lib/ -lgvc -lgraph -lpython
+    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython -lgvc -lgraph
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /usr/local/include/graphviz
     INCLUDEPATH += /usr/local/include
     INCLUDEPATH += /usr/include/graphviz
-    DEPENDPATH += /usr/local/lib/
-    DEPENDPATH += /usr/local/
+    DEPENDPATH += /usr/local/lib/graphviz
+    DEPENDPATH += /usr/local/lib
 }
 
 OTHER_FILES += \

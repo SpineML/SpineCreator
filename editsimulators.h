@@ -77,6 +77,10 @@ public slots:
     void setGLDetailLevel(int);
     void setDevMode(bool);
     void close();
+    void scriptSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void addScript();
+    void removeScript();
+    void renameScript();
     //void testFunc();
 };
 

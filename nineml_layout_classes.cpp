@@ -23,7 +23,6 @@
 ****************************************************************************/
 
 #include "nineml_layout_classes.h"
-//#include "stringify.h"
 
 NineMLLayout::NineMLLayout(NineMLLayout *data)
 {

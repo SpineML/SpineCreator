@@ -26,7 +26,6 @@
 #include "ui_connectionlistdialog.h"
 #include "connectionmodel.h"
 #include "connection.h"
-//#include "stringify.h"
 
 connectionListDialog::connectionListDialog(csv_connection * conn, QWidget *parent) :
     QDialog(parent),

@@ -23,9 +23,10 @@
 ****************************************************************************/
 
 #include "connection.h"
-//#include "stringify.h"
 #include "cinterpreter.h"
 #include "generate_dialog.h"
+#include "viewVZlayoutedithandler.h"
+#include "filteroutundoredoevents.h"
 
 connection::connection()
 {
@@ -39,6 +40,12 @@ connection::connection()
 connection::~connection() {
     //delete delay->dims;
     delete delay;
+}
+
+int connection::getIndex() {
+
+    return (int) this->type;
+
 }
 
 void connection::writeDelay(QXmlStreamWriter &xmlOut) {
@@ -109,6 +116,20 @@ alltoAll_connection::~alltoAll_connection()
 {
 }
 
+QLayout * alltoAll_connection::drawLayout(rootData *, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
+{
+
+    QHBoxLayout * hlay = new QHBoxLayout();
+    if (viewVZhandler) {
+        connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+    }
+    if (rootLay) {
+        connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+    }
+    return hlay;
+
+}
+
 void alltoAll_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     xmlOut.writeStartElement("AllToAllConnection");
@@ -163,6 +184,20 @@ onetoOne_connection::~onetoOne_connection()
 {
 }
 
+QLayout * onetoOne_connection::drawLayout(rootData *, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
+{
+
+    QHBoxLayout * hlay = new QHBoxLayout();
+    if (viewVZhandler) {
+        connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+    }
+    if (rootLay) {
+        connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+    }
+    return hlay;
+
+}
+
 void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     xmlOut.writeStartElement("OneToOneConnection");
@@ -212,8 +247,59 @@ fixedProb_connection::fixedProb_connection()
     seed = 123;
 }
 
+
 fixedProb_connection::~fixedProb_connection()
 {
+}
+
+/*!
+ * \brief fixedProb_connection::drawLayout
+ * \param data
+ * \param viewVZhandler
+ * \param rootLay
+ * \return
+ *
+ * Draw the UI for the Fixed Probability connection - caller can be either the Visualiser layout handler, or the Network layout
+ * handler, so we allow both to be passed and ignore the one set to NULL
+ */
+QLayout * fixedProb_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay) {
+
+    // draw up probability changer
+    QHBoxLayout * hlay = new QHBoxLayout;
+
+    QDoubleSpinBox *pSpin = new QDoubleSpinBox;
+    pSpin->setRange(0, 1);
+    pSpin->setSingleStep(0.1);
+    pSpin->setMaximumWidth(60);
+    pSpin->setDecimals(3);
+    pSpin->setValue(this->p);
+    pSpin->setProperty("valToChange", "1");
+    pSpin->setProperty("conn", "true");
+    pSpin->setToolTip("connection probability");
+    pSpin->setProperty("ptr", qVariantFromValue((void *) this));
+    pSpin->setProperty("action","changeConnProb");
+    pSpin->setFocusPolicy(Qt::StrongFocus);
+    pSpin->installEventFilter(new FilterOutUndoRedoEvents);
+    connect(pSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
+    hlay->addWidget(new QLabel("Probability: "));
+    if (data->main->viewVZ.OpenGLWidget) {
+        connect(pSpin, SIGNAL(editingFinished()), data->main->viewVZ.OpenGLWidget, SLOT (parsChangedProjection()));
+    }
+    // do connections to other classes
+    if (viewVZhandler) {
+        connect(viewVZhandler, SIGNAL(deleteProperties()), pSpin, SLOT(deleteLater()));
+        connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+        connect(viewVZhandler, SIGNAL(deleteProperties()), hlay->itemAt(hlay->count()-1)->widget(), SLOT(deleteLater()));
+    }
+    if (rootLay) {
+        connect(rootLay, SIGNAL(deleteProperties()), pSpin, SLOT(deleteLater()));
+        connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+        connect(rootLay, SIGNAL(deleteProperties()), hlay->itemAt(hlay->count()-1)->widget(), SLOT(deleteLater()));
+    }
+    hlay->addWidget(pSpin);
+
+    return hlay;
+
 }
 
 void fixedProb_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
@@ -271,6 +357,8 @@ csv_connection::csv_connection() {
     type = CSV;
     numRows = 0;
     setUniqueName();
+    // no connectivity generator in constructor
+    generator = NULL;
 
     this->values.push_back("src");
     this->values.push_back("dst");
@@ -303,10 +391,92 @@ csv_connection::csv_connection() {
 
 csv_connection::~csv_connection() {
 
+    // remove generator
+    if (this->generator) {
+        delete this->generator;
+        this->generator = NULL;
+    }
+
     // remove memory usage
 
     if (this->file.isOpen()) {
         this->file.close();
+    }
+
+}
+
+int csv_connection::getIndex() {
+
+    if (!this->generator) {
+        return (int) this->type;
+    } else {
+        return this->generator->getIndex();
+    }
+
+}
+
+QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay) {
+
+    // if we do not have a generator...
+    if (this->generator == NULL) {
+
+        QHBoxLayout * hlay = new QHBoxLayout();
+
+        QTableView *tableView = new QTableView();
+
+        csv_connectionModel *connMod = new csv_connectionModel();
+        connMod->setConnection(this);
+        tableView->setModel(connMod);
+
+        hlay->addWidget(tableView);
+
+        QPushButton *import = new QPushButton("Import");
+        import->setMaximumWidth(70);
+        import->setMaximumHeight(28);
+        import->setToolTip("Import the explicit value list");
+        import->setProperty("ptr", qVariantFromValue((void *) this));
+
+        hlay->addWidget(import);
+
+        // add connection:
+        connect(import, SIGNAL(clicked()), data, SLOT(editConnections()));
+
+       // set up GL:
+        if (viewVZhandler) {
+            connect(viewVZhandler, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));
+            if (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel() != (QAbstractTableModel *)0)
+            {
+                // don't fetch data if we already have for this connection
+                if (((csv_connectionModel *) viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel())->getConnection() == this  && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.size() == this->getNumRows()) {
+                    viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
+                } else {
+                    viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
+                    viewVZhandler->viewVZ->OpenGLWidget->getConnections();
+                }
+            } else {
+                viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
+                viewVZhandler->viewVZ->OpenGLWidget->getConnections();
+            }
+
+            connect(connMod, SIGNAL(dataChanged(QModelIndex,QModelIndex)), viewVZhandler->viewVZ->OpenGLWidget, SLOT(connectionDataChanged(QModelIndex,QModelIndex)));
+            connect(tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), viewVZhandler->viewVZ->OpenGLWidget, SLOT(connectionSelectionChanged(QItemSelection,QItemSelection)));
+            connect(viewVZhandler, SIGNAL(deleteProperties()), import, SLOT(deleteLater()));
+            connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+        }
+        if (rootLay) {
+            //
+            connect(rootLay, SIGNAL(deleteProperties()), import, SLOT(deleteLater()));
+            connect(rootLay, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));
+            connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+        }
+
+        return hlay;
+
+    } else {
+
+        // we have a generator, so pass on the task of drawing the layout to it!
+        return generator->drawLayout(data, viewVZhandler, rootLay);
+
     }
 
 }
@@ -316,6 +486,8 @@ csv_connection::csv_connection(QString fileName) {
     type = CSV;
     numRows = 0;
     setUniqueName();
+    // no connectivity generator in constructor
+    generator = NULL;
 
     this->values.push_back("src");
     this->values.push_back("dst");
@@ -493,6 +665,38 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     }
 
     xmlOut.writeEndElement(); // connectionList
+
+}
+
+/*!
+ * \brief csv_connection::write_metadata_xml
+ * \param meta
+ * \param e
+ *
+ * Accessor for getting the connectivity generator to write its description into the Project
+ * metaData.xml file.
+ */
+void csv_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e) {
+
+    // pass this task on to the generator connection
+    if (this->generator != NULL) {
+        this->generator->write_metadata_xml(meta, e);
+    }
+
+}
+
+/*!
+ * \brief csv_connection::read_metadata_xml
+ * \param e
+ *
+ * Read the metaData for a connection generator - may be blank if there is not one
+ */
+void csv_connection::read_metadata_xml(QDomNode &e) {
+
+    // pass this task on to the generator connection
+    if (this->generator != NULL) {
+        this->generator->read_metadata_xml(e);
+    }
 
 }
 
@@ -983,384 +1187,19 @@ void csv_connection::setData(int row, int col, float value) {
     file.flush();
 }
 
+void csv_connection::clearData() {
+    file.remove();
+    // open the storage file
+    if( !this->file.open( QIODevice::ReadWrite ) ) {
+        QMessageBox msgBox;
+        msgBox.setText("Could not open output file for conversion");
+        msgBox.exec();
+        return;}
+}
 
 void csv_connection::abortChanges() {
     changes.clear();
 }
-
-distanceBased_connection::distanceBased_connection()
-{
-    type = DistanceBased;
-    this->isAList = false;
-    selfConnections = false;
-    hasChanged = true;
-    srcSize = 0;
-    dstSize = 0;
-}
-
-distanceBased_connection::~distanceBased_connection()
-{
-}
-
-bool distanceBased_connection::changed() {
-    if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
-        return true;
-    } else {
-        return hasChanged;
-    }
-}
-
-bool distanceBased_connection::changed(QString newEquation) {
-
-    if (newEquation != equation && newEquation.size() > 0) {
-        return true;
-    } else if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
-        return true;
-    } else {
-        return hasChanged;
-    }
-}
-
-void distanceBased_connection::setUnchanged(bool state) {
-    if (state) {
-        srcSize = src->numNeurons;
-        dstSize = dst->numNeurons;
-    }
-    hasChanged = !state;
-}
-
-void distanceBased_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
-
-    // are we outputting for simulation
-    bool forSim = false;
-    QSettings settings;
-    forSim = settings.value("export_for_simulation", "0").toBool();
-
-    if (!this->isAList && !forSim) {
-        xmlOut.writeStartElement("DistanceBasedConnection");
-        // extra stuff
-        xmlOut.writeStartElement("Probability");
-
-        xmlOut.writeEndElement(); // Probability
-        this->writeDelay(xmlOut);
-        xmlOut.writeEndElement(); // DistanceBasedConnection
-    }
-
-    else {
-
-        xmlOut.writeStartElement("ConnectionList");
-
-        // generate connections:
-        QMutex * connGenerationMutex = new QMutex();
-
-        if (changed()) {
-            generate_dialog generate(this, this->src, this->dst, connections, connGenerationMutex, (QWidget *)NULL);
-            bool retVal = generate.exec();
-            if (!retVal)
-                return;
-            setUnchanged(true);
-        }
-
-        delete connGenerationMutex;
-
-        if (connections.size() == 0) {
-            QMessageBox msgBox;
-            msgBox.setText("Error: no connections generated for Distance-based Connection");
-            msgBox.exec();
-            return;
-        }
-
-        // load path
-        bool exportBinary = false;
-        if (settings.value("export_for_simulation", "error").toBool()) {
-            exportBinary = settings.value("export_binary").toBool();
-        }
-
-        // loop through connections writing them out
-         if (!exportBinary || connections.size() < 30) {
-            for (uint i=0; i < connections.size(); ++i) {
-
-                xmlOut.writeEmptyElement("Connection");
-
-                xmlOut.writeAttribute("src_neuron", QString::number(float(connections[i].src)));
-                xmlOut.writeAttribute("dst_neuron", QString::number(float(connections[i].dst)));
-
-                if (!this->delayEquation.isEmpty()) {
-                    xmlOut.writeAttribute("delay", QString::number(float(connections[i].metric)));
-                }
-            }
-         }
-         else {
-
-           QUuid uuid = QUuid::createUuid();
-           QString export_filename = uuid.toString();
-           export_filename.chop(1);
-           export_filename[0] = 'C';
-           export_filename += ".bin"; // need to generate a unique filename - preferably a descriptive one... but not for now!
-           QString saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + export_filename);
-
-           // add a tag to the binary file
-           xmlOut.writeEmptyElement("BinaryFile");
-           xmlOut.writeAttribute("file_name", export_filename);
-           xmlOut.writeAttribute("num_connections", QString::number(float(connections.size())));
-           if (!this->delayEquation.isEmpty()) {
-                xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(0)));
-           } else {
-                xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(1)));
-           }
-
-           // re-write the data
-
-           // write out
-           QFile export_file(saveFileName);
-           if (!export_file.open( QIODevice::WriteOnly)) {
-               QMessageBox msgBox;
-               msgBox.setText("Error creating file - is there sufficient disk space?");
-               msgBox.exec();
-               return;
-           }
-
-           QDataStream access(&export_file);
-           for (uint i = 0; i < connections.size(); ++i) {
-               access.writeRawData((char*) &connections[i].src, sizeof(uint));
-               access.writeRawData((char*) &connections[i].dst, sizeof(uint));
-
-               if (!this->delayEquation.isEmpty()) {
-                   access.writeRawData((char*) &connections[i].metric, sizeof(float));
-               }
-           }
-
-       }
-
-
-        if (this->delayEquation.isEmpty()) {
-            this->writeDelay(xmlOut);
-        }
-
-        xmlOut.writeEndElement(); // ConnectionList
-    }
-
-
-}
-
-void distanceBased_connection::import_parameters_from_xml(QDomNode &e) {
-
-    QDomNodeList delayProp = e.toElement().elementsByTagName("Delay");
-    if (delayProp.size() == 1) {
-
-        QDomNode n = delayProp.item(0);
-
-        QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
-        if (propVal.size() == 1) {
-            this->delay->currType = FixedValue;
-            this->delay->value.resize(1,0);
-            this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
-        }
-        propVal = n.toElement().elementsByTagName("UniformDistribution");
-        if (propVal.size() == 1) {
-            this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
-            this->delay->value[0] = 1;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
-        }
-        propVal = n.toElement().elementsByTagName("NormalDistribution");
-        if (propVal.size() == 1) {
-            this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
-            this->delay->value[0] = 2;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
-        }
-
-    }
-}
-/*
-void distanceBased_connection::generate_connections(population * src, population * dst, vector < conn > &conns) {
-
-    // if we have something to do!
-    if (!this->equation.isEmpty()) {
-
-        conns.clear();
-
-        // if src or dst hasn't generated locations then do it
-        QString errorLog;
-        //if (src->layoutType->locations.size() == 0) {
-                src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
-                if (!errorLog.isEmpty())
-                    return;
-        //}
-        //if (dst->layoutType->locations.size() == 0) {
-                dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
-                if (!errorLog.isEmpty())
-                    return;
-        //}
-
-        // create the variable list:
-        vector < lookup > varList;
-
-        varList.push_back(lookup("d", 0));
-
-        // provided:
-        varList.push_back(lookup("e", M_E));
-        varList.push_back(lookup("pi", M_PI));
-
-        // create stack
-        vector < valop > stack;
-        errorLog = createStack(this->equation, varList, &stack);
-
-        // if the stack compiles
-        if (errorLog.isEmpty()) {
-
-            float total_ops = src->layoutType->locations.size();
-
-            for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
-                for (uint j = 0; j < dst->layoutType->locations.size(); ++j) {
-                    // set d
-                    varList[0].value = sqrt(pow(dst->layoutType->locations[j].x - src->layoutType->locations[i].x,2)+ \
-                                            pow(dst->layoutType->locations[j].y - src->layoutType->locations[i].y,2)+ \
-                                            pow(dst->layoutType->locations[j].z - src->layoutType->locations[i].z,2));
-                    //qDebug() << src->name << " " << dst->name << " " << dst->layoutType->locations[j].x << " " << src->layoutType->locations[i].x;
-                    float result = interpretMaths(stack);
-                    //qDebug() << result;
-                    if (result > 0) {
-                        conn newConn;
-                        newConn.src = i;
-                        newConn.dst = j;
-                        conns.push_back(newConn);
-                    }
-
-
-                }
-                emit progress((int) round(float(i)/total_ops * 100.0));
-            }
-        }
-    }
-
-}*/
-
-
-void distanceBased_connection::generate_connections() {
-
-    // if we have something to do!
-    if (!this->equation.isEmpty()) {
-
-        conns->clear();
-        errorLog.clear();
-
-        // if src or dst hasn't generated locations then do it
-        //if (src->layoutType->locations.size() == 0) {
-                src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
-                if (!errorLog.isEmpty()) {
-                     this->moveToThread(QApplication::instance()->thread());
-                     emit connectionsDone();
-                     return;
-                }
-        //}
-        //if (dst->layoutType->locations.size() == 0) {
-                dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
-                if (!errorLog.isEmpty()) {
-                    this->moveToThread(QApplication::instance()->thread());
-                    emit connectionsDone();
-                    return;
-                }
-        //}
-
-        // create the variable list:
-        vector < lookup > varList;
-
-        varList.push_back(lookup("d", 0));
-        varList.push_back(lookup("xs_abs", 0));
-        varList.push_back(lookup("ys_abs", 0));
-        varList.push_back(lookup("zs_abs", 0));
-
-
-        // provided:
-        varList.push_back(lookup("e", M_E));
-        varList.push_back(lookup("pi", M_PI));
-
-        // create stack
-        vector < valop > stack;
-        errorLog = createStack(this->equation, varList, &stack);
-
-        // if delays...
-        vector < valop > delayStack;
-        if (!this->delayEquation.isEmpty()) {
-            errorLog = createStack(this->delayEquation, varList, &delayStack);
-        }
-
-        // if the stack compiles
-        if (errorLog.isEmpty()) {
-
-            float total_ops = src->layoutType->locations.size();
-            int scale_val = round(10000000.0/(src->layoutType->locations.size()*dst->layoutType->locations.size()));
-
-            int oldprogress = 0;
-
-            for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
-
-                for (uint j = 0; j < dst->layoutType->locations.size(); ++j) {
-                    // set d
-                    varList[0].value = sqrt(pow(dst->layoutType->locations[j].x - src->layoutType->locations[i].x,2)+ \
-                                            pow(dst->layoutType->locations[j].y - src->layoutType->locations[i].y,2)+ \
-                                            pow(dst->layoutType->locations[j].z - src->layoutType->locations[i].z,2));
-                    varList[1].value = src->layoutType->locations[i].x;
-                    varList[2].value = src->layoutType->locations[i].y;
-                    varList[3].value = src->layoutType->locations[i].z;
-                    // HACK!!! - no self connections for now
-                    if (varList[0].value < 0.0001 && !this->selfConnections) {
-                        continue;
-                    }
-                    //qDebug() << src->name << " " << dst->name << " " << dst->layoutType->locations[j].x << " " << src->layoutType->locations[i].x;
-                    float result = interpretMaths(stack);
-                    //qDebug() << result;
-                    if (result > 0) {
-                        mutex->lock();
-                        conn newConn;
-                        newConn.src = i;
-                        newConn.dst = j;
-                        if (!delayEquation.isEmpty()) {
-                            newConn.metric = interpretMaths(delayStack);
-                        }
-                        conns->push_back(newConn);
-                        mutex->unlock();
-                    }
-                }
-
-
-                if (round(float(i)/total_ops * 100.0) > oldprogress) {
-                    emit progress((int) round(float(i)/total_ops * 100.0));
-                    oldprogress = round(float(i)/total_ops * 100.0)+scale_val;
-                }
-            }
-        }
-    }
-    this->moveToThread(QApplication::instance()->thread());
-    emit connectionsDone();
-}
-
-void distanceBased_connection::convertToList(bool check) {
-
-    // instantiate the connection for simulators etc...
-    this->isAList = check;
-    systemObject * ptr;
-    ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
-    src = (population *) ptr;
-    ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
-    dst = (population *) ptr;
-
-}
-
-bool distanceBased_connection::isList() {
-
-    return this->isAList;
-
-}
-
-
-
 
 kernel_connection::kernel_connection()
 {
@@ -1380,6 +1219,10 @@ kernel_connection::kernel_connection()
 
 kernel_connection::~kernel_connection()
 {
+}
+
+QLayout * kernel_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay) {
+    return new QVBoxLayout();
 }
 
 bool kernel_connection::changed() {
@@ -1668,9 +1511,7 @@ bool kernel_connection::isList() {
 
 }
 
-
-
-pythonscript_connection::pythonscript_connection()
+pythonscript_connection::pythonscript_connection(population * src, population * dst, csv_connection *  conn_targ)
 {
     type = Python;
     this->isAList = false;
@@ -1680,14 +1521,334 @@ pythonscript_connection::pythonscript_connection()
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;
+    this->src = src;
+    this->dst = dst;
+    this->connection_target = conn_targ;
 }
 
 pythonscript_connection::~pythonscript_connection()
 {
 }
 
+int pythonscript_connection::getIndex() {
+
+    QSettings settings;
+    settings.beginGroup("pythonscripts");
+    QStringList scripts = settings.childKeys();
+    settings.endGroup();
+
+    // sanity
+    int index = scripts.indexOf(this->scriptName);
+    if (index == -1) {
+        qDebug() << "Error with script " << this->scriptName;
+    }
+
+    // use Python as the base index and increment by the script number
+    return (int) this->type + index;
+}
+
+QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
+{
+
+    // refetch the script text
+    QSettings settings;
+    // enter group of scripts
+    settings.beginGroup("pythonscripts");
+    // find the script by name
+    QString script = settings.value(this->scriptName, "has been deleted").toString();
+
+    if (script == "has been deleted") {
+        // add it back in - just to be annoying
+        settings.setValue(this->scriptName, this->scriptText);
+    } else {
+        this->scriptText = script;
+    }
+    settings.endGroup();
+
+    // most draw stuff is the same if we are a generator or not...
+    QVBoxLayout * vlay = new QVBoxLayout;
+
+    // check if we are a generator...
+    if (this->connection_target == NULL) {
+        // NOT a generator
+        QLabel * label = new QLabel("Oops");
+        vlay->addWidget(label);
+    } else {
+        // ARE a generator
+        // we have a python script to generate the connections
+
+        QHBoxLayout * buttons = new QHBoxLayout;
+        vlay->addLayout(buttons);
+        if (viewVZhandler) {
+            // add the delete signal
+            connect(viewVZhandler, SIGNAL(deleteProperties()), buttons, SLOT(deleteLater()));
+        }
+        if (rootLay) {
+            // add the delete signal
+            connect(rootLay, SIGNAL(deleteProperties()), buttons, SLOT(deleteLater()));
+        }
+
+        // add a 'Generate connectivity' button
+        QPushButton * gen = new QPushButton("Generate");
+        if (!this->changed()) {
+            gen->setEnabled(false);
+        }
+        // should we enable the button?
+        //gen->setEnabled(this->scriptValidates);
+        // connect up to the Connection object
+        connect(gen, SIGNAL(clicked(bool)), this, SLOT(setUnchanged(bool)));
+        connect(gen, SIGNAL(clicked()), this, SLOT(regenerateConnections()));
+        connect(gen, SIGNAL(clicked()), data, SLOT(reDrawAll()));
+        connect(this, SIGNAL(setGenEnabled(bool)), gen, SLOT(setEnabled(bool)));
+        if (viewVZhandler) {
+            // redraw to update glview
+            connect(gen, SIGNAL(clicked()), data->main->viewVZ.OpenGLWidget, SLOT(parsChangedProjection()));
+            // add the delete signal
+            connect(viewVZhandler, SIGNAL(deleteProperties()), gen, SLOT(deleteLater()));
+        }
+        if (rootLay) {
+            // add the delete signal
+            connect(rootLay, SIGNAL(deleteProperties()), gen, SLOT(deleteLater()));
+        }
+        // add a connection so we can disable the button if the script changes
+        // add to the HBoxLayout
+        buttons->addWidget(gen);
+        buttons->addStretch();
+
+        // if we have a weight produced add a combobox (which is safe as it never deletes itself)
+        if (this->hasWeight && !this->getPropList().isEmpty()) {
+            QLabel * wLabel = new QLabel("Weight:");
+            if (viewVZhandler) {
+                // add the delete signal
+                connect(viewVZhandler, SIGNAL(deleteProperties()), wLabel, SLOT(deleteLater()));
+            }
+            if (rootLay) {
+                // add the delete signal
+                connect(rootLay, SIGNAL(deleteProperties()), wLabel, SLOT(deleteLater()));
+            }
+            buttons->addWidget(wLabel);
+            QComboBox * weightTarget = new QComboBox;
+            weightTarget->setFocusPolicy(Qt::StrongFocus);
+            weightTarget->installEventFilter(new FilterOutUndoRedoEvents);
+            // find the WeightUpdate for this Connection
+            QStringList list = this->getPropList();
+            list.push_front("-no weight set-");
+            // add the props to the combobox
+            weightTarget->addItems(list);
+            // now set the prop to the currently selected one
+            for (int i = 0; i < list.size();++i) {
+                if (this->weightProp == list[i]) {
+                    // set index
+                    weightTarget->setCurrentIndex(i);
+                }
+            }
+            if (viewVZhandler) {
+                // add the delete signal
+                connect(viewVZhandler, SIGNAL(deleteProperties()), weightTarget, SLOT(deleteLater()));
+            }
+            if (rootLay) {
+                // add the delete signal
+                connect(rootLay, SIGNAL(deleteProperties()), weightTarget, SLOT(deleteLater()));
+            }
+            // connect up so we can change the par
+            weightTarget->setProperty("action", "changePythonScriptProp");
+            weightTarget->setProperty("ptr", qVariantFromValue((void *) this));
+            weightTarget->setToolTip("Select a property to be assigned the script weight values");
+            // add the change signal
+            connect(weightTarget, SIGNAL(currentIndexChanged(int)), data, SLOT(updatePar()));
+            // enable the generate button
+            connect(weightTarget, SIGNAL(currentIndexChanged(int)), this, SLOT(enableGen(int)));
+            // add to the HBoxLayout
+            buttons->addWidget(weightTarget);
+
+        }
+
+
+        // clean up the interface by adding an expanding spacer to the end of the line
+        buttons->addStretch();
+
+        // create the grid layout for the script parameters
+        QGridLayout * grid = new QGridLayout;
+        vlay->addLayout(grid);
+        // add the delete signal
+        if (viewVZhandler) {
+            // add the delete signal
+            connect(viewVZhandler, SIGNAL(deleteProperties()), grid, SLOT(deleteLater()));
+        }
+        if (rootLay) {
+            // add the delete signal
+            connect(rootLay, SIGNAL(deleteProperties()), grid, SLOT(deleteLater()));
+        }
+
+        int maxCols = 1;
+
+        // first add the items that have locations
+        for (int i = 0; i < this->parNames.size(); ++i) {
+            // if we have a position
+            if (this->parPos[i].x() != -1) {
+                if (grid->itemAtPosition(this->parPos[i].x(), this->parPos[i].y())) {
+                    // grid slot is taken! Get rid of Pos
+                    this->parPos[i] = QPoint(-1,-1);
+                } else {
+                    // grid slot is free, so add the par
+                    QHBoxLayout * parBox = new QHBoxLayout;
+                    // add the delete signal
+                    if (viewVZhandler) {
+                        // add the delete signal
+                        connect(viewVZhandler, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
+                    }
+                    if (rootLay) {
+                        // add the delete signal
+                        connect(rootLay, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
+                    }
+                    QLabel * name = new QLabel;
+                    name->setText(this->parNames[i] + QString("="));
+                    if (viewVZhandler) {
+                        // add the delete signal
+                        connect(viewVZhandler, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
+                    }
+                    if (rootLay) {
+                        // add the delete signal
+                        connect(rootLay, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
+                    }
+                    parBox->addWidget(name);
+                    QDoubleSpinBox * val = new QDoubleSpinBox;
+                    val->setMaximum(100000000.0);
+                    val->setMinimum(-100000000.0);
+                    val->setDecimals(5);
+                    val->setMinimumWidth(120);
+                    val->setValue(this->parValues[i]);
+                    val->setProperty("par_name", this->parNames[i]);
+                    val->setProperty("action", "changePythonScriptPar");
+                    val->setProperty("ptr", qVariantFromValue((void *) this));
+                    val->setFocusPolicy(Qt::StrongFocus);
+                    val->installEventFilter(new FilterOutUndoRedoEvents);
+                    if (viewVZhandler) {
+                        // add the delete signal
+                        connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                    }
+                    if (rootLay) {
+                        // add the delete signal
+                        connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                    }
+                    // add the change signal
+                    connect(val, SIGNAL(valueChanged(double)), data, SLOT(updatePar()));
+                    // enable the generator button
+                    connect(val, SIGNAL(valueChanged(double)), this, SLOT(enableGen(double)));
+                    parBox->addWidget(val);
+                    parBox->addStretch();
+                    // now add this to the grid
+                    grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
+                    // get our grid width
+                    if (this->parPos[i].y()>maxCols) {
+                        maxCols = this->parPos[i].y();
+                    }
+                }
+            }
+        }
+        // then add the items that do not have locations
+        for (int i = 0; i < this->parNames.size(); ++i) {
+            // if we have a position
+            if (this->parPos[i].x() == -1) {
+                bool inserted = false;
+                int row = 0;
+                // while we have not placed the par
+                while (!inserted) {
+                    // for each column
+                    for (int col = 0; col < maxCols; ++col) {
+                        if (!grid->itemAtPosition(row, col)) {
+                            inserted = true;
+                            // grid slot is free, so add the par
+                            QHBoxLayout * parBox = new QHBoxLayout;
+                            if (viewVZhandler) {
+                                // add the delete signal
+                                connect(viewVZhandler, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
+                            }
+                            if (rootLay) {
+                                // add the delete signal
+                                connect(rootLay, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
+                            }
+                            QLabel * name = new QLabel;
+                            name->setText(this->parNames[i] + QString("="));
+                            if (viewVZhandler) {
+                                // add the delete signal
+                                connect(viewVZhandler, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
+                            }
+                            if (rootLay) {
+                                // add the delete signal
+                                connect(rootLay, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
+                            }
+                            parBox->addWidget(name);
+                            QDoubleSpinBox * val = new QDoubleSpinBox;
+                            val->setMaximum(100000000.0);
+                            val->setMinimum(-100000000.0);
+                            val->setDecimals(5);
+                            val->setMinimumWidth(120);
+                            val->setValue(this->parValues[i]);
+                            val->setProperty("par_name", this->parNames[i]);
+                            val->setProperty("action", "changePythonScriptPar");
+                            val->setProperty("ptr", qVariantFromValue((void *) this));
+                            val->setFocusPolicy(Qt::StrongFocus);
+                            val->installEventFilter(new FilterOutUndoRedoEvents);
+                            if (viewVZhandler) {
+                                // add the delete signal
+                                connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                            }
+                            if (rootLay) {
+                                // add the delete signal
+                                connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                            }
+                            // add the change signal
+                            connect(val, SIGNAL(valueChanged(double)), data, SLOT(updatePar()));
+                            // enable the generator button
+                            connect(val, SIGNAL(valueChanged(double)), this, SLOT(enableGen(double)));
+                            parBox->addWidget(val);
+                            parBox->addStretch();
+                            // now add this to the grid
+                            grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
+                        }
+                    }
+                    // increment the row
+                    ++row;
+                }
+            }
+        }
+    }
+
+    return vlay;
+
+}
+
+void pythonscript_connection::enableGen(double) {
+
+    emit setGenEnabled(true);
+
+}
+
+void pythonscript_connection::enableGen(int) {
+
+    emit setGenEnabled(true);
+
+}
+
 bool pythonscript_connection::changed() {
-    if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
+    // check all pars
+    bool par_changed = false;
+    for (int i = 0; i <this->lastGeneratedParValues.size(); ++i) {
+        if (this->lastGeneratedParValues[i] != this->parValues[i]) {
+            par_changed = true;
+        }
+    }
+
+    if (this->weightProp != this->lastGeneratedWeightProp) {
+        par_changed = true;
+    }
+
+    if (this->scriptText != this->lastGeneratedScriptText) {
+        par_changed = true;
+    }
+
+    if (src->numNeurons != srcSize || dst->numNeurons != dstSize || par_changed) {
         return true;
     } else {
         return hasChanged;
@@ -1698,6 +1859,11 @@ void pythonscript_connection::setUnchanged(bool state) {
     if (state) {
         srcSize = src->numNeurons;
         dstSize = dst->numNeurons;
+        for (int i = 0; i <this->lastGeneratedParValues.size(); ++i) {
+            this->lastGeneratedParValues[i] = this->parValues[i];
+        }
+        this->lastGeneratedWeightProp = this->weightProp;
+        this->lastGeneratedScriptText = scriptText;
     }
     hasChanged = !state;
 }
@@ -1739,204 +1905,179 @@ void pythonscript_connection::configureFromScript(QString script) {
                 this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
             }
         }
-    }
-    // place old values into new lists
-    for (int i = 0; i < this->parNames.size(); ++i) {
-        for (int j = 0; j < oldNames.size(); ++j) {
-            if (this->parNames[i] == oldNames[j]) {
-                this->parValues[i] = oldValues[j];
-            }
+        if (lines[i].contains("#HASDELAY")) {
+            this->hasDelay = true;
+        }
+        if (lines[i].contains("#HASWEIGHT")) {
+            this->hasWeight = true;
+            qDebug() << "Has Weight";
         }
     }
-}
+    // clear the last par vals
+    this->lastGeneratedParValues.clear();
+    this->lastGeneratedParValues.resize(this->parValues.size());
+    this->lastGeneratedParValues.fill(0);
 
-void pythonscript_connection::configureFromTextEdit() {
-    // grab a pointer to the source and use it to get the plain text script.
-    QTextEdit * edit = (QTextEdit *) sender()->property("textEdit").value<void *>();
-    this->configureFromScript(edit->toPlainText());
-    // attempt to regenerate the connection in case we have an error
-    this->scriptValidates = false;
-    this->regenerateConnections();
-    if (!this->scriptValidates) {
-        // failure
-        return;
-    }
-    // if we have lost the weight prop then clear any existing prop name...
-    if (!this->hasWeight) {
-        this->weightProp.clear();
-    }
 }
-
-/*!
- * \brief pythonscript_connection::configureAfterLoad
- * Configure the Python Script Connection after loading the file
- */
-void pythonscript_connection::configureAfterLoad() {
-    this->configureFromScript(this->scriptText);
-    // attempt to regenerate the connection in case we have an error
-    this->scriptValidates = false;
-    this->regenerateConnections();
-    if (!this->scriptValidates) {
-        // failure
-        return;
-    }
-    // if we have lost the weight prop then clear any existing prop name...
-    if (!this->hasWeight) {
-        this->weightProp.clear();
-    }
-}
-
 
 void pythonscript_connection::regenerateConnections() {
 
-    this->setUnchanged(false);
+    // refetch the script text
+    QSettings settings;
+    // enter group of scripts
+    settings.beginGroup("pythonscripts");
+    // find the script by name
+    QString script = settings.value(this->scriptName, "has been deleted").toString();
+
+    if (script == "has been deleted") {
+        // add it back in - just to be annoying
+        settings.setValue(this->scriptName, this->scriptText);
+    } else {
+        this->scriptText = script;
+    }
+    settings.endGroup();
+
+    // test if required
+    if (!this->changed()) {
+        return;
+    }
 
     // generate connections:
     QMutex * connGenerationMutex = new QMutex();
 
-    //if (changed()) {
-        setUnchanged(false);
-        this->connections.clear();
-        generate_dialog generate(this, this->src, this->dst, this->connections, connGenerationMutex, (QWidget *)NULL);
-        bool retVal = generate.exec();
-        if (!retVal) {
-            return;
-        }
-    //}
+    this->connections.clear();
+    generate_dialog generate(this, this->src, this->dst, this->connections, connGenerationMutex, (QWidget *)NULL);
+    bool retVal = generate.exec();
+    if (!retVal) {
+        return;
+    }
 
     if (connections.size() == 0) {
-        QMessageBox msgBox;
-        msgBox.setText("Error: no connections generated for Python Script Connection");
-        msgBox.exec();
-        return;
+        if (this->connection_target) {
+            if (this->connection_target->getNumRows() == 0) {
+                QMessageBox msgBox;
+                msgBox.setText("Error: no connections generated for Python Script Connection");
+                msgBox.exec();
+                delete connGenerationMutex;
+                return;
+            }
+        }
     }
 
     delete connGenerationMutex;
 }
 
-void pythonscript_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
+void pythonscript_connection::write_node_xml(QXmlStreamWriter &) {
 
-    // are we outputting for simulation
-    bool forSim = false;
+    // this should never be called
+
+}
+
+void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e) {
+
+    // write out the settings for this generator
+
+    // write out the script and parameters
+    QDomElement script = meta.createElement( "Script" );
+    e.appendChild(script);
+
+    // script text
+    script.setAttribute("text", this->scriptText);
+
+    script.setAttribute("name", this->scriptName);
+
+    // parameter values for the script
+    for (int i = 0; i < this->parNames.size(); ++i) {
+        script.setAttribute(this->parNames[i], QString::number(this->parValues[i]));
+    }
+
+    // write out configuration information
+    QDomElement config = meta.createElement( "Config" );
+    e.appendChild(config);
+
+    if (!this->weightProp.isEmpty()) {
+        config.setAttribute("weightProperty", this->weightProp);
+    }
+
+}
+
+void pythonscript_connection::read_metadata_xml(QDomNode &e) {
+
+    // read in the settings for this generator
+    QDomNode node = e.firstChild();
+
+    while(!node.isNull()) {
+
+        // read in the script
+        if (node.toElement().tagName() == "Script") {
+
+            // fetch the script name
+            this->scriptName = node.toElement().attribute("name", "");
+
+            // load in the python script
+            this->scriptText = node.toElement().attribute("text", "");
+
+            // find the parameters from the script
+            if (this->scriptText.size() > 0) {
+                this->configureFromScript(this->scriptText);
+            }
+
+            // load the parameters from the metadata
+            for (int i = 0; i < this->parNames.size(); ++i) {
+                this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
+            }
+
+        }
+
+        // read the config metadata
+        if (node.toElement().tagName() == "Config") {
+            // get the name of the weight property associated with the script
+            this->weightProp = node.toElement().attribute("weightProperty", "");
+        }
+
+        node = node.nextSibling();
+    }
+
+    // now try to match the script to a script in the library - if you can't then add the script
     QSettings settings;
-    QString sim = settings.value("export_for_simulation", "no").toString();
+    // enter group of scripts
+    settings.beginGroup("pythonscripts");
+    // fetch a list of scripts
+    QStringList scripts = settings.childKeys();
+    // first try to match by name and text
+    // if this does not evaluate we have a match and can leave it at that
+    if (settings.value(this->scriptName,"not found") != this->scriptText) {
+        // no match found!
+        // test the existing scripts for a match
+        bool matchFound = false;
+        for (int i = 0; i < scripts.size(); ++i) {
+            if (settings.value(scripts[i],"not found") == this->scriptText) {
+                this->scriptName = scripts[i];
+                matchFound = true;
+            }
+        }
+        // script just isn't in the library...
+        if (!matchFound) {
+            QString extra = "";
+            int i = 1;
+            if (this->scriptName == "") {
+                this->scriptName = "loaded connection";
+                extra = " 1";
+                i = 2;
+            }
 
-    if (sim != "no") {
-        forSim = true;
+            // make sure the name is unique
+            while (scripts.contains(this->scriptName+extra)) {
+                extra = QString(" ") + QString::number(i);
+            }
+            // add the script to the library
+            settings.setValue(this->scriptName+extra, this->scriptText);
+            // save the modified scriptname
+            this->scriptName = this->scriptName+extra;
+        }
     }
-
-    if (!this->isAList && !forSim) {
-        xmlOut.writeStartElement("PythonScriptConnection");
-        // extra stuff
-        xmlOut.writeStartElement("Script");
-        xmlOut.writeAttribute("text", this->scriptText);
-        // parameter values for the script
-        for (int i = 0; i < this->parNames.size(); ++i) {
-            xmlOut.writeAttribute(this->parNames[i], QString::number(this->parValues[i]));
-        }
-        xmlOut.writeEndElement(); // Script
-        xmlOut.writeStartElement("Config");
-        // reference to a weight parameter
-        if (!this->weightProp.isEmpty()) {
-            xmlOut.writeAttribute("weightProperty", this->weightProp);
-        }
-        xmlOut.writeEndElement(); // Config
-        this->writeDelay(xmlOut);
-        xmlOut.writeEndElement(); // PythonScriptConnection
-    }
-
-    else {
-
-        xmlOut.writeStartElement("ConnectionList");
-
-        // generate connections:
-        QMutex * connGenerationMutex = new QMutex();
-
-        if (changed()) {
-            setUnchanged(true);
-            connections.clear();
-            generate_dialog generate(this, this->src, this->dst, connections, connGenerationMutex, (QWidget *)NULL);
-            bool retVal = generate.exec();
-            if (!retVal) {
-                return;
-            }
-        }
-
-        if (connections.size() == 0) {
-            QMessageBox msgBox;
-            msgBox.setText("Error: no connections generated for Python Script Connection");
-            msgBox.exec();
-            return;
-        }
-
-        delete connGenerationMutex;
-
-        // load path
-        bool exportBinary = false;
-        if (settings.value("export_for_simulation", "error").toBool()) {
-            exportBinary = settings.value("export_binary").toBool();
-        }
-
-        if (!exportBinary || connections.size() < 30) {
-
-            // loop through connections writing them out
-            for (uint i=0; i < connections.size(); ++i) {
-
-                xmlOut.writeEmptyElement("Connection");
-
-                xmlOut.writeAttribute("src_neuron", QString::number(float(connections[i].src)));
-                xmlOut.writeAttribute("dst_neuron", QString::number(float(connections[i].dst)));
-            }
-
-        } else {
-
-            // create a unique name for the binary connection file
-            QUuid uuid = QUuid::createUuid();
-            QString export_filename = uuid.toString();
-            export_filename.chop(1);
-            export_filename[0] = 'C';
-            export_filename += ".bin"; // need to generate a unique filename - preferably a descriptive one... but not for now!
-            QString saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + export_filename);
-
-            // add a tag to the binary file
-            xmlOut.writeEmptyElement("BinaryFile");
-            xmlOut.writeAttribute("file_name", export_filename);
-            xmlOut.writeAttribute("num_connections", QString::number(float(connections.size())));
-            if (!this->hasDelay) {
-                 xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(0)));
-            } else {
-                 xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(1)));
-            }
-
-            // re-write the data
-
-            // write out
-            QFile export_file(saveFileName);
-            if (!export_file.open( QIODevice::WriteOnly)) {
-                QMessageBox msgBox;
-                msgBox.setText("Error creating file - is there sufficient disk space?");
-                msgBox.exec();
-                return;
-            }
-
-            QDataStream access(&export_file);
-            for (uint i = 0; i < connections.size(); ++i) {
-                access.writeRawData((char*) &connections[i].src, sizeof(uint));
-                access.writeRawData((char*) &connections[i].dst, sizeof(uint));
-                if (this->hasDelay) {
-                    access.writeRawData((char*) &connections[i].metric, sizeof(float));
-                }
-            }
-
-        }
-
-        if (!this->hasDelay) {
-            this->writeDelay(xmlOut);
-        }
-
-        xmlOut.writeEndElement(); // ConnectionList
-    }
-
+    // exit the scripts group
+    settings.endGroup();
 
 }
 
@@ -1946,7 +2087,17 @@ ParameterData * pythonscript_connection::getPropPointer() {
         for (uint j = 0; j < proj->synapses.size(); ++j) {
             synapse * syn = proj->synapses[j];
             // if we have found the connection
+            bool isConn = false;
             if (syn->connectionType == this) {
+                isConn = true;
+            }
+            // if we are the generator of the connection
+            if (syn->connectionType->type == CSV) {
+                if (((csv_connection *)syn->connectionType)->generator == this) {
+                    isConn = true;
+                }
+            }
+            if (isConn) {
                 // now we know which weight update we have to look at
                 for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
                     if (syn->weightUpdateType->ParameterList[k]->name == this->weightProp) {
@@ -1974,7 +2125,17 @@ QStringList pythonscript_connection::getPropList() {
         for (uint j = 0; j < proj->synapses.size(); ++j) {
             synapse * syn = proj->synapses[j];
             // if we have found the connection
+            bool isConn = false;
             if (syn->connectionType == this) {
+                isConn = true;
+            }
+            // if we are the generator of the connection
+            if (syn->connectionType->type == CSV) {
+                if (((csv_connection *)syn->connectionType)->generator == this) {
+                    isConn = true;
+                }
+            }
+            if (isConn) {
                 // now we know which weight update we have to look at
                 for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
                     // found the weight
@@ -1991,59 +2152,10 @@ QStringList pythonscript_connection::getPropList() {
     return list;
 }
 
-void pythonscript_connection::import_parameters_from_xml(QDomNode &e) {
+void pythonscript_connection::import_parameters_from_xml(QDomNode &) {
 
-    QDomNodeList scriptNode = e.toElement().elementsByTagName("Script");
-    if (scriptNode.size() == 1) {
-        QDomNode n = scriptNode.item(0);
-        this->scriptText = n.toElement().attribute("text");
-        // parse the script
-        this->configureFromScript(this->scriptText);
-        // extract the referenced pars
-        for (int i = 0; i < this->parNames.size(); ++i) {
-            this->parValues[i] = n.toElement().attribute(parNames[i]).toFloat();
-        }
-    }
-    QDomNodeList configNode = e.toElement().elementsByTagName("Config");
-    if (configNode.size() == 1) {
-        QDomNode n = configNode.item(0);
-        // get reference to a weight parameter
-        if (n.toElement().hasAttribute("weightProperty")) {
-            this->weightProp = n.toElement().attribute("weightProperty");
-        }
-    }
+    // this should never be called
 
-    QDomNodeList delayProp = e.toElement().elementsByTagName("Delay");
-    if (delayProp.size() == 1) {
-
-        QDomNode n = delayProp.item(0);
-
-        QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
-        if (propVal.size() == 1) {
-            this->delay->currType = FixedValue;
-            this->delay->value.resize(1,0);
-            this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
-        }
-        propVal = n.toElement().elementsByTagName("UniformDistribution");
-        if (propVal.size() == 1) {
-            this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
-            this->delay->value[0] = 1;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
-        }
-        propVal = n.toElement().elementsByTagName("NormalDistribution");
-        if (propVal.size() == 1) {
-            this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
-            this->delay->value[0] = 2;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
-        }
-
-    }
 }
 
 /*!
@@ -2108,7 +2220,7 @@ struct outputUnPackaged {
  * \return
  * A simple function to take the output of a connection function and unpack it
  */
-outputUnPackaged extractOutput(PyObject * output) {
+outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight) {
     // create the structure to hold the unpacked output
     outputUnPackaged outUnPacked;
     if (PyList_Size(output) < 1) {
@@ -2131,11 +2243,11 @@ outputUnPackaged extractOutput(PyObject * output) {
                 outUnPacked.connections[i].dst = PyInt_AsLong(PyTuple_GetItem(element,1));
             }
             // if we have a delay as well
-            if (PyTuple_Size(element) > 2) {
+            if (PyTuple_Size(element) > 2 && hasDelay) {
                 outUnPacked.connections[i].metric = PyFloat_AsDouble(PyTuple_GetItem(element,2));
             }
             // if we have a weight as well
-            if (PyTuple_Size(element) > 3) {
+            if (PyTuple_Size(element) > 3 && hasWeight) {
                 outUnPacked.weights[i] = PyFloat_AsDouble(PyTuple_GetItem(element,3));
             } else {
                 outUnPacked.weights.clear();
@@ -2202,26 +2314,16 @@ void pythonscript_connection::generate_connections() {
 
     this->pythonErrors.clear();
 
-    // Set up the Python API
-    //Py_SetProgramName((char *) qApp->applicationFilePath().toStdString().c_str());
-    //Py_Initialize();
-
     // regenerate src and dst locations
     QString errorLog;
     src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         qDebug() << "no src locs";
-        //Py_Finalize();
-        //this->moveToThread(QApplication::instance()->thread());
-        //emit connectionsDone();
         return;
     }
     dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         qDebug() << "no dst locs";
-        //Py_Finalize();
-        //this->moveToThread(QApplication::instance()->thread());
-        //emit connectionsDone();
         return;
     }
 
@@ -2244,9 +2346,6 @@ void pythonscript_connection::generate_connections() {
     // check the tuple is sound
     if (!argsPy) {
         qDebug() << "Bad args tuple";
-        //this->moveToThread(QApplication::instance()->thread());
-        //emit connectionsDone();
-        //Py_Finalize();
         return;
     }
 
@@ -2261,21 +2360,16 @@ void pythonscript_connection::generate_connections() {
         if (pythonErrors.isEmpty()) {
             pythonErrors = "Python Error: Script function is not named connectionFunc.";
         }
-        //Py_Finalize();
-        //this->moveToThread(QApplication::instance()->thread());
-        //emit connectionsDone();
         return;
     }
 
     //Call my function
-    //PyImport_ImportModule("math");
     PyObject * output = PyObject_CallObject(pyFunc, argsPy);
     Py_XDECREF(argsPy);
     Py_XDECREF(srcPy);
     Py_XDECREF(dstPy);
 
     Py_XDECREF(pyFunc);
-    //Py_DECREF(pymod);
 
     if (!output) {
         this->pythonErrors = "Python Error: ";
@@ -2292,44 +2386,54 @@ void pythonscript_connection::generate_connections() {
             }
             pythonErrors += QString("Error found on line:") + QString::number(errtraceObj->tb_lineno);
         }
-        //Py_Finalize();
-        //this->moveToThread(QApplication::instance()->thread());
-        //emit connectionsDone();
         return;
     }
 
     // unpack the output into C++ forms
-    outputUnPackaged unpacked = extractOutput(output);
+    outputUnPackaged unpacked = extractOutput(output, this->hasDelay, this->hasWeight);
 
     // transfer the unpacked output to the local storage location for connections
-    this->connections = unpacked.connections;
+    if (this->connection_target != NULL) {
 
-    (*this->conns) = unpacked.connections;
+        // remove existing connections
+        this->connection_target->clearData();
+
+        // if no connections are returned
+        if (unpacked.connections.size() > 0) {
+            // otherwise...
+            if (this->hasDelay) {
+                // if we have delays, resize
+                this->connection_target->setNumCols(3);
+            } else {
+                //  no delays
+                this->connection_target->setNumCols(2);
+            }
+        }
+
+        for (uint i = 0; i < unpacked.connections.size(); ++i) {
+
+            // transfer connection
+            this->connection_target->setData(i, 0, unpacked.connections[i].src);
+            this->connection_target->setData(i, 1, unpacked.connections[i].dst);
+            if (unpacked.connections[0].metric != NO_DELAY) {
+                this->connection_target->setData(i, 2, unpacked.connections[i].metric);
+            }
+        }
+
+        this->connection_target->setNumRows(unpacked.connections.size());
+
+    } else {
+        this->connections = unpacked.connections;
+        (*this->conns) = unpacked.connections;
+    }
 
     // transfer the unpacked output to the local storage location for weights
     this->weights = unpacked.weights;
 
-    // configure bools to indicate what type of connection data is provided by the script
-    if (this->weights.size() == 0) {
-        this->hasWeight = false;
-    } else {
-        this->hasWeight = true;
-    }
-    if (this->connections.size() == 0) {
-        this->hasDelay = false;
-    } else if (this->connections[0].metric == NO_DELAY) {
-        this->hasDelay = false;
-    } else {
-        this->hasDelay = true;
-    }
-
-    //Py_Finalize();
-
     // if we get to the end then that's good enough
     this->scriptValidates = true;
+    this->setUnchanged(true);
 
-    //this->moveToThread(QApplication::instance()->thread());
-    //emit connectionsDone();
 }
 
 void pythonscript_connection::convertToList(bool check) {

@@ -23,7 +23,6 @@
 ****************************************************************************/
 
 #include "connectionmodel.h"
-//#include "stringify.h"
 
 csv_connectionModel::csv_connectionModel(QObject *parent) :
     QAbstractTableModel(parent)

@@ -45,7 +45,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="gen">
     <attribute name="title">
@@ -139,6 +139,83 @@ restart required)</string>
        </widget>
       </item>
      </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="scripts">
+    <attribute name="title">
+     <string>Python Scripts</string>
+    </attribute>
+    <widget class="QPushButton" name="addScript">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>61</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Add</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="removeScript">
+     <property name="geometry">
+      <rect>
+       <x>123</x>
+       <y>0</y>
+       <width>91</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Remove</string>
+     </property>
+    </widget>
+    <widget class="QPlainTextEdit" name="scriptTextBox">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>30</y>
+       <width>451</width>
+       <height>401</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QListWidget" name="scriptList">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>30</y>
+       <width>211</width>
+       <height>401</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="renameScript">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>0</y>
+       <width>81</width>
+       <height>32</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Rename</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_2">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>10</y>
+       <width>62</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Script:</string>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="sims">

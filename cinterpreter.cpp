@@ -28,8 +28,6 @@
 //QString QString::number(float);
 #include "nineML_classes.h"
 #include "globalHeader.h"
-//#include "stringify.h"
-
 int precedance(valop in) {
 
     if (in.val == ADD || in.val == SUB) return 0;

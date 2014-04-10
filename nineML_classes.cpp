@@ -28,7 +28,6 @@
 #include "nineml_layout_classes.h"
 #include "genericinput.h"
 #include "population.h"
-//#include "stringify.h"
 
 QString dim::toString() {
     // do stuff
@@ -763,9 +762,9 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
                       ((kernel_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->src = (population *) ((NineMLComponentData *) this)->inputs[i]->source;
                       ((kernel_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->dst = (population *) ((NineMLComponentData *) this)->inputs[i]->destination;
                   }
-                  if (((NineMLComponentData *) this)->inputs[i]->connectionType->type == DistanceBased) {
-                      ((distanceBased_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->src = (population *) ((NineMLComponentData *) this)->inputs[i]->source;
-                      ((distanceBased_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->dst = (population *) ((NineMLComponentData *) this)->inputs[i]->destination;
+                  if (((NineMLComponentData *) this)->inputs[i]->connectionType->type == Python) {
+                      ((pythonscript_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->src = (population *) ((NineMLComponentData *) this)->inputs[i]->source;
+                      ((pythonscript_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->dst = (population *) ((NineMLComponentData *) this)->inputs[i]->destination;
                   }
                   ((NineMLComponentData *) this)->inputs[i]->connectionType->write_node_xml(xmlOut);
                   xmlOut.writeEndElement(); // input

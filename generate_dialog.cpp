@@ -28,38 +28,6 @@
 #include "connection.h"
 #include "glconnectionwidget.h"
 
-generate_dialog::generate_dialog(distanceBased_connection * currConn, population * src, population * dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::generate_dialog)
-{
-    ui->setupUi(this);
-
-    this->setWindowTitle("Generate connections using Distance");
-
-    // generating connectivity
-
-    this->currConn = currConn;
-    currConn->src = src;
-    currConn->dst = dst;
-    currConn->conns = &conns;
-    currConn->mutex = mutex;
-
-    workerThread = new QThread(this);
-
-    connect(workerThread, SIGNAL(started()), currConn, SLOT(generate_connections()));
-    //connect(workerThread, SIGNAL(finished()), this, SLOT(moveFromThread()));
-    connect(currConn, SIGNAL(connectionsDone()), this, SLOT(moveFromThread()));
-
-    connect(currConn, SIGNAL(progress(int)), ui->progressBar, SLOT(setValue(int)));
-    if (parent != NULL)
-        connect(currConn, SIGNAL(progress(int)), ((glConnectionWidget *)parent), SLOT(redraw()));
-
-    currConn->moveToThread(workerThread);
-
-    workerThread->start();
-
-}
-
 generate_dialog::generate_dialog(kernel_connection * currConn, population * src, population * dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::generate_dialog)
@@ -145,7 +113,7 @@ void generate_dialog::doPython() {
         // move the weights across
         pythonscript_connection * currPyConn = (pythonscript_connection *) currConn;
         ParameterData * par = currPyConn->getPropPointer();
-        if (par) {
+        if (par && currPyConn->hasWeight) {
             par->currType = ExplicitList;
             par->value = currPyConn->weights;
             for (uint i = 0; i < currPyConn->weights.size(); ++i) {
@@ -164,12 +132,6 @@ void generate_dialog::moveFromThread() {
     if (currConn->type == Kernel) {
         if (!((kernel_connection *) currConn)->errorLog.isEmpty())
             ui->errors->setText(((kernel_connection *) currConn)->errorLog);
-        else
-            this->accept();
-    }
-    else if (currConn->type == DistanceBased) {
-        if (!((distanceBased_connection *) currConn)->errorLog.isEmpty())
-            ui->errors->setText(((distanceBased_connection *) currConn)->errorLog);
         else
             this->accept();
     }

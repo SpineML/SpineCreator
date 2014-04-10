@@ -844,14 +844,14 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
     }
     connectionComboBox->addItem("Fixed Probability");
     connectionComboBox->addItem("Explicit List");
-    connectionComboBox->addItem("Distance Based Probability");
     connectionComboBox->addItem("Kernel");
     QSettings settings;
-    bool devMode = settings.value("dev_mode_on", "false").toBool();
-    if (devMode) {
-        connectionComboBox->addItem("Python Script");
-    }
-    connectionComboBox->setCurrentIndex(proj->synapses[proj->currTarg]->connectionType->type);
+    // add python scripts
+    settings.beginGroup("pythonscripts");
+    QStringList scripts = settings.childKeys();
+    connectionComboBox->addItems(scripts);
+    settings.endGroup();
+    connectionComboBox->setCurrentIndex(proj->synapses[proj->currTarg]->connectionType->getIndex());
     connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     emit deleteProperties();
@@ -912,10 +912,16 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
     inputConnectionComboBox->addItem("Fixed Probability");
     inputConnectionComboBox->addItem("Explicit List");
     if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
-        inputConnectionComboBox->addItem("Distance Based Probability");
         inputConnectionComboBox->addItem("Kernel");
+        // add python scripts
+        QSettings settings;
+        settings.beginGroup("pythonscripts");
+        QStringList scripts = settings.childKeys();
+        inputConnectionComboBox->addItems(scripts);
+        settings.endGroup();
+
     }
-    inputConnectionComboBox->setCurrentIndex(in->connectionType->type);
+    inputConnectionComboBox->setCurrentIndex(in->connectionType->getIndex());
     connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     QFormLayout * varLayout = new QFormLayout;
@@ -926,30 +932,15 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
     // other connectivity:
     switch (in->connectionType->type) {
         case AlltoAll:
-            break;
         case OnetoOne:
-            break;
         case FixedProb:
-            {// draw in p and seed boxes:
-            QDoubleSpinBox *pSpin = new QDoubleSpinBox;
-            pSpin->setRange(0, 1);
-            pSpin->setSingleStep(0.1);
-            pSpin->setMaximumWidth(60);
-            pSpin->setDecimals(3);
-            pSpin->setValue(((fixedProb_connection *) in->connectionType)->p);
-            pSpin->setProperty("valToChange", "1");
-            pSpin->setProperty("conn", "true");
-            pSpin->setToolTip("connection probability");
-            pSpin->setProperty("ptr", qVariantFromValue((void *) in->connectionType));
-            pSpin->setProperty("action","changeConnProb");
-            connect(pSpin, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
-            varLayout->addRow("Probability", pSpin);
-            // add to delete props
-            connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
-            connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
+        case CSV:
+            {
+            QLayout * lay = (QLayout *) in->connectionType->drawLayout(data, NULL, this);
+            this->insertLayout(this->count()-2,lay);
             }
             break;
-        case CSV:
+        /*case CSV:
             {QPushButton *edit = new QPushButton("Edit");
             varLayout->addRow("Connection list", edit);
             edit->setMaximumWidth(70);
@@ -962,14 +953,8 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
             // add connection:
             connect(edit, SIGNAL(clicked()), data, SLOT(editConnections()));
             }
-            break;
+            break;*/
         case CSA:
-            break;
-        case DistanceBased:
-            varLayout->addRow("", new QLabel("Configure in visualiser"));
-            // add to delete props
-            //connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
-            connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
             break;
         case Kernel:
         case Python:
@@ -989,13 +974,12 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
         case FixedProb:
         case CSA:
         case Kernel:
-        case CSV:
             // add delay box:
             drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", NULL, in->connectionType);
             break;
-        case DistanceBased:
-            // add delay box:
-            if (((distanceBased_connection *)in->connectionType)->delayEquation == "") {
+        case CSV:
+            if (((csv_connection *) in->connectionType)->getNumCols() != 3) {
+                // add delay box:
                 drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", NULL, in->connectionType);
             }
             break;
@@ -1261,9 +1245,10 @@ void rootLayout::drawParamsLayout(rootData * data) {
 
                     // pars
                     if (connectionBool) {
-                        if (conn->type == DistanceBased) {
-                            if (((distanceBased_connection *) conn)->delayEquation == "")
+                        if (conn->type == CSV) {
+                            if (((csv_connection *) conn)->getNumCols() != 3) {
                                 drawSingleParam(varLayout, currPar, data, connectionBool, type, type9ml, conn);
+                            }
                         } else {
                             drawSingleParam(varLayout, currPar, data, connectionBool, type, type9ml, conn);
                         }
@@ -1276,12 +1261,15 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 if (connectionBool) {
                     switch (conn->type) {
                     case AlltoAll:
-                        break;
                     case OnetoOne:
-                        break;
+                    case CSV:
                     case FixedProb:
                         {// draw in p and seed boxes:
-                        QDoubleSpinBox *pSpin = new QDoubleSpinBox;
+
+                        QLayout * lay = (QLayout *) conn->drawLayout(data, NULL, this);
+                        tabLayout->insertLayout(tabLayout->count() - (1), lay);
+
+                        /*QDoubleSpinBox *pSpin = new QDoubleSpinBox;
                         pSpin->setRange(0, 1);
                         pSpin->setSingleStep(0.1);
                         pSpin->setMaximumWidth(60);
@@ -1296,11 +1284,11 @@ void rootLayout::drawParamsLayout(rootData * data) {
                         connect(this, SIGNAL(deleteProperties()), pSpin, SLOT(deleteLater()));
                         varLayout->addRow("Probability", pSpin);
                         connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
-
+                        */
 
                     }
                         break;
-                    case CSV:
+                    /*case CSV:
                         {
                         // handled in the connection dialog
                         QPushButton *edit = new QPushButton("Edit");
@@ -1315,13 +1303,8 @@ void rootLayout::drawParamsLayout(rootData * data) {
                         // add connection:
                         connect(edit, SIGNAL(clicked()), data, SLOT(editConnections()));
                         }
-                        break;
+                        break;*/
                     case CSA:
-                        break;
-                    case DistanceBased:
-                        varLayout->addRow("", new QLabel("Configure in visualiser"));
-                        //connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
-                        connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
                         break;
                     case Kernel:
                     case Python:

@@ -305,9 +305,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(&(data), SIGNAL(updatePanel(rootData*)), this, SLOT(updateNetworkButtons(rootData*)));
     QObject::connect(this, SIGNAL(updatePanel(rootData*)), layoutRoot, SLOT(updatePanel(rootData*)));
 
-    QObject::connect(this, SIGNAL(import_csv_signal(QString)), &(data), SLOT(import_csv(QString)));
-    QObject::connect(layoutRoot, SIGNAL(setCurrConnectionModel(csv_connectionModel*)), &(data), SLOT(setCurrConnectionModelSig(csv_connectionModel*)));
-    QObject::connect(layoutRoot, SIGNAL(getRootDataPointer(rootData**)), &(data), SLOT(returnPointerToSelf(rootData**)));
     QObject::connect(layoutRoot, SIGNAL(setCaption(QString)), &(data), SLOT(setModelTitle(QString)));
     QObject::connect(&(data), SIGNAL(statusBarUpdate(QString, int)), ui->statusBar, SLOT(showMessage(QString, int)));
     QObject::connect(this, SIGNAL(statusBarUpdate(QString, int)), ui->statusBar, SLOT(showMessage(QString, int)));
@@ -2175,6 +2172,12 @@ void MainWindow::launchSimulatorEditor()
 {
     editSimulators * dialog  = new editSimulators(this);
     dialog->show();
+
+    // we may have changed the python scripts, so we should redraw NL and VZ
+    if (this->viewVZ.OpenGLWidget) {
+        this->viewVZhandler->redrawHeaders();
+    }
+    this->viewNL.layout->updatePanel(&data);
 }
 
 

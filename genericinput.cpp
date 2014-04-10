@@ -27,7 +27,6 @@
 #include "connection.h"
 #include "projections.h"
 #include "experiment.h"
-//#include "stringify.h"
 
 genericInput::genericInput()
 {
@@ -577,6 +576,15 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
 
     }
 
+    // write out connection metadata:
+    // write container (name after the weight update)
+    QDomElement c = meta.createElement( "connection" );
+
+    // add the metadata description (if there is one)
+    this->connectionType->write_metadata_xml(meta, c);
+
+    col.appendChild(c);
+
 }
 
 void genericInput::read_meta_data(QDomDocument * meta) {
@@ -624,6 +632,25 @@ void genericInput::read_meta_data(QDomDocument * meta) {
                         }
                         // add the filled out curve to the list
                         this->curves.push_back(newCurve);
+                    }
+
+                }
+
+                // find tags for connection generators
+                if (metaData.toElement().tagName() == "connection") {
+                    // extract data for connection generator
+
+                    // add connection generator if we are a csv
+                    if (this->connectionType->type == CSV) {
+                        csv_connection * conn = (csv_connection *) this->connectionType;
+                        // add generator
+                        conn->generator = new pythonscript_connection((population *) this->source, (population *) this->destination, conn);
+                        // extract data for connection generator
+                        ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
+                        // configure generator
+                        ((pythonscript_connection *) conn->generator)->configureFromScript(((pythonscript_connection *) conn->generator)->scriptText);
+                        // prevent regeneration
+                        ((pythonscript_connection *) conn->generator)->setUnchanged(true);
                     }
 
                 }

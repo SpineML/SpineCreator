@@ -69,6 +69,7 @@ private:
     void initGlobal();
     void initPopulation();
     void initConnection();
+    void updateConnectionList();
 
     void setAllSelectState(bool);
 
