@@ -539,6 +539,16 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     file.seek(0);
     QDataStream access(&file);
 
+    // ok, check if we have a generator, and if it is up-to-date
+    if (this->generator) {
+        pythonscript_connection * pyConn = (pythonscript_connection *) this->generator;
+        // if we have changes then...
+        if (pyConn->changed()) {
+            // ... regenerate the connectivity!
+            pyConn->regenerateConnections();
+        }
+    }
+
     // get a handle to the saved file
     QSettings settings;
     QString filePathString = settings.value("files/currentFileName", "error").toString();
