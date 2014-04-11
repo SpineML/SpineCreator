@@ -227,6 +227,9 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data)
     // fetch current experiment
     experiment * currentExperiment = NULL;
 
+    // transfer model back from data
+    this->copy_back_data(data);
+
     // find currentExperiment
     for (uint i = 0; i < this->experimentList.size(); ++i) {
         if (this->experimentList[i]->selected) {currentExperiment = this->experimentList[i]; break;}

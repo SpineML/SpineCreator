@@ -1508,6 +1508,7 @@ void viewELExptPanelHandler::delChangedProp()
 
 void viewELExptPanelHandler::run()
 {
+
     QSettings settings;
 
     runButton = (QPushButton *) sender();
