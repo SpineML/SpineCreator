@@ -169,9 +169,10 @@ void glConnectionWidget::updateLogData() {
                 val *= 3;
                 // complete the remap in just 4 ternarys 
                 int val3 = val > 511 ? val-512 : 0;
-                int val2 = val3 > 0 ? 255 : val;
-                val2 = val2 > 255 ? val2 - 255 : 0;
-                int val1 = val2 > 0 ? 255 : val;
+                int val2 = val3 > 0 ? 511 : val;
+                val2 = val2 > 255 ? val2 - 256 : 0;
+                int val1 = val < 255 ? val : 255;
+
                 popColours[i][j] = QColor(val1,val2, val3, 255);
             }
         }
@@ -425,7 +426,20 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             dstZ = dst->loc3.z;
         }
 
-        if (conn->type == CSV || conn->type == DistanceBased || conn->type == Kernel || conn->type == Python) {
+        // check we have the current version of the connectivity
+        if (conn->type == CSV) {
+            csv_connection * csv_conn = (csv_connection *) conn;
+            if (csv_conn->generator) {
+                if (((pythonscript_connection *) csv_conn->generator)->changed()) {
+                    ((pythonscript_connection *) csv_conn->generator)->regenerateConnections();
+                    // fetch connections back here:
+                    connections[targNum].clear();
+                    csv_conn->getAllData(connections[targNum]);
+                }
+            }
+        }
+
+        if (conn->type == CSV || conn->type == Kernel || conn->type == Python) {
 
             if (!src->isVisualised && !dst->isVisualised) {
                 glEnable(GL_DEPTH_TEST);
@@ -1224,24 +1238,6 @@ void glConnectionWidget::parsChangedProjections() {
             conn = currIn->connectionType;
         }
 
-        // regrab data for distance based
-        if (conn->type == DistanceBased) {
-
-            // refresh the connections
-            if (((distanceBased_connection *) conn)->changed()) {
-                connections[i].clear();
-                // launch version increment dialog box:
-                generate_dialog generate(((distanceBased_connection *) conn), ((distanceBased_connection *) conn)->src, ((distanceBased_connection *) conn)->dst, connections[i], connGenerationMutex, this);
-                bool retVal = generate.exec();
-                if (!retVal) {
-                    return;
-                }
-                ((distanceBased_connection *) conn)->connections = connections[i];
-                ((distanceBased_connection *) conn)->setUnchanged(true);
-            }
-
-        }
-
 
         // regrab data for kernel based
         if (conn->type == Kernel) {
@@ -1310,45 +1306,13 @@ void glConnectionWidget::parsChangedProjection() {
             dst = (population *) currIn->destination;
         }
 
-        // regrab data for distance based
-        if (conn->type == DistanceBased) {
+        if (conn->type == CSV) {
 
-            QString newEquation;
-
-            QLineEdit * senderPtr = NULL;
-
-            if (sender()) {
-                newEquation = ((QLineEdit *) sender())->text();
-                senderPtr = (QLineEdit *) sender();
-                sender()->disconnect(this);
-            }
-
-            // find selected object
-            for (uint i = 0; i < this->selectedConns.size(); ++i) {
-
-                if (selectedObject == selectedConns[i]) {
-
-                    // refresh the connections
-                    if (((distanceBased_connection *) conn)->changed(newEquation)) {
-                        connections[i].clear();
-                        // launch version increment dialog box:
-                        generate_dialog generate(((distanceBased_connection *) conn), src, dst, connections[i], connGenerationMutex, this);
-                        bool retVal = generate.exec();
-                        if (!retVal) {
-                            qDebug() << "glConnectionWidget::parsChangedProjection: generate.exec() returned 0, but continuing in this case...";
-                        }
-                        ((distanceBased_connection *) conn)->connections = connections[i];
-                        ((distanceBased_connection *) conn)->setUnchanged(true);
-                    }
-                }
-            }
-
-            // reconnect
-            if (senderPtr) {
-                connect(senderPtr, SIGNAL(editingFinished()), this, SLOT (parsChangedProjection()));
-            }
+            // generated connection
+            this->getConnections();
 
         }
+
         // regrab data for kernel based
         if (conn->type == Kernel) {
 
@@ -1623,20 +1587,6 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                     ((kernel_connection *) currIn->connectionType)->connections = connections.back();
                                     ((kernel_connection *) currIn->connectionType)->setUnchanged(true);
                                 }
-                            } else if (currIn->connectionType->type == DistanceBased) {
-                                if (((distanceBased_connection *) currIn->connectionType)->connections.size() > 0 && !((distanceBased_connection *) currIn->connectionType)->changed()) {
-                                    connections.back() = ((distanceBased_connection *) currIn->connectionType)->connections;
-                                } else {
-                                    // generate
-                                    // launch version increment dialog box:
-                                    generate_dialog generate(((distanceBased_connection *) currIn->connectionType), (population *) currIn->source, (population *) currIn->destination, connections.back(), connGenerationMutex, this);
-                                    bool retVal = generate.exec();
-                                    if (!retVal) {
-                                        return;
-                                    }
-                                    ((distanceBased_connection *) currIn->connectionType)->connections = connections.back();
-                                    ((distanceBased_connection *) currIn->connectionType)->setUnchanged(true);
-                                }
                             } else if (currIn->connectionType->type == Python) {
                                 if (((pythonscript_connection *) currIn->connectionType)->connections.size() > 0 && !((pythonscript_connection *) currIn->connectionType)->changed()) {
                                     connections.back() = ((pythonscript_connection *) currIn->connectionType)->connections;
@@ -1707,23 +1657,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                 ((kernel_connection *) currTarg->connectionType)->connections = connections.back();
                                 ((kernel_connection *) currTarg->connectionType)->setUnchanged(true);
                             }
-                        } else if (currTarg->connectionType->type == DistanceBased) {
-                            if (((distanceBased_connection *) currTarg->connectionType)->connections.size() > 0 && !((distanceBased_connection *) currTarg->connectionType)->changed()) {
-                                connections.back() = ((distanceBased_connection *) currTarg->connectionType)->connections;
-                            } else {
-                                // generate
-                                // launch version increment dialog box:
-                                generate_dialog generate(((distanceBased_connection *) currTarg->connectionType), currTarg->proj->source, currTarg->proj->destination, connections.back(), connGenerationMutex, this);
-                                bool retVal = generate.exec();
-                                if (!retVal) {
-                                    return;
-                                }
-                                ((distanceBased_connection *) currTarg->connectionType)->connections = connections.back();
-                                ((distanceBased_connection *) currTarg->connectionType)->setUnchanged(true);
-                            }
                         } else if (currTarg->connectionType->type == Python) {
                             if (((pythonscript_connection *) currTarg->connectionType)->connections.size() > 0 && !((pythonscript_connection *) currTarg->connectionType)->changed()) {
-                                connections.back() = ((distanceBased_connection *) currTarg->connectionType)->connections;
+                                connections.back() = ((pythonscript_connection *) currTarg->connectionType)->connections;
                             } else {
                                 // generate
                                 // launch version increment dialog box:

@@ -528,16 +528,20 @@ void viewVZLayoutEditHandler::initConnection() {
     bool devMode = settings.value("dev_mode_on", "false").toBool();
 
     connectionComboBox = this->addDropBox(panelLayout, "Connectivity", "will_be_overriden");
-    connectionComboBox->addItem("All to All");
+    this->updateConnectionList();
+    /*connectionComboBox->addItem("All to All");
     connectionComboBox->addItem("One to One");
     connectionComboBox->addItem("Fixed Probability");
     connectionComboBox->addItem("Explicit List");
     connectionComboBox->addItem("Distance Based Probability");
     connectionComboBox->addItem("Kernel");
-    if (devMode) {
-        connectionComboBox->addItem("Python Script");
-    }
-    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
+    // add python scripts
+    QSettings settings;
+    settings.beginGroup("pythonscripts");
+    QStringList scripts = settings.childKeys();
+    connectionComboBox->addItems(scripts);
+    settings.endGroup();
+    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));*/
 
     // connect for hide
     connect(this, SIGNAL(hideAll()), connectionComboBox, SLOT(hide()));
@@ -559,6 +563,25 @@ void viewVZLayoutEditHandler::initConnection() {
     }
     connect(kernelComboBox, SIGNAL(currentIndexChanged(int)), data, SLOT (updatePar()));
     connect(this, SIGNAL(hideAll()), kernelComboBox, SLOT(hide()));
+}
+
+void viewVZLayoutEditHandler::updateConnectionList() {
+
+    disconnect(connectionComboBox,0,0,0);
+    connectionComboBox->clear();
+    connectionComboBox->addItem("All to All");
+    connectionComboBox->addItem("One to One");
+    connectionComboBox->addItem("Fixed Probability");
+    connectionComboBox->addItem("Explicit List");
+    connectionComboBox->addItem("Kernel");
+    //connectionComboBox->addItem("Python Script");
+    // add python scripts
+    QSettings settings;
+    settings.beginGroup("pythonscripts");
+    QStringList scripts = settings.childKeys();
+    connectionComboBox->addItems(scripts);
+    settings.endGroup();
+    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 }
 
 void viewVZLayoutEditHandler::updateLayoutList(rootData * data) {
@@ -643,7 +666,7 @@ void viewVZLayoutEditHandler::togglePlay() {
 void viewVZLayoutEditHandler::playBackTimeout() {
 
     if (timeSlider->value() < timeSlider->maximum()) {
-        timeSlider->setValue(timeSlider->value()+1);
+        timeSlider->setValue(timeSlider->value()+50);
         viewVZ->OpenGLWidget->updateLogDataTime(timeSlider->value());
     } else {
         playBack.stop();
@@ -705,6 +728,9 @@ void viewVZLayoutEditHandler::redrawHeaders()
     emit deleteProperties();
     emit hideAll();
     emit showAll();
+
+    // refresh python scripts
+    this->updateConnectionList();
 
     // configure timeSlider
     for (uint i = 0; i < data->experiments.size(); ++i) {
@@ -786,7 +812,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
 
         // set index
         connectionComboBox->disconnect(data);
-        connectionComboBox->setCurrentIndex(input->connectionType->type);
+        connectionComboBox->setCurrentIndex(input->connectionType->getIndex());
         connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     }
@@ -815,7 +841,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
 
         // set index
         connectionComboBox->disconnect(data);
-        connectionComboBox->setCurrentIndex(syn->connectionType->type);
+        connectionComboBox->setCurrentIndex(syn->connectionType->getIndex());
         connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     }
@@ -1190,37 +1216,7 @@ void viewVZLayoutEditHandler::drawDeletables() {
         }
 
         // change display options based on type of connection
-        if (currConn->type == CSV) {
-
-                QTableView *tableView = new QTableView();
-                connect(this, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));
-
-                csv_connectionModel *connMod = new csv_connectionModel();
-                connMod->setConnection((csv_connection *) currConn);
-                tableView->setModel(connMod);
-
-                panelLayout->insertWidget(panelLayout->count() - 2, tableView, 2);
-
-               // set up GL:
-                if (this->viewVZ->OpenGLWidget->getConnectionsModel() != (QAbstractTableModel *)0)
-                {
-                    // don't fetch data if we already have for this connection
-                    if (((csv_connectionModel *) this->viewVZ->OpenGLWidget->getConnectionsModel())->getConnection() == currConn  && (int) this->viewVZ->OpenGLWidget->connections.size() == ((csv_connection *) currConn)->getNumRows()) {
-                        this->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
-                    } else {
-                        this->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
-                        this->viewVZ->OpenGLWidget->getConnections();
-                    }
-                } else {
-                    this->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
-                    this->viewVZ->OpenGLWidget->getConnections();
-                }
-
-                connect(connMod, SIGNAL(dataChanged(QModelIndex,QModelIndex)), this->viewVZ->OpenGLWidget, SLOT(connectionDataChanged(QModelIndex,QModelIndex)));
-                connect(tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this->viewVZ->OpenGLWidget, SLOT(connectionSelectionChanged(QItemSelection,QItemSelection)));
-
-
-        } else {
+        if (currConn->type != CSV) {
 
             panelLayout->insertWidget(panelLayout->count() - 2, getDivider(),2);
 
@@ -1262,95 +1258,11 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
         }
 
-        if (currConn->type == FixedProb) {
+        if (currConn->type == FixedProb || currConn->type == AlltoAll || currConn->type == OnetoOne || currConn->type == CSV) {
 
             // draw up probability changer
-            QHBoxLayout * hlay = new QHBoxLayout;
-            connect(this, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
-            QDoubleSpinBox *pSpin = new QDoubleSpinBox;
-            pSpin->setRange(0, 1);
-            pSpin->setSingleStep(0.1);
-            pSpin->setMaximumWidth(60);
-            pSpin->setDecimals(3);
-            pSpin->setValue(((fixedProb_connection *) currConn)->p);
-            pSpin->setProperty("valToChange", "1");
-            pSpin->setProperty("conn", "true");
-            pSpin->setToolTip("connection probability");
-            pSpin->setProperty("ptr", qVariantFromValue((void *) currConn));
-            pSpin->setProperty("action","changeConnProb");
-            pSpin->setFocusPolicy(Qt::StrongFocus);
-            pSpin->installEventFilter(new FilterOutUndoRedoEvents);
-            connect(pSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
-            connect(pSpin, SIGNAL(editingFinished()), viewVZ->OpenGLWidget, SLOT (parsChangedProjection()));
-            connect(this, SIGNAL(deleteProperties()), pSpin, SLOT(deleteLater()));
-
-            hlay->addWidget(new QLabel("Probability: "));
-            connect(this, SIGNAL(deleteProperties()), hlay->itemAt(hlay->count()-1)->widget(), SLOT(deleteLater()));
-            hlay->addWidget(pSpin);
-
-            panelLayout->insertLayout(panelLayout->count() - 2, hlay,2);
-
-        }
-
-        if (currConn->type == DistanceBased) {
-
-            // draw up probability changer
-            QHBoxLayout * hlay = new QHBoxLayout;
-            connect(this, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
-            QLineEdit *equation = new QLineEdit;
-            equation->setText(((distanceBased_connection *) currConn)->equation);
-            equation->setProperty("conn", "true");
-            equation->setToolTip("distance based equation between neuron pairs. <br/>If evaluates to > 0 then a connection is made. <br/>e.g. 10-d connects all neuron pairs closer than 10 microns.<br/>Pre-defined variables: d (distance).<br/>Use 'C' syntax and functions.");
-            equation->setProperty("ptr", qVariantFromValue((void *) currConn));
-            equation->setProperty("action","changeConnEq");
-            connect(equation, SIGNAL(editingFinished()), data, SLOT (updatePar()));
-            connect(equation, SIGNAL(editingFinished()), viewVZ->OpenGLWidget, SLOT (parsChangedProjection()));
-            connect(this, SIGNAL(deleteProperties()), equation, SLOT(deleteLater()));
-
-            hlay->addWidget(new QLabel("Probability equation for d: "));
-            connect(this, SIGNAL(deleteProperties()), hlay->itemAt(hlay->count()-1)->widget(), SLOT(deleteLater()));
-            hlay->addWidget(equation);
-
-            panelLayout->insertLayout(panelLayout->count() - 2, hlay,2);
-
-            hlay = new QHBoxLayout;
-            connect(this, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
-            QLineEdit *delayEq = new QLineEdit;
-            delayEq->setText(((distanceBased_connection *) currConn)->delayEquation);
-            delayEq->setProperty("conn", "true");
-            delayEq->setToolTip("distance based equation for delays");
-            delayEq->setProperty("ptr", qVariantFromValue((void *) currConn));
-            delayEq->setProperty("action","changeConnDelayEq");
-
-            if (currConn->delay->currType != Undefined) {
-                delayEq->setText("Alternative delay type set");
-                delayEq->setDisabled(true);
-            }
-
-            connect(delayEq, SIGNAL(editingFinished()), data, SLOT (updatePar()));
-            connect(this, SIGNAL(deleteProperties()), delayEq, SLOT(deleteLater()));
-
-            hlay->addWidget(new QLabel("Equation for delays: "));
-            connect(this, SIGNAL(deleteProperties()), hlay->itemAt(hlay->count()-1)->widget(), SLOT(deleteLater()));
-            hlay->addWidget(delayEq);
-
-            panelLayout->insertLayout(panelLayout->count() - 2, hlay,2);
-
-            QCheckBox * convert = new QCheckBox("Output as explicit list");
-            connect(this, SIGNAL(deleteProperties()), convert, SLOT(deleteLater()));
-            convert->setChecked(((distanceBased_connection *)currConn)->isList());
-            if (this->viewVZ->currObject->type == synapseObject) {
-                synapse * currSyn = (synapse *) this->viewVZ->currObject;
-                convert->setProperty("ptrSrc", qVariantFromValue((void *) currSyn->proj->source));
-                convert->setProperty("ptrDst", qVariantFromValue((void *) currSyn->proj->destination));
-            } else {
-                genericInput * currIn = (genericInput *) this->viewVZ->currObject;
-                convert->setProperty("ptrSrc", qVariantFromValue((void *) currIn->source));
-                convert->setProperty("ptrDst", qVariantFromValue((void *) currIn->destination));
-            }
-            connect(convert, SIGNAL(toggled(bool)), currConn, SLOT (convertToList(bool)));
-
-            panelLayout->insertWidget(panelLayout->count() - 2, convert,2);
+            QLayout * lay = currConn->drawLayout(this->data, this, NULL);
+            panelLayout->insertLayout(panelLayout->count() - 2, lay,2);
 
         }
 
@@ -1446,197 +1358,10 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
         if (currConn->type == Python) {
 
-            // we have a python script to generate the connections
-            // get a better pointer to the connection
-            pythonscript_connection * currPyConn = (pythonscript_connection *) currConn;
 
-            // somewhere to add the script
-            QTextEdit * scriptEdit = new QTextEdit;
-            scriptEdit->setAcceptRichText(false);
-
-            // add the script we have in
-            scriptEdit->setText(currPyConn->scriptText);
-            // set height
-            scriptEdit->setMinimumHeight(500);
-
-            // this is a temporary measure for convenience - it is not how we will do things when this is complete
-            //connect(scriptEdit, SIGNAL(textChanged()), currPyConn, SLOT(configureFromTextEdit()));
-            // add the delete signal
-            connect(this, SIGNAL(deleteProperties()), scriptEdit, SLOT(deleteLater()));
-
-            QHBoxLayout * buttons = new QHBoxLayout;
-            // add the delete signal
-            connect(this, SIGNAL(deleteProperties()), buttons, SLOT(deleteLater()));
-            panelLayout->insertLayout(panelLayout->count() -2, buttons, 2);
-
-            // add 'Validate Script' button
-            QPushButton * val = new QPushButton("Validate Script");
-            // add a reference to the TextEdit
-            val->setProperty("textEdit", qVariantFromValue((void *) scriptEdit));
-            // connect up to the Connection object
-            connect(val, SIGNAL(clicked()), currPyConn, SLOT(configureFromTextEdit()));
-            // redraw to update parameters
-            connect(val, SIGNAL(clicked()), this, SLOT(redrawHeaders()));
-            // add the delete signal
-            connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
-            // add to the HBoxLayout
-            buttons->addWidget(val);
-
-            // add a 'Generate connectivity' button
-            QPushButton * gen = new QPushButton("Generate");
-            // should we enable the button?
-            gen->setEnabled(currPyConn->scriptValidates);
-            // add a reference to the TextEdit
-            gen->setProperty("textEdit", qVariantFromValue((void *) scriptEdit));
-            // connect up to the Connection object
-            connect(gen, SIGNAL(clicked(bool)), currPyConn, SLOT(setUnchanged(bool)));
-            // redraw to update glview
-            connect(gen, SIGNAL(clicked()), this->viewVZ->OpenGLWidget, SLOT(parsChangedProjection()));
-            // add the delete signal
-            connect(this, SIGNAL(deleteProperties()), gen, SLOT(deleteLater()));
-            // add a connection so we can disable the button if the script changes
-            scriptEdit->setProperty("buttonToDisable", qVariantFromValue((void *) gen));
-            connect(scriptEdit, SIGNAL(textChanged()), this, SLOT(disableButton()));
-            // add to the HBoxLayout
-            buttons->addWidget(gen);
-
-            // if we have a weight produced the add a combobox (which is safe as it never deletes itself)
-            if (currPyConn->scriptValidates && currPyConn->hasWeight) {
-                QComboBox * weightTarget = new QComboBox;
-                weightTarget->setFocusPolicy(Qt::StrongFocus);
-                weightTarget->installEventFilter(new FilterOutUndoRedoEvents);
-                // find the WeightUpdate for this Connection
-                QStringList list = currPyConn->getPropList();
-                list.push_front("-no weight set-");
-                // add the props to the combobox
-                weightTarget->addItems(list);
-                // now set the prop to the currently selected one
-                for (int i = 0; i < list.size();++i) {
-                    if (currPyConn->weightProp == list[i]) {
-                        // set index
-                        weightTarget->setCurrentIndex(i);
-                    }
-                }
-                // add the delete signal
-                connect(this, SIGNAL(deleteProperties()), weightTarget, SLOT(deleteLater()));
-                // add the delete signal for when the script is changed
-                connect(scriptEdit, SIGNAL(textChanged()), weightTarget, SLOT(deleteLater()));
-                // connect up so we can change the par
-                weightTarget->setProperty("action", "changePythonScriptProp");
-                weightTarget->setProperty("ptr", qVariantFromValue((void *) currConn));
-                // add the change signal
-                connect(weightTarget, SIGNAL(currentIndexChanged(int)), this->data, SLOT(updatePar()));
-                // add to the HBoxLayout
-                buttons->addWidget(weightTarget);
-
-            }
-
-
-            // clean up the interface by adding an expanding spacer to the end of the line
-            buttons->addStretch();
-
-
-
-            // create the grid layout for the script parameters
-            QGridLayout * grid = new QGridLayout;
-            panelLayout->insertLayout(panelLayout->count() -2, grid, 2);
-            // add the delete signal
-            connect(this, SIGNAL(deleteProperties()), grid, SLOT(deleteLater()));
-
-            int maxCols = 1;
-
-            // first add the items that have locations
-            for (int i = 0; i < currPyConn->parNames.size(); ++i) {
-                // if we have a position
-                if (currPyConn->parPos[i].x() != -1) {
-                    if (grid->itemAtPosition(currPyConn->parPos[i].x(), currPyConn->parPos[i].y())) {
-                        // grid slot is taken! Get rid of Pos
-                        currPyConn->parPos[i] = QPoint(-1,-1);
-                    } else {
-                        // grid slot is free, so add the par
-                        QHBoxLayout * parBox = new QHBoxLayout;
-                        // add the delete signal
-                        connect(this, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
-                        QLabel * name = new QLabel;
-                        name->setText(currPyConn->parNames[i] + QString("="));
-                        // add the delete signal
-                        connect(this, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
-                        parBox->addWidget(name);
-                        QDoubleSpinBox * val = new QDoubleSpinBox;
-                        val->setMaximum(100000000.0);
-                        val->setMinimum(-100000000.0);
-                        val->setDecimals(5);
-                        val->setMinimumWidth(120);
-                        val->setValue(currPyConn->parValues[i]);
-                        val->setProperty("par_name", currPyConn->parNames[i]);
-                        val->setProperty("action", "changePythonScriptPar");
-                        val->setProperty("ptr", qVariantFromValue((void *) currConn));
-                        val->setFocusPolicy(Qt::StrongFocus);
-                        val->installEventFilter(new FilterOutUndoRedoEvents);
-                        // add the delete signal
-                        connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
-                        // add the change signal
-                        connect(val, SIGNAL(valueChanged(double)), this->data, SLOT(updatePar()));
-                        parBox->addWidget(val);
-                        parBox->addStretch();
-                        // now add this to the grid
-                        grid->addLayout(parBox,currPyConn->parPos[i].x(), currPyConn->parPos[i].y(),1,1);
-                        // get our grid width
-                        if (currPyConn->parPos[i].y()>maxCols) {
-                            maxCols = currPyConn->parPos[i].y();
-                        }
-                    }
-                }
-            }
-            // then add the items that do not have locations
-            for (int i = 0; i < currPyConn->parNames.size(); ++i) {
-                // if we have a position
-                if (currPyConn->parPos[i].x() == -1) {
-                    bool inserted = false;
-                    int row = 0;
-                    // while we have not placed the par
-                    while (!inserted) {
-                        // for each column
-                        for (int col = 0; col < maxCols; ++col) {
-                            if (!grid->itemAtPosition(row, col)) {
-                                inserted = true;
-                                // grid slot is free, so add the par
-                                QHBoxLayout * parBox = new QHBoxLayout;
-                                // add the delete signal
-                                connect(this, SIGNAL(deleteProperties()), parBox, SLOT(deleteLater()));
-                                QLabel * name = new QLabel;
-                                name->setText(currPyConn->parNames[i] + QString("="));
-                                // add the delete signal
-                                connect(this, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
-                                parBox->addWidget(name);
-                                QDoubleSpinBox * val = new QDoubleSpinBox;
-                                val->setMaximum(100000000.0);
-                                val->setMinimum(-100000000.0);
-                                val->setDecimals(5);
-                                val->setMinimumWidth(120);
-                                val->setValue(currPyConn->parValues[i]);
-                                val->setProperty("par_name", currPyConn->parNames[i]);
-                                val->setProperty("action", "changePythonScriptPar");
-                                val->setProperty("ptr", qVariantFromValue((void *) currConn));
-                                val->setFocusPolicy(Qt::StrongFocus);
-                                val->installEventFilter(new FilterOutUndoRedoEvents);
-                                // add the delete signal
-                                connect(this, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
-                                // add the change signal
-                                connect(val, SIGNAL(valueChanged(double)), this->data, SLOT(updatePar()));
-                                parBox->addWidget(val);
-                                parBox->addStretch();
-                                // now add this to the grid
-                                grid->addLayout(parBox,currPyConn->parPos[i].x(), currPyConn->parPos[i].y(),1,1);
-                            }
-                        }
-                        // increment the row
-                        ++row;
-                    }
-                }
-            }
+            //}
             // add the text edit to the main layout
-            panelLayout->insertWidget(panelLayout->count() -2, scriptEdit, 2);
+            //panelLayout->insertWidget(panelLayout->count() -2, scriptEdit, 2);
 
         }
 

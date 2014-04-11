@@ -53,7 +53,6 @@ class synapse;
 class systemmodel;
 class ParameterData;
 class fixedProb_connection;
-class distanceBased_connection;
 class kernel_connection;
 class pythonscript_connection;
 class versionControl;
@@ -139,7 +138,6 @@ enum connectionType {
     OnetoOne,
     FixedProb,
     CSV,
-    DistanceBased,
     Kernel,
     Python,
     CSA,

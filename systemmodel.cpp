@@ -25,7 +25,6 @@
 #include "systemmodel.h"
 #include "QCheckBox"
 #include "rootdata.h"
-//#include "stringify.h"
 
 systemmodel::systemmodel(rootData * dataPtr, QObject *parent) :
     QAbstractItemModel(parent)

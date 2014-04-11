@@ -91,8 +91,6 @@ private:
 signals:
     void updateParams(QString, int);
     void renameSignal(rootLayout*);
-    void setCurrConnectionModel(csv_connectionModel *);
-    void getRootDataPointer(rootData * *);
     void setCaption(QString);
     void deleteHeader();
     void deleteProperties();

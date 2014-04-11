@@ -23,7 +23,6 @@
 ****************************************************************************/
 
 #include "systemobject.h"
-//#include "stringify.h"
 
 
 systemObject::systemObject()

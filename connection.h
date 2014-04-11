@@ -52,7 +52,13 @@ public:
 
     virtual void write_node_xml(QXmlStreamWriter &){}
     virtual void import_parameters_from_xml(QDomNode &){}
+    virtual void write_metadata_xml(QDomDocument &, QDomNode &) {}
+    virtual void read_metadata_xml(QDomNode &) {}
     virtual void writeDelay(QXmlStreamWriter &xmlOut);
+    virtual QLayout * drawLayout(rootData * , viewVZLayoutEditHandler * , rootLayout * ) {return new QHBoxLayout();}
+
+    virtual int getIndex();
+
     ParameterData * delay;
 
 private:
@@ -70,6 +76,7 @@ public:
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
+    QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
 
 private:
 };
@@ -83,6 +90,7 @@ public:
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
+    QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
 
 private:
 };
@@ -97,6 +105,7 @@ public:
     QStringList values;
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
+    QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
 
     // the probability of a connection
     float p;
@@ -127,13 +136,19 @@ public:
     void setNumCols(int);
     void setData(const QModelIndex & index, float value);
     void setData(int, int, float);
+    void clearData();
     void flushChangesToDisk();
     void abortChanges();
     void write_node_xml(QXmlStreamWriter &xmlOut);
+    void write_metadata_xml(QDomDocument &, QDomNode &);
     void import_parameters_from_xml(QDomNode &);
+    void read_metadata_xml(QDomNode &);
     void setFileName(QString name);
     QString getFileName();
     void fetch_headings();
+    connection * generator;
+    QLayout * drawLayout(rootData *, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
+    int getIndex();
 
 private:
     QString filename;
@@ -146,50 +161,6 @@ private:
 
 };
 
-class distanceBased_connection : public connection
-{
-        Q_OBJECT
-public:
-    distanceBased_connection();
-    ~distanceBased_connection();
-
-    void write_node_xml(QXmlStreamWriter &xmlOut);
-    void import_parameters_from_xml(QDomNode &);
-
-    QString equation;
-    QString delayEquation;
-    QString errorLog;
-
-    population * src;
-    population * dst;
-    vector < conn > *conns;
-    QMutex * mutex;
-    bool isList();
-    bool selfConnections;
-    vector <conn> connections;
-    bool changed();
-    bool changed(QString);
-    void setUnchanged(bool);
-
-
-private:
-    csv_connection * explicitList;
-    bool isAList;
-    bool hasChanged;
-    int srcSize;
-    int dstSize;
-
-
-public slots:
-    //void generate_connections(population * src, population * dst, vector < conn > &conns);
-    void generate_connections();
-    void convertToList(bool);
-
-signals:
-    void progress(int);
-    void connectionsDone();
-
-};
 
 class kernel_connection : public connection
 {
@@ -216,6 +187,7 @@ public:
     bool changed();
     void setUnchanged(bool);
     vector <conn> connections;
+    QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
 
 private:
     csv_connection * explicitList;
@@ -242,11 +214,14 @@ class pythonscript_connection : public connection
 {
         Q_OBJECT
 public:
-    pythonscript_connection();
+    pythonscript_connection(population * src, population * dst, csv_connection *conn_targ);
     ~pythonscript_connection();
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
+    void write_metadata_xml(QDomDocument &, QDomNode &);
+    void read_metadata_xml(QDomNode &);
+    int getIndex();
 
     float rotation;
     QString errorLog;
@@ -262,11 +237,15 @@ public:
     vector <conn> connections;
 
     QString scriptText;
+    QString lastGeneratedScriptText;
+    QString scriptName;
     QStringList parNames;
     QVector <float> parValues;
+    QVector <float> lastGeneratedParValues;
     QVector < QPoint > parPos;
 
     QString weightProp;
+    QString lastGeneratedWeightProp;
     vector <float> weights;
 
     QString pythonErrors;
@@ -277,9 +256,13 @@ public:
 
     ParameterData *getPropPointer();
     QStringList getPropList();
+    QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
+
+    // the explicit connection list to copy the generated weights to
+    csv_connection * connection_target;
 
 private:
-    void regenerateConnections();
+
     csv_connection * explicitList;
     bool isAList;
     bool hasChanged;
@@ -297,15 +280,26 @@ public slots:
      */
     void configureFromScript(QString);
 
-    void configureFromTextEdit();
-
-    void configureAfterLoad();
+    void regenerateConnections();
 
     void setUnchanged(bool);
+
+    /*!
+     * \brief enableGen
+     * A simple slot to allow the QDoubleSpinBoxes with the pars to re-enable the Generator button
+     */
+    void enableGen(double);
+
+    /*!
+     * \brief enableGen
+     * A simple slot to allow the QComboBox with the Propoerty for the weight to re-enable the Generator button
+     */
+    void enableGen(int);
 
 signals:
     void progress(int);
     void connectionsDone();
+    void setGenEnabled(bool);
 
 };
 

@@ -27,7 +27,6 @@
 #include "connection.h"
 #include "experiment.h"
 #include "projectobject.h"
-//#include "stringify.h"
 
 synapse::synapse(projection * proj, projectObject * data, bool dontAddInputs) {
 
@@ -1030,6 +1029,20 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
 
     }
 
+    // write out connection metadata
+    for (uint i = 0; i < synapses.size(); ++i) {
+
+        // write container (name after the weight update)
+        QDomElement c = meta.createElement( "synapseConnection" );
+        c.setAttribute( "name", synapses[i]->weightUpdateType->getXMLName() );
+
+        // add the metadata description (if there is one)
+        synapses[i]->connectionType->write_metadata_xml(meta, c);
+
+        col.appendChild(c);
+
+    }
+
     // write inputs out
     for (uint i = 0; i < synapses.size(); ++i) {
 
@@ -1172,13 +1185,6 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 newSynapse->connectionType = new csv_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
             }
-            else if (n.toElement().tagName() == "DistanceBasedConnection") {
-                delete newSynapse->connectionType;
-                newSynapse->connectionType = new distanceBased_connection;
-                newSynapse->connectionType->import_parameters_from_xml(n);
-                ((distanceBased_connection *) newSynapse->connectionType)->src = (population *) this->source;
-                ((distanceBased_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
-            }
             else if (n.toElement().tagName() == "KernelConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new kernel_connection;
@@ -1187,12 +1193,12 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
             }
             else if (n.toElement().tagName() == "PythonScriptConnection") {
-                delete newSynapse->connectionType;
+                /*delete newSynapse->connectionType;
                 newSynapse->connectionType = new pythonscript_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
                 ((pythonscript_connection *) newSynapse->connectionType)->src = (population *) this->source;
                 ((pythonscript_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
-                ((pythonscript_connection *) newSynapse->connectionType)->configureAfterLoad();
+                ((pythonscript_connection *) newSynapse->connectionType)->configureFromScript();*/
             }
 
             else if (n.toElement().tagName() == "LL:PostSynapse") {
@@ -1342,6 +1348,33 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                         this->curves.push_back(newCurve);
                     }
 
+                }
+
+                // find tags for connection generators
+                if (metaData.toElement().tagName() == "synapseConnection") {
+
+                    // extract the name from the tag
+                    QString synapseName = metaData.toElement().attribute("name", "");
+                    bool synapseFound = false;
+
+                    for (uint i = 0; i < this->synapses.size(); ++i) {
+                         // check if we have the current node
+                        if (synapseName == this->synapses[i]->weightUpdateType->getXMLName()) {
+                            synapseFound = true;
+                            // add connection generator if we are a csv
+                            if (this->synapses[i]->connectionType->type == CSV) {
+                                csv_connection * conn = (csv_connection *) this->synapses[i]->connectionType;
+                                // add generator
+                                conn->generator = new pythonscript_connection(this->source, this->destination, conn);
+                                // extract data for connection generator
+                                ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
+                                // configure generator
+                                ((pythonscript_connection *) conn->generator)->configureFromScript(((pythonscript_connection *) conn->generator)->scriptText);
+                                // prevent regeneration
+                                ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                            }
+                        }
+                    }
                 }
 
                 metaData = metaData.nextSibling();

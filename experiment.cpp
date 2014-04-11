@@ -25,7 +25,6 @@
 #include "experiment.h"
 #include "rootdata.h"
 #include "projectobject.h"
-//#include "stringify.h"
 
 experiment::experiment()
 {
@@ -1266,6 +1265,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             QCheckBox * externToggle = new QCheckBox;
             externToggle->setChecked(isExternal);
             externToggle->setProperty("ptr", qVariantFromValue((void *) this));
+            externToggle->setText("Output to external program");
             frameLay->addWidget(externToggle);
             QObject::connect(externToggle, SIGNAL(toggled(bool)), handler, SLOT(toggleExternalOutput(bool)));
 
@@ -1295,6 +1295,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
                 host->setEnabled(false);
             host->setToolTip("The host computer IP address, or localhost if the external output is on the same computer as the experiment");
             QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setOutputExternalData()));
+            QObject ::connect(externToggle, SIGNAL(toggled(bool)), host, SLOT(setEnabled(bool)));
             formlay->addRow("Host IP:", host);
 
             // port
@@ -1321,6 +1322,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             if (!isExternal)
                 timestep->setEnabled(false);
             QObject ::connect(timestep, SIGNAL(valueChanged(double)), handler, SLOT(setOutputExternalData()));
+            QObject ::connect(externToggle, SIGNAL(toggled(bool)), timestep, SLOT(setEnabled(bool)));
             formlay->addRow("dt:", timestep);
 
         }
@@ -2200,7 +2202,18 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
             this->externalInput.size = ((population *)this->target->owner)->numNeurons;
         writer->writeAttribute("size",QString::number(this->externalInput.size));
         writer->writeAttribute("command", this->externalInput.commandline);
-        writer->writeAttribute("host", this->externalInput.host);
+        // lookup the host name if it is not an IP
+        // regular expression for an IP address
+        QRegExp rx("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$");
+        if (rx.exactMatch(this->externalInput.host)) {
+            writer->writeAttribute("host", this->externalInput.host);
+        } else {
+            QHostInfo ip = QHostInfo::fromName(this->externalInput.host);
+            qDebug() << "Hostname = " << ip.hostName();
+            if (ip.addresses().size() > 2) {
+                writer->writeAttribute("host", ip.addresses()[1].toString());
+            }
+        }
         writer->writeAttribute("timestep", QString::number(this->externalInput.timestep));
     }
         break;

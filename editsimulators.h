@@ -32,6 +32,8 @@ namespace Ui {
 class editSimulators;
 }
 
+class PythonSyntaxHighlighter;
+
 class editSimulators : public QDialog
 {
     Q_OBJECT
@@ -60,6 +62,8 @@ private:
     void recursiveDeleteLater(QLayout *);
     void recursiveDeleteLaterloop(QLayout *);
 
+    PythonSyntaxHighlighter * pySyn;
+
 public slots:
 
     void addEnvVar();
@@ -77,7 +81,82 @@ public slots:
     void setGLDetailLevel(int);
     void setDevMode(bool);
     void close();
+    void scriptSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void addScript();
+    void removeScript();
+    void renameScript();
     //void testFunc();
 };
+
+class SyntaxHighlighter : public QSyntaxHighlighter
+   {
+       Q_OBJECT
+
+   public:
+       SyntaxHighlighter(QPlainTextEdit * parent);
+
+   protected:
+       void highlightBlock(const QString &text);
+
+       struct HighlightingRule
+       {
+           QRegExp pattern;
+           QTextCharFormat format;
+       };
+
+       QVector<HighlightingRule> highlightingRules;
+
+       QTextCharFormat commentFormat;
+       QTextCharFormat quotationFormat;
+       QTextCharFormat functionFormat;
+       QTextCharFormat numericFormat;
+   };
+
+   class PythonSyntaxHighlighter : public SyntaxHighlighter
+   {
+       Q_OBJECT
+
+   public:
+       PythonSyntaxHighlighter(QPlainTextEdit *parent);
+
+       static QStringList keywordsList(){return d_keywords;}
+
+   protected:
+       void highlightBlock(const QString &text);
+
+   private:
+       QVector<HighlightingRule> pythonHighlightingRules;
+
+       QTextCharFormat keywordFormat;
+       QTextCharFormat classFormat;
+
+       static const QStringList d_keywords;
+   };
+
+    struct ParenthesisInfo
+    {
+        char character;
+        int position;
+    };
+
+    class TextBlockData : public QTextBlockUserData
+    {
+    public:
+        TextBlockData(){}
+
+        QVector<ParenthesisInfo *> parentheses(){return m_parentheses;}
+        void insert(ParenthesisInfo *info)
+        {
+            int i = 0;
+            while (i < m_parentheses.size() &&
+                info->position > m_parentheses.at(i)->position)
+                ++i;
+
+            m_parentheses.insert(i, info);
+        }
+
+    private:
+        QVector<ParenthesisInfo *> m_parentheses;
+    };
 
 #endif // EDITSIMULATORS_H

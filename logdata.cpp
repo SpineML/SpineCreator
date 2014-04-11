@@ -196,7 +196,7 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
         return false;
 
     // if out of range give up (should also catch no file)
-    if (colNum > (int) columns.size())
+    if (colNum >= (int) columns.size())
         return false;
 
     // clear existing data;

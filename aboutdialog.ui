@@ -80,7 +80,7 @@
     <string notr="true">background: transparent; color: white</string>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SpineCreator&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(C) 2013-2014 Alex Cope, Paul Richmond, Seb James&lt;/p&gt;&lt;p&gt;Includes QCustomPlot for graphing &lt;/p&gt;&lt;p&gt;(C) Emanuel Eichhammer &lt;/p&gt;&lt;p&gt;This software is licensed under the GNU General Public License (GPL) v3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SpineCreator&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(C) 2013-2014 Alex Cope, Paul Richmond, Seb James&lt;/p&gt;&lt;p&gt;Includes QCustomPlot for graphing and code from QtiPlot for code highlighting&lt;/p&gt;&lt;p&gt;QCustomPlot (C) Emanuel Eichhammer&lt;/p&gt;&lt;p&gt;QtiPlot (C) 2006 by Ion Vasilief, Knut Franke &lt;/p&gt;&lt;p&gt;This software is licensed under the GNU General Public License (GPL) v3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>

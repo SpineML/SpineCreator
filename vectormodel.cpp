@@ -23,7 +23,6 @@
 ****************************************************************************/
 
 #include "vectormodel.h"
-//#include "stringify.h"
 
 vectorModel::vectorModel(QObject *parent) :
     QAbstractTableModel(parent)

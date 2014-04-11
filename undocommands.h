@@ -260,6 +260,7 @@ private:
     rootData * data;
     systemObject * ptr;
     int index;
+    QString scriptName;
     connection * oldConn;
     bool isUndone;
 };
@@ -326,38 +327,6 @@ private:
     fixedProb_connection * ptr;
     float oldValue;
     float value;
-    bool firstRedo;
-};
-
-class updateConnEquation: public QUndoCommand
-{
-public:
-    updateConnEquation(rootData * data, distanceBased_connection * ptr, QString newEq, QUndoCommand *parent = 0);
-    void undo();
-    void redo();
-
-private:
-    // these references are needed for the redo and undo
-    rootData * data;
-    distanceBased_connection * ptr;
-    QString oldValue;
-    QString value;
-    bool firstRedo;
-};
-
-class updateConnDelayEquation: public QUndoCommand
-{
-public:
-    updateConnDelayEquation(rootData * data, distanceBased_connection * ptr, QString newEq, QUndoCommand *parent = 0);
-    void undo();
-    void redo();
-
-private:
-    // these references are needed for the redo and undo
-    rootData * data;
-    distanceBased_connection * ptr;
-    QString oldValue;
-    QString value;
     bool firstRedo;
 };
 

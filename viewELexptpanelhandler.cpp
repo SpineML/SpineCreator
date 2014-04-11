@@ -34,7 +34,6 @@
 #include "experiment.h"
 #include "projectobject.h"
 #include "undocommands.h"
-//#include "stringify.h"
 
 #define NEW_EXPERIMENT_VIEW11
 
@@ -1682,6 +1681,8 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setIcon(QMessageBox::Critical);
             msgBox.setText(errorMessages[i]);
             msgBox.setDetailedText(simulatorStdOutText);
+            msgBox.addButton(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
             return;
         }
@@ -1707,6 +1708,8 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         QMessageBox msgBox;
         msgBox.setWindowTitle("Simulator Error");
         msgBox.setText(simulatorStdErrText);
+        msgBox.addButton(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
         return;
     }
@@ -1717,6 +1720,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setText("Simulator has finished. See below for more details.");
         msgBox.setDetailedText(simulatorStdOutText);
+        msgBox.addButton(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
         return;

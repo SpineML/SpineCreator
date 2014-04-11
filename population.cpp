@@ -438,13 +438,6 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
             }
-            type = e2.elementsByTagName("DistanceBasedConnection");
-            if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new distanceBased_connection;
-                QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-            }
             type = e2.elementsByTagName("KernelConnection");
             if (type.count() == 1) {
                 delete newInput->connectionType;
@@ -906,10 +899,6 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
                 if (projection->synapses[j]->connectionType->type == Kernel) {
                     ((kernel_connection *) projection->synapses[j]->connectionType)->src = projection->source;
                     ((kernel_connection *) projection->synapses[j]->connectionType)->dst = projection->destination;
-                }
-                if (projection->synapses[j]->connectionType->type == DistanceBased) {
-                    ((distanceBased_connection *) projection->synapses[j]->connectionType)->src = projection->source;
-                    ((distanceBased_connection *) projection->synapses[j]->connectionType)->dst = projection->destination;
                 }
                 projection->synapses[j]->connectionType->write_node_xml(xmlOut);
 

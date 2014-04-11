@@ -402,7 +402,7 @@ delProjection::delProjection(rootData * data, projection* proj, QUndoCommand *pa
     QUndoCommand(parent)
 {
     isChild = false;
-    if (!parent==0 && parent->text() != "Delete selection") isChild = true;
+    if ((!(parent == 0)) && (parent->text() != "Delete selection")) isChild = true;
     this->proj = proj;
     this->data = data;
     this->setText("delete projection " + this->proj->getName());
@@ -504,7 +504,7 @@ delSynapse::delSynapse(rootData * data, projection * proj, synapse * syn, QUndoC
     QUndoCommand(parent)
 {
     isChild = false;
-    if (!parent==0) isChild = true;
+    if (!(parent == 0)) isChild = true;
     this->syn = syn;
     this->data = data;
     this->proj = proj;
@@ -652,7 +652,7 @@ delInput::delInput(rootData * data, genericInput * input, QUndoCommand *parent) 
     QUndoCommand(parent)
 {
     isChild = false;
-    if (!parent==0 && parent->text() != "Delete selection") isChild = true;
+    if (!(parent == 0) && (parent->text() != "Delete selection")) isChild = true;
     this->input = input;
     this->data = data;
     this->setText("delete Input from " + this->input->src->getXMLName() + " to " + this->input->dst->getXMLName());
@@ -707,6 +707,19 @@ changeConnection:: changeConnection(rootData * data, systemObject * ptr, int ind
     this->ptr = ptr;
     this->data = data;
     this->setText("change connection type on " + this->ptr->getName());
+    // if we use an index only and the scripts change before an undo / redo we are in trouble, so if we have
+    // a script we must get the script name right now (NOTE: this could still be an issue if we rename scripts)
+    if (index >= Python) {
+        QSettings settings;
+        // get python scripts
+        settings.beginGroup("pythonscripts");
+        QStringList scripts = settings.childKeys();
+        // get the script associated with that index
+        int scriptIndex = index - (int) Python;
+        this->scriptName = scripts.at(scriptIndex);
+        index = none;
+        settings.endGroup();
+    }
 }
 
 void changeConnection::undo()
@@ -740,25 +753,38 @@ void changeConnection::redo()
         case CSV:
             ((genericInput *) ptr)->connectionType = new csv_connection;
             break;
-        case DistanceBased:
-            ((genericInput *) ptr)->connectionType = new distanceBased_connection;
-            ((distanceBased_connection *)((genericInput *) ptr)->connectionType)->src = (population *) ((genericInput *) ptr)->source;
-            ((distanceBased_connection *)((genericInput *) ptr)->connectionType)->dst = (population *) ((genericInput *) ptr)->destination;
-            break;
         case Kernel:
             ((genericInput *) ptr)->connectionType = new kernel_connection;
             ((kernel_connection *)((genericInput *) ptr)->connectionType)->src = (population *) ((genericInput *) ptr)->source;
             ((kernel_connection *)((genericInput *) ptr)->connectionType)->dst = (population *) ((genericInput *) ptr)->destination;
             break;
         case Python:
-            ((genericInput *) ptr)->connectionType = new pythonscript_connection;
+            //((genericInput *) ptr)->connectionType = new csv_connection;
+            //((csv_connection *)((genericInput *) ptr)->connectionType)->generator = new pythonscript_connection((population *) ((genericInput *) ptr)->source, (population *) ((genericInput *) ptr)->destination, (csv_connection *)((genericInput *) ptr)->connectionType);
+            /*((genericInput *) ptr)->connectionType = new pythonscript_connection;
             ((pythonscript_connection *)((genericInput *) ptr)->connectionType)->src = (population *) ((genericInput *) ptr)->source;
-            ((pythonscript_connection *)((genericInput *) ptr)->connectionType)->dst = (population *) ((genericInput *) ptr)->destination;
+            ((pythonscript_connection *)((genericInput *) ptr)->connectionType)->dst = (population *) ((genericInput *) ptr)->destination;*/
             break;
         case CSA:
             break;
         case none:
             break;
+        }
+        // if we are using a script...
+        if (!scriptName.isEmpty()) {
+            QSettings settings;
+            // get python scripts
+            settings.beginGroup("pythonscripts");
+            QStringList scripts = settings.childKeys();
+            // get the script associated with that index
+            QString script = settings.value(scriptName, "").toString();
+            ((genericInput *) ptr)->connectionType = new csv_connection;
+            ((csv_connection *)((genericInput *) ptr)->connectionType)->generator = new pythonscript_connection((population *) ((genericInput *) ptr)->source, (population *) ((genericInput *) ptr)->destination, (csv_connection *)((genericInput *) ptr)->connectionType);
+            // setup the generator:
+            ((pythonscript_connection *) ((csv_connection *)((genericInput *) ptr)->connectionType)->generator)->scriptText = script;
+            ((pythonscript_connection *) ((csv_connection *)((genericInput *) ptr)->connectionType)->generator)->scriptName = scriptName;
+            ((pythonscript_connection *) ((csv_connection *)((genericInput *) ptr)->connectionType)->generator)->configureFromScript(script);
+            settings.endGroup();
         }
     }
     if (ptr->type == synapseObject) {
@@ -776,25 +802,38 @@ void changeConnection::redo()
         case CSV:
             ((synapse *) ptr)->connectionType = new csv_connection;
             break;
-        case DistanceBased:
-            ((synapse *) ptr)->connectionType = new distanceBased_connection;
-            ((distanceBased_connection *)((synapse *) ptr)->connectionType)->src = (population *) ((synapse *) ptr)->proj->source;
-            ((distanceBased_connection *)((synapse *) ptr)->connectionType)->dst = (population *) ((synapse *) ptr)->proj->destination;
-            break;
         case Kernel:
             ((synapse *) ptr)->connectionType = new kernel_connection;
             ((kernel_connection *)((synapse *) ptr)->connectionType)->src = (population *) ((synapse *) ptr)->proj->source;
             ((kernel_connection *)((synapse *) ptr)->connectionType)->dst = (population *) ((synapse *) ptr)->proj->destination;
             break;
         case Python:
-            ((synapse *) ptr)->connectionType = new pythonscript_connection;
+            ((synapse *) ptr)->connectionType = new csv_connection;
+            ((csv_connection *)((synapse *) ptr)->connectionType)->generator = new pythonscript_connection((population *) ((synapse *) ptr)->proj->source, (population *) ((synapse *) ptr)->proj->destination, (csv_connection *)((synapse *) ptr)->connectionType);
+            /*((synapse *) ptr)->connectionType = new pythonscript_connection;
             ((pythonscript_connection *)((synapse *) ptr)->connectionType)->src = (population *) ((synapse *) ptr)->proj->source;
-            ((pythonscript_connection *)((synapse *) ptr)->connectionType)->dst = (population *) ((synapse *) ptr)->proj->destination;
+            ((pythonscript_connection *)((synapse *) ptr)->connectionType)->dst = (population *) ((synapse *) ptr)->proj->destination;*/
             break;
         case CSA:
             break;
         case none:
             break;
+        }
+        // if we are using a script...
+        if (!scriptName.isEmpty()) {
+            QSettings settings;
+            // get python scripts
+            settings.beginGroup("pythonscripts");
+            QStringList scripts = settings.childKeys();
+            // get the script associated with that index
+            QString script = settings.value(scriptName, "").toString();
+            ((synapse *) ptr)->connectionType = new csv_connection;
+            ((csv_connection *)((synapse *) ptr)->connectionType)->generator = new pythonscript_connection((population *) ((synapse *) ptr)->proj->source, (population *) ((synapse *) ptr)->proj->destination, (csv_connection *)((synapse *) ptr)->connectionType);
+            // setup the generator:
+            ((pythonscript_connection *) ((csv_connection *)((synapse *) ptr)->connectionType)->generator)->scriptText = script;
+            ((pythonscript_connection *) ((csv_connection *)((synapse *) ptr)->connectionType)->generator)->scriptName = scriptName;
+            ((pythonscript_connection *) ((csv_connection *)((synapse *) ptr)->connectionType)->generator)->configureFromScript(script);
+            settings.endGroup();
         }
     }
     isUndone = false;
@@ -929,60 +968,6 @@ void updateConnProb::undo()
 void updateConnProb::redo()
 {
     ptr->p = value;
-    firstRedo = false;
-    data->setTitle();
-}
-
-// ######## UPDATE CONN EQUATION #################
-
-updateConnEquation::updateConnEquation(rootData * data, distanceBased_connection * ptr, QString newEq, QUndoCommand *parent) :
-    QUndoCommand(parent)
-{
-    this->value = newEq;
-    this->oldValue = ptr->equation;
-    this->ptr = ptr;
-    this->data = data;
-    this->setText("set " + this->ptr->name + " equation to " + value);
-    firstRedo = true;
-}
-
-void updateConnEquation::undo()
-{
-    ptr->equation = oldValue;
-    ptr->setUnchanged(false);
-    data->setTitle();
-}
-
-void updateConnEquation::redo()
-{
-    ptr->equation = value;
-    firstRedo = false;
-    ptr->setUnchanged(false);
-    data->setTitle();
-}
-
-// ######## UPDATE CONN DELAY EQUATION #################
-
-updateConnDelayEquation::updateConnDelayEquation(rootData * data, distanceBased_connection * ptr, QString newEq, QUndoCommand *parent) :
-    QUndoCommand(parent)
-{
-    this->value = newEq;
-    this->oldValue = ptr->delayEquation;
-    this->ptr = ptr;
-    this->data = data;
-    this->setText("set " + this->ptr->name + " delay equation to " + value);
-    firstRedo = true;
-}
-
-void updateConnDelayEquation::undo()
-{
-    ptr->delayEquation = oldValue;
-    data->setTitle();
-}
-
-void updateConnDelayEquation::redo()
-{
-    ptr->delayEquation = value;
     firstRedo = false;
     data->setTitle();
 }

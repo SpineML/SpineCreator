@@ -41,13 +41,6 @@
 */
 
 
-QString stringify(int val) {
-    stringstream ss (stringstream::in | stringstream::out);
-    ss << float(val);
-    QString returnVal = ss.str().c_str();
-    return returnVal;
-}
-
 rootData::rootData(QObject *parent) :
     QObject(parent)
 {
@@ -83,6 +76,9 @@ rootData::rootData(QObject *parent) :
 
     clipboardCData = NULL;
     projectActions = NULL;
+
+    catalogConn.push_back("1");
+    catalogConn.push_back("2");
 }
 
 void rootData::redrawViews()
@@ -457,20 +453,6 @@ void destroyDom(QDomNode &node)
         destroyDom(child);
         child.clear();
     }
-}
-
-void rootData::import_csv(QString fileName)
-{
-    // open file and load NineML
-    if (fileName.size() == 0) {
-        // user cancelled - do nothing
-        return;
-    }
-
-    this->catalogConn.push_back(new csv_connection(fileName));
-
-    // force redraw of data panel
-    updatePanel(this);
 }
 
 void rootData::onRightMouseDown(float xGL, float yGL, float GLscale)
@@ -1305,7 +1287,7 @@ void rootData::updateComponentType(int index)
             }
             if (type == "conn") {
                 if (index >= 0) {
-                    if (targSel->connectionType->type != index) {
+                    if (targSel->connectionType->getIndex() != index) {
                         currProject->undoStack->push(new changeConnection(this, ptr, index));
                     }
                 }
@@ -1315,7 +1297,7 @@ void rootData::updateComponentType(int index)
             inSel = (genericInput *) ptr;
             if (type == "input") {
                 if (index >= 0) {
-                    if (inSel->connectionType->type != index) {
+                    if (inSel->connectionType->getIndex() != index) {
                         currProject->undoStack->push(new changeConnection(this, ptr, index));
                     }
                 }
@@ -1375,26 +1357,6 @@ void rootData::updatePar()
         // only add undo if value has changed
         if (value != conn->p) {
             currProject->undoStack->push(new updateConnProb(this, conn, value));
-        }
-    }
-
-    if (action == "changeConnEq") {
-        // Update the parameter value
-        distanceBased_connection * conn = (distanceBased_connection *) sender()->property("ptr").value<void *>();
-        QString newEq = ((QLineEdit *) sender())->text();
-        // only add undo if value has changed
-        if (newEq != conn->equation) {
-            currProject->undoStack->push(new updateConnEquation(this, conn, newEq));
-        }
-    }
-
-    if (action == "changeConnDelayEq") {
-        // Update the parameter value
-        distanceBased_connection * conn = (distanceBased_connection *) sender()->property("ptr").value<void *>();
-        QString newEq = ((QLineEdit *) sender())->text();
-        // only add undo if value has changed
-        if (newEq != conn->delayEquation) {
-            currProject->undoStack->push(new updateConnDelayEquation(this, conn, newEq));
         }
     }
 
@@ -1617,7 +1579,7 @@ QString rootData::getUniquePopName(QString newName)
                 nameGood = true;
                 ++j;
                 QString testName = newName;
-                testName.append(" " + stringify(j));
+                testName.append(" " + QString::number(j));
 
                 // check name against populations
                 for (unsigned int k = 0; k < this->populations.size(); ++k) {
@@ -1633,7 +1595,7 @@ QString rootData::getUniquePopName(QString newName)
                 }
             }
             // we have the name - we can exit
-            newName.append(" " + stringify(j));
+            newName.append(" " + QString::number(j));
         }
     }
     return newName;
@@ -1709,18 +1671,6 @@ void rootData::selectColour()
 
     // redraw GL
     emit redrawGLview();
-}
-
-void rootData::setCurrConnectionModel(csv_connectionModel *connModel)
-{
-    if (this->catalogConn.size() > 1) {
-        connModel->setConnection((csv_connection *) this->catalogConn.back());
-    }
-}
-
-void rootData::setCurrConnectionModelSig(csv_connectionModel *connModel)
-{
-    this->setCurrConnectionModel(connModel);
 }
 
 void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QColor> * cols, QString name)
@@ -2022,11 +1972,6 @@ void rootData::setSelectionbyName(QString name)
 
     this->selList.clear();
     this->selList.push_back(currObject);
-}
-
-void rootData::returnPointerToSelf(rootData * * data)
-{
-    (*data) = this;
 }
 
 void rootData::addgenericInput()
