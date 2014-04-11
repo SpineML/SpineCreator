@@ -188,6 +188,8 @@ void RootComponentItem::clearSelection()
 
 void RootComponentItem::notifyDataChange()
 {
+    // Update the component in the component library in root data with this line:
+    this->alPtr->updateFrom (this->al);
     emit unsavedChange(true);
 }
 
@@ -214,8 +216,10 @@ void RootComponentItem::setComponentClassName(QString name)
     bool unique = true;
     // check if name is unique
     for (uint i = 0; i < curr_lib->size(); ++i) {
-        if ((*curr_lib)[i]->name == name)
+        if ((*curr_lib)[i]->name == name) {
+            qDebug() << name << " is not unique in the component catalog.";
             unique = false;
+        }
     }
 
     // find unique name
@@ -226,24 +230,32 @@ void RootComponentItem::setComponentClassName(QString name)
         while (!unique) {
             unique = true;
             for (uint i = 0; i < curr_lib->size(); ++i) {
-                if ((*curr_lib)[i]->name == name + QString::number(float(val)))
+                if ((*curr_lib)[i]->name == name + QString::number(float(val))) {
                     unique = false;
+                }
             }
-            if (!unique)
+            if (!unique) {
                 ++val;
+            }
         }
     }
 
-    if (val != -1)
+    if (val != -1) {
+        qDebug() << "Adding extra suffix to name to make it unique";
         name += " " + QString::number(val);
+    }
 
+    // Update the name in the current component.
     al->name = name;
+
     notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+
+    if (qobject_cast < QLineEdit *> (sender())) {
         alPtr->undoStack.push(new changeComponent(this, oldComponent, "Set Component name"));
-    else
+    } else {
         delete oldComponent;
-    //main->fileListItemChanged(main->viewCL.fileList->currentItem(), NULL);
+    }
+
     main->updateTitle();
 }
 
@@ -292,13 +304,15 @@ void RootComponentItem::setInitialRegime(QString regime)
             al->initial_regime_name = regime;
         }
     }
-    if (al->initial_regime)
+    if (al->initial_regime) {
         emit initialRegimeChanged();
+    }
     notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         alPtr->undoStack.push(new changeComponent(this, oldComponent, "Set Component Initial Regime"));
-    else
+    } else {
         delete oldComponent;
+    }
 }
 
 void RootComponentItem::setPath(QString component_path)
