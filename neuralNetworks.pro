@@ -84,7 +84,6 @@ HEADERS  += mainwindow.h \
     layouteditpreviewdialog.h \
     projections.h \
     vectormodel.h \
-    vectormodel.h \
     valuelistdialog.h \
     genericinput.h \
     connectionlistdialog.h \
