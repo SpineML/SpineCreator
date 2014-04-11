@@ -67,6 +67,7 @@ RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, NineML
     init();
 
     al = new NineMLComponent(component);
+    alPtr = NULL;
 
     //initialise the scene
     scene->initialiseScene(al);
@@ -84,6 +85,7 @@ RootComponentItem::~RootComponentItem()
     gvlayout = NULL;
     delete al;
     al = NULL;
+    alPtr = NULL;
     delete actionSelectMode;
     actionSelectMode = NULL;
     delete actionAddOnCondition;
@@ -130,7 +132,6 @@ RootComponentItem::~RootComponentItem()
 
     toolbar->deleteLater();
     addItemsToolbar->deleteLater();
-
 }
 
 
@@ -189,7 +190,9 @@ void RootComponentItem::clearSelection()
 void RootComponentItem::notifyDataChange()
 {
     // Update the component in the component library in root data with this line:
-    this->alPtr->updateFrom (this->al);
+    if (this->alPtr != NULL && this->al != NULL) {
+        this->alPtr->updateFrom (this->al);
+    }
     emit unsavedChange(true);
 }
 
