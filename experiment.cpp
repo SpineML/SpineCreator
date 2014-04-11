@@ -543,9 +543,10 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
     if (edit) {
         // frame to add
         QFrame * frame = new QFrame;
-#ifndef Q_OS_MAC
-        frame->setStyleSheet("background-color :rgba(0,0,0,40)");
-#endif
+
+        // This doesn't work quite as hoped, so commented out for all platforms:
+        // frame->setStyleSheet("background-color :rgba(0,0,0,40)");
+
         layout->addWidget(frame);
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
@@ -1132,9 +1133,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
     if (edit) {
         // frame to add
         QFrame * frame = new QFrame;
-#ifndef Q_OS_MAC
-        frame->setStyleSheet("background-color :rgba(0,0,0,40)");
-#endif
+        // setStyleSheet removed here.
         layout->addWidget(frame);
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
@@ -1405,10 +1404,7 @@ QVBoxLayout * exptLesion::drawLesion(rootData * data, viewELExptPanelHandler *ha
      if (edit) {
         // frame to add
         QFrame * frame = new QFrame;
-#ifndef Q_OS_MAC
-        frame->setStyleSheet("background-color :rgba(0,0,0,40)");
-#endif
-
+        // setStyleSheet here if required.
         layout->addWidget(frame);
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
@@ -1514,9 +1510,7 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
      if (edit) {
         // frame to add
         QFrame * frame = new QFrame;
-#ifndef Q_OS_MAC
-        frame->setStyleSheet("background-color :rgba(0,0,0,40)");
-#endif
+        // Setting of stylesheet removed here.
         layout->addWidget(frame);
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
