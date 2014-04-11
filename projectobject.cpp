@@ -133,6 +133,13 @@ bool projectObject::open_project(QString fileName)
 
 bool projectObject::save_project(QString fileName, rootData * data)
 {
+    if (!fileName.contains(".")) {
+        QMessageBox msgBox;
+        msgBox.setText("Project file needs .proj suffix.");
+        msgBox.exec();
+        return false;
+    }
+
     QDir project_dir(fileName);
 
     // remove filename
@@ -576,21 +583,25 @@ bool projectObject::load_project_file(QString fileName) {
     }
 
     return true;
-
 }
 
-bool projectObject::save_project_file(QString fileName) {
-
-    // add extension if none provided
-    if (!fileName.contains("."))
-        fileName.append(".proj");
+bool projectObject::save_project_file(QString fileName)
+{
+    // complain if there's no extension (client code should correctly set fileName)
+    if (!fileName.contains(".")) {
+        QMessageBox msgBox;
+        msgBox.setText("Project file needs .proj suffix.");
+        msgBox.exec();
+        return false;
+    }
 
     QFile file( fileName );
     if( !file.open( QIODevice::WriteOnly ) ) {
         QMessageBox msgBox;
         msgBox.setText("Could not create the project file");
         msgBox.exec();
-        return false;}
+        return false;
+    }
 
     // get a streamwriter
     QXmlStreamWriter * writer = new QXmlStreamWriter;
@@ -656,7 +667,6 @@ bool projectObject::save_project_file(QString fileName) {
         version.addToVersion(file.fileName());
 
     return true;
-
 }
 
 bool projectObject::isComponent(QString fileName) {
@@ -1233,8 +1243,8 @@ void projectObject::saveExperiment(QString fileName, QDir project_dir, experimen
 
 }
 
-void projectObject::copy_back_data(rootData * data) {
-
+void projectObject::copy_back_data(rootData * data)
+{
     // copy data from rootData to project
     network = data->populations;
     catalogNB = data->catalogNrn;
@@ -1243,7 +1253,6 @@ void projectObject::copy_back_data(rootData * data) {
     catalogGC = data->catalogUnsorted;
     catalogLAY = data->catalogLayout;
     experimentList = data->experiments;
-
 }
 
 void projectObject::copy_out_data(rootData * data) {

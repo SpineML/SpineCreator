@@ -1445,6 +1445,10 @@ void MainWindow::export_project(const QString& filePath)
         if (testPath == filePath) {
             // Skip this
             // qDebug() << "This file is ok - it's going to be over-written: " << testPath;
+        } else if (testPath == (filePath + ".proj")) {
+            // Skip this too, because if user omitted the .proj, then
+            // projectObject::save_project_file will append .proj. So
+            // this is going to be overwritten, too.
         } else {
             // We have an alien project file here!
             if (this->emsg == (QErrorMessage*)0) {
@@ -1476,6 +1480,9 @@ void MainWindow::export_project()
         path = this->getLastDirectory(MAINWINDOW_LASTPROJECTDIR); // defaults to HOME.
         fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
     }
+    if (!fileName.contains(".")) {
+        fileName.append(".proj");
+    }
     this->export_project (fileName);
 }
 
@@ -1487,6 +1494,9 @@ void MainWindow::export_project_as()
         path = this->getLastDirectory(MAINWINDOW_LASTPROJECTDIR); // defaults to HOME.
     }
     fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
+    if (!fileName.contains(".")) {
+        fileName.append(".proj");
+    }
     this->export_project (fileName);
 }
 
