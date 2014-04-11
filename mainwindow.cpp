@@ -2169,7 +2169,7 @@ void MainWindow::viewCLshow()
 
     // set the current component's undoStack to active
     if (this->viewCL.root != NULL && this->viewCL.root->alPtr != NULL) {
-        undoStacks->setActiveStack(&this->viewCL.root->alPtr->undoStack)
+        undoStacks->setActiveStack(&this->viewCL.root->alPtr->undoStack);
     }
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
