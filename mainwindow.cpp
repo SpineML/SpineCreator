@@ -1463,6 +1463,11 @@ void MainWindow::export_project(const QString& filePath)
     }
 
     this->data.currProject->save_project(filePath, &this->data);
+
+    // Clean up the component undostack (the project itself doesn't
+    // have access to this as far as I can see (Seb).
+    viewCL.root->alPtr->undoStack.setClean();
+
     // enable / disable menus
     this->configureVCSMenu();
     // Update the recent projects menu
@@ -2739,7 +2744,6 @@ void MainWindow::configureVCSMenu()
 void MainWindow::updateTitle(bool unsaved)
 {
     // TITLE UPDATE FOR COMPONENT LAYER
-
     unsaved_changes = unsaved;
     if (viewCL.frame->isVisible()) {
         QString title = "SpineCreator: Component Editor";
@@ -2755,9 +2759,6 @@ void MainWindow::updateTitle(bool unsaved)
                 }
             }
         }
-        //if (unsaved_changes)
-        //    title = title.append("*");
-
         this->setWindowTitle(title);
     }
 }
