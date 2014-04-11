@@ -1466,7 +1466,9 @@ void MainWindow::export_project(const QString& filePath)
 
     // Clean up the component undostack (the project itself doesn't
     // have access to this as far as I can see (Seb).
-    viewCL.root->alPtr->undoStack.setClean();
+    if (viewCL.root != NULL && viewCL.root->alPtr != NULL) {
+        viewCL.root->alPtr->undoStack.setClean();
+    }
 
     // enable / disable menus
     this->configureVCSMenu();
