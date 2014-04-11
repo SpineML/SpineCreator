@@ -169,9 +169,10 @@ void glConnectionWidget::updateLogData() {
                 val *= 3;
                 // complete the remap in just 4 ternarys 
                 int val3 = val > 511 ? val-512 : 0;
-                int val2 = val3 > 0 ? 255 : val;
-                val2 = val2 > 255 ? val2 - 255 : 0;
-                int val1 = val2 > 0 ? 255 : val;
+                int val2 = val3 > 0 ? 511 : val;
+                val2 = val2 > 255 ? val2 - 256 : 0;
+                int val1 = val < 255 ? val : 255;
+
                 popColours[i][j] = QColor(val1,val2, val3, 255);
             }
         }
@@ -431,6 +432,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             if (csv_conn->generator) {
                 if (((pythonscript_connection *) csv_conn->generator)->changed()) {
                     ((pythonscript_connection *) csv_conn->generator)->regenerateConnections();
+                    // fetch connections back here:
+                    connections[targNum].clear();
+                    csv_conn->getAllData(connections[targNum]);
                 }
             }
         }

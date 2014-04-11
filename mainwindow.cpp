@@ -1141,7 +1141,7 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
         viewCL.root->alPtr = selectedComponent;
         // add undo to undoGroup
         this->undoStacks->addStack(&selectedComponent->undoStack);
-        selectedComponent->undoStack.setActive(true);
+        this->undoStacks->setActiveStack(&selectedComponent->undoStack);
     //}
 
     // update fileList
@@ -2157,7 +2157,7 @@ void MainWindow::viewCLshow()
 
     // set the current component's undoStack to active
     if (this->viewCL.root != NULL && this->viewCL.root->alPtr != NULL) {
-        this->viewCL.root->alPtr->undoStack.setActive(true);
+        undoStacks->setActiveStack(&this->viewCL.root->alPtr->undoStack)
     }
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );

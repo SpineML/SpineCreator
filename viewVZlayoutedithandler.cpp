@@ -666,7 +666,7 @@ void viewVZLayoutEditHandler::togglePlay() {
 void viewVZLayoutEditHandler::playBackTimeout() {
 
     if (timeSlider->value() < timeSlider->maximum()) {
-        timeSlider->setValue(timeSlider->value()+1);
+        timeSlider->setValue(timeSlider->value()+50);
         viewVZ->OpenGLWidget->updateLogDataTime(timeSlider->value());
     } else {
         playBack.stop();
