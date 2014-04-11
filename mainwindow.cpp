@@ -1476,6 +1476,9 @@ void MainWindow::export_project()
     if (path.size() == 0) {
         path = this->getLastDirectory(MAINWINDOW_LASTPROJECTDIR); // defaults to HOME.
         fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
+        if (fileName.isEmpty()) {
+            return;
+        }
     }
     if (!fileName.contains(".")) {
         fileName.append(".proj");
@@ -1491,6 +1494,9 @@ void MainWindow::export_project_as()
         path = this->getLastDirectory(MAINWINDOW_LASTPROJECTDIR); // defaults to HOME.
     }
     fileName = QFileDialog::getSaveFileName(this, "Choose the Directory to save project in", path, tr("Project files (*.proj);; All files (*)"));
+    if (fileName.isEmpty()) {
+        return;
+    }
     if (!fileName.contains(".")) {
         fileName.append(".proj");
     }
