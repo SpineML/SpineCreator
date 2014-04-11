@@ -76,6 +76,11 @@ public:
     QAction * actionAddImpulseOut;
     QAction * actionAddStateAssignment;
     rootData * rootDataPtr;
+    /*!
+     * This is a pointer to the component in the rootdata's component
+     * library. This is the "real" component - the one which will get
+     * saved when the user chooses "Save Project".
+     */
     NineMLComponent * alPtr;
 
 
@@ -89,6 +94,12 @@ public slots:
     void deleteComponent();
 
 public:
+    /*!
+     * This is a pointer to a local component instance.
+     *
+     * TODO: Use only alPtr, which points to the instance of the
+     * component in the rootdata component library.
+     */
     NineMLComponent *al;
     PropertiesManager *properties;
     NineMLALScene *scene;
