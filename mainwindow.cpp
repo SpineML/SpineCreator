@@ -2767,7 +2767,6 @@ void MainWindow::updateTitle(bool unsaved)
 
 void MainWindow::updateTitle()
 {
-    qDebug() << "Triggered window title redraw";
 
     // TITLE UPDATE FOR NETWORK LAYER
     QString title;
