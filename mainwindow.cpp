@@ -869,6 +869,7 @@ void MainWindow::initViewCL()
     toolbar0->setMinimumWidth(250);
     toolbar0->setMaximumWidth(250);
     toolbar0->setMinimumHeight(27);
+    toolbar0->setMaximumHeight(27);
     toolbar0->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar0->layout())
         delete toolbar0->layout();
