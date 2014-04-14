@@ -630,8 +630,7 @@ void MainWindow::initViewGV()
     viewGV.toolbar = new QToolBar("Graphing Toolbar");
     viewGV.toolbar->setAllowedAreas(Qt::TopToolBarArea);
 #ifdef Q_OS_MAC
-    // Should be ok for Mac now, as well:
-    viewGV.toolbar->setStyleSheet(this->toolbarStyleSheet);
+    // Don't set toolbar stylesheet for Mac, current QT implementation ignores it.
 #else
     viewGV.toolbar->setStyleSheet(this->toolbarStyleSheet);
 #endif
