@@ -112,7 +112,8 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, rootData *
     ((QHBoxLayout *) this->viewEL->expt->layout())->addLayout(this->exptChanges);
 
 #endif
-    this->viewEL->panel->setStyleSheet("background-color :white");
+    // panel is part of struct viewELstruct and is a QWidget:
+    this->viewEL->panel->setStyleSheet("QWidget { background-color: white; }");
 
     redrawPanel();
     redrawExpt();

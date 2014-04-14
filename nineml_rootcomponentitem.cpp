@@ -404,17 +404,17 @@ void RootComponentItem::init()
     // add actions and toolbars:
     toolbar = new QToolBar("Component main toolbar");
     main->viewCL.subWin->addToolBar(Qt::TopToolBarArea,toolbar);
-#ifndef Q_OS_MAC
+//#ifndef Q_OS_MAC
     toolbar->setStyleSheet(main->toolbarStyleSheet);
-#endif
+//#endif
     toolbar->setMaximumHeight(32);
     toolbar->layout()->setMargin(0);
 
     addItemsToolbar = new QToolBar("Component additional toolbar");
     main->viewCL.subWin->addToolBar( Qt::TopToolBarArea, addItemsToolbar);
-#ifndef Q_OS_MAC
+//#ifndef Q_OS_MAC
     addItemsToolbar->setStyleSheet(main->toolbarStyleSheet);
-#endif
+//#endif
     addItemsToolbar->setMaximumHeight(32);
     addItemsToolbar->layout()->setMargin(0);
 
