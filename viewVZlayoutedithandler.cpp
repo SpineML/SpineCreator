@@ -1385,7 +1385,7 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
 
     // add a block of colour to differentiate the extent of the regime
     QLabel * block = new QLabel("");
-    block->setStyleSheet("background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:1 rgba(200, 200, 200, 255), stop:0 rgba(200,200,200,0))");
+    block->setStyleSheet("QLabel { background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:1 rgba(200, 200, 200, 255), stop:0 rgba(200,200,200,0)); }");
     block->setFixedWidth(0);
     regimeSurround->addWidget(block);
 
@@ -1395,13 +1395,13 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
 
     // add another block of colour to differentiate the extent of the regime
     QLabel * blockEnd = new QLabel("");
-    blockEnd->setStyleSheet("background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(200, 200, 200, 255), stop:1 rgba(200,200,200,0))");
+    blockEnd->setStyleSheet("QLabel { background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(200, 200, 200, 255), stop:1 rgba(200,200,200,0)); }");
     blockEnd->setFixedWidth(0);
     regimeSurround->addWidget(blockEnd);
 
     // add a bar at the top
     QLabel * bar1 = new QLabel("");
-    bar1->setStyleSheet("background: rgba(250, 250, 250, 255)");
+    bar1->setStyleSheet("QLabel { background: rgba(250, 250, 250, 255); }");
     bar1->setMaximumHeight(2);
     regimeLay->addWidget(bar1);
 
@@ -1412,7 +1412,7 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
 
     // add a bar under the title:
     QLabel * bar2b = new QLabel("");
-    bar2b->setStyleSheet("background: rgba(200, 200, 200, 0)");
+    bar2b->setStyleSheet("QLabel { background: rgba(200, 200, 200, 0); }");
     bar2b->setMaximumHeight(6);
     regimeLay->addWidget(bar2b);
 
@@ -1453,7 +1453,7 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
 
     // add a bar under the transforms:
     QLabel * bar3 = new QLabel("");
-    bar3->setStyleSheet("background: rgba(200, 200, 200, 255)");
+    bar3->setStyleSheet("QLabel { background: rgba(200, 200, 200, 255); }");
     bar3->setMaximumHeight(6);
     regimeLay->addWidget(bar3);
 
@@ -2102,9 +2102,9 @@ void viewVZLayoutEditHandler::viewVZeditDisplayErrors(QStringList errs) {
     QString errString;
 
     if (errs.size() > 0) {
-        this->viewVZ->errors->setStyleSheet("background: rgba(255,0,0,50)");
+        this->viewVZ->errors->setStyleSheet("QLabel { background: rgba(255,0,0,50); }");
     } else {
-        this->viewVZ->errors->setStyleSheet("background: rgba(255,255,255,0)");
+        this->viewVZ->errors->setStyleSheet("QLabel { background: rgba(255,255,255,0); }");
     }
 
     for (uint i = 0; i < (uint) errs.size(); ++i) {

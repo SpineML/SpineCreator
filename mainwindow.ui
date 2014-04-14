@@ -40,16 +40,7 @@
     </size>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>0</number>
     </property>
     <property name="spacing">
@@ -101,16 +92,7 @@
        <number>0</number>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
+       <property name="margin">
         <number>0</number>
        </property>
        <property name="spacing">
@@ -175,7 +157,7 @@
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0.1 rgba(150, 150, 150, 255), stop:0.405 rgba(120, 120, 120, 255), stop:0.415 rgba(100, 100, 100 255), stop:1 rgba(80, 80, 80, 255), stop:0 rgba(255,255,255,255))</string>
+          <string notr="true">QFrame, QToolBar, QToolButton, QFrame &gt; QLayout, QFrame &gt; QToolButton {background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0.1 rgba(150, 150, 150, 255), stop:0.405 rgba(120, 120, 120, 255), stop:0.415 rgba(100, 100, 100 255), stop:1 rgba(80, 80, 80, 255), stop:0 rgba(255,255,255,255))}</string>
          </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
@@ -414,8 +396,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>432</width>
-            <height>577</height>
+            <width>433</width>
+            <height>576</height>
            </rect>
           </property>
          </widget>

@@ -80,7 +80,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     this->emsg = (QErrorMessage*)0;
 
-    toolbarStyleSheet = ui->toolbar_3->styleSheet();
+    // Copy the main toolbar stylesheet, as set in the QT UI form:
+    this->toolbarStyleSheet = this->ui->toolbar_3->styleSheet();
 
     resize(settings.value("mainwindow/size", QSize(1060, 622)).toSize());
     move(settings.value("mainwindow/pos", QPoint(0, 0)).toPoint());
@@ -629,9 +630,10 @@ void MainWindow::initViewGV()
     viewGV.toolbar = new QToolBar("Graphing Toolbar");
     viewGV.toolbar->setAllowedAreas(Qt::TopToolBarArea);
 #ifdef Q_OS_MAC
-    //viewGV.toolbar->setStyleSheet(this->ui->toolbar_3->styleSheet());
+    // Should be ok for Mac now, as well:
+    viewGV.toolbar->setStyleSheet(this->toolbarStyleSheet);
 #else
-    viewGV.toolbar->setStyleSheet(this->ui->toolbar_3->styleSheet());
+    viewGV.toolbar->setStyleSheet(this->toolbarStyleSheet);
 #endif
     viewGV.subWin->addToolBar(Qt::TopToolBarArea,viewGV.toolbar);
 
@@ -737,7 +739,7 @@ void MainWindow::initViewEL()
     toolbar0->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     toolbar0->setMinimumSize(this->ui->topleft->size());
     toolbar0->setMinimumHeight(27);
-    toolbar0->setStyleSheet(this->ui->toolbar_3->styleSheet());
+    toolbar0->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar0->layout())
         delete toolbar0->layout();
     toolbar0->setLayout(new QHBoxLayout);
@@ -754,7 +756,7 @@ void MainWindow::initViewEL()
     // add a run button to the toolbar
     QToolButton * run = new QToolButton();
     run->setMinimumHeight(27);
-    run->setStyleSheet("color: white; border: 0px;");
+    run->setStyleSheet("QToolButton { color: white; border: 0px; }");
     run->setText("Run experiment");
     run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     run->setToolTip("Run the selected experiment in the chosen simulator");
@@ -867,7 +869,7 @@ void MainWindow::initViewCL()
     toolbar0->setMinimumWidth(250);
     toolbar0->setMaximumWidth(250);
     toolbar0->setMinimumHeight(27);
-    toolbar0->setStyleSheet(this->ui->toolbar_3->styleSheet());
+    toolbar0->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar0->layout())
         delete toolbar0->layout();
     toolbar0->setLayout(new QHBoxLayout);
@@ -999,7 +1001,7 @@ void MainWindow::initViewVZ()
     toolbar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     toolbar->setMinimumSize(this->ui->topleft->size());
     toolbar->setMinimumHeight(27);
-    toolbar->setStyleSheet(this->ui->toolbar_3->styleSheet());
+    toolbar->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar->layout())
         delete toolbar->layout();
     toolbar->setLayout(new QHBoxLayout);
@@ -1889,14 +1891,14 @@ void MainWindow::saveImageAction()
 void MainWindow::viewGVshow()
 {
     // reset all view buttons to 'inactive' look
-    this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab2->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
+    this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab2->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab3->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab4->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
 
     // set the current view button to the 'active' look
-    this->ui->tab4->setStyleSheet("border: 0px; color:white; background:rgba(255,255,255,40%)");
+    this->ui->tab4->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
     // make sure open component is replaced in the network
     if (viewCL.root != NULL) {
@@ -1928,11 +1930,11 @@ void MainWindow::viewGVshow()
 void MainWindow::viewELshow()
 {
     // reset all view buttons to 'inactive' look
-    this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab2->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
+    this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab2->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab3->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab4->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
 
     // make sure open component is replaced in the network
     if (viewCL.root != NULL) {
@@ -1941,7 +1943,7 @@ void MainWindow::viewELshow()
     }
 
     // set the current view button to the 'active' look
-    this->ui->tab0->setStyleSheet("border: 0px; color:white; background:rgba(255,255,255,40%)");
+    this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
     // refresh it all
     this->viewELhandler->redraw();
@@ -1982,11 +1984,11 @@ void MainWindow::viewELshow()
 void MainWindow::viewNLshow()
 {
     // reset all view buttons to 'inactive' look
-    this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab2->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
+    this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab2->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab3->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab4->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
 
     // make sure open component is replaced in the network
     if (viewCL.root != NULL) {
@@ -1998,7 +2000,7 @@ void MainWindow::viewNLshow()
     this->data.reDrawPanel();
 
     // set the current view button to the 'active' look
-    this->ui->tab1->setStyleSheet("border: 0px; color:white; background:rgba(255,255,255,40%)");
+    this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
     // hide the other views
     this->viewGV.subWin->hide();
@@ -2052,11 +2054,11 @@ void MainWindow::viewVZshow()
     viewVZ.OpenGLWidget->refreshAll();
 
     // reset all view buttons to 'inactive' look
-    this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab2->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
+    this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab2->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab3->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab4->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
 
     // make sure open component is replaced in the network
     if (viewCL.root != NULL) {
@@ -2065,7 +2067,7 @@ void MainWindow::viewVZshow()
     }
 
     // set the current view button to the 'active' look
-    this->ui->tab2->setStyleSheet("border: 0px; color:white; background:rgba(255,255,255,40%)");
+    this->ui->tab2->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
     // hide the other views
     this->viewGV.subWin->hide();
@@ -2132,17 +2134,17 @@ void MainWindow::viewVZshow()
 void MainWindow::viewCLshow()
 {
     // reset all view buttons to 'inactive' look
-    this->ui->tab0->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab1->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab2->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab3->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
-    this->ui->tab4->setStyleSheet("border: 0px; color:white; background:QColor(0,0,0,0)");
+    this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab2->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab3->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
+    this->ui->tab4->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
 
     // get source button handle
     //QToolButton * srcBut =  (QToolButton *) sender();
 
     // set the current view button to the 'active' look
-    this->ui->tab3->setStyleSheet("border: 0px; color:white; background:rgba(255,255,255,40%)");
+    this->ui->tab3->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
     // hide the other views
     this->viewGV.subWin->hide();
