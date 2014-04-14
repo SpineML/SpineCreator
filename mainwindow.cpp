@@ -739,6 +739,7 @@ void MainWindow::initViewEL()
     toolbar0->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     toolbar0->setMinimumSize(this->ui->topleft->size());
     toolbar0->setMinimumHeight(27);
+    toolbar0->setMaximumHeight(27);
     toolbar0->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar0->layout())
         delete toolbar0->layout();
@@ -1002,6 +1003,7 @@ void MainWindow::initViewVZ()
     toolbar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     toolbar->setMinimumSize(this->ui->topleft->size());
     toolbar->setMinimumHeight(27);
+    toolbar->setMaximumHeight(27);
     toolbar->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar->layout())
         delete toolbar->layout();
