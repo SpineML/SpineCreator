@@ -871,9 +871,82 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
     redrawExpt();
 }
 
+void viewELExptPanelHandler::reorderParams (vector<float>& params)
+{
+    vector <float> tempVec;
+    while (params.size() > 1) {
+        int min = 100000000;
+        int minIndex = 0;
+        for (uint i = 0; i < params.size(); i+=2) {
+            if (params[i] < min) {min = params[i]; minIndex = i;}
+        }
+        for (uint i = 0; i < 2; ++i) {
+            tempVec.push_back(params[minIndex]);
+            params.erase(params.begin()+minIndex);
+        }
+    }
+    params.swap(tempVec);
+}
+
 void viewELExptPanelHandler::acceptInput()
 {
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
+
+    // Auto re-order params at this point.
+    if (in->inType == timevarying) {
+
+        // reorder in->params, which is a vector of floats.
+        this->reorderParams (in->params);
+
+    } else if (in->inType == arrayTimevarying) {
+
+        vector<float> curr; // a single table from in->params goes in here to be sorted
+        vector<float> temp; // a sorted copy of in->params is built in here
+        curr.clear();
+        temp.clear();
+
+        bool copy = false;
+        bool loopdone = false;
+        unsigned int i = 0;
+
+        // Loop over each neuron index. This algorithm works, but it can be simplified.
+        for (unsigned int index = 0; !loopdone; ++index) {
+
+            // move the table for the current index into a new vector curr
+            for (; i < in->params.size(); i+=2) {
+                if (in->params[i] == -1 && copy) {
+                    copy = false;
+                    break;
+                }
+                if (copy) {
+                    curr.push_back(in->params[i]);
+                    curr.push_back(in->params[i+1]);
+                }
+                if (in->params[i] == -1 && in->params[i+1] == index) {
+                    copy = true;
+                }
+            }
+
+            // Check if this was the last table to sort:
+            if (i >= in->params.size()) {
+                loopdone = true;
+            }
+
+            // sort curr:
+            this->reorderParams (curr);
+
+            // append curr onto temp:
+            temp.push_back(-1);
+            temp.push_back(index);
+            temp.insert(temp.end(), curr.begin(), curr.end());
+            curr.clear();
+        }
+
+        // Swap the (now sorted) contents of temp into in->params
+        in->params.swap (temp);
+    }
+
+    // Mark that we're no longer editing this input
     in->edit = false;
 
     // redraw to update the selection
@@ -948,27 +1021,15 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
 
         // construct index and set value
         int index = row*2+col;
-        if (index > (int) in->params.size()-1)
+        if (index > (int) in->params.size()-1) {
             in->params.resize(qCeil(index/2)*2, 0);
+        }
 
         in->params[index] = value;
 
-        // reorder:
-        vector <float> tempVec;
-
-        while (in->params.size() > 1) {
-            int min = 100000000;
-            int minIndex = 0;
-            for (uint i = 0; i < in->params.size(); i+=2) {
-                if (in->params[i] < min) {min = in->params[i]; minIndex = i;}
-            }
-            for (uint i = 0; i < 2; ++i) {
-                tempVec.push_back(in->params[minIndex]);
-                in->params.erase(in->params.begin()+minIndex);
-            }
-        }
-
-        in->params.swap(tempVec);
+#ifdef AUTO_REORDER_TIME_VARYING
+        this->reorderParams (in->params);
+#endif
 
     } else if (in->inType == arrayConstant) {
 
@@ -976,14 +1037,15 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
 
     } else if (in->inType == arrayTimevarying) {
 
-        vector < float > curr;
-
+        vector<float> curr;
         bool copy = false;
-        // move current index to new vector
+
+        // move the table for the current index into a new vector curr
         for (int i = 0; i < (int) in->params.size(); i+=2) {
-            if (in->params[i] == -1 && copy) break;
-            if (copy)
-            {
+            if (in->params[i] == -1 && copy) {
+                break;
+            }
+            if (copy) {
                 curr.push_back(in->params[i]);
                 curr.push_back(in->params[i+1]);
                 in->params.erase(in->params.begin()+i, in->params.begin()+i+2);
@@ -996,33 +1058,22 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
             }
         }
 
-        // construct index and set value
+        // construct index and set value in curr.
         int index = row*2+col;
-        if (index > (int) curr.size()-1)
+        if (index > (int) curr.size()-1) {
             curr.resize(qCeil(index/2)*2, 0);
-
+        }
         curr[index] = value;
 
-        // reorder:
-        vector <float> tempVec;
+#ifdef AUTO_REORDER_ARRAY_TIME_VARYING
+        this->reorderParams (curr);
+#endif
 
-        while (curr.size() > 1) {
-            int min = 100000000;
-            int minIndex = 0;
-            for (uint i = 0; i < curr.size(); i+=2) {
-                if (curr[i] < min) {min = curr[i]; minIndex = i;}
-            }
-            for (uint i = 0; i < 2; ++i) {
-                tempVec.push_back(curr[minIndex]);
-                curr.erase(curr.begin()+minIndex);
-            }
-        }
-
-        // put back the index
+        // put curr back the index
         in->params.push_back(-1);
         in->params.push_back(in->currentIndex);
-        for (uint i = 0; i < tempVec.size(); ++i) {
-            in->params.push_back(tempVec[i]);
+        for (uint i = 0; i < curr.size(); ++i) {
+            in->params.push_back(curr[i]);
         }
     }
 
