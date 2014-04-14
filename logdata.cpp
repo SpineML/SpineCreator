@@ -774,9 +774,20 @@ bool logData::setupFromXML() {
                             for (uint i = 0; i < columns.size(); ++i)
                                 columns[i].index = i;
 
+                        } else if (reader->name() == "TimeStep") {
+
+                            if (reader->attributes().hasAttribute("dt")) {
+                                timeStep = reader->attributes().value("dt").toString().toDouble();
+                            } else {
+                                // required attribute
+                                qDebug() << "Timestep attr missing";
+                                delete reader;
+                                return false;
+                            }
+
                         } else {
                             // XML tag not recognised
-                            qDebug() << "Unkown tag name " << reader->name();
+                            qDebug() << "Unknown tag name " << reader->name();
                             delete reader;
                             return false;
                         }
