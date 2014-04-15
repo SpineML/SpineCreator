@@ -1358,7 +1358,7 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                     bool synapseFound = false;
 
                     // if we are not an empty node
-                    if (!metaData.toElement().hasChildNodes()) {
+                    if (!metaData.firstChildElement().isNull()) {
 
                         for (uint i = 0; i < this->synapses.size(); ++i) {
                              // check if we have the current node

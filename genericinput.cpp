@@ -641,7 +641,7 @@ void genericInput::read_meta_data(QDomDocument * meta) {
                     // extract data for connection generator
 
                     // if we are not an empty node
-                    if (!metaData.toElement().hasChildNodes()) {
+                    if (!metaData.firstChildElement().isNull()) {
 
                         // add connection generator if we are a csv
                         if (this->connectionType->type == CSV) {
