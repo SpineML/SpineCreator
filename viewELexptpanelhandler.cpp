@@ -905,41 +905,23 @@ void viewELExptPanelHandler::acceptInput()
         curr.clear();
         temp.clear();
 
-        bool copy = false;
-        bool loopdone = false;
+        unsigned int index = 0;
         unsigned int i = 0;
-
-        // Loop over each neuron index. This algorithm works, but it can be simplified.
-        for (unsigned int index = 0; !loopdone; ++index) {
-
-            // move the table for the current index into a new vector curr
-            for (; i < in->params.size(); i+=2) {
-                if (in->params[i] == -1 && copy) {
-                    copy = false;
-                    break;
+        while (i < in->params.size()) {
+            if (in->params[i] == -1) { // it should be
+                index = in->params[++i]; // get the table index from the next entry
+                ++i; // and then move on to the first table entry
+                while (i < in->params.size() && in->params[i] != -1) { // read the current table
+                    curr.push_back(in->params[i++]);
                 }
-                if (copy) {
-                    curr.push_back(in->params[i]);
-                    curr.push_back(in->params[i+1]);
+                if (!curr.empty()) {
+                    this->reorderParams (curr); // sort
+                    temp.push_back(-1);
+                    temp.push_back(index);
+                    temp.insert(temp.end(), curr.begin(), curr.end());  // append
+                    curr.clear(); // clear ready for the next table read
                 }
-                if (in->params[i] == -1 && in->params[i+1] == index) {
-                    copy = true;
-                }
-            }
-
-            // Check if this was the last table to sort:
-            if (i >= in->params.size()) {
-                loopdone = true;
-            }
-
-            // sort curr:
-            this->reorderParams (curr);
-
-            // append curr onto temp:
-            temp.push_back(-1);
-            temp.push_back(index);
-            temp.insert(temp.end(), curr.begin(), curr.end());
-            curr.clear();
+            } // else corrupt data somewhere? This depends on time never being -1. Negative time not allowed.
         }
 
         // Swap the (now sorted) contents of temp into in->params
@@ -1025,11 +1007,16 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
             in->params.resize(qCeil(index/2)*2, 0);
         }
 
+        if (index%2 == 0) {
+            // even index; value (time) should be >=0
+            if (value < 0) {
+                // Error - positive time values required. Force to 0.
+                value = 0;
+                table->currentItem()->setText("0");
+                return;
+            }
+        }
         in->params[index] = value;
-
-#ifdef AUTO_REORDER_TIME_VARYING
-        this->reorderParams (in->params);
-#endif
 
     } else if (in->inType == arrayConstant) {
 
@@ -1037,43 +1024,70 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
 
     } else if (in->inType == arrayTimevarying) {
 
-        vector<float> curr;
-        bool copy = false;
-
-        // move the table for the current index into a new vector curr
-        for (int i = 0; i < (int) in->params.size(); i+=2) {
-            if (in->params[i] == -1 && copy) {
+        bool readpast = false;
+        vector<float>::iterator params_iter = in->params.begin();
+        vector<float>::iterator curr_start = in->params.end();
+        vector<float>::iterator curr_end = in->params.end();
+        while (params_iter != in->params.end()) {
+            if (*params_iter == -1 && readpast) {
+                curr_end = params_iter; // Points to one past the last element of the current table.
+                readpast = false;
                 break;
             }
-            if (copy) {
-                curr.push_back(in->params[i]);
-                curr.push_back(in->params[i+1]);
-                in->params.erase(in->params.begin()+i, in->params.begin()+i+2);
-                i -= 2;
+            if (readpast) { // Expect to skip past a time and a value:
+                if (++params_iter == in->params.end()) { break; }
+                if (++params_iter == in->params.end()) { continue; }
             }
-            if (in->params[i] == -1 && in->params[i+1] == in->currentIndex) {
-                copy = true;
-                in->params.erase(in->params.begin()+i, in->params.begin()+i+2);
-                i -= 2;
+            if (params_iter != in->params.end() && *params_iter == -1) {
+                if (*++params_iter == in->currentIndex) {
+                    readpast = true;
+                    curr_start = params_iter;
+                    curr_start++; // Now at the start of the current index table data (just past the -1 and the index).
+                } else {
+                    params_iter++; // step past that index, and on to the next.
+                }
+            } else {
+                if (++params_iter == in->params.end()) { break; }
+                if (++params_iter == in->params.end()) { continue; }
             }
+        }
+        if (readpast) {
+            // We were "reading" the current table, but didn't get to another table, so need to set end iter
+            curr_end = params_iter;
         }
 
         // construct index and set value in curr.
         int index = row*2+col;
-        if (index > (int) curr.size()-1) {
-            curr.resize(qCeil(index/2)*2, 0);
+        vector<float>::iterator index_iter = curr_start;
+        index_iter += index;
+
+        // Every other value has to be checked to ensure it's non-negative
+        if (index%2 == 0) {
+            // even index; value (time) should be >=0
+            if (value < 0) {
+                // Error - positive time values please! Force to 0.
+                value = 0;
+                // Trigger a new value in the currentItem, which will re-call this function.
+                table->currentItem()->setText("0");
+                // Then return.
+                return;
+            }
         }
-        curr[index] = value;
 
-#ifdef AUTO_REORDER_ARRAY_TIME_VARYING
-        this->reorderParams (curr);
-#endif
-
-        // put curr back the index
-        in->params.push_back(-1);
-        in->params.push_back(in->currentIndex);
-        for (uint i = 0; i < curr.size(); ++i) {
-            in->params.push_back(curr[i]);
+        if (index_iter >= curr_end) {
+            // need to insert into in->params. This doesn't seem to occur in practice.
+            if (col == 1) {
+                curr_end = in->params.insert (curr_end, 0.0);
+                in->params.insert (curr_end, static_cast<float>(value));
+            } else if (col == 0) {
+                curr_end = in->params.insert (curr_end, static_cast<float>(value));
+                in->params.insert (curr_end, 0.0);
+            } else {
+                // error
+            }
+        } else {
+            // Can over-write in->params
+            *index_iter = static_cast<float>(value);
         }
     }
 
