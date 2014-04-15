@@ -1368,8 +1368,6 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                                 conn->generator = new pythonscript_connection(this->source, this->destination, conn);
                                 // extract data for connection generator
                                 ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
-                                // configure generator
-                                ((pythonscript_connection *) conn->generator)->configureFromScript(((pythonscript_connection *) conn->generator)->scriptText);
                                 // prevent regeneration
                                 ((pythonscript_connection *) conn->generator)->setUnchanged(true);
                             }

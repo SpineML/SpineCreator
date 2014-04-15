@@ -647,8 +647,6 @@ void genericInput::read_meta_data(QDomDocument * meta) {
                         conn->generator = new pythonscript_connection((population *) this->source, (population *) this->destination, conn);
                         // extract data for connection generator
                         ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
-                        // configure generator
-                        ((pythonscript_connection *) conn->generator)->configureFromScript(((pythonscript_connection *) conn->generator)->scriptText);
                         // prevent regeneration
                         ((pythonscript_connection *) conn->generator)->setUnchanged(true);
                     }

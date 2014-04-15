@@ -49,6 +49,13 @@ connectionListDialog::connectionListDialog(csv_connection * conn, QWidget *paren
     header->resizeSection(0, 80);
     header->resizeSection(1, 80);
 
+    // hide import button if is a pythonscript
+    if (this->conn->generator != NULL) {
+        this->ui->import_csv->setVisible(false);
+        this->ui->tableView->setMinimumWidth(240);
+        this->ui->spinBox->setEnabled(false);
+    }
+
     connect(this->ui->import_csv,SIGNAL(clicked()), this, SLOT(importCSV()));
     connect(this->vModel,SIGNAL(setSpinBoxVal(int)), ui->spinBox, SLOT(setValue(int)));
 }

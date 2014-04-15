@@ -1627,6 +1627,18 @@ QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditH
         // add a connection so we can disable the button if the script changes
         // add to the HBoxLayout
         buttons->addWidget(gen);
+
+        // add a button to investigate the connections
+        QPushButton *view = new QPushButton("View");
+        view->setMaximumWidth(70);
+        view->setToolTip("view connectivity");
+        view->setProperty("ptr", qVariantFromValue((void *) this->connection_target));
+
+        buttons->addWidget(view);
+
+        // add connection:
+        connect(view, SIGNAL(clicked()), data, SLOT(editConnections()));
+
         buttons->addStretch();
 
         // if we have a weight produced add a combobox (which is safe as it never deletes itself)
@@ -2038,6 +2050,7 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
 
             // load the parameters from the metadata
             for (int i = 0; i < this->parNames.size(); ++i) {
+                qDebug() << "ParName = " << this->parNames[i];
                 this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
             }
 
