@@ -110,18 +110,34 @@ struct externalObject {
     int size;
 };
 
-class exptInput : QObject {
+class exptInput : QObject
+{
     Q_OBJECT
 public:
 
-    exptInput() {edit = true; set=false; eventport.name="spike"; target = NULL; portIsAnalog = false; inType = constant; params.push_back(0); rate = false;currentIndex = 0; name = "New Input"; rateDistribution = Poisson; \
-                 externalInput.size=1; externalInput.port = 50091; externalInput.host = "localhost"; externalInput.timestep = 0.0;}
+    exptInput()
+    {
+        edit = true;
+        set=false;
+        eventport.name="spike";
+        target = NULL;
+        portIsAnalog = false;
+        inType = constant;
+        params.push_back(0);
+        rate = false;currentIndex = 0;
+        name = "New Input";
+        rateDistribution = Poisson;                                     \
+        externalInput.size=1;
+        externalInput.port = 50091;
+        externalInput.host = "localhost";
+        externalInput.timestep = 0.0;
+    }
 
     bool rate;
     int currentIndex;
 
     exptInType inType;
-    vector < float > params;
+    vector <float> params;
     externalObject externalInput;
     NineMLComponentData * target;
     QString portName;
@@ -135,7 +151,6 @@ public:
     QVBoxLayout * drawInput(rootData *data, viewELExptPanelHandler * handler);
     void writeXML(QXmlStreamWriter *, projectObject * data);
     void readXML(QXmlStreamReader * , projectObject *);
-
 };
 
 class exptOutput : QObject {

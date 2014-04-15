@@ -877,9 +877,64 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
     redrawExpt();
 }
 
+void viewELExptPanelHandler::reorderParams (vector<float>& params)
+{
+    vector <float> tempVec;
+    while (params.size() > 1) {
+        int min = 100000000;
+        int minIndex = 0;
+        for (uint i = 0; i < params.size(); i+=2) {
+            if (params[i] < min) {min = params[i]; minIndex = i;}
+        }
+        for (uint i = 0; i < 2; ++i) {
+            tempVec.push_back(params[minIndex]);
+            params.erase(params.begin()+minIndex);
+        }
+    }
+    params.swap(tempVec);
+}
+
 void viewELExptPanelHandler::acceptInput()
 {
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
+
+    // Auto re-order params at this point.
+    if (in->inType == timevarying) {
+
+        // reorder in->params, which is a vector of floats.
+        this->reorderParams (in->params);
+
+    } else if (in->inType == arrayTimevarying) {
+
+        vector<float> curr; // a single table from in->params goes in here to be sorted
+        vector<float> temp; // a sorted copy of in->params is built in here
+        curr.clear();
+        temp.clear();
+
+        unsigned int index = 0;
+        unsigned int i = 0;
+        while (i < in->params.size()) {
+            if (in->params[i] == -1) { // it should be
+                index = in->params[++i]; // get the table index from the next entry
+                ++i; // and then move on to the first table entry
+                while (i < in->params.size() && in->params[i] != -1) { // read the current table
+                    curr.push_back(in->params[i++]);
+                }
+                if (!curr.empty()) {
+                    this->reorderParams (curr); // sort
+                    temp.push_back(-1);
+                    temp.push_back(index);
+                    temp.insert(temp.end(), curr.begin(), curr.end());  // append
+                    curr.clear(); // clear ready for the next table read
+                }
+            } // else corrupt data somewhere? This depends on time never being -1. Negative time not allowed.
+        }
+
+        // Swap the (now sorted) contents of temp into in->params
+        in->params.swap (temp);
+    }
+
+    // Mark that we're no longer editing this input
     in->edit = false;
 
     // redraw to update the selection
@@ -954,27 +1009,20 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
 
         // construct index and set value
         int index = row*2+col;
-        if (index > (int) in->params.size()-1)
+        if (index > (int) in->params.size()-1) {
             in->params.resize(qCeil(index/2)*2, 0);
-
-        in->params[index] = value;
-
-        // reorder:
-        vector <float> tempVec;
-
-        while (in->params.size() > 1) {
-            int min = 100000000;
-            int minIndex = 0;
-            for (uint i = 0; i < in->params.size(); i+=2) {
-                if (in->params[i] < min) {min = in->params[i]; minIndex = i;}
-            }
-            for (uint i = 0; i < 2; ++i) {
-                tempVec.push_back(in->params[minIndex]);
-                in->params.erase(in->params.begin()+minIndex);
-            }
         }
 
-        in->params.swap(tempVec);
+        if (index%2 == 0) {
+            // even index; value (time) should be >=0
+            if (value < 0) {
+                // Error - positive time values required. Force to 0.
+                value = 0;
+                table->currentItem()->setText("0");
+                return;
+            }
+        }
+        in->params[index] = value;
 
     } else if (in->inType == arrayConstant) {
 
@@ -982,53 +1030,70 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
 
     } else if (in->inType == arrayTimevarying) {
 
-        vector < float > curr;
-
-        bool copy = false;
-        // move current index to new vector
-        for (int i = 0; i < (int) in->params.size(); i+=2) {
-            if (in->params[i] == -1 && copy) break;
-            if (copy)
-            {
-                curr.push_back(in->params[i]);
-                curr.push_back(in->params[i+1]);
-                in->params.erase(in->params.begin()+i, in->params.begin()+i+2);
-                i -= 2;
+        bool readpast = false;
+        vector<float>::iterator params_iter = in->params.begin();
+        vector<float>::iterator curr_start = in->params.end();
+        vector<float>::iterator curr_end = in->params.end();
+        while (params_iter != in->params.end()) {
+            if (*params_iter == -1 && readpast) {
+                curr_end = params_iter; // Points to one past the last element of the current table.
+                readpast = false;
+                break;
             }
-            if (in->params[i] == -1 && in->params[i+1] == in->currentIndex) {
-                copy = true;
-                in->params.erase(in->params.begin()+i, in->params.begin()+i+2);
-                i -= 2;
+            if (readpast) { // Expect to skip past a time and a value:
+                if (++params_iter == in->params.end()) { break; }
+                if (++params_iter == in->params.end()) { continue; }
+            }
+            if (params_iter != in->params.end() && *params_iter == -1) {
+                if (*++params_iter == in->currentIndex) {
+                    readpast = true;
+                    curr_start = params_iter;
+                    curr_start++; // Now at the start of the current index table data (just past the -1 and the index).
+                } else {
+                    params_iter++; // step past that index, and on to the next.
+                }
+            } else {
+                if (++params_iter == in->params.end()) { break; }
+                if (++params_iter == in->params.end()) { continue; }
             }
         }
+        if (readpast) {
+            // We were "reading" the current table, but didn't get to another table, so need to set end iter
+            curr_end = params_iter;
+        }
 
-        // construct index and set value
+        // construct index and set value in curr.
         int index = row*2+col;
-        if (index > (int) curr.size()-1)
-            curr.resize(qCeil(index/2)*2, 0);
+        vector<float>::iterator index_iter = curr_start;
+        index_iter += index;
 
-        curr[index] = value;
-
-        // reorder:
-        vector <float> tempVec;
-
-        while (curr.size() > 1) {
-            int min = 100000000;
-            int minIndex = 0;
-            for (uint i = 0; i < curr.size(); i+=2) {
-                if (curr[i] < min) {min = curr[i]; minIndex = i;}
-            }
-            for (uint i = 0; i < 2; ++i) {
-                tempVec.push_back(curr[minIndex]);
-                curr.erase(curr.begin()+minIndex);
+        // Every other value has to be checked to ensure it's non-negative
+        if (index%2 == 0) {
+            // even index; value (time) should be >=0
+            if (value < 0) {
+                // Error - positive time values please! Force to 0.
+                value = 0;
+                // Trigger a new value in the currentItem, which will re-call this function.
+                table->currentItem()->setText("0");
+                // Then return.
+                return;
             }
         }
 
-        // put back the index
-        in->params.push_back(-1);
-        in->params.push_back(in->currentIndex);
-        for (uint i = 0; i < tempVec.size(); ++i) {
-            in->params.push_back(tempVec[i]);
+        if (index_iter >= curr_end) {
+            // need to insert into in->params. This doesn't seem to occur in practice.
+            if (col == 1) {
+                curr_end = in->params.insert (curr_end, 0.0);
+                in->params.insert (curr_end, static_cast<float>(value));
+            } else if (col == 0) {
+                curr_end = in->params.insert (curr_end, static_cast<float>(value));
+                in->params.insert (curr_end, 0.0);
+            } else {
+                // error
+            }
+        } else {
+            // Can over-write in->params
+            *index_iter = static_cast<float>(value);
         }
     }
 

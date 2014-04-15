@@ -62,6 +62,8 @@ private:
     void recursiveDelete(QLayout * parentLayout);
     void recursiveDeleteExpt(QLayout * parentLayout);
 
+    void reorderParams (vector<float>& params);
+
     /*!
      * \brief Redraw the simulator parameters - this is called if there is no current systemObject selected
      * \param currentExperiment
