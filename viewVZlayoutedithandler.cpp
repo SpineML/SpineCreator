@@ -1216,7 +1216,7 @@ void viewVZLayoutEditHandler::drawDeletables() {
         }
 
         // change display options based on type of connection
-        if (currConn->type != CSV) {
+        if (currConn->type != CSV || ((csv_connection *) currConn)->generator != NULL) {
 
             panelLayout->insertWidget(panelLayout->count() - 2, getDivider(),2);
 

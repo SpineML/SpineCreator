@@ -380,6 +380,8 @@ csv_connection::csv_connection() {
         }
     }
 
+    qDebug() << lib_dir;
+
     this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
 
     // open the storage file
@@ -2430,6 +2432,7 @@ void pythonscript_connection::generate_connections() {
             if (unpacked.connections[0].metric != NO_DELAY) {
                 this->connection_target->setData(i, 2, unpacked.connections[i].metric);
             }
+            this->connection_target->setNumRows(i);
         }
 
         this->connection_target->setNumRows(unpacked.connections.size());

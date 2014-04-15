@@ -264,6 +264,12 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
         connect(solverOrd, SIGNAL(valueChanged(int)), this, SLOT(changedSolverOrder(int)));
         formSim->addRow("Solver order:",solverOrd);
     }
+
+    // add batch interface
+    QPushButton * batch = new QPushButton("Setup");
+    connect(batch, SIGNAL(clicked()), this, SLOT(batch_clicked()));
+    formSim->addRow("Batch:",batch);
+
 }
 
 void viewELExptPanelHandler::redrawExpt()
