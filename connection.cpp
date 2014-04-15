@@ -1634,6 +1634,16 @@ QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditH
         view->setToolTip("view connectivity");
         view->setProperty("ptr", qVariantFromValue((void *) this->connection_target));
 
+        if (viewVZhandler) {
+            // add the delete signal
+            connect(viewVZhandler, SIGNAL(deleteProperties()), view, SLOT(deleteLater()));
+        }
+        if (rootLay) {
+            // add the delete signal
+            connect(rootLay, SIGNAL(deleteProperties()), view, SLOT(deleteLater()));
+        }
+
+
         buttons->addWidget(view);
 
         // add connection:

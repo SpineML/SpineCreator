@@ -640,15 +640,19 @@ void genericInput::read_meta_data(QDomDocument * meta) {
                 if (metaData.toElement().tagName() == "connection") {
                     // extract data for connection generator
 
-                    // add connection generator if we are a csv
-                    if (this->connectionType->type == CSV) {
-                        csv_connection * conn = (csv_connection *) this->connectionType;
-                        // add generator
-                        conn->generator = new pythonscript_connection((population *) this->source, (population *) this->destination, conn);
-                        // extract data for connection generator
-                        ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
-                        // prevent regeneration
-                        ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                    // if we are not an empty node
+                    if (!metaData.toElement().hasChildNodes()) {
+
+                        // add connection generator if we are a csv
+                        if (this->connectionType->type == CSV) {
+                            csv_connection * conn = (csv_connection *) this->connectionType;
+                            // add generator
+                            conn->generator = new pythonscript_connection((population *) this->source, (population *) this->destination, conn);
+                            // extract data for connection generator
+                            ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
+                            // prevent regeneration
+                            ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                        }
                     }
 
                 }

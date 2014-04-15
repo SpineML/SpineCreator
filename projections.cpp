@@ -1357,19 +1357,23 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                     QString synapseName = metaData.toElement().attribute("name", "");
                     bool synapseFound = false;
 
-                    for (uint i = 0; i < this->synapses.size(); ++i) {
-                         // check if we have the current node
-                        if (synapseName == this->synapses[i]->weightUpdateType->getXMLName()) {
-                            synapseFound = true;
-                            // add connection generator if we are a csv
-                            if (this->synapses[i]->connectionType->type == CSV) {
-                                csv_connection * conn = (csv_connection *) this->synapses[i]->connectionType;
-                                // add generator
-                                conn->generator = new pythonscript_connection(this->source, this->destination, conn);
-                                // extract data for connection generator
-                                ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
-                                // prevent regeneration
-                                ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                    // if we are not an empty node
+                    if (!metaData.toElement().hasChildNodes()) {
+
+                        for (uint i = 0; i < this->synapses.size(); ++i) {
+                             // check if we have the current node
+                            if (synapseName == this->synapses[i]->weightUpdateType->getXMLName()) {
+                                synapseFound = true;
+                                // add connection generator if we are a csv
+                                if (this->synapses[i]->connectionType->type == CSV) {
+                                    csv_connection * conn = (csv_connection *) this->synapses[i]->connectionType;
+                                    // add generator
+                                    conn->generator = new pythonscript_connection(this->source, this->destination, conn);
+                                    // extract data for connection generator
+                                    ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
+                                    // prevent regeneration
+                                    ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                                }
                             }
                         }
                     }
