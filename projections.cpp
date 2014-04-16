@@ -1158,7 +1158,6 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
     for (unsigned int i = 0; i < (uint) colList.count(); ++i) {
         // create a new Synapse on the projection
         synapse * newSynapse = new synapse(this, data, true); // add bool to avoid adding the projInputs - we need to do that later
-        qDebug() << "Added Synapse";
         QString pspName;
         QString synName;
         QDomNode n = colList.item(i).toElement().firstChild();
@@ -1296,10 +1295,8 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                     settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
                 settings.endArray();
             }
-            qDebug() << "read tag";
         n = n.nextSibling();
         }
-        qDebug() << i;
     }
 
     // now load the metadata for the projection:
@@ -1427,7 +1424,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
-    qDebug() << this->getName();
     if (colList.count() != this->synapses.size()) {
         // oh dear, something has gone badly wrong
         qDebug() << "Size mismatch " << colList.count() << " != " << this->synapses.size();
@@ -1638,8 +1634,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         // ERRR
 
                 }
-
-                this->print();
 
                 // read in the synapseInput
                 genericInput * newInput = new genericInput;
