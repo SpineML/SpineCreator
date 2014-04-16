@@ -63,7 +63,8 @@ SOURCES += main.cpp \
     logdata.cpp \
     aboutdialog.cpp \
     projectobject.cpp \
-    filteroutundoredoevents.cpp
+    filteroutundoredoevents.cpp \
+    batchexperimentwindow.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -112,7 +113,8 @@ HEADERS  += mainwindow.h \
     aboutdialog.h \
     projectobject.h \
     rootlayout.h \
-    filteroutundoredoevents.h
+    filteroutundoredoevents.h \
+    batchexperimentwindow.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \
@@ -125,7 +127,8 @@ FORMS    += mainwindow.ui \
     savenetworkimage_dialog.ui \
     generate_dialog.ui \
     commitdialog.ui \
-    aboutdialog.ui
+    aboutdialog.ui \
+    batchexperimentwindow.ui
 
 RESOURCES += \
     icons.qrc

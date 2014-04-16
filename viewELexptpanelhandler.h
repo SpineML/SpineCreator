@@ -165,6 +165,12 @@ public slots:
      * \param GLScale
      */
     void selectByMouseDown(float xGL, float yGL, float GLScale);
+
+    /*!
+     * \brief batch_clicked
+     * Launch the batch window for running more complex experiments
+     */
+    void batch_clicked();
 };
 
 #endif // VIEWVISEXPTPANELHANDLER_H

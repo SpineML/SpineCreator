@@ -1910,3 +1910,10 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
         this->redraw();
     }
 }
+
+void viewELExptPanelHandler::batch_clicked() {
+
+    // launch batcher window
+
+
+}
