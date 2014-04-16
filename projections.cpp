@@ -1144,7 +1144,7 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
 
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
-    if (colList.size() == 0) {
+    if (colList.count() == 0) {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
@@ -1158,6 +1158,7 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
     for (unsigned int i = 0; i < (uint) colList.count(); ++i) {
         // create a new Synapse on the projection
         synapse * newSynapse = new synapse(this, data, true); // add bool to avoid adding the projInputs - we need to do that later
+        qDebug() << "Added Synapse";
         QString pspName;
         QString synName;
         QDomNode n = colList.item(i).toElement().firstChild();
@@ -1191,14 +1192,6 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 newSynapse->connectionType->import_parameters_from_xml(n);
                 ((kernel_connection *) newSynapse->connectionType)->src = (population *) this->source;
                 ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
-            }
-            else if (n.toElement().tagName() == "PythonScriptConnection") {
-                /*delete newSynapse->connectionType;
-                newSynapse->connectionType = new pythonscript_connection;
-                newSynapse->connectionType->import_parameters_from_xml(n);
-                ((pythonscript_connection *) newSynapse->connectionType)->src = (population *) this->source;
-                ((pythonscript_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
-                ((pythonscript_connection *) newSynapse->connectionType)->configureFromScript();*/
             }
 
             else if (n.toElement().tagName() == "LL:PostSynapse") {
@@ -1245,7 +1238,6 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                         settings.setArrayIndex(num_errs + 1);
                         settings.setValue("warnText",  "Network references missing Component '" + pspName + "'");
                     settings.endArray();
-                    return;
                 }
 
             }
@@ -1293,7 +1285,6 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                         settings.setArrayIndex(num_errs + 1);
                         settings.setValue("warnText",  "Network references missing Component '" + synName + "'");
                     settings.endArray();
-                    return;
                 }
 
             } else {
@@ -1305,10 +1296,11 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                     settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
                 settings.endArray();
             }
+            qDebug() << "read tag";
         n = n.nextSibling();
         }
+        qDebug() << i;
     }
-
 
     // now load the metadata for the projection:
     QDomNode metaNode = meta->documentElement().firstChild();
@@ -1434,6 +1426,12 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
+
+    qDebug() << this->getName();
+    if (colList.count() != this->synapses.size()) {
+        // oh dear, something has gone badly wrong
+        qDebug() << "Size mismatch " << colList.count() << " != " << this->synapses.size();
+    }
 
     for (unsigned int t = 0; t < (uint) colList.count(); ++t) {
         QDomNode n = colList.item(t).toElement().firstChild();
@@ -1640,6 +1638,8 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         // ERRR
 
                 }
+
+                this->print();
 
                 // read in the synapseInput
                 genericInput * newInput = new genericInput;

@@ -1101,7 +1101,6 @@ void csv_connection::setUniqueName() {
 #else
     QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 #endif
-    qDebug() << lib_dir.absolutePath();
     if (!lib_dir.exists()) {
         if (!lib_dir.mkpath(lib_dir.absolutePath())) {
             qDebug() << "error creating library";
@@ -1946,7 +1945,6 @@ void pythonscript_connection::configureFromScript(QString script) {
         }
         if (lines[i].contains("#HASWEIGHT")) {
             this->hasWeight = true;
-            qDebug() << "Has Weight";
         }
     }
     // clear the last par vals

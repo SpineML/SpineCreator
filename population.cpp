@@ -211,7 +211,6 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                     settings.setArrayIndex(num_errs + 1);
                     settings.setValue("warnText",  "Network references component '" + this->neuronTypeName + "' which is not found");
                 settings.endArray();
-                return;
             }
 
         } else if (n.toElement().tagName() == "LL:Projection") {
