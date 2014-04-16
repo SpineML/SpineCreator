@@ -495,8 +495,9 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 portsExist = true;
             }
         }
-        if (portsExist)
+        if (portsExist) {
             elementList << data->populations[i]->neuronType->getXMLName();
+        }
         for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
@@ -863,11 +864,14 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 QSpinBox * spin = new QSpinBox;
                 spin->setProperty("ptr", qVariantFromValue((void *) this));
                 spin->setMinimum(0);
+                spin->setToolTip ("Index of the neuron within the population");
                 int componentSize;
-                if (this->target->owner->type == populationObject)
+                if (this->target->owner->type == populationObject) {
                     componentSize = ((population *) this->target->owner)->numNeurons;
-                if (this->target->owner->type == projectionObject)
+                }
+                if (this->target->owner->type == projectionObject) {
                     componentSize = ((projection *) this->target->owner)->destination->numNeurons;
+                }
                 spin->setMaximum(componentSize-1);
                 spin->setValue(currentIndex);
                 gridlay->addWidget(spin,0,1,1,1);
