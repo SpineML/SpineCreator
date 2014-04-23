@@ -162,7 +162,7 @@ void PropertiesManager::createEmptySelectionProperties()
     type->addItem("neuron_body");
     type->addItem("weight_update");
     type->addItem("postsynapse");
-    type->addItem("generic_component");
+    //type->addItem("generic_component");
     int typeVal;
     if (root->al->type == "neuron_body")
         typeVal = 0;

@@ -979,6 +979,7 @@ void MainWindow::initViewVZ()
     QWidget * panelContent = new QWidget;
     panel->setWidget(panelContent);
     panel->setWidgetResizable(true);
+    panel->setMaximumWidth(600);
 
     panelContent->setLayout(new QVBoxLayout());
 
@@ -1034,6 +1035,7 @@ void MainWindow::initViewVZ()
     this->viewVZ.view = splitter;
     QList <int> sizes;
     sizes.push_back(3);
+    sizes.push_back(1);
     sizes.push_back(1);
     splitter->setSizes(sizes);
 }
