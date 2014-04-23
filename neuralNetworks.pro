@@ -64,7 +64,8 @@ SOURCES += main.cpp \
     aboutdialog.cpp \
     projectobject.cpp \
     filteroutundoredoevents.cpp \
-    batchexperimentwindow.cpp
+    batchexperimentwindow.cpp \
+    vectorlistmodel.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -114,7 +115,8 @@ HEADERS  += mainwindow.h \
     projectobject.h \
     rootlayout.h \
     filteroutundoredoevents.h \
-    batchexperimentwindow.h
+    batchexperimentwindow.h \
+    vectorlistmodel.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \

@@ -34,6 +34,7 @@
 #include "experiment.h"
 #include "projectobject.h"
 #include "undocommands.h"
+#include "batchexperimentwindow.h"
 
 #define NEW_EXPERIMENT_VIEW11
 
@@ -1583,8 +1584,12 @@ void viewELExptPanelHandler::run()
 
     QSettings settings;
 
-    runButton = (QPushButton *) sender();
-    runButton->setEnabled(false);
+    runButton = qobject_cast < QPushButton * > (sender());
+    if (runButton && runButton->text() == "Run") {
+        runButton->setEnabled(false);
+    } else {
+        runButton = NULL;
+    }
 
     simulatorStdOutText = "";
     simulatorStdErrText = "";
@@ -1741,7 +1746,9 @@ void viewELExptPanelHandler::run()
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 {
     // update run button
-    runButton->setEnabled(true);
+    if (runButton) {
+        runButton->setEnabled(true);
+    }
 
     // check for errors we can present
     for (uint i = 0; i < (uint) errorStrings.size(); ++i) {
@@ -1788,16 +1795,22 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     }
 
     if (status == QProcess::NormalExit) {
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Simulator Complete");
-        msgBox.setIcon(QMessageBox::Information);
-        msgBox.setText("Simulator has finished. See below for more details.");
-        msgBox.setDetailedText(simulatorStdOutText);
-        msgBox.addButton(QMessageBox::Ok);
-        msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        // check if we are running in batch mode (i.e. run button is not set)
+        if (runButton) {
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Simulator Complete");
+            msgBox.setIcon(QMessageBox::Information);
+            msgBox.setText("Simulator has finished. See below for more details.");
+            msgBox.setDetailedText(simulatorStdOutText);
+            msgBox.addButton(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
+            msgBox.exec();
+        }
+        // signal others
+        emit simulationDone();
         return;
     }
+
 }
 
 void viewELExptPanelHandler::simulatorStandardOutput()
@@ -1913,7 +1926,19 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
 
 void viewELExptPanelHandler::batch_clicked() {
 
-    // launch batcher window
+    experiment * currentExperiment;
 
+    // find currentExperiment
+    for (uint i = 0; i < data->experiments.size(); ++i) {
+        if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
+    }
+
+    if (currentExperiment == NULL) return;
+
+
+    // launch batcher window
+    BatchExperimentWindow bwin(currentExperiment, this, this->data->main->viewGV.properties);
+    connect(this, SIGNAL(simulationDone()), &bwin, SLOT(simulationDone()));
+    bwin.exec();
 
 }

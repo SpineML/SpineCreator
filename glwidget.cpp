@@ -203,7 +203,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event)
     }  else {
         emit drawSynapse(xGL, yGL);
     }
-    repaint();
+    //repaint();
     event->setAccepted(true);
 }
 

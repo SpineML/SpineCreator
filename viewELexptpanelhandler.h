@@ -76,8 +76,10 @@ private:
 
     GLWidget * gl;
 
+
 signals:
     void enableRun(bool);
+    void simulationDone();
     
 public slots:
     void addExperiment();
