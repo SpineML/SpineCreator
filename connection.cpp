@@ -566,9 +566,6 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     // fetch the option
     bool writeBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
 
-    qDebug() << writeBinary;
-    qDebug() << this->getNumRows();
-
     // load path
     bool exportBinary = false;
     if (settings.value("export_for_simulation", "false").toBool()) {

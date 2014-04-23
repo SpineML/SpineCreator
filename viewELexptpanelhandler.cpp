@@ -1584,8 +1584,9 @@ void viewELExptPanelHandler::run()
 
     QSettings settings;
 
-    runButton = qobject_cast < QPushButton * > (sender());
-    if (runButton && runButton->text() == "Run") {
+    //runButton = (QPushButton *) (sender());
+    runButton = qobject_cast < QToolButton * > (sender());
+    if (runButton) {
         runButton->setEnabled(false);
     } else {
         runButton = NULL;

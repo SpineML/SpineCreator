@@ -49,7 +49,7 @@ private:
     QVBoxLayout * exptOutputs;
     QVBoxLayout * exptChanges;
 
-    QPushButton * runButton;
+    QToolButton * runButton;
     QString simulatorStdOutText;
     QString simulatorStdErrText;
 
