@@ -224,12 +224,18 @@ void BatchExperimentWindow::simulationDone() {
         possibleLogName.replace(" ", "_");
         if (log->logName == possibleLogName) {
             // extract the required data and store
-            vector < double > rowData = log->getRow(ui->index_log->value());
-            int timeIndex = (int) (ui->time_log->value()/currExpt->setup.dt);
-            if (rowData.size() > 0 && timeIndex < 0) {
-                results.push_back(rowData.back());
-            } else if (timeIndex < rowData.size()-1) {
-                results.push_back(rowData[timeIndex]);
+            vector < double > rowData;
+            float timeIndex = ui->time_log->value();
+            if (timeIndex < 0) {
+                rowData = log->getRow(log->endTime/currExpt->setup.dt);
+                if (rowData.size() > ui->index_log->value()) {
+                    results.push_back(rowData[ui->index_log->value()]);
+                }
+            } else if (timeIndex < log->endTime) {
+                rowData = log->getRow(timeIndex/currExpt->setup.dt);
+                if (rowData.size() > ui->index_log->value()) {
+                    results.push_back(rowData[ui->index_log->value()]);
+                }
             } else {
                 results.push_back(-1);
             }
