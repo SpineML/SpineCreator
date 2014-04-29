@@ -70,6 +70,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
    QSettings settings;
 
+   // clear all QSettings keys (for testing initial setup)
+   /*QStringList keys = settings.allKeys();
+   foreach (QString key, keys) {
+       qDebug() << key;
+       settings.remove(key);
+   }*/
+   //exit(0);
+
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
   #ifdef Q_OS_MAC
 
@@ -143,22 +151,27 @@ MainWindow::MainWindow(QWidget *parent) :
         QFile convert_script_home(QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script"));
         if (convert_script_s2b.exists()) {
             // We have the packaged version of the convert script
-            settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
+            settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
+            settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators("/usr/bin/convert_script_s2b"));
         } else if (convert_script_home.exists()) {
-            settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS"));
+            settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS"));
+            settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
         } else {
             // No SpineML to BRAHMS. Set a default value for simulators/BRAHMS/path
             settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
         }
         
+        // set to use binaries
+        settings.setValue("simulators/BRAHMS/binary", true);
+
         // Check if we have the pre-compiled/packaged Namespace.
-        QFile spineml_2_brahms_precompiled_namespace("/usr/lib/spineml-2-brahms/allToAll/brahms/0/component.so");
+        QFile spineml_2_brahms_precompiled_namespace("/usr/lib/spineml-2-brahms/dev/SpineML/tools/allToAll/brahms/0/component.so");
         if (spineml_2_brahms_precompiled_namespace.exists()) {
             settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", "/usr/lib/spineml-2-brahms/");
         } else {
             // Set the BRAHMS Namespace to the one we just set in simulators/BRAHMS/path
             settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS",
-                              settings.value ("simulators/BRAHMS/path").toString() + "/temp/Namespace/");
+                              settings.value ("simulators/BRAHMS/working_dir").toString() + "/temp/Namespace/");
         }
 
 #else
