@@ -49,7 +49,8 @@
 #include "aboutdialog.h"
 
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::
+MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     maxRecentFiles(12) // Number of files which show in the recent projects menu
@@ -140,7 +141,7 @@ MainWindow::MainWindow(QWidget *parent) :
         //
         // It may be that this directory will be used - the convert_script_s2b may create this in the home dir.
         QFile convert_script_s2b("/usr/bin/convert_script_s2b");
-        QFile convert_script_home(QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script"));
+        QFile convert_script_home(QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
         if (convert_script_s2b.exists()) {
             // We have the packaged version of the convert script
             settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
@@ -168,7 +169,7 @@ MainWindow::MainWindow(QWidget *parent) :
         settings.setValue("simulators/BRAHMS/present", true);
         
         // Is this used? Yes, in viewELexptpanelhandler.cpp
-        settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS"));
+        settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
 
         QDir brahmspath = qApp->applicationDirPath();
         brahmspath.cd("SystemML");
