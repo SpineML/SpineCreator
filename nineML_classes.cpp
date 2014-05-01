@@ -3280,7 +3280,7 @@ void NineMLComponentData::copyParsFrom(NineMLComponentData * data) {
     for (uint i = 0; i < data->StateVariableList.size(); ++i) {
         for (uint j = 0; j < this->StateVariableList.size(); ++j) {
             if (data->StateVariableList[i]->name == this->StateVariableList[j]->name) {
-                dim * oldDims = new dim(this->ParameterList[j]->dims->toString());
+                dim * oldDims = new dim(this->StateVariableList[j]->dims->toString());
                 delete this->StateVariableList[j];
                 this->StateVariableList[j] = new StateVariableData(data->StateVariableList[i]);
                 // but may change dims!
