@@ -12,13 +12,13 @@ projectObject::projectObject(QObject *parent) :
 {
     this->name = "New Project";
 
-    menuAction = new QAction(this);
+    this->menuAction = new QAction(this);
 
-    undoStack = new QUndoStack(this);
+    this->undoStack = new QUndoStack(this);
 
     // default fileNames
-    networkFile = "model.xml";
-    metaFile = "metaData.xml";
+    this->networkFile = "model.xml";
+    this->metaFile = "metaData.xml";
 
     // create the catalog blank entries:
     this->catalogGC.push_back((new NineMLComponent()));
@@ -40,12 +40,12 @@ projectObject::projectObject(QObject *parent) :
 projectObject::~projectObject()
 {
     // clean up these
-    delete undoStack;
-    delete menuAction;
+    delete this->undoStack;
+    delete this->menuAction;
 
     // destroy experiments
-    for (uint i = 0; i < experimentList.size(); ++i) {
-        delete experimentList[i];
+    for (uint i = 0; i < this->experimentList.size(); ++i) {
+        delete this->experimentList[i];
     }
 
     for (uint i = 0; i < network.size(); ++i) {
@@ -59,28 +59,28 @@ projectObject::~projectObject()
     }
 
     // delete catalog components
-    for (uint i = 0; i < catalogLAY.size(); ++i) {
-        delete catalogLAY[i];
+    for (uint i = 0; i < this->catalogLAY.size(); ++i) {
+        delete this->catalogLAY[i];
     }
-    for (uint i = 0; i < catalogNB.size(); ++i) {
-        delete catalogNB[i];
+    for (uint i = 0; i < this->catalogNB.size(); ++i) {
+        delete this->catalogNB[i];
     }
-    for (uint i = 0; i < catalogPS.size(); ++i) {
-        delete catalogPS[i];
+    for (uint i = 0; i < this->catalogPS.size(); ++i) {
+        delete this->catalogPS[i];
     }
-    for (uint i = 0; i < catalogWU.size(); ++i) {
-        delete catalogWU[i];
+    for (uint i = 0; i < this->catalogWU.size(); ++i) {
+        delete this->catalogWU[i];
     }
-    for (uint i = 0; i < catalogGC.size(); ++i) {
-        delete catalogGC[i];
+    for (uint i = 0; i < this->catalogGC.size(); ++i) {
+        delete this->catalogGC[i];
     }
 
     // clear catalog vectors
-    catalogLAY.clear();
-    catalogNB.clear();
-    catalogPS.clear();
-    catalogWU.clear();
-    catalogGC.clear();
+    this->catalogLAY.clear();
+    this->catalogNB.clear();
+    this->catalogPS.clear();
+    this->catalogWU.clear();
+    this->catalogGC.clear();
 }
 
 bool projectObject::open_project(QString fileName)
@@ -100,25 +100,25 @@ bool projectObject::open_project(QString fileName)
     }
 
     // then load in all the components listed in the project file ///////////
-    for (int i = 0; i < components.size(); ++i) {
-        loadComponent(components[i], project_dir);
+    for (int i = 0; i < this->components.size(); ++i) {
+        loadComponent(this->components[i], project_dir);
     }
     printErrors("Errors found loading project Components:");
 
     // then load in all the layouts listed in the project file //////////////
-    for (int i = 0; i < layouts.size(); ++i) {
-        loadLayout(layouts[i], project_dir);
+    for (int i = 0; i < this->layouts.size(); ++i) {
+        loadLayout(this->layouts[i], project_dir);
     }
     printErrors("Errors found loading project Layouts:");
 
     // now the network //////////////////////////////////////////////////////
-    loadNetwork(networkFile, project_dir);
+    loadNetwork(this->networkFile, project_dir);
     if (printErrors("Errors prevented loading the Project:"))
         return false;
 
     // finally the experiments //////////////////////////////////////////////
-    for (int i = 0; i < experiments.size(); ++i) {
-        loadExperiment(experiments[i], project_dir);
+    for (int i = 0; i < this->experiments.size(); ++i) {
+        loadExperiment(this->experiments[i], project_dir);
     }
     printErrors("Errors found loading project Experiments:");
 
@@ -149,7 +149,7 @@ bool projectObject::save_project(QString fileName, rootData * data)
     settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // check for version control
-    version.setupVersion();
+    this->version.setupVersion();
 
     // remove old binary files
     project_dir.setNameFilters(QStringList() << "*.bin");
@@ -158,8 +158,8 @@ bool projectObject::save_project(QString fileName, rootData * data)
         // delete
         project_dir.remove(files[i]);
         // and remove from version control
-        if (version.isModelUnderVersion()) {
-            version.removeFromVersion(files[i]);
+        if (this->version.isModelUnderVersion()) {
+            this->version.removeFromVersion(files[i]);
         }
     }
 
@@ -172,33 +172,33 @@ bool projectObject::save_project(QString fileName, rootData * data)
     }
 
     // write components
-    for (uint i = 1; i < catalogNB.size(); ++i) {
-        saveComponent(catalogNB[i]->getXMLName(), project_dir, catalogNB[i]);
+    for (uint i = 1; i < this->catalogNB.size(); ++i) {
+        saveComponent(this->catalogNB[i]->getXMLName(), project_dir, this->catalogNB[i]);
     }
-    for (uint i = 1; i < catalogWU.size(); ++i) {
-        saveComponent(catalogWU[i]->getXMLName(), project_dir, catalogWU[i]);
+    for (uint i = 1; i < this->catalogWU.size(); ++i) {
+        saveComponent(this->catalogWU[i]->getXMLName(), project_dir, this->catalogWU[i]);
     }
-    for (uint i = 1; i < catalogPS.size(); ++i) {
-        saveComponent(catalogPS[i]->getXMLName(), project_dir, catalogPS[i]);
+    for (uint i = 1; i < this->catalogPS.size(); ++i) {
+        saveComponent(this->catalogPS[i]->getXMLName(), project_dir, this->catalogPS[i]);
     }
-    for (uint i = 1; i < catalogGC.size(); ++i) {
-        saveComponent(catalogGC[i]->getXMLName(), project_dir, catalogGC[i]);
+    for (uint i = 1; i < this->catalogGC.size(); ++i) {
+        saveComponent(this->catalogGC[i]->getXMLName(), project_dir, this->catalogGC[i]);
     }
 
     // write layouts
-    for (uint i = 1; i < catalogLAY.size(); ++i) {
-        saveLayout(catalogLAY[i]->getXMLName(), project_dir, catalogLAY[i]);
+    for (uint i = 1; i < this->catalogLAY.size(); ++i) {
+        saveLayout(this->catalogLAY[i]->getXMLName(), project_dir, this->catalogLAY[i]);
     }
 
     // write network
-    saveNetwork(networkFile, project_dir);
+    saveNetwork(this->networkFile, project_dir);
 
     // saveMetaData
-    saveMetaData(metaFile, project_dir);
+    saveMetaData(this->metaFile, project_dir);
 
     // write experiments
-    for (uint i = 0; i < experimentList.size(); ++i) {
-        saveExperiment("experiment" + QString::number(i) + ".xml", project_dir, experimentList[i]);
+    for (uint i = 0; i < this->experimentList.size(); ++i) {
+        saveExperiment("experiment" + QString::number(i) + ".xml", project_dir, this->experimentList[i]);
     }
 
     // store the new file name
@@ -261,8 +261,8 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data)
         // delete
         project_dir.remove(files[i]);
         // and remove from version control
-        if (version.isModelUnderVersion()) {
-            version.removeFromVersion(files[i]);
+        if (this->version.isModelUnderVersion()) {
+            this->version.removeFromVersion(files[i]);
         }
     }
 
@@ -270,34 +270,34 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data)
     copy_back_data(data);
 
     // write components
-    for (uint i = 1; i < catalogNB.size(); ++i) {
-        QString fileName = catalogNB[i]->getXMLName();
+    for (uint i = 1; i < this->catalogNB.size(); ++i) {
+        QString fileName = this->catalogNB[i]->getXMLName();
         fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, catalogNB[i]);
+        saveComponent(fileName, project_dir, this->catalogNB[i]);
     }
-    for (uint i = 1; i < catalogWU.size(); ++i) {
-        QString fileName = catalogWU[i]->getXMLName();
+    for (uint i = 1; i < this->catalogWU.size(); ++i) {
+        QString fileName = this->catalogWU[i]->getXMLName();
         fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, catalogWU[i]);
+        saveComponent(fileName, project_dir, this->catalogWU[i]);
     }
-    for (uint i = 1; i < catalogPS.size(); ++i) {
-        QString fileName = catalogPS[i]->getXMLName();
+    for (uint i = 1; i < this->catalogPS.size(); ++i) {
+        QString fileName = this->catalogPS[i]->getXMLName();
         fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, catalogPS[i]);
+        saveComponent(fileName, project_dir, this->catalogPS[i]);
     }
-    for (uint i = 1; i < catalogGC.size(); ++i) {
-        QString fileName = catalogGC[i]->getXMLName();
+    for (uint i = 1; i < this->catalogGC.size(); ++i) {
+        QString fileName = this->catalogGC[i]->getXMLName();
         fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, catalogGC[i]);
+        saveComponent(fileName, project_dir, this->catalogGC[i]);
     }
 
     // write layouts
-    for (uint i = 1; i < catalogLAY.size(); ++i) {
-        saveLayout(catalogLAY[i]->getXMLName(), project_dir, catalogLAY[i]);
+    for (uint i = 1; i < this->catalogLAY.size(); ++i) {
+        saveLayout(this->catalogLAY[i]->getXMLName(), project_dir, this->catalogLAY[i]);
     }
 
     // write network
-    saveNetwork(networkFile, project_dir);
+    saveNetwork(this->networkFile, project_dir);
 
     // write experiment
     saveExperiment("experiment.xml", project_dir, currentExperiment);
@@ -346,8 +346,8 @@ bool projectObject::import_network(QString fileName) {
         return false;
 
     // set up metaData if not loaded
-    if (metaFile == "not found") {
-        metaFile = "metaData.xml";
+    if (this->metaFile == "not found") {
+        this->metaFile = "metaData.xml";
 
         // place populations
         for (uint i = 0; i < this->network.size(); ++i) {
@@ -433,7 +433,7 @@ bool projectObject::load_project_file(QString fileName) {
                         if (reader->name() == "File") {
 
                             if (reader->attributes().hasAttribute("name"))
-                                networkFile = reader->attributes().value("name").toString();
+                                this->networkFile = reader->attributes().value("name").toString();
                             else {
                                 QSettings settings;
                                 int num_errs = settings.beginReadArray("errors");
@@ -444,7 +444,7 @@ bool projectObject::load_project_file(QString fileName) {
                                 settings.endArray();
                             }
                             if (reader->attributes().hasAttribute("metaFile"))
-                                metaFile = reader->attributes().value("metaFile").toString();
+                                this->metaFile = reader->attributes().value("metaFile").toString();
                             else {
                                 QSettings settings;
                                 int num_errs = settings.beginReadArray("errors");
@@ -475,7 +475,7 @@ bool projectObject::load_project_file(QString fileName) {
                         if (reader->name() == "File") {
 
                             if (reader->attributes().hasAttribute("name"))
-                                components.push_back(reader->attributes().value("name").toString());
+                                this->components.push_back(reader->attributes().value("name").toString());
                             else {
                                 QSettings settings;
                                 int num_errs = settings.beginReadArray("errors");
@@ -506,7 +506,7 @@ bool projectObject::load_project_file(QString fileName) {
                         if (reader->name() == "File") {
 
                             if (reader->attributes().hasAttribute("name"))
-                                layouts.push_back(reader->attributes().value("name").toString());
+                                this->layouts.push_back(reader->attributes().value("name").toString());
                             else {
                                 QSettings settings;
                                 int num_errs = settings.beginReadArray("errors");
@@ -537,7 +537,7 @@ bool projectObject::load_project_file(QString fileName) {
                         if (reader->name() == "File") {
 
                             if (reader->attributes().hasAttribute("name"))
-                                experiments.push_back(reader->attributes().value("name").toString());
+                                this->experiments.push_back(reader->attributes().value("name").toString());
                             else {
                                 QSettings settings;
                                 int num_errs = settings.beginReadArray("errors");
@@ -619,44 +619,44 @@ bool projectObject::save_project_file(QString fileName)
     writer->writeStartElement("Network");
 
     writer->writeEmptyElement("File");
-    writer->writeAttribute("name", networkFile);
-    writer->writeAttribute("metaFile", metaFile);
+    writer->writeAttribute("name", this->networkFile);
+    writer->writeAttribute("metaFile", this->metaFile);
 
     writer->writeEndElement(); // Network
 
     writer->writeStartElement("Components");
 
-    for (uint i = 1; i < catalogNB.size(); ++i) {
+    for (uint i = 1; i < this->catalogNB.size(); ++i) {
         writer->writeEmptyElement("File");
-        writer->writeAttribute("name", catalogNB[i]->getXMLName());
+        writer->writeAttribute("name", this->catalogNB[i]->getXMLName());
     }
-    for (uint i = 1; i < catalogWU.size(); ++i) {
+    for (uint i = 1; i < this->catalogWU.size(); ++i) {
         writer->writeEmptyElement("File");
-        writer->writeAttribute("name", catalogWU[i]->getXMLName());
+        writer->writeAttribute("name", this->catalogWU[i]->getXMLName());
     }
-    for (uint i = 1; i < catalogPS.size(); ++i) {
+    for (uint i = 1; i < this->catalogPS.size(); ++i) {
         writer->writeEmptyElement("File");
-        writer->writeAttribute("name", catalogPS[i]->getXMLName());
+        writer->writeAttribute("name", this->catalogPS[i]->getXMLName());
     }
-    for (uint i = 1; i < catalogGC.size(); ++i) {
+    for (uint i = 1; i < this->catalogGC.size(); ++i) {
         writer->writeEmptyElement("File");
-        writer->writeAttribute("name", catalogGC[i]->getXMLName());
+        writer->writeAttribute("name", this->catalogGC[i]->getXMLName());
     }
 
     writer->writeEndElement(); // Components
 
     writer->writeStartElement("Layouts");
 
-    for (uint i = 0; i < catalogLAY.size(); ++i) {
+    for (uint i = 0; i < this->catalogLAY.size(); ++i) {
         writer->writeEmptyElement("File");
-        writer->writeAttribute("name", catalogLAY[i]->getXMLName());
+        writer->writeAttribute("name", this->catalogLAY[i]->getXMLName());
     }
 
     writer->writeEndElement(); // Layouts
 
     writer->writeStartElement("Experiments");
 
-    for (uint i = 0; i < experimentList.size(); ++i) {
+    for (uint i = 0; i < this->experimentList.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", "experiment" + QString::number(i) + ".xml");
     }
@@ -666,8 +666,8 @@ bool projectObject::save_project_file(QString fileName)
     writer->writeEndElement(); // SpineCreatorProject
 
     // add to version control
-    if (version.isModelUnderVersion())
-        version.addToVersion(file.fileName());
+    if (this->version.isModelUnderVersion())
+        this->version.addToVersion(file.fileName());
 
     return true;
 }
@@ -678,24 +678,24 @@ bool projectObject::isComponent(QString fileName) {
     QFile file( fileName );
     if( !file.open( QIODevice::ReadOnly ) )
         return false;
-    if( !doc.setContent( &file ) )
+    if( !this->doc.setContent( &file ) )
         return false;
 
     // we have loaded the XML - discard the file handle
     file.close();
 
     // confirm root tag is correct
-    QDomElement root = doc.documentElement();
+    QDomElement root = this->doc.documentElement();
     if( root.tagName() != "SpineML" )
-        {doc.clear(); return false;}
+        {this->doc.clear(); return false;}
 
     // if a componentclass
     QDomElement classType = root.firstChildElement();
     if (classType.tagName() != "ComponentClass")
-        {doc.clear(); return false;}
+        {this->doc.clear(); return false;}
 
     // clean up
-    doc.clear();
+    this->doc.clear();
     return true;
 
 }
@@ -706,24 +706,24 @@ bool projectObject::isLayout(QString fileName) {
     QFile file( fileName );
     if( !file.open( QIODevice::ReadOnly ) )
         return false;
-    if( !doc.setContent( &file ) )
+    if( !this->doc.setContent( &file ) )
         return false;
 
     // we have loaded the XML - discard the file handle
     file.close();
 
     // confirm root tag is correct
-    QDomElement root = doc.documentElement();
+    QDomElement root = this->doc.documentElement();
     if ( root.tagName() != "SpineML" )
-        {doc.clear(); return false;}
+        {this->doc.clear(); return false;}
 
     // if a componentclass
     QDomElement classType = root.firstChildElement();
     if (classType.tagName() != "LayoutClass")
-        {doc.clear(); return false;}
+        {this->doc.clear(); return false;}
 
     // clean up
-    doc.clear();
+    this->doc.clear();
 
     return true;
 
@@ -740,13 +740,13 @@ void projectObject::loadComponent(QString fileName, QDir project_dir) {
         addError("Cannot open required file '" + fileName + "'");
         return;
     }
-    if( !doc.setContent( &file ) ) {
+    if( !this->doc.setContent( &file ) ) {
         addError("Cannot read required file '" + fileName + "'");
         return;
     }
 
     // confirm root tag is correct
-    QDomElement root = doc.documentElement();
+    QDomElement root = this->doc.documentElement();
     if( root.tagName() != "SpineML" ) {
         addError("Missing or incorrect root tag in required file '" + fileName + "'");
         return;
@@ -762,7 +762,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir) {
         // create a new AL class instance and populate it from the data
         NineMLComponent *tempALobject = new NineMLComponent();
 
-        tempALobject->load(&doc);
+        tempALobject->load(&this->doc);
 
         // check for errors:
         QSettings settings;
@@ -780,13 +780,13 @@ void projectObject::loadComponent(QString fileName, QDir project_dir) {
         // get lib to add component to
         vector < NineMLComponent * > * curr_lib;
         if (tempALobject->type == "neuron_body")
-            curr_lib = &catalogNB;
+            curr_lib = &this->catalogNB;
         else if (tempALobject->type == "weight_update")
-            curr_lib = &catalogWU;
+            curr_lib = &this->catalogWU;
         else if (tempALobject->type == "postsynapse")
-            curr_lib = &catalogPS;
+            curr_lib = &this->catalogPS;
         else
-            curr_lib = &catalogGC;
+            curr_lib = &this->catalogGC;
 
         // check the name doesn't already exist in the library
         for (uint i = 0; i < curr_lib->size(); ++i) {
@@ -820,19 +820,19 @@ void projectObject::saveComponent(QString fileName, QDir project_dir, NineMLComp
         return;
     }
 
-    doc.setContent(QString(""));
+    this->doc.setContent(QString(""));
 
     // get the 9ML description
-    component->write(&doc);
+    component->write(&this->doc);
 
     // write out to file
     QTextStream tsFromFile( &file );
-    tsFromFile << doc.toString();
+    tsFromFile << this->doc.toString();
     tsFromFile.flush();
 
     // add to version control
-    if (version.isModelUnderVersion())
-        version.addToVersion(file.fileName());
+    if (this->version.isModelUnderVersion())
+        this->version.addToVersion(file.fileName());
 
     file.close();
 
@@ -840,7 +840,7 @@ void projectObject::saveComponent(QString fileName, QDir project_dir, NineMLComp
     component->filePath = project_dir.absoluteFilePath(fileName);
 
     // kill off the DOM document
-    doc.clear();
+    this->doc.clear();
 }
 
 void projectObject::loadLayout(QString fileName, QDir project_dir) {
@@ -854,13 +854,13 @@ void projectObject::loadLayout(QString fileName, QDir project_dir) {
         addError("Cannot open required file '" + fileName + "'");
         return;
     }
-    if( !doc.setContent( &file ) ) {
+    if( !this->doc.setContent( &file ) ) {
         addError("Cannot read required file '" + fileName + "'");
         return;
     }
 
     // confirm root tag is correct
-    QDomElement root = doc.documentElement();
+    QDomElement root = this->doc.documentElement();
     if( root.tagName() != "SpineML" ) {
         addError("Missing or incorrect root tag in required file '" + fileName + "'");
         return;
@@ -876,7 +876,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir) {
             // create a new AL class instance and populate it from the data
             NineMLLayout *tempALobject = new NineMLLayout();
 
-            tempALobject->load(&doc);
+            tempALobject->load(&this->doc);
 
             // check for errors:
             QSettings settings;
@@ -900,7 +900,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir) {
             }
 
             // all good - add layout to catalog
-            catalogLAY.push_back(tempALobject);
+            this->catalogLAY.push_back(tempALobject);
 
         } else {
             addError("Unknown XML tag found in required file '" + fileName + "'");
@@ -920,19 +920,19 @@ void projectObject::saveLayout(QString fileName, QDir project_dir, NineMLLayout 
         return;
     }
 
-    doc.setContent(QString(""));
+    this->doc.setContent(QString(""));
 
     // get the 9ML description
-    layout->write(&doc);
+    layout->write(&this->doc);
 
     // write out to file
     QTextStream tsFromFile( &file );
-    tsFromFile << doc.toString();
+    tsFromFile << this->doc.toString();
     tsFromFile.flush();
 
     // add to version control
-    if (version.isModelUnderVersion())
-        version.addToVersion(file.fileName());
+    if (this->version.isModelUnderVersion())
+        this->version.addToVersion(file.fileName());
 
     file.close();
 
@@ -940,7 +940,7 @@ void projectObject::saveLayout(QString fileName, QDir project_dir, NineMLLayout 
     layout->filePath = project_dir.absoluteFilePath(fileName);
 
     // kill off the DOM document
-    doc.clear();
+    this->doc.clear();
 
 }
 
@@ -949,11 +949,11 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
     // load up the file and check it is valid XML
     QFile file( project_dir.absoluteFilePath(fileName) );
-    if( !file.open( QIODevice::ReadOnly ) ) {
+    if( !file.open( QIODevice::ReadOnly | QIODevice::Text) ) {
         addError("Could not open the Network file for reading");
         return;
     }
-    if( !doc.setContent( &file ) ) {
+    if( !this->doc.setContent( &file ) ) {
         addError("Could not parse the Network file XML - is the selected file correctly formed XML?");
         return;
     }
@@ -965,18 +965,18 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     file.close();
 
     // confirm root tag is correct
-    QDomElement root = doc.documentElement();
+    QDomElement root = this->doc.documentElement();
     if ( root.tagName() != "LL:SpineML" ) {
         addError("Network file is not valid SpineML Low Level Network Layer description");
         return;
     }
 
     // get the model name
-    name = root.toElement().attribute("name", "Untitled project");
+    this->name = root.toElement().attribute("name", "Untitled project");
 
     // only load metadata for projects
 
-    QString metaFilePath = project_dir.absoluteFilePath(metaFile);
+    QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
     QFile fileMeta( metaFilePath );
 
     if( !fileMeta.open( QIODevice::ReadOnly) ) {
@@ -985,10 +985,10 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             addError("Could not open the MetaData file for reading");
             return;
         } else {
-            metaFile = "not found";
+            this->metaFile = "not found";
         }
     } else {
-        if( !meta.setContent( &fileMeta ))
+        if( !this->meta.setContent( &fileMeta ))
         {
             addError("Could not parse the MetaData file XML - is the selected file correctly formed XML?");
             return;
@@ -997,7 +997,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         fileMeta.close();
 
         // confirm root tag is correct
-        root = meta.documentElement();
+        root = this->meta.documentElement();
         if( root.tagName() != "modelMetaData") {
             addError("MetaData file is not valid");
             return;
@@ -1006,7 +1006,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
 
     //////////////// LOAD POPULATIONS
-    QDomNode n = doc.documentElement().firstChild();
+    QDomNode n = this->doc.documentElement().firstChild();
     while( !n.isNull() )
     {
 
@@ -1014,13 +1014,13 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         if( e.tagName() == "LL:Population" )
         {
             // add population from population xml:
-            this->network.push_back(new population(e, &doc, &meta, this));
+            this->network.push_back(new population(e, &this->doc, &this->meta, this));
 
             // check for duplicate names:
-            for (uint i = 0; i < network.size() - 1; ++i) {
-                if (network[i]->name == network.back()->name) {
-                    network[i]->name = getUniquePopName(network[i]->name);
-                    addWarning("Duplicate Population name found: renamed existing Population to '" + network[i]->name + "'");
+            for (uint i = 0; i < this->network.size() - 1; ++i) {
+                if (this->network[i]->name == this->network.back()->name) {
+                    this->network[i]->name = getUniquePopName(this->network[i]->name);
+                    addWarning("Duplicate Population name found: renamed existing Population to '" + this->network[i]->name + "'");
                 }
             }
 
@@ -1039,7 +1039,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     }
 
     //////////////// LOAD PROJECTIONS
-    n = doc.documentElement().firstChild();
+    n = this->doc.documentElement().firstChild();
     int counter = 0;
     while( !n.isNull() )
     {
@@ -1048,7 +1048,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         if( e.tagName() == "LL:Population" )
         {
             // with all the populations added, add the projections and join them up:
-            this->network[counter]->load_projections_from_xml(e, &doc, &meta, this);
+            this->network[counter]->load_projections_from_xml(e, &this->doc, &this->meta, this);
 
             // check for errors:
             QSettings settings;
@@ -1068,7 +1068,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
     ///////////////// LOAD INPUTS
     counter = 0;
-    n = doc.documentElement().firstChild();
+    n = this->doc.documentElement().firstChild();
     while( !n.isNull() )
     {
 
@@ -1076,14 +1076,14 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         if( e.tagName() == "LL:Population" )
         {
             // add inputs
-            this->network[counter]->read_inputs_from_xml(e, &meta, this);
+            this->network[counter]->read_inputs_from_xml(e, &this->meta, this);
 
             int projCount = 0;
             QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
             for (uint i = 0; i < (uint) n2.size(); ++i)
             {
                 QDomElement e = n2.item(i).toElement();
-                this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &meta, this);
+                this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this);
                 ++projCount;
             }
             ++counter;
@@ -1092,8 +1092,8 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
     }
 
-    meta.clear();
-    doc.clear();
+    this->meta.clear();
+    this->doc.clear();
 }
 
 void projectObject::saveNetwork(QString fileName, QDir projectDir) {
@@ -1124,15 +1124,15 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir) {
     for (unsigned int pop = 0; pop < this->network.size(); ++pop) {
 
         //// WE NEED TO HAVE A PROPER MODEL NAME!
-        network[pop]->write_population_xml(xmlOut);
+        this->network[pop]->write_population_xml(xmlOut);
 
     }
 
     xmlOut.writeEndDocument();
 
     // add to version control
-    if (version.isModelUnderVersion())
-        version.addToVersion(fileModel.fileName());
+    if (this->version.isModelUnderVersion())
+        this->version.addToVersion(fileModel.fileName());
 
 }
 
@@ -1144,23 +1144,23 @@ void projectObject::saveMetaData(QString fileName, QDir projectDir) {
         return;
     }
 
-    meta.setContent(QString(""));
+    this->meta.setContent(QString(""));
 
     // create the root of the file:
-    QDomElement root = meta.createElement( "modelMetaData" );
-    meta.appendChild(root);
+    QDomElement root = this->meta.createElement( "modelMetaData" );
+    this->meta.appendChild(root);
 
     // iterate through the populations and get the xml
-    for (unsigned int i = 0; i < network.size(); ++i) {
-        network[i]->write_model_meta_xml(meta, root);
+    for (unsigned int i = 0; i < this->network.size(); ++i) {
+        this->network[i]->write_model_meta_xml(this->meta, root);
     }
 
     QTextStream tsFromFileMeta( &fileMeta );
-    tsFromFileMeta << meta.toString();
+    tsFromFileMeta << this->meta.toString();
 
     // add to version control
-    if (version.isModelUnderVersion())
-        version.addToVersion(fileMeta.fileName());
+    if (this->version.isModelUnderVersion())
+        this->version.addToVersion(fileMeta.fileName());
 
 
 }
@@ -1241,33 +1241,33 @@ void projectObject::saveExperiment(QString fileName, QDir project_dir, experimen
     file.close();
 
     // add to version control
-    if (version.isModelUnderVersion())
-        version.addToVersion(fileName);
+    if (this->version.isModelUnderVersion())
+        this->version.addToVersion(fileName);
 
 }
 
 void projectObject::copy_back_data(rootData * data)
 {
     // copy data from rootData to project
-    network = data->populations;
-    catalogNB = data->catalogNrn;
-    catalogWU = data->catalogWU;
-    catalogPS = data->catalogPS;
-    catalogGC = data->catalogUnsorted;
-    catalogLAY = data->catalogLayout;
-    experimentList = data->experiments;
+    this->network = data->populations;
+    this->catalogNB = data->catalogNrn;
+    this->catalogWU = data->catalogWU;
+    this->catalogPS = data->catalogPS;
+    this->catalogGC = data->catalogUnsorted;
+    this->catalogLAY = data->catalogLayout;
+    this->experimentList = data->experiments;
 }
 
 void projectObject::copy_out_data(rootData * data) {
 
     // copy from project to rootData
-    data->populations = network;
-    data->catalogNrn = catalogNB;
-    data->catalogWU = catalogWU;
-    data->catalogPS = catalogPS;
-    data->catalogUnsorted = catalogGC;
-    data->catalogLayout = catalogLAY;
-    data->experiments = experimentList;
+    data->populations = this->network;
+    data->catalogNrn = this->catalogNB;
+    data->catalogWU = this->catalogWU;
+    data->catalogPS = this->catalogPS;
+    data->catalogUnsorted = this->catalogGC;
+    data->catalogLayout = this->catalogLAY;
+    data->experiments = this->experimentList;
 
 }
 
@@ -1293,8 +1293,8 @@ void projectObject::select_project(rootData * data) {
 
     QSettings settings;
     settings.remove("files/currentFileName");
-    if (filePath != "") {
-        settings.setValue("files/currentFileName", filePath);
+    if (this->filePath != "") {
+        settings.setValue("files/currentFileName", this->filePath);
     }
     settings.setValue("model/model_name", "New Project");
 
@@ -1438,23 +1438,23 @@ bool projectObject::isChanged(rootData * data) {
     if (data->currProject == this)
         copy_back_data(data);
 
-    if (!undoStack->isClean())
+    if (!this->undoStack->isClean())
          return true;
 
-    for (uint i = 1; i < catalogNB.size(); ++i) {
-        if (!catalogNB[i]->undoStack.isClean())
+    for (uint i = 1; i < this->catalogNB.size(); ++i) {
+        if (!this->catalogNB[i]->undoStack.isClean())
             return true;
     }
-    for (uint i = 1; i < catalogWU.size(); ++i) {
-        if (!catalogWU[i]->undoStack.isClean())
+    for (uint i = 1; i < this->catalogWU.size(); ++i) {
+        if (!this->catalogWU[i]->undoStack.isClean())
             return true;
     }
-    for (uint i = 1; i < catalogPS.size(); ++i) {
-        if (!catalogPS[i]->undoStack.isClean())
+    for (uint i = 1; i < this->catalogPS.size(); ++i) {
+        if (!this->catalogPS[i]->undoStack.isClean())
             return true;
     }
-    for (uint i = 1; i < catalogGC.size(); ++i) {
-        if (!catalogGC[i]->undoStack.isClean())
+    for (uint i = 1; i < this->catalogGC.size(); ++i) {
+        if (!this->catalogGC[i]->undoStack.isClean())
             return true;
     }
 
@@ -1541,16 +1541,16 @@ bool projectObject::isValidPointer(NineMLComponentData * ptr) {
 bool projectObject::isValidPointer(NineMLComponent * ptr) {
 
     for (uint i = 0; i < this->catalogNB.size(); ++i)
-        if (catalogNB[i] == ptr)
+        if (this->catalogNB[i] == ptr)
             return true;
     for (uint i = 0; i < this->catalogPS.size(); ++i)
-        if (catalogPS[i] == ptr)
+        if (this->catalogPS[i] == ptr)
             return true;
     for (uint i = 0; i < this->catalogGC.size(); ++i)
-        if (catalogGC[i] == ptr)
+        if (this->catalogGC[i] == ptr)
             return true;
     for (uint i = 0; i < this->catalogWU.size(); ++i)
-        if (catalogWU[i] == ptr)
+        if (this->catalogWU[i] == ptr)
             return true;
 
     // not found
@@ -1589,10 +1589,10 @@ NineMLComponentData * projectObject::getComponentDataFromName(QString name)
 
 QAction * projectObject::action(int i) {
 
-    menuAction->setProperty("number", QString::number(i));
-    menuAction->setText(this->name);
-    menuAction->setCheckable(true);
-    return menuAction;
+    this->menuAction->setProperty("number", QString::number(i));
+    this->menuAction->setText(this->name);
+    this->menuAction->setCheckable(true);
+    return this->menuAction;
 
 }
 
