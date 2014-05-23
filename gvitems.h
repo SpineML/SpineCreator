@@ -23,6 +23,11 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
+/*
+ * NB: Graphviz is used to draw the components in the component view
+ * (and not the plots in the graphing/data view window).
+ */
+
 #ifndef GVITEMS_H
 #define GVITEMS_H
 

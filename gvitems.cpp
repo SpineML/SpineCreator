@@ -22,6 +22,10 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
+// graphviz/types.h provides node/graph/edge data access macros
+#define WITH_CGRAPH 1
+#include <graphviz/types.h>
+
 #include "gvitems.h"
 
 // Debugging define here, as we don't include globalHeader.h
@@ -81,6 +85,7 @@ GVItem::GVItem(GVLayout *l)
 GVNode::GVNode(GVLayout *l, QString name)
     : GVItem(l)
 {
+    DBG() << "GVNode constructor...";
     this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE); // TRUE means create if not existent
     agsafeset(this->gv_node, (char*)"fixedsize", (char*)"true", (char*)"");
     agsafeset(this->gv_node, (char*)"shape", (char*)"rectangle", (char*)"");
@@ -103,30 +108,34 @@ void GVNode::setGVNodeSize(qreal width_inches, qreal height_inches)
     char h[16];
     sprintf(w,"%f", width_inches);
     sprintf(h,"%f", height_inches);
-    agsafeset(gv_node, (char*)"width", w, (char*)"");
-    agsafeset(gv_node, (char*)"height", h, (char*)"");
-    //qDebug() << "GVNode setGVNodeSize(" << w << ", " << h << ")";
+    agsafeset(this->gv_node, (char*)"width", w, (char*)"");
+    agsafeset(this->gv_node, (char*)"height", h, (char*)"");
+    DBG() << "(" << w << ", " << h << ")";
 }
 
 // used once only in nineml_graphicsitems.cpp:122
 QPointF GVNode::getGVNodePosition(QPointF offset)
 {
-    DBG() << "Called. Warning - this is a no-op!";
-    QPointF position(0,0);
-#if 0
-    position = QPointF((this->gv_node->u.coord.x),
-                       (this->layout->getGVGraph()->u.bb.UR.y - gv_node->u.coord.y));
+
+    DBG() << "offset: " << offset;
+    QPointF position = QPointF(ND_coord(this->gv_node).x,
+                               (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
     position -= offset;
-#endif
-    return position;
+    DBG() << position;
+    return position*2;
 }
 
 // Is the the right approach?
 void GVNode::renameGVNode(QString name)
 {
-    QString temp(this->gv_node->base.data->name);
-    agstrfree(this->layout->getGVGraph(), this->gv_node->base.data->name);
-    this->gv_node->base.data->name = agstrdup(this->layout->getGVGraph(), name.toUtf8().data());
+    // When using libgraph/libgvc, this renamed
+    // this->gv_node->name. However, with cgraph you can't rename the
+    // node.
+#if 0
+    // The following is what this used to do:
+    agstrfree(this->layout->getGVGraph(), this->gv_node->name);
+    this->gv_node->name = agstrdup(this->layout->getGVGraph(), name.toUtf8().data());
+#endif
 }
 
 
@@ -152,52 +161,40 @@ void GVEdge::setGVEdgeLabelSize(int width_pixels, int height_pixels)
     char* html = agstrdup_html(this->layout->getGVGraph(), label);
     agsafeset(this->gv_edge, (char*)"label", html, (char*)"html");
     agstrfree(this->layout->getGVGraph(), html);
-    //qDebug() << "GVEdge setGVEdgeLabelSize (" << width_pixels<< ", " << height_pixels << ")";
+
+    DBG() << "(" << width_pixels<< ", " << height_pixels << ")";
 }
 
-// Used only once in ./nineml_graphicsitems.cpp:186
 QPointF GVEdge::getGVEdgeLabelPosition(QPointF offset)
 {
-    DBG() << "Called. Warning - this is a no-op!";
     QPointF position(0,0);
-#if 0
-    position = QPointF(this->gv_edge->u.label->pos.x,
-                       this->layout->getGVGraph()->u.bb.UR.y - this->gv_edge->u.label->pos.y);
+    position = QPointF(ED_label(this->gv_edge)->pos.x,
+                       (GD_bb(this->layout->getGVGraph()).UR.y - ED_label(this->gv_edge)->pos.y));
+
     position -= offset;
-#endif
+    DBG() << position;
     return position;
 }
 
-// Used only once in ./nineml_graphicsitems.cpp:194
 uint GVEdge::getGVEdgeSplinesCount()
 {
-    DBG() << "Called. Warning - no-op";
-#if 0
-    return this->gv_edge->u.spl->list->size;
-#else
-    return 0;
-#endif
+    return ED_spl(this->gv_edge)->list->size; 
 }
 
-// Used a few times in /nineml_graphicsitems.cpp
 QPointF GVEdge::getGVEdgeSplinesPoint(uint i)
 {
-    DBG() << "Called. Warning - no-op!";
-#if 0
-    QPointF spline = QPointF(this->gv_edge->u.spl->list->list[i].x,
-                             this->layout->getGVGraph()->u.bb.UR.y - this->gv_edge->u.spl->list->list[i].y);
-#endif
-    QPointF spline(0,0);
+    QPointF spline = QPointF(ED_spl(this->gv_edge)->list->list[i].x,
+                             GD_bb(this->layout->getGVGraph()).UR.y - ED_spl(this->gv_edge)->list->list[i].y);
+    DBG() << spline;
     return spline;
 }
 
 // Used once only in ./nineml_graphicsitems.cpp:201
 QPointF GVEdge::getGVEdgeSplinesEndPoint()
 {
-    DBG() << "Called. Warning - no-op!";
-#if 0
-    QPointF spline = QPointF(this->gv_edge->u.spl->list->ep.x, this->layout->getGVGraph()->u.bb.UR.y - gv_edge->u.spl->list->ep.y);
-#endif
-    QPointF spline(0,0);
+    QPointF spline = QPointF(ED_spl(this->gv_edge)->list->ep.x,
+                             GD_bb(this->layout->getGVGraph()).UR.y - ED_spl(this->gv_edge)->list->ep.y);
+
+    DBG() << spline;
     return spline;
 }
