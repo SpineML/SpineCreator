@@ -1,3 +1,4 @@
+/*! ** C++ ** */
 /***************************************************************************
 **                                                                        **
 **  This file is part of SpineCreator, an easy to use GUI for             **
@@ -26,8 +27,7 @@
 #define GVITEMS_H
 
 #include <QtGui>
-#include <graphviz/gvc.h>
-#include <graphviz/graph.h>
+#include <graphviz/cgraph.h>
 #include <vector>
 #include <algorithm>
 #include "grouptextitems.h"
@@ -41,7 +41,7 @@ class GVLayout;
 class GVItem
 {
 public:
-    GVItem(GVLayout *layout);
+    GVItem(GVLayout *l);
     virtual void updateLayout() = 0;
     virtual void updateGVData() = 0;
 
@@ -61,7 +61,8 @@ public:
     void removeGVItem(GVItem *item);
 private:
     Agraph_t *gvgraph;
-    GVC_t *gvc;
+    // cgraph doesn't use contexts in the way that graph did.
+    //GVC_t *gvc;
     vector <GVItem*> items;
 };
 
@@ -93,8 +94,5 @@ public:
 protected:
     Agedge_t *gv_edge;
 };
-
-
-
 
 #endif // GVITEMS_H
