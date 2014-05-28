@@ -1877,7 +1877,7 @@ void MainWindow::saveImageAction()
     if (viewCL.frame->isVisible()) {
         // components
         actionAs_Image_triggered();
-    } else if (viewVZ.view->isVisible()) {
+    } else if (viewVZ.OpenGLWidget != NULL && viewVZ.view->isVisible()) {
         // visualisation
         QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
         if (!fileName.isEmpty()) {

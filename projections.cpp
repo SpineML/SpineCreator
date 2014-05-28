@@ -1193,6 +1193,9 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 ((kernel_connection *) newSynapse->connectionType)->src = (population *) this->source;
                 ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
             }
+            else if (n.toElement().tagName() == "PythonScriptConnection") {
+
+            }
 
             else if (n.toElement().tagName() == "LL:PostSynapse") {
 

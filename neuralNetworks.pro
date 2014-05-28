@@ -172,3 +172,5 @@ OTHER_FILES += \
 
 target.path = /usr/bin
 INSTALLS += target
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
