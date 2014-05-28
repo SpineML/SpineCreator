@@ -260,10 +260,10 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data)
     for (int i = 0; i < files.size(); ++i) {
         // delete
         project_dir.remove(files[i]);
-        // and remove from version control
-        if (version.isModelUnderVersion()) {
+        // and remove from version control (not needed for simulation)
+        /*if (version.isModelUnderVersion()) {
             version.removeFromVersion(files[i]);
-        }
+        }*/
     }
 
     // sync project
