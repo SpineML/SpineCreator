@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Batch launch</string>
   </property>
   <widget class="QComboBox" name="par_log">
    <property name="geometry">

@@ -31,7 +31,7 @@
 genericInput::genericInput()
 {
     // only used for loading from file - and all info will be specified so no need to muck about here - except this:
-    this->connectionType = new onetoOne_connection;
+    this->connectionType = new alltoAll_connection;
     this->type = inputObject;
     // for reinserting on undo / redo
     srcPos = -1;

@@ -1727,7 +1727,7 @@ void viewELExptPanelHandler::run()
     simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath());
 
     // Wait a couple of seconds for the process to start
-    if (!simulator->waitForStarted(5000)) {
+    if (!simulator->waitForStarted(100)) {
         // Error - simulator failed to start
         QMessageBox msgBox;
         msgBox.setWindowTitle("Simulator Error");
@@ -1735,7 +1735,8 @@ void viewELExptPanelHandler::run()
         msgBox.setText("The simulator '" + path + "' failed to start.");
         msgBox.exec();
         runButton->setEnabled(true);
-        delete simulator;
+        //delete simulator; // Alex: this appears to be dangerous - we can have the wait for started fail, without the simulator crashing
+                            // - in which case deleting the simulator causes a crash later on... for this reason I have left it as a memory leak
         return;
     }
 
@@ -1938,8 +1939,11 @@ void viewELExptPanelHandler::batch_clicked() {
 
 
     // launch batcher window
-    BatchExperimentWindow bwin(currentExperiment, this, this->data->main->viewGV.properties);
-    connect(this, SIGNAL(simulationDone()), &bwin, SLOT(simulationDone()));
-    bwin.exec();
+    BatchExperimentWindow * bwin = new BatchExperimentWindow(currentExperiment, this, this->data->main->viewGV.properties);
+    connect(this, SIGNAL(simulationDone()), bwin, SLOT(simulationDone()));
+    bwin->setModal(false);
+    // don't leave lying around
+    bwin->setAttribute(Qt::WA_DeleteOnClose);
+    bwin->show();
 
 }

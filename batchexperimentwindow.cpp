@@ -206,6 +206,8 @@ void BatchExperimentWindow::runAll() {
 
     currIndex = 0;
     this->model->moveIndex(currIndex);
+    // clear results
+    this->results.clear();
 
     eH->run();
 
@@ -228,6 +230,7 @@ void BatchExperimentWindow::simulationDone() {
             float timeIndex = ui->time_log->value();
             if (timeIndex < 0) {
                 rowData = log->getRow(log->endTime/currExpt->setup.dt);
+                qDebug() << "rowData size = " << rowData.size();
                 if (rowData.size() > ui->index_log->value()) {
                     results.push_back(rowData[ui->index_log->value()]);
                 }
@@ -268,3 +271,5 @@ void BatchExperimentWindow::simulationDone() {
     eH->run();
 
 }
+
+
