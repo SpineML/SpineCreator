@@ -3235,6 +3235,9 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
             reader->readNextStartElement();
         } else if (reader->name() == "ValueList") {
             this->par->currType = ExplicitList;
+            // clear lists as they have inherited the values at startup
+            this->par->indices.clear();
+            this->par->value.clear();
             while (reader->readNextStartElement()) {
 
                 //cerr << reader->name().toString().toStdString() << " ##VALINST#####\n";
