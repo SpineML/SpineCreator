@@ -3235,7 +3235,11 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
             reader->readNextStartElement();
         } else if (reader->name() == "ValueList") {
             this->par->currType = ExplicitList;
+<<<<<<< HEAD
             // clear lists first, as we will have cloned them in the startup
+=======
+            // clear lists as they have inherited the values at startup
+>>>>>>> fac63b6... Fixed bug where explicit list property changes appended to model lists at Project Load
             this->par->indices.clear();
             this->par->value.clear();
             while (reader->readNextStartElement()) {

@@ -161,7 +161,6 @@ void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
             this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
-            qDebug() << this->delay->value[1] << " << mooooo";
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
