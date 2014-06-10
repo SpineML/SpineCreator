@@ -800,9 +800,12 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
     emit showProjection();
     emit setProjectionName("<u><b>" + proj->getName() + "</b></u>");
 
-    // make sure we are not off the end due to deletes
-    while (proj->currTarg > (int) proj->synapses.size()-1)
+    // make sure we are not off the end due to deletes, but don't go
+    // negative if there are no synapses.
+    while (proj->currTarg > 0
+           && proj->currTarg > (int) proj->synapses.size()-1) {
         proj->currTarg--;
+    }
 
     // Synapse
     emit setProjectionSynapseName("Synapse " + QString::number(proj->currTarg));

@@ -96,6 +96,9 @@ class projectObject;
 #define atanh(x) (log(1.0+x) - log(1.0-x))/2.0
 #endif
 
+// Debugging defines
+#define DBG() qDebug() << __FUNCTION__ << ": "
+
 using namespace std;
 
 class versionNumber
