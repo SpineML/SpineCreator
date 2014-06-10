@@ -73,7 +73,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut) {
             xmlOut.writeEmptyElement("UniformDistribution");
             xmlOut.writeAttribute("minimum", QString::number(this->delay->value[1]));
             xmlOut.writeAttribute("maximum", QString::number(this->delay->value[2]));
-            xmlOut.writeAttribute("seed", QString::number(this->delay->value[2]));
+            xmlOut.writeAttribute("seed", QString::number(this->delay->value[3]));
         }
             break;
         case 2:
@@ -81,7 +81,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut) {
             xmlOut.writeEmptyElement("NormalDistribution");
             xmlOut.writeAttribute("mean", QString::number(this->delay->value[1]));
             xmlOut.writeAttribute("variance", QString::number(this->delay->value[2]));
-            xmlOut.writeAttribute("seed", QString::number(this->delay->value[2]));
+            xmlOut.writeAttribute("seed", QString::number(this->delay->value[3]));
          }
             break;
         }
@@ -158,9 +158,10 @@ void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->currType = Statistical;
             this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
+            this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
+            qDebug() << this->delay->value[1] << " << mooooo";
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
@@ -169,7 +170,7 @@ void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -223,18 +224,20 @@ void onetoOne_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
+            this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(3,0);
+            this->delay->value.resize(4,0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -335,9 +338,9 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->currType = Statistical;
             this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
+            this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
@@ -346,7 +349,7 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -835,9 +838,9 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->currType = Statistical;
             this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
+            this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
@@ -846,7 +849,7 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
@@ -1415,9 +1418,9 @@ void kernel_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->currType = Statistical;
             this->delay->value.resize(4,0);
             this->delay->value[0] = 1;
-            this->delay->value[1] = propVal.item(0).toElement().attribute("minumum").toFloat();
+            this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
@@ -1426,7 +1429,7 @@ void kernel_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
-            this->delay->value[2] = propVal.item(0).toElement().attribute("seed").toFloat();
+            this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
 
     }
