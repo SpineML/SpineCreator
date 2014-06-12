@@ -10,7 +10,7 @@ using namespace std;
 void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
-    cout << "spinemlnetStop called" << endl;
+    cout << "SpineMLNet: stop-mexFunction: Called" << endl;
     unsigned long long int *threadPtr; // Or some other type?
     if (nrhs==0) {
        mexErrMsgTxt("failed");
@@ -24,12 +24,11 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // request termination
     *stopRequested = true;
     // wait for thread to terminate
-    cout << "Wait for join..." << endl;
+    cout << "SpineMLNet: stop-mexFunction: Wait for thread to join..." << endl;
     pthread_join(*thread, 0);
-
-    cout << "Thread has terminated, destroy mutexes then return." << endl;
+    cout << "SpineMLNet: stop-mexFunction: Thread has terminated, destroy mutexes then return." << endl;
 
     // destroy mutexes
     pthread_mutex_destroy(bufferMutex);
-    cout << "return." << endl;
+    cout << "SpineMLNet: stop-mexFunction: Returning" << endl;
 }

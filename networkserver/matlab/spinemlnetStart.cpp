@@ -42,8 +42,6 @@ volatile bool initialised;
 // A connected socket.
 volatile int connecting_socket;
 
-volatile int errorFlag;
-
 // Allow up to 1024 bytes in the listen queue.
 #define LISTENQ 1024
 
@@ -88,14 +86,14 @@ doHandshake (void)
                     // Write response.
                     buf[0] = RESP_HELLO;
                     if (write (connecting_socket, buf, 1) != 1) {
-                        cout << "SpineMLNet: Failed to write RESP_HELLO to client." << endl;
+                        cout << "SpineMLNet: start-doHandshake: Failed to write RESP_HELLO to client." << endl;
                         return -1;
                     }
                     handshakeStage++;
                 } else {
                     // Wrong data direction.
                     clientDataDirection = NOT_SET;
-                    cout << "SpineMLNet: Wrong data direction in first handshake byte from client." << endl;
+                    cout << "SpineMLNet: start-doHandshake: Wrong data direction in first handshake byte from client." << endl;
                     return -1;
                 }
             } // else b==0, so try reading again.
@@ -108,14 +106,14 @@ doHandshake (void)
                     clientDataType = buf[0];
                     buf[0] = RESP_RECVD;
                     if (write (connecting_socket, buf, 1) != 1) {
-                        cout << "SpineMLNet: Failed to write RESP_RECVD to client." << endl;
+                        cout << "SpineMLNet: start-doHandshake: Failed to write RESP_RECVD to client." << endl;
                         return -1;
                     }
                     handshakeStage++;
 
                 } else if (buf[0] == RESP_DATA_SPIKES || buf[0] == RESP_DATA_IMPULSES) {
                     // These are not yet implemented.
-                    cout << "SpineMLNet: Spikes/Impulses not yet implemented." << endl;
+                    cout << "SpineMLNet: start-doHandshake: Spikes/Impulses not yet implemented." << endl;
                     return -1;
                 }
             }
@@ -126,14 +124,14 @@ doHandshake (void)
                 // Got 4 bytes.
                 buf[0] = RESP_RECVD;
                 if (write (connecting_socket, buf, 1) != 1) {
-                    cout << "SpineMLNet: Failed to write RESP_RECVD to client." << endl;
+                    cout << "SpineMLNet: start-doHandshake: Failed to write RESP_RECVD to client." << endl;
                     return -1;
                 }
                 handshakeStage++;
 
             } else {
                 // Wrong number of bytes.
-                cout << "SpineMLNet: Read " << b << " bytes, expected 4." << endl;
+                cout << "SpineMLNet: start-doHandshake: Read " << b << " bytes, expected 4." << endl;
                 for (ssize_t i = 0; i<b; ++i) {
                     cout << "buf[" << i << "]: '" << buf[i] << "'  0x" << hex << buf[i] << dec << endl;
                 }
@@ -141,9 +139,9 @@ doHandshake (void)
             }
 
         } else if (handshakeStage == CS_HS_DONE) {
-            cout << "SpineMLNet: Handshake finished." << endl;
+            cout << "SpineMLNet: start-doHandshake: Handshake finished." << endl;
         } else {
-            cout << "SpineMLNet: Error: Invalid handshake stage." << endl;
+            cout << "SpineMLNet: start-doHandshake: Error: Invalid handshake stage." << endl;
             return -1;
         }
     }
@@ -155,15 +153,16 @@ doHandshake (void)
 void
 closeSockets (int& listening_socket)
 {
-    cout << "SpineMLNet: Closing sockets." << endl;
+    cout << "SpineMLNet: start-closeSockets: Called" << endl;
     if (close (connecting_socket)) {
         int theError = errno;
-        cout << "SpineMLNet: Error closing connecting socket: " << theError << endl;
+        cout << "SpineMLNet: start-closeSockets: Error closing connecting socket: " << theError << endl;
     }
     if (close (listening_socket)) {
         int theError = errno;
-        cout << "SpineMLNet: Error closing listening socket: " << theError << endl;
+        cout << "SpineMLNet: start-closeSockets: Error closing listening socket: " << theError << endl;
     }
+    cout << "SpineMLNet: start-closeSockets: Returning" << endl;
 }
 
 // thread function - this is where the TCP/IP comms happens. This is a
@@ -173,14 +172,13 @@ theThread (void* nothing)
 {
     // INIT CODE
     threadFailed = false;
-    errorFlag = 0;
 
     // Set up and await connection from a TCP/IP client. Use
     // the socket(), bind(), listen() and accept() calls.
     int listening_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (listening_socket < 0) {
         // error.
-        cout << "SpineMLNet: Failed to open listening socket." << endl;
+        cout << "SpineMLNet: start-theThread: Failed to open listening socket." << endl;
         threadFailed = true;
         return NULL;
     }
@@ -197,14 +195,14 @@ theThread (void* nothing)
     int bind_rtn = bind (listening_socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
     if (bind_rtn < 0) {
         int theError = errno;
-        cout << "SpineMLNet: Failed to bind listening socket (error " << theError << ")." << endl;
+        cout << "SpineMLNet: start-theThread: Failed to bind listening socket (error " << theError << ")." << endl;
         threadFailed = true;
         return NULL;
     }
 
     int listen_rtn = listen (listening_socket, LISTENQ);
     if (listen_rtn < 0) {
-        cout << "SpineMLNet: Failed to listen to listening socket." << endl;
+        cout << "SpineMLNet: start-theThread: Failed to listen to listening socket." << endl;
         threadFailed = true;
         return NULL;
     }
@@ -231,7 +229,7 @@ theThread (void* nothing)
                 // This is ok.
                 // cout << "Got positive value from select() or poll()"<< endl;
             } else if (retval == -1) {
-                cout << "error with poll()/select()" << endl;
+                cout << "SpineMLNet: start-theThread: error with poll()/select()" << endl;
             } else {
                 // This is ok.
                 // cout << "poll returns 0." << endl;
@@ -241,24 +239,27 @@ theThread (void* nothing)
                 // Data ready to read...
                 connecting_socket = accept (listening_socket, NULL, NULL);
                 if (connecting_socket < 0) {
-                    cout << "SpineMLNet: Failed to accept on listening socket." << endl;
+                    cout << "SpineMLNet: start-theThread: Failed to accept on listening socket." << endl;
                     threadFailed = true;
                     return NULL;
                 }
 
                 connected = true;
-                cout << "SpineMLNet: Accepted a connection." << endl;
+                cout << "SpineMLNet: start-theThread: Accepted a connection." << endl;
 
-                // Now we have a connection, we can procede to carry out
+                // Now we have a connection, we can proceed to carry out
                 // the SpineML TCP/IP network comms handshake
                 //
                 if (doHandshake() < 0) {
-                    cout << "SpineMLNet: Failed to complete SpineML handshake." << endl;
+                    cout << "SpineMLNet: start-theThread: Failed to complete SpineML handshake." << endl;
+                    cout << "SpineMLNet: start-theThread: Set threadFailed to true." << endl;
                     threadFailed = true;
+                    cout << "SpineMLNet: start-theThread: Direct call to closeSockets..." << endl;
                     closeSockets (listening_socket);
+                    cout << "SpineMLNet: start-theThread: return NULL from theThread." << endl;
                     return NULL;
                 }
-                cout << "SpineMLNet: Completed handshake." << endl;
+                cout << "SpineMLNet: start-theThread: Completed handshake." << endl;
 
             } else {
                 // cout << "no data available." << endl;
@@ -278,9 +279,9 @@ theThread (void* nothing)
     }
 
     // Shutdown code
-    cout << "SpineMLNet: Thread shutting down." << endl;
+    cout << "SpineMLNet: start-theThread: Close sockets." << endl;
     closeSockets (listening_socket);
-
+    cout << "SpineMLNet: start-theThread: At end of thread." << endl;
     return NULL;
 }
 
@@ -291,25 +292,25 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     stopRequested = false;
     initialised = false;
     updated = false;
-    errorFlag = 1;
+    threadFailed = false;
 
     // set up mutexes
     pthread_mutex_init (&bufferMutex, NULL);
 
     // create the thread
-    cout << "SpineMLNet: creating thread...";
+    cout << "SpineMLNet: start-mexFunction: creating thread..." << endl;
     int rtn = pthread_create (&thread, NULL, &theThread, NULL);
     if (rtn < 0) {
-        cout << "SpineMLNet: Failed to create thread." << endl;
+        cout << "SpineMLNet: start-mexFunction: Failed to create thread." << endl;
         return;
     }
 
     // wait until initialisation in the thread is complete before continuing
     do {
         usleep (1000);
-        if (errorFlag !=0) {
+        if (threadFailed == true) {
             // Shutdown as we have an error.
-            cout << "Shutdown due to error." << endl;
+            cout << "SpineMLNet: start-mexFunction: Shutdown due to error." << endl;
             // destroy mutexes
             pthread_mutex_destroy(&bufferMutex);
             // clear the loop

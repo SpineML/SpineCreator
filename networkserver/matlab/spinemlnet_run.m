@@ -1,9 +1,9 @@
 function [] = spinemlnet_run ()
 % start the interface thread
-display('SpineMLNet initialising...');
+display ('SpineMLNet ML: initialising...');
 snetHandle = spinemlnetStart;
-display('SpineMLNet initialised.');
-display (snetHandle);
+display ('SpineMLNet ML: initialised.');
+%display (snetHandle);
 
 % Specify a cleanup function.
 cleanupObj = onCleanup(@() spinemlnetCleanup(snetHandle));
@@ -16,21 +16,24 @@ cleanupObj = onCleanup(@() spinemlnetCleanup(snetHandle));
 escaped = false;
 %tic % start timer.
 %counter = 0;
+display ('SpineMLNet ML: Going into loop...');
 while escaped == false
 
-    % query for current state.
+    display ('SpineMLNet ML: Call spinemlnetQuery()');
+
+% query for current state.
     qrtn = spinemlnetQuery (snetHandle);
     % qrtn is:
     % qrtn(1,1): threadFailed
     % qrtn(1,2): updated
     %
-    %display (qrtn(1,1));
+    % display (qrtn(1,1));
     
-    %pause (1);
+    pause (1);
     
     if qrtn(1,1) == 1
         % The thread failed, so set escaped to true.
-        display ('The TCP/IP I/O thread seems to have failed. Finishing.');
+        display ('SpineMLNet ML: The TCP/IP I/O thread seems to have failed. Finishing.');
         escaped = true;
     end
     
@@ -43,12 +46,11 @@ while escaped == false
 
 end
 
-% spinemlnetCleanup gets called at end.
+display ('SpineMLNet ML: Script finished');
 end
 
 function spinemlnetCleanup (snetHandle)
-    disp('spinemlnetCleanup: Calling stop');
-    display (snetHandle);
+    disp('SpineMLNet ML: spinemlnetCleanup: Calling spinemlnetStop');
     spinemlnetStop(snetHandle);
-    disp('Called stop');
+    disp('SpineMLNet ML: cleanup complete.');
 end
