@@ -22,12 +22,12 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     pthread_t *thread = ((pthread_t*) threadPtr[0]);
     volatile bool *stopRequested = ((volatile bool*) threadPtr[1]);
     volatile bool *updated = ((volatile bool*) threadPtr[2]);
-    volatile bool *threadFailed = ((volatile bool*) threadPtr[5]);
+    volatile bool *threadFinished = ((volatile bool*) threadPtr[5]);
     pthread_mutex_t *bufferMutex = ((pthread_mutex_t *) threadPtr[4]);
 
-    bool tf = *threadFailed; // Seems to be necessary to make a copy
-                             // of the thing pointed to by
-                             // threadFailed.
+    bool tf = *threadFinished; // Seems to be necessary to make a copy
+                               // of the thing pointed to by
+                               // threadFinished.
 
     // The data for the output array. 2 numbers for now.
     const mwSize res[2] = { 1, 2 }; // 1 by 2 matrix
@@ -35,13 +35,13 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // create the output array
     // args: ndims, const mwSize *dims, mxClassID classid, complexity flag
     //cout << "create numeric array..." << endl;
-    plhs[0] = mxCreateNumericArray (2, res, mxUINT16_CLASS, mxREAL); 
+    plhs[0] = mxCreateNumericArray (2, res, mxUINT16_CLASS, mxREAL);
 
     // set up a pointer to the output array
     unsigned short *outPtr = (unsigned short*) mxGetData(plhs[0]);
-    
+
     // copy new data into the output structure
-    unsigned short rtn[2] = { (unsigned short)*threadFailed, (unsigned short)*updated };
+    unsigned short rtn[2] = { (unsigned short)*threadFinished, (unsigned short)*updated };
     //cout << "memcpy..." << endl;
-    memcpy(outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn. 
+    memcpy(outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn.
 }

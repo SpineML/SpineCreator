@@ -25,7 +25,7 @@ using namespace std;
 pthread_t thread;
 // flags
 volatile bool stopRequested; // User requested stop from matlab space
-volatile bool threadFailed;  // Thread failed, need to inform matlab space
+volatile bool threadFinished;// The thread finished executing (maybe it failed), need to inform matlab space
 volatile bool updated;       // Data was updated. May or may not need this - comes from mkinect.
 volatile char clientDataDirection; // AM_SOURCE or AM_TARGET
 volatile char clientDataType;      // nums, spikes or impulses. Only nums implemented.
@@ -230,7 +230,7 @@ void*
 theThread (void* nothing)
 {
     // INIT CODE
-    threadFailed = false;
+    threadFinished = false;
 
     // Set up and await connection from a TCP/IP client. Use
     // the socket(), bind(), listen() and accept() calls.
@@ -239,7 +239,7 @@ theThread (void* nothing)
     if (listening_socket < 0) {
         // error.
         cout << "SpineMLNet: start-theThread: Failed to open listening socket." << endl;
-        threadFailed = true;
+        threadFinished = true;
         return NULL;
     }
 
@@ -256,14 +256,14 @@ theThread (void* nothing)
     if (bind_rtn < 0) {
         int theError = errno;
         cout << "SpineMLNet: start-theThread: Failed to bind listening socket (error " << theError << ")." << endl;
-        threadFailed = true;
+        threadFinished = true;
         return NULL;
     }
 
     int listen_rtn = listen (listening_socket, LISTENQ);
     if (listen_rtn < 0) {
         cout << "SpineMLNet: start-theThread: Failed to listen to listening socket." << endl;
-        threadFailed = true;
+        threadFinished = true;
         return NULL;
     }
 
@@ -300,7 +300,7 @@ theThread (void* nothing)
                 connecting_socket = accept (listening_socket, NULL, NULL);
                 if (connecting_socket < 0) {
                     cout << "SpineMLNet: start-theThread: Failed to accept on listening socket." << endl;
-                    threadFailed = true;
+                    threadFinished = true;
                     return NULL;
                 }
 
@@ -312,8 +312,8 @@ theThread (void* nothing)
                 //
                 if (doHandshake() < 0) {
                     cout << "SpineMLNet: start-theThread: Failed to complete SpineML handshake." << endl;
-                    cout << "SpineMLNet: start-theThread: Set threadFailed to true." << endl;
-                    threadFailed = true;
+                    cout << "SpineMLNet: start-theThread: Set threadFinished to true." << endl;
+                    threadFinished = true;
                     cout << "SpineMLNet: start-theThread: Direct call to closeSockets..." << endl;
                     closeSockets (listening_socket);
                     cout << "SpineMLNet: start-theThread: return NULL from theThread." << endl;
@@ -340,7 +340,7 @@ theThread (void* nothing)
 
     // Shutdown code
     cout << "SpineMLNet: start-theThread: Close sockets." << endl;
-    threadFailed = true; // Here, its "threadFinished" really
+    threadFinished = true; // Here, its "threadFinished" really
     closeSockets (listening_socket);
     cout << "SpineMLNet: start-theThread: At end of thread." << endl;
     return NULL;
@@ -353,7 +353,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     stopRequested = false;
     initialised = false;
     updated = false;
-    threadFailed = false;
+    threadFinished = false;
 
     // set up mutexes
     pthread_mutex_init (&bufferMutex, NULL);
@@ -369,7 +369,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // wait until initialisation in the thread is complete before continuing
     do {
         usleep (1000);
-        if (threadFailed == true) {
+        if (threadFinished == true) {
             // Shutdown as we have an error.
             cout << "SpineMLNet: start-mexFunction: Shutdown due to error." << endl;
             // destroy mutexes
@@ -391,5 +391,5 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     threadPtr[2] = (unsigned long long int)&updated;
     threadPtr[3] = (unsigned long long int)bufferData;
     threadPtr[4] = (unsigned long long int)&bufferMutex;
-    threadPtr[5] = (unsigned long long int)&threadFailed;
+    threadPtr[5] = (unsigned long long int)&threadFinished;
 }
