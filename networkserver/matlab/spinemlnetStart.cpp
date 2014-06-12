@@ -68,6 +68,9 @@ enum dataTypes {
 #define CS_HS_GETTINGDATATYPE 1
 #define CS_HS_READINGDUMMY    2
 #define CS_HS_DONE            3
+
+#define NO_DATA_MAX_COUNT 10000
+
 int
 doHandshake (void)
 {
@@ -75,12 +78,20 @@ doHandshake (void)
     char buf[16];
     // There are three stages in the handshake process:
     int handshakeStage = CS_HS_GETTINGTARGET;
-    while (handshakeStage != CS_HS_DONE) {
+    int noData = 0; // Incremented everytime we get no data. Used so
+                    // that we don't spin forever waiting for the
+                    // handshake.
+    while (handshakeStage != CS_HS_DONE && noData < NO_DATA_MAX_COUNT) {
 
         if (handshakeStage == CS_HS_GETTINGTARGET) {
+            if (!noData) {
+                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGTARGET." << endl;
+            }
             b = read (connecting_socket, (void*)buf, 1);
             if (b == 1) {
                 // Got byte.
+                cout << "SpineMLNet: start-doHandshake: Got byte: '"
+                     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
                 if (buf[0] == AM_SOURCE || buf[0] == AM_TARGET) {
                     clientDataDirection = buf[0];
                     // Write response.
@@ -89,19 +100,30 @@ doHandshake (void)
                         cout << "SpineMLNet: start-doHandshake: Failed to write RESP_HELLO to client." << endl;
                         return -1;
                     }
+                    cout << "SpineMLNet: start-doHandshake: Wrote RESP_HELLO to client." << endl;
                     handshakeStage++;
+                    noData = 0; // reset the "no data" counter
                 } else {
                     // Wrong data direction.
                     clientDataDirection = NOT_SET;
                     cout << "SpineMLNet: start-doHandshake: Wrong data direction in first handshake byte from client." << endl;
                     return -1;
                 }
-            } // else b==0, so try reading again.
+            } else {
+                // No byte read, increment the no_data counter.
+                ++noData;
+            }
 
         } else if (handshakeStage == CS_HS_GETTINGDATATYPE) {
+            if (!noData) {
+                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGDATATYPE." << endl;
+            }
+            cout << "SpineMLNet: start-doHandshake: call read()" << endl;
             b = read (connecting_socket, (void*)buf, 1);
             if (b == 1) {
                 // Got byte.
+                cout << "SpineMLNet: start-doHandshake: Got byte: '"
+                     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
                 if (buf[0] == RESP_DATA_NUMS || buf[0] == 'a') { // a is for test/debug
                     clientDataType = buf[0];
                     buf[0] = RESP_RECVD;
@@ -109,16 +131,46 @@ doHandshake (void)
                         cout << "SpineMLNet: start-doHandshake: Failed to write RESP_RECVD to client." << endl;
                         return -1;
                     }
+                    cout << "SpineMLNet: start-doHandshake: Wrote RESP_RECVD to client." << endl;
                     handshakeStage++;
+                    noData = 0; // reset the "no data" counter
 
                 } else if (buf[0] == RESP_DATA_SPIKES || buf[0] == RESP_DATA_IMPULSES) {
                     // These are not yet implemented.
                     cout << "SpineMLNet: start-doHandshake: Spikes/Impulses not yet implemented." << endl;
                     return -1;
+
+                } else if (buf[0] == AM_SOURCE || buf[0] == AM_TARGET) {
+                    // Hypothesis: If the client sent a handshake byte
+                    // saying that is an AM_TARGET, it will send a
+                    // second AM_TARGET at this stage of the handshake.
+                    clientDataDirection = buf[0];
+                    // Write response.
+                    buf[0] = RESP_HELLO;
+                    if (write (connecting_socket, buf, 1) != 1) {
+                        cout << "SpineMLNet: start-doHandshake: Failed to write RESP_HELLO to client." << endl;
+                        return -1;
+                    }
+                    cout << "SpineMLNet: start-doHandshake: Wrote RESP_HELLO to client (again)." << endl;
+                    handshakeStage++;// DO increment handshakeStage here. Next comms from client will be dummy byte.
+                    noData = 0; // reset the "no data" counter
+
+                } else {
+                    // Wrong/unexpected character.
+                    cout << "SpineMLNet: start-doHandshake: Character '" << buf[0] << "'/0x" << (int)buf[0] << " is unexpected here." << endl;
+                    return -1;
                 }
+            } else {
+                if (noData < 10) {
+                    cout << "SpineMLNet: start-doHandshake: Got " << b << " bytes, not 1" << endl;
+                }
+                ++noData;
             }
 
         } else if (handshakeStage == CS_HS_READINGDUMMY) {
+            if (!noData) {
+                cout << "SpineMLNet: start-doHandshake: CS_HS_READINGDUMMY." << endl;
+            }
             b = read (connecting_socket, (void*)buf, 4);
             if (b == 4) {
                 // Got 4 bytes.
@@ -128,14 +180,17 @@ doHandshake (void)
                     return -1;
                 }
                 handshakeStage++;
+                noData = 0;
 
-            } else {
+            } else if (b > 0) {
                 // Wrong number of bytes.
                 cout << "SpineMLNet: start-doHandshake: Read " << b << " bytes, expected 4." << endl;
                 for (ssize_t i = 0; i<b; ++i) {
                     cout << "buf[" << i << "]: '" << buf[i] << "'  0x" << hex << buf[i] << dec << endl;
                 }
                 return -1;
+            } else {
+                ++noData;
             }
 
         } else if (handshakeStage == CS_HS_DONE) {
@@ -144,6 +199,10 @@ doHandshake (void)
             cout << "SpineMLNet: start-doHandshake: Error: Invalid handshake stage." << endl;
             return -1;
         }
+    }
+    if (noData >= NO_DATA_MAX_COUNT) {
+        cout << "SpineMLNet: start-doHandshake: Error: Failed to get data from client." << endl;
+        return -1;
     }
     return 0;
 }
@@ -175,6 +234,7 @@ theThread (void* nothing)
 
     // Set up and await connection from a TCP/IP client. Use
     // the socket(), bind(), listen() and accept() calls.
+    cout << "SpineMLNet: start-theThread: Open a socket." << endl;
     int listening_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (listening_socket < 0) {
         // error.
@@ -280,6 +340,7 @@ theThread (void* nothing)
 
     // Shutdown code
     cout << "SpineMLNet: start-theThread: Close sockets." << endl;
+    threadFailed = true; // Here, its "threadFinished" really
     closeSockets (listening_socket);
     cout << "SpineMLNet: start-theThread: At end of thread." << endl;
     return NULL;
