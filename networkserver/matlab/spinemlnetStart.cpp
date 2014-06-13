@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <deque>
+#include <vector>
 
 extern "C" {
 #include <pthread.h>
@@ -28,7 +29,8 @@ volatile bool stopRequested; // User requested stop from matlab space
 volatile bool threadFinished;// The thread finished executing (maybe it failed), need to inform matlab space
 volatile bool updated;       // Data was updated. May or may not need this - comes from mkinect.
 volatile char clientDataDirection; // AM_SOURCE or AM_TARGET
-volatile char clientDataType;      // nums, spikes or impulses. Only nums implemented.
+volatile char clientDataType;      // nums(analog), spikes(events) or impulses. Only nums implemented.
+volatile char clientDataSize;      // If clientDataType is nums, this is the size of those nums in number of bytes per num.
 // mutexes
 pthread_mutex_t bufferMutex;
 // data structures
@@ -64,13 +66,24 @@ enum dataTypes {
     IMPULSE
 };
 
-#define CS_HS_GETTINGTARGET   0
-#define CS_HS_GETTINGDATATYPE 1
-#define CS_HS_READINGDUMMY    2
-#define CS_HS_DONE            3
+// Handshake stages:
+#define CS_HS_GETTINGTARGET     0
+#define CS_HS_GETTINGDATATYPE   1
+#define CS_HS_GETTINGDATASIZE   2
+#define CS_HS_DONE              3
 
-#define NO_DATA_MAX_COUNT 10000
+// How many times to fail to read a byte before calling the session a
+// failure:
+#define NO_DATA_MAX_COUNT   10000
 
+/*
+ * Go through the handshake process, as defined in protocol.txt.
+ *
+ * The client.h code in SpineML_2_BRAHMS refers to 3 stages in the
+ * handshake process: "initial handshake", "set datatype", "set
+ * datasize". Here, these 3 stages are referred to in combination as
+ * the "handshake".
+ */
 int
 doHandshake (void)
 {
@@ -85,7 +98,7 @@ doHandshake (void)
 
         if (handshakeStage == CS_HS_GETTINGTARGET) {
             if (!noData) {
-                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGTARGET." << endl;
+                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGTARGET. connecting_socket: " << connecting_socket << endl;
             }
             b = read (connecting_socket, (void*)buf, 1);
             if (b == 1) {
@@ -140,21 +153,6 @@ doHandshake (void)
                     cout << "SpineMLNet: start-doHandshake: Spikes/Impulses not yet implemented." << endl;
                     return -1;
 
-                } else if (buf[0] == AM_SOURCE || buf[0] == AM_TARGET) {
-                    // Hypothesis: If the client sent a handshake byte
-                    // saying that is an AM_TARGET, it will send a
-                    // second AM_TARGET at this stage of the handshake.
-                    clientDataDirection = buf[0];
-                    // Write response.
-                    buf[0] = RESP_HELLO;
-                    if (write (connecting_socket, buf, 1) != 1) {
-                        cout << "SpineMLNet: start-doHandshake: Failed to write RESP_HELLO to client." << endl;
-                        return -1;
-                    }
-                    cout << "SpineMLNet: start-doHandshake: Wrote RESP_HELLO to client (again)." << endl;
-                    handshakeStage++;// DO increment handshakeStage here. Next comms from client will be dummy byte.
-                    noData = 0; // reset the "no data" counter
-
                 } else {
                     // Wrong/unexpected character.
                     cout << "SpineMLNet: start-doHandshake: Character '" << buf[0] << "'/0x" << (int)buf[0] << " is unexpected here." << endl;
@@ -167,13 +165,22 @@ doHandshake (void)
                 ++noData;
             }
 
-        } else if (handshakeStage == CS_HS_READINGDUMMY) {
+        } else if (handshakeStage == CS_HS_GETTINGDATASIZE) {
             if (!noData) {
-                cout << "SpineMLNet: start-doHandshake: CS_HS_READINGDUMMY." << endl;
+                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGDATASIZE." << endl;
             }
             b = read (connecting_socket, (void*)buf, 4);
             if (b == 4) {
-                // Got 4 bytes.
+                // Got 4 bytes. This is the data size.
+
+                clientDataSize =
+                    (unsigned char)buf[0]
+                    | (unsigned char)buf[1] << 8
+                    | (unsigned char)buf[2] << 16
+                    | (unsigned char)buf[3] << 24;
+                // Note: clientDataSize is the number of doubles per datum.
+                cout << "SpineMLNet: start-doHandshake: client data size: " << clientDataSize << endl;
+
                 buf[0] = RESP_RECVD;
                 if (write (connecting_socket, buf, 1) != 1) {
                     cout << "SpineMLNet: start-doHandshake: Failed to write RESP_RECVD to client." << endl;
@@ -207,8 +214,10 @@ doHandshake (void)
     return 0;
 }
 
-// Close the network sockets. Uses a global for connecting_socket;
-// listening socket is passed in.
+/*
+ * Close the network sockets. Uses a global for connecting_socket;
+ * listening socket is passed in.
+ */
 void
 closeSockets (int& listening_socket)
 {
@@ -224,8 +233,46 @@ closeSockets (int& listening_socket)
     cout << "SpineMLNet: start-closeSockets: Returning" << endl;
 }
 
-// thread function - this is where the TCP/IP comms happens. This is a
-// matlab-free zone.
+/*
+ * Write a datum to the client and then read the acknowledgement byte.
+ */
+int
+doWriteToClient (void)
+{
+    // This is just me putting some static data in for testing/development.
+    vector<double> dbls;
+    for (int i = 0; i < clientDataSize; ++i) {
+        dbls.push_back(5.0);
+    }
+
+    cout << "SpineMLNet: start-doWriteToClient: write... connecting_socket: " << connecting_socket << endl;
+    ssize_t bytesWritten = write (connecting_socket, &(dbls[0]), clientDataSize*sizeof(double));
+    if (bytesWritten != clientDataSize*sizeof(double)) {
+        int theError = errno;
+        cout << "SpineMLNet: start-doWriteToClient: Failed. Wrote " << bytesWritten
+             << " bytes. Tried to write " << (clientDataSize*sizeof(double)) << ". errno: "
+             << theError << endl;
+        return -1;
+    }
+    cout << "SpineMLNet: start-doWriteToClient: wrote " << bytesWritten << " bytes." << endl;
+    // Expect an acknowledgement now from the client
+    char buf[16];
+    int b = read (connecting_socket, (void*)buf, 1);
+    if (b == 1) {
+        // Good.
+        cout << "SpineMLNet: start-doWriteToClient: Read '" << buf[0] << "' from client" << endl;
+    } else {
+        cout << "SpineMLNet: start-doWriteToClient: Failed to read 1 byte from client." << endl;
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
+ * thread function - this is where the TCP/IP comms happens. This is a
+ * matlab-free zone.
+ */
 void*
 theThread (void* nothing)
 {
@@ -331,12 +378,29 @@ theThread (void* nothing)
             pthread_mutex_lock (&bufferMutex);
 
             // Update the buffer by reading/writing from network.
+            if (clientDataDirection == AM_TARGET) {
+                // Client is a target, I need to write data to the client, if I have anything to write.
+                cout << "SpineMLNet: start-theThread: clientDataDirection: AM_TARGET." << endl;
+                if (doWriteToClient()) {
+                    cout << "SpineMLNet: start-theThread: Error writing to client." << endl;
+                    break;
+                }
+                usleep (1000);
+
+            } else if (clientDataDirection == AM_SOURCE) {
+                // Client is a source, I need to read data from the client.
+                //doReadFromClient();
+                cout << "SpineMLNet: start-theThread: clientDataDirection: AM_SOURCE." << endl;
+            } else {
+                // error.
+                cout << "SpineMLNet: start-theThread: clientDataDirection error." << endl;
+            }
 
             pthread_mutex_unlock (&bufferMutex);
-
             initialised = true;
         }
-    }
+
+    } // while (!stopRequested)
 
     // Shutdown code
     cout << "SpineMLNet: start-theThread: Close sockets." << endl;
