@@ -56,7 +56,8 @@ enum dataTypes {
 #define CS_HS_GETTINGTARGET     0
 #define CS_HS_GETTINGDATATYPE   1
 #define CS_HS_GETTINGDATASIZE   2
-#define CS_HS_DONE              3
+#define CS_HS_GETTINGNAME       3
+#define CS_HS_DONE              4
 
 // How many times to fail to read a byte before calling the session a
 // failure:
@@ -84,11 +85,12 @@ public:
      * data mutex.
      */
     SpineMLConnection()
-        : connectingSocket(0)
-        , established(false)
-        , failed(false)
-        , unacknowledgedDataSent(false)
-        , noData(0)
+        : connectingSocket (0)
+        , established (false)
+        , failed (false)
+        , unacknowledgedDataSent (false)
+        , noData (0)
+        , clientConnectionName ("")
         , clientDataDirection (NOT_SET)
         , clientDataType (NOT_SET)
         , clientDataSize (1)
@@ -181,6 +183,10 @@ private:
      * connection.
      */
     unsigned int noData;
+    /*!
+     * The name of the connection, as defined by the client.
+     */
+    string clientConnectionName;
     /*!
      * The data direction, as set by the client. Client sends a flag
      * which is either AM_SOURCE (I am a source) or AM_TARGET (I am a
@@ -385,6 +391,63 @@ SpineMLConnection::doHandshake (void)
                 ++this->noData;
             }
 
+        } else if (handshakeStage == CS_HS_GETTINGNAME) {
+            if (!this->noData) {
+                cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGNAME." << endl;
+            }
+            b = read (this->connectingSocket, (void*)buf, 4);
+            if (b == 4) {
+                // Got 4 bytes. This is the size of the name - the
+                // number of chars to read from the name.
+                int nameSize =
+                    (unsigned char)buf[0]
+                    | (unsigned char)buf[1] << 8
+                    | (unsigned char)buf[2] << 16
+                    | (unsigned char)buf[3] << 24;
+
+                // sanity check
+                if (nameSize > 1024) {
+                    cout << "SpineMLConnection::doHandshake: Insanely long name (" << nameSize << " bytes)" << endl;
+                    this->failed = true;
+                    return -1;
+                }
+
+                // Now we know how much to read for the name:
+                char* namebuf = (char*) malloc (1+nameSize); // 1 extra for trailing null
+                b = read (this->connectingSocket, (void*)namebuf, nameSize);
+
+                if (b != nameSize) {
+                    // Wrong number of bytes.
+                    free (namebuf);
+                    cout << "SpineMLConnection::doHandshake: Read " << b << " bytes, expected " << nameSize << endl;
+                    this->failed = true;
+                    return -1;
+                } // else carry on...
+
+                // We got the name; great.
+                namebuf[nameSize] = '\0';
+                this->clientConnectionName.assign (namebuf);
+                cout << "SpineMLConnection::doHandshake: Connection name is '" << this->clientConnectionName << "'" << endl;
+                buf[0] = RESP_RECVD;
+                if (write (this->connectingSocket, buf, 1) != 1) {
+                    cout << "SpineMLConnection::doHandshake: Failed to write RESP_RECVD to client." << endl;
+                    this->failed = true;
+                    return -1;
+                }
+
+                free (namebuf);
+                handshakeStage++;
+                this->noData = 0;
+
+            } else if (b > 0) {
+                // Wrong number of bytes.
+                cout << "SpineMLConnection::doHandshake: Read " << b << " bytes, expected 4." << endl;
+                this->failed = true;
+                return -1;
+            } else {
+                ++this->noData;
+            }
+
         } else if (handshakeStage == CS_HS_DONE) {
             cout << "SpineMLConnection::doHandshake: Handshake finished." << endl;
         } else {
@@ -462,6 +525,7 @@ SpineMLConnection::doWriteToClient (void) volatile
         cout << "SpineMLConnection::doWriteToClient: Failed. Wrote " << bytesWritten
              << " bytes. Tried to write " << (this->clientDataSize*sizeof(double)) << ". errno: "
              << theError << endl;
+        // Note: We'll get ECONNRESET (errno 104) when the client has finished its experiment and needs no more data.
         return -1;
     }
     //cout << "SpineMLConnection::doWriteToClient: wrote " << bytesWritten << " bytes." << endl;

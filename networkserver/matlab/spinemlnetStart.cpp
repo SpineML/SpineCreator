@@ -239,11 +239,11 @@ void cleanupFailedConnections (void)
 
     while (connectionsIter != connections->end()) {
         if (connectionsIter->second->getFailed() == true) {
-            cout << "SpineMLNet: start->cleanupFailedConnections: we have a failed connection. allow to join." << endl;
+            cout << "SpineMLNet: start-cleanupFailedConnections: we have a failed connection. allow to join." << endl;
             pthread_join (connectionsIter->first, 0);
-            cout << "SpineMLNet: start->cleanupFailedConnections: now delete the object." << endl;
+            cout << "SpineMLNet: start-cleanupFailedConnections: now delete the object." << endl;
             delete connectionsIter->second;
-            cout << "SpineMLNet: start->cleanupFailedConnections: now remove pointer from map." << endl;
+            cout << "SpineMLNet: start-cleanupFailedConnections: now remove pointer from map." << endl;
             connections->erase (connectionsIter);
         }
         ++connectionsIter;
@@ -260,24 +260,24 @@ void deleteConnections (void)
     map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
 
     // First job - run through and destroy all threads.
-    cout << "SpineMLNet: start->deleteConnections: join threads" << endl;
+    cout << "SpineMLNet: start-deleteConnections: join threads" << endl;
     while (connectionsIter != connections->end()) {
-        cout << "SpineMLNet: start->deleteConnections: join a thread..." << endl;
+        cout << "SpineMLNet: start-deleteConnections: join a thread..." << endl;
         pthread_join (connectionsIter->first, 0);
         ++connectionsIter;
     }
 
     // Now delete the connections
-    cout << "SpineMLNet: start->deleteConnections: delete connections" << endl;
+    cout << "SpineMLNet: start-deleteConnections: delete connections" << endl;
     connectionsIter = connections->begin();
     while (connectionsIter != connections->end()) {
-        cout << "SpineMLNet: start->deleteConnections: delete a connection" << endl;
+        cout << "SpineMLNet: start-deleteConnections: delete a connection" << endl;
         delete connectionsIter->second;
         ++connectionsIter;
     }
 
     // Clear, then delete the connections map.
-    cout << "SpineMLNet: start->deleteConnections: clear and delete connections map" << endl;
+    cout << "SpineMLNet: start-deleteConnections: clear and delete connections map" << endl;
     connections->clear();
     delete connections;
 }
