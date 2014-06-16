@@ -102,9 +102,9 @@ int initServer (void)
 
     struct sockaddr_in servaddr;
     bzero((char *) &servaddr, sizeof(servaddr));
-    servaddr.sin_family      = AF_INET;
+    servaddr.sin_family = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port        = htons(port);
+    servaddr.sin_port = htons(port);
 
     int bind_rtn = bind (listening_socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
     if (bind_rtn < 0) {
@@ -151,9 +151,9 @@ void* connectionThread (void*)
     cout << "SpineMLNet: start-connectionThread: start while loop..." << endl;
     while (!stopRequested /*&& !c->getFailed()*/) {
         // Is the connection established?
-        cout << "SpineMLNet: start-connectionThread: Loop.." << endl;
+        //cout << "SpineMLNet: start-connectionThread: Loop.." << endl;
         if (!c->getEstablished()) {
-            cout << "SpineMLNet: start-connectionThread: Not established. Do handshake." << endl;
+            //cout << "SpineMLNet: start-connectionThread: Not established. Do handshake." << endl;
             if (c->doHandshake() < 0) {
                 cout << "SpineMLNet: start-pollForConnection: Failed to complete SpineML handshake." << endl;
                 // Now what kind of clean up?
@@ -162,7 +162,7 @@ void* connectionThread (void*)
             }
             cout << "SpineMLNet: start-pollForConnection: Completed handshake." << endl;
         } else {
-            cout << "SpineMLNet: start-connectionThread: Established. Do data I/O." << endl;
+            //cout << "SpineMLNet: start-connectionThread: Established. Do data I/O." << endl;
             /*
              * Now do data I/O
              */
@@ -175,7 +175,7 @@ void* connectionThread (void*)
                 break;
             }
         }
-        usleep (1000000);
+        usleep (1000);
     }
 
     return NULL;
