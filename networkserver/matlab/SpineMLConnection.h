@@ -228,6 +228,11 @@ SpineMLConnection::getEstablished (void)
 {
     return this->established;
 }
+bool
+SpineMLConnection::getFailed (void)
+{
+    return this->failed;
+}
 //@}
 
 /*

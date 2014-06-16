@@ -149,7 +149,7 @@ void* connectionThread (void*)
     }
 
     cout << "SpineMLNet: start-connectionThread: start while loop..." << endl;
-    while (!stopRequested) {
+    while (!stopRequested /*&& !c->getFailed()*/) {
         // Is the connection established?
         cout << "SpineMLNet: start-connectionThread: Loop.." << endl;
         if (!c->getEstablished()) {
@@ -233,6 +233,23 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
     return 0;
 }
 
+void cleanupFailedConnections (void)
+{
+    map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
+
+    while (connectionsIter != connections->end()) {
+        if (connectionsIter->second->getFailed() == true) {
+            cout << "SpineMLNet: start->cleanupFailedConnections: we have a failed connection. allow to join." << endl;
+            pthread_join (connectionsIter->first, 0);
+            cout << "SpineMLNet: start->cleanupFailedConnections: now delete the object." << endl;
+            delete connectionsIter->second;
+            cout << "SpineMLNet: start->cleanupFailedConnections: now remove pointer from map." << endl;
+            connections->erase (connectionsIter);
+        }
+        ++connectionsIter;
+    }
+}
+
 /*
  * Delete connections.
  */
@@ -287,10 +304,12 @@ void* theThread (void* nothing)
     p.revents = 0;
     int retval = 0;
 
+    // The main thread is now initialised.
+    initialised = true;
+
     // loop until we get the termination signal
     while (!stopRequested) {
 
-//        cout << "SpineMLNet: start-theThread: loop" << endl;
         /*
          * First job in the loop is to see if we have any more
          * connections coming in from the client.
@@ -301,8 +320,10 @@ void* theThread (void* nothing)
             return NULL;
         }
 
-        // Now, we need to set initialised for each connection thread as well as the main thread?
-        initialised = true;
+        /*
+         * Second job in loop is to do some housekeeping.
+         */
+        cleanupFailedConnections();
 
         usleep (10000);
 
