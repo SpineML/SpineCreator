@@ -4,7 +4,10 @@
 
 #include "mex.h"
 #include <iostream>
+#include <map>
 #include <string.h>
+
+#include "SpineMLConnection.h"
 
 using namespace std;
 
@@ -21,9 +24,8 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     threadPtr = (unsigned long long int*)mxGetData(prhs[0]);
     pthread_t *thread = ((pthread_t*) threadPtr[0]);
     volatile bool *stopRequested = ((volatile bool*) threadPtr[1]);
-    volatile bool *updated = ((volatile bool*) threadPtr[2]);
-    volatile bool *threadFinished = ((volatile bool*) threadPtr[5]);
-    pthread_mutex_t *bufferMutex = ((pthread_mutex_t *) threadPtr[4]);
+    volatile bool *threadFinished = ((volatile bool*) threadPtr[2]);
+    map<int, SpineMLConnection*>* connections = (map<int, SpineMLConnection*>*) threadPtr[3];
 
     bool tf = *threadFinished; // Seems to be necessary to make a copy
                                // of the thing pointed to by
@@ -41,7 +43,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     unsigned short *outPtr = (unsigned short*) mxGetData(plhs[0]);
 
     // copy new data into the output structure
-    unsigned short rtn[2] = { (unsigned short)*threadFinished, (unsigned short)*updated };
+    unsigned short rtn[2] = { (unsigned short)*threadFinished, 0 };
     //cout << "memcpy..." << endl;
     memcpy(outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn.
 }

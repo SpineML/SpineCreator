@@ -6,8 +6,10 @@
 #include "mex.h"
 
 #include <iostream>
+#include <map>
 #include <deque>
 #include <vector>
+#include <stdexcept>
 
 extern "C" {
 #include <pthread.h>
@@ -20,212 +22,44 @@ extern "C" {
 #include <errno.h>
 }
 
+// Include our connection class code.
+#include "SpineMLConnection.h"
+
 using namespace std;
-
-// thread handle and termination flag, must be global
-pthread_t thread;
-// flags
-volatile bool stopRequested; // User requested stop from matlab space
-volatile bool threadFinished;// The thread finished executing (maybe it failed), need to inform matlab space
-volatile bool updated;       // Data was updated. May or may not need this - comes from mkinect.
-volatile char clientDataDirection; // AM_SOURCE or AM_TARGET
-volatile char clientDataType;      // nums(analog), spikes(events) or impulses. Only nums implemented.
-volatile char clientDataSize;      // If clientDataType is nums, this is the size of those nums in number of bytes per num.
-// mutexes
-pthread_mutex_t bufferMutex;
-// data structures
-volatile char* bufferData;
-// Whatever data type is used by SpineML:
-volatile std::deque<int> data;
-
-// flag for if we are all up and running
-volatile bool initialised;
-
-// A connected socket.
-volatile int connecting_socket;
 
 // Allow up to 1024 bytes in the listen queue.
 #define LISTENQ 1024
 
-// SpineML tcp/ip comms flags.
-#define RESP_DATA_NUMS     31 // a non-printable character
-#define RESP_DATA_SPIKES   32 // ' ' (space)
-#define RESP_DATA_IMPULSES 33 // '!'
-#define RESP_HELLO         41 // ')'
-#define RESP_RECVD         42 // '*'
-#define RESP_ABORT         43 // '+'
-#define RESP_FINISHED      44 // ','
-#define AM_SOURCE          45 // '-'
-#define AM_TARGET          46 // '.'
-#define NOT_SET            99 // 'c'
+// thread handle and termination flag, must be global. This is the
+// main server thread. Each incoming connection then gets its own
+// thread in addition to this one.
+pthread_t thread;
+// flags
+volatile bool stopRequested;  // User requested stop from matlab space
+volatile bool clientStopRequested;  // Used by main thread to request stop on client threads.
+volatile bool threadFinished; // The main thread finished executing (maybe it failed), need to inform
+                              // matlab space
+volatile bool initialised;    // Set when server is up and running - this only refers to the main
+                              // thread, which polls for new connections.
 
-// SpineML tcp/ip comms data types
-enum dataTypes {
-    ANALOG,
-    EVENT,
-    IMPULSE
-};
-
-// Handshake stages:
-#define CS_HS_GETTINGTARGET     0
-#define CS_HS_GETTINGDATATYPE   1
-#define CS_HS_GETTINGDATASIZE   2
-#define CS_HS_DONE              3
-
-// How many times to fail to read a byte before calling the session a
-// failure:
-#define NO_DATA_MAX_COUNT   10000
-
-/*
- * Go through the handshake process, as defined in protocol.txt.
- *
- * The client.h code in SpineML_2_BRAHMS refers to 3 stages in the
- * handshake process: "initial handshake", "set datatype", "set
- * datasize". Here, these 3 stages are referred to in combination as
- * the "handshake".
- */
-int
-doHandshake (void)
-{
-    ssize_t b = 0;
-    char buf[16];
-    // There are three stages in the handshake process:
-    int handshakeStage = CS_HS_GETTINGTARGET;
-    int noData = 0; // Incremented everytime we get no data. Used so
-                    // that we don't spin forever waiting for the
-                    // handshake.
-    while (handshakeStage != CS_HS_DONE && noData < NO_DATA_MAX_COUNT) {
-
-        if (handshakeStage == CS_HS_GETTINGTARGET) {
-            if (!noData) {
-                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGTARGET. connecting_socket: " << connecting_socket << endl;
-            }
-            b = read (connecting_socket, (void*)buf, 1);
-            if (b == 1) {
-                // Got byte.
-                cout << "SpineMLNet: start-doHandshake: Got byte: '"
-                     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
-                if (buf[0] == AM_SOURCE || buf[0] == AM_TARGET) {
-                    clientDataDirection = buf[0];
-                    // Write response.
-                    buf[0] = RESP_HELLO;
-                    if (write (connecting_socket, buf, 1) != 1) {
-                        cout << "SpineMLNet: start-doHandshake: Failed to write RESP_HELLO to client." << endl;
-                        return -1;
-                    }
-                    cout << "SpineMLNet: start-doHandshake: Wrote RESP_HELLO to client." << endl;
-                    handshakeStage++;
-                    noData = 0; // reset the "no data" counter
-                } else {
-                    // Wrong data direction.
-                    clientDataDirection = NOT_SET;
-                    cout << "SpineMLNet: start-doHandshake: Wrong data direction in first handshake byte from client." << endl;
-                    return -1;
-                }
-            } else {
-                // No byte read, increment the no_data counter.
-                ++noData;
-            }
-
-        } else if (handshakeStage == CS_HS_GETTINGDATATYPE) {
-            if (!noData) {
-                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGDATATYPE." << endl;
-            }
-            cout << "SpineMLNet: start-doHandshake: call read()" << endl;
-            b = read (connecting_socket, (void*)buf, 1);
-            if (b == 1) {
-                // Got byte.
-                cout << "SpineMLNet: start-doHandshake: Got byte: '"
-                     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
-                if (buf[0] == RESP_DATA_NUMS || buf[0] == 'a') { // a is for test/debug
-                    clientDataType = buf[0];
-                    buf[0] = RESP_RECVD;
-                    if (write (connecting_socket, buf, 1) != 1) {
-                        cout << "SpineMLNet: start-doHandshake: Failed to write RESP_RECVD to client." << endl;
-                        return -1;
-                    }
-                    cout << "SpineMLNet: start-doHandshake: Wrote RESP_RECVD to client." << endl;
-                    handshakeStage++;
-                    noData = 0; // reset the "no data" counter
-
-                } else if (buf[0] == RESP_DATA_SPIKES || buf[0] == RESP_DATA_IMPULSES) {
-                    // These are not yet implemented.
-                    cout << "SpineMLNet: start-doHandshake: Spikes/Impulses not yet implemented." << endl;
-                    return -1;
-
-                } else {
-                    // Wrong/unexpected character.
-                    cout << "SpineMLNet: start-doHandshake: Character '" << buf[0] << "'/0x" << (int)buf[0] << " is unexpected here." << endl;
-                    return -1;
-                }
-            } else {
-                if (noData < 10) {
-                    cout << "SpineMLNet: start-doHandshake: Got " << b << " bytes, not 1" << endl;
-                }
-                ++noData;
-            }
-
-        } else if (handshakeStage == CS_HS_GETTINGDATASIZE) {
-            if (!noData) {
-                cout << "SpineMLNet: start-doHandshake: CS_HS_GETTINGDATASIZE." << endl;
-            }
-            b = read (connecting_socket, (void*)buf, 4);
-            if (b == 4) {
-                // Got 4 bytes. This is the data size.
-
-                clientDataSize =
-                    (unsigned char)buf[0]
-                    | (unsigned char)buf[1] << 8
-                    | (unsigned char)buf[2] << 16
-                    | (unsigned char)buf[3] << 24;
-                // Note: clientDataSize is the number of doubles per datum.
-                cout << "SpineMLNet: start-doHandshake: client data size: " << clientDataSize << endl;
-
-                buf[0] = RESP_RECVD;
-                if (write (connecting_socket, buf, 1) != 1) {
-                    cout << "SpineMLNet: start-doHandshake: Failed to write RESP_RECVD to client." << endl;
-                    return -1;
-                }
-                handshakeStage++;
-                noData = 0;
-
-            } else if (b > 0) {
-                // Wrong number of bytes.
-                cout << "SpineMLNet: start-doHandshake: Read " << b << " bytes, expected 4." << endl;
-                for (ssize_t i = 0; i<b; ++i) {
-                    cout << "buf[" << i << "]: '" << buf[i] << "'  0x" << hex << buf[i] << dec << endl;
-                }
-                return -1;
-            } else {
-                ++noData;
-            }
-
-        } else if (handshakeStage == CS_HS_DONE) {
-            cout << "SpineMLNet: start-doHandshake: Handshake finished." << endl;
-        } else {
-            cout << "SpineMLNet: start-doHandshake: Error: Invalid handshake stage." << endl;
-            return -1;
-        }
-    }
-    if (noData >= NO_DATA_MAX_COUNT) {
-        cout << "SpineMLNet: start-doHandshake: Error: Failed to get data from client." << endl;
-        return -1;
-    }
-    return 0;
-}
+// This map is indexed by the thread id of the connection.
+map<pthread_t, SpineMLConnection*>* connections;
 
 /*
  * Close the network sockets. Uses a global for connecting_socket;
  * listening socket is passed in.
  */
-void
-closeSockets (int& listening_socket)
+void closeSockets (int& listening_socket)
 {
     cout << "SpineMLNet: start-closeSockets: Called" << endl;
-    if (close (connecting_socket)) {
-        int theError = errno;
-        cout << "SpineMLNet: start-closeSockets: Error closing connecting socket: " << theError << endl;
+
+    // Close each connection:
+    map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
+    while (connectionsIter != connections->end()) {
+        connectionsIter->second->closeSocket();
+        ++connectionsIter;
     }
+
     if (close (listening_socket)) {
         int theError = errno;
         cout << "SpineMLNet: start-closeSockets: Error closing listening socket: " << theError << endl;
@@ -233,65 +67,38 @@ closeSockets (int& listening_socket)
     cout << "SpineMLNet: start-closeSockets: Returning" << endl;
 }
 
-/*
- * Write a datum to the client and then read the acknowledgement byte.
+/*!
+ * Close only the main thread's listening socket.
  */
-int
-doWriteToClient (void)
+void closeSocket (int& listening_socket)
 {
-    // This is just me putting some static data in for testing/development.
-    vector<double> dbls;
-    for (int i = 0; i < clientDataSize; ++i) {
-        dbls.push_back(5.0);
-    }
+    cout << "SpineMLNet: start-closeSocket: Called" << endl;
 
-    cout << "SpineMLNet: start-doWriteToClient: write... connecting_socket: " << connecting_socket << endl;
-    ssize_t bytesWritten = write (connecting_socket, &(dbls[0]), clientDataSize*sizeof(double));
-    if (bytesWritten != clientDataSize*sizeof(double)) {
+    if (close (listening_socket)) {
         int theError = errno;
-        cout << "SpineMLNet: start-doWriteToClient: Failed. Wrote " << bytesWritten
-             << " bytes. Tried to write " << (clientDataSize*sizeof(double)) << ". errno: "
-             << theError << endl;
-        return -1;
+        cout << "SpineMLNet: start-closeSocket: Error closing listening socket: " << theError << endl;
     }
-    cout << "SpineMLNet: start-doWriteToClient: wrote " << bytesWritten << " bytes." << endl;
-    // Expect an acknowledgement now from the client
-    char buf[16];
-    int b = read (connecting_socket, (void*)buf, 1);
-    if (b == 1) {
-        // Good.
-        cout << "SpineMLNet: start-doWriteToClient: Read '" << buf[0] << "' from client" << endl;
-    } else {
-        cout << "SpineMLNet: start-doWriteToClient: Failed to read 1 byte from client." << endl;
-        return -1;
-    }
-
-    return 0;
+    cout << "SpineMLNet: start-closeSocket: Returning" << endl;
 }
 
-/*
- * thread function - this is where the TCP/IP comms happens. This is a
- * matlab-free zone.
+/*!
+ * Initialise the server with socket(), bind(), listen(). Return
+ * listening socket.
  */
-void*
-theThread (void* nothing)
+int initServer (void)
 {
-    // INIT CODE
-    threadFinished = false;
-
     // Set up and await connection from a TCP/IP client. Use
     // the socket(), bind(), listen() and accept() calls.
-    cout << "SpineMLNet: start-theThread: Open a socket." << endl;
+    cout << "SpineMLNet: start-initServer: Open a socket." << endl;
     int listening_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (listening_socket < 0) {
         // error.
-        cout << "SpineMLNet: start-theThread: Failed to open listening socket." << endl;
-        threadFinished = true;
-        return NULL;
+        cout << "SpineMLNet: start-initServer: Failed to open listening socket." << endl;
+        return -1;
     }
 
     // This is the port on which this server will listen.
-    int port = 50099;
+    int port = 50091;
 
     struct sockaddr_in servaddr;
     bzero((char *) &servaddr, sizeof(servaddr));
@@ -302,20 +109,176 @@ theThread (void* nothing)
     int bind_rtn = bind (listening_socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
     if (bind_rtn < 0) {
         int theError = errno;
-        cout << "SpineMLNet: start-theThread: Failed to bind listening socket (error " << theError << ")." << endl;
-        threadFinished = true;
-        return NULL;
+        cout << "SpineMLNet: start-initServer: Failed to bind listening socket (error " << theError << ")." << endl;
+        return -1;
     }
 
     int listen_rtn = listen (listening_socket, LISTENQ);
     if (listen_rtn < 0) {
-        cout << "SpineMLNet: start-theThread: Failed to listen to listening socket." << endl;
+        cout << "SpineMLNet: start-initServer: Failed to listen to listening socket." << endl;
+        return -1;
+    }
+
+    return listening_socket;
+}
+
+/*!
+ * Code executed for each accepted connection.
+ */
+void* connectionThread (void*)
+{
+    cout << "SpineMLNet: start-connectionThread: New thread starting." << endl;
+
+    /*
+     * First job is to get connected - that is to complete the handshake.
+     */
+    pthread_t myThread = pthread_self(); // Figure out own thread ID to get correct connection.
+    SpineMLConnection* c;
+
+    // spin until connection got added to connections. See ***
+    bool setup = false;
+    while (!setup) {
+        try {
+            c = connections->at(myThread);
+            setup = true;
+        } catch (const exception& e) {
+            cout << "SpineMLNet: start-connectionThread: No connection for myThread ("
+                 << (long unsigned int*)myThread << ") yet..." << endl;
+        }
+        usleep (1000);
+    }
+
+    cout << "SpineMLNet: start-connectionThread: start while loop..." << endl;
+    while (!stopRequested) {
+        // Is the connection established?
+        cout << "SpineMLNet: start-connectionThread: Loop.." << endl;
+        if (!c->getEstablished()) {
+            cout << "SpineMLNet: start-connectionThread: Not established. Do handshake." << endl;
+            if (c->doHandshake() < 0) {
+                cout << "SpineMLNet: start-pollForConnection: Failed to complete SpineML handshake." << endl;
+                // Now what kind of clean up?
+                c->closeSocket();
+                break;
+            }
+            cout << "SpineMLNet: start-pollForConnection: Completed handshake." << endl;
+        } else {
+            cout << "SpineMLNet: start-connectionThread: Established. Do data I/O." << endl;
+            /*
+             * Now do data I/O
+             */
+            int retval = c->doInputOutput();
+            if (retval == -1) {
+                // Read or write to that connection failed. Do we now set stopRequested true?
+                cout << "SpineMLNet: start-connectionThread: doInputOutput failed for thread 0x"
+                     << hex << (int)myThread << dec << endl;
+                c->closeSocket();
+                break;
+            }
+        }
+        usleep (1000000);
+    }
+
+    return NULL;
+}
+
+/*!
+ * Poll for a connection on listening socket. If one is found, do the
+ * handshake and create an entry in the connections map.
+ */
+int pollForConnection (int& listening_socket, struct pollfd& p)
+{
+    // cout << "SpineMLNet: start-pollForConnection: called" << endl;
+    int retval = 0;
+    p.revents = 0;
+    if ((retval = poll (&p, 1, 0)) > 0) {
+        // This is ok.
+        cout << "Got positive value from poll()"<< endl;
+    } else if (retval == -1) {
+        int theError = errno;
+        cout << "SpineMLNet: start-pollForConnection: error with poll(), errno: " << theError << endl;
+        return -1;
+    } else {
+        // This is ok.
+        //cout << "poll returns 0." << endl;
+    }
+
+    if (p.revents & POLLIN || p.revents & POLLPRI) {
+        // Data ready to read...
+        int connecting_socket = accept (listening_socket, NULL, NULL);
+        if (connecting_socket < 0) {
+            int theError = errno;
+            cout << "SpineMLNet: start-pollForConnection: Failed to accept on listening socket. errno: "
+                 << theError << endl;
+            return -1;
+        } // else connected ok.
+
+        // Create a new connection instance and insert it into our map container
+        SpineMLConnection* c = new SpineMLConnection();
+        c->setConnectingSocket (connecting_socket);
+
+        // Create a thread for this connection to operate in
+        int rtn = pthread_create (&c->thread, NULL, &connectionThread, NULL);
+        if (rtn < 0) {
+            cout << "SpineMLNet: start-pollForConnection: Failed to create a connection thread." << endl;
+            return -1;
+        }
+        connections->insert (make_pair (c->thread, c)); // *** connectionThread needs to wait until this
+                                                        // insert completes before getting on with its
+                                                        // business.
+
+        cout << "SpineMLNet: start-pollForConnection: Accepted a connection." << endl;
+
+    } // else no new connections available on the listening socket
+
+    return 0;
+}
+
+/*
+ * Delete connections.
+ */
+void deleteConnections (void)
+{
+    cout << "SpineMLNet: start-deleteConnections: called" << endl;
+
+    map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
+
+    // First job - run through and destroy all threads.
+    cout << "SpineMLNet: start->deleteConnections: join threads" << endl;
+    while (connectionsIter != connections->end()) {
+        cout << "SpineMLNet: start->deleteConnections: join a thread..." << endl;
+        pthread_join (connectionsIter->first, 0);
+        ++connectionsIter;
+    }
+
+    // Now delete the connections
+    cout << "SpineMLNet: start->deleteConnections: delete connections" << endl;
+    connectionsIter = connections->begin();
+    while (connectionsIter != connections->end()) {
+        cout << "SpineMLNet: start->deleteConnections: delete a connection" << endl;
+        delete connectionsIter->second;
+        ++connectionsIter;
+    }
+
+    // Clear, then delete the connections map.
+    cout << "SpineMLNet: start->deleteConnections: clear and delete connections map" << endl;
+    connections->clear();
+    delete connections;
+}
+
+/*
+ * thread function - this is where the TCP/IP comms happens. This is a
+ * matlab-free zone.
+ */
+void* theThread (void* nothing)
+{
+    // Initialisation
+    threadFinished = false;
+    connections = new map<pthread_t, SpineMLConnection*>();
+    int listening_socket = initServer();
+    if (listening_socket == -1) {
         threadFinished = true;
         return NULL;
     }
-
-    // MAIN LOOP CODE
-
     // We poll for activity on the connection, so that if the user
     // Ctrl-Cs we don't block on an accept() call.
     struct pollfd p;
@@ -325,102 +288,45 @@ theThread (void* nothing)
     int retval = 0;
 
     // loop until we get the termination signal
-    bool connected = false;
     while (!stopRequested) {
 
-        if (!connected) {
-
-            p.revents = 0;
-
-            if ((retval = poll (&p, 1, 0)) > 0) {
-                // This is ok.
-                // cout << "Got positive value from select() or poll()"<< endl;
-            } else if (retval == -1) {
-                cout << "SpineMLNet: start-theThread: error with poll()/select()" << endl;
-            } else {
-                // This is ok.
-                // cout << "poll returns 0." << endl;
-            }
-
-            if (p.revents & POLLIN || p.revents & POLLPRI) {
-                // Data ready to read...
-                connecting_socket = accept (listening_socket, NULL, NULL);
-                if (connecting_socket < 0) {
-                    cout << "SpineMLNet: start-theThread: Failed to accept on listening socket." << endl;
-                    threadFinished = true;
-                    return NULL;
-                }
-
-                connected = true;
-                cout << "SpineMLNet: start-theThread: Accepted a connection." << endl;
-
-                // Now we have a connection, we can proceed to carry out
-                // the SpineML TCP/IP network comms handshake
-                //
-                if (doHandshake() < 0) {
-                    cout << "SpineMLNet: start-theThread: Failed to complete SpineML handshake." << endl;
-                    cout << "SpineMLNet: start-theThread: Set threadFinished to true." << endl;
-                    threadFinished = true;
-                    cout << "SpineMLNet: start-theThread: Direct call to closeSockets..." << endl;
-                    closeSockets (listening_socket);
-                    cout << "SpineMLNet: start-theThread: return NULL from theThread." << endl;
-                    return NULL;
-                }
-                cout << "SpineMLNet: start-theThread: Completed handshake." << endl;
-
-            } else {
-                // cout << "no data available." << endl;
-            }
-
-        } else { // connected
-
-            ///////// update some data in memory
-            pthread_mutex_lock (&bufferMutex);
-
-            // Update the buffer by reading/writing from network.
-            if (clientDataDirection == AM_TARGET) {
-                // Client is a target, I need to write data to the client, if I have anything to write.
-                cout << "SpineMLNet: start-theThread: clientDataDirection: AM_TARGET." << endl;
-                if (doWriteToClient()) {
-                    cout << "SpineMLNet: start-theThread: Error writing to client." << endl;
-                    break;
-                }
-                usleep (1000);
-
-            } else if (clientDataDirection == AM_SOURCE) {
-                // Client is a source, I need to read data from the client.
-                //doReadFromClient();
-                cout << "SpineMLNet: start-theThread: clientDataDirection: AM_SOURCE." << endl;
-            } else {
-                // error.
-                cout << "SpineMLNet: start-theThread: clientDataDirection error." << endl;
-            }
-
-            pthread_mutex_unlock (&bufferMutex);
-            initialised = true;
+//        cout << "SpineMLNet: start-theThread: loop" << endl;
+        /*
+         * First job in the loop is to see if we have any more
+         * connections coming in from the client.
+         */
+        retval = pollForConnection (listening_socket, p);
+        if (retval != 0) {
+            threadFinished = true;
+            return NULL;
         }
+
+        // Now, we need to set initialised for each connection thread as well as the main thread?
+        initialised = true;
+
+        usleep (10000);
 
     } // while (!stopRequested)
 
     // Shutdown code
     cout << "SpineMLNet: start-theThread: Close sockets." << endl;
+
+    // Clean up.
+    deleteConnections();
+    closeSocket (listening_socket);
+
     threadFinished = true; // Here, its "threadFinished" really
-    closeSockets (listening_socket);
+
     cout << "SpineMLNet: start-theThread: At end of thread." << endl;
     return NULL;
 }
 
-void
-mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     // initialise flags
     stopRequested = false;
     initialised = false;
-    updated = false;
     threadFinished = false;
-
-    // set up mutexes
-    pthread_mutex_init (&bufferMutex, NULL);
 
     // create the thread
     cout << "SpineMLNet: start-mexFunction: creating thread..." << endl;
@@ -436,12 +342,15 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (threadFinished == true) {
             // Shutdown as we have an error.
             cout << "SpineMLNet: start-mexFunction: Shutdown due to error." << endl;
-            // destroy mutexes
-            pthread_mutex_destroy(&bufferMutex);
+
+            // for each connection, delete it (thereby also destrying the mutexes):
+            deleteConnections();
+
             // clear the loop
             initialised = true;
         }
     } while (!initialised);
+    cout << "SpineMLNet: start-mexFunction: Main thread is initialised." << endl;
 
     // details of output
     mwSize dims[2] = { 1, 16 };
@@ -452,8 +361,6 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // store thread information - this passed back to matlab as threadPtr is plhs[0].
     threadPtr[0] = (unsigned long long int)&thread;
     threadPtr[1] = (unsigned long long int)&stopRequested;
-    threadPtr[2] = (unsigned long long int)&updated;
-    threadPtr[3] = (unsigned long long int)bufferData;
-    threadPtr[4] = (unsigned long long int)&bufferMutex;
-    threadPtr[5] = (unsigned long long int)&threadFinished;
+    threadPtr[2] = (unsigned long long int)&threadFinished;
+    threadPtr[3] = (unsigned long long int)connections;
 }
