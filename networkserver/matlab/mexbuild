@@ -1,9 +1,9 @@
 #!/bin/bash
 
 echo "Building mex functions..."
-mex -Dlinux spinemlnetStart.cpp
-mex -Dlinux spinemlnetStop.cpp
-mex -Dlinux spinemlnetQuery.cpp
+mex spinemlnetStart.cpp
+mex spinemlnetStop.cpp
+mex spinemlnetQuery.cpp
 echo "Building mex functions complete!"
 
 
