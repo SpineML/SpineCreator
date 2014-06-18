@@ -175,7 +175,7 @@ void* connectionThread (void*)
                 break;
             }
         }
-        usleep (1000);
+        usleep (500000);
     }
 
     return NULL;
@@ -364,7 +364,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             // Shutdown as we have an error.
             cout << "SpineMLNet: start-mexFunction: Shutdown due to error." << endl;
 
-            // for each connection, delete it (thereby also destrying the mutexes):
+            // for each connection, delete it (thereby also destroying the mutexes):
             deleteConnections();
 
             // clear the loop
