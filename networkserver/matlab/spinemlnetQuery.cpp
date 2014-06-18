@@ -1,5 +1,7 @@
 /*
- * Query TCP/IP server thread.
+ * Query TCP/IP server thread. Return information about whether the
+ * main TCP/IP server thread finished. This is returned in the first
+ * element of a 1 by 2 matrix.
  */
 
 #include "mex.h"
@@ -40,6 +42,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // Extract these, and add them, as possible, to the Connections,
     // using name as index
 
+    // Debugging:
     map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
     while (connIter != connections->end()) {
         cout << "Add data to a connection!" << endl;
