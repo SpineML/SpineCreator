@@ -41,10 +41,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // Has the main thread finished?
     volatile bool *threadFinished = ((volatile bool*) context[2]);
     coutMutex = (pthread_mutex_t*)context[6];
-
-    bool tf = *threadFinished; // Seems to be necessary to make a copy
-                               // of the thing pointed to by
-                               // threadFinished.
+    volatile bool *connectionsFinished = ((volatile bool*) context[7]);
 
     // The data for the output array. 2 numbers for now.
     const mwSize res[2] = { 1, 2 }; // 1 by 2 matrix
@@ -57,6 +54,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     unsigned short *outPtr = (unsigned short*) mxGetData (plhs[0]);
 
     // copy new data into the output structure
-    unsigned short rtn[2] = { (unsigned short)*threadFinished, 0 };
+    unsigned short rtn[2] = { (unsigned short)*threadFinished,
+                              (unsigned short)*connectionsFinished };
     memcpy (outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn.
 }

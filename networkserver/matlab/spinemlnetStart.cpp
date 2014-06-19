@@ -510,4 +510,5 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     context[4] = (unsigned long long int)dataCache;
     context[5] = (unsigned long long int)&dataCacheMutex;
     context[6] = (unsigned long long int)coutMutex;
+    context[7] = (unsigned long long int)&connectionsFinished;
 }

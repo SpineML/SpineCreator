@@ -211,6 +211,15 @@ public:
      */
     size_t getDataSize (void);
 
+    /*!
+     * Pop a value from the front of the data deque and return
+     * it. This returns this->data->at(0) and calls
+     * this->data->pop_front();
+     *
+     * May throw std::out_of_range.
+     */
+    double popFront (void);
+
 public:
     /*!
      * The thread on which this connection will execute.
@@ -847,4 +856,15 @@ SpineMLConnection::getDataSize (void)
     return sz;
 }
 
+double
+SpineMLConnection::popFront (void)
+{
+    double rtn;
+    this->lockDataMutex();
+    rtn = this->data->at(0);
+    //INFO ("Popping the number " << rtn);
+    this->data->pop_front();
+    this->unlockDataMutex();
+    return rtn;
+}
 #endif // _SPINEMLCONNECTION_H_
