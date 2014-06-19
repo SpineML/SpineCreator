@@ -194,6 +194,11 @@ void* connectionThread (void*)
                      << hex << (int)myThread << dec << endl;
                 c->closeSocket();
                 break;
+            } else if (retval == 1) {
+                // Connection finished; client disconnected.
+                cout << "SpineMLNet: start-connectionThread: Connection finished." << endl;
+                c->closeSocket();
+                break;
             }
         }
     }

@@ -100,6 +100,7 @@ public:
         : connectingSocket (0)
         , established (false)
         , failed (false)
+        , finished (false)
         , unacknowledgedDataSent (false)
         , noData (0)
         , clientConnectionName ("")
@@ -141,6 +142,7 @@ public:
     unsigned int getClientDataSize (void);
     bool getEstablished (void);
     bool getFailed (void);
+    bool getFinished (void);
     //@}
 
     /*!
@@ -217,6 +219,10 @@ private:
      * failed read or write call.
      */
     bool failed;
+    /*!
+     * Set to true if the connection finishes - the client will disconnect.
+     */
+    bool finished;
     /*!
      * Every time data is sent to the client, set this to true. When a
      * RESP_RECVD response is received from the client, set this back
@@ -312,6 +318,11 @@ bool
 SpineMLConnection::getFailed (void)
 {
     return this->failed;
+}
+bool
+SpineMLConnection::getFinished (void)
+{
+    return this->finished;
 }
 //@}
 
@@ -605,7 +616,12 @@ SpineMLConnection::doWriteToClient (void)
             int theError = errno;
             cout << "SpineMLConnection::doWriteToClient: Failed to read 1 byte from client. errno: "
                  << theError << " bytes read: " << b << endl;
-            return -1;
+            if (theError == ECONNRESET) {
+                // This isn't really an error - it means the client disconnected.
+                return 1;
+            } else {
+                return -1;
+            }
         }
     } // else we're not waiting for a RESP_RECVD response from the server.
 
@@ -665,10 +681,16 @@ SpineMLConnection::doInputOutput (void)
     if (this->clientDataDirection == AM_TARGET) {
         // Client is a target, I need to write data to the client, if I have anything to write.
         //cout << "SpineMLConnection::doInputOutput: clientDataDirection: AM_TARGET." << endl;
-        if (this->doWriteToClient()) {
+        int drc = this->doWriteToClient();
+        if (drc == -1) {
             cout << "SpineMLConnection::doInputOutput: Error writing to client." << endl;
             this->failed = true;
             return -1;
+        } else if (drc == 1) {
+            // Client disconnected.
+            cout << "SpineMLConnection::doInputOutput: Client disconnected." << endl;
+            this->finished = true;
+            return 1;
         }
 
     } else if (this->clientDataDirection == AM_SOURCE) {

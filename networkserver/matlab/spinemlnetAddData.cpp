@@ -157,7 +157,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             pthread_mutex_unlock (dCacheMutex);
         }
 
-    } else if (errormsg.empty()) {
+    } else if (tf && errormsg.empty()) {
         errormsg = "Can't add data; the main thread has finished.";
     } // else errormsg already contained a message.
 
