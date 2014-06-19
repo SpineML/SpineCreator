@@ -121,6 +121,7 @@ public:
     void setConnectingSocket (int i);
     char getClientDataDirection (void);
     char getClientDataType (void);
+    string getClientConnectionName (void);
     unsigned int getClientDataSize (void);
     bool getEstablished (void);
     bool getFailed (void);
@@ -165,6 +166,12 @@ public:
      * push_back().
      */
     void addNum (double& d);
+
+    /*!
+     * Return the number of data elements in data - the number of
+     * doubles in data.
+     */
+    size_t getDataSize (void);
 
 public:
     /*!
@@ -256,6 +263,11 @@ char
 SpineMLConnection::getClientDataType (void)
 {
     return this->clientDataType;
+}
+string
+SpineMLConnection::getClientConnectionName (void)
+{
+    return this->clientConnectionName;
 }
 unsigned int
 SpineMLConnection::getClientDataSize (void)
@@ -657,4 +669,10 @@ SpineMLConnection::addNum (double& d)
     this->data.push_back (d);
     cout << "SpineMLConnection::addNum: added num. data size now " << this->data.size() << endl;
     this->unlockDataMutex();
+}
+
+size_t
+SpineMLConnection::getDataSize (void)
+{
+    return this->data.size();
 }

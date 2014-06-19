@@ -25,6 +25,10 @@ while escaped == false
     %
     % display (qrtn(1,1));
     
+    % Here's how we add data to a connection. You have to test the
+    % return to make sure the data got added to an established connection.
+    [artn errormsg] = spinemlnetAddData (snetHandle, 'realtime', [1.0 2.0 4.0 8.0])
+    
     pause (1);
     
     if qrtn(1,1) == 1
