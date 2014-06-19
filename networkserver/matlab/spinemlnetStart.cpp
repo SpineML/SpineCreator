@@ -159,7 +159,7 @@ void* connectionThread (void*)
     bool setup = false;
     while (!setup) {
         try {
-            c = connections->at(myThread);
+            c = (*connections)[myThread];
             setup = true;
         } catch (const exception& e) {
             cout << "SpineMLNet: start-connectionThread: No connection for myThread ("
