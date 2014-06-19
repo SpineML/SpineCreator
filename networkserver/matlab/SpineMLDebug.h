@@ -13,11 +13,13 @@ extern "C" {
 
 extern pthread_mutex_t* coutMutex;
 
+// INFO is for messages which should always be shown.
 #define INFO(s)                                 \
     pthread_mutex_lock (coutMutex);             \
     cout << "SpineMLNet: " << s << std::endl;   \
     pthread_mutex_unlock (coutMutex);
 
+// DBG is for debugging, but program should still be usable with this turned on.
 #ifdef DEBUG
 #define DBG(s)                                  \
     pthread_mutex_lock (coutMutex);             \
@@ -25,6 +27,16 @@ extern pthread_mutex_t* coutMutex;
     pthread_mutex_unlock (coutMutex);
 #else
 # define DBG(s)
+#endif
+
+// DBG2 is for horribly noisy stuff.
+#ifdef DEBUG2
+#define DBG2(s)                                 \
+    pthread_mutex_lock (coutMutex);             \
+    cout << "SpineMLNet: " << s << std::endl;   \
+    pthread_mutex_unlock (coutMutex);
+#else
+# define DBG2(s)
 #endif
 
 
