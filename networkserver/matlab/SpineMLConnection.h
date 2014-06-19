@@ -63,6 +63,16 @@ enum dataTypes {
 // failure:
 #define NO_DATA_MAX_COUNT     100
 
+// See spinemlnetStart.cpp, which instatates dataCache at global scope.
+#ifdef DATACACHE_MAP_DEFINED
+// We have a "real" data cache object, externally defined, probably in
+// the mex cpp file.
+extern map<string, deque<double>*>* dataCache;
+#else
+// We need a dummy dataCache object.
+map<string, deque<double>*>* dataCache = (map<string, deque<double>*>*)0;
+#endif
+
 /*
  * A connection class. The SpineML client code connects to this server
  * with a separate connection for each stream of data. For example,
@@ -94,6 +104,7 @@ public:
         , clientDataDirection (NOT_SET)
         , clientDataType (NOT_SET)
         , clientDataSize (1)
+        , data ((deque<double>*)0)
         {
             cout << "SpineMLConnection::SpineMLConnection constructor" << endl;
             pthread_mutex_init (&this->dataMutex, NULL);
@@ -111,6 +122,9 @@ public:
             }
             cout << "SpineMLConnection::SpineMLConnection destructor. destroy mutex..." << endl;
             pthread_mutex_destroy(&this->dataMutex);
+            if (this->data != (deque<double>*)0) {
+                delete this->data;
+            }
         };
 
     /*!
@@ -236,8 +250,15 @@ private:
      * container. Data coming into the class object is pushed to the
      * back of the deque; data being retrieved from the object is
      * popped from the front.
+     *
+     * Note that this is a pointer to the data. The data may be
+     * allocated by this class the first time it is required, or it
+     * may be pre-allocated if data was passed in by the matlab user
+     * prior to the establishment of the connection - i.e. prior to
+     * the instantiation of an object of this class which matches the
+     * connection name.
      */
-    std::deque<double> data;
+    std::deque<double>* data;
 };
 
 /*!
@@ -451,7 +472,8 @@ SpineMLConnection::doHandshake (void)
                 if (b != nameSize) {
                     // Wrong number of bytes.
                     free (namebuf);
-                    cout << "SpineMLConnection::doHandshake: Read " << b << " bytes, expected " << nameSize << endl;
+                    cout << "SpineMLConnection::doHandshake: Read " << b << " bytes, expected "
+                         << nameSize << endl;
                     this->failed = true;
                     return -1;
                 } // else carry on...
@@ -459,12 +481,33 @@ SpineMLConnection::doHandshake (void)
                 // We got the name; great.
                 namebuf[nameSize] = '\0';
                 this->clientConnectionName.assign (namebuf);
-                cout << "SpineMLConnection::doHandshake: Connection name is '" << this->clientConnectionName << "'" << endl;
+                cout << "SpineMLConnection::doHandshake: Connection name is '"
+                     << this->clientConnectionName << "'" << endl;
                 buf[0] = RESP_RECVD;
                 if (write (this->connectingSocket, buf, 1) != 1) {
-                    cout << "SpineMLConnection::doHandshake: Failed to write RESP_RECVD to client." << endl;
+                    cout << "SpineMLConnection::doHandshake: Failed to write RESP_RECVD to client."
+                         << endl;
                     this->failed = true;
                     return -1;
+                }
+
+                // Now we have the name, lets see if any data has been
+                // supplied for this connection already and stored in
+                // dataCache.
+                if (dataCache != (map<string, deque<double>*>*)0) {
+                    map<string, deque<double>*>::iterator entry = dataCache->find(this->clientConnectionName);
+                    if (entry != dataCache->end()) {
+                        // Use connectionName->at(this->clientConnectionName).second as data.
+                        this->data = entry->second;
+                        // Now remove the entry from dataCache, as the data is now in the connection:
+                        dataCache->erase(entry);
+                    } else {
+                        // No pre-existing data; allocate new data
+                        this->data = new deque<double>();
+                    }
+                } else {
+                    // There's no dataCache object, go straight to allocating new data.
+                    this->data = new deque<double>();
                 }
 
                 free (namebuf);
@@ -473,7 +516,8 @@ SpineMLConnection::doHandshake (void)
 
             } else if (b > 0) {
                 // Wrong number of bytes.
-                cout << "SpineMLConnection::doHandshake: Read " << b << " bytes, expected 4." << endl;
+                cout << "SpineMLConnection::doHandshake: Read "
+                     << b << " bytes, expected 4." << endl;
                 this->failed = true;
                 return -1;
             } else {
@@ -576,14 +620,14 @@ SpineMLConnection::doWriteToClient (void)
     }
     // We're going to update some data in memory
     this->lockDataMutex();
-    if (this->data.size() >= this->clientDataSize) {
+    if (this->data->size() >= this->clientDataSize) {
 
         // We have enough data to write.
-        cout << "SpineMLConnection::doWriteToClient: data.size(): " << data.size() << endl;
+        cout << "SpineMLConnection::doWriteToClient: data->size(): " << this->data->size() << endl;
 
         // Write some data to the client:
         //cout << "SpineMLConnection::doWriteToClient: write... this->connectingSocket: " << this->connectingSocket << endl;
-        ssize_t bytesWritten = write (this->connectingSocket, &(this->data[0]), this->clientDataSize*sizeof(double));
+        ssize_t bytesWritten = write (this->connectingSocket, &(this->data->at(0)) /*was: &(this->data[0])*/, this->clientDataSize*sizeof(double));
         if (bytesWritten != this->clientDataSize*sizeof(double)) {
             int theError = errno;
             cout << "SpineMLConnection::doWriteToClient: Failed. Wrote " << bytesWritten
@@ -595,7 +639,7 @@ SpineMLConnection::doWriteToClient (void)
         } // else carry on
 
         // We wrote the right amount, now pop these values from the front of the deque
-        for (ssize_t i = 0; i < this->clientDataSize; ++i) { this->data.pop_front(); }
+        for (ssize_t i = 0; i < this->clientDataSize; ++i) { this->data->pop_front(); }
 
         cout << "SpineMLConnection::doWriteToClient: wrote " << bytesWritten << " bytes." << endl;
 
@@ -605,7 +649,7 @@ SpineMLConnection::doWriteToClient (void)
     } else {
         // No more data to write
         cout << "SpineMLConnection::doWriteToClient: WARNING: Not enough data to write to client experiment (have "
-             << this->data.size() << " points, need " << this->clientDataSize << ")" << endl;
+             << this->data->size() << " points, need " << this->clientDataSize << ")" << endl;
     }
     this->unlockDataMutex();
 
@@ -666,13 +710,16 @@ SpineMLConnection::addNum (double& d)
     }
     //cout << "SpineMLConnection::addNum: established and not failed." << endl;
     this->lockDataMutex();
-    this->data.push_back (d);
-    cout << "SpineMLConnection::addNum: added num. data size now " << this->data.size() << endl;
+    this->data->push_back (d);
+    cout << "SpineMLConnection::addNum: added num. data size now " << this->data->size() << endl;
     this->unlockDataMutex();
 }
 
 size_t
 SpineMLConnection::getDataSize (void)
 {
-    return this->data.size();
+    this->lockDataMutex();
+    size_t sz = this->data->size();
+    this->unlockDataMutex();
+    return sz;
 }

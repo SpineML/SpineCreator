@@ -1,11 +1,11 @@
 function [] = spinemlnet_run ()
 % start the interface thread
 display ('SpineMLNet ML: initialising...');
-snetHandle = spinemlnetStart;
+context = spinemlnetStart;
 display ('SpineMLNet ML: initialised.');
 
 % Specify a cleanup function.
-cleanupObj = onCleanup(@() spinemlnetCleanup(snetHandle));
+cleanupObj = onCleanup(@() spinemlnetCleanup(context));
 
 % First job - manually call the handshake and look at status?
 
@@ -18,7 +18,7 @@ while escaped == false
     display ('SpineMLNet ML: Call spinemlnetQuery()');
 
     % query for current state.
-    qrtn = spinemlnetQuery (snetHandle);
+    qrtn = spinemlnetQuery (context);
     % qrtn is:
     % qrtn(1,1): threadFailed
     % qrtn(1,2): updated
@@ -27,7 +27,7 @@ while escaped == false
     
     % Here's how we add data to a connection. You have to test the
     % return to make sure the data got added to an established connection.
-    [artn errormsg] = spinemlnetAddData (snetHandle, 'realtime', [1.0 2.0 4.0 8.0])
+    [artn errormsg] = spinemlnetAddData (context, 'realtime', [1.0 2.0 4.0 8.0])
     
     pause (1);
     
@@ -42,8 +42,8 @@ end
 display ('SpineMLNet ML: Script finished');
 end
 
-function spinemlnetCleanup (snetHandle)
+function spinemlnetCleanup (context)
     disp('SpineMLNet ML: spinemlnetCleanup: Calling spinemlnetStop');
-    spinemlnetStop(snetHandle);
+    spinemlnetStop(context);
     disp('SpineMLNet ML: cleanup complete.');
 end

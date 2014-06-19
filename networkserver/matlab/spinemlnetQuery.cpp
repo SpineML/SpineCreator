@@ -24,14 +24,14 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // something. What gets passed in if this mex function is
     // mis-called?
 
-    unsigned long long int *threadPtr; // Or some other type?
-    threadPtr = (unsigned long long int*)mxGetData(prhs[0]);
+    unsigned long long int *context; // Or some other type?
+    context = (unsigned long long int*)mxGetData(prhs[0]);
     // This points to the main thread
-    pthread_t *thread = ((pthread_t*) threadPtr[0]);
+    pthread_t *thread = ((pthread_t*) context[0]);
     // Has the main thread finished?
-    volatile bool *threadFinished = ((volatile bool*) threadPtr[2]);
+    volatile bool *threadFinished = ((volatile bool*) context[2]);
     // Active connections
-    map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) threadPtr[3];
+    map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) context[3];
 
     // Pass in some numbers from matlab - if a vector, then it's
     // numbers for first connection. If >1 connection, it's numbers

@@ -12,6 +12,7 @@
 #include "matrix.h"
 #include <iostream>
 #include <map>
+#include <deque>
 #include <string.h>
 
 #include "SpineMLConnection.h"
@@ -25,14 +26,18 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexErrMsgTxt("Need 3 arguments");
     }
 
-    unsigned long long int *threadPtr; // Or some other type?
-    threadPtr = (unsigned long long int*)mxGetData(prhs[0]);
+    unsigned long long int *context; // Or some other type?
+    context = (unsigned long long int*)mxGetData(prhs[0]);
     // This points to the main thread
-    pthread_t *thread = ((pthread_t*) threadPtr[0]);
+    pthread_t *thread = ((pthread_t*) context[0]);
     // Has the main thread finished?
-    volatile bool *threadFinished = ((volatile bool*) threadPtr[2]);
+    volatile bool *threadFinished = ((volatile bool*) context[2]);
     // Active connections
-    map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) threadPtr[3];
+    map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) context[3];
+
+    // NB: Don't name this local variable dataCache, else it will
+    // clash with the one in the SpineMLConnection class.
+    map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) context[4];
 
     bool tf = *threadFinished; // Seems to be necessary to make a copy
                                // of the thing pointed to by
@@ -87,9 +92,28 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             ++connIter;
         }
 
+        // Second
         if (!added) {
-            // No established connection to which to add these data.
-            errormsg = "Can't add data; there's no established connection named " + targetConnection;
+            // There was no existing connection to add these data to;
+            // add to the connectionData map instead.
+            if (dCache != (map<string, deque<double>*>*)0) {
+                map<string, deque<double>*>::iterator targ = dCache->find (targetConnection);
+                if (targ != dCache->end()) {
+                    // We already have data for that connection name; add to it.
+                    targ->second->push_back (7.0); // FIXME: Example code.
+                    targ->second->push_back (8.0);
+                    cout << "Inserted data into existing dataCache entry." << endl;
+                } else {
+                    // No existing cache of data for targetConnection.
+                    deque<double>* dc = new deque<double>();
+                    dc->push_back (7.0); // FIXME: Example code.
+                    dc->push_back (8.0);
+                    dCache->insert (make_pair (targetConnection, dc));
+                    cout << "Inserted data into new dataCache entry." << endl;
+                }
+            } else {
+                errormsg = "Can't add data, no established connection and no dataCache.";
+            }
         }
 
     } else {

@@ -22,10 +22,28 @@ extern "C" {
 #include <errno.h>
 }
 
+using namespace std;
+
+// This map is used to store data passed over from matlab space in the
+// case that the connection for the named data has not yet been
+// created. Suppose you passed in an array of 1000 numbers for the
+// connection called "PopulationA", but the SpineML experiment had not
+// yet connected that connection. The data will be placed into this
+// map as a "holding position". When the connection is then created,
+// any data here is then moved into the connection object. This data
+// structure is available to other matlab mex functions in the
+// spinemlnet_ family, as its pointer address is passed into matlab
+// space.
+//
+// Note how we define DATACACHE_MAP_DEFINED. Other code which
+// #includes SpineMLConnection.h has leave this undefined and a dummy
+// dataCache pointer will be instantiated at global scope.
+//
+#define DATACACHE_MAP_DEFINED 1
+map<string, deque<double>*>* dataCache;
+
 // Include our connection class code.
 #include "SpineMLConnection.h"
-
-using namespace std;
 
 // Allow up to 1024 bytes in the listen queue.
 #define LISTENQ 1024
@@ -42,7 +60,9 @@ volatile bool threadFinished; // The main thread finished executing (maybe it fa
 volatile bool initialised;    // Set when server is up and running - this only refers to the main
                               // thread, which polls for new connections.
 
-// This map is indexed by the thread id of the connection.
+// This map is indexed by the thread id of the connection. Available
+// to matlab mex functions as its pointer address is passed into
+// matlab space.
 map<pthread_t, SpineMLConnection*>* connections;
 
 /*
@@ -195,7 +215,8 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
         cout << "Got positive value from poll()"<< endl;
     } else if (retval == -1) {
         int theError = errno;
-        cout << "SpineMLNet: start-pollForConnection: error with poll(), errno: " << theError << endl;
+        cout << "SpineMLNet: start-pollForConnection: error with poll(), errno: "
+             << theError << endl;
         return -1;
     } else {
         // This is ok.
@@ -277,7 +298,7 @@ void deleteConnections (void)
     }
 
     // Clear, then delete the connections map.
-    cout << "SpineMLNet: start-deleteConnections: clear and delete connections map" << endl;
+    cout << "SpineMLNet: start-deleteConnections: clear and deallocate connections map" << endl;
     connections->clear();
     delete connections;
 }
@@ -349,6 +370,9 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     initialised = false;
     threadFinished = false;
 
+    // Allocate the dataCache memory
+    dataCache = new map<string, deque<double>*>();
+
     // create the thread
     cout << "SpineMLNet: start-mexFunction: creating thread..." << endl;
     int rtn = pthread_create (&thread, NULL, &theThread, NULL);
@@ -377,11 +401,12 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mwSize dims[2] = { 1, 16 };
     plhs[0] = mxCreateNumericArray (2, dims, mxUINT64_CLASS, mxREAL);
     // pointer to pass back the context to matlab
-    unsigned long long int* threadPtr = (unsigned long long int*) mxGetData (plhs[0]);
+    unsigned long long int* context = (unsigned long long int*) mxGetData (plhs[0]);
 
-    // store thread information - this passed back to matlab as threadPtr is plhs[0].
-    threadPtr[0] = (unsigned long long int)&thread;
-    threadPtr[1] = (unsigned long long int)&stopRequested;
-    threadPtr[2] = (unsigned long long int)&threadFinished;
-    threadPtr[3] = (unsigned long long int)connections;
+    // store thread information - this passed back to matlab as context is plhs[0].
+    context[0] = (unsigned long long int)&thread;
+    context[1] = (unsigned long long int)&stopRequested;
+    context[2] = (unsigned long long int)&threadFinished;
+    context[3] = (unsigned long long int)connections;
+    context[4] = (unsigned long long int)dataCache;
 }
