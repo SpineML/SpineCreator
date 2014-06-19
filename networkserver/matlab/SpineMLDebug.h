@@ -11,6 +11,10 @@ extern "C" {
 #include <pthread.h>
 }
 
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
 extern pthread_mutex_t* coutMutex;
 
 // INFO is for messages which should always be shown.

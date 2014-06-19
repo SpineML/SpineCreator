@@ -113,6 +113,7 @@ public:
         , clientDataType (NOT_SET)
         , clientDataSize (1)
         , data ((deque<double>*)0)
+        , doublebuf ((double*)0)
         {
             DBG2 ("SpineMLConnection::SpineMLConnection constructor");
             pthread_mutex_init (&this->dataMutex, NULL);
@@ -132,6 +133,9 @@ public:
             pthread_mutex_destroy(&this->dataMutex);
             if (this->data != (deque<double>*)0) {
                 delete this->data;
+            }
+            if (this->doublebuf != (double*)0) {
+                delete this->doublebuf;
             }
         };
 
@@ -155,6 +159,11 @@ public:
      * clientDataDirection,Type and Size.
      */
     int doHandshake (void);
+
+    /*!
+     * If the client has data for us, then read it.
+     */
+    int doReadFromClient (void);
 
     /*!
      * If we have data to write, then write it to the client.
@@ -197,7 +206,8 @@ public:
 
     /*!
      * Return the number of data elements in data - the number of
-     * doubles in data.
+     * doubles in this->data. Don't confuse with clientDataSize, which
+     * is the number of doubles to transfer per timestep.
      */
     size_t getDataSize (void);
 
@@ -277,6 +287,17 @@ private:
      * connection name.
      */
     std::deque<double>* data;
+
+    /*!
+     * A small buffer for use with data comms.
+     */
+    char smallbuf[16];
+
+    /*!
+     * A buffer used for reading data from the TCP/IP wire. Data is
+     * read into this buffer, then transferred into the deque data.
+     */
+    double* doublebuf;
 };
 
 /*!
@@ -342,7 +363,6 @@ int
 SpineMLConnection::doHandshake (void)
 {
     ssize_t b = 0;
-    char buf[16];
     // There are three stages in the handshake process:
     int handshakeStage = CS_HS_GETTINGTARGET;
 
@@ -353,15 +373,15 @@ SpineMLConnection::doHandshake (void)
             if (!this->noData) {
                 DBG2 ("SpineMLConnection::doHandshake: CS_HS_GETTINGTARGET. this->connectingSocket: " << this->connectingSocket);
             }
-            b = read (this->connectingSocket, (void*)buf, 1);
+            b = read (this->connectingSocket, (void*)this->smallbuf, 1);
             if (b == 1) {
                 // Got byte.
-                DBG2 ("SpineMLConnection::doHandshake: Got byte: '" << buf[0] << "'/0x" << hex << (int)buf[0] << dec);
-                if (buf[0] == AM_SOURCE || buf[0] == AM_TARGET) {
-                    this->clientDataDirection = buf[0];
+                DBG2 ("SpineMLConnection::doHandshake: Got byte: '" << this->smallbuf[0] << "'/0x" << hex << (int)this->smallbuf[0] << dec);
+                if (this->smallbuf[0] == AM_SOURCE || this->smallbuf[0] == AM_TARGET) {
+                    this->clientDataDirection = this->smallbuf[0];
                     // Write response.
-                    buf[0] = RESP_HELLO;
-                    if (write (this->connectingSocket, buf, 1) != 1) {
+                    this->smallbuf[0] = RESP_HELLO;
+                    if (write (this->connectingSocket, this->smallbuf, 1) != 1) {
                         INFO ("SpineMLConnection::doHandshake: Failed to write RESP_HELLO to client.");
                         this->failed = true;
                         return -1;
@@ -387,14 +407,14 @@ SpineMLConnection::doHandshake (void)
                 DBG2 ("SpineMLConnection::doHandshake: CS_HS_GETTINGDATATYPE.");
             }
             DBG2 ("SpineMLConnection::doHandshake: call read()");
-            b = read (this->connectingSocket, (void*)buf, 1);
+            b = read (this->connectingSocket, (void*)this->smallbuf, 1);
             if (b == 1) {
                 // Got byte.
-                DBG2 ("SpineMLConnection::doHandshake: Got byte: '" << buf[0] << "'/0x" << hex << (int)buf[0] << dec);
-                if (buf[0] == RESP_DATA_NUMS || buf[0] == 'a') { // a is for test/debug
-                    this->clientDataType = buf[0];
-                    buf[0] = RESP_RECVD;
-                    if (write (this->connectingSocket, buf, 1) != 1) {
+                DBG2 ("SpineMLConnection::doHandshake: Got byte: '" << this->smallbuf[0] << "'/0x" << hex << (int)this->smallbuf[0] << dec);
+                if (this->smallbuf[0] == RESP_DATA_NUMS || this->smallbuf[0] == 'a') { // a is for test/debug
+                    this->clientDataType = this->smallbuf[0];
+                    this->smallbuf[0] = RESP_RECVD;
+                    if (write (this->connectingSocket, this->smallbuf, 1) != 1) {
                         INFO ("SpineMLConnection::doHandshake: Failed to write RESP_RECVD to client.");
                         this->failed = true;
                         return -1;
@@ -403,7 +423,7 @@ SpineMLConnection::doHandshake (void)
                     handshakeStage++;
                     this->noData = 0; // reset the "no data" counter
 
-                } else if (buf[0] == RESP_DATA_SPIKES || buf[0] == RESP_DATA_IMPULSES) {
+                } else if (this->smallbuf[0] == RESP_DATA_SPIKES || this->smallbuf[0] == RESP_DATA_IMPULSES) {
                     // These are not yet implemented.
                     INFO ("SpineMLConnection::doHandshake: Spikes/Impulses not yet implemented.");
                     this->failed = true;
@@ -411,8 +431,8 @@ SpineMLConnection::doHandshake (void)
 
                 } else {
                     // Wrong/unexpected character.
-                    INFO ("SpineMLConnection::doHandshake: Character '" << buf[0]
-                         << "'/0x" << (int)buf[0] << " is unexpected here.");
+                    INFO ("SpineMLConnection::doHandshake: Character '" << this->smallbuf[0]
+                         << "'/0x" << (int)this->smallbuf[0] << " is unexpected here.");
                     this->failed = true;
                     return -1;
                 }
@@ -427,7 +447,7 @@ SpineMLConnection::doHandshake (void)
             if (!this->noData) {
                 DBG2 ("SpineMLConnection::doHandshake: CS_HS_GETTINGDATASIZE.");
             }
-            b = read (this->connectingSocket, (void*)buf, 4);
+            b = read (this->connectingSocket, (void*)this->smallbuf, 4);
             if (b == 4) {
                 // Got 4 bytes. This is the data size - the number of
                 // doubles to transmit during each timestep. E.g.: If
@@ -435,20 +455,24 @@ SpineMLConnection::doHandshake (void)
                 // 10. Interpret as an unsigned int, with the first
                 // byte in the buffer as the least significant byte:
                 this->clientDataSize =
-                    (unsigned char)buf[0]
-                    | (unsigned char)buf[1] << 8
-                    | (unsigned char)buf[2] << 16
-                    | (unsigned char)buf[3] << 24;
+                    (unsigned char)this->smallbuf[0]
+                    | (unsigned char)this->smallbuf[1] << 8
+                    | (unsigned char)this->smallbuf[2] << 16
+                    | (unsigned char)this->smallbuf[3] << 24;
 
                 INFO ("SpineMLConnection::doHandshake: client data size: "
                      << this->clientDataSize << " doubles/timestep");
 
-                buf[0] = RESP_RECVD;
-                if (write (this->connectingSocket, buf, 1) != 1) {
+                // Can now allocate doublebuf.
+                this->doublebuf = new double[clientDataSize];
+
+                this->smallbuf[0] = RESP_RECVD;
+                if (write (this->connectingSocket, this->smallbuf, 1) != 1) {
                     INFO ("SpineMLConnection::doHandshake: Failed to write RESP_RECVD to client.");
                     this->failed = true;
                     return -1;
                 }
+
                 handshakeStage++;
                 this->noData = 0;
 
@@ -456,7 +480,7 @@ SpineMLConnection::doHandshake (void)
                 // Wrong number of bytes.
                 INFO ("SpineMLConnection::doHandshake: Read " << b << " bytes, expected 4.");
                 for (ssize_t i = 0; i<b; ++i) {
-                    INFO ("buf[" << i << "]: '" << buf[i] << "'  0x" << hex << buf[i] << dec);
+                    INFO ("this->smallbuf[" << i << "]: '" << this->smallbuf[i] << "'  0x" << hex << this->smallbuf[i] << dec);
                 }
                 this->failed = true;
                 return -1;
@@ -468,15 +492,15 @@ SpineMLConnection::doHandshake (void)
             if (!this->noData) {
                 DBG2 ("SpineMLConnection::doHandshake: CS_HS_GETTINGNAME.");
             }
-            b = read (this->connectingSocket, (void*)buf, 4);
+            b = read (this->connectingSocket, (void*)this->smallbuf, 4);
             if (b == 4) {
                 // Got 4 bytes. This is the size of the name - the
                 // number of chars to read from the name.
                 int nameSize =
-                    (unsigned char)buf[0]
-                    | (unsigned char)buf[1] << 8
-                    | (unsigned char)buf[2] << 16
-                    | (unsigned char)buf[3] << 24;
+                    (unsigned char)this->smallbuf[0]
+                    | (unsigned char)this->smallbuf[1] << 8
+                    | (unsigned char)this->smallbuf[2] << 16
+                    | (unsigned char)this->smallbuf[3] << 24;
 
                 // sanity check
                 if (nameSize > 1024) {
@@ -503,8 +527,8 @@ SpineMLConnection::doHandshake (void)
                 this->clientConnectionName.assign (namebuf);
                 INFO ("SpineMLConnection::doHandshake: Connection name is '"
                      << this->clientConnectionName << "'");
-                buf[0] = RESP_RECVD;
-                if (write (this->connectingSocket, buf, 1) != 1) {
+                this->smallbuf[0] = RESP_RECVD;
+                if (write (this->connectingSocket, this->smallbuf, 1) != 1) {
                     INFO ("SpineMLConnection::doHandshake: Failed to write RESP_RECVD to client."
                         );
                     this->failed = true;
@@ -579,15 +603,66 @@ SpineMLConnection::unlockDataMutex (void)
 }
 
 int
+SpineMLConnection::doReadFromClient (void)
+{
+    // NB: Can't read directly into this->data, as it is not backed by
+    // contiguous memory region.
+    size_t datachunk = sizeof(double)*this->clientDataSize;
+    int b = read (this->connectingSocket, this->doublebuf, datachunk);
+    if (b < 0) {
+        int theError = errno;
+        INFO ("SpineMLConnection::doReadFromClient: Read wrong number of bytes ("
+              << b << " not " << datachunk << "). errno: "
+              << theError);
+        return -1;
+    } else if (b == datachunk) {
+        // Correct amount of data was read. Transfer it into data.
+        DBG2 ("Read the right amount of data (" << b << " bytes)");
+        this->lockDataMutex();
+        int i = 0;
+        double* p = this->doublebuf;
+        while (i<this->clientDataSize) {
+            this->data->push_back (*p++);
+            ++i;
+        }
+        this->noData = 0;
+        this->unlockDataMutex();
+    } else if (b == 0 && this->noData < NO_DATA_MAX_COUNT) {
+        ++this->noData;
+        return 0;
+    } else if (b == 0 && this->noData == NO_DATA_MAX_COUNT) {
+        // Nothing was available to read. Need to count up a-la
+        // doWriteToClient and then say "ok, done".
+        INFO ("SpineMLConnection:doReadFromClient: No data available, assume finished.");
+        return 1;
+    }
+
+    // Now write RESP_RECVD
+    this->smallbuf[0] = RESP_RECVD;
+    if (write (this->connectingSocket, this->smallbuf, 1) != 1) {
+        int theError = errno;
+        INFO ("SpineMLConnection::doReadFromClient: Failed to write RESP_RECVD to client. errno: "
+              << theError);
+        if (theError == ECONNRESET) {
+            // This isn't really an error - it means the client disconnected.
+            return 1;
+        } else {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int
 SpineMLConnection::doWriteToClient (void)
 {
     // Expect an acknowledgement from the client if we sent data:
     if (this->unacknowledgedDataSent == true) {
-        char buf[16];
-        int b = read (this->connectingSocket, (void*)buf, 1);
+        int b = read (this->connectingSocket, (void*)this->smallbuf, 1);
         if (b == 1) {
             // Good; we got data.
-            if (buf[0] != RESP_RECVD) {
+            if (this->smallbuf[0] != RESP_RECVD) {
                 INFO ("SpineMLConnection::doWriteToClient: Wrong response from client.");
                 return -1;
             }
@@ -606,9 +681,14 @@ SpineMLConnection::doWriteToClient (void)
 
         } else if (b == 0 && this->noData == NO_DATA_MAX_COUNT) {
             int theError = errno;
-            INFO ("SpineMLConnection::doWriteToClient: Failed to read data from client. Hit max number of tries. errno: "
-                 << theError);
-            return -1;
+            INFO ("SpineMLConnection::doWriteToClient: Failed to read RESP_RECVD from client. "
+                  << "Hit max number of tries. errno: " << theError);
+            if (theError == 0) {
+                // Ok, there's just no data.
+                return 1;
+            } else {
+                return -1;
+            }
 
         } else {
             int theError = errno;
@@ -623,33 +703,31 @@ SpineMLConnection::doWriteToClient (void)
         }
     } // else we're not waiting for a RESP_RECVD response from the server.
 
-    // This is just me putting some static data in for testing/development.
-    vector<double> dbls;
-    for (int i = 0; i < this->clientDataSize; ++i) {
-        dbls.push_back(5.0);
-    }
     // We're going to update some data in memory
     this->lockDataMutex();
     if (this->data->size() >= this->clientDataSize) {
 
-        // We have enough data to write.
-        DBG2 ("SpineMLConnection::doWriteToClient: data->size(): " << this->data->size());
+        // We have enough data to write some to the client:
+        int j = 0;
+        double* p = this->doublebuf;
+        while (j < this->clientDataSize) {
+            *p++ = this->data->at(0);
+            ++j; this->data->pop_front();
+        }
+        ssize_t bytesWritten = write (this->connectingSocket,
+                                      this->doublebuf,
+                                      this->clientDataSize*sizeof(double));
 
-        // Write some data to the client:
-        DBG2 ("SpineMLConnection::doWriteToClient: write... this->connectingSocket: " << this->connectingSocket);
-        ssize_t bytesWritten = write (this->connectingSocket, &(this->data->at(0)) /*was: &(this->data[0])*/, this->clientDataSize*sizeof(double));
         if (bytesWritten != this->clientDataSize*sizeof(double)) {
             int theError = errno;
             INFO ("SpineMLConnection::doWriteToClient: Failed. Wrote " << bytesWritten
-                 << " bytes. Tried to write " << (this->clientDataSize*sizeof(double)) << ". errno: "
-                 << theError);
-            // Note: We'll get ECONNRESET (errno 104) when the client has finished its experiment and needs no more data.
+                  << " bytes. Tried to write " << (this->clientDataSize*sizeof(double))
+                  << ". errno: " << theError);
+            // Note: We'll get ECONNRESET (errno 104) when the client
+            // has finished its experiment and needs no more data.
             this->unlockDataMutex();
             return -1;
         } // else carry on
-
-        // We wrote the right amount, now pop these values from the front of the deque
-        for (ssize_t i = 0; i < this->clientDataSize; ++i) { this->data->pop_front(); }
 
         DBG2 ("SpineMLConnection::doWriteToClient: wrote " << bytesWritten << " bytes.");
 
@@ -671,7 +749,7 @@ SpineMLConnection::doInputOutput (void)
 {
     // Check if this is an established connection.
     if (this->established == false) {
-        INFO ("SpineMLConnection::doInputOutput: connection is not established, returning 0.");
+        DBG ("SpineMLConnection::doInputOutput: connection is not established, returning 0.");
         return 0;
     }
 
@@ -683,6 +761,7 @@ SpineMLConnection::doInputOutput (void)
         if (drc == -1) {
             INFO ("SpineMLConnection::doInputOutput: Error writing to client.");
             this->failed = true;
+            this->finished = true;
             return -1;
         } else if (drc == 1) {
             // Client disconnected.
@@ -693,8 +772,19 @@ SpineMLConnection::doInputOutput (void)
 
     } else if (this->clientDataDirection == AM_SOURCE) {
         // Client is a source, I need to read data from the client.
-        //DBG ("SpineMLConnection::doInputOutput: clientDataDirection: AM_SOURCE.");
-        //this->doReadFromClient();
+        DBG2 ("SpineMLConnection::doInputOutput: clientDataDirection: AM_SOURCE.");
+        int drc = this->doReadFromClient();
+        if (drc == -1) {
+            INFO ("SpineMLConnection::doInputOutput: Error reading from client.");
+            this->failed = true;
+            this->finished = true;
+            return -1;
+        } else if (drc == 1) {
+            // Client disconnected.
+            DBG2 ("SpineMLConnection::doInputOutput: Client disconnected.");
+            this->finished = true;
+            return 1;
+        }
 
     } else {
         // error.

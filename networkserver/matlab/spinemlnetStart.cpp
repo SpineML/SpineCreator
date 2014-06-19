@@ -61,7 +61,9 @@ pthread_mutex_t* coutMutex;
 pthread_t thread;
 // flags
 volatile bool stopRequested;  // User requested stop from matlab space
-volatile bool clientStopRequested;  // Used by main thread to request stop on client threads.
+
+volatile bool connectionsFinished; // All running connections completed.
+
 volatile bool threadFinished; // The main thread finished executing (maybe it failed), need to inform
                               // matlab space
 volatile bool initialised;    // Set when server is up and running - this only refers to the main
@@ -110,6 +112,20 @@ void closeSocket (int& listening_socket)
         INFO ("start-closeSocket: Error closing listening socket: " << theError);
     }
     INFO ("start-closeSocket: Returning");
+}
+
+bool haveAmSourceConnections (void)
+{
+    bool rtn = false;
+    map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
+    while (connectionsIter != connections->end()) {
+        if (connectionsIter->second->getClientDataDirection() == AM_SOURCE) {
+            rtn = true;
+            break;
+        }
+        ++connectionsIter;
+    }
+    return rtn;
 }
 
 /*!
@@ -288,6 +304,28 @@ void cleanupFailedConnections (void)
     }
 }
 
+void checkForAllFinished (void)
+{
+    map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
+    bool allFinished = true;
+    // If there are no connections, we're probably at the start of the sequence:
+    if (connIter == connections->end()) {
+        allFinished = false;
+    }
+    while (connIter != connections->end()) {
+        if (connIter->second->getFinished() == false) {
+            allFinished = false;
+            break;
+        }
+        ++connIter;
+    }
+
+    if (allFinished == true) {
+        // Mark that all connections have now finished.
+        connectionsFinished = true;
+    }
+}
+
 /*
  * Delete connections.
  */
@@ -341,7 +379,7 @@ void* theThread (void* nothing)
     initialised = true;
 
     // loop until we get the termination signal
-    while (!stopRequested) {
+    while (!stopRequested && !connectionsFinished) {
 
         /*
          * First job in the loop is to see if we have any more
@@ -358,9 +396,28 @@ void* theThread (void* nothing)
          */
         cleanupFailedConnections();
 
+        // Check to see if all connections have finished. This will
+        // set stopRequested and break us out of this loop.
+        checkForAllFinished();
+
         usleep (10000);
 
-    } // while (!stopRequested)
+    } // while (!stopRequested && !connectionsFinished)
+
+    // After finishing, if any connections are AM_SOURCE connections,
+    // then we need to wait until the user has obtained the data. This
+    // means we need another level of stop request. We need the thread
+    // to be running for the user's mex "get data" functions to
+    // operate. User also needs to find out if we've moved into this
+    // state.
+    if (!stopRequested) {
+        if (haveAmSourceConnections()) {
+            INFO ("start-theThread: Waiting for user to retrieve data.");
+            while (!stopRequested) {
+                usleep (10000);
+            }
+        }
+    }
 
     // Shutdown code
     INFO ("start-theThread: Close sockets.");
@@ -369,7 +426,7 @@ void* theThread (void* nothing)
     deleteConnections();
     closeSocket (listening_socket);
 
-    threadFinished = true; // Here, its "threadFinished" really
+    threadFinished = true;
 
     INFO ("start-theThread: At end of thread.");
     return NULL;

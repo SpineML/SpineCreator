@@ -35,6 +35,14 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // request termination
     *stopRequested = true;
+
+    // Now see if we're in the "need to get data state", in which case
+    // we don't want to wait for the join, or perhaps, we want to
+    // force through (seeing as user pressed Ctrl-C).
+
+    // Can check HERE if we have any data?
+
+
     // wait for thread to terminate
     cout << "SpineMLNet: stop-mexFunction: Wait for thread to join..." << endl;
     pthread_join(*thread, 0);
