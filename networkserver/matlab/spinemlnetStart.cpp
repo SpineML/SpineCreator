@@ -43,8 +43,14 @@ using namespace std;
 map<string, deque<double>*>* dataCache;
 pthread_mutex_t dataCacheMutex;
 
+// A mutex to keep our dbg output messages from being garbled.
+pthread_mutex_t* coutMutex;
+
 // Include our connection class code.
 #include "SpineMLConnection.h"
+
+// Defines the DBG and INFO macros for thread-safe cout.
+#include "SpineMLDebug.h"
 
 // Allow up to 1024 bytes in the listen queue.
 #define LISTENQ 1024
@@ -76,7 +82,7 @@ int port;
  */
 void closeSockets (int& listening_socket)
 {
-    cout << "SpineMLNet: start-closeSockets: Called" << endl;
+    INFO ("start-closeSockets: Called");
 
     // Close each connection:
     map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
@@ -87,9 +93,9 @@ void closeSockets (int& listening_socket)
 
     if (close (listening_socket)) {
         int theError = errno;
-        cout << "SpineMLNet: start-closeSockets: Error closing listening socket: " << theError << endl;
+        INFO ("start-closeSockets: Error closing listening socket: " << theError);
     }
-    cout << "SpineMLNet: start-closeSockets: Returning" << endl;
+    INFO ("start-closeSockets: Returning");
 }
 
 /*!
@@ -97,13 +103,13 @@ void closeSockets (int& listening_socket)
  */
 void closeSocket (int& listening_socket)
 {
-    cout << "SpineMLNet: start-closeSocket: Called" << endl;
+    INFO ("start-closeSocket: Called");
 
     if (close (listening_socket)) {
         int theError = errno;
-        cout << "SpineMLNet: start-closeSocket: Error closing listening socket: " << theError << endl;
+        INFO ("start-closeSocket: Error closing listening socket: " << theError);
     }
-    cout << "SpineMLNet: start-closeSocket: Returning" << endl;
+    INFO ("start-closeSocket: Returning");
 }
 
 /*!
@@ -114,11 +120,11 @@ int initServer (void)
 {
     // Set up and await connection from a TCP/IP client. Use
     // the socket(), bind(), listen() and accept() calls.
-    cout << "SpineMLNet: start-initServer: Open a socket." << endl;
+    INFO ("start-initServer: Open a socket.");
     int listening_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (listening_socket < 0) {
         // error.
-        cout << "SpineMLNet: start-initServer: Failed to open listening socket." << endl;
+        INFO ("start-initServer: Failed to open listening socket.");
         return -1;
     }
 
@@ -131,14 +137,14 @@ int initServer (void)
     int bind_rtn = bind (listening_socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
     if (bind_rtn < 0) {
         int theError = errno;
-        cout << "SpineMLNet: start-initServer: Failed to bind listening socket (error "
-             << theError << ")." << endl;
+        INFO ("start-initServer: Failed to bind listening socket (error "
+             << theError << ").");
         return -1;
     }
 
     int listen_rtn = listen (listening_socket, LISTENQ);
     if (listen_rtn < 0) {
-        cout << "SpineMLNet: start-initServer: Failed to listen to listening socket." << endl;
+        INFO ("start-initServer: Failed to listen to listening socket.");
         return -1;
     }
 
@@ -150,7 +156,7 @@ int initServer (void)
  */
 void* connectionThread (void*)
 {
-    cout << "SpineMLNet: start-connectionThread: New thread starting." << endl;
+    INFO ("start-connectionThread: New thread starting.");
 
     /*
      * First job is to get connected - that is to complete the handshake.
@@ -165,13 +171,13 @@ void* connectionThread (void*)
             c = (*connections)[myThread];
             setup = true;
         } catch (const exception& e) {
-            cout << "SpineMLNet: start-connectionThread: No connection for myThread ("
-                 << (long unsigned int*)myThread << ") yet..." << endl;
+            INFO ("start-connectionThread: No connection for myThread ("
+                 << (long unsigned int*)myThread << ") yet...");
         }
         usleep (1000);
     }
 
-    cout << "SpineMLNet: start-connectionThread: start while loop..." << endl;
+    INFO ("start-connectionThread: start while loop...");
     while (!stopRequested) {
 
         // Is the connection established?
@@ -179,13 +185,13 @@ void* connectionThread (void*)
 
             // Yes, it is established.
             if (c->doHandshake() < 0) {
-                cout << "SpineMLNet: start-pollForConnection: Failed to complete SpineML handshake."
-                     << endl;
+                INFO ("start-pollForConnection: Failed to complete SpineML handshake."
+                    );
                 // Now what kind of clean up?
                 c->closeSocket();
                 break;
             }
-            cout << "SpineMLNet: start-pollForConnection: Completed handshake." << endl;
+            INFO ("start-pollForConnection: Completed handshake.");
 
         } else {
             /*
@@ -194,13 +200,15 @@ void* connectionThread (void*)
             int retval = c->doInputOutput();
             if (retval == -1) {
                 // Read or write to that connection failed. Do we now set stopRequested true?
-                cout << "SpineMLNet: start-connectionThread: doInputOutput failed for thread 0x"
-                     << hex << (int)myThread << dec << endl;
+                INFO ("start-connectionThread: doInputOutput failed for thread 0x"
+                     << hex << (int)myThread << dec);
                 c->closeSocket();
                 break;
             } else if (retval == 1) {
                 // Connection finished; client disconnected.
-                cout << "SpineMLNet: start-connectionThread: Connection finished." << endl;
+                INFO ("start-connectionThread: Connection "
+                      << c->getClientConnectionName()
+                      << " finished.");
                 c->closeSocket();
                 break;
             }
@@ -216,20 +224,20 @@ void* connectionThread (void*)
  */
 int pollForConnection (int& listening_socket, struct pollfd& p)
 {
-    // cout << "SpineMLNet: start-pollForConnection: called" << endl;
+    //DBG ("start-pollForConnection: called");
     int retval = 0;
     p.revents = 0;
     if ((retval = poll (&p, 1, 0)) > 0) {
         // This is ok.
-        //cout << "Got positive value from poll()"<< endl;
+        //DBG ("Got positive value from poll()");
     } else if (retval == -1) {
         int theError = errno;
-        cout << "SpineMLNet: start-pollForConnection: error with poll(), errno: "
-             << theError << endl;
+        INFO ("start-pollForConnection: error with poll(), errno: "
+             << theError);
         return -1;
     } else {
         // This is ok.
-        //cout << "poll returns 0." << endl;
+        //DBG ("poll returns 0.");
     }
 
     if (p.revents & POLLIN || p.revents & POLLPRI) {
@@ -237,8 +245,8 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
         int connecting_socket = accept (listening_socket, NULL, NULL);
         if (connecting_socket < 0) {
             int theError = errno;
-            cout << "SpineMLNet: start-pollForConnection: Failed to accept on listening socket. errno: "
-                 << theError << endl;
+            INFO ("start-pollForConnection: Failed to accept on listening socket. errno: "
+                 << theError);
             return -1;
         } // else connected ok.
 
@@ -249,14 +257,14 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
         // Create a thread for this connection to operate in
         int rtn = pthread_create (&c->thread, NULL, &connectionThread, NULL);
         if (rtn < 0) {
-            cout << "SpineMLNet: start-pollForConnection: Failed to create connection thread." << endl;
+            INFO ("start-pollForConnection: Failed to create connection thread.");
             return -1;
         }
         connections->insert (make_pair (c->thread, c)); // *** connectionThread needs to wait until this
                                                         // insert completes before getting on with its
                                                         // business.
 
-        cout << "SpineMLNet: start-pollForConnection: Accepted a connection." << endl;
+        INFO ("start-pollForConnection: Accepted a connection.");
 
     } // else no new connections available on the listening socket
 
@@ -285,7 +293,7 @@ void cleanupFailedConnections (void)
  */
 void deleteConnections (void)
 {
-    cout << "SpineMLNet: start-deleteConnections: Cleaning up connections" << endl;
+    INFO ("start-deleteConnections: Cleaning up connections");
 
     map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
 
@@ -355,7 +363,7 @@ void* theThread (void* nothing)
     } // while (!stopRequested)
 
     // Shutdown code
-    cout << "SpineMLNet: start-theThread: Close sockets." << endl;
+    INFO ("start-theThread: Close sockets.");
 
     // Clean up.
     deleteConnections();
@@ -363,7 +371,7 @@ void* theThread (void* nothing)
 
     threadFinished = true; // Here, its "threadFinished" really
 
-    cout << "SpineMLNet: start-theThread: At end of thread." << endl;
+    INFO ("start-theThread: At end of thread.");
     return NULL;
 }
 
@@ -378,36 +386,40 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     dataCache = new map<string, deque<double>*>();
     pthread_mutex_init (&dataCacheMutex, NULL);
 
+    // init the mutex for our output debugging.
+    coutMutex = new pthread_mutex_t;
+    pthread_mutex_init (coutMutex, NULL);
+
     // Get port from the function args.
     if (nrhs>0) {
         // First argument to spinemlnetStart is the port number
         port = (int)mxGetScalar(prhs[0]);
         if (port < 1) {
-            cout << "SpineMLNet: start-mexFunction: port " << port
-                 << " is out of range, using default." << endl;
+            INFO ("start-mexFunction: port " << port
+                  << " is out of range, using default.");
             port = DEFAULT_PORT;
         }
         if (port > 65535) {
             // out of range
-            cout << "SpineMLNet: start-mexFunction: port " << port
-                 << " is out of range, using default." << endl;
+            INFO ("start-mexFunction: port " << port
+                 << " is out of range, using default.");
             port = DEFAULT_PORT;
         }
         if (port < 1024) {
             // May have trouble running unless root
-            cout << "SpineMLNet: start-mexFunction: Warning: may need root access "
-                 << "to serve on this port." << endl;
+            INFO ("start-mexFunction: Warning: may need root access "
+                 << "to serve on this port.");
         }
     } else {
         port = DEFAULT_PORT;
     }
-    cout << "SpineMLNet: start-mexFunction: Listening on port " << port << endl;
+    INFO ("start-mexFunction: Listening on port " << port);
 
     // create the thread
-    cout << "SpineMLNet: start-mexFunction: creating thread..." << endl;
+    INFO ("start-mexFunction: creating thread...");
     int rtn = pthread_create (&thread, NULL, &theThread, NULL);
     if (rtn < 0) {
-        cout << "SpineMLNet: start-mexFunction: Failed to create thread." << endl;
+        INFO ("start-mexFunction: Failed to create thread.");
         return;
     }
 
@@ -416,7 +428,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         usleep (1000);
         if (threadFinished == true) {
             // Shutdown as we have an error.
-            cout << "SpineMLNet: start-mexFunction: Shutdown due to error." << endl;
+            INFO ("start-mexFunction: Shutdown due to error.");
 
             // for each connection, delete it (thereby also destroying the mutexes):
             deleteConnections();
@@ -425,7 +437,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             initialised = true;
         }
     } while (!initialised);
-    cout << "SpineMLNet: start-mexFunction: Main thread is initialised." << endl;
+    INFO ("start-mexFunction: Main thread is initialised.");
 
     // details of output
     mwSize dims[2] = { 1, 16 };
@@ -440,4 +452,5 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     context[3] = (unsigned long long int)connections;
     context[4] = (unsigned long long int)dataCache;
     context[5] = (unsigned long long int)&dataCacheMutex;
+    context[6] = (unsigned long long int)coutMutex;
 }

@@ -30,6 +30,8 @@ extern "C" {
 
 #include "SpineMLConnection.h"
 
+pthread_mutex_t* coutMutex;
+
 using namespace std;
 
 void
@@ -52,6 +54,10 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // clash with the one in the SpineMLConnection class.
     map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) context[4];
     pthread_mutex_t* dCacheMutex = (pthread_mutex_t*)context[5];
+
+    // It's very important to get coutMutex set up from teh context,
+    // so that INFO() and DBG() calls won't crash matlab.
+    coutMutex = (pthread_mutex_t*)context[6];
 
     bool tf = *threadFinished; // Seems to be necessary to make a copy
                                // of the thing pointed to by
@@ -135,7 +141,8 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                         ++nrows;
                     }
 
-                    cout << "Inserted data into existing dataCache entry." << endl;
+                    INFO ("Inserted data into existing dataCache entry.");
+
                 } else {
                     // No existing cache of data for targetConnection.
                     deque<double>* dc = new deque<double>();
@@ -147,7 +154,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     }
 
                     dCache->insert (make_pair (targetConnection, dc));
-                    cout << "Inserted data into new dataCache entry." << endl;
+                    INFO ("Inserted data into new dataCache entry.");
                 }
             } else {
                 errormsg = "Can't add data, no established connection and no dataCache.";

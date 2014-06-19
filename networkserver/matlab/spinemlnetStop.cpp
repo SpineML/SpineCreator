@@ -11,6 +11,10 @@ extern "C" {
 #include <pthread.h>
 }
 
+pthread_mutex_t* coutMutex;
+
+#include "SpineMLDebug.h"
+
 using namespace std;
 
 void
@@ -27,6 +31,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     volatile bool *stopRequested = ((volatile bool*) context[1]);
     map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) context[4];
     pthread_mutex_t* dCacheMutex = (pthread_mutex_t*)context[5];
+    coutMutex = (pthread_mutex_t*)context[6];
 
     // request termination
     *stopRequested = true;
@@ -39,6 +44,9 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     delete dCache;
     // And the mutex:
     pthread_mutex_destroy(dCacheMutex);
+
+    pthread_mutex_destroy(coutMutex);
+    delete coutMutex;
 
     cout << "SpineMLNet: stop-mexFunction: Returning" << endl;
 }

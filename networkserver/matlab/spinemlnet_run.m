@@ -8,15 +8,20 @@ display ('SpineMLNet ML: initialised.');
 cleanupObj = onCleanup(@() spinemlnetCleanup(context));
 
 % First job - add some data for a connection
+
 % My sample experiment requires 3000 points. Here is a sine with
 % 3000 points and about 4 3/4 periods:
 sine_array = sin([0:0.01:29.99]);
 
+% Add the sine_array data to spinemlnet for the first connection,
+% which is called realtime.
 [artn errormsg] = spinemlnetAddData (context, 'realtime', sine_array);
 if length(errormsg) > 0
     display (errormsg);
 end
 
+% Add the sine_array data to spinemlnet for the second connection,
+% which is called realtime2.
 [artn errormsg] = spinemlnetAddData (context, 'realtime2', sine_array);
 if length(errormsg) > 0
     display (errormsg);
@@ -35,6 +40,10 @@ while escaped == false
     % qrtn is:
     % qrtn(1,1): threadFailed
     % qrtn(1,2): updated
+    
+    % You can also call spinemlnetAddData() within the loop, as
+    % often as you like to add to the data which will be passed to
+    % the SpineML experiment/simulation/execution.
 
     pause (1);
     

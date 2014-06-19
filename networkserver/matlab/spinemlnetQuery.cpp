@@ -12,7 +12,13 @@
 #include <map>
 #include <string.h>
 
+extern "C" {
+#include <pthread.h>
+}
+
 #include "SpineMLConnection.h"
+
+pthread_mutex_t* coutMutex;
 
 using namespace std;
 
@@ -34,32 +40,35 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     volatile bool *stopRequested = ((volatile bool*) context[1]);
     // Has the main thread finished?
     volatile bool *threadFinished = ((volatile bool*) context[2]);
+    coutMutex = (pthread_mutex_t*)context[6];
 
-    // Active connections - could pass back a list of the active
-    // connections to the caller? The main thing we'll do here is to
-    // check on the connections and monitor when they're all
-    // finished. If they DO all finish, we'll say "stopRequested".
-    map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) context[3];
+    if (!*stopRequested) {
+        // Active connections - could pass back a list of the active
+        // connections to the caller? The main thing we'll do here is to
+        // check on the connections and monitor when they're all
+        // finished. If they DO all finish, we'll say "stopRequested".
+        map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) context[3];
 
-    map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
-    bool allFinished = true;
-    // If there are no connections, we're probably at the start of the sequence:
-    if (connIter == connections->end()) {
-        allFinished = false;
-    }
-    while (connIter != connections->end()) {
-        if (connIter->second->getFinished() == false) {
+        map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
+        bool allFinished = true;
+        // If there are no connections, we're probably at the start of the sequence:
+        if (connIter == connections->end()) {
             allFinished = false;
-            break;
         }
-        ++connIter;
-    }
+        while (connIter != connections->end()) {
+            if (connIter->second->getFinished() == false) {
+                allFinished = false;
+                break;
+            }
+            ++connIter;
+        }
 
-    if (allFinished == true) {
-        // request termination now. Note that spinemlnetStop will be
-        // called at the end of the matlab stuff, so there's no need
-        // to do any other clean up, just request the stop here.
-        *stopRequested = true;
+        if (allFinished == true) {
+            // request termination now. Note that spinemlnetStop will be
+            // called at the end of the matlab stuff, so there's no need
+            // to do any other clean up, just request the stop here.
+            *stopRequested = true;
+        }
     }
 
     bool tf = *threadFinished; // Seems to be necessary to make a copy
