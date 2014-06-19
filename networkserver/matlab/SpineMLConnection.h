@@ -68,9 +68,11 @@ enum dataTypes {
 // We have a "real" data cache object, externally defined, probably in
 // the mex cpp file.
 extern map<string, deque<double>*>* dataCache;
+extern pthread_mutex_t dataCacheMutex;
 #else
 // We need a dummy dataCache object.
 map<string, deque<double>*>* dataCache = (map<string, deque<double>*>*)0;
+pthread_mutex_t dataCacheMutex;
 #endif
 
 /*
@@ -180,6 +182,12 @@ public:
      * push_back().
      */
     void addNum (double& d);
+
+    /*!
+     * Add dataSize elements from the double array d to the data
+     * deque. Calls push_back dataSize times.
+     */
+    void addData (double* d, size_t dataSize);
 
     /*!
      * Return the number of data elements in data - the number of
@@ -495,6 +503,7 @@ SpineMLConnection::doHandshake (void)
                 // supplied for this connection already and stored in
                 // dataCache.
                 if (dataCache != (map<string, deque<double>*>*)0) {
+                    pthread_mutex_lock (&dataCacheMutex);
                     map<string, deque<double>*>::iterator entry = dataCache->find(this->clientConnectionName);
                     if (entry != dataCache->end()) {
                         // Use connectionName->at(this->clientConnectionName).second as data.
@@ -505,6 +514,7 @@ SpineMLConnection::doHandshake (void)
                         // No pre-existing data; allocate new data
                         this->data = new deque<double>();
                     }
+                    pthread_mutex_unlock (&dataCacheMutex);
                 } else {
                     // There's no dataCache object, go straight to allocating new data.
                     this->data = new deque<double>();
@@ -547,27 +557,13 @@ SpineMLConnection::doHandshake (void)
 void
 SpineMLConnection::lockDataMutex (void)
 {
-#ifdef TRYLOCK_FIRST
-    if (!pthread_mutex_trylock (&this->dataMutex)) {
-        // Got lock
-        cout << "SpineMLConnection::lockDataMutex: got lock (first try)." << endl;
-    } else {
-        int theError = errno;
-        cout << "SpineMLConnection::lockDataMutex: no lock first try, errno: " << theError << endl;
-#endif
-        pthread_mutex_lock (&this->dataMutex);
-#ifdef TRYLOCK_FIRST
-    }
-#endif
-    cout << "SpineMLConnection::lockDataMutex: lock obtained for connection id 0x"
-         << hex << (int)this->thread << dec << endl;
+    pthread_mutex_lock (&this->dataMutex);
 }
 
 void
 SpineMLConnection::unlockDataMutex (void)
 {
     pthread_mutex_unlock (&this->dataMutex);
-    cout << "SpineMLConnection::unlockDataMutex: released lock for connection id 0x" << hex << (int)this->thread << dec << endl;
 }
 
 /*
@@ -712,6 +708,22 @@ SpineMLConnection::addNum (double& d)
     this->lockDataMutex();
     this->data->push_back (d);
     cout << "SpineMLConnection::addNum: added num. data size now " << this->data->size() << endl;
+    this->unlockDataMutex();
+}
+
+void
+SpineMLConnection::addData (double* d, size_t dataSize)
+{
+    if (!this->established || this->failed) {
+        return;
+    }
+    this->lockDataMutex();
+    size_t i = 0;
+    while (i < dataSize) {
+        this->data->push_back (*d);
+        ++d;
+        ++i;
+    }
     this->unlockDataMutex();
 }
 

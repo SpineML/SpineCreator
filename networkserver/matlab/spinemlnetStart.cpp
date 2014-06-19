@@ -41,6 +41,7 @@ using namespace std;
 //
 #define DATACACHE_MAP_DEFINED 1
 map<string, deque<double>*>* dataCache;
+pthread_mutex_t dataCacheMutex;
 
 // Include our connection class code.
 #include "SpineMLConnection.h"
@@ -372,6 +373,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // Allocate the dataCache memory
     dataCache = new map<string, deque<double>*>();
+    pthread_mutex_init (&dataCacheMutex, NULL);
 
     // create the thread
     cout << "SpineMLNet: start-mexFunction: creating thread..." << endl;
@@ -409,4 +411,5 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     context[2] = (unsigned long long int)&threadFinished;
     context[3] = (unsigned long long int)connections;
     context[4] = (unsigned long long int)dataCache;
+    context[5] = (unsigned long long int)&dataCacheMutex;
 }

@@ -15,6 +15,10 @@
 #include <deque>
 #include <string.h>
 
+extern "C" {
+#include <pthread.h>
+}
+
 #include "SpineMLConnection.h"
 
 using namespace std;
@@ -38,6 +42,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // NB: Don't name this local variable dataCache, else it will
     // clash with the one in the SpineMLConnection class.
     map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) context[4];
+    pthread_mutex_t* dCacheMutex = (pthread_mutex_t*)context[5];
 
     bool tf = *threadFinished; // Seems to be necessary to make a copy
                                // of the thing pointed to by
@@ -45,45 +50,49 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // Get connection name from input arguments.
     char* targetConn = mxArrayToString(prhs[1]);
-    cout << "Target connection:  " << targetConn << endl;
+    //cout << "Target connection:  " << targetConn << endl;
     // Lazily stick the char array into a string:
     string targetConnection(targetConn); // get from input args
     mxFree (targetConn);
 
     // create a pointer to the real data in the input matrix
     // Use the mxGetN function to get the size of the matrix.
-    double* inMatrix = mxGetPr(prhs[2]); // mxGetData for anything other than ptr to doubles.
+    double* inputData = mxGetPr(prhs[2]); // mxGetData for anything other than ptr to doubles.
     size_t ncols = mxGetN(prhs[2]);
     size_t nrows = mxGetM(prhs[2]);
     cout << "Input matrix has " << ncols << " cols and " << nrows << " rows.";
 
     string errormsg("");
+
+    size_t dataLength = 0;
+    // Validate input data:
+    if (ncols > 1 && nrows > 1) { // Both > 1 - 2d matrix
+        errormsg = "This mex function supports only one dimensional matrices.";
+    } else if (ncols == 0 || nrows == 0) { // At least one is 0, no data
+        errormsg = "No data passed in.";
+    } else { // Both >0, but not both are greater than 1 - 1d matrix
+        if (ncols > 1) {
+            dataLength = ncols;
+        } else if (nrows > 1) {
+            dataLength = nrows;
+        } else {
+            // Both must be exactly 1
+            dataLength = nrows;
+        }
+    }
+
     unsigned int dataSize = 0;
 
-    if (!tf) {
-
-        // Pass in some numbers from matlab - if a vector, then it's
-        // numbers for first connection. If >1 connection, it's numbers
-        // for several connections.
-
-        // sometype data = mxGetData(prhs[1]);
-
-        // Extract these, and add them, as possible, to the Connections,
-        // using name as index
+    if (!tf && errormsg.empty()) {
 
         bool added = false;
 
+        // First, see if we can add the inputData to a connection.
         map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
         while (connIter != connections->end()) {
             if (connIter->second->getClientConnectionName() == targetConnection) {
                 // Matched connection.
-
-                // FIXME - this is dummy data being added.
-                double d = 1.0;
-                connIter->second->addNum(d);
-                d += 1.0;
-                connIter->second->addNum(d);
-
+                connIter->second->addData (inputData, dataLength);
                 // Find out how much data there is now.
                 dataSize = connIter->second->getDataSize();
 
@@ -96,24 +105,41 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (!added) {
             // There was no existing connection to add these data to;
             // add to the connectionData map instead.
+
+            // Get dCache mutex
+            pthread_mutex_lock (dCacheMutex);
             if (dCache != (map<string, deque<double>*>*)0) {
                 map<string, deque<double>*>::iterator targ = dCache->find (targetConnection);
                 if (targ != dCache->end()) {
                     // We already have data for that connection name; add to it.
-                    targ->second->push_back (7.0); // FIXME: Example code.
-                    targ->second->push_back (8.0);
+
+                    // targ->second is a deque<double>*. We need a mutex on dataCache.
+                    nrows = 0; // re-use as iterator
+                    while (nrows < dataSize) {
+                        targ->second->push_back (*inputData);
+                        ++inputData;
+                        ++nrows;
+                    }
+
                     cout << "Inserted data into existing dataCache entry." << endl;
                 } else {
                     // No existing cache of data for targetConnection.
                     deque<double>* dc = new deque<double>();
-                    dc->push_back (7.0); // FIXME: Example code.
-                    dc->push_back (8.0);
+                    nrows = 0; // re-use as iterator
+                    while (nrows < dataSize) {
+                        dc->push_back (*inputData);
+                        ++inputData;
+                        ++nrows;
+                    }
+
                     dCache->insert (make_pair (targetConnection, dc));
                     cout << "Inserted data into new dataCache entry." << endl;
                 }
             } else {
                 errormsg = "Can't add data, no established connection and no dataCache.";
             }
+            // release dCache mutex
+            pthread_mutex_unlock (dCacheMutex);
         }
 
     } else {
