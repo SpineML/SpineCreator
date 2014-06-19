@@ -196,7 +196,6 @@ void* connectionThread (void*)
                 break;
             }
         }
-        usleep (500000);
     }
 
     return NULL;
@@ -213,7 +212,7 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
     p.revents = 0;
     if ((retval = poll (&p, 1, 0)) > 0) {
         // This is ok.
-        cout << "Got positive value from poll()"<< endl;
+        //cout << "Got positive value from poll()"<< endl;
     } else if (retval == -1) {
         int theError = errno;
         cout << "SpineMLNet: start-pollForConnection: error with poll(), errno: "

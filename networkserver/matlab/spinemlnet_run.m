@@ -7,7 +7,20 @@ display ('SpineMLNet ML: initialised.');
 % Specify a cleanup function.
 cleanupObj = onCleanup(@() spinemlnetCleanup(context));
 
-% First job - manually call the handshake and look at status?
+% First job - add some data for a connection
+% My sample experiment requires 3000 points. Here is a sine with
+% 3000 points and about 4 3/4 periods:
+sine_array = sin([0:0.01:29.99]);
+
+[artn errormsg] = spinemlnetAddData (context, 'realtime', sine_array);
+if length(errormsg) > 0
+    display (errormsg);
+end
+
+[artn errormsg] = spinemlnetAddData (context, 'realtime2', sine_array);
+if length(errormsg) > 0
+    display (errormsg);
+end
 
 % loop until the user presses 'q'
 escaped = false;
@@ -15,20 +28,14 @@ escaped = false;
 display ('SpineMLNet ML: Going into loop...');
 while escaped == false
 
-    display ('SpineMLNet ML: Call spinemlnetQuery()');
+    %display ('SpineMLNet ML: Call spinemlnetQuery()');
 
     % query for current state.
     qrtn = spinemlnetQuery (context);
     % qrtn is:
     % qrtn(1,1): threadFailed
     % qrtn(1,2): updated
-    %
-    % display (qrtn(1,1));
-    
-    % Here's how we add data to a connection. You have to test the
-    % return to make sure the data got added to an established connection.
-    [artn errormsg] = spinemlnetAddData (context, 'realtime', [1.0 2.0 4.0 8.0])
-    
+
     pause (1);
     
     if qrtn(1,1) == 1

@@ -1,7 +1,10 @@
 /*
  * Query TCP/IP server thread. Return information about whether the
  * main TCP/IP server thread finished. This is returned in the first
- * element of a 1 by 2 matrix.
+ * element of a 1 by 2 matrix. A zero is currently returned in the
+ * second element of this matrix. I've left this mex function
+ * returning a matrix, rather than a scaler, in case I need to return
+ * any additional information.
  */
 
 #include "mex.h"
@@ -17,7 +20,7 @@ void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nrhs==0) {
-        mexErrMsgTxt("failed");
+        mexErrMsgTxt ("Please pass in a context matrix as the first argument.");
     }
 
     // FIXME: Need to check here that the pointer points to
@@ -30,35 +33,9 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     pthread_t *thread = ((pthread_t*) context[0]);
     // Has the main thread finished?
     volatile bool *threadFinished = ((volatile bool*) context[2]);
-    // Active connections
-    map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) context[3];
 
-    // Pass in some numbers from matlab - if a vector, then it's
-    // numbers for first connection. If >1 connection, it's numbers
-    // for several connections.
-
-    // sometype data = mxGetData(prhs[1]);
-
-    // Extract these, and add them, as possible, to the Connections,
-    // using name as index
-
-    // Debugging:
-    map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
-    while (connIter != connections->end()) {
-        cout << "Add data to a connection!" << endl;
-        // Do stuff here - add some data to the deque:
-        double d = 1.0;
-        connIter->second->addNum(d);
-        d += 1.0;
-        connIter->second->addNum(d);
-        d += 1.0;
-        connIter->second->addNum(d);
-        d += 1.0;
-        connIter->second->addNum(d);
-
-        ++connIter;
-    }
-
+    // Active connections - could pass back a list of the active connections to the caller?
+    // map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) context[3];
 
     bool tf = *threadFinished; // Seems to be necessary to make a copy
                                // of the thing pointed to by
@@ -69,14 +46,12 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // create the output array
     // args: ndims, const mwSize *dims, mxClassID classid, complexity flag
-    //cout << "create numeric array..." << endl;
     plhs[0] = mxCreateNumericArray (2, res, mxUINT16_CLASS, mxREAL);
 
     // set up a pointer to the output array
-    unsigned short *outPtr = (unsigned short*) mxGetData(plhs[0]);
+    unsigned short *outPtr = (unsigned short*) mxGetData (plhs[0]);
 
     // copy new data into the output structure
     unsigned short rtn[2] = { (unsigned short)*threadFinished, 0 };
-    //cout << "memcpy..." << endl;
-    memcpy(outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn.
+    memcpy (outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn.
 }

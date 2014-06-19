@@ -108,7 +108,7 @@ public:
         , clientDataSize (1)
         , data ((deque<double>*)0)
         {
-            cout << "SpineMLConnection::SpineMLConnection constructor" << endl;
+            //cout << "SpineMLConnection::SpineMLConnection constructor" << endl;
             pthread_mutex_init (&this->dataMutex, NULL);
         };
 
@@ -118,11 +118,11 @@ public:
      */
     ~SpineMLConnection()
         {
-            cout << "SpineMLConnection::SpineMLConnection destructor. close socket..." << endl;
+            //cout << "SpineMLConnection::SpineMLConnection destructor. close socket..." << endl;
             if (this->connectingSocket > 0) {
                 this->closeSocket();
             }
-            cout << "SpineMLConnection::SpineMLConnection destructor. destroy mutex..." << endl;
+            //cout << "SpineMLConnection::SpineMLConnection destructor. destroy mutex..." << endl;
             pthread_mutex_destroy(&this->dataMutex);
             if (this->data != (deque<double>*)0) {
                 delete this->data;
@@ -336,14 +336,14 @@ SpineMLConnection::doHandshake (void)
 
         if (handshakeStage == CS_HS_GETTINGTARGET) {
             if (!this->noData) {
-                cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGTARGET. this->connectingSocket: "
-                     << this->connectingSocket << endl;
+                //cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGTARGET. this->connectingSocket: "
+                //<< this->connectingSocket << endl;
             }
             b = read (this->connectingSocket, (void*)buf, 1);
             if (b == 1) {
                 // Got byte.
-                cout << "SpineMLConnection::doHandshake: Got byte: '"
-                     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
+                //cout << "SpineMLConnection::doHandshake: Got byte: '"
+                //     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
                 if (buf[0] == AM_SOURCE || buf[0] == AM_TARGET) {
                     this->clientDataDirection = buf[0];
                     // Write response.
@@ -353,7 +353,7 @@ SpineMLConnection::doHandshake (void)
                         this->failed = true;
                         return -1;
                     }
-                    cout << "SpineMLConnection::doHandshake: Wrote RESP_HELLO to client." << endl;
+                    //cout << "SpineMLConnection::doHandshake: Wrote RESP_HELLO to client." << endl;
                     handshakeStage++;
                     this->noData = 0; // reset the "no data" counter
                 } else {
@@ -371,14 +371,14 @@ SpineMLConnection::doHandshake (void)
 
         } else if (handshakeStage == CS_HS_GETTINGDATATYPE) {
             if (!this->noData) {
-                cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGDATATYPE." << endl;
+                //cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGDATATYPE." << endl;
             }
-            cout << "SpineMLConnection::doHandshake: call read()" << endl;
+            //cout << "SpineMLConnection::doHandshake: call read()" << endl;
             b = read (this->connectingSocket, (void*)buf, 1);
             if (b == 1) {
                 // Got byte.
-                cout << "SpineMLConnection::doHandshake: Got byte: '"
-                     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
+                //cout << "SpineMLConnection::doHandshake: Got byte: '"
+                //     << buf[0] << "'/0x" << hex << (int)buf[0] << dec << endl;
                 if (buf[0] == RESP_DATA_NUMS || buf[0] == 'a') { // a is for test/debug
                     this->clientDataType = buf[0];
                     buf[0] = RESP_RECVD;
@@ -387,7 +387,7 @@ SpineMLConnection::doHandshake (void)
                         this->failed = true;
                         return -1;
                     }
-                    cout << "SpineMLConnection::doHandshake: Wrote RESP_RECVD to client." << endl;
+                    //cout << "SpineMLConnection::doHandshake: Wrote RESP_RECVD to client." << endl;
                     handshakeStage++;
                     this->noData = 0; // reset the "no data" counter
 
@@ -413,7 +413,7 @@ SpineMLConnection::doHandshake (void)
 
         } else if (handshakeStage == CS_HS_GETTINGDATASIZE) {
             if (!this->noData) {
-                cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGDATASIZE." << endl;
+                // cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGDATASIZE." << endl;
             }
             b = read (this->connectingSocket, (void*)buf, 4);
             if (b == 4) {
@@ -454,7 +454,7 @@ SpineMLConnection::doHandshake (void)
 
         } else if (handshakeStage == CS_HS_GETTINGNAME) {
             if (!this->noData) {
-                cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGNAME." << endl;
+                //cout << "SpineMLConnection::doHandshake: CS_HS_GETTINGNAME." << endl;
             }
             b = read (this->connectingSocket, (void*)buf, 4);
             if (b == 4) {
@@ -619,7 +619,7 @@ SpineMLConnection::doWriteToClient (void)
     if (this->data->size() >= this->clientDataSize) {
 
         // We have enough data to write.
-        cout << "SpineMLConnection::doWriteToClient: data->size(): " << this->data->size() << endl;
+        //cout << "SpineMLConnection::doWriteToClient: data->size(): " << this->data->size() << endl;
 
         // Write some data to the client:
         //cout << "SpineMLConnection::doWriteToClient: write... this->connectingSocket: " << this->connectingSocket << endl;
@@ -637,7 +637,7 @@ SpineMLConnection::doWriteToClient (void)
         // We wrote the right amount, now pop these values from the front of the deque
         for (ssize_t i = 0; i < this->clientDataSize; ++i) { this->data->pop_front(); }
 
-        cout << "SpineMLConnection::doWriteToClient: wrote " << bytesWritten << " bytes." << endl;
+        //cout << "SpineMLConnection::doWriteToClient: wrote " << bytesWritten << " bytes." << endl;
 
         // Set that we now need an acknowledgement from the client:
         this->unacknowledgedDataSent = true;
