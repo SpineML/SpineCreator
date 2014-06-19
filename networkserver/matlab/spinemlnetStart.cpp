@@ -66,6 +66,10 @@ volatile bool initialised;    // Set when server is up and running - this only r
 // matlab space.
 map<pthread_t, SpineMLConnection*>* connections;
 
+// The port on which the server will listen.
+#define DEFAULT_PORT 50091
+int port;
+
 /*
  * Close the network sockets. Uses a global for connecting_socket;
  * listening socket is passed in.
@@ -118,9 +122,6 @@ int initServer (void)
         return -1;
     }
 
-    // This is the port on which this server will listen.
-    int port = 50091;
-
     struct sockaddr_in servaddr;
     bzero((char *) &servaddr, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
@@ -130,7 +131,8 @@ int initServer (void)
     int bind_rtn = bind (listening_socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
     if (bind_rtn < 0) {
         int theError = errno;
-        cout << "SpineMLNet: start-initServer: Failed to bind listening socket (error " << theError << ")." << endl;
+        cout << "SpineMLNet: start-initServer: Failed to bind listening socket (error "
+             << theError << ")." << endl;
         return -1;
     }
 
@@ -170,20 +172,22 @@ void* connectionThread (void*)
     }
 
     cout << "SpineMLNet: start-connectionThread: start while loop..." << endl;
-    while (!stopRequested /*&& !c->getFailed()*/) {
+    while (!stopRequested) {
+
         // Is the connection established?
-        //cout << "SpineMLNet: start-connectionThread: Loop.." << endl;
         if (!c->getEstablished()) {
-            //cout << "SpineMLNet: start-connectionThread: Not established. Do handshake." << endl;
+
+            // Yes, it is established.
             if (c->doHandshake() < 0) {
-                cout << "SpineMLNet: start-pollForConnection: Failed to complete SpineML handshake." << endl;
+                cout << "SpineMLNet: start-pollForConnection: Failed to complete SpineML handshake."
+                     << endl;
                 // Now what kind of clean up?
                 c->closeSocket();
                 break;
             }
             cout << "SpineMLNet: start-pollForConnection: Completed handshake." << endl;
+
         } else {
-            //cout << "SpineMLNet: start-connectionThread: Established. Do data I/O." << endl;
             /*
              * Now do data I/O
              */
@@ -245,7 +249,7 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
         // Create a thread for this connection to operate in
         int rtn = pthread_create (&c->thread, NULL, &connectionThread, NULL);
         if (rtn < 0) {
-            cout << "SpineMLNet: start-pollForConnection: Failed to create a connection thread." << endl;
+            cout << "SpineMLNet: start-pollForConnection: Failed to create connection thread." << endl;
             return -1;
         }
         connections->insert (make_pair (c->thread, c)); // *** connectionThread needs to wait until this
@@ -265,11 +269,11 @@ void cleanupFailedConnections (void)
 
     while (connectionsIter != connections->end()) {
         if (connectionsIter->second->getFailed() == true) {
-            cout << "SpineMLNet: start-cleanupFailedConnections: we have a failed connection. allow to join." << endl;
+            // allow failed connection to join
             pthread_join (connectionsIter->first, 0);
-            cout << "SpineMLNet: start-cleanupFailedConnections: now delete the object." << endl;
+            // deallocate the SpineMLConnection object
             delete connectionsIter->second;
-            cout << "SpineMLNet: start-cleanupFailedConnections: now remove pointer from map." << endl;
+            // Remove pointer from map
             connections->erase (connectionsIter);
         }
         ++connectionsIter;
@@ -281,29 +285,24 @@ void cleanupFailedConnections (void)
  */
 void deleteConnections (void)
 {
-    cout << "SpineMLNet: start-deleteConnections: called" << endl;
+    cout << "SpineMLNet: start-deleteConnections: Cleaning up connections" << endl;
 
     map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
 
     // First job - run through and destroy all threads.
-    cout << "SpineMLNet: start-deleteConnections: join threads" << endl;
     while (connectionsIter != connections->end()) {
-        cout << "SpineMLNet: start-deleteConnections: join a thread..." << endl;
         pthread_join (connectionsIter->first, 0);
         ++connectionsIter;
     }
 
     // Now delete the connections
-    cout << "SpineMLNet: start-deleteConnections: delete connections" << endl;
     connectionsIter = connections->begin();
     while (connectionsIter != connections->end()) {
-        cout << "SpineMLNet: start-deleteConnections: delete a connection" << endl;
         delete connectionsIter->second;
         ++connectionsIter;
     }
 
     // Clear, then delete the connections map.
-    cout << "SpineMLNet: start-deleteConnections: clear and deallocate connections map" << endl;
     connections->clear();
     delete connections;
 }
@@ -378,6 +377,31 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // Allocate the dataCache memory
     dataCache = new map<string, deque<double>*>();
     pthread_mutex_init (&dataCacheMutex, NULL);
+
+    // Get port from the function args.
+    if (nrhs>0) {
+        // First argument to spinemlnetStart is the port number
+        port = (int)mxGetScalar(prhs[0]);
+        if (port < 1) {
+            cout << "SpineMLNet: start-mexFunction: port " << port
+                 << " is out of range, using default." << endl;
+            port = DEFAULT_PORT;
+        }
+        if (port > 65535) {
+            // out of range
+            cout << "SpineMLNet: start-mexFunction: port " << port
+                 << " is out of range, using default." << endl;
+            port = DEFAULT_PORT;
+        }
+        if (port < 1024) {
+            // May have trouble running unless root
+            cout << "SpineMLNet: start-mexFunction: Warning: may need root access "
+                 << "to serve on this port." << endl;
+        }
+    } else {
+        port = DEFAULT_PORT;
+    }
+    cout << "SpineMLNet: start-mexFunction: Listening on port " << port << endl;
 
     // create the thread
     cout << "SpineMLNet: start-mexFunction: creating thread..." << endl;

@@ -1,7 +1,7 @@
 function [] = spinemlnet_run ()
 % start the interface thread
 display ('SpineMLNet ML: initialising...');
-context = spinemlnetStart;
+context = spinemlnetStart (50091);
 display ('SpineMLNet ML: initialised.');
 
 % Specify a cleanup function.
