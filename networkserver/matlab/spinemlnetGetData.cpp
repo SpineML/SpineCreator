@@ -55,14 +55,18 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     string errormsg("");
     unsigned int connectionDataSize = 0;
-    bool gotdata = false;
+    bool gotdata = false, gotmatch = false;
     if (!tf) {
 
         // First, see if we can add the inputData to a connection.
         map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
+        if (connIter == connections->end()) {
+            errormsg = "No connections available.";
+        }
         while (connIter != connections->end()) {
             if (connIter->second->getClientConnectionName() == targetConnection) {
 
+                gotmatch = true;
                 // Find out how much data there is in the matched connection.
                 connectionDataSize = connIter->second->getDataSize();
 
@@ -72,13 +76,10 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 // set up a pointer to the output array
                 double* outPtr = (double*) mxGetData (plhs[0]);
                 // copy new data into the output structure
-                //double tmp;
                 unsigned int i = 0;
                 while (i < connectionDataSize) {
                     try {
                         *outPtr++ = connIter->second->popFront();
-                        //tmp = connIter->second->popFront();
-                        //memcpy (outPtr++, (const void*)&tmp, sizeof(double));
                     } catch (std::out_of_range& e) {
                         break;
                     }
@@ -97,6 +98,19 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
 
     if (!gotdata) {
-        INFO ("Failed to get any data from the connection.");
+        if (errormsg.empty()) {
+            if (!gotmatch) {
+                errormsg = "No matching connection found.";
+            } else {
+                errormsg = "Connection contained no data.";
+            }
+        }
+        INFO ("spinemlnetGetData: Failed to get data: " << errormsg);
+        const mwSize res[2] = { 1, 2 }; // 1 by 2 matrix
+        plhs[0] = mxCreateNumericArray (2, res, mxDOUBLE_CLASS, mxREAL);
+        // set up a pointer to the output array
+        double* outPtr = (double*) mxGetData (plhs[0]);
+        // Fill with 2 zeros
+        *outPtr++ = 0; *outPtr = 0;
     }
 }

@@ -141,7 +141,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                         ++nrows;
                     }
 
-                    INFO ("Inserted data into existing dataCache entry.");
+                    INFO ("Inserted data (" << targ->second->size() << " doubles) into existing dataCache entry.");
 
                 } else {
                     // No existing cache of data for targetConnection.
@@ -154,7 +154,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     }
 
                     dCache->insert (make_pair (targetConnection, dc));
-                    INFO ("Inserted data into new dataCache entry.");
+                    INFO ("Inserted data (" << dc->size() << " doubles) into new dataCache entry.");
                 }
             } else {
                 errormsg = "Can't add data, no established connection and no dataCache.";

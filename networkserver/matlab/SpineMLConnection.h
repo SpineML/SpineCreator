@@ -559,21 +559,25 @@ SpineMLConnection::doHandshake (void)
                 // dataCache.
                 if (dataCache != (map<string, deque<double>*>*)0) {
                     pthread_mutex_lock (&dataCacheMutex);
-                    map<string, deque<double>*>::iterator entry;
-                    entry = dataCache->find(this->clientConnectionName);
+                    map<string, deque<double>*>::iterator entry = dataCache->find(this->clientConnectionName);
                     if (entry != dataCache->end()) {
+                        INFO ("Using cached data for connection '" << this->clientConnectionName << "'");
                         // Use connectionName->at(this->clientConnectionName).second as data.
                         this->data = entry->second;
+                        INFO ("data contains " << this->data->size() << " doubles.");
                         // Now remove the entry from dataCache, as the
                         // data is now in the connection:
-                        dataCache->erase(entry);
+                        dataCache->erase (entry);
+                        INFO ("data contains " << this->data->size() << " doubles.");
                     } else {
                         // No pre-existing data; allocate new data
+                        INFO ("No cached data for connection '" << this->clientConnectionName << "', allocate new store.");
                         this->data = new deque<double>();
                     }
                     pthread_mutex_unlock (&dataCacheMutex);
                 } else {
                     // There's no dataCache object, go straight to allocating new data.
+                    INFO ("Allocating new data store for this connection.");
                     this->data = new deque<double>();
                 }
 
@@ -754,11 +758,20 @@ SpineMLConnection::doWriteToClient (void)
         // Set that we now need an acknowledgement from the client:
         this->unacknowledgedDataSent = true;
 
+        this->noData = 0;
+
     } else {
         // No more data to write
-        INFO ("SpineMLConnection::doWriteToClient: WARNING: "
-              << "Not enough data to write to client experiment (have "
-              << this->data->size() << " points, need " << this->clientDataSize << ")");
+        if (this->noData >= NO_DATA_MAX_COUNT) {
+
+            INFO ("SpineMLConnection::doWriteToClient: WARNING: "
+                  << "No data left to write to connection '"
+                  << this->clientConnectionName << "', assume finished.");
+
+            this->unlockDataMutex();
+            return 1;
+        }
+        this->noData++;
     }
     this->unlockDataMutex();
 
