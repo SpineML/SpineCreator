@@ -55,19 +55,18 @@ pthread_mutex_t* coutMutex;
 // Allow up to 1024 bytes in the listen queue.
 #define LISTENQ 1024
 
-// thread handle and termination flag, must be global. This is the
-// main server thread. Each incoming connection then gets its own
-// thread in addition to this one.
+// The thread handle. This is the main server thread. Each incoming
+// connection then gets its own thread in addition to this one. This
+// global handle is accessed from other mex functions via its address.
 pthread_t thread;
-// flags
-volatile bool stopRequested;  // User requested stop from matlab space
 
-volatile bool connectionsFinished; // All running connections completed.
-
-volatile bool threadFinished; // The main thread finished executing (maybe it failed), need to inform
-                              // matlab space
-volatile bool initialised;    // Set when server is up and running - this only refers to the main
-                              // thread, which polls for new connections.
+// Server state flags
+volatile bool stopRequested;          // User requested stop from matlab space
+volatile bool connectionsFinished;    // All running connections completed.
+volatile bool threadFinished;         // The main thread finished executing (maybe it failed);
+                                      // used to inform matlab space.
+volatile bool initialised;            // Set when server is up and running - this only refers
+                                      // to the main thread, which polls for new connections.
 
 // This map is indexed by the thread id of the connection. Available
 // to matlab mex functions as its pointer address is passed into
@@ -78,13 +77,13 @@ map<pthread_t, SpineMLConnection*>* connections;
 #define DEFAULT_PORT 50091
 int port;
 
-/*
+/*!
  * Close the network sockets. Uses a global for connecting_socket;
  * listening socket is passed in.
  */
 void closeSockets (int& listening_socket)
 {
-    INFO ("start-closeSockets: Called");
+    INFO ("start-closeSockets: Closing sockets.");
 
     // Close each connection:
     map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
@@ -97,7 +96,6 @@ void closeSockets (int& listening_socket)
         int theError = errno;
         INFO ("start-closeSockets: Error closing listening socket: " << theError);
     }
-    INFO ("start-closeSockets: Returning");
 }
 
 /*!
@@ -105,15 +103,17 @@ void closeSockets (int& listening_socket)
  */
 void closeSocket (int& listening_socket)
 {
-    INFO ("start-closeSocket: Called");
-
+    INFO ("start-closeSocket: Closing listening socket.");
     if (close (listening_socket)) {
         int theError = errno;
         INFO ("start-closeSocket: Error closing listening socket: " << theError);
     }
-    INFO ("start-closeSocket: Returning");
 }
 
+/*!
+ * Returns true if any of the established connections are AM_SOURCE;
+ * that is data is being transferred from the client to this server.
+ */
 bool haveAmSourceConnections (void)
 {
     bool rtn = false;
@@ -136,7 +136,7 @@ int initServer (void)
 {
     // Set up and await connection from a TCP/IP client. Use
     // the socket(), bind(), listen() and accept() calls.
-    INFO ("start-initServer: Open a socket.");
+    INFO ("start-initServer: Open, bind and listen...");
     int listening_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (listening_socket < 0) {
         // error.
@@ -153,8 +153,7 @@ int initServer (void)
     int bind_rtn = bind (listening_socket, (struct sockaddr *) &servaddr, sizeof(servaddr));
     if (bind_rtn < 0) {
         int theError = errno;
-        INFO ("start-initServer: Failed to bind listening socket (error "
-             << theError << ").");
+        INFO ("start-initServer: Failed to bind listening socket (error " << theError << ").");
         return -1;
     }
 
@@ -188,12 +187,11 @@ void* connectionThread (void*)
             setup = true;
         } catch (const exception& e) {
             INFO ("start-connectionThread: No connection for myThread ("
-                 << (long unsigned int*)myThread << ") yet...");
+                  << (long unsigned int*)myThread << ") yet...");
         }
         usleep (1000);
     }
 
-    INFO ("start-connectionThread: start while loop...");
     while (!stopRequested) {
 
         // Is the connection established?
@@ -201,18 +199,16 @@ void* connectionThread (void*)
 
             // Yes, it is established.
             if (c->doHandshake() < 0) {
-                INFO ("start-pollForConnection: Failed to complete SpineML handshake."
-                    );
-                // Now what kind of clean up?
+                INFO ("start-pollForConnection: Failed to complete SpineML handshake.");
+                // Close the socket to clean up
                 c->closeSocket();
                 break;
             }
             INFO ("start-pollForConnection: Completed handshake.");
 
         } else {
-            /*
-             * Now do data I/O
-             */
+
+            // Now do data I/O
             int retval = c->doInputOutput();
             if (retval == -1) {
                 // Read or write to that connection failed. Do we now set stopRequested true?
@@ -223,8 +219,7 @@ void* connectionThread (void*)
             } else if (retval == 1) {
                 // Connection finished; client disconnected.
                 INFO ("start-connectionThread: Connection "
-                      << c->getClientConnectionName()
-                      << " finished.");
+                      << c->getClientConnectionName() << " finished.");
                 c->closeSocket();
                 break;
             }
@@ -240,24 +235,17 @@ void* connectionThread (void*)
  */
 int pollForConnection (int& listening_socket, struct pollfd& p)
 {
-    //DBG ("start-pollForConnection: called");
     int retval = 0;
     p.revents = 0;
-    if ((retval = poll (&p, 1, 0)) > 0) {
-        // This is ok.
-        //DBG ("Got positive value from poll()");
-    } else if (retval == -1) {
+    if ((retval = poll (&p, 1, 0)) == -1) {
         int theError = errno;
         INFO ("start-pollForConnection: error with poll(), errno: "
              << theError);
         return -1;
-    } else {
-        // This is ok.
-        //DBG ("poll returns 0.");
-    }
+    } // else 0 or +ve return from poll() is ok.
 
     if (p.revents & POLLIN || p.revents & POLLPRI) {
-        // Data ready to read...
+        // Data is ready to read...
         int connecting_socket = accept (listening_socket, NULL, NULL);
         if (connecting_socket < 0) {
             int theError = errno;
@@ -276,9 +264,9 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
             INFO ("start-pollForConnection: Failed to create connection thread.");
             return -1;
         }
-        connections->insert (make_pair (c->thread, c)); // *** connectionThread needs to wait until this
-                                                        // insert completes before getting on with its
-                                                        // business.
+        connections->insert (make_pair (c->thread, c)); // *** connectionThread needs to wait until
+                                                        // this insert completes before getting on
+                                                        // with its business.
 
         INFO ("start-pollForConnection: Accepted a connection.");
 
@@ -287,6 +275,10 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
     return 0;
 }
 
+/*!
+ * Does what it says on the tin. Clean up any connections which have
+ * failed.
+ */
 void cleanupFailedConnections (void)
 {
     map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
@@ -304,6 +296,10 @@ void cleanupFailedConnections (void)
     }
 }
 
+/*!
+ * Run through all the connections. If all of them have the "finished"
+ * flag set, then set the connectionsFinished global flag to true.
+ */
 void checkForAllFinished (void)
 {
     map<pthread_t, SpineMLConnection*>::iterator connIter = connections->begin();
@@ -335,7 +331,7 @@ void deleteConnections (void)
 
     map<pthread_t, SpineMLConnection*>::iterator connectionsIter = connections->begin();
 
-    // First job - run through and destroy all threads.
+    // First job - run through and allow all threads to join.
     while (connectionsIter != connections->end()) {
         pthread_join (connectionsIter->first, 0);
         ++connectionsIter;
@@ -355,7 +351,9 @@ void deleteConnections (void)
 
 /*
  * thread function - this is where the TCP/IP comms happens. This is a
- * matlab-free zone.
+ * matlab-free zone. When this function exits, the SpineMLNet
+ * environment is done with, and the matlab user will no longer be
+ * able to transfer data to and from the SpineML experiment.
  */
 void* theThread (void* nothing)
 {
@@ -381,23 +379,20 @@ void* theThread (void* nothing)
     // loop until we get the termination signal
     while (!stopRequested && !connectionsFinished) {
 
-        /*
-         * First job in the loop is to see if we have any more
-         * connections coming in from the client.
-         */
+        // First job in the loop is to see if we have any more
+        // connections coming in from the client.
         retval = pollForConnection (listening_socket, p);
         if (retval != 0) {
             threadFinished = true;
             return NULL;
         }
 
-        /*
-         * Second job in loop is to do some housekeeping.
-         */
+        // Second job in loop is to do some housekeeping.
         cleanupFailedConnections();
 
-        // Check to see if all connections have finished. This will
-        // set stopRequested and break us out of this loop.
+        // Thirdly, check to see if all connections have
+        // finished. This will set connectionsFinished and break us
+        // out of this loop.
         checkForAllFinished();
 
         usleep (10000);
@@ -428,7 +423,7 @@ void* theThread (void* nothing)
 
     threadFinished = true;
 
-    INFO ("start-theThread: At end of thread.");
+    INFO ("start-theThread: SpineMLNet environment is exiting.");
     return NULL;
 }
 
@@ -473,10 +468,10 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     INFO ("start-mexFunction: Listening on port " << port);
 
     // create the thread
-    INFO ("start-mexFunction: creating thread...");
+    INFO ("start-mexFunction: Creating SpineMLNet environment main thread.");
     int rtn = pthread_create (&thread, NULL, &theThread, NULL);
     if (rtn < 0) {
-        INFO ("start-mexFunction: Failed to create thread.");
+        INFO ("start-mexFunction: Failed to create main thread.");
         return;
     }
 
@@ -485,16 +480,14 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         usleep (1000);
         if (threadFinished == true) {
             // Shutdown as we have an error.
-            INFO ("start-mexFunction: Shutdown due to error.");
-
+            INFO ("start-mexFunction: Shutting down due to error during initialisation.");
             // for each connection, delete it (thereby also destroying the mutexes):
             deleteConnections();
-
             // clear the loop
             initialised = true;
         }
     } while (!initialised);
-    INFO ("start-mexFunction: Main thread is initialised.");
+    INFO ("start-mexFunction: SpineMLNet environment is initialised.");
 
     // details of output
     mwSize dims[2] = { 1, 16 };
