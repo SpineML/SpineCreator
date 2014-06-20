@@ -431,6 +431,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     // initialise flags
     stopRequested = false;
+    connectionsFinished = false;
     initialised = false;
     threadFinished = false;
 
