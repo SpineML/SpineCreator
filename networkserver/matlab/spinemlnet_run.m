@@ -11,7 +11,7 @@ cleanupObj = onCleanup(@() spinemlnetCleanup(context));
 
 % My sample experiment requires 3000 points. Here is a sine with
 % 3000 points and about 4 3/4 periods:
-sine_array = 10 * sin([0:0.01:29.99]);
+sine_array = 12 * sin([0:0.01:29.99]);
 
 % Add the sine_array data to spinemlnet for the first connection,
 % which is called realtime.
