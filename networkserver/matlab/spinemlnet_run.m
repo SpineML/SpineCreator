@@ -27,7 +27,7 @@ if length(errormsg) > 0
     display (errormsg);
 end
 
-% loop until the user presses 'q'
+% loop until the spinemlnet system has finished.
 escaped = false;
 
 display ('SpineMLNet ML: Going into loop...');
@@ -39,8 +39,8 @@ while escaped == false
     qrtn = spinemlnetQuery (context);
     % qrtn is:
     % qrtn(1,1): threadFinished (possibly failure)
-    % qrtn(1,2): connectionsFinished (that means you can go ahead
-    % and collect data.
+    % qrtn(1,2): connectionsFinished - this means you can go ahead
+    % and collect data with spinemlnetGetData().
     
     % You can also call spinemlnetAddData() within the loop, as
     % often as you like to add to the data which will be passed to
