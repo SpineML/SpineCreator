@@ -213,7 +213,7 @@ void* connectionThread (void*)
             if (retval == -1) {
                 // Read or write to that connection failed. Do we now set stopRequested true?
                 INFO ("start-connectionThread: doInputOutput failed for thread 0x"
-                     << hex << (int)myThread << dec);
+                     << hex << (unsigned long long int)myThread << dec);
                 c->closeSocket();
                 break;
             } else if (retval == 1) {
