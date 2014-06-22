@@ -7,7 +7,12 @@
  * any additional information.
  */
 
+// To enable compilation on Mac OS X 10.8
+#ifndef char16_t
+typedef unsigned short char16_t;
+#endif
 #include "mex.h"
+
 #include <iostream>
 #include <map>
 #include <string.h>

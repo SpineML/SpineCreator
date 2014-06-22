@@ -13,6 +13,10 @@
  * spinemlnetStart and 'realtime' is the name of the connection.
  */
 
+// To enable compilation on Mac OS X 10.8
+#ifndef char16_t
+typedef unsigned short char16_t;
+#endif
 #include "mex.h"
 #include "matrix.h"
 #include <iostream>

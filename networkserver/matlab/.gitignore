@@ -1,2 +1,4 @@
 *.mexa64
 *.h.gch
+*.mexmaci64
+*.mexa32
