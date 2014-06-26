@@ -87,19 +87,13 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         nrows = mxGetM(prhs[2]);
 
         // Validate input data:
-        if (ncols > 1 && nrows > 1) { // Both > 1 - 2d matrix
-            errormsg = "This mex function supports only one dimensional matrices.";
-        } else if (ncols == 0 || nrows == 0) { // At least one is 0, no data
+        if (ncols > 0 && nrows > 0) { // We have a matrix
+            // Need to interleave the data as we have >1 row and therefore >1 time series.
+            INFO ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
+            inputDataLength = nrows * ncols;
+
+        } else { // At least one dimension is 0.
             errormsg = "No data passed in.";
-        } else { // Both >0, but not both are greater than 1 - 1d matrix
-            if (ncols > 1) {
-                inputDataLength = ncols;
-            } else if (nrows > 1) {
-                inputDataLength = nrows;
-            } else {
-                // Both must be exactly 1
-                inputDataLength = nrows;
-            }
         }
     }
 
