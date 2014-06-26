@@ -14,9 +14,7 @@
  */
 
 // To enable compilation on Mac OS X 10.8
-#ifndef char16_t
 typedef unsigned short char16_t;
-#endif
 #include "mex.h"
 #include "matrix.h"
 #include <iostream>
@@ -73,16 +71,20 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 gotmatch = true;
                 // Find out how much data there is in the matched connection.
                 connectionDataSize = connIter->second->getDataSize();
+                // We'll make a clientDataSize by connectionDataSize/clientDataSize matrix.
+                unsigned int matrixRows = connIter->second->getClientDataSize();
+                unsigned int matrixCols = connectionDataSize/matrixRows;
 
                 // Now need to copy this data into our output.
-                const mwSize res[2] = { 1, connectionDataSize }; // 1 by 2 matrix
+                const mwSize res[2] = { matrixRows, matrixCols };
                 plhs[0] = mxCreateNumericArray (2, res, mxDOUBLE_CLASS, mxREAL);
                 // set up a pointer to the output array
-                double* outPtr = (double*) mxGetData (plhs[0]);
+                double* outPtr = (double*) mxGetData (plhs[0]); // plhs[0] is an mxArray.
                 // copy new data into the output structure
                 unsigned int i = 0;
                 while (i < connectionDataSize) {
                     try {
+                        // This just works, whatever the dimensionality of the matrix:
                         *outPtr++ = connIter->second->popFront();
                     } catch (std::out_of_range& e) {
                         break;
