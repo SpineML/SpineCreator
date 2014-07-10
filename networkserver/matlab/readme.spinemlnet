@@ -1,0 +1,29 @@
+SpineMLNet
+----------
+
+This is a communication server which can be launched from your matlab 
+script and used to send data to and receive data from a SpineML model 
+(which is probably running on Brahms).
+
+It's a set of Matlab mex functions which implement the network server to 
+which the SpineML model connects as a network client.
+
+The functions are:
+
+spinemlnetStart() - this launches the server
+
+spinemlnetAddData() - write some data into the spinemlnet server's data buffer.
+                      These data will then be sent to the SpineML model.
+
+spinemlnetGetData() - retrieve data from the spinemlnet server which the
+                      SpineML model sent over.
+
+spinemlnetQuery() - Check up on the progress of the simulation; has the
+                    SpineML model finished?
+
+spinemlnetStop() - Stop the spinemlnet server.
+
+Consule spinemlnet_run.m and spinemlnet_test.m to see how to use these
+mex functions.
+
+Seb James, June 2014.
