@@ -784,7 +784,9 @@ void rootLayout::popSelected(population * pop, rootData* data) {
         tabs->setCurrentIndex(0);
     }
 
-    tabs->removeTab(2);
+    if (tabs->count() == 3) {
+        tabs->removeTab(2);
+    }
 
     tabs->setTabText(0, "Neuron Body");
     tabs->setTabText(1, "Layout");
@@ -803,6 +805,10 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
     // make sure we are not off the end due to deletes
     while (proj->currTarg > (int) proj->synapses.size()-1)
         proj->currTarg--;
+
+    if (proj->currTarg == -1) {
+        return;
+    }
 
     // Synapse
     emit setProjectionSynapseName("Synapse " + QString::number(proj->currTarg));
@@ -1558,7 +1564,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         {
         QHBoxLayout * buttons = new QHBoxLayout;
         connect(this, SIGNAL(deleteProperties()), buttons, SLOT(deleteLater()));
-        buttons->setSpacing(0);
+        buttons->setSpacing(20);
 
         value = currPar->value[0];
 
@@ -1583,7 +1589,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
             goBack->setMaximumWidth(28);
             goBack->setMaximumHeight(28);
             goBack->setIcon(QIcon(":/icons/toolbar/delShad.png"));
-            goBack->setFlat(true);
+            //goBack->setFlat(true);
             goBack->setToolTip("Select different value type");
             goBack->setFocusPolicy(Qt::NoFocus);
             buttons->addWidget(goBack);

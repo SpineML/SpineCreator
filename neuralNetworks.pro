@@ -158,7 +158,8 @@ linux-g++-64{
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
-    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython -lgvc -lgraph
+    QMAKE_CXXFLAGS += -O0 -g
+    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython -lgvc -lgraph /Users/alex/Documents/gitSpineCreator/libefence.a
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /usr/local/include/graphviz
     INCLUDEPATH += /usr/local/include

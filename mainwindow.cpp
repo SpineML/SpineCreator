@@ -1251,6 +1251,7 @@ void MainWindow::addComponentsToFileList()
                 if (viewCL.root->alPtr == component)
                     newItem->setBackgroundColor(QColor(255,255,255,255));
         }
+
     }
 }
 
@@ -1292,6 +1293,7 @@ void MainWindow::createActions()
 
 void MainWindow::new_project()
 {
+
     // check for unsaved changes?: if (isChanged()) { promptToSave(); }
 
     // create new project
