@@ -257,10 +257,13 @@ void experiment::deselect() {
 void experiment::purgeBadPointer(systemObject * ptr) {
 
     if (ptr->type == populationObject) {
-        purgeBadPointer(((population *) ptr)->neuronType);
+        population * pop = dynamic_cast<population *> (ptr);
+        CHECK_CAST(pop)
+        purgeBadPointer(pop->neuronType);
     }
     if (ptr->type == projectionObject) {
-        projection * proj = (projection *) ptr;
+        projection * proj = dynamic_cast<projection *> (ptr);
+        CHECK_CAST(proj)
         for (uint i = 0; i < proj->synapses.size(); ++i) {
             purgeBadPointer(proj->synapses[i]->postsynapseType);
             purgeBadPointer(proj->synapses[i]->weightUpdateType);
@@ -555,7 +558,8 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
         // new layout to contain name and port boxes
         QHBoxLayout * nameAndPort = new QHBoxLayout;
         frame->setLayout(new QVBoxLayout);
-        QVBoxLayout *frameLay = (QVBoxLayout *) frame->layout();
+        QVBoxLayout *frameLay = qobject_cast<QVBoxLayout *> (frame->layout());
+        CHECK_CAST(frameLay)
 
         // input name
         QLineEdit * nameEdit = new QLineEdit;
@@ -596,7 +600,9 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
             }
             // if spike source
             if (this->target->owner->type == populationObject) {
-                if (((population *) this->target->owner)->isSpikeSource) {
+                population * pop = dynamic_cast<population *> (this->target->owner);
+                CHECK_CAST(pop)
+                if (pop->isSpikeSource) {
                     portBox->addItem("spike in");
                     portBox->setDisabled(true);
                     // point to dummy event port
@@ -760,10 +766,16 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 table->setItemDelegate(new NTableDelegate(table));
                 gridlay->addWidget(table,0,0,4,1);
                 int componentSize;
-                if (this->target->owner->type == populationObject)
-                    componentSize = ((population *) this->target->owner)->numNeurons;
-                if (this->target->owner->type == projectionObject)
-                    componentSize = ((projection *) this->target->owner)->destination->numNeurons;
+                if (this->target->owner->type == populationObject) {
+                    population * pop = dynamic_cast<population *> (this->target->owner);
+                    CHECK_CAST(pop)
+                    componentSize = pop->numNeurons;
+                }
+                if (this->target->owner->type == projectionObject) {
+                    projection * proj = dynamic_cast<projection *> (this->target->owner);
+                    CHECK_CAST(proj)
+                    componentSize = proj->destination->numNeurons;
+                }
                 table->setColumnCount(1);
                 table->setRowCount(componentSize);
                 this->params.resize(componentSize,0);
@@ -867,10 +879,14 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 spin->setToolTip ("Index of the neuron within the population");
                 int componentSize;
                 if (this->target->owner->type == populationObject) {
-                    componentSize = ((population *) this->target->owner)->numNeurons;
+                    population * pop = dynamic_cast<population *> (this->target->owner);
+                    CHECK_CAST(pop)
+                    componentSize = pop->numNeurons;
                 }
                 if (this->target->owner->type == projectionObject) {
-                    componentSize = ((projection *) this->target->owner)->destination->numNeurons;
+                    projection * proj = dynamic_cast<projection *> (this->target->owner);
+                    CHECK_CAST(proj)
+                    componentSize = proj->destination->numNeurons;
                 }
                 spin->setMaximum(componentSize-1);
                 spin->setValue(currentIndex);
@@ -947,8 +963,11 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 size->setProperty("type", "size");
                 size->setMinimum(1);
                 size->setMaximum(100000000);
-                if (this->target->owner->type == populationObject)
-                    this->externalInput.size = ((population *)this->target->owner)->numNeurons;
+                if (this->target->owner->type == populationObject) {
+                    population * pop = dynamic_cast<population *> (this->target->owner);
+                    CHECK_CAST(pop)
+                    this->externalInput.size = pop->numNeurons;
+                }
                 size->setValue(externalInput.size);
                 size->setEnabled(false);
                 QObject ::connect(size, SIGNAL(valueChanged(int)), handler, SLOT(setInputExternalData()));
@@ -1144,7 +1163,8 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
         // new layout to contain name and port boxes
         QHBoxLayout * nameAndPort = new QHBoxLayout;
         frame->setLayout(new QVBoxLayout);
-        QVBoxLayout *frameLay = (QVBoxLayout *) frame->layout();
+        QVBoxLayout *frameLay = qobject_cast<QVBoxLayout *> (frame->layout());
+        CHECK_CAST(frameLay)
 
         // output name
         QLineEdit * nameEdit = new QLineEdit;
@@ -1416,7 +1436,9 @@ QVBoxLayout * exptLesion::drawLesion(rootData * data, viewELExptPanelHandler *ha
         frame->setContentsMargins(0,0,0,0);
 
         frame->setLayout(new QHBoxLayout);
-        QHBoxLayout *frameLay = (QHBoxLayout *) frame->layout();
+        QHBoxLayout *frameLay = qobject_cast<QHBoxLayout *> (frame->layout());
+        CHECK_CAST(frameLay)
+
         frameLay->setContentsMargins(0,0,0,0);
         frameLay->setSpacing(0);
 
@@ -1527,7 +1549,9 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
         frameLay->setSpacing(0);
 
         QHBoxLayout * componentLay = new QHBoxLayout;
-        ((QVBoxLayout *) frame->layout())->addLayout(componentLay);
+        QVBoxLayout * vbox = qobject_cast<QVBoxLayout *> (frame->layout());
+        CHECK_CAST(vbox)
+        vbox->addLayout(componentLay);
 
         // add Component LineEdit
         QLineEdit * lineEdit = new QLineEdit;
@@ -2202,8 +2226,11 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
             array += QString::number(params[i]) + ",";
         array.chop(1);
         writer->writeAttribute("tcp_port",QString::number(this->externalInput.port));
-        if (this->target->owner->type == populationObject)
-            this->externalInput.size = ((population *)this->target->owner)->numNeurons;
+        if (this->target->owner->type == populationObject) {
+            population * pop = dynamic_cast<population *> (this->target->owner);
+            CHECK_CAST(pop)
+            this->externalInput.size = pop->numNeurons;
+        }
         writer->writeAttribute("size",QString::number(this->externalInput.size));
         writer->writeAttribute("command", this->externalInput.commandline);
         // lookup the host name if it is not an IP
@@ -2242,7 +2269,8 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         QStringList inds = indices.split(",");
         for (int i = 0; i < inds.size(); ++i) {
             if (source->component->type == "neuron_body") {
-                population * pop = (population *) source->owner;
+                population * pop = dynamic_cast<population *> (source->owner);
+                CHECK_CAST(pop)
                 if (inds[i].toInt() < 0 || inds[i].toInt() > pop->numNeurons-1) {
                     QMessageBox msgBox;
                     msgBox.setIcon(QMessageBox::Critical);
@@ -2252,7 +2280,9 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
                 }
             }
             if (source->component->type == "postsynapse") {
-                population * pop = ((projection *) source->owner)->destination;
+                projection * proj = dynamic_cast<projection *> (source->owner);
+                CHECK_CAST(proj)
+                population * pop = proj->destination;
                 if (inds[i].toInt() < 0 || inds[i].toInt() > pop->numNeurons-1) {
                     QMessageBox msgBox;
                     msgBox.setIcon(QMessageBox::Warning);
@@ -2698,7 +2728,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
 
         // if spike source
         if (this->target->owner->type == populationObject) {
-            if (((population *) this->target->owner)->isSpikeSource) {
+            population * pop = dynamic_cast<population *> (this->target->owner);
+            if (pop->isSpikeSource) {
                 // point to dummy event port
                 port = &(this->eventport);
             }

@@ -198,7 +198,8 @@ void glConnectionWidget::redraw() {
     if (selectedObject != NULL) {
         if (selectedObject->type == populationObject) {
             QString errs;
-            population * currPop = ((population *) selectedObject);
+            population * currPop = dynamic_cast<population *> selectedObject;
+            CHECK_CAST(currPop)
             currPop->layoutType->locations.clear();
             currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
         }
@@ -211,9 +212,15 @@ void glConnectionWidget::redraw(int)
 
     // we haven't updated the underlying data yet - but we want to show spinbox changes
     // get spinbox ptrs:
-    QSpinBox * xSpin = (QSpinBox *) sender()->property("xptr").value<void *>();
-    QSpinBox * ySpin = (QSpinBox *) sender()->property("yptr").value<void *>();
-    QSpinBox * zSpin = (QSpinBox *) sender()->property("zptr").value<void *>();
+    QObject * temp = (QObject *) sender()->property("xptr").value<void *>();
+    QSpinBox * xSpin = qobject_cast<QSpinBox *> (temp);
+    CHECK_CAST(xSpin)
+    temp = (QObject *) sender()->property("yptr").value<void *>();
+    QSpinBox * ySpin = qobject_cast<QSpinBox *> (temp);
+    CHECK_CAST(ySpin)
+    temp = (QObject *) sender()->property("zptr").value<void *>();
+    QSpinBox * zSpin = qobject_cast<QSpinBox *> (temp);
+    CHECK_CAST(zSpin)
 
     loc3Offset.x = xSpin->value();
     loc3Offset.y = ySpin->value();
@@ -385,15 +392,19 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
         connection * conn;
 
         if (selectedConns[targNum]->type == synapseObject) {
-            synapse * currTarg = (synapse *) selectedConns[targNum];
+            synapse * currTarg = dynamic_cast<synapse *> (selectedConns[targNum]);
+            CHECK_CAST(currTarg)
             conn = currTarg->connectionType;
             src = currTarg->proj->source;
             dst = currTarg->proj->destination;
         } else {
-            genericInput * currIn = (genericInput *) selectedConns[targNum];
+            genericInput * currIn = dynamic_cast<genericInput *> (selectedConns[targNum]);
+            CHECK_CAST(currIn)
             conn = currIn->connectionType;
-            src = (population *) currIn->source; // would not be here if this was not true
-            dst = (population *) currIn->destination;
+            src = dynamic_cast<population *> (currIn->source);
+            CHECK_CAST(src)
+            dst = dynamic_cast<population *> (currIn->destination);
+            CHECK_CAST(dst)
         }
 
         float srcX;
@@ -428,10 +439,13 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
         // check we have the current version of the connectivity
         if (conn->type == CSV) {
-            csv_connection * csv_conn = (csv_connection *) conn;
+            csv_connection * csv_conn = dynamic_cast<csv_connection *> (conn);
+            CHECK_CAST(csv_conn)
             if (csv_conn->generator) {
-                if (((pythonscript_connection *) csv_conn->generator)->changed()) {
-                    ((pythonscript_connection *) csv_conn->generator)->regenerateConnections();
+                pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (csv_conn->generator);
+                CHECK_CAST(pyConn)
+                if (pyConn->changed()) {
+                    pyConn->regenerateConnections();
                     // fetch connections back here:
                     connections[targNum].clear();
                     csv_conn->getAllData(connections[targNum]);
@@ -653,9 +667,12 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
         if (conn->type == FixedProb) {
 
-            random.setSeed(((fixedProb_connection *) conn)->seed);
+            fixedProb_connection * fpConn = dynamic_cast <fixedProb_connection *> (conn);
+            CHECK_CAST(fpConn)
 
-            prob = ((fixedProb_connection *) conn)->p;
+            random.setSeed(fpConn->seed);
+
+            prob = fpConn->p;
 
             // generate a list of projections to highlight
             vector < loc > redrawLocs;
@@ -1064,7 +1081,8 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
 
     for (uint i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->populations[i];
+        population * currPop = dynamic_cast<population *> (data->populations[i]);
+        CHECK_CAST(currPop)
 
         // populations
         if (currPop->getName() == item->name) {
@@ -1093,7 +1111,8 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
         // projections
         for (uint j = 0; j < currPop->projections.size(); ++j) {
 
-            projection * currProj = (projection *) currPop->projections[j];
+            projection * currProj = dynamic_cast<projection *> (currPop->projections[j]);
+            CHECK_CAST(currProj)
 
             if (currProj->getName() == item->name)
                 selectedObject = currProj;
@@ -1101,7 +1120,8 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
             // synapses
             for (uint k = 0; k < currProj->synapses.size(); ++k) {
 
-                synapse * currTarg = (synapse *) currProj->synapses[k];
+                synapse * currTarg = dynamic_cast<synapse *> (currProj->synapses[k]);
+                CHECK_CAST(currTarg)
 
                 if (currProj->getName() + ": Synapse " + QString::number(k) == item->name) {
                     selectedObject = currTarg;

@@ -453,7 +453,9 @@ QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * 
             if (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel() != (QAbstractTableModel *)0)
             {
                 // don't fetch data if we already have for this connection
-                if (((csv_connectionModel *) viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel())->getConnection() == this  && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.size() == this->getNumRows()) {
+                csv_connectionModel * connModel = dynamic_cast<csv_connectionModel *> (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel());
+                CHECK_CAST(connModel);
+                if (connModel->getConnection() == this  && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.size() == this->getNumRows()) {
                     viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
                 } else {
                     viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
@@ -547,7 +549,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     // ok, check if we have a generator, and if it is up-to-date
     if (this->generator) {
-        pythonscript_connection * pyConn = (pythonscript_connection *) this->generator;
+        pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (this->generator);
+        CHECK_CAST(pyConn);
         // if we have changes then...
         if (pyConn->changed()) {
             // ... regenerate the connectivity!
@@ -1653,9 +1656,13 @@ void kernel_connection::convertToList(bool check) {
     this->isAList = check;
     systemObject * ptr;
     ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
-    src = (population *) ptr;
+    CHECK_CAST(ptr);
+    src = dynamic_cast<population *> (ptr);
+    CHECK_CAST(src);
     ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
-    dst = (population *) ptr;
+    CHECK_CAST(ptr);
+    dst = dynamic_cast<population *> (ptr);
+    CHECK_CAST(dst);
 
 }
 
@@ -2269,7 +2276,9 @@ ParameterData * pythonscript_connection::getPropPointer() {
             }
             // if we are the generator of the connection
             if (syn->connectionType->type == CSV) {
-                if (((csv_connection *)syn->connectionType)->generator == this) {
+                csv_connection * csvConn = dynamic_cast<csv_connection *> (syn->connectionType);
+                CHECK_CAST(csvConn);
+                if (csvConn->generator == this) {
                     isConn = true;
                 }
             }
@@ -2307,7 +2316,9 @@ QStringList pythonscript_connection::getPropList() {
             }
             // if we are the generator of the connection
             if (syn->connectionType->type == CSV) {
-                if (((csv_connection *)syn->connectionType)->generator == this) {
+                csv_connection * csvConn = dynamic_cast<csv_connection *> (syn->connectionType);
+                CHECK_CAST(csvConn);
+                if (csvConn->generator == this) {
                     isConn = true;
                 }
             }
@@ -2619,9 +2630,13 @@ void pythonscript_connection::convertToList(bool check) {
     this->isAList = check;
     systemObject * ptr;
     ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
-    src = (population *) ptr;
+    CHECK_CAST(ptr);
+    src = dynamic_cast<population *> (ptr);
+    CHECK_CAST(src);
     ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
-    dst = (population *) ptr;
+    CHECK_CAST(ptr);
+    dst = dynamic_cast<population *> (ptr);
+    CHECK_CAST(dst);
 
 }
 

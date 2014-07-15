@@ -179,7 +179,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             if (source != NULL) {
                 if (source->type == projectionObject) {
-                    projection * s = (projection *) source;
+                    projection * s = dynamic_cast<projection *> (source);
+                    CHECK_CAST(s)
                     if (s->curves.size() > 0 && s->destination != NULL) {
                         QLineF temp = QLineF(QPointF(s->destination->x, s->destination->y), s->curves.back().C2);
                         temp.setLength(0.6);
@@ -189,7 +190,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                         start = QPointF(0.0,0.0);
                     }
                 } else if (source->type == populationObject) {
-                    population * s = (population *) source;
+                    population * s = dynamic_cast<population *> (source);
+                    CHECK_CAST(s)
                     QLineF temp = QLineF(QPointF(s->x, s->y), this->curves.front().C1);
                     temp.setLength(0.6);
                     start = temp.p2();
@@ -200,7 +202,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             if (destination != NULL) {
                 if (destination->type == projectionObject) {
-                    projection * d = (projection *) destination;
+                    projection * d = dynamic_cast<projection *> destination;
+                    CHECK_CAST(d)
                     if (d->curves.size() > 0 && d->destination != NULL) {
                         QLineF temp = QLineF(QPointF(d->destination->x, d->destination->y), d->curves.back().C2);
                         temp.setLength(0.55);
@@ -210,7 +213,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                         start = QPointF(0.0,0.0);
                     }
                 } else if (destination->type == populationObject) {
-                    population * d = (population *) destination;
+                    population * d = dynamic_cast<population *> destination;
+                    CHECK_CAST(d)
                     QLineF temp = QLineF(QPointF(d->x, d->y), this->curves.back().C2);
                     temp.setLength(0.55);
                     end = temp.p2();
@@ -364,7 +368,9 @@ void genericInput::addCurves() {
         bool handled = false;
         // if we are from a population to a projection and the pop is the Synapse of the proj, handle differently for aesthetics
         if (this->destination->type == projectionObject) {
-            if (((projection *) this->destination)->destination == (population *) this->source) {
+            projection * proj = dynamic_cast <projection *> (this->destination);
+            CHECK_CAST(proj)
+            if (proj->destination == this->source) {
                 handled = true;
                 QLineF line;
                 line.setP1(this->source->currentLocation());
@@ -373,30 +379,38 @@ void genericInput::addCurves() {
                 line.setLength(1.6);
                 this->curves.back().C2 = line.p2();
                 line.setAngle(line.angle()+30.0);
-                QPointF boxEdge = this->findBoxEdge((population *) this->source, line.p2().x(), line.p2().y());
+                population * pop = dynamic_cast <population *> (this->source);
+                CHECK_CAST(pop)
+                QPointF boxEdge = this->findBoxEdge(pop, line.p2().x(), line.p2().y());
                 this->start = boxEdge;
                 this->curves.back().C1 = line.p2();
             }
         }
         if (!handled) {
-            QPointF boxEdge = this->findBoxEdge((population *) this->source, dst->owner->currentLocation().x(), dst->owner->currentLocation().y());
+            population * pop = dynamic_cast <population *> (this->source);
+            CHECK_CAST(pop)
+            QPointF boxEdge = this->findBoxEdge(pop, dst->owner->currentLocation().x(), dst->owner->currentLocation().y());
             this->start = boxEdge;
         }
 
 
     }
     if (this->destination->type == populationObject) {
-
-        QPointF boxEdge = this->findBoxEdge((population *) this->destination, src->owner->currentLocation().x(), src->owner->currentLocation().y());
+        population * pop = dynamic_cast <population *> (this->destination);
+        CHECK_CAST(pop)
+        QPointF boxEdge = this->findBoxEdge(pop, src->owner->currentLocation().x(), src->owner->currentLocation().y());
         this->curves.back().end = boxEdge;
 
     }
     // self connection population aesthetics
     if (this->destination == this->source && this->destination->type == populationObject) {
-
-        QPointF boxEdge = this->findBoxEdge((population *) this->destination, this->destination->currentLocation().x(), 1000000.0);
+        population * pop = dynamic_cast <population *> (this->destination);
+        CHECK_CAST(pop)
+        QPointF boxEdge = this->findBoxEdge(pop, this->destination->currentLocation().x(), 1000000.0);
         this->curves.back().end = boxEdge;
-        boxEdge = this->findBoxEdge((population *) this->source, 1000000.0, 1000000.0);
+        pop = dynamic_cast <population *> (this->source);
+        CHECK_CAST(pop)
+        boxEdge = this->findBoxEdge(pop, 1000000.0, 1000000.0);
         this->start = boxEdge;
         this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0, this->destination->currentLocation().y()+1.0);
         this->curves.back().C2 = QPointF(this->destination->currentLocation().x(), this->destination->currentLocation().y()+1.4);
@@ -405,9 +419,11 @@ void genericInput::addCurves() {
     // self projection connection aesthetics
     if (this->destination->type == projectionObject && this->source->type == projectionObject && this->destination == this->source) {
 
+        projection * proj = dynamic_cast <projection *> (this->destination);
+        CHECK_CAST(proj)
         QLineF line;
         line.setP1(this->source->currentLocation());
-        line.setP2(((projection *) this->destination)->curves.back().C2);
+        line.setP2(proj->curves.back().C2);
         line = line.unitVector();
         line.setLength(1.6);
         line.setAngle(line.angle()+20.0);
@@ -457,15 +473,17 @@ void genericInput::moveSelectedControlPoint(float xGL, float yGL) {
             return;
 
         if (source->type == populationObject) {
-            QLineF line(QPointF(((population *)this->source)->x, ((population *)this->source)->y), cursor);
+            population * pop = dynamic_cast <population *> (this->source);
+            CHECK_CAST(pop)
+            QLineF line(QPointF((pop->x, pop->y), cursor);
             QLineF nextLine = line.unitVector();
             nextLine.setLength(1000.0);
             QPointF point = nextLine.p2();
 
-            QPointF boxEdge = findBoxEdge(((population *)this->source), point.x(), point.y());
+            QPointF boxEdge = findBoxEdge(pop, point.x(), point.y());
 
             // realign the handle
-            QLineF handle(QPointF(((population *)this->source)->x, ((population *)this->source)->y), this->curves.front().C1);
+            QLineF handle(QPointF(pop->x, pop->y), this->curves.front().C1);
             handle.setAngle(nextLine.angle());
             this->curves.front().C1 = handle.p2();
 
@@ -483,16 +501,18 @@ void genericInput::moveSelectedControlPoint(float xGL, float yGL) {
                 return;
 
             if (source->type == populationObject) {
+                population * pop = dynamic_cast <population *> (this->destination);
+                CHECK_CAST(pop)
                 // work out closest point on edge of destination population
-                QLineF line(QPointF(((population *)this->destination)->x, ((population *)this->destination)->y), cursor);
+                QLineF line(QPointF(pop->x, (pop->y), cursor);
                 QLineF nextLine = line.unitVector();
                 nextLine.setLength(1000.0);
                 QPointF point = nextLine.p2();
 
-                QPointF boxEdge = findBoxEdge(((population *)this->destination), point.x(), point.y());
+                QPointF boxEdge = findBoxEdge(pop, point.x(), point.y());
 
                 // realign the handle
-                QLineF handle(QPointF(((population *)this->destination)->x, ((population *)this->destination)->y), this->curves.back().C2);
+                QLineF handle(QPointF(pop->x, pop->y), this->curves.back().C2);
                 handle.setAngle(nextLine.angle());
                 this->curves.back().C2 = handle.p2();
 
@@ -645,13 +665,20 @@ void genericInput::read_meta_data(QDomDocument * meta) {
 
                         // add connection generator if we are a csv
                         if (this->connectionType->type == CSV) {
-                            csv_connection * conn = (csv_connection *) this->connectionType;
+                            csv_connection * conn = dynamic_cast<csv_connection *> (this->connectionType);
+                            CHECK_CAST(conn)
+                            population * popsrc = dynamic_cast<population *>(this->source);
+                            CHECK_CAST(popsrc)
+                            population * popdst = dynamic_cast<population *>(this->destination);
+                            CHECK_CAST(popdst)
                             // add generator
-                            conn->generator = new pythonscript_connection((population *) this->source, (population *) this->destination, conn);
+                            conn->generator = new pythonscript_connection(popsrc, popdst, conn);
+                            pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
+                            CHECK_CAST(pyConn)
                             // extract data for connection generator
-                            ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
+                            pyConn->read_metadata_xml(metaData);
                             // prevent regeneration
-                            ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                            pyConn->setUnchanged(true);
                         }
                     }
 
