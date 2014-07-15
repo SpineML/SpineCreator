@@ -575,9 +575,16 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
         exportBinary = settings.value("export_binary").toBool();
     }
 
+    // write containing tag
     xmlOut.writeStartElement("ConnectionList");
 
-    if (writeBinary && this->getNumRows() > 30) {
+    // if we have greater than 30 rows and we want to write to binary then write binary file
+    // (less than 30 rows is sufficiently compacy that it should go in the XML)
+    // Alex: this is the old code that just copied the QStreamData written file. This is
+    // undesirable as this file cannot be read by BRAHMS or any generic program. Current
+    // procedure is to write the file as a packed binary data file as when writing for
+    // simulation.
+    /*if (writeBinary && this->getNumRows() > 30) {
 
         QString saveFileName = this->filename + ".bin";
 
@@ -593,15 +600,33 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
         // reopen the file that copy helpfully closed grrr....
         file.open(QIODevice::ReadWrite);
 
-    } else if (exportBinary && this->getNumRows() > 30) {
+    } else */
 
-        QString saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
+    // if we have greater than 30 rows and we want to write to binary then write binary file
+    // (less than 30 rows is sufficiently compacy that it should go in the XML)
+    if ((writeBinary || exportBinary) && this->getNumRows() > 30) {
+
+        // construct the save file name based upon whether we are saving the project or outputting for simulation
+        QString saveFileName;
+        if (exportBinary) {
+
+            saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
+
+        } else if (writeBinary) {
+
+            saveFileName = saveDir.absoluteFilePath(this->filename + ".bin");
+
+        } else {
+            qDebug() << "Error - this shouldn't happen! (connection.cpp write_node_xml)";
+            return;
+        }
 
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
         xmlOut.writeAttribute("file_name", this->filename + ".bin");
         xmlOut.writeAttribute("num_connections", QString::number(float(getNumRows())));
         xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(getNumCols()==3)));
+        xmlOut.writeAttribute("packed_data", "true");
 
         // re-write the data
         if (getNumCols()==3) {
@@ -731,61 +756,130 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
         else
             this->setNumCols(2);
 
-        // copy across file and set file name
-        // first remove existing file
-        this->file.remove();
+        // check what the file type is, since we changed from using QStreamData written binary to
+        // packed binary we need to check for the packed_binary flag
 
-        // get a handle to the saved file
-        QSettings settings;
-        QString filePathString = settings.value("files/currentFileName", "error").toString();
+        QString isPacked = BinaryFileList.at(0).toElement().attribute("packed_data", "false");
 
-        if (filePathString == "error") {
-            qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
-            return;}
+        if (isPacked == "true") {
 
-        QDir filePath(filePathString);
+            // first remove existing file
+            this->file.remove();
 
-        // get file name and path
-        QString fileName = BinaryFileList.at(0).toElement().attribute("file_name");
-
-        #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
-        #else
-        QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-        #endif
-        if (!lib_dir.exists()) {
-            if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-                qDebug() << "error creating library";
-            }
-        }
-
-        // copy the file across to the temporary file
-        QFile savedData(filePath.absoluteFilePath(fileName));
-
-        // check that the data file exists!
-        if (!savedData.open(QIODevice::ReadOnly)) {
+            // get a handle to the saved file
             QSettings settings;
-            int num_errs = settings.beginReadArray("errors");
-            settings.endArray();
-            settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
-            settings.endArray();
-            return;
+            QString filePathString = settings.value("files/currentFileName", "error").toString();
+
+            if (filePathString == "error") {
+                qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
+                return;}
+
+            QDir filePath(filePathString);
+
+            // get file name and path
+            QString fileName = BinaryFileList.at(0).toElement().attribute("file_name");
+
+            #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+            QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
+            #else
+            QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+            #endif
+            if (!lib_dir.exists()) {
+                if (!lib_dir.mkpath(lib_dir.absolutePath())) {
+                    qDebug() << "error creating library";
+                }
+            }
+
+            // copy the file across to the temporary file
+            QFile savedData(filePath.absoluteFilePath(fileName));
+
+            // check that the data file exists!
+            if (!savedData.open(QIODevice::ReadOnly)) {
+                QSettings settings;
+                int num_errs = settings.beginReadArray("errors");
+                settings.endArray();
+                settings.beginWriteArray("errors");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
+                settings.endArray();
+                return;
+            }
+
+            // restart the file
+            this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
+
+            // open the storage file
+            if( !this->file.open( QIODevice::ReadWrite ) ) {
+                QMessageBox msgBox;
+                msgBox.setText("Could not open temporary file for Explicit Connection");
+                msgBox.exec();
+                return;}
+
+            // now we need to read from the savedData file and put this into a QDataStream...
+            this->import_packed_binary(savedData);
+
         }
-        savedData.close();
+        // this is the old way of loading binary data - it is obselete as new projects should not store data this way,
+        // however it is left in for compatibility with old projects - these will be converted to the new method once
+        // they are re-saved
+        else {
 
-        savedData.copy(lib_dir.absoluteFilePath(this->filename));
+            // copy across file and set file name
+            // first remove existing file
+            this->file.remove();
 
-        // restart the file
-        this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
+            // get a handle to the saved file
+            QSettings settings;
+            QString filePathString = settings.value("files/currentFileName", "error").toString();
 
-        // open the storage file
-        if( !this->file.open( QIODevice::ReadWrite ) ) {
-            QMessageBox msgBox;
-            msgBox.setText("Could not open temporary file for Explicit Connection");
-            msgBox.exec();
-            return;}
+            if (filePathString == "error") {
+                qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
+                return;}
+
+            QDir filePath(filePathString);
+
+            // get file name and path
+            QString fileName = BinaryFileList.at(0).toElement().attribute("file_name");
+
+            #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+            QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
+            #else
+            QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+            #endif
+            if (!lib_dir.exists()) {
+                if (!lib_dir.mkpath(lib_dir.absolutePath())) {
+                    qDebug() << "error creating library";
+                }
+            }
+
+            // copy the file across to the temporary file
+            QFile savedData(filePath.absoluteFilePath(fileName));
+
+            // check that the data file exists!
+            if (!savedData.open(QIODevice::ReadOnly)) {
+                QSettings settings;
+                int num_errs = settings.beginReadArray("errors");
+                settings.endArray();
+                settings.beginWriteArray("errors");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
+                settings.endArray();
+                return;
+            }
+            savedData.close();
+
+            savedData.copy(lib_dir.absoluteFilePath(this->filename));
+
+            // restart the file
+            this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
+
+            // open the storage file
+            if( !this->file.open( QIODevice::ReadWrite ) ) {
+                QMessageBox msgBox;
+                msgBox.setText("Could not open temporary file for Explicit Connection");
+                msgBox.exec();
+                return;}
+        }
 
     }
 
@@ -958,6 +1052,54 @@ void csv_connection::import_csv(QString fileName) {
         if (i == 0) this->values.push_back("src");
         if (i == 1) this->values.push_back("dst");
         if (i == 2) this->values.push_back("delay");
+    }
+
+    // flush out the output...
+    this->file.flush();
+
+}
+
+void csv_connection::import_packed_binary(QFile &fileIn) {
+
+    this->changes.clear();
+
+    //wipe file;
+    file.resize(0);
+
+    file.seek(0);
+
+    QDataStream access(&file);
+
+    int count = 0;
+
+    // load in the binary packed data
+    while (!(fileIn.atEnd())) {
+
+        // read in the required values:
+        // first two int32s
+        int srcVal, dstVal;
+        float delayVal;
+
+        fileIn.read((char *) &srcVal,4);
+        fileIn.read((char *) &dstVal,4);
+
+        // add the row...
+        quint32 num = srcVal;
+        access << num;
+        num = dstVal;
+        access << num;
+
+        // if we have a delay then read that too
+        if (this->values.size() == 3) {
+            // we have a delay
+            fileIn.read((char *) &delayVal,4);
+            access << delayVal;
+        }
+        ++count;
+    }
+
+    if (count != this->getNumRows()) {
+        qDebug() << "Mismatch between the number of rows in the XML and in the binary";
     }
 
     // flush out the output...
