@@ -378,6 +378,7 @@ void viewVZLayoutEditHandler::initPopulation() {
     xSpin = new QSpinBox;
     xSpin->setRange(-10000, 10000);
     xSpin->setSingleStep(1);
+    xSpin->setMaximumWidth(70);
     xSpin->setProperty("type", 0);
     xSpin->setFocusPolicy(Qt::StrongFocus);
     xSpin->installEventFilter(new FilterOutUndoRedoEvents);
@@ -399,6 +400,7 @@ void viewVZLayoutEditHandler::initPopulation() {
     ySpin = new QSpinBox;
     ySpin->setRange(-10000, 10000);
     ySpin->setSingleStep(1);
+    ySpin->setMaximumWidth(70);
     ySpin->setProperty("type", 1);
     ySpin->setFocusPolicy(Qt::StrongFocus);
     ySpin->installEventFilter(new FilterOutUndoRedoEvents);
@@ -420,6 +422,7 @@ void viewVZLayoutEditHandler::initPopulation() {
     zSpin = new QSpinBox;
     zSpin->setRange(-10000, 10000);
     zSpin->setSingleStep(1);
+    zSpin->setMaximumWidth(70);
     zSpin->setProperty("type", 2);
     zSpin->setFocusPolicy(Qt::StrongFocus);
     zSpin->installEventFilter(new FilterOutUndoRedoEvents);

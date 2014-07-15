@@ -1,0 +1,7 @@
+lif_test2 contains a sample SpineCreator experiment which is set up to 
+communicate with the example matlab script spinemlnet_test.m.
+
+Load lif_test2 in SpineCreator and run spinemlnet_test.m in matlab. Now 
+run the experiment in SpineCreator and with a bit of luck it will 
+collect data from matlab (some sine waves) and return a result which is 
+an exponential decay with a sine superimposed on top.

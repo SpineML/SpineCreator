@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLComponentLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd">
+ <ComponentClass type="neuron_body" name="LIFtest">
+  <Dynamics initial_regime="New_Regime_1">
+   <Regime name="New_Regime_1">
+    <TimeDerivative variable="V_m">
+     <MathInline>-(V_m + V_in)/tau_m</MathInline>
+    </TimeDerivative>
+   </Regime>
+   <StateVariable dimension="mV" name="V_m"/>
+  </Dynamics>
+  <AnalogSendPort name="V_m"/>
+  <AnalogReducePort dimension="mV" reduce_op="+" name="V_in"/>
+  <Parameter dimension="ms" name="tau_m"/>
+ </ComponentClass>
+</SpineML>

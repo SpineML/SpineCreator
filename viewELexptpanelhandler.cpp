@@ -266,11 +266,6 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
         formSim->addRow("Solver order:",solverOrd);
     }
 
-    // add batch interface
-    QPushButton * batch = new QPushButton("Setup");
-    connect(batch, SIGNAL(clicked()), this, SLOT(batch_clicked()));
-    formSim->addRow("Batch:",batch);
-
 }
 
 void viewELExptPanelHandler::redrawExpt()
@@ -288,10 +283,11 @@ void viewELExptPanelHandler::redrawExpt()
     }
 
     // clear old stuff
-    while(forDeleting.size() > 0) {
-        forDeleting[0]->deleteLater();
-        forDeleting.erase(forDeleting.begin());
-    }
+    //while(forDeleting.size() > 0) {
+        // Commented to attempt to avoid nasty bugs when comboboxes are deleted. I know it is a memory leak. Alex 23/05/2014
+        //forDeleting[0]->deleteLater();
+        //forDeleting.erase(forDeleting.begin());
+    //}
 
     recursiveDeleteExpt(exptSetup);
     recursiveDeleteExpt(exptInputs);

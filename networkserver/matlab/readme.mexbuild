@@ -1,0 +1,19 @@
+The script mexbuild calls the matlab mex command on each of the
+mex-function source files.
+
+This worked fine for me in Matlab R2013a running on Debian 7.
+
+Running mexbuild on a Mac running Mac OS 10.8, Xcode version 5.1 and
+Matlab R2013a gave me some build errors. Matlab R2013a was developed
+with an earlier version of Xcode as its "tested and verified"
+compiler. A bit off googling showed that this can be worked around by
+editing mexopts.sh:
+
+The change is in /Applications/MATLAB/R2013a/bin/mexopts.sh
+
+You go through and change references to 10.7 to 10.8, or if you're on
+Mac OS 10.9, change 'em to 10.9. You may have to
+
+ chmod ug+w /Applications/MATLAB/R2013a/bin/mexopts.sh
+
+before you can edit the file.

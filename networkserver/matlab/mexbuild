@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "Building mex functions..."
+mex spinemlnetStart.cpp
+mex spinemlnetStop.cpp
+mex spinemlnetQuery.cpp
+mex spinemlnetAddData.cpp
+mex spinemlnetGetData.cpp
+echo "Building mex functions complete!"
+
+
