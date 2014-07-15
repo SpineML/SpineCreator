@@ -1237,7 +1237,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             indicesString->setText(this->indices);
             indicesString->setMinimumWidth(200);
             indicesString->setProperty("ptr", qVariantFromValue((void *) this));
-            indicesString->setToolTip("Indices to log - 'all' for all indices or comma seperated list of indices (first index is index 0)");
+            indicesString->setToolTip("Indices to log - 'all' for all indices or comma separated list of indices (first index is index 0)");
             connect(indicesString, SIGNAL(editingFinished()), handler, SLOT(setOutputIndices()));
             indices->addWidget(indicesString);
             frameLay->addLayout(indices);
