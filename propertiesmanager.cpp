@@ -276,7 +276,7 @@ void PropertiesManager::createTimeDerivativeProperties(TimeDerivativeTextItem *t
     addWidget(new QLabel(tr("<i>in physiological units</i>")));
 
     QStringList errs;
-    td->time_derivative->maths->validateMathInLine(root->al, &errs);
+    td->time_derivative->maths->validateMathInLine(root->al.data(), &errs);
 
     // sort out errors
     QSettings settings;
@@ -396,7 +396,7 @@ void PropertiesManager::createAliasProperties(AliasTextItem *ati)
     addWidget(new QLabel(tr("<i>in physiological units</i>")));
 
     QStringList errs;
-    ati->getMaths()->validateMathInLine(root->al, &errs);
+    ati->getMaths()->validateMathInLine(root->al.data(), &errs);
 
     // sort out errors
     QSettings settings;
@@ -452,7 +452,7 @@ void PropertiesManager::createOnConditionProperties(OnConditionGraphicsItem *oci
     addWidget(new QLabel(tr("<i>in physiological units</i>")));
 
     QStringList errs;
-    oci->getTriggerMaths()->validateMathInLine(root->al, &errs);
+    oci->getTriggerMaths()->validateMathInLine(root->al.data(), &errs);
 
     // sort out errors
     QSettings settings;
@@ -586,7 +586,7 @@ void PropertiesManager::createStateAssignmentProperties(StateAssignmentTextItem 
     addWidget(new QLabel(tr("<i>in physiological units</i>")));
 
     QStringList errs;
-    sa->getMaths()->validateMathInLine(root->al, &errs);
+    sa->getMaths()->validateMathInLine(root->al.data(), &errs);
 
     // sort out errors
     QSettings settings;

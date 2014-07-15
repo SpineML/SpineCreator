@@ -543,61 +543,63 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     // definition
     QString simpleName;
     if (this->type == NineMLLayoutType) {
-        simpleName = ((NineMLLayoutData *) this)->component->name.simplified();
+        simpleName = (static_cast<NineMLLayoutData *> (this))->component->name.simplified();
     }
     if (this->type == NineMLComponentType) {
-        simpleName = ((NineMLComponentData *) this)->component->name.simplified();
+        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
+        simpleName = ptr->component->name.simplified();
     }
     simpleName.replace( " ", "_" );
     xmlOut.writeAttribute("url", simpleName + ".xml");
 
     // wriet the seed and minumum distance for the Layout
     if (this->type == NineMLLayoutType) {
-        NineMLLayoutData * lay = (NineMLLayoutData *) this;
+        NineMLLayoutData * lay = static_cast<NineMLLayoutData *> (this);
         xmlOut.writeAttribute("seed", QString::number(lay->seed));
         xmlOut.writeAttribute("minimum_distance", QString::number(lay->minimumDistance));
     }
 
     if (this->type == NineMLComponentType) {
-        for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
-            if (((NineMLComponentData *) this)->inputs[i]->projInput == true) {
+        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
+        for (uint i = 0; i < ptr->inputs.size(); ++i) {
+            if (ptr->inputs[i]->projInput == true) {
 
                 // add the special input for the synapse
-                if (((NineMLComponentData *) this)->component->type == "weight_update") {
+                if (ptr->component->type == "weight_update") {
 
                     // check we have ports
-                    if (((NineMLComponentData *) this)->inputs[i]->srcPort.size() == 0 || ((NineMLComponentData *) this)->inputs[i]->dstPort.size() == 0) {
+                    if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ((NineMLComponentData *) this)->inputs[i]->src->getXMLName() + "' and '" + ((NineMLComponentData *) this)->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" + ptr->inputs[i]->dst->getXMLName() + "'");
                         settings.endArray();
                     }
 
-                    xmlOut.writeAttribute("input_src_port", ((NineMLComponentData *) this)->inputs[i]->srcPort);
-                    xmlOut.writeAttribute("input_dst_port", ((NineMLComponentData *) this)->inputs[i]->dstPort);
+                    xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
+                    xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
 
                 }
 
                 // add the special input for the postsynapse
-                if (((NineMLComponentData *) this)->component->type == "postsynapse") {
+                if (ptr->component->type == "postsynapse") {
 
                     // check we have ports
-                    if (((NineMLComponentData *) this)->inputs[i]->srcPort.size() == 0 || ((NineMLComponentData *) this)->inputs[i]->dstPort.size() == 0) {
+                    if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ((NineMLComponentData *) this)->inputs[i]->src->getXMLName() + "' and '" + ((NineMLComponentData *) this)->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" +ptr->inputs[i]->dst->getXMLName() + "'");
                         settings.endArray();
                     }
 
 
-                    xmlOut.writeAttribute("input_src_port", ((NineMLComponentData *) this)->inputs[i]->srcPort);
-                    xmlOut.writeAttribute("input_dst_port", ((NineMLComponentData *) this)->inputs[i]->dstPort);
+                    xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
+                    xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
 
                 }
 
@@ -605,27 +607,27 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
         }
 
 
-        if (((NineMLComponentData *) this)->component->type == "postsynapse") {
+        if (ptr->component->type == "postsynapse") {
 
             // search out the Synapse population and add the postsynapticMapping
-            for (uint i = 0; i < ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs.size(); ++i) {
-                if (((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->src == this && \
-                    ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->projInput == true) {
+            for (uint i = 0; i < (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs.size(); ++i) {
+                if ((qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->src == this && \
+                    (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->projInput == true) {
 
                     // check we have ports
-                    if (((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->srcPort.size() == 0 || ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->dstPort.size() == 0) {
+                    if (qSharedPointerDynamicCast<projection> (ptr->owner)->destination->neuronType->inputs[i]->srcPort.size() == 0 || (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->src->getXMLName() + "' and '" + ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->src->getXMLName() + "' and '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dst->getXMLName() + "'");
                         settings.endArray();
                     }
 
 
-                    xmlOut.writeAttribute("output_src_port", ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->srcPort);
-                    xmlOut.writeAttribute("output_dst_port", ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->dstPort);
+                    xmlOut.writeAttribute("output_src_port", (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcPort);
+                    xmlOut.writeAttribute("output_dst_port", (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstPort);
 
                 }
             }
@@ -730,43 +732,44 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     // if it is not a layout, add the inputs
     if (this->type == NineMLComponentType) {
 
+        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
         bool inputsTag = false;
 
-        for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
-           if (((NineMLComponentData *) this)->inputs[i]->projInput == false) {
+        for (uint i = 0; i < ptr->inputs.size(); ++i) {
+           if (ptr->inputs[i]->projInput == false) {
                inputsTag = true;
            }
         }
 
         if (inputsTag) {
             // inputs
-            for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
-               if (((NineMLComponentData *) this)->inputs[i]->projInput == false) {
+            for (uint i = 0; i < ptr->inputs.size(); ++i) {
+               if (ptr->inputs[i]->projInput == false) {
 
                    // check we have ports
-                   if (((NineMLComponentData *) this)->inputs[i]->srcPort.size() == 0 || ((NineMLComponentData *) this)->inputs[i]->dstPort.size() == 0) {
+                   if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                        QSettings settings;
                        int num_errs = settings.beginReadArray("warnings");
                        settings.endArray();
                        settings.beginWriteArray("warnings");
                            settings.setArrayIndex(num_errs + 1);
-                           settings.setValue("warnText",  "No matched ports between '" + ((NineMLComponentData *) this)->inputs[i]->src->getXMLName() + "' and '" + ((NineMLComponentData *) this)->inputs[i]->dst->getXMLName() + "'");
+                           settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" + ptr->inputs[i]->dst->getXMLName() + "'");
                        settings.endArray();
                    }
 
                   xmlOut.writeStartElement("LL:Input");
-                  xmlOut.writeAttribute("src", ((NineMLComponentData *) this)->inputs[i]->src->getXMLName());
-                  xmlOut.writeAttribute("src_port", ((NineMLComponentData *) this)->inputs[i]->srcPort);
-                  xmlOut.writeAttribute("dst_port", ((NineMLComponentData *) this)->inputs[i]->dstPort);
-                  if (((NineMLComponentData *) this)->inputs[i]->connectionType->type == Kernel) {
-                      ((kernel_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->src = (population *) ((NineMLComponentData *) this)->inputs[i]->source;
-                      ((kernel_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->dst = (population *) ((NineMLComponentData *) this)->inputs[i]->destination;
+                  xmlOut.writeAttribute("src", ptr->inputs[i]->src->getXMLName());
+                  xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
+                  xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
+                  if (ptr->inputs[i]->connectionType->type == Kernel) {
+                      ((kernel_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((kernel_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
                   }
-                  if (((NineMLComponentData *) this)->inputs[i]->connectionType->type == Python) {
-                      ((pythonscript_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->src = (population *) ((NineMLComponentData *) this)->inputs[i]->source;
-                      ((pythonscript_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->dst = (population *) ((NineMLComponentData *) this)->inputs[i]->destination;
+                  if (ptr->inputs[i]->connectionType->type == Python) {
+                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
                   }
-                  ((NineMLComponentData *) this)->inputs[i]->connectionType->write_node_xml(xmlOut);
+                  ptr->inputs[i]->connectionType->write_node_xml(xmlOut);
                   xmlOut.writeEndElement(); // input
               }
 
@@ -1583,7 +1586,7 @@ AnalogPort::AnalogPort(AnalogPort *data): Port(data)
 
 bool AnalogPort::isAnalog() {return true;}
 
-int AnalogPort::validateAnalogPort(NineMLComponent *component, QStringList * )
+int AnalogPort::validateAnalogPort(NineMLComponent * component, QStringList * )
 {
     //if mode is send then validate
     int failures = 0;
@@ -1644,7 +1647,7 @@ ImpulsePort::ImpulsePort(ImpulsePort *data): Port(data)
 
 bool ImpulsePort::isAnalog() {return false;}
 
-int ImpulsePort::validateImpulsePort(NineMLComponent *component, QStringList * )
+int ImpulsePort::validateImpulsePort(NineMLComponent * component, QStringList * )
 {
     //if mode is send then validate
     int failures = 0;
@@ -1966,12 +1969,12 @@ Regime::~Regime()
 NineMLComponent::NineMLComponent()
 {
     initial_regime = NULL;
-    editedVersion = NULL;
+    editedVersion.clear();
     path = "temp";
     type = "neuron_body";
 }
 
-NineMLComponent::NineMLComponent(NineMLComponent *data)
+NineMLComponent::NineMLComponent(QSharedPointer<NineMLComponent>data)
 {
     name = data->name;
     this->type = data->type;
@@ -2063,7 +2066,7 @@ NineMLComponent::NineMLComponent(NineMLComponent *data)
     }*/
 
     // don't copy this...
-    editedVersion = NULL;
+    editedVersion.clear();
 }
 
 NineMLComponent::~NineMLComponent()
@@ -2104,8 +2107,10 @@ NineMLComponent::~NineMLComponent()
         ip = NULL;
     }
 
-    if (editedVersion != NULL)
-        delete editedVersion;
+    // decrement the shared pointer
+    if (!editedVersion.isNull()) {
+        editedVersion.clear();
+    }
 }
 
 // assignment operator required for the base class
@@ -2201,7 +2206,7 @@ NineMLComponent& NineMLComponent::operator=(const NineMLComponent& data)
     return *this;
 }
 
-void NineMLComponent::updateFrom(NineMLComponent* data)
+void NineMLComponent::updateFrom(QSharedPointer<NineMLComponent>  data)
 {
     // remove existing data
     foreach (Regime *r, RegimeList)
@@ -2240,9 +2245,10 @@ void NineMLComponent::updateFrom(NineMLComponent* data)
         ip = NULL;
     }
 
-    if (editedVersion != NULL)
-        delete editedVersion;
-    editedVersion = NULL;
+    // decrement shared pointer
+    if (!editedVersion.isNull()) {
+        editedVersion.clear();
+    }
 
     name = data->name;
     type = data->type;
@@ -2302,7 +2308,7 @@ void NineMLComponent::updateFrom(NineMLComponent* data)
 }
 
 // copy constructor required for the base class
-NineMLComponentData::NineMLComponentData(NineMLComponent *data)
+NineMLComponentData::NineMLComponentData(QSharedPointer<NineMLComponent>data)
 {
 
     type = NineMLComponentType;
@@ -2320,7 +2326,7 @@ NineMLComponentData::NineMLComponentData(NineMLComponent *data)
 }
 
 // duplicate
-NineMLComponentData::NineMLComponentData(NineMLComponentData *data)
+NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>data)
 {
 
     type = NineMLComponentType;
@@ -2341,7 +2347,7 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *data)
     this->component = data->component;
 }
 
-NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLComponent *data)
+void NineMLComponentData::copyFrom(QSharedPointer <NineMLComponentData>src, QSharedPointer<NineMLComponent>data, QSharedPointer<NineMLComponentData> thisSharedPointer)
 {
 
     // copy owner
@@ -2361,19 +2367,17 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLCompone
 
     // update reference in outputs:
     for (uint i = 0; i < outputs.size(); ++i) {
-        outputs[i]->src = this;
+        outputs[i]->src = thisSharedPointer;
         // remove the port name reference
         outputs[i]->srcPort.clear();
     }
 
     // update reference in inputs:
     for (uint i = 0; i < inputs.size(); ++i) {
-        inputs[i]->dst = this;
+        inputs[i]->dst = thisSharedPointer;
         // remove dstPort name reference
         this->inputs[i]->dstPort.clear();
     }
-
-    delete src;
 
     type = NineMLComponentType;
     StateVariableList = vector<StateVariableData*>(data->StateVariableList.size());
@@ -2422,7 +2426,7 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLCompone
 
 
 
-int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
+int MathInLine::validateMathInLine(NineMLComponent * component, QStringList * )
 {
     // remove operators
 
@@ -2541,7 +2545,7 @@ int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
     return 0;
 }
 
-int Trigger::validateTrigger(NineMLComponent *component, QStringList * errs)
+int Trigger::validateTrigger(NineMLComponent * component, QStringList * errs)
 {
     // mathinline pointer may be null
     if (maths != (MathInLine *)0) {
@@ -2553,7 +2557,7 @@ int Trigger::validateTrigger(NineMLComponent *component, QStringList * errs)
     }
 }
 
-int Alias::validateAlias(NineMLComponent *component, QStringList * errs)
+int Alias::validateAlias(NineMLComponent * component, QStringList * errs)
 {
     // mathinline pointer may be null
     if (maths != (MathInLine *)0) {
@@ -2564,7 +2568,7 @@ int Alias::validateAlias(NineMLComponent *component, QStringList * errs)
     }
 }
 
-int TimeDerivative::validateTimeDerivative(NineMLComponent *component, QStringList * errs)
+int TimeDerivative::validateTimeDerivative(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     // mathinline pointer may be null
@@ -2594,7 +2598,7 @@ int TimeDerivative::validateTimeDerivative(NineMLComponent *component, QStringLi
     return failures;
 }
 
-int StateAssignment::validateStateAssignment(NineMLComponent *component, QStringList * errs)
+int StateAssignment::validateStateAssignment(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     // mathinline pointer may be null
@@ -2630,7 +2634,7 @@ int StateAssignment::validateStateAssignment(NineMLComponent *component, QString
     return failures;
 }
 
-int EventOut::validateEventOut(NineMLComponent *component, QStringList * )
+int EventOut::validateEventOut(NineMLComponent * component, QStringList * )
 {
     int failures = 0;
     bool match = false;
@@ -2653,7 +2657,7 @@ int EventOut::validateEventOut(NineMLComponent *component, QStringList * )
 }
 
 
-int ImpulseOut::validateImpulseOut(NineMLComponent *component, QStringList * )
+int ImpulseOut::validateImpulseOut(NineMLComponent * component, QStringList * )
 {
     int failures = 0;
     bool match = false;
@@ -2680,7 +2684,7 @@ int ImpulseOut::validateImpulseOut(NineMLComponent *component, QStringList * )
     return failures;
 }
 
-int OnCondition::validateOnCondition(NineMLComponent *component, QStringList * errs)
+int OnCondition::validateOnCondition(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -2715,7 +2719,7 @@ int OnCondition::validateOnCondition(NineMLComponent *component, QStringList * e
     return failures;
 }
 
-int OnEvent::validateOnEvent(NineMLComponent *component, QStringList * errs)
+int OnEvent::validateOnEvent(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -2768,7 +2772,7 @@ int OnEvent::validateOnEvent(NineMLComponent *component, QStringList * errs)
 }
 
 
-int OnImpulse::validateOnImpulse(NineMLComponent *component, QStringList * errs)
+int OnImpulse::validateOnImpulse(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -2819,7 +2823,7 @@ int OnImpulse::validateOnImpulse(NineMLComponent *component, QStringList * errs)
     return failures;
 }
 
-int Regime::validateRegime(NineMLComponent *component, QStringList * errs)
+int Regime::validateRegime(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     for(uint i=0; i<TimeDerivativeList.size(); i++)
@@ -2993,16 +2997,20 @@ QString NineMLComponentData::getXMLName() {
     }
     if (this->component->type == "weight_update") {
         // find which Synapse we are attached to
-        for (uint i = 0; i < ((projection *) owner)->synapses.size(); ++i) {
-            if (((projection *) owner)->synapses[i]->weightUpdateType == this) {
+        QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
+        CHECK_CAST(projOwner)
+        for (uint i = 0; i < projOwner->synapses.size(); ++i) {
+            if (projOwner->synapses[i]->weightUpdateType == this) {
                 return this->owner->getName() + " Synapse " + QString::number(float(i)) + " weight_update";
             }
         }
     }
     if (this->component->type == "postsynapse") {
         // find which Synapse we are attached to
-        for (uint i = 0; i < ((projection *) owner)->synapses.size(); ++i) {
-            if (((projection *) owner)->synapses[i]->postsynapseType == this) {
+        QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
+        CHECK_CAST(projOwner)
+        for (uint i = 0; i < projOwner->synapses.size(); ++i) {
+            if (projOwner->synapses[i]->postsynapseType == this) {
                 return this->owner->getName() + " Synapse " +  QString::number(float(i)) + " postsynapse";
             }
         }
@@ -3030,11 +3038,11 @@ void NineMLComponentData::removeReferences() {
 
 }
 
-void NineMLComponentData::addInput(NineMLComponentData *, bool) {
+void NineMLComponentData::addInput(QSharedPointer <NineMLComponentData>, bool) {
 
-    qDebug() << "This shouldn't be called - NineMLComponentData::addInput(NineMLComponentData * src, bool isProj)";
+    qDebug() << "This shouldn't be called - NineMLComponentData::addInput(QSharedPointer <NineMLComponentData> src, bool isProj)";
 
-    //genericInput * newInput = new genericInput(src, this, isProj);
+    //QSharedPointer<genericInput> newInput = new genericInput(src, this, isProj);
 
     // suppress warning
     //newInput = NULL;
@@ -3125,7 +3133,7 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
     // find pairs of ports that could match
     QStringList portPairs;
 
-    genericInput * currInput;
+    QSharedPointer<genericInput> currInput;
     if (!isOutput) {
         currInput = this->inputs[index];
     } else {
@@ -3205,7 +3213,7 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
     return portPairs;
 }
 
-void NineMLComponentData::migrateComponent(NineMLComponent * newComponent) {
+void NineMLComponentData::migrateComponent(QSharedPointer<NineMLComponent> newComponent) {
 
     vector < ParameterData * > oldParList;
     vector < StateVariableData * > oldSVList;
@@ -3258,7 +3266,7 @@ void NineMLComponentData::migrateComponent(NineMLComponent * newComponent) {
 
 }
 
-void NineMLComponentData::copyParsFrom(NineMLComponentData * data) {
+void NineMLComponentData::copyParsFrom(QSharedPointer <NineMLComponentData> data) {
 
     if (this->component->name == "none")
         return;

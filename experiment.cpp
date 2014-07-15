@@ -254,15 +254,15 @@ void experiment::deselect() {
 
 }
 
-void experiment::purgeBadPointer(systemObject * ptr) {
-
+void experiment::purgeBadPointer(QSharedPointer<systemObject> ptr) {
+/* NOT NECESSARY ANYMORE
     if (ptr->type == populationObject) {
-        population * pop = dynamic_cast<population *> (ptr);
+        QSharedPointer <population> pop = dynamic_cast<QSharedPointer <population>> (ptr);
         CHECK_CAST(pop)
         purgeBadPointer(pop->neuronType);
     }
     if (ptr->type == projectionObject) {
-        projection * proj = dynamic_cast<projection *> (ptr);
+        QSharedPointer <projection> proj = dynamic_cast<QSharedPointer <projection>> (ptr);
         CHECK_CAST(proj)
         for (uint i = 0; i < proj->synapses.size(); ++i) {
             purgeBadPointer(proj->synapses[i]->postsynapseType);
@@ -281,10 +281,10 @@ void experiment::purgeBadPointer(systemObject * ptr) {
             --i;
         }
     }
-
+*/
 }
 
-void experiment::purgeBadPointer(NineMLComponentData * ptr)
+void experiment::purgeBadPointer(QSharedPointer <NineMLComponentData> ptr)
 {
     // inputs
     for (uint i = 0; i < ins.size(); ++i) {
@@ -330,7 +330,7 @@ void experiment::purgeBadPointer(NineMLComponentData * ptr)
     }
 }
 
-void experiment::purgeBadPointer(NineMLComponent * ptr, NineMLComponent * newPtr) {
+void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPointer<NineMLComponent> newPtr) {
 
     // inputs
     for (uint i = 0; i < ins.size(); ++i) {
@@ -417,7 +417,7 @@ void experiment::purgeBadPointer(NineMLComponent * ptr, NineMLComponent * newPtr
 
 }
 
-void experiment::updateChanges(NineMLComponentData * ptr) {
+void experiment::updateChanges(QSharedPointer <NineMLComponentData> ptr) {
 
     // par changes
     for (uint i = 0; i < changes.size(); ++i) {
@@ -593,14 +593,14 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
         QComboBox * portBox = new QComboBox;
         portBox->setMaximumWidth(90);
         if (set) {
-            // if broken
-            if (!data->isValidPointer(this->target)) {
+            // if broken NOT NEEDED ANYMORE
+            /*if (!data->isValidPointer(this->target)) {
                 set = false;
                 return this->drawInput(data, handler);
-            }
+            }*/
             // if spike source
             if (this->target->owner->type == populationObject) {
-                population * pop = dynamic_cast<population *> (this->target->owner);
+                QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
                 CHECK_CAST(pop)
                 if (pop->isSpikeSource) {
                     portBox->addItem("spike in");
@@ -767,12 +767,12 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 gridlay->addWidget(table,0,0,4,1);
                 int componentSize;
                 if (this->target->owner->type == populationObject) {
-                    population * pop = dynamic_cast<population *> (this->target->owner);
+                    QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
                     CHECK_CAST(pop)
                     componentSize = pop->numNeurons;
                 }
                 if (this->target->owner->type == projectionObject) {
-                    projection * proj = dynamic_cast<projection *> (this->target->owner);
+                    QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (this->target->owner);
                     CHECK_CAST(proj)
                     componentSize = proj->destination->numNeurons;
                 }
@@ -879,12 +879,12 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 spin->setToolTip ("Index of the neuron within the population");
                 int componentSize;
                 if (this->target->owner->type == populationObject) {
-                    population * pop = dynamic_cast<population *> (this->target->owner);
+                    QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
                     CHECK_CAST(pop)
                     componentSize = pop->numNeurons;
                 }
                 if (this->target->owner->type == projectionObject) {
-                    projection * proj = dynamic_cast<projection *> (this->target->owner);
+                    QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (this->target->owner);
                     CHECK_CAST(proj)
                     componentSize = proj->destination->numNeurons;
                 }
@@ -964,7 +964,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 size->setMinimum(1);
                 size->setMaximum(100000000);
                 if (this->target->owner->type == populationObject) {
-                    population * pop = dynamic_cast<population *> (this->target->owner);
+                    QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
                     CHECK_CAST(pop)
                     this->externalInput.size = pop->numNeurons;
                 }
@@ -1001,13 +1001,13 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
 
     } else {
 
-        // check for badness
-        if (!data->isValidPointer(this->target)) {
+        // check for badness NOT NEEDED ANYMORE
+        /*if (!data->isValidPointer(this->target)) {
             qDebug() << "input refers to target that can't be found";
             this->set = false;
             this->edit = true;
             return this->drawInput(data, handler);
-        }
+        }*/
 
         // new layout to contain name and port boxes
         QFrame * frame = new QFrame;
@@ -1198,11 +1198,11 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
         QComboBox * portBox = new QComboBox;
         portBox->setMaximumWidth(90);
         if (set) {
-            // if broken
-            if (!data->isValidPointer(this->source)) {
+            // if broken NOT NEEDED ANYMORE
+            /*if (!data->isValidPointer(this->source)) {
                 set = false;
                 return this->drawOutput(data, handler);
-            }
+            }*/
             // add
             portBox->addItem("AnalogPorts");
             int currentRow = 0;
@@ -1355,13 +1355,14 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
 
     } else {
 
-        // check for badness
+        // check for badness NOT NEEDED ANYMORE
+        /*
         if (!data->isValidPointer(this->source)) {
             qDebug() << "moo4";
             this->set = false;
             this->edit = true;
             return this->drawOutput(data, handler);
-        }
+        }*/
 
         // new layout to contain name and port boxes
         QFrame * frame = new QFrame;
@@ -1445,11 +1446,11 @@ QVBoxLayout * exptLesion::drawLesion(rootData * data, viewELExptPanelHandler *ha
         // add Component LineEdit
         QLineEdit * lineEdit = new QLineEdit;
         if (set) {
-            // if broken
-            if (!data->isValidPointer(this->proj)) {
+            // if broken NOT NEEDED ANYMORE
+            /*if (!data->isValidPointer(this->proj)) {
                 set = false;
                 return this->drawLesion(data, handler);
-            }
+            }*/
             lineEdit->setText(this->proj->getName());
         } else {
             lineEdit->setText("Type projection name");
@@ -1485,12 +1486,13 @@ QVBoxLayout * exptLesion::drawLesion(rootData * data, viewELExptPanelHandler *ha
 
     } else {
 
-         // check for badness
+         // check for badness NOT NEEDED ANYMORE
+         /*
          if (!data->isValidPointer(this->proj)) {
              this->set = false;
              this->edit = true;
              return this->drawLesion(data, handler);
-         }
+         }*/
 
         // new layout to contain name and port boxes
         QFrame * frame = new QFrame;
@@ -1556,11 +1558,11 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
         // add Component LineEdit
         QLineEdit * lineEdit = new QLineEdit;
         if (set) {
-            // if broken
-            if (!data->isValidPointer(this->component)) {
+            // if broken NOT NEEDED ANYMORE
+            /*if (!data->isValidPointer(this->component)) {
                 set = false;
                 return this->drawChangeProp(data, handler);
-            }
+            }*/
             lineEdit->setText(this->component->getXMLName());
         } else {
             lineEdit->setText("Type component name");
@@ -1871,7 +1873,7 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
                 buttons->addWidget(currButton);
 
                 currButton->setProperty("ptr", qVariantFromValue((void *) currPar));
-                currButton->setProperty("ptrComp", qVariantFromValue((void *) component->component));
+                currButton->setProperty("ptrComp", qVariantFromValue((void *) component->component.data()));
 
                 // add connection:
                 connect(currButton, SIGNAL(clicked()), data, SLOT(updatePar()));
@@ -1924,12 +1926,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
 
     } else {
 
-         // check for badness
-         if (!data->isValidPointer(this->component)) {
+         // check for badness NOT NEEDED ANYMORE
+         /*if (!data->isValidPointer(this->component)) {
              this->set = false;
              this->edit = true;
              return this->drawChangeProp(data, handler);
-         }
+         }*/
 
         // new layout to contain name and port boxes
         QFrame * frame = new QFrame;
@@ -2227,7 +2229,7 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         array.chop(1);
         writer->writeAttribute("tcp_port",QString::number(this->externalInput.port));
         if (this->target->owner->type == populationObject) {
-            population * pop = dynamic_cast<population *> (this->target->owner);
+            QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
             CHECK_CAST(pop)
             this->externalInput.size = pop->numNeurons;
         }
@@ -2269,7 +2271,7 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         QStringList inds = indices.split(",");
         for (int i = 0; i < inds.size(); ++i) {
             if (source->component->type == "neuron_body") {
-                population * pop = dynamic_cast<population *> (source->owner);
+                QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (source->owner);
                 CHECK_CAST(pop)
                 if (inds[i].toInt() < 0 || inds[i].toInt() > pop->numNeurons-1) {
                     QMessageBox msgBox;
@@ -2280,9 +2282,9 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
                 }
             }
             if (source->component->type == "postsynapse") {
-                projection * proj = dynamic_cast<projection *> (source->owner);
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (source->owner);
                 CHECK_CAST(proj)
-                population * pop = proj->destination;
+                QSharedPointer <population> pop = proj->destination;
                 if (inds[i].toInt() < 0 || inds[i].toInt() > pop->numNeurons-1) {
                     QMessageBox msgBox;
                     msgBox.setIcon(QMessageBox::Warning);
@@ -2317,8 +2319,9 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
 
 void exptLesion::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
 
-    if (!data->isValidPointer(proj))
-        return;
+    // NOT NEEDED ANYMORE
+    /*if (!data->isValidPointer(proj))
+        return;*/
 
     if (!set || edit)
         return;
@@ -2390,7 +2393,7 @@ void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
 
 // ###################### READ IN XML:
 
-NineMLComponentData * getTargetFromData(QString TargetName, projectObject * data) {
+QSharedPointer <NineMLComponentData> getTargetFromData(QString TargetName, projectObject * data) {
 
     // find Synapse in model
     for (uint i = 0; i < data->network.size(); ++i) {
@@ -2411,10 +2414,12 @@ NineMLComponentData * getTargetFromData(QString TargetName, projectObject * data
             }
         }
     }
-    return NULL;
+    QSharedPointer<NineMLComponentData> null;
+
+    return null;
 }
 
-Port * findPortInComponent(QString portName, NineMLComponentData * target) {
+Port * findPortInComponent(QString portName, QSharedPointer <NineMLComponentData> target) {
 
     // find port in Synapse:
     for (uint i = 0; i < target->component->AnalogPortList.size(); ++i) {
@@ -2433,7 +2438,7 @@ Port * findPortInComponent(QString portName, NineMLComponentData * target) {
     return NULL;
 }
 
-Port * findOutputPortInComponent(QString portName, NineMLComponentData * Synapse) {
+Port * findOutputPortInComponent(QString portName, QSharedPointer <NineMLComponentData> Synapse) {
 
     // find port in Synapse:
     for (uint i = 0; i < Synapse->component->AnalogPortList.size(); ++i) {
@@ -2476,7 +2481,7 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
 
                                 if (reader->name() == "Configuration") {
 
-                                    NineMLComponentData * component = NULL;
+                                    QSharedPointer <NineMLComponentData> component;
                                     QString SynapseName;
                                     if (reader->attributes().hasAttribute("target"))
                                         SynapseName = reader->attributes().value("target").toString();
@@ -2493,7 +2498,7 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
 
                                     component = getTargetFromData(SynapseName, data);
 
-                                    if (component == NULL)
+                                    if (component.isNull())
                                     {
                                         QSettings settings;
                                         int num_errs = settings.beginReadArray("errors");
@@ -2728,7 +2733,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
 
         // if spike source
         if (this->target->owner->type == populationObject) {
-            population * pop = dynamic_cast<population *> (this->target->owner);
+            QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
             if (pop->isSpikeSource) {
                 // point to dummy event port
                 port = &(this->eventport);
@@ -3325,7 +3330,7 @@ void exptLesion::readXML(QXmlStreamReader * reader, projectObject * data) {
     QString srcName;
     QString dstName;
 
-    this->proj = NULL;
+    this->proj.clear();
 
     if (reader->attributes().hasAttribute("src_population"))
         srcName = reader->attributes().value("src_population").toString();

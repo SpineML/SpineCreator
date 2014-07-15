@@ -24,7 +24,7 @@
 
 #include "nineml_layout_classes.h"
 
-NineMLLayout::NineMLLayout(NineMLLayout *data)
+NineMLLayout::NineMLLayout(QSharedPointer<NineMLLayout>data)
 {
 
     name = data->name;
@@ -113,7 +113,7 @@ NineMLLayout& NineMLLayout::operator=(const NineMLLayout& data)
 }
 
 // copy constructor required for the base class
-NineMLLayoutData::NineMLLayoutData(NineMLLayout *data)
+NineMLLayoutData::NineMLLayoutData(QSharedPointer<NineMLLayout>data)
 {
     seed = 123;
     minimumDistance = 0.0;
@@ -666,7 +666,7 @@ RegimeSpace::~RegimeSpace()
     }
 }
 
-int RegimeSpace::validateRegime(NineMLLayout *component, QStringList * errs)
+int RegimeSpace::validateRegime(NineMLLayout * component, QStringList * errs)
 {
     int failures = 0;
     for(uint i=0; i<OnConditionList.size(); i++)
@@ -782,7 +782,7 @@ OnConditionSpace::~OnConditionSpace()
 
 }
 
-int OnConditionSpace::validateOnCondition(NineMLLayout *component, QStringList * errs)
+int OnConditionSpace::validateOnCondition(NineMLLayout * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -874,7 +874,7 @@ void Transform::writeOut(QDomDocument * doc, QDomElement &parent)
 
 }
 
-int Transform::validateTransform(NineMLLayout *component, QStringList * errs)
+int Transform::validateTransform(NineMLLayout * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -917,7 +917,7 @@ TransformData::TransformData(Transform *data)
     value = 0;
 }
 
-int StateAssignment::validateStateAssignment(NineMLLayout *component, QStringList * errs)
+int StateAssignment::validateStateAssignment(NineMLLayout * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -934,7 +934,7 @@ int StateAssignment::validateStateAssignment(NineMLLayout *component, QStringLis
     return failures;
 }
 
-int Alias::validateAlias(NineMLLayout *component, QStringList * errs)
+int Alias::validateAlias(NineMLLayout * component, QStringList * errs)
 {
     // mathinline pointer may be null
     if (maths != (MathInLine *)0) {
@@ -944,7 +944,7 @@ int Alias::validateAlias(NineMLLayout *component, QStringList * errs)
     }
 }
 
-int MathInLine::validateMathInLine(NineMLLayout* component, QStringList * errs)
+int MathInLine::validateMathInLine(NineMLLayout * component, QStringList * errs)
 {
     // remove operators
 

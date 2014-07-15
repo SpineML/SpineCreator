@@ -40,15 +40,16 @@
 class population : public systemObject
 {
 public:
-    population(float x, float y, float size, float aspect_ratio, QString name = "New population");
-    population(population * data);
-    population(QDomElement &e, QDomDocument * doc, QDomDocument *meta, projectObject *data);
+    population() {}
+    population(float x, float y, float size, float aspect_ratio, QString name);
+    population(QSharedPointer <population> data, QSharedPointer<population> thisSharedPointer);
+    void readFromXML(QDomElement &e, QDomDocument * doc, QDomDocument *meta, projectObject *data, QSharedPointer<population> thisSharedPointer);
     ~population();
-    NineMLComponentData *neuronType;
-    NineMLLayoutData *layoutType;
+    QSharedPointer <NineMLComponentData>neuronType;
+    QSharedPointer<NineMLLayoutData>layoutType;
     bool within_bounds(float x, float y);
     bool is_clicked(float, float, float );
-    void animate();
+    void animate(QSharedPointer<population> thisSharedPointer);
     void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style);
     void drawSynapses(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style);
     void drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style);
@@ -62,8 +63,8 @@ public:
     QString neuronTypeName;
     int numNeurons;
     QString layoutName;
-    vector < projection *> projections;
-    vector < projection *> reverseProjections;
+    vector < QSharedPointer <projection> > projections;
+    vector < QSharedPointer <projection> > reverseProjections;
     float getLeft();
     float getRight();
     float getTop();
@@ -75,7 +76,7 @@ public:
     void load_projections_from_xml(QDomElement  &e, QDomDocument * doc, QDomDocument * meta, projectObject *data);
     void read_inputs_from_xml(QDomElement  &e, QDomDocument *meta, projectObject *data);
     QPainterPath * addToPath(QPainterPath * path);
-    bool connectsTo(population * pop);
+    bool connectsTo(QSharedPointer <population> pop);
     void remove(rootData *data);
     void delAll(rootData *data);
     void delAll(projectObject *);
@@ -83,7 +84,7 @@ public:
     void getNeuronLocations(vector<loc> *locations,QColor * cols);
     void print();
     void setupBounds();
-    void makeSpikeSource();
+    void makeSpikeSource(QSharedPointer<population> thisSharedPointer);
 
     QColor colour;
 

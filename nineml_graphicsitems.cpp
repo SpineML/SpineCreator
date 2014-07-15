@@ -278,7 +278,7 @@ void RegimeGraphicsItem::handleSelection()
 
 void RegimeGraphicsItem::setRegimeName(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     regime->name = n;
     //rename the gv node
     renameGVNode(n);
@@ -302,17 +302,19 @@ void RegimeGraphicsItem::setRegimeName(QString n)
 
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Regime name"));
-    else
-        delete oldComponent;
+    } else {
+        oldComponent.clear();
+    }
 }
 
 void RegimeGraphicsItem::updateContent()
 {
     QString title_text = regime->name;
-    if (root->al->initial_regime == regime)
+    if (root->al->initial_regime == regime) {
         title_text.append( "*");
+    }
     title->setPlainText(title_text);
     //need to force a layout call for a TitleTextItem
     updateGVData();
@@ -371,7 +373,7 @@ MathInLine * TimeDerivativeTextItem::getMaths()
 
 void TimeDerivativeTextItem::setVariable(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     time_derivative->variable_name = p;
     if (time_derivative->variable != NULL)
     {
@@ -386,21 +388,22 @@ void TimeDerivativeTextItem::setVariable(QString p)
     }
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set TD variable"));
-    else
-        delete oldComponent;
+    } else {
+        oldComponent.clear();
+    }
 }
 
 void TimeDerivativeTextItem::setMaths(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
     time_derivative->maths->equation = m;
     QStringList errs;
-    time_derivative->maths->validateMathInLine(root->al, &errs);
+    time_derivative->maths->validateMathInLine(root->al.data(), &errs);
 
     // sort out errors
     QSettings settings;
@@ -431,10 +434,11 @@ void TimeDerivativeTextItem::setMaths(QString m)
 
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set TD maths"));
-    else
-        delete oldComponent;
+    } else {
+        oldComponent.clear();
+    }
 }
 
 void TimeDerivativeTextItem::updateContent()
@@ -509,7 +513,7 @@ MathInLine * OnConditionGraphicsItem::getTriggerMaths()
 
 void OnConditionGraphicsItem::setTriggerMaths(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
@@ -542,10 +546,11 @@ void OnConditionGraphicsItem::setTriggerMaths(QString m)
         settings.remove("errors");
     }
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set OC trigger"));
-    else
-        delete oldComponent;
+    } else {
+        oldComponent.clear();
+    }
 }
 
 Regime * OnConditionGraphicsItem::getSynapseRegime()
@@ -560,7 +565,7 @@ Regime * OnConditionGraphicsItem::getSourceRegime()
 
 void OnConditionGraphicsItem::setSynapseRegime(QString r)
 {
-    //NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    //QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_condition->target_regime_name = r;
     for (uint i=0;i<root->al->RegimeList.size();i++)
     {
@@ -571,7 +576,7 @@ void OnConditionGraphicsItem::setSynapseRegime(QString r)
     //if (qobject_cast < QComboBox *> (sender()))
    //     root->alPtr->undoStack.push(new changeComponent(root, oldComponent));
    // else
-    //    delete oldComponent;
+    //    oldComponent.clear();
 }
 
 void OnConditionGraphicsItem::addStateAssignment(StateAssignment *sa)
@@ -626,7 +631,7 @@ void OnConditionTriggerTextItem::setMaths(QString m)
 {
     trigger->maths->equation = m;
     QStringList errs;
-    trigger->maths->validateMathInLine(root->al, &errs);
+    trigger->maths->validateMathInLine(root->al.data(), &errs);
     updateContent();
     root->notifyDataChange();
 }
@@ -678,7 +683,7 @@ MathInLine * StateAssignmentTextItem::getMaths()
 
 void StateAssignmentTextItem::setVariable(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     assignment->name = p;
     if (assignment->variable != NULL)
         disconnect(assignment->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -692,21 +697,22 @@ void StateAssignmentTextItem::setVariable(QString p)
     }
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SA variable"));
-    else
-        delete oldComponent;
+    } else {
+        oldComponent.clear();
+    }
 }
 
 void StateAssignmentTextItem::setMaths(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
     assignment->maths->equation = m;
     QStringList errs;
-    assignment->maths->validateMathInLine(root->al, &errs);
+    assignment->maths->validateMathInLine(root->al.data(), &errs);
 
     // sort out errors
     QSettings settings;
@@ -740,7 +746,7 @@ void StateAssignmentTextItem::setMaths(QString m)
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SA maths"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void StateAssignmentTextItem::updateContent()
@@ -777,7 +783,7 @@ EventPort * EventOutTextItem::getEventPort()
 
 void EventOutTextItem::setEventPort(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     event_out->port_name = m;
     if (event_out->port != NULL)
         disconnect(event_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -794,7 +800,7 @@ void EventOutTextItem::setEventPort(QString m)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set EventOut port"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void EventOutTextItem::updateContent()
@@ -835,7 +841,7 @@ ImpulsePort * ImpulseOutTextItem::getImpulsePort()
 
 void ImpulseOutTextItem::setImpulsePort(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     impulse_out->port_name = m;
     if (impulse_out->port != NULL){
         disconnect(impulse_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -994,35 +1000,35 @@ QString ParameterTextItem::getName()
 
 void ParameterTextItem::setName(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     parameter->setName(n);
     updateContent();
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Parameter name"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void ParameterTextItem::setDimsPrefix(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     parameter->dims->setPrefix(p);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Par dims prefix"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void ParameterTextItem::setDimsUnit(QString u)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     parameter->dims->setUnit(u);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Par dims suffix"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void ParameterTextItem::handleSelection()
@@ -1067,36 +1073,36 @@ QString StateVariableTextItem::getName()
 
 void StateVariableTextItem::setName(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     state_variable->setName(n);
     updateContent();
     root->notifyDataChange();
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV name"));
     else
-        delete oldComponent;
+         oldComponent.clear();
 }
 
 void StateVariableTextItem::setDimsPrefix(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     state_variable->dims->setPrefix(p);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV dims prefix"));
     else
-        delete oldComponent;
+         oldComponent.clear();
 }
 
 void StateVariableTextItem::setDimsUnit(QString u)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     state_variable->dims->setUnit(u);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV dims suffix"));
     else
-        delete oldComponent;
+         oldComponent.clear();
 }
 
 void StateVariableTextItem::handleSelection()
@@ -1138,14 +1144,14 @@ QString AliasTextItem::getName()
 
 void AliasTextItem::setName(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
     alias->setName(n);
     updateContent();
     root->notifyDataChange();
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Alias name"));
     else
-        delete oldComponent;
+         oldComponent.clear();
 }
 
 MathInLine * AliasTextItem::getMaths()
@@ -1155,13 +1161,13 @@ MathInLine * AliasTextItem::getMaths()
 
 void AliasTextItem::setMaths(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
     alias->maths->equation = m;
     QStringList errs;
-    alias->maths->validateMathInLine(root->al, &errs);
+    alias->maths->validateMathInLine(root->al.data(), &errs);
 
     // sort out errors
     QSettings settings;
@@ -1196,7 +1202,7 @@ void AliasTextItem::setMaths(QString m)
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Alias maths"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void AliasTextItem::handleSelection()
@@ -1354,7 +1360,7 @@ QString AnalogPortTextItem::getName()
 
 void AnalogPortTextItem::setName(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     port->setName(n);
     updateContent();
     root->notifyDataChange();
@@ -1364,7 +1370,7 @@ void AnalogPortTextItem::setName(QString n)
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port name"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 AnalogPortMode AnalogPortTextItem::getPortMode()
@@ -1384,7 +1390,7 @@ StateVariable * AnalogPortTextItem::getVariable()
 
 void AnalogPortTextItem::setVariable(QString v)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     port->name = v;
     //could be either an analog port
     if (port->variable != NULL)
@@ -1410,13 +1416,13 @@ void AnalogPortTextItem::setVariable(QString v)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port variable"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 
 }
 
 void AnalogPortTextItem::setPortMode(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if (p.compare("Send") == 0){
         if (port->variable != NULL)
             disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -1454,13 +1460,13 @@ void AnalogPortTextItem::setPortMode(QString p)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port mode"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 
 }
 
 void AnalogPortTextItem::setPortReduceOp(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if (p.compare("None") == 0)
         port->op = ReduceOperationNone;
     else if (p.compare("Addition") == 0)
@@ -1470,12 +1476,12 @@ void AnalogPortTextItem::setPortReduceOp(QString p)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port reduce op"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void AnalogPortTextItem::setDimsPrefix(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)){
         port->dims->setPrefix(p);
         updateContent();
@@ -1483,12 +1489,12 @@ void AnalogPortTextItem::setDimsPrefix(QString p)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set AP dims prefix"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void AnalogPortTextItem::setDimsUnit(QString u)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)){
         port->dims->setUnit(u);
         updateContent();
@@ -1496,7 +1502,7 @@ void AnalogPortTextItem::setDimsUnit(QString u)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set AP dims suffix"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 
@@ -1549,19 +1555,19 @@ EventPortMode EventPortTextItem::getPortMode()
 
 void EventPortTextItem::setName(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     port->setName(n);
     updateContent();
     root->notifyDataChange();
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Event Port name"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void EventPortTextItem::setPortMode(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if (p.compare("Send") == 0)
         port->mode = EventSendPort;
     else if (p.compare("Receive") == 0)
@@ -1571,7 +1577,7 @@ void EventPortTextItem::setPortMode(QString p)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set EventPort mode"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 /************************************************************/
@@ -1631,7 +1637,7 @@ QString ImpulsePortTextItem::getName()
 
 void ImpulsePortTextItem::setName(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     port->setName(n);
     port->parameter = NULL;
     updateContent();
@@ -1639,7 +1645,7 @@ void ImpulsePortTextItem::setName(QString n)
     if (qobject_cast < QLineEdit *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP name"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 Parameter *ImpulsePortTextItem::getParameter()
@@ -1655,7 +1661,7 @@ ImpulsePortMode ImpulsePortTextItem::getPortMode()
 
 void ImpulsePortTextItem::setParameter(QString n)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     //could be either an analog port
     if (port->parameter != NULL)
         disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -1689,13 +1695,13 @@ void ImpulsePortTextItem::setParameter(QString n)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP Parameter"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 
 }
 
 void ImpulsePortTextItem::setPortMode(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if (p.compare("Send") == 0){
         if (port->parameter != NULL)
             disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -1717,29 +1723,29 @@ void ImpulsePortTextItem::setPortMode(QString p)
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP mode"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void ImpulsePortTextItem::setDimsPrefix(QString p)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     port->dims->setPrefix(p);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP dims prefix"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void ImpulsePortTextItem::setDimsUnit(QString u)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     port->dims->setUnit(u);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP dims suffix"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 /************************************************************/
@@ -1797,14 +1803,14 @@ EventPort * OnEventGraphicsItem::getEventPort()
 
 void OnEventGraphicsItem::setEventPort(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_event->src_port_name = m;
     trigger_item->setEventPort(m);
     root->notifyDataChange();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set OE Event Port"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 Regime * OnEventGraphicsItem::getSynapseRegime()
@@ -1819,7 +1825,7 @@ Regime * OnEventGraphicsItem::getSourceRegime()
 
 void OnEventGraphicsItem::setSynapseRegime(QString r)
 {
-   // NineMLComponent * oldComponent = new NineMLComponent(root->al);
+   // QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_event->target_regime_name = r;
     for (uint i=0;i<root->al->RegimeList.size();i++)
     {
@@ -1971,14 +1977,14 @@ ImpulsePort * OnImpulseGraphicsItem::getImpulsePort()
 
 void OnImpulseGraphicsItem::setImpulsePort(QString m)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(root->al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_impulse->src_port_name = m;
     trigger_item->setImpulsePort(m);
     root->notifyDataChange();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set OI Impulse Port"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 Regime * OnImpulseGraphicsItem::getSynapseRegime()

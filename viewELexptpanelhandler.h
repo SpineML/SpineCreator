@@ -72,7 +72,7 @@ private:
 
     QPointF cursor;
 
-    systemObject * currSystemObject;
+    QSharedPointer<systemObject> currSystemObject;
 
     GLWidget * gl;
 

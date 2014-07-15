@@ -1651,19 +1651,19 @@ void kernel_connection::generate_connections() {
 }
 
 void kernel_connection::convertToList(bool check) {
-
+/*
     // instantiate the connection for simulators etc...
     this->isAList = check;
-    systemObject * ptr;
-    ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
-    CHECK_CAST(ptr);
+    systemObject* ptr;
+    ptr = (systemObject *)  sender()->property("ptrSrc").value<void *>();
+    //CHECK_CAST(ptr);
     src = dynamic_cast<population *> (ptr);
     CHECK_CAST(src);
     ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
-    CHECK_CAST(ptr);
+    //CHECK_CAST(ptr);
     dst = dynamic_cast<population *> (ptr);
     CHECK_CAST(dst);
-
+*/
 }
 
 bool kernel_connection::isList() {
@@ -1672,7 +1672,7 @@ bool kernel_connection::isList() {
 
 }
 
-pythonscript_connection::pythonscript_connection(population * src, population * dst, csv_connection *  conn_targ)
+pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
 {
     type = Python;
     this->isAList = false;
@@ -2266,9 +2266,9 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
 
 ParameterData * pythonscript_connection::getPropPointer() {
     for (uint i = 0; i < this->src->projections.size(); ++i) {
-        projection * proj = this->src->projections[i];
+        QSharedPointer <projection> proj = this->src->projections[i];
         for (uint j = 0; j < proj->synapses.size(); ++j) {
-            synapse * syn = proj->synapses[j];
+            QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
             bool isConn = false;
             if (syn->connectionType == this) {
@@ -2306,9 +2306,9 @@ ParameterData * pythonscript_connection::getPropPointer() {
 QStringList pythonscript_connection::getPropList() {
     QStringList list;
     for (uint i = 0; i < this->src->projections.size(); ++i) {
-        projection * proj = this->src->projections[i];
+        QSharedPointer <projection> proj = this->src->projections[i];
         for (uint j = 0; j < proj->synapses.size(); ++j) {
-            synapse * syn = proj->synapses[j];
+            QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
             bool isConn = false;
             if (syn->connectionType == this) {
@@ -2624,21 +2624,21 @@ void pythonscript_connection::generate_connections() {
 
 }
 
-void pythonscript_connection::convertToList(bool check) {
+/*void pythonscript_connection::convertToList(bool check) {
 
     // instantiate the connection for simulators etc...
     this->isAList = check;
-    systemObject * ptr;
-    ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
+    QSharedPointer<systemObject> ptr;
+    ptr = (QSharedPointer<systemObject>) sender()->property("ptrSrc").value<void *>();
     CHECK_CAST(ptr);
-    src = dynamic_cast<population *> (ptr);
+    src = dynamic_cast<QSharedPointer <population>> (ptr);
     CHECK_CAST(src);
-    ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
+    ptr = (QSharedPointer<systemObject>) sender()->property("ptrDst").value<void *>();
     CHECK_CAST(ptr);
-    dst = dynamic_cast<population *> (ptr);
+    dst = dynamic_cast<QSharedPointer <population>> (ptr);
     CHECK_CAST(dst);
 
-}
+}*/
 
 bool pythonscript_connection::isList() {
 

@@ -28,7 +28,7 @@
 #include "connection.h"
 #include "glconnectionwidget.h"
 
-generate_dialog::generate_dialog(kernel_connection * currConn, population * src, population * dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
+generate_dialog::generate_dialog(kernel_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::generate_dialog)
 {
@@ -52,7 +52,7 @@ generate_dialog::generate_dialog(kernel_connection * currConn, population * src,
 
     connect(currConn, SIGNAL(progress(int)), ui->progressBar, SLOT(setValue(int)));
     if (parent != NULL) {
-        glConnectionWidget * p = dynamic_cast<glConnectionWidget *> parent;
+        glConnectionWidget * p = dynamic_cast<glConnectionWidget *> (parent);
         CHECK_CAST(p)
         connect(currConn, SIGNAL(progress(int)), p, SLOT(redraw()));
     }
@@ -63,7 +63,7 @@ generate_dialog::generate_dialog(kernel_connection * currConn, population * src,
 
 }
 
-generate_dialog::generate_dialog(pythonscript_connection * currConn, population * src, population * dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
+generate_dialog::generate_dialog(pythonscript_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::generate_dialog)
 {
@@ -152,9 +152,9 @@ void generate_dialog::moveFromThread() {
         } else {
             // move the weights across
             for (uint i = 0; i < currConnPy->src->projections.size(); ++i) {
-                projection * proj = currConnPy->src->projections[i];
+                QSharedPointer <projection> proj = currConnPy->src->projections[i];
                 for (uint j = 0; j < proj->synapses.size(); ++j) {
-                    synapse * syn = proj->synapses[j];
+                    QSharedPointer <synapse> syn = proj->synapses[j];
                     // if we have found the connection
                     if (syn->connectionType == currConnPy) {
                         // now we know which weight update we have to look at

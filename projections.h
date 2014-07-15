@@ -61,14 +61,14 @@ class synapse : public systemObject
 {
 public:
     synapse() {isVisualised=false;}
-    synapse(projection * proj, projectObject * data, bool dontAddInputs = false);
-    synapse(projection * proj, rootData * data, bool dontAddInputs = false);
+    synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs = false);
+    synapse(QSharedPointer <projection> proj, rootData * data, bool dontAddInputs = false);
     ~synapse();
-    NineMLComponentData *postsynapseType;
-    NineMLComponentData *weightUpdateType;
+    QSharedPointer <NineMLComponentData>postsynapseType;
+    QSharedPointer <NineMLComponentData>weightUpdateType;
     connection *connectionType;
     bool isVisualised;
-    projection * proj;
+    QSharedPointer <projection> proj;
     QString getName();
     virtual void delAll(rootData *);
 };
@@ -77,7 +77,7 @@ class projection : public systemObject
 {
 public:
     projection();
-    projection(QDomElement  &e, QDomDocument * , QDomDocument * meta, projectObject *data);
+    void readFromXML(QDomElement  &e, QDomDocument * , QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
     virtual ~projection();
     vector < edge > edges;
     vector < bezierCurve > curves;
@@ -85,9 +85,9 @@ public:
     bool is_clicked(float, float,float);
     void add_curves();
 
-    population * source;
-    population * destination;
-    vector <synapse *> synapses;
+    QSharedPointer <population> source;
+    QSharedPointer <population> destination;
+    vector <QSharedPointer <synapse> > synapses;
     int currTarg;
     QString getName();
     virtual void remove(rootData *);
@@ -95,7 +95,7 @@ public:
     virtual void delAll(projectObject *);
     void move(float,float);
 
-    void connect();
+    void connect(QSharedPointer<projection> in);
     void disconnect();
 
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
@@ -103,11 +103,11 @@ public:
     void drawHandles(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height);
     void moveEdge(int, float, float);
     virtual void write_model_meta_xml(QDomDocument &meta, QDomElement &root);
-    void read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject *data);
+    void read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
     void print();
-    QPointF findBoxEdge(population * pop, float xGL, float yGL);
-    void setAutoHandles(population * pop1, population *pop2, QPointF end);
-    virtual void animate(systemObject * movingObj, QPointF delta);
+    QPointF findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL);
+    void setAutoHandles(QSharedPointer <population> pop1, QSharedPointer <population>pop2, QPointF end);
+    void animate(QSharedPointer<systemObject> movingObj, QPointF delta, QSharedPointer<projection> thisSharedPointer);
     virtual void moveSelectedControlPoint(float xGL, float yGL);
     bool selectControlPoint(float xGL, float yGL, float GLscale);
     bool deleteControlPoint(float xGL, float yGL, float GLscale);
@@ -125,7 +125,7 @@ public:
     QPointF transformPoint(QPointF point);
     QPainterPath makeIntersectionLine(int first, int last);
 
-    vector < genericInput * > disconnectedInputs;
+    vector < QSharedPointer<genericInput> > disconnectedInputs;
 
 protected:
     cPoint selectedControlPoint;

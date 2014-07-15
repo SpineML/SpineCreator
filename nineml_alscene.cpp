@@ -60,7 +60,7 @@ NineMLALScene::~NineMLALScene()
     portl_item = NULL;
 }
 
-void NineMLALScene::initialiseScene(NineMLComponent *al)
+void NineMLALScene::initialiseScene(QSharedPointer<NineMLComponent>al)
 {
 
     //create paramater list item
@@ -1142,7 +1142,7 @@ void NineMLALScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
                         {
                             RegimeGraphicsItem *rg = (RegimeGraphicsItem*)g;
 
-                            NineMLComponent * oldComponent = new NineMLComponent(root->al);
+                            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
 
                             //create a transition
                             if (mode == ModeInsertOnCondition)
@@ -1151,7 +1151,7 @@ void NineMLALScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
                                 oc->target_regime_name = rg->getRegimeName();
                                 // validate to set up pointers
                                 QStringList errs;
-                                oc->validateOnCondition(root->al, &errs);
+                                oc->validateOnCondition(root->al.data(), &errs);
                                 // clear errors
                                 QSettings settings;
                                 settings.remove("errors");
@@ -1169,7 +1169,7 @@ void NineMLALScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
                                 oe->target_regime_name = rg->getRegimeName();
                                 // validate to set up pointers
                                 QStringList errs;
-                                oe->validateOnEvent(root->al, &errs);
+                                oe->validateOnEvent(root->al.data(), &errs);
                                 // clear errors
                                 QSettings settings;
                                 settings.remove("errors");
@@ -1188,7 +1188,7 @@ void NineMLALScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
                                 oi->target_regime_name = rg->getRegimeName();
                                 // validate to set up pointers
                                 QStringList errs;
-                                oi->validateOnImpulse(root->al, &errs);
+                                oi->validateOnImpulse(root->al.data(), &errs);
                                 // clear errors
                                 QSettings settings;
                                 settings.remove("errors");

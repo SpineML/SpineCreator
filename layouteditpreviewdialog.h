@@ -34,11 +34,11 @@ class layoutEditPreviewDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit layoutEditPreviewDialog(NineMLLayout *, glConnectionWidget *glConn, QWidget *parent = 0);
+    explicit layoutEditPreviewDialog(QSharedPointer<NineMLLayout>, glConnectionWidget *glConn, QWidget *parent = 0);
 
     
 private:
-    NineMLLayout * srcNineMLLayout;
+    QSharedPointer<NineMLLayout> srcNineMLLayout;
     QFormLayout * contentLayoutRef;
     glConnectionWidget * glView;
 

@@ -48,7 +48,7 @@ public:
     vector <StateVariable*> StateVariableList;
     vector <Parameter*> ParameterList;
     vector <Alias*> AliasList;
-    NineMLLayout(NineMLLayout *data);
+    NineMLLayout(QSharedPointer<NineMLLayout>data);
     NineMLLayout& operator=(const NineMLLayout& data);
     NineMLLayout(){}
     ~NineMLLayout();
@@ -120,8 +120,8 @@ class NineMLLayoutData : public NineMLData
 public:
     int seed;
     double minimumDistance;
-    NineMLLayout * component;
-    NineMLLayoutData(NineMLLayout *data);
+    QSharedPointer<NineMLLayout> component;
+    NineMLLayoutData(QSharedPointer<NineMLLayout>data);
     NineMLLayoutData& operator=(const NineMLLayoutData& data);
     NineMLLayoutData(){}
     ~NineMLLayoutData(){}

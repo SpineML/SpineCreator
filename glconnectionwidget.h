@@ -67,9 +67,9 @@ class glConnectionWidget : public QGLWidget
     Q_OBJECT
 public:
     explicit glConnectionWidget(rootData * data, QWidget *parent = 0);
-    vector <population *> selectedPops;
+    vector <QSharedPointer <population> > selectedPops;
     vector < popLocs> pops;
-    vector <systemObject *> selectedConns;
+    vector <QSharedPointer<systemObject> > selectedConns;
     vector < vector < loc > > locations; // temp readded
     vector < QColor > cols;
     vector < vector < conn > > connections;
@@ -102,7 +102,7 @@ private:
     RNG random;
     rootData * data;
     loc3f loc3Offset;
-    systemObject * selectedObject;
+    QSharedPointer<systemObject> selectedObject;
     int selectedIndex;
     int selectedType;
     QString last_distance_based_equation;

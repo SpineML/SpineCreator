@@ -39,7 +39,7 @@ public:
     ~NineMLALScene();
 
     void setMode(ALSceneMode mode);
-    void initialiseScene(NineMLComponent *al);
+    void initialiseScene(QSharedPointer<NineMLComponent>al);
     RegimeGraphicsItem* addRegimeItem(Regime *r);
     OnConditionGraphicsItem* addOnConditionItem(Regime *r, OnCondition* oc);
     OnEventGraphicsItem* addOnEventItem(Regime *r, OnEvent* oe);
