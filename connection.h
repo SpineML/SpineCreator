@@ -125,6 +125,7 @@ public:
 
     QStringList values;
     void import_csv(QString filename);
+    void import_packed_binary(QFile &fileIn);
     vector <float> fetchData(int index);
     void getAllData(vector < conn > &conns);
     float getData(int, int);
