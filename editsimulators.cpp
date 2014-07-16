@@ -50,7 +50,7 @@ editSimulators::editSimulators(QWidget *parent) :
     }
     settings.endGroup();
 
-    QHBoxLayout * hbox = qobject_cast<QHBoxLayout *> (ui->scrollAreaWidgetContents->layout());
+    QVBoxLayout * hbox = qobject_cast<QVBoxLayout *> (ui->scrollAreaWidgetContents->layout());
     CHECK_CAST(hbox);
     hbox->removeWidget(ui->addEnv);
     hbox->addWidget(ui->addEnv);
@@ -367,7 +367,8 @@ void editSimulators::recursiveDeleteLater(QLayout * parentLayout)
 void editSimulators::redrawEnvVars()
 {
 
-    QHBoxLayout * hbox = qobject_cast<QHBoxLayout *> (ui->scrollAreaWidgetContents->layout());
+    //qDebug() << ui->scrollAreaWidgetContents->layout();
+    QVBoxLayout * hbox = qobject_cast<QVBoxLayout *> (ui->scrollAreaWidgetContents->layout());
     CHECK_CAST(hbox);
 
     recursiveDeleteLater(hbox);

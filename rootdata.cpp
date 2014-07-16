@@ -1153,6 +1153,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
+        CHECK_CAST(dynamic_cast<GLWidget *>(sender()))
         GLWidget * source = (GLWidget *) sender();
         source->move(xGL+source->viewX-cursor.x,yGL-source->viewY-cursor.y);
         return;
@@ -1161,6 +1162,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
     // revised move code for multiple objects
 
     // if grid is on, snap to grid
+    CHECK_CAST(dynamic_cast<GLWidget *>(sender()))
     GLWidget * source = (GLWidget *) sender();
     if (source->gridSelect) {
         xGL = round(xGL/source->gridScale)*source->gridScale;
@@ -1340,6 +1342,7 @@ void rootData::updatePar()
     // update the type of parameter
     if (action == "updateType") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterData *>(par))
         QString newType = sender()->property("newType").toString();
         currProject->undoStack->push(new updateParType(this, par, newType));
     }
@@ -1347,6 +1350,7 @@ void rootData::updatePar()
     // launch the list editor dialog
     if (action == "editList") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterData *>(par))
         NineMLComponent * comp = (NineMLComponent *) sender()->property("ptrComp").value<void *>();
 
         QSharedPointer<NineMLComponent> compShr = this->isValidPointer(comp);
@@ -1363,6 +1367,7 @@ void rootData::updatePar()
     if (action == "changeVal") {
         // Update the parameter value
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterData *>(par))
         int index = sender()->property("valToChange").toInt();
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
@@ -1374,6 +1379,7 @@ void rootData::updatePar()
     if (action == "changeConnProb") {
         // Update the parameter value
         fixedProb_connection * conn = (fixedProb_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<fixedProb_connection *>(conn))
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
         if (value != conn->p) {
@@ -1384,6 +1390,7 @@ void rootData::updatePar()
     if (action == "changeConnKerSize") {
         // Update the parameter value
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
         int kernel_size = ((QComboBox *) sender())->currentIndex() * 2 + 3;
         // only add undo if value has changed
         conn->setKernelSize(kernel_size);
@@ -1393,7 +1400,9 @@ void rootData::updatePar()
     if (action == "changeConnKerScale") {
         // Update the parameter value
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
         float kernel_scale = ((QDoubleSpinBox *) sender())->value();
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
         // only add undo if value has changed
         conn->setKernelScale(kernel_scale);
     }
@@ -1401,7 +1410,9 @@ void rootData::updatePar()
     if (action == "changeConnKernel") {
         // Update the parameter value
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
         float kernel_value = ((QDoubleSpinBox *) sender())->value();
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
         int i = sender()->property("i").toInt();
         int j = sender()->property("j").toInt();
         // only add undo if value has changed
@@ -1411,8 +1422,10 @@ void rootData::updatePar()
     if (action == "changePythonScriptPar") {
         // Update the parameter value
         pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<pythonscript_connection *>(conn))
         float par_value = ((QDoubleSpinBox *) sender())->value();
         QString par_name = ((QDoubleSpinBox *) sender())->property("par_name").toString();
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
         // only add undo if value has changed
         currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
     }
@@ -1420,7 +1433,9 @@ void rootData::updatePar()
     if (action == "changePythonScriptProp") {
         // Update the property affected by the connection
         pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<pythonscript_connection *>(conn))
         QString par_name = ((QComboBox *) sender())->currentText();
+        CHECK_CAST(dynamic_cast<QComboBox *>(sender()))
         // only add undo if value has changed
         currProject->undoStack->push(new undoUpdatePythonConnectionScriptProp(this, conn, par_name));
     }
@@ -1430,6 +1445,7 @@ void rootData::updatePar(int value)
 {
     // Update the parameter value
     ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+    CHECK_CAST(dynamic_cast<ParameterData *>(par))
     par->value[0] = value;
 
     switch (value) {
@@ -1492,6 +1508,7 @@ void rootData::updateLayoutPar()
     case 0:
     {
         QDoubleSpinBox * source = (QDoubleSpinBox *) sender();
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *> (sender()))
         QSharedPointer<NineMLLayoutData> layout = currSel->layoutType;
         if (layout->minimumDistance != source->value())
             currProject->undoStack->push(new updateLayoutMinDist(this,layout,source->value()));
@@ -1500,6 +1517,7 @@ void rootData::updateLayoutPar()
     case 1:
     {
         QSpinBox * source = (QSpinBox *) sender();
+        CHECK_CAST(dynamic_cast<QSpinBox *> (sender()))
         QSharedPointer<NineMLLayoutData> layout = currSel->layoutType;
         if (layout->seed != source->value())
             currProject->undoStack->push(new updateLayoutSeed(this,layout,source->value()));
@@ -1519,6 +1537,7 @@ void rootData::setSize()
 
     // get value
     int value = ((QSpinBox *) sender())->value();
+    CHECK_CAST(dynamic_cast<QSpinBox *>(sender()))
 
     // only update if we have a change
     if (value != currSel->numNeurons) {
@@ -1537,6 +1556,7 @@ void rootData::setLoc3()
 
     int index = sender()->property("type").toInt();
     int value = ((QSpinBox *) sender())->value();
+    CHECK_CAST(dynamic_cast<QSpinBox *>(sender()))
 
     currProject->undoStack->push(new setLoc3Undo(this, currSel, index, value));
 }
@@ -1552,9 +1572,11 @@ void rootData::renamePopulation()
 
     // get the title label so we can update it with the new name
     QLabel * titleLabel = (QLabel *) sender()->property("ptrTitle").value<void *>();
+    CHECK_CAST(dynamic_cast<QLabel *>(titleLabel))
 
     // get the rename box so we can get the new title (it isn't necessarily the sender)
     QLineEdit * renameBox = (QLineEdit *) sender()->property("ptrRename").value<void *>();
+    CHECK_CAST(dynamic_cast<QLineEdit *>(renameBox))
 
     QString newName = renameBox->text();
     // check name is unique
@@ -1633,6 +1655,7 @@ int rootData::getIndex()
 void rootData::changeSynapse()
 {
     QPushButton * source = (QPushButton *) sender();
+    CHECK_CAST(dynamic_cast<QPushButton *>(sender()))
     QString dir = source->property("direction").toString();
 
     // get the currently selected projection
@@ -2046,6 +2069,7 @@ void rootData::addgenericInput()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
+    CHECK_CAST(dynamic_cast<QLineEdit *>(sender()))
     QSharedPointer <NineMLComponentData> src;
 
     // find source:
@@ -2090,6 +2114,7 @@ void rootData::addgenericInput()
     } else {
         // src not found - set the LineEdit background red-ish
         QPalette p = ((QLineEdit *) sender())->palette();
+        CHECK_CAST(dynamic_cast<QLineEdit *>(sender()))
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
         ((QLineEdit *) sender())->setPalette(p);
     }
@@ -2115,6 +2140,7 @@ void rootData::editConnections()
 {
     // launch the list editor dialog
     csv_connection * conn = (csv_connection *) sender()->property("ptr").value<void *>();
+    CHECK_CAST(dynamic_cast<csv_connection *>(conn))
     connectionListDialog * dialog  = new connectionListDialog(conn);
     dialog->show();
 

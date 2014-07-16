@@ -2533,6 +2533,9 @@ void pythonscript_connection::generate_connections() {
     // check the tuple is sound
     if (!argsPy) {
         qDebug() << "Bad args tuple";
+        Py_XDECREF(argsPy);
+        Py_XDECREF(srcPy);
+        Py_XDECREF(dstPy);
         return;
     }
 
@@ -2547,6 +2550,11 @@ void pythonscript_connection::generate_connections() {
         if (pythonErrors.isEmpty()) {
             pythonErrors = "Python Error: Script function is not named connectionFunc.";
         }
+        Py_XDECREF(argsPy);
+        Py_XDECREF(srcPy);
+        Py_XDECREF(dstPy);
+        Py_XDECREF(pyFunc);
+        Py_XDECREF(pymod);
         return;
     }
 
@@ -2557,6 +2565,7 @@ void pythonscript_connection::generate_connections() {
     Py_XDECREF(dstPy);
 
     Py_XDECREF(pyFunc);
+    Py_XDECREF(pymod);
 
     if (!output) {
         this->pythonErrors = "Python Error: ";

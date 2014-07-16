@@ -423,6 +423,7 @@ void rootLayout::initTabBoxPopulation(rootData *) {
 
     ////// LAYOUT
 
+    CHECK_CAST(qobject_cast<QVBoxLayout *> (tab2->layout()));
     layoutComboBox = this->addDropBox((QVBoxLayout *) tab2->layout(), "Layout", "layout");
 
     // connect for configure
@@ -436,6 +437,7 @@ void rootLayout::initTabBoxPopulation(rootData *) {
 
     ////// TYPE
 
+    CHECK_CAST(qobject_cast<QVBoxLayout *> (tab1->layout()));
     neuronComboBox = this->addDropBox((QVBoxLayout *) tab1->layout(),"Neuron type", "neuron");
 
     // connect for configure
@@ -454,6 +456,7 @@ void rootLayout::initTabBoxProjection(rootData * ) {
 
     ////// WU TYPE
 
+    CHECK_CAST(qobject_cast<QVBoxLayout *> (tab1->layout()));
     weightUpdateComboBox = this->addDropBox((QVBoxLayout *) tab1->layout(),"Weight Update", "weight_update");
 
     // connect for configure
@@ -467,6 +470,7 @@ void rootLayout::initTabBoxProjection(rootData * ) {
 
     ////// PSP
 
+    CHECK_CAST(qobject_cast<QVBoxLayout *> (tab2->layout()));
     postSynapseComboBox = this->addDropBox((QVBoxLayout *) tab2->layout(),"Post-synapse", "postsynapse");
 
     // connect for configure
@@ -480,6 +484,7 @@ void rootLayout::initTabBoxProjection(rootData * ) {
 
     ////// CONNECTION
 
+    CHECK_CAST(qobject_cast<QVBoxLayout *> (tab3->layout()));
     connectionComboBox = this->addDropBox((QVBoxLayout *) tab3->layout(),"Connectivity", "conn");
 
     // connect for configure
@@ -501,8 +506,10 @@ void rootLayout::initFinish(rootData * data) {
         // select tab
         QVBoxLayout * tabLayout;
         if (i == 0) {
+            CHECK_CAST(qobject_cast<QVBoxLayout *> (tab1->layout()));
             tabLayout = (QVBoxLayout *) tab1->layout();
         } else {
+            CHECK_CAST(qobject_cast<QVBoxLayout *> (tab2->layout()));
             tabLayout = (QVBoxLayout *) tab2->layout();
         }
 
@@ -647,6 +654,7 @@ void rootLayout::updateComponentLists(rootData * data) {
 
 void rootLayout::modelNameChanged() {
 
+    CHECK_CAST(qobject_cast<QLineEdit *> (sender()));
     QString model_name = ((QLineEdit *) sender())->text();
     emit setCaption(model_name);
 
@@ -945,7 +953,8 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
         case FixedProb:
         case CSV:
             {
-            QLayout * lay = (QLayout *) in->connectionType->drawLayout(data, NULL, this);
+
+            QLayout * lay = in->connectionType->drawLayout(data, NULL, this);
             this->insertLayout(this->count()-2,lay);
             }
             break;
@@ -988,6 +997,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
             drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
             break;
         case CSV:
+            CHECK_CAST(dynamic_cast<csv_connection *>(in->connectionType))
             if (((csv_connection *) in->connectionType)->getNumCols() != 3) {
                 // add delay box:
                 drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
@@ -995,6 +1005,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
             break;
         case Python:
             // add delay box:
+            CHECK_CAST(dynamic_cast<pythonscript_connection *>(in->connectionType))
             if (!((pythonscript_connection *)in->connectionType)->hasDelay) {
                 drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
             }
@@ -1072,12 +1083,13 @@ void rootLayout::drawParamsLayout(rootData * data) {
 
         // select tab
         QVBoxLayout * tabLayout;
-        if (i == 0)
+        if (i == 0) {
             tabLayout = (QVBoxLayout *) tab1->layout();
-        else if (i == 1)
+        } else if (i == 1) {
             tabLayout = (QVBoxLayout *) tab2->layout();
-        else if (i == 2)
+        } else if (i == 2) {
             tabLayout = (QVBoxLayout *) tab3->layout();
+        }
 
         switch (data->selList[0]->type) {
         case populationObject:
@@ -1259,6 +1271,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                     // pars
                     if (connectionBool) {
                         if (conn->type == CSV) {
+                            CHECK_CAST(dynamic_cast<csv_connection *>(conn))
                             if (((csv_connection *) conn)->getNumCols() != 3) {
                                 drawSingleParam(varLayout, currPar, data, connectionBool, type, type9ml, conn);
                             }
@@ -1279,7 +1292,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                     case FixedProb:
                         {// draw in p and seed boxes:
 
-                        QLayout * lay = (QLayout *) conn->drawLayout(data, NULL, this);
+                        QLayout * lay = conn->drawLayout(data, NULL, this);
                         tabLayout->insertLayout(tabLayout->count() - (1), lay);
 
                         /*QDoubleSpinBox *pSpin = new QDoubleSpinBox;
