@@ -62,7 +62,7 @@ bool DotWriter::writeDotFile(QString file_name)
 
 void DotWriter::writeRegimes()
 {
-    for (uint i=0; i<root->al->RegimeList.size(); i++)
+    for (int i=0; i<root->al->RegimeList.size(); i++)
     {
         Regime *r = root->al->RegimeList[i];
         *out << "  " << r->name << " [ style = \"filled, bold\"\n";
@@ -74,7 +74,7 @@ void DotWriter::writeRegimes()
         *out << "            <tr>\n";
         *out << "              <td bgcolor=\"black\" align=\"center\" colspan=\"1\"> <font color=\"white\"> " << r->name << " </font> </td>\n";
         *out << "            </tr>\n";
-        for (uint j=0; j< r->TimeDerivativeList.size();j++)
+        for (int j=0; j< r->TimeDerivativeList.size();j++)
         {
             TimeDerivative *td = r->TimeDerivativeList[j];
             *out << "            <tr>\n";
@@ -87,10 +87,10 @@ void DotWriter::writeRegimes()
 
 void DotWriter::writeTransitions()
 {
-    for (uint i=0; i<root->al->RegimeList.size(); i++)
+    for (int i=0; i<root->al->RegimeList.size(); i++)
     {
         Regime *r = root->al->RegimeList[i];
-        for (uint j=0; j<r->OnConditionList.size(); j++)
+        for (int j=0; j<r->OnConditionList.size(); j++)
         {
             OnCondition *oc = r->OnConditionList[j];
             *out << "  " << r->name <<  " -> " << oc->target_regime->name << "\n";
@@ -105,14 +105,14 @@ void DotWriter::writeTransitions()
             *out << "            <tr> \n";
             *out << "              <td bgcolor=\"green\" align=\"center\" > <font color=\"black\"> @ OnCondition&#40; " << oc->trigger->maths->getHTMLSafeEquation() << "&#41; </font> </td> \n";
             *out << "            </tr> \n";
-            for (uint k=0; k<oc->StateAssignList.size(); k++)
+            for (int k=0; k<oc->StateAssignList.size(); k++)
             {
                 StateAssignment *sa = oc->StateAssignList[k];
                 *out << "            <tr> \n";
                 *out << "              <td> Assign: " << sa->variable->getName() << "&lt;= "<< sa->maths->getHTMLSafeEquation() << " </td> \n";
                 *out << "            </tr> \n";
             }
-            for (uint k=0; k<oc->eventOutList.size(); k++)
+            for (int k=0; k<oc->eventOutList.size(); k++)
             {
                 EventOut * eo = oc->eventOutList[k];
                 *out << "            <tr> \n";
@@ -122,7 +122,7 @@ void DotWriter::writeTransitions()
             *out << "            </table>> ]; \n";
         }
 
-        for (uint j=0; j<r->OnEventList.size(); j++)
+        for (int j=0; j<r->OnEventList.size(); j++)
         {
             OnEvent *oe = r->OnEventList[j];
             *out << "  " << r->name <<  " -> " << oe->target_regime->name << "\n";
@@ -137,14 +137,14 @@ void DotWriter::writeTransitions()
             *out << "            <tr> \n";
             *out << "              <td bgcolor=\"green\" align=\"center\"> <font color=\"black\"> @ OnEvent&#40; " << oe->src_port->getName() << "&#41; </font> </td> \n";
             *out << "            </tr> \n";
-            for (uint k=0; k<oe->StateAssignList.size(); k++)
+            for (int k=0; k<oe->StateAssignList.size(); k++)
             {
                 StateAssignment *sa = oe->StateAssignList[k];
                 *out << "            <tr> \n";
                 *out << "              <td> Assign: " << sa->variable->getName() << "&lt;= "<< sa->maths->getHTMLSafeEquation() <<" </td>\n";
                 *out << "            </tr> \n";
             }
-            for (uint k=0; k<oe->eventOutList.size(); k++)
+            for (int k=0; k<oe->eventOutList.size(); k++)
             {
                 EventOut * eo = oe->eventOutList[k];
                 *out << "            <tr> \n";

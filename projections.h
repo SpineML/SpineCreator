@@ -79,15 +79,15 @@ public:
     projection();
     void readFromXML(QDomElement  &e, QDomDocument * , QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
     virtual ~projection();
-    vector < edge > edges;
-    vector < bezierCurve > curves;
+    QVector < edge > edges;
+    QVector < bezierCurve > curves;
     QPointF start;
     bool is_clicked(float, float,float);
     void add_curves();
 
     QSharedPointer <population> source;
     QSharedPointer <population> destination;
-    vector <QSharedPointer <synapse> > synapses;
+    QVector <QSharedPointer <synapse> > synapses;
     int currTarg;
     QString getName();
     virtual void remove(rootData *);
@@ -97,6 +97,9 @@ public:
 
     void connect(QSharedPointer<projection> in);
     void disconnect();
+
+    void setStyle(drawStyle style);
+    drawStyle style();
 
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
     void drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style);
@@ -125,7 +128,7 @@ public:
     QPointF transformPoint(QPointF point);
     QPainterPath makeIntersectionLine(int first, int last);
 
-    vector < QSharedPointer<genericInput> > disconnectedInputs;
+    QVector < QSharedPointer<genericInput> > disconnectedInputs;
 
 protected:
     cPoint selectedControlPoint;
@@ -133,6 +136,7 @@ protected:
 private:
     int srcPos;
     int dstPos;
+    drawStyle projDrawStyle;
 };
 
 #endif // PROJECTIONS_H

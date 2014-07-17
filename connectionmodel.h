@@ -37,7 +37,7 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const ;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    void allData(vector < conn > &conns);
+    void allData(QVector < conn > &conns);
     void setConnection(csv_connection * currConn);
     csv_connection * getConnection();
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;

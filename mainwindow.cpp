@@ -468,7 +468,7 @@ void MainWindow::osxHack()
 
 bool MainWindow::isChanged()
 {
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i]->isChanged(&data))
             return true;
     }
@@ -487,7 +487,7 @@ void MainWindow::setProjectMenu()
     // create a new action group
     data.projectActions = new QActionGroup(this);
     // add actions to select projects to the action group
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         data.projectActions->addAction(data.projects[i]->action(i));
     }
     // select the current project
@@ -526,7 +526,7 @@ bool MainWindow::promptToSave()
 void MainWindow::closeEvent(QCloseEvent * event)
 {
     // if there are changes
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i]->isChanged(&data)) {
             data.currProject->deselect_project(&data);
             data.projects[i]->select_project(&data);
@@ -551,19 +551,19 @@ void MainWindow::closeEvent(QCloseEvent * event)
 void MainWindow::clearComponents()
 {
     // delete catalog components
-    for (uint i = 0; i < this->data.catalogLayout.size(); ++i) {
+    for (int i = 0; i < this->data.catalogLayout.size(); ++i) {
         this->data.catalogLayout[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogNrn.size(); ++i) {
+    for (int i = 0; i < this->data.catalogNrn.size(); ++i) {
         this->data.catalogNrn[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogPS.size(); ++i) {
+    for (int i = 0; i < this->data.catalogPS.size(); ++i) {
         this->data.catalogPS[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogWU.size(); ++i) {
+    for (int i = 0; i < this->data.catalogWU.size(); ++i) {
         this->data.catalogWU[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogUnsorted.size(); ++i) {
+    for (int i = 0; i < this->data.catalogUnsorted.size(); ++i) {
         this->data.catalogUnsorted[i].clear();
     }
 
@@ -607,7 +607,7 @@ MainWindow::~MainWindow()
     QStringList connFiles = lib_dir.entryList();
 
     // remove temporary connection list files
-    for (uint i = 0; i < (uint) connFiles.size(); ++i)
+    for (int i = 0; i < (int) connFiles.size(); ++i)
        QFile::remove(lib_dir.absoluteFilePath(connFiles[i]));
 
     if (this->emsg != (QErrorMessage*)0) {
@@ -1058,7 +1058,7 @@ void MainWindow::connectViewVZ()
 {
     // viewVZ
     QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(setSelectionbyName(QString)), &(data), SLOT(setSelectionbyName(QString)));
-    QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(getNeuronLocationsSrc(vector< vector<loc> >*,vector <QColor>*, QString)), &(data), SLOT(getNeuronLocationsSrc(vector< vector<loc> >*,vector <QColor>*, QString)));
+    QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(getNeuronLocationsSrc(QVector < QVector <loc> >*,QVector <QColor>*, QString)), &(data), SLOT(getNeuronLocationsSrc(QVector < QVector <loc> >*,QVector <QColor>*, QString)));
     QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(updatePanel(QString)), this->viewVZhandler, SLOT(redrawFromObject(QString)));
     QObject::connect(&(data), SIGNAL(updatePanelView2(QString)), this->viewVZhandler, SLOT(redrawFromObject(QString)));
 }
@@ -1097,12 +1097,12 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
 
     // extract the current item component:
     // select catalog
-    vector < QSharedPointer<NineMLComponent> > currCatalog;
+    QVector < QSharedPointer<NineMLComponent> > currCatalog;
     QString catalogString;
 
     QSharedPointer<NineMLComponent> selectedComponent;
 
-    for (uint catNum = 0; catNum < 3; ++catNum) {
+    for (int catNum = 0; catNum < 3; ++catNum) {
 
         switch (catNum) {
         case 0:
@@ -1120,7 +1120,7 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
         }
 
         // add components
-        for (uint i = 0; i < currCatalog.size(); ++i) {
+        for (int i = 0; i < currCatalog.size(); ++i) {
 
             // get reference for component
             QSharedPointer<NineMLComponent> component = currCatalog[i];
@@ -1189,9 +1189,9 @@ void MainWindow::addComponentsToFileList()
     }
 
     // select catalog
-    vector < QSharedPointer<NineMLComponent> > currCatalog;
+    QVector < QSharedPointer<NineMLComponent> > currCatalog;
     QString catalogString;
-    for (uint catNum = 0; catNum < 3; ++catNum) {
+    for (int catNum = 0; catNum < 3; ++catNum) {
 
         switch (catNum) {
         case 0:
@@ -1209,7 +1209,7 @@ void MainWindow::addComponentsToFileList()
         }
 
         // add components
-        for (uint i = 1; i < currCatalog.size(); ++i) {
+        for (int i = 1; i < currCatalog.size(); ++i) {
 
             // get reference for component
             QSharedPointer<NineMLComponent> component = currCatalog[i];
@@ -1544,7 +1544,7 @@ void MainWindow::close_project()
 
     // close the current project
     // find current project
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i] == data.currProject) {
 
             // find another project to switch to:
@@ -1652,7 +1652,7 @@ void MainWindow::import_csv()
 void MainWindow::duplicate_component()
 {
     // find which catalog we are saving to
-    vector < QSharedPointer<NineMLComponent> > * curr_lib;
+    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
     if (viewCL.root->al->type == "neuron_body")
         curr_lib = &data.catalogNrn;
     if (viewCL.root->al->type == "weight_update")
@@ -1668,7 +1668,7 @@ void MainWindow::duplicate_component()
     // see if there is a component with the same name
     while (!unique) {
         unique = true;
-        for (uint i = 0; i < curr_lib->size(); ++i) {
+        for (int i = 0; i < curr_lib->size(); ++i) {
             if ((*curr_lib)[i]->name == viewCL.root->al->name + QString::number(float(val))) {
                 unique = false;
             }
@@ -1827,7 +1827,7 @@ void MainWindow::export_layout()
 
     // add layouts to list and add to dialog
     QStringList options;
-    for (uint i = 1; i < data.catalogLayout.size(); ++i) {
+    for (int i = 1; i < data.catalogLayout.size(); ++i) {
         options <<  data.catalogLayout[i]->name;
     }
     dialog->setComboBoxItems(options);
@@ -1838,7 +1838,7 @@ void MainWindow::export_layout()
     dialog->setModal(true);
 
     if (dialog->exec()) {
-        for (uint i = 1; i < data.catalogLayout.size(); ++i) {
+        for (int i = 1; i < data.catalogLayout.size(); ++i) {
             if (dialog->textValue() == data.catalogLayout[i]->name) {
                 index = i;
             }
@@ -2272,7 +2272,7 @@ void MainWindow::actionAddParamater_triggered()
         Parameter *p = new Parameter();
         p->name = "New_Parameter_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->ParameterList.size(); i++) {
+        for (int i=0; i< viewCL.root->al->ParameterList.size(); i++) {
             QString name = viewCL.root->al->ParameterList[i]->getName();
             if (name.startsWith("New_Parameter_")) {
                 QString temp = name.remove(0,14);
@@ -2301,7 +2301,7 @@ void MainWindow::actionAddRegime_triggered()
         Regime *r = new Regime();
         r->name = "New_Regime_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->RegimeList.size(); i++)
+        for (int i=0; i< viewCL.root->al->RegimeList.size(); i++)
         {
             QString name = viewCL.root->al->RegimeList[i]->name;
             if (name.startsWith("New_Regime_"))
@@ -2451,7 +2451,7 @@ void MainWindow::actionAddStateVariable_triggered()
         StateVariable * sv = new StateVariable();
         sv->name = "New_State_Var_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->StateVariableList.size(); i++) {
+        for (int i=0; i< viewCL.root->al->StateVariableList.size(); i++) {
             QString name = viewCL.root->al->StateVariableList[i]->getName();
             if (name.startsWith("New_State_Var_")) {
                 QString temp = name.remove(0,14);
@@ -2479,7 +2479,7 @@ void MainWindow::actionAddAlias_triggered()
         Alias * a = new Alias();
         a->name = "New_Alias_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->AliasList.size(); i++) {
+        for (int i=0; i< viewCL.root->al->AliasList.size(); i++) {
             QString name = viewCL.root->al->AliasList[i]->name;
             if (name.startsWith("New_Alias_")) {
                 QString temp = name.remove(0,10);
@@ -2651,7 +2651,7 @@ void MainWindow::actionNew_triggered()
     // see if there is a component with the same name
     while (!unique) {
         unique = true;
-        for (uint i = 0; i < data.catalogNrn.size(); ++i) {
+        for (int i = 0; i < data.catalogNrn.size(); ++i) {
             if (data.catalogNrn[i]->name == "New Component " + QString::number(float(val)))
                 unique = false;
         }

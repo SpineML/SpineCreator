@@ -108,7 +108,7 @@ void vectorListModel::moveIndex(int row) {
         return;
     }
     if (row < this->list[0].size()) {
-        for (uint i = 0; i < this->list.size(); ++i) {
+        for (int i = 0; i < this->list.size(); ++i) {
             // copy
             this->destinations[i]->value[0] = this->list[i][row];
         }

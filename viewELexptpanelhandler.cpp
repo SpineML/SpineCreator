@@ -266,6 +266,10 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
         formSim->addRow("Solver order:",solverOrd);
     }
 
+    // add batch interface
+    QPushButton * batch = new QPushButton("Setup");
+    connect(batch, SIGNAL(clicked()), this, SLOT(batch_clicked()));
+    formSim->addRow("Batch:",batch);
 }
 
 void viewELExptPanelHandler::redrawExpt()
@@ -297,7 +301,7 @@ void viewELExptPanelHandler::redrawExpt()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -375,7 +379,7 @@ void viewELExptPanelHandler::redrawExpt()
     exptInputs->addLayout(formIn);
 
     // existing
-    for (uint i = 0; i < currentExperiment->ins.size(); ++i) {
+    for (int i = 0; i < currentExperiment->ins.size(); ++i) {
         exptInput * in = currentExperiment->ins[i];
         formIn->addLayout(in->drawInput(this->data, this));
     }
@@ -388,7 +392,7 @@ void viewELExptPanelHandler::redrawExpt()
     addIn->setToolTip("Add a new experimental input to the current model");
     addIn->setFont(addFont);
     // grey out if editing:
-    for (uint i=0; i < currentExperiment->ins.size(); ++i)
+    for (int i=0; i < currentExperiment->ins.size(); ++i)
         if (currentExperiment->ins[i]->edit)
             addIn->setDisabled(true);
 
@@ -404,7 +408,7 @@ void viewELExptPanelHandler::redrawExpt()
     exptOutputs->addLayout(formOut);
 
     // existing
-    for (uint i = 0; i < currentExperiment->outs.size(); ++i) {
+    for (int i = 0; i < currentExperiment->outs.size(); ++i) {
         exptOutput * out = currentExperiment->outs[i];
         formOut->addLayout(out->drawOutput(this->data, this));
     }
@@ -417,7 +421,7 @@ void viewELExptPanelHandler::redrawExpt()
     addOut->setToolTip("Add a new experimental output to the current model");
     addOut->setFont(addFont);
     // grey out if editing:
-    for (uint i=0; i < currentExperiment->outs.size(); ++i)
+    for (int i=0; i < currentExperiment->outs.size(); ++i)
         if (currentExperiment->outs[i]->edit)
             addOut->setDisabled(true);
 
@@ -433,7 +437,7 @@ void viewELExptPanelHandler::redrawExpt()
     formLesion->addWidget(new QLabel("Lesions"));
 
     // existing
-    for (uint i = 0; i < currentExperiment->lesions.size(); ++i) {
+    for (int i = 0; i < currentExperiment->lesions.size(); ++i) {
         exptLesion * out = currentExperiment->lesions[i];
         formLesion->addLayout(out->drawLesion(this->data, this));
     }
@@ -446,7 +450,7 @@ void viewELExptPanelHandler::redrawExpt()
     addLesion->setToolTip("Add a new lesion to the current model");
     addLesion->setFont(addFont);
     // grey out if editing:
-    for (uint i=0; i < currentExperiment->lesions.size(); ++i) {
+    for (int i=0; i < currentExperiment->lesions.size(); ++i) {
         if (currentExperiment->lesions[i]->edit) {
             addLesion->setDisabled(true);
         }
@@ -464,7 +468,7 @@ void viewELExptPanelHandler::redrawExpt()
     formPropChanges->addWidget(new QLabel("Changed properties"));
 
     // existing
-    for (uint i = 0; i < currentExperiment->changes.size(); ++i) {
+    for (int i = 0; i < currentExperiment->changes.size(); ++i) {
         exptChangeProp * out = currentExperiment->changes[i];
         formPropChanges->addLayout(out->drawChangeProp(this->data, this));
     }
@@ -477,7 +481,7 @@ void viewELExptPanelHandler::redrawExpt()
     addChange->setToolTip("Add a changed property to the current model");
     addChange->setFont(addFont);
     // grey out if editing:
-    for (uint i=0; i < currentExperiment->changes.size(); ++i) {
+    for (int i=0; i < currentExperiment->changes.size(); ++i) {
         if (currentExperiment->changes[i]->edit) {
             addChange->setDisabled(true);
         }
@@ -519,7 +523,7 @@ void viewELExptPanelHandler::redrawPanel()
     add->setToolTip("Add a new experiment to the current model");
     add->setFont(addFont);
     // grey out if editing:
-    for (uint i=0; i < data->experiments.size(); ++i)
+    for (int i=0; i < data->experiments.size(); ++i)
         if (data->experiments[i]->editing)
             add->setDisabled(true);
 
@@ -564,7 +568,7 @@ void viewELExptPanelHandler::addExperiment()
 
 void viewELExptPanelHandler::delExperiment()
 {
-    uint index = sender()->property("index").toUInt();
+    int index = sender()->property("index").toUInt();
 
     data->experiments.erase(data->experiments.begin() + index);
 
@@ -580,8 +584,8 @@ void viewELExptPanelHandler::delExperiment()
 
 void viewELExptPanelHandler::moveExperiment()
 {
-    uint index = sender()->property("index").toUInt();
-    uint type = sender()->property("type").toUInt();
+    int index = sender()->property("index").toUInt();
+    int type = sender()->property("type").toUInt();
 
     experiment * tempExperiment;
 
@@ -608,7 +612,7 @@ void viewELExptPanelHandler::moveExperiment()
 
 void viewELExptPanelHandler::editExperiment()
 {
-    uint index = sender()->property("index").toUInt();
+    int index = sender()->property("index").toUInt();
 
     data->experiments[index]->editing = true;
 
@@ -622,7 +626,7 @@ void viewELExptPanelHandler::editExperiment()
 
 void viewELExptPanelHandler::doneEditExperiment()
 {
-    uint index = sender()->property("index").toUInt();
+    int index = sender()->property("index").toUInt();
 
     // update the experiment
     QLineEdit * titleEdit = (QLineEdit *) sender()->property("title").value<void *>();
@@ -643,7 +647,7 @@ void viewELExptPanelHandler::doneEditExperiment()
 
 void viewELExptPanelHandler::cancelEditExperiment()
 {
-    uint index = sender()->property("index").toUInt();
+    int index = sender()->property("index").toUInt();
 
     data->experiments[index]->editing = false;
 
@@ -657,7 +661,7 @@ void viewELExptPanelHandler::cancelEditExperiment()
 
 void viewELExptPanelHandler::changeSelection()
 {
-    uint index = sender()->property("index").toUInt();
+    int index = sender()->property("index").toUInt();
 
     // also make sure that the run button is enabled
     emit enableRun(true);
@@ -680,7 +684,7 @@ void viewELExptPanelHandler::changedEngine(QString sim)
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -697,7 +701,7 @@ void viewELExptPanelHandler::changedDt()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -711,7 +715,7 @@ void viewELExptPanelHandler::changedDuration()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -725,7 +729,7 @@ void viewELExptPanelHandler::changedSolver(int index)
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -744,7 +748,7 @@ void viewELExptPanelHandler::changedSolverOrder(int val)
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -761,7 +765,7 @@ void viewELExptPanelHandler::addInput()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -786,12 +790,12 @@ void viewELExptPanelHandler::setInputComponent()
     QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
 
     // find source:
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
         if (data->populations[i]->neuronType->getXMLName() == text) {
             src = data->populations[i]->neuronType;
         }
-        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+        for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
                     src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
@@ -874,16 +878,16 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
     redrawExpt();
 }
 
-void viewELExptPanelHandler::reorderParams (vector<float>& params)
+void viewELExptPanelHandler::reorderParams (QVector <float>& params)
 {
-    vector <float> tempVec;
+    QVector <float> tempVec;
     while (params.size() > 1) {
         int min = 100000000;
         int minIndex = 0;
-        for (uint i = 0; i < params.size(); i+=2) {
+        for (int i = 0; i < params.size(); i+=2) {
             if (params[i] < min) {min = params[i]; minIndex = i;}
         }
-        for (uint i = 0; i < 2; ++i) {
+        for (int i = 0; i < 2; ++i) {
             tempVec.push_back(params[minIndex]);
             params.erase(params.begin()+minIndex);
         }
@@ -903,13 +907,13 @@ void viewELExptPanelHandler::acceptInput()
 
     } else if (in->inType == arrayTimevarying) {
 
-        vector<float> curr; // a single table from in->params goes in here to be sorted
-        vector<float> temp; // a sorted copy of in->params is built in here
+        QVector <float> curr; // a single table from in->params goes in here to be sorted
+        QVector <float> temp; // a sorted copy of in->params is built in here
         curr.clear();
         temp.clear();
 
-        unsigned int index = 0;
-        unsigned int i = 0;
+        int index = 0;
+        int i = 0;
         while (i < in->params.size()) {
             if (in->params[i] == -1) { // it should be
                 index = in->params[++i]; // get the table index from the next entry
@@ -921,7 +925,8 @@ void viewELExptPanelHandler::acceptInput()
                     this->reorderParams (curr); // sort
                     temp.push_back(-1);
                     temp.push_back(index);
-                    temp.insert(temp.end(), curr.begin(), curr.end());  // append
+                    //temp.insert(temp.end(), curr.begin(), curr.end());  // append
+                    temp += curr;
                     curr.clear(); // clear ready for the next table read
                 }
             } // else corrupt data somewhere? This depends on time never being -1. Negative time not allowed.
@@ -952,7 +957,7 @@ void viewELExptPanelHandler::delInput()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -971,7 +976,7 @@ void viewELExptPanelHandler::setInputTypeData(double value)
 {
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     if (in->params.size() != 1) {
-        in->params.resize(1,0);
+        in->params.resize(1);
     }
     in->params[0] = value;
 }
@@ -1007,7 +1012,7 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
         // construct index and set value
         int index = row*2+col;
         if (index > (int) in->params.size()-1) {
-            in->params.resize(qCeil(index/2)*2, 0);
+            in->params.resize(qCeil(index/2)*2);
         }
 
         if (index%2 == 0) {
@@ -1028,9 +1033,9 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
     } else if (in->inType == arrayTimevarying) {
 
         bool readpast = false;
-        vector<float>::iterator params_iter = in->params.begin();
-        vector<float>::iterator curr_start = in->params.end();
-        vector<float>::iterator curr_end = in->params.end();
+        QVector <float>::iterator params_iter = in->params.begin();
+        QVector <float>::iterator curr_start = in->params.end();
+        QVector <float>::iterator curr_end = in->params.end();
         while (params_iter != in->params.end()) {
             if (*params_iter == -1 && readpast) {
                 curr_end = params_iter; // Points to one past the last element of the current table.
@@ -1061,7 +1066,7 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
 
         // construct index and set value in curr.
         int index = row*2+col;
-        vector<float>::iterator index_iter = curr_start;
+        QVector <float>::iterator index_iter = curr_start;
         index_iter += index;
 
         // Every other value has to be checked to ensure it's non-negative
@@ -1104,7 +1109,7 @@ void viewELExptPanelHandler::fillInputParams()
     QDoubleSpinBox * fillSpin = (QDoubleSpinBox *) sender()->property("ptrSpin").value<void *>();
 
     if (in->inType == arrayConstant) {
-        for (uint i = 0; i < in->params.size(); ++i) {
+        for (int i = 0; i < in->params.size(); ++i) {
             in->params[i] = fillSpin->value();
         }
     }
@@ -1125,14 +1130,14 @@ void viewELExptPanelHandler::setInputAddTVRow()
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
     if (in->inType == timevarying) {
-        in->params.resize(qCeil(in->params.size()/2)*2+2,0);
+        in->params.resize(qCeil(in->params.size()/2)*2+2);
     }
     if (in->inType == arrayTimevarying) {
         bool found = false;
         int indexIndex = -1;
 
         // find where to operate on
-        for (uint i = 0; i < in->params.size(); i+=2) {
+        for (int i = 0; i < in->params.size(); i+=2) {
             if (in->params[i] == -1 && found) {indexIndex = i; break;}
             if (in->params[i] == -1 && in->params[i+1] == in->currentIndex) {found = true;}
         }
@@ -1155,14 +1160,14 @@ void viewELExptPanelHandler::setInputDelTVRow()
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
     if (in->inType == timevarying) {
-        in->params.resize(qCeil(in->params.size()/2)*2-2,0);
+        in->params.resize(qCeil(in->params.size()/2)*2-2);
     }
     if (in->inType == arrayTimevarying) {
         bool found = false;
         int indexIndex = -1;
 
         // find where to operate on
-        for (uint i = 0; i < in->params.size(); i+=2) {
+        for (int i = 0; i < in->params.size(); i+=2) {
             if (in->params[i] == -1 && found) {indexIndex = i; break;}
             if (in->params[i] == -1 && in->params[i+1] == in->currentIndex) {found = true;}
         }
@@ -1185,7 +1190,7 @@ void viewELExptPanelHandler::addOutput()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -1210,12 +1215,12 @@ void viewELExptPanelHandler::setOutputComponent()
     QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
 
     // find source:
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
         if (data->populations[i]->neuronType->getXMLName() == text) {
             src = data->populations[i]->neuronType;
         }
-        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+        for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
                     src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
@@ -1329,7 +1334,7 @@ void viewELExptPanelHandler::delOutput()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -1373,7 +1378,7 @@ void viewELExptPanelHandler::addLesion()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -1392,8 +1397,8 @@ void viewELExptPanelHandler::setLesionProjection()
     QSharedPointer <projection> lesionedProj = (QSharedPointer <projection>)0;
 
     // find source:
-    for (uint i = 0; i < data->populations.size(); ++i) {
-        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
+    for (int i = 0; i < data->populations.size(); ++i) {
+        for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             if (data->populations[i]->projections[j]->getName() == text)
                 lesionedProj = data->populations[i]->projections[j];
         }
@@ -1438,7 +1443,7 @@ void viewELExptPanelHandler::delLesion()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -1459,12 +1464,12 @@ void viewELExptPanelHandler::setChangeParComponent()
     QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
 
     // find source:
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
         if (data->populations[i]->neuronType->getXMLName() == text) {
             src = data->populations[i]->neuronType;
         }
-        for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
-            for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+        for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
+            for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
                     src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
@@ -1509,13 +1514,13 @@ void viewELExptPanelHandler::setChangeProp(QString name)
 {
     exptChangeProp * changeProp = (exptChangeProp *) sender()->property("ptr").value<void *>();
 
-    for (uint i = 0; i < changeProp->component->ParameterList.size(); ++i) {
+    for (int i = 0; i < changeProp->component->ParameterList.size(); ++i) {
         if (name == changeProp->component->ParameterList[i]->name) {
             delete changeProp->par;
             changeProp->par = new ParameterData(changeProp->component->ParameterList[i]);
         }
     }
-    for (uint i = 0; i < changeProp->component->StateVariableList.size(); ++i) {
+    for (int i = 0; i < changeProp->component->StateVariableList.size(); ++i) {
         if (name == changeProp->component->StateVariableList[i]->name) {
             delete changeProp->par;
             changeProp->par = new StateVariableData(changeProp->component->StateVariableList[i]);
@@ -1529,7 +1534,7 @@ void viewELExptPanelHandler::addChangedProp()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -1560,7 +1565,7 @@ void viewELExptPanelHandler::delChangedProp()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -1595,7 +1600,7 @@ void viewELExptPanelHandler::run()
     experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 
@@ -1749,7 +1754,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     }
 
     // check for errors we can present
-    for (uint i = 0; i < (uint) errorStrings.size(); ++i) {
+    for (int i = 0; i < (int) errorStrings.size(); ++i) {
 
         // check if error there
         if (simulatorStdOutText.contains(errorStrings[i])) {
@@ -1835,17 +1840,17 @@ void viewELExptPanelHandler::mouseMove(float xGL, float yGL)
 void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
 {
     // draw the populations
-    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
+    for (int i = 0; i < this->data->populations.size(); ++i) {
         this->data->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, style);
     }
 
     // draw the synapses
-    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
+    for (int i = 0; i < this->data->populations.size(); ++i) {
         this->data->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
     }
 
     // draw the generic inputs
-    for (unsigned int i = 0; i < this->data->populations.size(); ++i) {
+    for (int i = 0; i < this->data->populations.size(); ++i) {
         QPen pen(QColor(100,0,0,100));
         pen.setWidthF(float(1));
         painter->setPen(pen);
@@ -1862,7 +1867,7 @@ void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float 
         float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
 
         if (pop->isSpikeSource) {
-            for (unsigned int i = 5; i > 1; --i) {
+            for (int i = 5; i > 1; --i) {
                 QPen pen(QColor(0,0,0,50/i));
                 pen.setWidthF(float(i*2));
                 painter->setPen(pen);
@@ -1871,7 +1876,7 @@ void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float 
 
         } else {
 
-            for (unsigned int i = 5; i > 1; --i) {
+            for (int i = 5; i > 1; --i) {
                 QPen pen(QColor(0,0,0,50/i));
                 pen.setWidthF(float(i*2));
                 painter->setPen(pen);
@@ -1883,7 +1888,7 @@ void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float 
 
     if (this->currSystemObject->type == projectionObject) {
         QSharedPointer <projection> col = qSharedPointerDynamicCast <projection> (this->currSystemObject);
-        for (unsigned int i = 5; i > 1; --i) {
+        for (int i = 5; i > 1; --i) {
             QPen pen(QColor(0,0,0,30/i));
             pen.setWidthF(float(i*2));
             painter->setPen(pen);
@@ -1901,7 +1906,7 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
     // A list of things which have been selected with this left mouse
     // down click. Will be added to this->selList after the logic in
     // this method.
-    vector<QSharedPointer<systemObject> > newlySelectedList;
+    QVector <QSharedPointer<systemObject> > newlySelectedList;
     this->data->findSelection (xGL, yGL, GLScale, newlySelectedList);
 
     // if we have an object selected
@@ -1923,10 +1928,10 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
 
 void viewELExptPanelHandler::batch_clicked() {
 
-    experiment * currentExperiment;
+    experiment * currentExperiment = NULL;
 
     // find currentExperiment
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
 

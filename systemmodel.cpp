@@ -89,7 +89,7 @@ systemmodel::systemmodel(rootData * dataPtr, QObject *parent) :
      if ( role == Qt::CheckStateRole && index.column() == 0 ) {
          item->setChecked(value.toBool());
          // find and set status of item in system:
-         for (uint i = 0; i < dataPtr->populations.size(); ++i) {
+         for (int i = 0; i < dataPtr->populations.size(); ++i) {
 
              QSharedPointer <population> currPop = (QSharedPointer <population>) dataPtr->populations[i];
 
@@ -99,12 +99,12 @@ systemmodel::systemmodel(rootData * dataPtr, QObject *parent) :
              }
 
              // projections
-             for (uint j = 0; j < currPop->projections.size(); ++j) {
+             for (int j = 0; j < currPop->projections.size(); ++j) {
 
                  QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[j];
 
                  // synapses
-                 for (uint k = 0; k < currProj->synapses.size(); ++k) {
+                 for (int k = 0; k < currProj->synapses.size(); ++k) {
 
                      QSharedPointer <synapse> currTarg = (QSharedPointer <synapse>) currProj->synapses[k];
 
@@ -199,7 +199,7 @@ void systemmodel::setupModelData(TreeItem *parent)
     QList<TreeItem*> parents;
     parents << parent;
 
-    for (uint pop = 0; pop < dataPtr->populations.size();++pop) {
+    for (int pop = 0; pop < dataPtr->populations.size();++pop) {
 
         // add population
         QSharedPointer <population> currPop = (QSharedPointer <population>) dataPtr->populations[pop];
@@ -213,7 +213,7 @@ void systemmodel::setupModelData(TreeItem *parent)
 
         // add generic inputs for Populations
 
-        for (uint output = 0; output < dataPtr->populations[pop]->neuronType->outputs.size(); ++output) {
+        for (int output = 0; output < dataPtr->populations[pop]->neuronType->outputs.size(); ++output) {
 
             // add output
             QSharedPointer<genericInput> currOutput = dataPtr->populations[pop]->neuronType->outputs[output];
@@ -234,7 +234,7 @@ void systemmodel::setupModelData(TreeItem *parent)
 
         // add projections
 
-        for (uint proj = 0; proj < currPop->projections.size(); ++proj) {
+        for (int proj = 0; proj < currPop->projections.size(); ++proj) {
 
             // add projection
             QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[proj];
@@ -246,7 +246,7 @@ void systemmodel::setupModelData(TreeItem *parent)
             parents.last()->child(parents.last()->childCount()-1)->type = currProj->type;
             parents << parents.last()->child(parents.last()->childCount()-1);
 
-            for (uint targ = 0; targ < dataPtr->populations[pop]->projections[proj]->synapses.size(); ++targ) {
+            for (int targ = 0; targ < dataPtr->populations[pop]->projections[proj]->synapses.size(); ++targ) {
 
                 // add Synapse
                 //QSharedPointer <projection> currTarg = (QSharedPointer <projection>) currProj->synapses[targ];

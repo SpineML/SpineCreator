@@ -56,13 +56,13 @@ private:
     QStringList errorStrings;
     QStringList errorMessages;
 
-    vector <QWidget * > forDeleting;
+    QVector <QWidget * > forDeleting;
 
     void recursiveDeleteLoop(QLayout * parentLayout);
     void recursiveDelete(QLayout * parentLayout);
     void recursiveDeleteExpt(QLayout * parentLayout);
 
-    void reorderParams (vector<float>& params);
+    void reorderParams (QVector<float> &params);
 
     /*!
      * \brief Redraw the simulator parameters - this is called if there is no current systemObject selected

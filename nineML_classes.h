@@ -187,8 +187,8 @@ class ParameterData {
 public:
     QString name;
     dim * dims;
-    vector < float > value;
-    vector < int > indices;
+    QVector < float > value;
+    QVector < int > indices;
     ParameterType currType;
     int seed;
 
@@ -389,10 +389,10 @@ public:
     QString target_regime_name;
 
     Regime *target_regime;
-    vector <StateAssignment*> StateAssignList;
+    QVector <StateAssignment*> StateAssignList;
     Trigger *trigger;
-    vector <EventOut*> eventOutList;
-    vector <ImpulseOut*> impulseOutList;
+    QVector <EventOut*> eventOutList;
+    QVector <ImpulseOut*> impulseOutList;
     OnCondition(OnCondition *data);
     OnCondition(){target_regime=NULL; trigger=new Trigger;}
     virtual ~OnCondition();
@@ -411,9 +411,9 @@ public:
 
     Regime *target_regime;
     EventPort *src_port;
-    vector <StateAssignment*> StateAssignList;
-    vector <EventOut*> eventOutList;
-    vector <ImpulseOut*> impulseOutList;
+    QVector <StateAssignment*> StateAssignList;
+    QVector <EventOut*> eventOutList;
+    QVector <ImpulseOut*> impulseOutList;
     OnEvent(OnEvent *data);
     OnEvent(){target_regime=NULL; src_port=NULL;}
     virtual ~OnEvent();
@@ -431,9 +431,9 @@ public:
 
     Regime *target_regime;
     ImpulsePort *src_port;
-    vector <StateAssignment*> StateAssignList;
-    vector <EventOut*> eventOutList;
-    vector <ImpulseOut*> impulseOutList;
+    QVector <StateAssignment*> StateAssignList;
+    QVector <EventOut*> eventOutList;
+    QVector <ImpulseOut*> impulseOutList;
     OnImpulse(OnImpulse *data);
     OnImpulse(){target_regime=NULL; src_port=NULL;}
     virtual ~OnImpulse();
@@ -446,10 +446,10 @@ public:
 class Regime: public NineMLObject {
 public:
     QString name;
-    vector <TimeDerivative*> TimeDerivativeList;
-    vector <OnCondition* > OnConditionList;
-    vector <OnEvent*> OnEventList;
-    vector <OnImpulse*> OnImpulseList;
+    QVector <TimeDerivative*> TimeDerivativeList;
+    QVector <OnCondition* > OnConditionList;
+    QVector <OnEvent*> OnEventList;
+    QVector <OnImpulse*> OnImpulseList;
     Regime(Regime *data);
     Regime(){}
     virtual ~Regime();
@@ -469,13 +469,13 @@ public:
     QString name;
     QString type;
     Regime *initial_regime;
-    vector <Regime*> RegimeList;
-    vector <StateVariable*> StateVariableList;
-    vector <Parameter*> ParameterList;
-    vector <Alias*> AliasList;
-    vector <AnalogPort*> AnalogPortList;
-    vector <EventPort*> EventPortList;
-    vector <ImpulsePort*> ImpulsePortList;
+    QVector <Regime*> RegimeList;
+    QVector <StateVariable*> StateVariableList;
+    QVector <Parameter*> ParameterList;
+    QVector <Alias*> AliasList;
+    QVector <AnalogPort*> AnalogPortList;
+    QVector <EventPort*> EventPortList;
+    QVector <ImpulsePort*> ImpulsePortList;
     NineMLComponent(QSharedPointer<NineMLComponent>data);
     NineMLComponent& operator=(const NineMLComponent& data);
     NineMLComponent();
@@ -496,8 +496,8 @@ class NineMLData
 {
 public:
     NineMLType type;
-    vector <StateVariableData*> StateVariableList;
-    vector <ParameterData*> ParameterList;
+    QVector <StateVariableData*> StateVariableList;
+    QVector <ParameterData*> ParameterList;
     void write_node_xml(QXmlStreamWriter &);
     NineMLData(){}
     virtual ~NineMLData(){}
@@ -506,8 +506,8 @@ public:
 class NineMLComponentData: public NineMLData
 {
 public:
-    vector < QSharedPointer<genericInput> > inputs;
-    vector < QSharedPointer<genericInput> > outputs;
+    QVector < QSharedPointer<genericInput> > inputs;
+    QVector < QSharedPointer<genericInput> > outputs;
     QSharedPointer<NineMLComponent> component;
     NineMLComponentData(QSharedPointer<NineMLComponent>data);
     NineMLComponentData(QSharedPointer <NineMLComponentData>data);

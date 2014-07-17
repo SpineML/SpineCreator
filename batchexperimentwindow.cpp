@@ -21,7 +21,7 @@ BatchExperimentWindow::BatchExperimentWindow(experiment * currExpt, viewELExptPa
 
     // make up a list of the current changed pars
     QVector < ParameterData * > dsts;
-    for (uint i = 0; i < this->currExpt->changes.size(); ++i) {
+    for (int i = 0; i < this->currExpt->changes.size(); ++i) {
         // only add FixedValue pars
         if (this->currExpt->changes[i]->par->currType == FixedValue) {
             dsts.push_back(this->currExpt->changes[i]->par);
@@ -36,7 +36,7 @@ BatchExperimentWindow::BatchExperimentWindow(experiment * currExpt, viewELExptPa
     // resize each vector to one and fill with existing values
     each.resize(1);
     datas.fill(each);
-    for (uint i = 0; i < this->currExpt->changes.size(); ++i) {
+    for (int i = 0; i < this->currExpt->changes.size(); ++i) {
         // only add FixedValue pars
         if (this->currExpt->changes[i]->par->currType == FixedValue) {
             datas[i][0] = this->currExpt->changes[i]->par->value[0];
@@ -57,7 +57,7 @@ BatchExperimentWindow::BatchExperimentWindow(experiment * currExpt, viewELExptPa
     connect(ui->export_but, SIGNAL(clicked()), this, SLOT(exportData()));
 
     // set up the log 'getter'
-    for (uint i = 0; i < this->currExpt->outs.size(); ++i) {
+    for (int i = 0; i < this->currExpt->outs.size(); ++i) {
         if (this->currExpt->outs[i]->portIsAnalog) {
             this->ui->par_log->addItem(this->currExpt->outs[i]->source->getXMLName() + " " + this->currExpt->outs[i]->portName);
         }
@@ -134,7 +134,7 @@ void BatchExperimentWindow::importData() {
             return;}
 
         // for add fields
-        for (uint i = 0; i < fields.size(); ++i) {
+        for (int i = 0; i < fields.size(); ++i) {
             datas[i].push_back(fields[i].toFloat());
         }
     }
@@ -165,8 +165,8 @@ void BatchExperimentWindow::exportData() {
     // use textstream so we can read lines into a QString
     QTextStream stream(&fileOut);
 
-    for (uint row = 0; row < this->model->rowCount(); ++row) {
-        for (uint col = 0; col < this->model->columnCount(); ++col) {
+    for (int row = 0; row < this->model->rowCount(); ++row) {
+        for (int col = 0; col < this->model->columnCount(); ++col) {
             stream << this->model->data(row,col);
             if (col != this->model->columnCount() -1) {
                 stream << ",";
@@ -190,7 +190,7 @@ void BatchExperimentWindow::addExpt() {
 void BatchExperimentWindow::logSelected(int index) {
     // find the log so we can reference it...
     int currIndex = 0;
-    for (uint i = 0; i < this->currExpt->outs.size(); ++i) {
+    for (int i = 0; i < this->currExpt->outs.size(); ++i) {
         if (this->currExpt->outs[i]->portIsAnalog) {
             if (currIndex == index) {
                 this->selectedLog = this->currExpt->outs[i];
@@ -218,7 +218,7 @@ void BatchExperimentWindow::simulationDone() {
     // we have a completion so log the required data and then launch next in the batch!
 
     // find the log:
-    for (uint i = 0; i < logs->logs.size(); ++i) {
+    for (int i = 0; i < logs->logs.size(); ++i) {
         logData * log = logs->logs[i];
         // construct log name! This should be replaced by XML data from the log
         if (selectedLog == NULL) continue;
@@ -226,7 +226,7 @@ void BatchExperimentWindow::simulationDone() {
         possibleLogName.replace(" ", "_");
         if (log->logName == possibleLogName) {
             // extract the required data and store
-            vector < double > rowData;
+            QVector < double > rowData;
             float timeIndex = ui->time_log->value();
             if (timeIndex < 0) {
                 rowData = log->getRow(log->endTime/currExpt->setup.dt);
@@ -249,7 +249,7 @@ void BatchExperimentWindow::simulationDone() {
     if (currIndex + 1 >= this->model->rowCount()) {
         // show results
         QString finalResults;
-        for (uint i = 0; i < this->results.size(); ++i) {
+        for (int i = 0; i < this->results.size(); ++i) {
             finalResults.append(QString::number(this->results[i]) + "\n");
         }
         QMessageBox msgBox;

@@ -36,7 +36,7 @@
 class delSelection : public QUndoCommand
 {
 public:
-    delSelection(rootData * data, vector <QSharedPointer<systemObject> > list, QUndoCommand *parent = 0);
+    delSelection(rootData * data, QVector <QSharedPointer<systemObject> > list, QUndoCommand *parent = 0);
     ~delSelection() {/*qDebug() << "Cleaning up selection";*/}
     void undo();
     void redo();
@@ -376,7 +376,7 @@ private:
     ParameterData * ptr;
     ParameterType oldType;
     ParameterType newType;
-    vector<float> oldValues;
+    QVector <float> oldValues;
 };
 
 class updateTitle : public QUndoCommand
@@ -391,6 +391,20 @@ private:
     QSharedPointer <population> ptr;
     QString oldName;
     QString newName;
+};
+
+class updateProjDrawStyle : public QUndoCommand
+{
+public:
+    updateProjDrawStyle(QSharedPointer <projection> ptr, drawStyle newStyle, drawStyle oldStyle, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    QSharedPointer <projection> ptr;
+    drawStyle oldStyle;
+    drawStyle newStyle;
 };
 
 class updateModelTitle : public QUndoCommand
@@ -419,17 +433,17 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    vector < ParameterData * > oldParDatas;
-    vector < StateVariableData * > oldSVDatas;
-    vector < ParameterData * > newParDatas;
-    vector < StateVariableData * > newSVDatas;
+    QVector < ParameterData * > oldParDatas;
+    QVector < StateVariableData * > oldSVDatas;
+    QVector < ParameterData * > newParDatas;
+    QVector < StateVariableData * > newSVDatas;
     QSharedPointer<NineMLComponent> oldComponent;
     QSharedPointer<NineMLComponent> newComponent;
     QSharedPointer <NineMLComponentData> componentData;
-    vector <QString> srcPortsInputs;
-    vector <QString> dstPortsInputs;
-    vector <QString> srcPortsOutputs;
-    vector <QString> dstPortsOutputs;
+    QVector <QString> srcPortsInputs;
+    QVector <QString> dstPortsInputs;
+    QVector <QString> srcPortsOutputs;
+    QVector <QString> dstPortsOutputs;
     bool isRedone;
 };
 
@@ -502,7 +516,7 @@ private:
 class changeComponentType: public QUndoCommand
 {
 public:
-    changeComponentType(RootComponentItem *root, vector <QSharedPointer<NineMLComponent> > * old_lib, vector <QSharedPointer<NineMLComponent> > * new_lib, QSharedPointer<NineMLComponent> component, QString message, QUndoCommand *parent = 0);
+    changeComponentType(RootComponentItem *root, QVector <QSharedPointer<NineMLComponent> > * old_lib, QVector <QSharedPointer<NineMLComponent> > * new_lib, QSharedPointer<NineMLComponent> component, QString message, QUndoCommand *parent = 0);
     ~changeComponentType() {}
     void undo();
     void redo();
@@ -510,8 +524,8 @@ public:
 private:
     // these references are needed for the redo and undo
     viewCLstruct * viewCL;
-    vector <QSharedPointer<NineMLComponent> > * old_lib;
-    vector <QSharedPointer<NineMLComponent> > * new_lib;
+    QVector <QSharedPointer<NineMLComponent> > * old_lib;
+    QVector <QSharedPointer<NineMLComponent> > * new_lib;
     QSharedPointer<NineMLComponent> component;
     bool first_redo;
 };

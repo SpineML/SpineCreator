@@ -29,23 +29,23 @@ NineMLLayout::NineMLLayout(QSharedPointer<NineMLLayout>data)
 
     name = data->name;
     //type = this->type;
-    RegimeList = vector<RegimeSpace*>(data->RegimeList.size());
-    StateVariableList = vector<StateVariable*>(data->StateVariableList.size());
-    ParameterList = vector<Parameter*>(data->ParameterList.size());
-    AliasList = vector<Alias*>(data->AliasList.size());
-    for (uint i=0; i<data->RegimeList.size(); i++)
+    RegimeList = QVector <RegimeSpace*>(data->RegimeList.size());
+    StateVariableList = QVector <StateVariable*>(data->StateVariableList.size());
+    ParameterList = QVector <Parameter*>(data->ParameterList.size());
+    AliasList = QVector <Alias*>(data->AliasList.size());
+    for (int i=0; i<data->RegimeList.size(); i++)
     {
         RegimeList[i] = new RegimeSpace(data->RegimeList[i]);
     }
-    for (uint i=0; i<data->StateVariableList.size(); i++)
+    for (int i=0; i<data->StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariable(data->StateVariableList[i]);
     }
-    for (uint i=0; i<data->ParameterList.size(); i++)
+    for (int i=0; i<data->ParameterList.size(); i++)
     {
         ParameterList[i] = new Parameter(data->ParameterList[i]);
     }
-    for (uint i=0; i<data->AliasList.size(); i++)
+    for (int i=0; i<data->AliasList.size(); i++)
     {
         AliasList[i] = new Alias(data->AliasList[i]);
     }
@@ -55,19 +55,19 @@ NineMLLayout::NineMLLayout(QSharedPointer<NineMLLayout>data)
 
 NineMLLayout::~NineMLLayout()
 {
-    for (uint i=0; i<RegimeList.size(); i++)
+    for (int i=0; i<RegimeList.size(); i++)
     {
         delete RegimeList[i];
     }
-    for (uint i=0; i<StateVariableList.size(); i++)
+    for (int i=0; i<StateVariableList.size(); i++)
     {
         delete StateVariableList[i];
     }
-    for (uint i=0; i<ParameterList.size(); i++)
+    for (int i=0; i<ParameterList.size(); i++)
     {
         delete ParameterList[i];
     }
-    for (uint i=0; i<AliasList.size(); i++)
+    for (int i=0; i<AliasList.size(); i++)
     {
         delete AliasList[i];
     }
@@ -78,23 +78,23 @@ NineMLLayout& NineMLLayout::operator=(const NineMLLayout& data)
 {
     name = data.name;
     //type = this->type;
-    RegimeList = vector<RegimeSpace*>(data.RegimeList.size());
-    StateVariableList = vector<StateVariable*>(data.StateVariableList.size());
-    ParameterList = vector<Parameter*>(data.ParameterList.size());
-    AliasList = vector<Alias*>(data.AliasList.size());
-    for (uint i=0; i<data.RegimeList.size(); i++)
+    RegimeList = QVector <RegimeSpace*>(data.RegimeList.size());
+    StateVariableList = QVector <StateVariable*>(data.StateVariableList.size());
+    ParameterList = QVector <Parameter*>(data.ParameterList.size());
+    AliasList = QVector <Alias*>(data.AliasList.size());
+    for (int i=0; i<data.RegimeList.size(); i++)
     {
         RegimeList[i] = new RegimeSpace(data.RegimeList[i]);
     }
-    for (uint i=0; i<data.StateVariableList.size(); i++)
+    for (int i=0; i<data.StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariable(data.StateVariableList[i]);
     }
-    for (uint i=0; i<data.ParameterList.size(); i++)
+    for (int i=0; i<data.ParameterList.size(); i++)
     {
         ParameterList[i] = new Parameter(data.ParameterList[i]);
     }
-    for (uint i=0; i<data.AliasList.size(); i++)
+    for (int i=0; i<data.AliasList.size(); i++)
     {
         AliasList[i] = new Alias(data.AliasList[i]);
     }
@@ -102,7 +102,7 @@ NineMLLayout& NineMLLayout::operator=(const NineMLLayout& data)
     if (validated.size() > 1) {
         QMessageBox msgBox;
         QString message;
-        for (uint i = 0; i < (uint) validated.size(); ++i) {
+        for (int i = 0; i < (int) validated.size(); ++i) {
             message += validated[i] + "\n";
         }
         msgBox.setText(message);
@@ -121,17 +121,19 @@ NineMLLayoutData::NineMLLayoutData(QSharedPointer<NineMLLayout>data)
     StateVariableList.resize(data->StateVariableList.size());
     ParameterList.resize(data->ParameterList.size());
 
-    for (uint i=0; i<data->StateVariableList.size(); i++)
+    for (int i=0; i<data->StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
         StateVariableList[i]->currType = FixedValue;
-        StateVariableList[i]->value.resize(1,0);
+        StateVariableList[i]->value.resize(1);
+        StateVariableList[i]->value.fill(0);
     }
-    for (uint i=0; i<data->ParameterList.size(); i++)
+    for (int i=0; i<data->ParameterList.size(); i++)
     {
         ParameterList[i] = new ParameterData(data->ParameterList[i]);
         ParameterList[i]->currType = FixedValue;
-        ParameterList[i]->value.resize(1,0);
+        ParameterList[i]->value.resize(1);
+        ParameterList[i]->value.fill(0);
     }
     this->component = data;
 }
@@ -201,7 +203,7 @@ void NineMLLayout::load(QDomDocument *doc)
     if (validated.size() > 1) {
         QMessageBox msgBox;
         QString message;
-        for (uint i = 0; i < (uint) validated.size(); ++i) {
+        for (int i = 0; i < (int) validated.size(); ++i) {
             message += validated[i] + "\n";
         }
         msgBox.setText(message);
@@ -216,7 +218,7 @@ void NineMLLayout::write(QDomDocument *doc)
     if (validated.size() > 1) {
         QMessageBox msgBox;
         QString message;
-        for (uint i = 0; i < (uint) validated.size(); ++i) {
+        for (int i = 0; i < (int) validated.size(); ++i) {
             message += validated[i] + "\n";
         }
         msgBox.setText(message);
@@ -238,7 +240,7 @@ void NineMLLayout::write(QDomDocument *doc)
     root.appendChild(CClass);
 
     // declarations
-    for (unsigned int i = 0; i < this->ParameterList.size(); ++i) {
+    for (int i = 0; i < this->ParameterList.size(); ++i) {
         ParameterList[i]->writeOut(doc, CClass);
     }
 
@@ -246,13 +248,13 @@ void NineMLLayout::write(QDomDocument *doc)
     CClass.appendChild(space);
 
     // space
-    for (unsigned int i = 0; i < this->RegimeList.size(); ++i) {
+    for (int i = 0; i < this->RegimeList.size(); ++i) {
         RegimeList[i]->writeOut(doc, space);
     }
-    for (unsigned int i = 0; i < this->AliasList.size(); ++i) {
+    for (int i = 0; i < this->AliasList.size(); ++i) {
         AliasList[i]->writeOut(doc, space);
     }
-    for (unsigned int i = 0; i < this->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->StateVariableList.size(); ++i) {
         StateVariableList[i]->writeOut(doc, space);
     }
 
@@ -263,11 +265,11 @@ QStringList NineMLLayout::validateComponent()
     QStringList errs;
 
     int failures = 0;
-    for(uint i=0; i<RegimeList.size(); i++)
+    for(int i=0; i<RegimeList.size(); i++)
     {
         failures += RegimeList[i]->validateRegime(this, &errs);
     }
-    for(uint i=0; i<AliasList.size(); i++)
+    for(int i=0; i<AliasList.size(); i++)
     {
         failures += AliasList[i]->validateAlias(this, &errs);
     }
@@ -304,7 +306,7 @@ void NineMLLayoutData::import_parameters_from_xml(QDomNode &nIn)
 
         bool parFound = false;
 
-        for (uint i = 0; i < this->ParameterList.size(); ++i) {
+        for (int i = 0; i < this->ParameterList.size(); ++i) {
             if (propName == this->ParameterList[i]->name) {
                 parFound = true;
                 QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
@@ -315,7 +317,7 @@ void NineMLLayoutData::import_parameters_from_xml(QDomNode &nIn)
             }
         }
         if (!parFound) {
-            for (uint i = 0; i < this->StateVariableList.size(); ++i) {
+            for (int i = 0; i < this->StateVariableList.size(); ++i) {
                 if (propName == this->StateVariableList[i]->name) {
                     parFound = true;
                     QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
@@ -397,7 +399,7 @@ void rotateAxes(axisType axis, float angle, float x[3], float y[3], float z[3]) 
 }
 
 
-void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QString &errRet) {
+void NineMLLayoutData::generateLayout(int numNeurons, QVector <loc> *locations, QString &errRet) {
 
     float result = 0;
 
@@ -407,7 +409,7 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
     if (this->component->name == "none") {
 
         // linear layout by default:
-        for (unsigned int i = 0; i < (uint) numNeurons; ++i) {
+        for (int i = 0; i < (int) numNeurons; ++i) {
 
             loc newLoc;
 
@@ -430,14 +432,14 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
     // create the variable list:
     vector < lookup > varList;
 
-    for (uint i = 0; i < this->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->StateVariableList.size(); ++i) {
         varList.push_back(lookup(StateVariableList[i]->name, StateVariableList[i]->value[0]));
     }
-    for (uint i = 0; i < this->component->AliasList.size(); ++i) {
+    for (int i = 0; i < this->component->AliasList.size(); ++i) {
         varList.push_back(lookup(this->component->AliasList[i]->name, 0.0));
     }
 
-    for (uint i = 0; i < this->ParameterList.size(); ++i) {
+    for (int i = 0; i < this->ParameterList.size(); ++i) {
         if (ParameterList[i]->name == "numNeurons") {
             // override number of neurons value
             varList.push_back(lookup(ParameterList[i]->name, numNeurons));
@@ -456,9 +458,9 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
         // start in the first regime we come across
 
         RegimeSpace * regime = this->component->RegimeList.front();
-        vector <int> order;
+        QVector <int> order;
 
-        for (uint i = 0; i < regime->TransformList.size(); ++i) {
+        for (int i = 0; i < regime->TransformList.size(); ++i) {
 
             // resize if order is smaller
             if ((int) order.size() < regime->TransformList[i]->order) {
@@ -470,7 +472,7 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
 
         // create stacks:
         vector < vector < valop > > trstacks;
-        for (uint trans = 0; trans < order.size(); ++trans) {
+        for (int trans = 0; trans < order.size(); ++trans) {
             QString err;
             vector < valop > newStack;
             trstacks.push_back(newStack);
@@ -487,7 +489,7 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
            }
         }
         vector < vector < valop > > alstacks;
-        for (uint j = 0; j < this->component->AliasList.size(); ++j) {
+        for (int j = 0; j < this->component->AliasList.size(); ++j) {
             QString err;
             vector < valop > newStack;
             alstacks.push_back(newStack);
@@ -508,7 +510,7 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
 
         int loop = 0;
 
-        for (uint i = 0; i < (uint) numNeurons; ++i) {
+        for (int i = 0; i < (int) numNeurons; ++i) {
 
             if (loop > 1000) {
                 errRet = "Cannot satisfy distance constraint";
@@ -520,7 +522,7 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
             vector < lookup > varListBack = varList;
 
             // do aliases:
-            for (uint j = 0; j < this->component->AliasList.size(); ++j) {
+            for (int j = 0; j < this->component->AliasList.size(); ++j) {
 
                 float result;
                 // find the correct alias
@@ -536,13 +538,13 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
             }
 
             // do translations
-            for (uint trans = 0; trans < order.size(); ++trans) {
+            for (int trans = 0; trans < order.size(); ++trans) {
 
                 result = interpretMaths(trstacks[trans]);
 
                 // assign result to the given statevariable
                 if (regime->TransformList[order[trans]]->type == TRANSLATE) {
-                    for (uint j = 0; j < this->StateVariableList.size(); ++j) {
+                    for (int j = 0; j < this->StateVariableList.size(); ++j) {
                         if (varList[j].name == regime->TransformList[order[trans]]->variable->name) {
                             varList[j].value = result;
                         }
@@ -553,7 +555,7 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
 
             // write out the location
             loc newLoc = {0,0,0};
-            for (uint sv = 0; sv < this->StateVariableList.size(); ++sv) {
+            for (int sv = 0; sv < this->StateVariableList.size(); ++sv) {
                 if (varList[sv].name == "x" ) {
                     newLoc.x = varList[sv].value;
                 }
@@ -570,7 +572,7 @@ void NineMLLayoutData::generateLayout(int numNeurons, vector<loc> *locations, QS
 
                 bool tooClose = false;
 
-                for (uint l = 0; l < locations->size(); ++l) {
+                for (int l = 0; l < locations->size(); ++l) {
                     if (pow((*locations)[l].x - newLoc.x,2) + pow((*locations)[l].y - newLoc.y, 2) + pow((*locations)[l].z - newLoc.z,2) < pow(this->minimumDistance,2)) {
                         tooClose = true;
                         break;
@@ -628,10 +630,10 @@ void RegimeSpace::writeOut(QDomDocument *doc, QDomElement &parent)
     parent.appendChild(regime);
 
     // write children
-    for (unsigned int i = 0; i < this->TransformList.size(); ++i) {
+    for (int i = 0; i < this->TransformList.size(); ++i) {
         this->TransformList[i]->writeOut(doc, regime);
     }
-    for (unsigned int i = 0; i < this->OnConditionList.size(); ++i) {
+    for (int i = 0; i < this->OnConditionList.size(); ++i) {
         this->OnConditionList[i]->writeOut(doc, regime);
     }
 
@@ -640,13 +642,13 @@ void RegimeSpace::writeOut(QDomDocument *doc, QDomElement &parent)
 RegimeSpace::RegimeSpace(RegimeSpace *data)
 {
     name = data->name;
-    OnConditionList = vector<OnConditionSpace*>(data->OnConditionList.size());
-    TransformList = vector<Transform*>(data->TransformList.size());
-    for (uint i=0; i<data->OnConditionList.size(); i++)
+    OnConditionList = QVector <OnConditionSpace*>(data->OnConditionList.size());
+    TransformList = QVector <Transform*>(data->TransformList.size());
+    for (int i=0; i<data->OnConditionList.size(); i++)
     {
         OnConditionList[i] = new OnConditionSpace(data->OnConditionList[i]);
     }
-    for (uint i=0; i<data->TransformList.size(); i++)
+    for (int i=0; i<data->TransformList.size(); i++)
     {
         TransformList[i] = new Transform(data->TransformList[i]);
     }
@@ -656,11 +658,11 @@ RegimeSpace::RegimeSpace(RegimeSpace *data)
 RegimeSpace::~RegimeSpace()
 {
 
-    for (uint i=0; i<OnConditionList.size(); i++)
+    for (int i=0; i<OnConditionList.size(); i++)
     {
         delete OnConditionList[i];
     }
-    for (uint i=0; i<TransformList.size(); i++)
+    for (int i=0; i<TransformList.size(); i++)
     {
         delete TransformList[i];
     }
@@ -669,17 +671,17 @@ RegimeSpace::~RegimeSpace()
 int RegimeSpace::validateRegime(NineMLLayout * component, QStringList * errs)
 {
     int failures = 0;
-    for(uint i=0; i<OnConditionList.size(); i++)
+    for(int i=0; i<OnConditionList.size(); i++)
     {
         failures += OnConditionList[i]->validateOnCondition(component, errs);
     }
-    for(uint i=0; i<TransformList.size(); i++)
+    for(int i=0; i<TransformList.size(); i++)
     {
         failures += TransformList[i]->validateTransform(component, errs);
     }
     // validate transform order:
     vector <int> order;
-    for (uint i = 0; i <TransformList.size(); ++i) {
+    for (int i = 0; i <TransformList.size(); ++i) {
         // resize if order is smaller
         if ((int) order.size() < this->TransformList[i]->order+1) {
             order.resize(this->TransformList[i]->order+1, -1);
@@ -687,7 +689,7 @@ int RegimeSpace::validateRegime(NineMLLayout * component, QStringList * errs)
         if (order[this->TransformList[i]->order] != -1) {++failures; errs->push_back("Duplicate Transform order value in Regime");}
         order[this->TransformList[i]->order] = i;
     }
-    for (uint i = 0; i < order.size(); ++i) {
+    for (int i = 0; i < order.size(); ++i) {
         if (i == 0 && order[i] != -1) {++failures; errs->push_back("Transform ordering must start from 1, not 0 in Regime");}
         if (order[i] == -1 && i != 0) {++failures; errs->push_back("Transform order is not contiguous in Regime");}
     }
@@ -739,10 +741,10 @@ void OnConditionSpace::writeOut(QDomDocument * doc, QDomElement &parent)
     parent.appendChild(OnCondition);
     OnCondition.setAttribute("target_regime", this->target_regime_name);
 
-    for (unsigned int i = 0; i < this->StateAssignList.size(); ++i) {
+    for (int i = 0; i < this->StateAssignList.size(); ++i) {
         this->StateAssignList[i]->writeOut(doc, OnCondition);
     }
-    for (unsigned int i = 0; i < this->TransformList.size(); ++i) {
+    for (int i = 0; i < this->TransformList.size(); ++i) {
         this->TransformList[i]->writeOut(doc, OnCondition);
     }
 
@@ -755,13 +757,13 @@ OnConditionSpace::OnConditionSpace(OnConditionSpace *data)
     target_regime = NULL;
     target_regime_name = data->target_regime_name;
     trigger = new Trigger(data->trigger);
-    StateAssignList = vector<StateAssignment*>(data->StateAssignList.size());
-    TransformList = vector<Transform*>(data->TransformList.size());
-    for (uint i=0; i<data->StateAssignList.size(); i++)
+    StateAssignList = QVector <StateAssignment*>(data->StateAssignList.size());
+    TransformList = QVector <Transform*>(data->TransformList.size());
+    for (int i=0; i<data->StateAssignList.size(); i++)
     {
         StateAssignList[i] = new StateAssignment(data->StateAssignList[i]);
     }
-    for (uint i=0; i<data->TransformList.size(); i++)
+    for (int i=0; i<data->TransformList.size(); i++)
     {
         TransformList[i] = new Transform(data->TransformList[i]);
     }
@@ -771,11 +773,11 @@ OnConditionSpace::OnConditionSpace(OnConditionSpace *data)
 OnConditionSpace::~OnConditionSpace()
 {
     delete trigger;
-    for (uint i=0; i<StateAssignList.size(); i++)
+    for (int i=0; i<StateAssignList.size(); i++)
     {
         delete StateAssignList[i];
     }
-    for (uint i=0; i<TransformList.size(); i++)
+    for (int i=0; i<TransformList.size(); i++)
     {
         delete TransformList[i];
     }
@@ -786,7 +788,7 @@ int OnConditionSpace::validateOnCondition(NineMLLayout * component, QStringList 
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0;i<component->RegimeList.size();i++)
+    for(int i=0;i<component->RegimeList.size();i++)
     {
         if (component->RegimeList[i]->name.compare(target_regime_name) == 0)
         {target_regime = component->RegimeList[i];
@@ -794,18 +796,18 @@ int OnConditionSpace::validateOnCondition(NineMLLayout * component, QStringList 
     }
     if (!match) errs->push_back("OnCondition references missing Synapse Regime");
     failures += !match;
-    for(uint i=0; i<StateAssignList.size(); i++)
+    for(int i=0; i<StateAssignList.size(); i++)
     {
         failures += StateAssignList[i]->validateStateAssignment(component, errs);
     }
-    for(uint i=0; i<TransformList.size(); i++)
+    for(int i=0; i<TransformList.size(); i++)
     {
         failures += TransformList[i]->validateTransform(component, errs);
     }
 
     // validate transform order:
     vector <int> order;
-    for (uint i = 0; i <TransformList.size(); ++i) {
+    for (int i = 0; i <TransformList.size(); ++i) {
         // resize if order is smaller
         if ((int) order.size() < this->TransformList[i]->order+1) {
             order.resize(this->TransformList[i]->order+1, -1);
@@ -813,7 +815,7 @@ int OnConditionSpace::validateOnCondition(NineMLLayout * component, QStringList 
         if (order[this->TransformList[i]->order] != -1) {++failures; errs->push_back("Duplicate Transform order value in OnCondition");}
         order[this->TransformList[i]->order] = i;
     }
-    for (uint i = 0; i < order.size(); ++i) {
+    for (int i = 0; i < order.size(); ++i) {
         if (i == 0 && order[i] != -1) {++failures; errs->push_back("Transform ordering must start from 1, not 0 in OnCondition");}
         if (order[i] == -1 && i != 0) {++failures; errs->push_back("Transform order is not contiguous in OnCondition");}
     }
@@ -878,7 +880,7 @@ int Transform::validateTransform(NineMLLayout * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0; i<component->StateVariableList.size(); i++)
+    for(int i=0; i<component->StateVariableList.size(); i++)
     {
         if (component->StateVariableList[i]->name.compare(this->variableName) == 0)
         {variable = component->StateVariableList[i];
@@ -921,7 +923,7 @@ int StateAssignment::validateStateAssignment(NineMLLayout * component, QStringLi
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0; i<component->StateVariableList.size(); i++)
+    for(int i=0; i<component->StateVariableList.size(); i++)
     {
         if (component->StateVariableList[i]->name.compare(name) == 0)
         {variable = component->StateVariableList[i];
@@ -1002,24 +1004,24 @@ int MathInLine::validateMathInLine(NineMLLayout * component, QStringList * errs)
     splitTest = test.split(' ');
 
     // check each token...
-    for (unsigned int i = 0; i < (uint) splitTest.count(); ++i) {
+    for (int i = 0; i < (int) splitTest.count(); ++i) {
 
         bool recognised = false;
 
         // see if it is in the component
-        for (unsigned int j = 0; j<component->ParameterList.size(); j++) {
+        for (int j = 0; j<component->ParameterList.size(); j++) {
             if (component->ParameterList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<component->StateVariableList.size(); j++) {
+        for (int j = 0; j<component->StateVariableList.size(); j++) {
             if (component->StateVariableList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<component->AliasList.size(); j++) {
+        for (int j = 0; j<component->AliasList.size(); j++) {
             if (component->AliasList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<(uint)FuncList.size(); j++) {
+        for (int j = 0; j<(int)FuncList.size(); j++) {
             if (FuncList[j].compare(splitTest[i]) == 0)
                 recognised = true;
         }

@@ -72,29 +72,29 @@ void NineMLALScene::initialiseScene(QSharedPointer<NineMLComponent>al)
     addItem(portl_item);
 
     //create all regime graphics items
-    for (uint i=0; i<al->RegimeList.size();i++)
+    for (int i=0; i<al->RegimeList.size();i++)
     {
         addRegimeItem(al->RegimeList[i]);
     }
 
     //create on condition/event items (must be done after all regime items are created)
-    for (uint i=0; i<al->RegimeList.size();i++)
+    for (int i=0; i<al->RegimeList.size();i++)
     {
         Regime* r = al->RegimeList[i];
 
         //create on conditions
-        for(uint j=0; j<r->OnConditionList.size(); j++)
+        for(int j=0; j<r->OnConditionList.size(); j++)
         {
             addOnConditionItem(al->RegimeList[i], r->OnConditionList[j]);
         }
 
         //create on events
-        for(uint j=0; j<r->OnEventList.size(); j++)
+        for(int j=0; j<r->OnEventList.size(); j++)
         {
             addOnEventItem(al->RegimeList[i], r->OnEventList[j]);
         }
         //create on impulse
-        for(uint j=0; j<r->OnImpulseList.size(); j++)
+        for(int j=0; j<r->OnImpulseList.size(); j++)
         {
             addOnImpulseItem(al->RegimeList[i], r->OnImpulseList[j]);
         }
@@ -113,7 +113,7 @@ void NineMLALScene::initialiseScene(QSharedPointer<NineMLComponent>al)
 
 Agnode_t * NineMLALScene::getRegimeGVNode(Regime *r)
 {
-    for (uint i=0; i<rg_items.size(); i++)
+    for (int i=0; i<rg_items.size(); i++)
     {
         RegimeGraphicsItem *rg = rg_items[i];
         if (rg->isRegime(r))
@@ -558,7 +558,7 @@ void NineMLALScene::deleteSelectedItem()
             Parameter *p = pi->parameter;
             root->al->ParameterList.erase(std::remove(root->al->ParameterList.begin(), root->al->ParameterList.end(), p), root->al->ParameterList.end());
             //update any impulse send ports
-            for (uint i=0;i<root->al->ImpulsePortList.size(); i++){
+            for (int i=0;i<root->al->ImpulsePortList.size(); i++){
                 ImpulsePort *ip = root->al->ImpulsePortList[i];
                 if (ip->parameter == p)
                     ip->parameter = NULL;
@@ -575,36 +575,36 @@ void NineMLALScene::deleteSelectedItem()
             StateVariable *sv = svti->state_variable;
             root->al->StateVariableList.erase(std::remove(root->al->StateVariableList.begin(), root->al->StateVariableList.end(), sv), root->al->StateVariableList.end());
             //update any time derivatives and on conditions
-            for (uint i=0; i<root->al->RegimeList.size();i++){
+            for (int i=0; i<root->al->RegimeList.size();i++){
                 Regime * r = root->al->RegimeList[i];
                 //time derivatives
-                for (uint j=0;j<r->TimeDerivativeList.size(); j++){
+                for (int j=0;j<r->TimeDerivativeList.size(); j++){
                     TimeDerivative *td = r->TimeDerivativeList[j];
                     if (td->variable == sv)
                         td->variable = NULL;
                 }
                 //on condition state assignments
-                for (uint j=0; j<r->OnConditionList.size();j++){
+                for (int j=0; j<r->OnConditionList.size();j++){
                     OnCondition *oc = r->OnConditionList[j];
-                    for (uint k=0; k<oc->StateAssignList.size();k++){
+                    for (int k=0; k<oc->StateAssignList.size();k++){
                         StateAssignment *sa = oc->StateAssignList[k];
                         if (sa->variable == sv)
                             sa->variable = NULL;
                     }
                 }
                 //on event state assignments
-                for (uint j=0; j<r->OnEventList.size();j++){
+                for (int j=0; j<r->OnEventList.size();j++){
                     OnEvent *oe = r->OnEventList[j];
-                    for (uint k=0; k<oe->StateAssignList.size();k++){
+                    for (int k=0; k<oe->StateAssignList.size();k++){
                         StateAssignment *sa = oe->StateAssignList[k];
                         if (sa->variable == sv)
                             sa->variable = NULL;
                     }
                 }
                 //on impulse state assignments
-                for (uint j=0; j<r->OnImpulseList.size();j++){
+                for (int j=0; j<r->OnImpulseList.size();j++){
                     OnImpulse *oi = r->OnImpulseList[j];
-                    for (uint k=0; k<oi->StateAssignList.size();k++){
+                    for (int k=0; k<oi->StateAssignList.size();k++){
                         StateAssignment *sa = oi->StateAssignList[k];
                         if (sa->variable == sv)
                             sa->variable = NULL;
@@ -612,13 +612,13 @@ void NineMLALScene::deleteSelectedItem()
                 }
             }
             //update any analog send ports
-            for (uint i=0;i<root->al->AnalogPortList.size(); i++){
+            for (int i=0;i<root->al->AnalogPortList.size(); i++){
                 AnalogPort *ap = root->al->AnalogPortList[i];
                 if (ap->variable == sv)
                     ap->variable = NULL;
             }
             //update any impulse send ports
-            for (uint i=0;i<root->al->ImpulsePortList.size(); i++){
+            for (int i=0;i<root->al->ImpulsePortList.size(); i++){
                 ImpulsePort *ip = root->al->ImpulsePortList[i];
                 if (ip->parameter == sv)
                     ip->parameter = NULL;
@@ -636,13 +636,13 @@ void NineMLALScene::deleteSelectedItem()
             Alias *a = ati->alias;
             root->al->AliasList.erase(std::remove(root->al->AliasList.begin(), root->al->AliasList.end(), a), root->al->AliasList.end());
             //update any analog send ports
-            for (uint i=0;i<root->al->AnalogPortList.size(); i++){
+            for (int i=0;i<root->al->AnalogPortList.size(); i++){
                 AnalogPort *ap = root->al->AnalogPortList[i];
                 if (ap->variable == a)
                     ap->variable = NULL;
             }
             //update any impulse send ports
-            for (uint i=0;i<root->al->ImpulsePortList.size(); i++){
+            for (int i=0;i<root->al->ImpulsePortList.size(); i++){
                 ImpulsePort *ip = root->al->ImpulsePortList[i];
                 if (ip->parameter == a)
                     ip->parameter = NULL;
@@ -671,30 +671,30 @@ void NineMLALScene::deleteSelectedItem()
             EventPort *ep = epti->port;
             root->al->EventPortList.erase(std::remove(root->al->EventPortList.begin(), root->al->EventPortList.end(), ep), root->al->EventPortList.end());
             //update any event outputs
-            for (uint i=0; i<root->al->RegimeList.size();i++){
+            for (int i=0; i<root->al->RegimeList.size();i++){
                 Regime * r = root->al->RegimeList[i];
                 //on condition event outputs
-                for (uint j=0; j<r->OnEventList.size();j++){
+                for (int j=0; j<r->OnEventList.size();j++){
                     OnEvent *oe = r->OnEventList[j];
-                    for (uint k=0; k<oe->eventOutList.size();k++){
+                    for (int k=0; k<oe->eventOutList.size();k++){
                         EventOut *eo = oe->eventOutList[k];
                         if (eo->port == ep)
                             eo->port = NULL;
                     }
                 }
                 //on event event outputs
-                for (uint j=0; j<r->OnConditionList.size();j++){
+                for (int j=0; j<r->OnConditionList.size();j++){
                     OnCondition *oc = r->OnConditionList[j];
-                    for (uint k=0; k<oc->eventOutList.size();k++){
+                    for (int k=0; k<oc->eventOutList.size();k++){
                         EventOut *eo = oc->eventOutList[k];
                         if (eo->port == ep)
                             eo->port = NULL;
                     }
                 }
                 //on impulse event outputs
-                for (uint j=0; j<r->OnImpulseList.size();j++){
+                for (int j=0; j<r->OnImpulseList.size();j++){
                     OnImpulse *oi = r->OnImpulseList[j];
-                    for (uint k=0; k<oi->eventOutList.size();k++){
+                    for (int k=0; k<oi->eventOutList.size();k++){
                         EventOut *eo = oi->eventOutList[k];
                         if (eo->port == ep)
                             eo->port = NULL;
@@ -713,30 +713,30 @@ void NineMLALScene::deleteSelectedItem()
             ImpulsePort *ip = ipti->port;
             root->al->ImpulsePortList.erase(std::remove(root->al->ImpulsePortList.begin(), root->al->ImpulsePortList.end(), ip), root->al->ImpulsePortList.end());
             //update any event outputs
-            for (uint i=0; i<root->al->RegimeList.size();i++){
+            for (int i=0; i<root->al->RegimeList.size();i++){
                 Regime * r = root->al->RegimeList[i];
                 //on event impulse outputs
-                for (uint j=0; j<r->OnEventList.size();j++){
+                for (int j=0; j<r->OnEventList.size();j++){
                     OnEvent *oe = r->OnEventList[j];
-                    for (uint k=0; k<oe->impulseOutList.size();k++){
+                    for (int k=0; k<oe->impulseOutList.size();k++){
                         ImpulseOut *eo = oe->impulseOutList[k];
                         if (eo->port == ip)
                             eo->port = NULL;
                     }
                 }
                 //on condition impulse outputs
-                for (uint j=0; j<r->OnConditionList.size();j++){
+                for (int j=0; j<r->OnConditionList.size();j++){
                     OnCondition *oc = r->OnConditionList[j];
-                    for (uint k=0; k<oc->impulseOutList.size();k++){
+                    for (int k=0; k<oc->impulseOutList.size();k++){
                         ImpulseOut *eo = oc->impulseOutList[k];
                         if (eo->port == ip)
                             eo->port = NULL;
                     }
                 }
                 //on impulse impulse outputs
-                for (uint j=0; j<r->OnImpulseList.size();j++){
+                for (int j=0; j<r->OnImpulseList.size();j++){
                     OnImpulse *oi = r->OnImpulseList[j];
-                    for (uint k=0; k<oi->impulseOutList.size();k++){
+                    for (int k=0; k<oi->impulseOutList.size();k++){
                         ImpulseOut *eo = oi->impulseOutList[k];
                         if (eo->port == ip)
                             eo->port = NULL;
@@ -883,16 +883,16 @@ void NineMLALScene::deleteSelectedItem()
             qDebug() << "Deletion not handled!";
 
         //update any referencing items
-        for (uint i=0; i<rg_items.size();i++){
+        for (int i=0; i<rg_items.size();i++){
             rg_items[i]->updateMemberContents();
         }
-        for (uint i=0; i<oc_items.size();i++){
+        for (int i=0; i<oc_items.size();i++){
             oc_items[i]->updateMemberContents();
         }
-        for (uint i=0; i<oe_items.size();i++){
+        for (int i=0; i<oe_items.size();i++){
             oe_items[i]->updateMemberContents();
         }
-        for (uint i=0; i<oi_items.size();i++){
+        for (int i=0; i<oi_items.size();i++){
             oi_items[i]->updateMemberContents();
         }
         portl_item->updateMemberContents();

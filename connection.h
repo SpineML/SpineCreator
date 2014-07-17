@@ -126,8 +126,8 @@ public:
     QStringList values;
     void import_csv(QString filename);
     void import_packed_binary(QFile &fileIn);
-    vector <float> fetchData(int index);
-    void getAllData(vector < conn > &conns);
+    QVector <float> fetchData(int index);
+    void getAllData(QVector < conn > &conns);
     float getData(int, int);
     float getData(QModelIndex &index);
     QString getHeader(int section);
@@ -157,7 +157,7 @@ private:
     QXmlStreamWriter xmlOut;
     QXmlStreamReader xmlIn;
     int numRows;
-    vector < change > changes;
+    QVector < change > changes;
     void setUniqueName();
 
 };
@@ -181,13 +181,13 @@ public:
 
     QSharedPointer <population> src;
     QSharedPointer <population> dst;
-    vector < conn > *conns;
+    QVector < conn > *conns;
     QMutex * mutex;
     bool isList();
     bool selfConnections;
     bool changed();
     void setUnchanged(bool);
-    vector <conn> connections;
+    QVector <conn> connections;
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
 
 private:
@@ -198,7 +198,7 @@ private:
     int dstSize;
 
 public slots:
-    //void generate_connections(QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns);
+    //void generate_connections(QSharedPointer <population> src, QSharedPointer <population> dst, QVector < conn > &conns);
     void generate_connections();
     void convertToList(bool);
     void setKernelSize(int);
@@ -229,13 +229,13 @@ public:
 
     QSharedPointer <population> src;
     QSharedPointer <population> dst;
-    vector < conn > *conns;
+    QVector < conn > *conns;
     QMutex * mutex;
     bool isList();
     bool selfConnections;
     bool changed();
 
-    vector <conn> connections;
+    QVector <conn> connections;
 
     QString scriptText;
     QString lastGeneratedScriptText;
@@ -247,7 +247,7 @@ public:
 
     QString weightProp;
     QString lastGeneratedWeightProp;
-    vector <float> weights;
+    QVector <float> weights;
 
     QString pythonErrors;
 

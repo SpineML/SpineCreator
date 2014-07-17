@@ -76,9 +76,11 @@ private:
     // widgets
     QSlider * timeSlider;
     QPushButton * playButton;
+    QSpinBox * playTimeStep;
 
     // timer
     QTimer playBack;
+    int playBackTimeStep;
 
     // population
     QComboBox * layoutComboBox;
@@ -138,6 +140,7 @@ public slots:
 
     void togglePlay();
     void playBackTimeout();
+    void setPlayTimeStep(int tstep);
 
     void disableButton();
 

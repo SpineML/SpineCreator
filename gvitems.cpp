@@ -51,7 +51,7 @@ void GVLayout::updateLayout()
     gvLayout(gvc, gvgraph, "dot");
 
     //update all graphviz items in the layout
-    for (uint i=0;i<items.size(); i++)
+    for (int i=0;i<items.size(); i++)
     {
         GVItem *gv_item = items[i];
         gv_item->updateLayout();
@@ -167,12 +167,12 @@ QPointF GVEdge::getGVEdgeLabelPosition(QPointF offset)
     return position;
 }
 
-uint GVEdge::getGVEdgeSplinesCount()
+int GVEdge::getGVEdgeSplinesCount()
 {
     return gv_edge->u.spl->list->size;
 }
 
-QPointF GVEdge::getGVEdgeSplinesPoint(uint i)
+QPointF GVEdge::getGVEdgeSplinesPoint(int i)
 {
     QPointF spline = QPointF(gv_edge->u.spl->list->list[i].x, layout->getGVGraph()->u.bb.UR.y - gv_edge->u.spl->list->list[i].y);
     return spline;

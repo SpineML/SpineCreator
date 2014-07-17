@@ -70,7 +70,7 @@ GLWidget::~GLWidget()
 
 void GLWidget::redrawGLview()
 {
-    changed = 100;
+    changed = 45;
 }
 
 

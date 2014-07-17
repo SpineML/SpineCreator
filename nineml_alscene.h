@@ -69,7 +69,7 @@ protected:
     void mouseMoveEvent(QGraphicsSceneMouseEvent *mouseEvent);
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent);
 
-    template <typename T> bool moveUp(vector<T> *vector, T item){
+    template <typename T> bool moveUp(QVector <T> *vector, T item){
         int index = std::find(vector->begin(), vector->end(), item) - vector->begin();
 
         if ((index > 0)&&(index < (int)vector->size())){
@@ -79,7 +79,7 @@ protected:
             return false;
         }
     }
-    template <typename T> bool moveDown(vector<T> *vector, T item){
+    template <typename T> bool moveDown(QVector <T> *vector, T item){
         int index = std::find(vector->begin(), vector->end(), item) - vector->begin();
 
         if ((index >= 0)&&(index < (int)vector->size() -1)){
@@ -93,10 +93,10 @@ protected:
 
 public: //TODO: private these up
 
-    vector <RegimeGraphicsItem*> rg_items;
-    vector <OnConditionGraphicsItem*> oc_items;
-    vector <OnEventGraphicsItem*> oe_items;
-    vector <OnImpulseGraphicsItem*> oi_items;
+    QVector <RegimeGraphicsItem*> rg_items;
+    QVector <OnConditionGraphicsItem*> oc_items;
+    QVector <OnEventGraphicsItem*> oe_items;
+    QVector <OnImpulseGraphicsItem*> oi_items;
     ParameterListGraphicsItem *pl_item;
     PortListGraphicsItem *portl_item;
 

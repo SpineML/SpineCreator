@@ -63,8 +63,8 @@ public:
     QString neuronTypeName;
     int numNeurons;
     QString layoutName;
-    vector < QSharedPointer <projection> > projections;
-    vector < QSharedPointer <projection> > reverseProjections;
+    QVector < QSharedPointer <projection> > projections;
+    QVector < QSharedPointer <projection> > reverseProjections;
     float getLeft();
     float getRight();
     float getTop();
@@ -81,7 +81,7 @@ public:
     void delAll(rootData *data);
     void delAll(projectObject *);
     QPointF currentLocation();
-    void getNeuronLocations(vector<loc> *locations,QColor * cols);
+    void getNeuronLocations(QVector <loc> *locations,QColor * cols);
     void print();
     void setupBounds();
     void makeSpikeSource(QSharedPointer<population> thisSharedPointer);

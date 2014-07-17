@@ -43,7 +43,7 @@ private:
     glConnectionWidget * glView;
 
 signals:
-    void drawLayout(vector <loc>);
+    void drawLayout(QVector <loc>);
     
 public slots:
     void reDraw(QString);

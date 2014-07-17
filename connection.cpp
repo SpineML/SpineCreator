@@ -89,7 +89,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut) {
     }
     else if (this->delay->currType == ExplicitList) {
         xmlOut.writeStartElement("ValueList");
-        for (uint ind = 0; ind < this->delay->value.size(); ++ind) {
+        for (int ind = 0; ind < this->delay->value.size(); ++ind) {
             xmlOut.writeEmptyElement("ValueInstance");
             xmlOut.writeAttribute("index", QString::number(float(this->delay->indices[ind])));
             xmlOut.writeAttribute("value", QString::number(float(this->delay->value[ind])));
@@ -150,13 +150,15 @@ void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
         QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
         if (propVal.size() == 1) {
             this->delay->currType = FixedValue;
-            this->delay->value.resize(1,0);
+            this->delay->value.resize(1);
+            this->delay->value.fill(0);
             this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
         }
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
@@ -165,7 +167,8 @@ void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
@@ -217,13 +220,15 @@ void onetoOne_connection::import_parameters_from_xml(QDomNode &e) {
         QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
         if (propVal.size() == 1) {
             this->delay->currType = FixedValue;
-            this->delay->value.resize(1,0);
+            this->delay->value.resize(1);
+            this->delay->value.fill(0);
             this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
         }
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
@@ -232,7 +237,8 @@ void onetoOne_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
@@ -329,13 +335,15 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e) {
         QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
         if (propVal.size() == 1) {
             this->delay->currType = FixedValue;
-            this->delay->value.resize(1,0);
+            this->delay->value.resize(1);
+            this->delay->value.fill(0);
             this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
         }
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
@@ -344,7 +352,8 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
@@ -633,7 +642,7 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
         // re-write the data
         if (getNumCols()==3) {
-            vector <conn> conns;
+            QVector <conn> conns;
             this->getAllData(conns);
 
             // write out
@@ -647,14 +656,14 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             }
 
             QDataStream access(&export_file);
-            for (uint i = 0; i < conns.size(); ++i) {
+            for (int i = 0; i < conns.size(); ++i) {
                 access.writeRawData((char*) &conns[i].src, sizeof(uint));
                 access.writeRawData((char*) &conns[i].dst, sizeof(uint));
                 access.writeRawData((char*) &conns[i].metric, sizeof(float));
             }
         }
         if (getNumCols()==2) {
-            vector <conn> conns;
+            QVector <conn> conns;
             this->getAllData(conns);
 
             // write out
@@ -668,9 +677,9 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             }
 
             QDataStream access(&export_file);
-            for (uint i = 0; i < conns.size(); ++i) {
-                access.writeRawData((char*) &conns[i].src, sizeof(uint));
-                access.writeRawData((char*) &conns[i].dst, sizeof(uint));
+            for (int i = 0; i < conns.size(); ++i) {
+                access.writeRawData((char*) &conns[i].src, sizeof(int));
+                access.writeRawData((char*) &conns[i].dst, sizeof(int));
             }
         }
 
@@ -682,7 +691,7 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
             xmlOut.writeEmptyElement("Connection");
 
-            quint32 val;
+            qint32 val;
 
             access >> val;
             xmlOut.writeAttribute("src_neuron", QString::number(float(val)));
@@ -896,9 +905,9 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
         this->setNumRows(connInstList.size());
 
-        for (uint i=0; i < (uint)connInstList.size(); ++i) {
+        for (int i=0; i < (int)connInstList.size(); ++i) {
 
-            quint32 val = connInstList.at(i).toElement().attribute("src_neuron").toUInt();
+            qint32 val = connInstList.at(i).toElement().attribute("src_neuron").toUInt();
             access << val;
 
             val = connInstList.at(i).toElement().attribute("dst_neuron").toUInt();
@@ -926,13 +935,15 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
         QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
         if (propVal.size() == 1) {
             this->delay->currType = FixedValue;
-            this->delay->value.resize(1,0);
+            this->delay->value.resize(1);
+            this->delay->value.fill(0);
             this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
         }
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
@@ -941,7 +952,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
@@ -1038,9 +1050,9 @@ void csv_connection::import_csv(QString fileName) {
             continue;
         }
         // for each field
-        for (unsigned int i = 0; i < (uint)fields.size(); ++i) {
+        for (int i = 0; i < (int)fields.size(); ++i) {
             if (i < 2) {
-                quint32 num = fields[i].toUInt();
+                qint32 num = fields[i].toUInt();
                 access << num;
             } else {
                 float num = fields[i].toFloat();
@@ -1051,7 +1063,7 @@ void csv_connection::import_csv(QString fileName) {
     }
 
     values.clear();
-    for (unsigned int i = 0; i < (uint)numFields; ++i) {
+    for (int i = 0; i < (int)numFields; ++i) {
         if (i == 0) this->values.push_back("src");
         if (i == 1) this->values.push_back("dst");
         if (i == 2) this->values.push_back("delay");
@@ -1087,7 +1099,7 @@ void csv_connection::import_packed_binary(QFile &fileIn) {
         fileIn.read((char *) &dstVal,4);
 
         // add the row...
-        quint32 num = srcVal;
+        qint32 num = srcVal;
         access << num;
         num = dstVal;
         access << num;
@@ -1137,7 +1149,7 @@ void csv_connection::setNumCols(int num) {
 }
 
 
-void csv_connection::getAllData(vector < conn > &conns) {
+void csv_connection::getAllData(QVector < conn > &conns) {
 
     //qDebug() << "ALL CONN DATA FETCHED";
 
@@ -1153,8 +1165,8 @@ void csv_connection::getAllData(vector < conn > &conns) {
 
         conn newConn;
 
-        quint32 src;
-        quint32 dst;
+        qint32 src;
+        qint32 dst;
 
         access >> src;
         access >> dst;
@@ -1191,7 +1203,7 @@ float csv_connection::getData(int rowV, int col) {
     // get a datastream to serialise the data
     QDataStream access(&file);
     if (col < 2) {
-        quint32 data;
+        qint32 data;
         access >> data;
         return float(data);
     }
@@ -1221,7 +1233,7 @@ float csv_connection::getData(QModelIndex &index) {
     // get a datastream to serialise the data
     QDataStream access(&file);
     if (index.column() < 2) {
-        quint32 data;
+        qint32 data;
         access >> data;
         return float(data);
     }
@@ -1266,7 +1278,7 @@ void csv_connection::setUniqueName() {
     while(!unique) {
         unique = true;
         uniqueName = baseName + QString::number(float(index));
-        for (unsigned int i = 0; i < (uint)files.count(); ++i) {
+        for (int i = 0; i < (int)files.count(); ++i) {
             // see if the new name is unique
             if (uniqueName == files[i]) {
                 unique = false;
@@ -1296,7 +1308,7 @@ void csv_connection::setData(const QModelIndex & index, float value) {
     if (index.row() > this->getNumRows()) {
         // resize
         for (int i = getNumRows()*getNumCols(); i < getNumCols()*index.row(); ++i) {
-            quint32 num = 0;
+            qint32 num = 0;
             access << num;
         }
     }
@@ -1308,7 +1320,7 @@ void csv_connection::setData(const QModelIndex & index, float value) {
     file.seek(seekTo*4); // seek to location in bytes
 
     if (index.column() < 2) {
-        access << (quint32) value;
+        access << (qint32) value;
     } else {
         access << (float) value;
     }
@@ -1325,7 +1337,7 @@ void csv_connection::setData(int row, int col, float value) {
     if (row > this->getNumRows()) {
         // resize
         for (int i = getNumRows()*getNumCols(); i < getNumCols()*row; ++i) {
-            quint32 num = 0;
+            qint32 num = 0;
             access << num;
         }
     }
@@ -1337,7 +1349,7 @@ void csv_connection::setData(int row, int col, float value) {
     file.seek(seekTo*4); // seek to location in bytes
 
     if (col < 2) {
-        access << (quint32) value;
+        access << (qint32) value;
     } else {
         access << (float) value;
     }
@@ -1481,7 +1493,7 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
         if (!exportBinary || connections.size() < 30) {
 
             // loop through connections writing them out
-            for (uint i=0; i < connections.size(); ++i) {
+            for (int i=0; i < connections.size(); ++i) {
 
                 xmlOut.writeEmptyElement("Connection");
 
@@ -1516,9 +1528,9 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             }
 
             QDataStream access(&export_file);
-            for (uint i = 0; i < connections.size(); ++i) {
-                access.writeRawData((char*) &connections[i].src, sizeof(uint));
-                access.writeRawData((char*) &connections[i].dst, sizeof(uint));
+            for (int i = 0; i < connections.size(); ++i) {
+                access.writeRawData((char*) &connections[i].src, sizeof(int));
+                access.writeRawData((char*) &connections[i].dst, sizeof(int));
             }
 
         }
@@ -1554,13 +1566,15 @@ void kernel_connection::import_parameters_from_xml(QDomNode &e) {
         QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
         if (propVal.size() == 1) {
             this->delay->currType = FixedValue;
-            this->delay->value.resize(1,0);
+            this->delay->value.resize(1);
+            this->delay->value.fill(0);
             this->delay->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
         }
         propVal = n.toElement().elementsByTagName("UniformDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 1;
             this->delay->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
@@ -1569,7 +1583,8 @@ void kernel_connection::import_parameters_from_xml(QDomNode &e) {
         propVal = n.toElement().elementsByTagName("NormalDistribution");
         if (propVal.size() == 1) {
             this->delay->currType = Statistical;
-            this->delay->value.resize(4,0);
+            this->delay->value.resize(4);
+            this->delay->value.fill(0);
             this->delay->value[0] = 2;
             this->delay->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
@@ -1603,7 +1618,7 @@ void kernel_connection::generate_connections() {
 
     int oldprogress = 0;
 
-    for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
+    for (int i = 0; i < src->layoutType->locations.size(); ++i) {
         //#pragma omp parallel for
         for (int j = 0; j < (int) dst->layoutType->locations.size(); ++j) {
 
@@ -2265,9 +2280,9 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
 }
 
 ParameterData * pythonscript_connection::getPropPointer() {
-    for (uint i = 0; i < this->src->projections.size(); ++i) {
+    for (int i = 0; i < this->src->projections.size(); ++i) {
         QSharedPointer <projection> proj = this->src->projections[i];
-        for (uint j = 0; j < proj->synapses.size(); ++j) {
+        for (int j = 0; j < proj->synapses.size(); ++j) {
             QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
             bool isConn = false;
@@ -2284,13 +2299,13 @@ ParameterData * pythonscript_connection::getPropPointer() {
             }
             if (isConn) {
                 // now we know which weight update we have to look at
-                for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
                     if (syn->weightUpdateType->ParameterList[k]->name == this->weightProp) {
                         // found the weight
                         return syn->weightUpdateType->ParameterList[k];
                     }
                 }
-                for (uint k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
                     if (syn->weightUpdateType->StateVariableList[k]->name == this->weightProp) {
                         // found the weight
                         return syn->weightUpdateType->StateVariableList[k];
@@ -2305,9 +2320,9 @@ ParameterData * pythonscript_connection::getPropPointer() {
 
 QStringList pythonscript_connection::getPropList() {
     QStringList list;
-    for (uint i = 0; i < this->src->projections.size(); ++i) {
+    for (int i = 0; i < this->src->projections.size(); ++i) {
         QSharedPointer <projection> proj = this->src->projections[i];
-        for (uint j = 0; j < proj->synapses.size(); ++j) {
+        for (int j = 0; j < proj->synapses.size(); ++j) {
             QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
             bool isConn = false;
@@ -2324,11 +2339,11 @@ QStringList pythonscript_connection::getPropList() {
             }
             if (isConn) {
                 // now we know which weight update we have to look at
-                for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
                     // found the weight
                     list.push_back(syn->weightUpdateType->ParameterList[k]->name);
                 }
-                for (uint k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
                     // found the weight
                     list.push_back(syn->weightUpdateType->StateVariableList[k]->name);
                 }
@@ -2366,10 +2381,10 @@ PyObject * vectorToList(QVector <float> * vect) {
  * A simple function to take a vector of locations and pack them into a Python list of Python tuples
  * each containing the three values (x,y,z)
  */
-PyObject * vectorLocToList(vector <loc> * vect) {
+PyObject * vectorLocToList(QVector <loc> * vect) {
     // create the new PyList
     PyObject * vectList = PyList_New(vect->size());
-    for (uint i = 0; i < vect->size(); ++i) {
+    for (int i = 0; i < vect->size(); ++i) {
         // create a tuple from the three vector values then
         // add the tuple to the list
         PyList_SetItem(vectList, i, PyTuple_Pack(3,PyFloat_FromDouble((double) (*vect)[i].x), PyFloat_FromDouble((double) (*vect)[i].y), PyFloat_FromDouble((double) (*vect)[i].z)));
@@ -2397,8 +2412,8 @@ QVector <float> listToVector(PyObject * list) {
 }
 
 struct outputUnPackaged {
-    vector <conn> connections;
-    vector <float> weights;
+    QVector <conn> connections;
+    QVector <float> weights;
 };
 
 /*!
@@ -2606,7 +2621,7 @@ void pythonscript_connection::generate_connections() {
             }
         }
 
-        for (uint i = 0; i < unpacked.connections.size(); ++i) {
+        for (int i = 0; i < unpacked.connections.size(); ++i) {
 
             // transfer connection
             this->connection_target->setData(i, 0, unpacked.connections[i].src);
@@ -2691,7 +2706,7 @@ void csv_connection::flushChangesToDisk() {
     while(!unique) {
         unique = true;
         uniqueName = baseName + QString::number(float(index));
-        for (unsigned int i = 0; i < (uint)files.count(); ++i) {
+        for (int i = 0; i < (int)files.count(); ++i) {
             // see if the new name is unique
             if (uniqueName == files[i]) {
                 unique = false;
@@ -2713,12 +2728,12 @@ void csv_connection::flushChangesToDisk() {
 
 
     // sort the changes so that we have a list where the first change to be applied is first
-    vector < change > sortedChanges;
+    QVector < change > sortedChanges;
     while (changes.size() > 0) {
         int ind = 0;
         int minRow = 1000000000;
         int minCol = 1000000000;
-        for (uint i = 0; i < changes.size(); ++i) {
+        for (int i = 0; i < changes.size(); ++i) {
 
             if (changes[i].row < minRow) {
                 ind = i;
@@ -2762,10 +2777,10 @@ void csv_connection::flushChangesToDisk() {
 
             if (this->xmlIn.isStartElement() && this->xmlIn.name() == "connection") {
 
-                vector < float > returnVals;
+                QVector < float > returnVals;
 
                 // read in
-                for (unsigned int i = 0; i < (uint)this->xmlIn.attributes().count(); ++i) {
+                for (int i = 0; i < (int)this->xmlIn.attributes().count(); ++i) {
                     returnVals.push_back(this->xmlIn.attributes().value("value"+QString::number(float(i))).toString().toFloat());
                 }
 
@@ -2781,7 +2796,7 @@ void csv_connection::flushChangesToDisk() {
 
                 // write out
                 this->xmlOut.writeEmptyElement("connection");
-                for (unsigned int i = 0; i < returnVals.size(); ++i) {
+                for (int i = 0; i < returnVals.size(); ++i) {
                     QString attr = "value" + QString::number(float(i));
                     this->xmlOut.writeAttribute(attr, QString::number(returnVals[i]));
                 }
@@ -2796,7 +2811,7 @@ void csv_connection::flushChangesToDisk() {
 
     // flush remaining changes
     while (sortedChanges.size()) {
-        vector < float > returnVals;
+        QVector < float > returnVals;
 
         while (sortedChanges.front().row == counter) {
             // changes should be in order
@@ -2807,7 +2822,7 @@ void csv_connection::flushChangesToDisk() {
         }
 
         this->xmlOut.writeEmptyElement("connection");
-        for (unsigned int i = 0; i < returnVals.size(); ++i) {
+        for (int i = 0; i < returnVals.size(); ++i) {
             QString attr = "value" + QString::number(float(i));
             this->xmlOut.writeAttribute(attr, QString::number(returnVals[i]));
         }
