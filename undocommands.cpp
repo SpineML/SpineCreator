@@ -1132,6 +1132,29 @@ void updateTitle::redo()
     ptr->name = newName;
 }
 
+// ######## CHANGE PROJECTION DRAW STYLE #################
+
+updateProjDrawStyle::updateProjDrawStyle(QSharedPointer <projection> ptr, drawStyle newStyle, drawStyle oldStyle, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->ptr = ptr;
+    this->oldStyle = oldStyle;
+    this->newStyle = newStyle;
+    this->setText("Change projection draw style");
+}
+
+void updateProjDrawStyle::undo()
+{
+    // set name
+    ptr->setStyle(oldStyle);
+}
+
+void updateProjDrawStyle::redo()
+{
+    // set name
+    ptr->setStyle(newStyle);
+}
+
 
 // ######## CHANGE MODEL TITLE #################
 

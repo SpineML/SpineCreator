@@ -185,6 +185,8 @@ public slots:
     void selectProject(QAction *);
     void reDrawAll();
 
+    void updateDrawStyle();
+
 private:
     /*!
      * \brief A population moved, so add it to the undostack

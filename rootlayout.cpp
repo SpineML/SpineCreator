@@ -252,6 +252,32 @@ void rootLayout::initProjectionHeader(rootData * data) {
     // connect for name update
     connect(this, SIGNAL(setProjectionName(QString)), title, SLOT(setText(QString)));
 
+    // DRAW STYLE ///////
+
+    QGroupBox * styleGroup = new QGroupBox("Draw style");
+    this->addWidget(styleGroup);
+    QHBoxLayout * drawStyleLayout = new QHBoxLayout();
+    styleGroup->setLayout(drawStyleLayout);
+
+    exc = new QRadioButton("Excitatory");
+    exc->setChecked(true);
+    exc->setProperty("style",standardDrawStyleExcitatory);
+    drawStyleLayout->addWidget(exc);
+    inh = new QRadioButton("Inhibitory");
+    drawStyleLayout->addWidget(inh);
+    inh->setProperty("style",standardDrawStyle);
+
+    drawStyleLayout->addStretch();
+
+    // connect for hide
+    connect(this, SIGNAL(hideHeader()), styleGroup, SLOT(hide()));
+    // connect for show
+    connect(this, SIGNAL(showProjection()), styleGroup, SLOT(show()));
+
+    // connect radios
+    connect(exc, SIGNAL(pressed()), data, SLOT(updateDrawStyle()));
+    connect(inh, SIGNAL(pressed()), data, SLOT(updateDrawStyle()));
+
     // SYNAPSES /////////
 
     // add layout
@@ -812,6 +838,13 @@ void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data)
 
     if (proj->currTarg == -1) {
         return;
+    }
+
+    // check the drawstyle
+    if (proj->style() == standardDrawStyle) {
+        inh->setChecked(true);
+    } else {
+        exc->setChecked(true);
     }
 
     // Synapse

@@ -164,7 +164,8 @@ enum drawStyle {
     standardDrawStyle,
     microcircuitDrawStyle,
     layersDrawStyle,
-    spikeSourceDrawStyle
+    spikeSourceDrawStyle,
+    standardDrawStyleExcitatory
 
 };
 

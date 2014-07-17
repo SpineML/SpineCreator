@@ -86,6 +86,10 @@ private:
     QComboBox * inputPortSelection;
     QComboBox * inputConnectionComboBox;
 
+    // Projection style radio buttons
+    QRadioButton * exc;
+    QRadioButton * inh;
+
     QLabel * inputSrcName; // we need to set the tooltip, which we cannot do through slots
 
 signals:

@@ -343,7 +343,8 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                         pen.setWidthF(float(i*2));
                         painter->setPen(pen);
                         QRectF rectangle(left, top, right-left, bottom-top);
-                        painter->drawRect(rectangle);
+                        painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
+                        //painter->drawRect(rectangle);
                     }
                 }
             }
@@ -1453,6 +1454,24 @@ void rootData::updatePar(int value)
 
     // update panel
     updatePanel(this);
+}
+
+void rootData::updateDrawStyle() {
+
+    drawStyle style = (drawStyle) sender()->property("style").toUInt();
+
+    if (this->selList.size() == 1) {
+        // have we only got a proj selected (this should always be the case)
+        if (this->selList[0]->type == projectionObject) {
+            // cast to a proj
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+            // test if the cast succeeded
+            if (!proj.isNull()) {
+                currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
+            }
+        }
+    }
+    emit updatePanel(this);
 }
 
 QVector <QSharedPointer<population> > rootData::currSelPopulations()

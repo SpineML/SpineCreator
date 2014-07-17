@@ -393,6 +393,20 @@ private:
     QString newName;
 };
 
+class updateProjDrawStyle : public QUndoCommand
+{
+public:
+    updateProjDrawStyle(QSharedPointer <projection> ptr, drawStyle newStyle, drawStyle oldStyle, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    QSharedPointer <projection> ptr;
+    drawStyle oldStyle;
+    drawStyle newStyle;
+};
+
 class updateModelTitle : public QUndoCommand
 {
 public:

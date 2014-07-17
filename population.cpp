@@ -506,7 +506,7 @@ void population::delAll(rootData * data)
 
     neuronType->removeReferences();
 
-    delete this;
+    //delete this;
 }
 
 void population::delAll(projectObject * data) {
@@ -530,7 +530,7 @@ void population::delAll(projectObject * data) {
 
     neuronType->removeReferences();
 
-    delete this;
+    //delete this;
 }
 
 population::~population()
@@ -707,16 +707,20 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
     QRectF rectangle(left, top, right-left, bottom-top);
 
-    QRectF rectangleInner(left+2, top+2, right-left-4, bottom-top-4);
+    QRectF rectangleInner(left+2, top+2, right-left-8, bottom-top-4);
 
     QColor col(this->colour);
     col.setAlpha(100);
-    painter->fillRect(rectangle, col);
+    QPainterPath path;
+    path.addRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
+
+    //painter->fillRect(rectangle, col);
+    painter->fillPath(path, col);
 
     painter->drawImage(rectangle, image);
 
     painter->setPen(QColor(200,200,200,255));
-    painter->drawRect(rectangle);
+    painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
     painter->setPen(QColor(0,0,0,255));
 
     QString displayed_name = this->name;

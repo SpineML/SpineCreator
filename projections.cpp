@@ -160,6 +160,8 @@ projection::projection()
     this->selectedControlPoint.start = false;
     this->selectedControlPoint.type = C1;
 
+    this->projDrawStyle = standardDrawStyleExcitatory;
+
 }
 
 projection::~projection()
@@ -257,7 +259,7 @@ void projection::delAll(rootData *) {
     // remove other references so we don't get deleted twice!
     this->disconnect();
 
-    delete this;
+    //delete this;
 
 }
 
@@ -266,7 +268,7 @@ void projection::delAll(projectObject *) {
     // remove other references so we don't get deleted twice!
     this->disconnect();
 
-    delete this;
+    //delete this;
 
 }
 
@@ -366,10 +368,23 @@ void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, Q
 
 }
 
+void projection::setStyle(drawStyle style) {
+    this->projDrawStyle = style;
+}
+
+drawStyle projection::style() {
+    return this->projDrawStyle;
+}
+
 void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style) {
 
     // setup for drawing curves
     this->setupTrans(GLscale, viewX, viewY, width, height);
+
+    // switch if we have standardDrawStyle
+    if (style == standardDrawStyle) {
+        style = this->projDrawStyle;
+    }
 
     if (this->curves.size() > 0) {
 
@@ -483,6 +498,94 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
         case layersDrawStyle:
 
             return;
+        case standardDrawStyleExcitatory:
+        {
+            if (this->type == projectionObject)
+                colour = QColor(0,0,255,255);
+            else
+                colour = QColor(0,255,0,255);
+
+            start = this->start;
+            end = this->curves.back().end;
+
+            // draw end marker
+
+            QSettings settings;
+            float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+
+            // account for hidpi in line width
+            QPen linePen = painter->pen();
+            linePen.setWidthF(linePen.widthF()*dpi_ratio);
+            painter->setPen(linePen);
+
+            QPainterPath path;
+
+            // start curve drawing
+            path.moveTo(this->transformPoint(start));
+
+            // draw curves
+            for (int i = 0; i < this->curves.size(); ++i) {
+                if (this->curves.size()-1 == i)
+                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
+                else
+                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+            }
+
+            QPolygonF arrow_head;
+            QPainterPath endPoint;
+            //calculate arrow head polygon
+            QPointF end_point = path.pointAtPercent(1.0);
+            QPointF temp_end_point = path.pointAtPercent(0.995);
+            QLineF line = QLineF(end_point, temp_end_point).unitVector();
+            QLineF line2 = QLineF(line.p2(), line.p1());
+            line2.setLength(line2.length()+0.05*GLscale/2.0);
+            end_point = line2.p2();
+            if (this->type == projectionObject) {
+                line.setLength(0.2*GLscale/2.0);
+            } else {
+                line.setLength(0.1*GLscale/2.0);
+            }
+            QPointF t = line.p2() - line.p1();
+            QLineF normal = line.normalVector();
+            normal.setLength(normal.length()*0.8);
+            QPointF a1 = normal.p2() + t;
+            normal.setLength(-normal.length());
+            QPointF a2 = normal.p2() + t;
+            arrow_head.clear();
+            arrow_head << end_point << a1 << a2 << end_point;
+            endPoint.addPolygon(arrow_head);
+            painter->fillPath(endPoint, colour);
+
+            // only draw number of synapses for Projections
+            if (this->type == projectionObject) {
+                QPen pen = painter->pen();
+                QVector<qreal> dash;
+                dash.push_back(4);
+                for (int syn = 1; syn < this->synapses.size(); ++syn) {
+                    dash.push_back(2.0);
+                    dash.push_back(1.0);
+                }
+                if (synapses.size() > 1) {
+                    dash.push_back(2.0);
+                    dash.push_back(1.0);
+                    dash.push_back(2.0);
+                    pen.setWidthF((pen.widthF()+1.0) * 1.5);
+                } else {
+                    dash.push_back(0.0);
+                }
+                dash.push_back(100000.0);
+                dash.push_back(0.0);
+
+                pen.setDashPattern(dash);
+                painter->setPen(pen);
+
+            }
+
+            // DRAW
+            painter->drawPath(path);
+            painter->setPen(oldPen);
+            return;
+        }
         case standardDrawStyle:
         {
             start = this->start;
@@ -1011,6 +1114,7 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     root.appendChild(col);
     col.setAttribute("source", this->source->name);
     col.setAttribute("destination", this->destination->name);
+    col.setAttribute("style", QString::number(this->projDrawStyle));
 
     // start position
     QDomElement start = meta.createElement( "start" );
@@ -1325,6 +1429,9 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     while(!metaNode.isNull()) {
 
         if (metaNode.toElement().attribute("source", "") == this->source->name && metaNode.toElement().attribute("destination", "") == this->destination->name) {
+
+            this->projDrawStyle = (drawStyle) metaNode.toElement().attribute("style", QString::number(standardDrawStyleExcitatory)).toUInt();
+
             QDomNode metaData = metaNode.toElement().firstChild();
             while (!metaData.isNull()) {
 

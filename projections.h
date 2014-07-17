@@ -98,6 +98,9 @@ public:
     void connect(QSharedPointer<projection> in);
     void disconnect();
 
+    void setStyle(drawStyle style);
+    drawStyle style();
+
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
     void drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style);
     void drawHandles(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height);
@@ -133,6 +136,7 @@ protected:
 private:
     int srcPos;
     int dstPos;
+    drawStyle projDrawStyle;
 };
 
 #endif // PROJECTIONS_H
