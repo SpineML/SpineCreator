@@ -136,7 +136,7 @@ public:
     int currentIndex;
 
     exptInType inType;
-    vector <float> params;
+    QVector <float> params;
     externalObject externalInput;
     QSharedPointer <NineMLComponentData> target;
     QString portName;
@@ -160,7 +160,7 @@ public:
                   externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "localhost"; externalOutput.timestep = 0.0;}
 
     //exptOutput outType;
-    //vector < float > params;
+    //QVector < float > params;
     QSharedPointer <NineMLComponentData> source;
     QString portName;
     bool portIsAnalog;
@@ -184,7 +184,7 @@ public:
     exptLesion() {edit = true; set=false;}
 
     //exptOutput outType;
-    //vector < float > params;
+    //QVector < float > params;
     QSharedPointer <projection> proj;
     Port * port;
     bool edit;
@@ -224,10 +224,10 @@ public:
     ~experiment();
 
     simulatorSetup setup;
-    vector < exptInput * > ins;
-    vector < exptOutput * > outs;
-    vector < exptChangeProp * > changes;
-    vector < exptLesion * > lesions;
+    QVector < exptInput * > ins;
+    QVector < exptOutput * > outs;
+    QVector < exptChangeProp * > changes;
+    QVector < exptLesion * > lesions;
 
     QString name;
     QString description;
@@ -242,7 +242,7 @@ public:
     void updateChanges(QSharedPointer <NineMLComponentData> ptr);
 
     bool selected;
-    void select(vector < experiment * > *);
+    void select(QVector < experiment * > *);
     void deselect();
     bool editing;
 
@@ -270,9 +270,9 @@ class TVGraph : public QWidget
 
 public:
     TVGraph();
-    TVGraph(vector <float>);
+    TVGraph(QVector <float>);
     ~TVGraph();
-    vector <float> vals;
+    QVector <float> vals;
 
 protected:
     void paintEvent(QPaintEvent *);

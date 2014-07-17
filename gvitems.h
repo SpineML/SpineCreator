@@ -62,7 +62,7 @@ public:
 private:
     Agraph_t *gvgraph;
     GVC_t *gvc;
-    vector <GVItem*> items;
+    QVector <GVItem*> items;
 };
 
 
@@ -87,8 +87,8 @@ public:
     ~GVEdge();
     void setGVEdgeLabelSize(int width_pixels, int height_pixels);
     QPointF getGVEdgeLabelPosition(QPointF offset);
-    uint getGVEdgeSplinesCount();
-    QPointF getGVEdgeSplinesPoint(uint item);
+    int getGVEdgeSplinesCount();
+    QPointF getGVEdgeSplinesPoint(int item);
     QPointF getGVEdgeSplinesEndPoint();
 protected:
     Agedge_t *gv_edge;

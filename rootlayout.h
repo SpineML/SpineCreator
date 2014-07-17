@@ -46,8 +46,8 @@ public:
 
 private:
     // draw functions for systemObject types
-    void popSelected(QSharedPointer <population>, rootData*);
-    void projSelected(QSharedPointer<projection>, rootData*);
+    void popSelected(QSharedPointer<population> &, rootData*);
+    void projSelected(QSharedPointer<projection> &, rootData*);
     void inSelected(QSharedPointer<genericInput>, rootData*);
 
     // draw the params
@@ -56,7 +56,7 @@ private:
 
     // are these needed anymore?
     void recursiveDeleteLater(QLayout * parentLayout);
-    vector <QWidget *> forDeleting;
+    QVector <QWidget *> forDeleting;
     QSharedPointer<systemObject> lastObject;
 
     // initialisation

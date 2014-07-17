@@ -80,13 +80,13 @@ genericInput::genericInput(QSharedPointer <NineMLComponentData> src, QSharedPoin
 void genericInput::connect(QSharedPointer<genericInput> in) {
 
     // connect can be called multiple times due to the nature of Undo
-    for (uint i = 0; i < dst->inputs.size(); ++i) {
+    for (int i = 0; i < dst->inputs.size(); ++i) {
         if (dst->inputs[i] == this) {
             // already there - give up
             return;
         }
     }
-    for (uint i = 0; i < src->outputs.size(); ++i) {
+    for (int i = 0; i < src->outputs.size(); ++i) {
         if (src->outputs[i] == this) {
             // already there - give up
             return;
@@ -109,13 +109,13 @@ void genericInput::connect(QSharedPointer<genericInput> in) {
 
 void genericInput::disconnect() {
 
-    for (uint i = 0; i < dst->inputs.size(); ++i) {
+    for (int i = 0; i < dst->inputs.size(); ++i) {
         if (dst->inputs[i].data() == this) {
             dst->inputs.erase(dst->inputs.begin()+i);
             dstPos = i;
         }
     }
-    for (uint i = 0; i < src->outputs.size(); ++i) {
+    for (int i = 0; i < src->outputs.size(); ++i) {
         if (src->outputs[i].data() == this) {
             src->outputs.erase(src->outputs.begin()+i);
             srcPos = i;
@@ -144,11 +144,11 @@ QString genericInput::getName() {
 void genericInput::remove(rootData * data) {
 
     // remove from experiment
-    for (uint j = 0; j < data->experiments.size(); ++j) {
+    for (int j = 0; j < data->experiments.size(); ++j) {
         //data->experiments[j]->purgeBadPointer(this);
     }
 
-    delete this;
+    //delete this;
 
 }
 
@@ -236,7 +236,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             path.moveTo(this->transformPoint(start));
 
 
-            for (unsigned int i = 0; i < this->curves.size(); ++i) {
+            for (int i = 0; i < this->curves.size(); ++i) {
                 if (this->curves.size()-1 == i)
                     path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
                 else
@@ -308,7 +308,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             path.moveTo(this->transformPoint(start));
 
             // draw curves
-            for (unsigned int i = 0; i < this->curves.size(); ++i) {
+            for (int i = 0; i < this->curves.size(); ++i) {
                 if (this->curves.size()-1 == i)
                     path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
                 else
@@ -320,7 +320,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                 QPen pen = painter->pen();
                 QVector<qreal> dash;
                 dash.push_back(4);
-                for (uint syn = 1; syn < this->synapses.size(); ++syn) {
+                for (int syn = 1; syn < this->synapses.size(); ++syn) {
                     dash.push_back(2.0);
                     dash.push_back(1.0);
                 }
@@ -576,7 +576,7 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     QDomElement curves = meta.createElement( "curves" );
     col.appendChild(curves);
 
-    for (unsigned int i = 0; i < this->curves.size(); ++i) {
+    for (int i = 0; i < this->curves.size(); ++i) {
 
         QDomElement curve = meta.createElement( "curve" );
         QDomElement C1 = meta.createElement( "C1" );
@@ -636,7 +636,7 @@ void genericInput::read_meta_data(QDomDocument * meta) {
 
                     // add each curve
                     QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
-                    for (unsigned int i = 0; i < (uint) edgeNodeList.count(); ++i) {
+                    for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
                         QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
                         bezierCurve newCurve;
                         while (!vals.isNull()) {

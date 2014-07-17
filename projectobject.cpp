@@ -44,13 +44,13 @@ projectObject::~projectObject()
     delete this->menuAction;
 
     // destroy experiments
-    for (uint i = 0; i < this->experimentList.size(); ++i) {
+    for (int i = 0; i < this->experimentList.size(); ++i) {
         delete this->experimentList[i];
     }
 
-    for (uint i = 0; i < network.size(); ++i) {
-        for (uint j = 0; j < network[i]->projections.size(); ++j) {
-            for (uint k = 0; k < network[i]->projections[j]->synapses.size(); ++k) {
+    for (int i = 0; i < network.size(); ++i) {
+        for (int j = 0; j < network[i]->projections.size(); ++j) {
+            for (int k = 0; k < network[i]->projections[j]->synapses.size(); ++k) {
                 network[i]->projections[j]->synapses[k].clear();
             }
             network[i]->projections[j].clear();
@@ -59,19 +59,19 @@ projectObject::~projectObject()
     }
 
     // delete catalog components
-    for (uint i = 0; i < this->catalogLAY.size(); ++i) {
+    for (int i = 0; i < this->catalogLAY.size(); ++i) {
         this->catalogLAY[i].clear();
     }
-    for (uint i = 0; i < this->catalogNB.size(); ++i) {
+    for (int i = 0; i < this->catalogNB.size(); ++i) {
         this->catalogNB[i].clear();
     }
-    for (uint i = 0; i < this->catalogPS.size(); ++i) {
+    for (int i = 0; i < this->catalogPS.size(); ++i) {
         this->catalogPS[i].clear();
     }
-    for (uint i = 0; i < this->catalogWU.size(); ++i) {
+    for (int i = 0; i < this->catalogWU.size(); ++i) {
         this->catalogWU[i].clear();
     }
-    for (uint i = 0; i < this->catalogGC.size(); ++i) {
+    for (int i = 0; i < this->catalogGC.size(); ++i) {
         this->catalogGC[i].clear();
     }
 
@@ -173,21 +173,21 @@ bool projectObject::save_project(QString fileName, rootData * data)
     }
 
     // write components
-    for (uint i = 1; i < this->catalogNB.size(); ++i) {
+    for (int i = 1; i < this->catalogNB.size(); ++i) {
         saveComponent(this->catalogNB[i]->getXMLName(), project_dir, this->catalogNB[i]);
     }
-    for (uint i = 1; i < this->catalogWU.size(); ++i) {
+    for (int i = 1; i < this->catalogWU.size(); ++i) {
         saveComponent(this->catalogWU[i]->getXMLName(), project_dir, this->catalogWU[i]);
     }
-    for (uint i = 1; i < this->catalogPS.size(); ++i) {
+    for (int i = 1; i < this->catalogPS.size(); ++i) {
         saveComponent(this->catalogPS[i]->getXMLName(), project_dir, this->catalogPS[i]);
     }
-    for (uint i = 1; i < this->catalogGC.size(); ++i) {
+    for (int i = 1; i < this->catalogGC.size(); ++i) {
         saveComponent(this->catalogGC[i]->getXMLName(), project_dir, this->catalogGC[i]);
     }
 
     // write layouts
-    for (uint i = 1; i < this->catalogLAY.size(); ++i) {
+    for (int i = 1; i < this->catalogLAY.size(); ++i) {
         saveLayout(this->catalogLAY[i]->getXMLName(), project_dir, this->catalogLAY[i]);
     }
 
@@ -198,7 +198,7 @@ bool projectObject::save_project(QString fileName, rootData * data)
     saveMetaData(this->metaFile, project_dir);
 
     // write experiments
-    for (uint i = 0; i < this->experimentList.size(); ++i) {
+    for (int i = 0; i < this->experimentList.size(); ++i) {
         saveExperiment("experiment" + QString::number(i) + ".xml", project_dir, this->experimentList[i]);
     }
 
@@ -232,7 +232,7 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data)
     this->copy_back_data(data);
 
     // find currentExperiment
-    for (uint i = 0; i < this->experimentList.size(); ++i) {
+    for (int i = 0; i < this->experimentList.size(); ++i) {
         if (this->experimentList[i]->selected) {currentExperiment = this->experimentList[i]; break;}
     }
 
@@ -271,29 +271,29 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data)
     copy_back_data(data);
 
     // write components
-    for (uint i = 1; i < this->catalogNB.size(); ++i) {
+    for (int i = 1; i < this->catalogNB.size(); ++i) {
         QString fileName = this->catalogNB[i]->getXMLName();
         fileName.replace(" ", "_");
         saveComponent(fileName, project_dir, this->catalogNB[i]);
     }
-    for (uint i = 1; i < this->catalogWU.size(); ++i) {
+    for (int i = 1; i < this->catalogWU.size(); ++i) {
         QString fileName = this->catalogWU[i]->getXMLName();
         fileName.replace(" ", "_");
         saveComponent(fileName, project_dir, this->catalogWU[i]);
     }
-    for (uint i = 1; i < this->catalogPS.size(); ++i) {
+    for (int i = 1; i < this->catalogPS.size(); ++i) {
         QString fileName = this->catalogPS[i]->getXMLName();
         fileName.replace(" ", "_");
         saveComponent(fileName, project_dir, this->catalogPS[i]);
     }
-    for (uint i = 1; i < this->catalogGC.size(); ++i) {
+    for (int i = 1; i < this->catalogGC.size(); ++i) {
         QString fileName = this->catalogGC[i]->getXMLName();
         fileName.replace(" ", "_");
         saveComponent(fileName, project_dir, this->catalogGC[i]);
     }
 
     // write layouts
-    for (uint i = 1; i < this->catalogLAY.size(); ++i) {
+    for (int i = 1; i < this->catalogLAY.size(); ++i) {
         saveLayout(this->catalogLAY[i]->getXMLName(), project_dir, this->catalogLAY[i]);
     }
 
@@ -352,7 +352,7 @@ bool projectObject::import_network(QString fileName)
         this->metaFile = "metaData.xml";
 
         // place populations
-        for (uint i = 0; i < this->network.size(); ++i) {
+        for (int i = 0; i < this->network.size(); ++i) {
             QSharedPointer <population> p = this->network[i];
             p->x = i*2.0; p->targx = i*2.0;
             p->y = i*2.0; p->targy = i*2.0;
@@ -362,9 +362,9 @@ bool projectObject::import_network(QString fileName)
         }
 
         // make projection curves
-        for (uint i = 0; i < this->network.size(); ++i) {
+        for (int i = 0; i < this->network.size(); ++i) {
             QSharedPointer <population> p = this->network[i];
-            for (uint j = 0; j < p->projections.size(); ++j) {
+            for (int j = 0; j < p->projections.size(); ++j) {
                 QSharedPointer <projection> pr = p->projections[j];
                 pr->add_curves();
             }
@@ -626,19 +626,19 @@ bool projectObject::save_project_file(QString fileName)
 
     writer->writeStartElement("Components");
 
-    for (uint i = 1; i < this->catalogNB.size(); ++i) {
+    for (int i = 1; i < this->catalogNB.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogNB[i]->getXMLName());
     }
-    for (uint i = 1; i < this->catalogWU.size(); ++i) {
+    for (int i = 1; i < this->catalogWU.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogWU[i]->getXMLName());
     }
-    for (uint i = 1; i < this->catalogPS.size(); ++i) {
+    for (int i = 1; i < this->catalogPS.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogPS[i]->getXMLName());
     }
-    for (uint i = 1; i < this->catalogGC.size(); ++i) {
+    for (int i = 1; i < this->catalogGC.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogGC[i]->getXMLName());
     }
@@ -647,7 +647,7 @@ bool projectObject::save_project_file(QString fileName)
 
     writer->writeStartElement("Layouts");
 
-    for (uint i = 0; i < this->catalogLAY.size(); ++i) {
+    for (int i = 0; i < this->catalogLAY.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogLAY[i]->getXMLName());
     }
@@ -656,7 +656,7 @@ bool projectObject::save_project_file(QString fileName)
 
     writer->writeStartElement("Experiments");
 
-    for (uint i = 0; i < this->experimentList.size(); ++i) {
+    for (int i = 0; i < this->experimentList.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", "experiment" + QString::number(i) + ".xml");
     }
@@ -790,7 +790,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
         }
 
         // get lib to add component to
-        vector < QSharedPointer<NineMLComponent> > * curr_lib;
+        QVector < QSharedPointer<NineMLComponent> > * curr_lib;
         if (tempALobject->type == "neuron_body") {
             curr_lib = &this->catalogNB;
         } else if (tempALobject->type == "weight_update") {
@@ -802,7 +802,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
         }
 
         // check the name doesn't already exist in the library
-        for (uint i = 0; i < curr_lib->size(); ++i) {
+        for (int i = 0; i < curr_lib->size(); ++i) {
             if ((*curr_lib)[i]->name == tempALobject->name
                 && (*curr_lib)[i]->path == tempALobject->path
                 && tempALobject->name != "none") {
@@ -907,7 +907,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir)
                 return;
             }
 
-            for (unsigned int i = 0; i < this->catalogLAY.size(); ++i) {
+            for (int i = 0; i < this->catalogLAY.size(); ++i) {
                 if (this->catalogLAY[i]->name.compare(tempALobject->name) == 0 && tempALobject->name != "none") {
                     // same name
                     addWarning("Two required files have the same Layout Name - this project may be corrupted");
@@ -1033,7 +1033,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             this->network.push_back(pop);
 
             // check for duplicate names:
-            for (uint i = 0; i < this->network.size() - 1; ++i) {
+            for (int i = 0; i < this->network.size() - 1; ++i) {
                 if (this->network[i]->name == this->network.back()->name) {
                     this->network[i]->name = getUniquePopName(this->network[i]->name);
                     addWarning("Duplicate Population name found: renamed existing Population to '" + this->network[i]->name + "'");
@@ -1091,7 +1091,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
             int projCount = 0;
             QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
-            for (uint i = 0; i < (uint) n2.size(); ++i) {
+            for (int i = 0; i < (int) n2.size(); ++i) {
                 QDomElement e = n2.item(i).toElement();
                 this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this, this->network[counter]->projections[projCount]);
                 ++projCount;
@@ -1130,7 +1130,7 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
     xmlOut.writeAttribute("name", name);
 
     // create a node for each population with the variables set
-    for (unsigned int pop = 0; pop < this->network.size(); ++pop) {
+    for (int pop = 0; pop < this->network.size(); ++pop) {
         //// WE NEED TO HAVE A PROPER MODEL NAME!
         this->network[pop]->write_population_xml(xmlOut);
     }
@@ -1158,7 +1158,7 @@ void projectObject::saveMetaData(QString fileName, QDir projectDir)
     this->meta.appendChild(root);
 
     // iterate through the populations and get the xml
-    for (unsigned int i = 0; i < this->network.size(); ++i) {
+    for (int i = 0; i < this->network.size(); ++i) {
         this->network[i]->write_model_meta_xml(this->meta, root);
     }
 
@@ -1445,19 +1445,19 @@ bool projectObject::isChanged(rootData * data)
     if (!this->undoStack->isClean()) {
          return true;
     }
-    for (uint i = 1; i < this->catalogNB.size(); ++i) {
+    for (int i = 1; i < this->catalogNB.size(); ++i) {
         if (!this->catalogNB[i]->undoStack.isClean())
             return true;
     }
-    for (uint i = 1; i < this->catalogWU.size(); ++i) {
+    for (int i = 1; i < this->catalogWU.size(); ++i) {
         if (!this->catalogWU[i]->undoStack.isClean())
             return true;
     }
-    for (uint i = 1; i < this->catalogPS.size(); ++i) {
+    for (int i = 1; i < this->catalogPS.size(); ++i) {
         if (!this->catalogPS[i]->undoStack.isClean())
             return true;
     }
-    for (uint i = 1; i < this->catalogGC.size(); ++i) {
+    for (int i = 1; i < this->catalogGC.size(); ++i) {
         if (!this->catalogGC[i]->undoStack.isClean())
             return true;
     }
@@ -1468,38 +1468,38 @@ bool projectObject::isChanged(rootData * data)
 bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
 {
     // find the pop / projection / input reference
-    for (uint i = 0; i < this->network.size(); ++i) {
+    for (int i = 0; i < this->network.size(); ++i) {
 
         if (this->network[i] == ptr) {
             return true;
         }
 
-        for (uint j = 0; j < this->network[i]->neuronType->inputs.size(); ++j) {
+        for (int j = 0; j < this->network[i]->neuronType->inputs.size(); ++j) {
             if (this->network[i]->neuronType->inputs[j] == ptr) {
                 return true;
             }
         }
 
-        for (uint j = 0; j < this->network[i]->projections.size(); ++j) {
+        for (int j = 0; j < this->network[i]->projections.size(); ++j) {
 
             if (this->network[i]->projections[j] == ptr) {
                 return true;
             }
 
-            for (uint k = 0; k < this->network[i]->projections[j]->synapses.size(); ++k) {
+            for (int k = 0; k < this->network[i]->projections[j]->synapses.size(); ++k) {
 
                 if (this->network[i]->projections[j]->synapses[k] == ptr) {
                     return true;
                 }
 
-                for (uint l = 0; l < this->network[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
 
                     if (this->network[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l] == ptr) {
                         return true;
                     }
                 }
 
-                for (uint l = 0; l < this->network[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
 
                     if (this->network[i]->projections[j]->synapses[k]->postsynapseType->inputs[l] == ptr) {
                         return true;
@@ -1517,15 +1517,15 @@ bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
 bool projectObject::isValidPointer(QSharedPointer <NineMLComponentData> ptr)
 {
     // find the reference
-    for (uint i = 0; i < this->network.size(); ++i) {
+    for (int i = 0; i < this->network.size(); ++i) {
 
         if (this->network[i]->neuronType == ptr) {
             return true;
         }
 
-        for (uint j = 0; j < this->network[i]->projections.size(); ++j) {
+        for (int j = 0; j < this->network[i]->projections.size(); ++j) {
 
-            for (uint k = 0; k < this->network[i]->projections[j]->synapses.size(); ++k) {
+            for (int k = 0; k < this->network[i]->projections[j]->synapses.size(); ++k) {
 
                 if (this->network[i]->projections[j]->synapses[k]->weightUpdateType == ptr) {
                     return true;
@@ -1545,22 +1545,22 @@ bool projectObject::isValidPointer(QSharedPointer <NineMLComponentData> ptr)
 // allow safe usage of NineMLComponent pointers
 bool projectObject::isValidPointer(QSharedPointer<NineMLComponent> ptr)
 {
-    for (uint i = 0; i < this->catalogNB.size(); ++i) {
+    for (int i = 0; i < this->catalogNB.size(); ++i) {
         if (this->catalogNB[i] == ptr) {
             return true;
         }
     }
-    for (uint i = 0; i < this->catalogPS.size(); ++i) {
+    for (int i = 0; i < this->catalogPS.size(); ++i) {
         if (this->catalogPS[i] == ptr) {
             return true;
         }
     }
-    for (uint i = 0; i < this->catalogGC.size(); ++i) {
+    for (int i = 0; i < this->catalogGC.size(); ++i) {
         if (this->catalogGC[i] == ptr) {
             return true;
         }
     }
-    for (uint i = 0; i < this->catalogWU.size(); ++i) {
+    for (int i = 0; i < this->catalogWU.size(); ++i) {
         if (this->catalogWU[i] == ptr) {
             return true;
         }
@@ -1573,15 +1573,15 @@ bool projectObject::isValidPointer(QSharedPointer<NineMLComponent> ptr)
 QSharedPointer <NineMLComponentData> projectObject::getComponentDataFromName(QString name)
 {
     // find the ComponentData requested
-    for (uint i = 0; i < this->network.size(); ++i) {
+    for (int i = 0; i < this->network.size(); ++i) {
         if (this->network[i]->neuronType->getXMLName() == name) {
             // found - return the ComponentData
             return this->network[i]->neuronType;
         }
-        for (uint j = 0; j < this->network[i]->projections.size(); ++j) {
+        for (int j = 0; j < this->network[i]->projections.size(); ++j) {
             // current projection
             QSharedPointer <projection> proj = this->network[i]->projections[j];
-            for (uint k = 0; k < proj->synapses.size(); ++k) {
+            for (int k = 0; k < proj->synapses.size(); ++k) {
                 // current synapse
                 QSharedPointer <synapse> syn = proj->synapses[k];
                 if (syn->weightUpdateType->getXMLName() == name) {
@@ -1623,7 +1623,7 @@ QString projectObject::getUniquePopName(QString newName)
         testName.append(" dup" + QString::number(j));
 
         // check name against populations
-        for (unsigned int k = 0; k < this->network.size(); ++k) {
+        for (int k = 0; k < this->network.size(); ++k) {
             if (this->network[k]->name.compare(testName) == 0) {
                 nameGood = false;
             }

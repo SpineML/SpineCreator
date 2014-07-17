@@ -100,8 +100,10 @@ bool vectorModel::setData(const QModelIndex & index, const QVariant & value, int
                 return true;
             } else if (index.row() == (int) currPar->indices.size()) {
                 beginInsertRows(this->createIndex(currPar->indices.size()-1, 0).parent(),currPar->indices.size(),currPar->indices.size());
-                currPar->value.resize(currPar->value.size()+1, 0);
-                currPar->indices.resize(currPar->indices.size()+1, value.toInt());
+                currPar->value.resize(currPar->value.size()+1);
+                currPar->value.fill(0);
+                currPar->indices.resize(currPar->indices.size()+1);
+                currPar->indices.fill(value.toInt());
                 endInsertRows();
                 emit setSpinBoxVal(currPar->value.size());
             }
@@ -112,8 +114,10 @@ bool vectorModel::setData(const QModelIndex & index, const QVariant & value, int
                 return true;
             } else if (index.row() == (int) currPar->indices.size()) {
                 beginInsertRows(this->createIndex(currPar->indices.size()-1, 0).parent(),currPar->indices.size(),currPar->indices.size());
-                currPar->value.resize(currPar->value.size()+1, value.toFloat());
-                currPar->indices.resize(currPar->indices.size()+1, 0);
+                currPar->value.resize(currPar->value.size()+1);
+                currPar->value.fill(value.toFloat());
+                currPar->indices.resize(currPar->indices.size()+1);
+                currPar->indices.fill(0);
                 endInsertRows();
                 emit setSpinBoxVal(currPar->value.size());
             }
@@ -129,10 +133,12 @@ bool vectorModel::insertConnRows(int row) {
         beginInsertRows(this->createIndex(currPar->indices.size()-1, 0).parent(),currPar->indices.size(),row-1);
 
         int start = currPar->indices.size();
-        currPar->value.resize(row,0);
-        currPar->indices.resize(row,0);
+        currPar->value.resize(row);
+        currPar->value.fill(0);
+        currPar->indices.resize(row);
+        currPar->indices.fill(0);
         // and fill in indices
-        for (uint i = start; i < currPar->indices.size(); ++i)
+        for (int i = start; i < currPar->indices.size(); ++i)
             currPar->indices[i] = i;
 
         endInsertRows();
@@ -140,8 +146,10 @@ bool vectorModel::insertConnRows(int row) {
     }
     if (row < (int) currPar->indices.size()) {
         beginRemoveRows(this->createIndex(currPar->indices.size()-1, 0).parent(),row, currPar->indices.size()-1);
-        currPar->value.resize(row,0);
-        currPar->indices.resize(row,0);
+        currPar->value.resize(row);
+        currPar->value.fill(0);
+        currPar->indices.resize(row);
+        currPar->indices.fill(0);
 
         endRemoveRows();
         emit setSpinBoxVal(currPar->value.size());

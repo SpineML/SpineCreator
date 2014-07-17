@@ -44,10 +44,10 @@ public:
 
     QString name;
     QString type;
-    vector <RegimeSpace*> RegimeList;
-    vector <StateVariable*> StateVariableList;
-    vector <Parameter*> ParameterList;
-    vector <Alias*> AliasList;
+    QVector <RegimeSpace*> RegimeList;
+    QVector <StateVariable*> StateVariableList;
+    QVector <Parameter*> ParameterList;
+    QVector <Alias*> AliasList;
     NineMLLayout(QSharedPointer<NineMLLayout>data);
     NineMLLayout& operator=(const NineMLLayout& data);
     NineMLLayout(){}
@@ -91,8 +91,8 @@ public:
     // temp name
     QString target_regime_name;
     RegimeSpace *target_regime;
-    vector <StateAssignment*> StateAssignList;
-    vector <Transform*> TransformList;
+    QVector <StateAssignment*> StateAssignList;
+    QVector <Transform*> TransformList;
     Trigger *trigger;
     OnConditionSpace(OnConditionSpace *data);
     OnConditionSpace(){}
@@ -105,8 +105,8 @@ public:
 class RegimeSpace {
 public:
     QString name;
-    vector <Transform*> TransformList;
-    vector <OnConditionSpace* > OnConditionList;
+    QVector <Transform*> TransformList;
+    QVector <OnConditionSpace* > OnConditionList;
     RegimeSpace(RegimeSpace *data);
     RegimeSpace(){}
     ~RegimeSpace();
@@ -126,8 +126,8 @@ public:
     NineMLLayoutData(){}
     ~NineMLLayoutData(){}
     void import_parameters_from_xml(QDomNode &e);
-    void generateLayout(int numNeurons, vector<loc> *locations, QString &errRet);
-    vector < loc > locations;
+    void generateLayout(int numNeurons, QVector <loc> *locations, QString &errRet);
+    QVector < loc > locations;
 };
 
 

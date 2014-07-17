@@ -63,15 +63,15 @@ public:
     QStringList layouts;
 
     // storage for objects
-    vector < QSharedPointer <population> > network;
-    vector < QSharedPointer<NineMLComponent> > catalogNB;
-    vector < QSharedPointer<NineMLComponent> > catalogWU;
-    vector < QSharedPointer<NineMLComponent> > catalogPS;
-    vector < QSharedPointer<NineMLComponent> > catalogGC;
+    QVector < QSharedPointer <population> > network;
+    QVector < QSharedPointer<NineMLComponent> > catalogNB;
+    QVector < QSharedPointer<NineMLComponent> > catalogWU;
+    QVector < QSharedPointer<NineMLComponent> > catalogPS;
+    QVector < QSharedPointer<NineMLComponent> > catalogGC;
 
-    vector < QSharedPointer<NineMLLayout> > catalogLAY;
+    QVector < QSharedPointer<NineMLLayout> > catalogLAY;
 
-    vector < experiment * > experimentList;
+    QVector < experiment * > experimentList;
 
     // features
     versionControl version;

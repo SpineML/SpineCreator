@@ -28,7 +28,7 @@
 #include "connection.h"
 #include "glconnectionwidget.h"
 
-generate_dialog::generate_dialog(kernel_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
+generate_dialog::generate_dialog(kernel_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, QVector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::generate_dialog)
 {
@@ -63,7 +63,7 @@ generate_dialog::generate_dialog(kernel_connection * currConn, QSharedPointer <p
 
 }
 
-generate_dialog::generate_dialog(pythonscript_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
+generate_dialog::generate_dialog(pythonscript_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, QVector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::generate_dialog)
 {
@@ -121,7 +121,7 @@ void generate_dialog::doPython() {
         if (par && currConnPy->hasWeight) {
             par->currType = ExplicitList;
             par->value = currConnPy->weights;
-            for (uint i = 0; i < currConnPy->weights.size(); ++i) {
+            for (int i = 0; i < currConnPy->weights.size(); ++i) {
                 par->indices.push_back(i);
             }
         }
@@ -151,14 +151,14 @@ void generate_dialog::moveFromThread() {
             ui->errors->setText(currConnPy->pythonErrors);
         } else {
             // move the weights across
-            for (uint i = 0; i < currConnPy->src->projections.size(); ++i) {
+            for (int i = 0; i < currConnPy->src->projections.size(); ++i) {
                 QSharedPointer <projection> proj = currConnPy->src->projections[i];
-                for (uint j = 0; j < proj->synapses.size(); ++j) {
+                for (int j = 0; j < proj->synapses.size(); ++j) {
                     QSharedPointer <synapse> syn = proj->synapses[j];
                     // if we have found the connection
                     if (syn->connectionType == currConnPy) {
                         // now we know which weight update we have to look at
-                        for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
+                        for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
                             if (syn->weightUpdateType->ParameterList[k]->name == currConnPy->weightProp) {
                                 // found the weight - now to alter it
                                 ParameterData * par = syn->weightUpdateType->ParameterList[k];

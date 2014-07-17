@@ -34,18 +34,18 @@
 
 // ######## DELETE SELECTION #################
 
-delSelection::delSelection(rootData * data, vector <QSharedPointer<systemObject> > list, QUndoCommand *parent) :
+delSelection::delSelection(rootData * data, QVector <QSharedPointer<systemObject> > list, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
 
     this->data = data;
     this->setText("delete selection");
 
-    vector < QSharedPointer<systemObject> > populations;
-    vector < QSharedPointer<systemObject> > projections;
+    QVector < QSharedPointer<systemObject> > populations;
+    QVector < QSharedPointer<systemObject> > projections;
 
     // spawn children
-    for (uint i = 0; i < list.size(); ++i) {
+    for (int i = 0; i < list.size(); ++i) {
         // seperate out:
         if (list[i]->type == populationObject) {
             QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (list[i]);
@@ -53,13 +53,13 @@ delSelection::delSelection(rootData * data, vector <QSharedPointer<systemObject>
             new delPopulation(data, pop, this);
         }
     }
-    for (uint i = 0; i < list.size(); ++i) {
+    for (int i = 0; i < list.size(); ++i) {
         if (list[i]->type == projectionObject) {
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (list[i]);
             bool alreadyDeleted = false;
             // check if any of the populations are the source or dest of this proj
             // and it has therefore already been handled
-            for (uint j = 0; j < populations.size(); ++j)
+            for (int j = 0; j < populations.size(); ++j)
                 if (proj->source == populations[j] || proj->destination == populations[j])
                     alreadyDeleted = true;
             if (!alreadyDeleted) {
@@ -68,26 +68,26 @@ delSelection::delSelection(rootData * data, vector <QSharedPointer<systemObject>
             }
         }
     }
-    for (uint i = 0; i < list.size(); ++i) {
+    for (int i = 0; i < list.size(); ++i) {
         if (list[i]->type == inputObject) {
             QSharedPointer<genericInput> input = qSharedPointerDynamicCast<genericInput> (list[i]);
             // check if the input has already been handled
             bool alreadyDeleted = false;
-            for (uint j = 0; j < populations.size(); ++j) {
+            for (int j = 0; j < populations.size(); ++j) {
                 if (input->source == populations[j] || input->destination == populations[j])
                     alreadyDeleted = true;
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (populations[j]);
-                for (uint k = 0; k <pop->projections.size(); ++k) {
+                for (int k = 0; k <pop->projections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->projections[k];
-                    for (uint l = 0; l < proj->synapses.size(); ++l) {
+                    for (int l = 0; l < proj->synapses.size(); ++l) {
                         if (input->src == proj->synapses[l]->weightUpdateType || input->dst == proj->synapses[l]->weightUpdateType || \
                                 input->src == proj->synapses[l]->postsynapseType || input->dst == proj->synapses[l]->postsynapseType)
                             alreadyDeleted = true;
                     }
                 }
-                for (uint k = 0; k <pop->reverseProjections.size(); ++k) {
+                for (int k = 0; k <pop->reverseProjections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->reverseProjections[k];
-                    for (uint l = 0; l < proj->synapses.size(); ++l) {
+                    for (int l = 0; l < proj->synapses.size(); ++l) {
                         if (input->src == proj->synapses[l]->weightUpdateType || input->dst == proj->synapses[l]->weightUpdateType || \
                                 input->src == proj->synapses[l]->postsynapseType || input->dst == proj->synapses[l]->postsynapseType)
                             alreadyDeleted = true;
@@ -130,12 +130,12 @@ void addPopulationCmd::undo()
     pop->isDeleted = true;
     isDeleted = true;
     // remove from system:
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
         if (this->pop == data->populations[i])
             data->populations.erase(data->populations.begin()+i);
     }
     // might be selected:
-    for (uint i = 0; i < data->selList.size(); ++i) {
+    for (int i = 0; i < data->selList.size(); ++i) {
         if (this->pop == data->selList[i]) {
             data->selList.erase(data->selList.begin()+i);
             selIndex = i;
@@ -175,21 +175,21 @@ delPopulation::delPopulation(rootData * data, QSharedPointer<population> pop, QU
     this->setText("delete population " + this->pop->getName());
 
     // spawn children
-    for (uint i = 0; i < this->pop->neuronType->inputs.size(); ++i) {
+    for (int i = 0; i < this->pop->neuronType->inputs.size(); ++i) {
         new delInput(data, this->pop->neuronType->inputs[i], this);
     }
-    for (uint i = 0; i < this->pop->neuronType->outputs.size(); ++i) {
+    for (int i = 0; i < this->pop->neuronType->outputs.size(); ++i) {
         // ok, find out if the input for this output is deleted
         bool destination_deleted = false;
-        for (uint j = 0; j < data->selList.size(); ++j) {
+        for (int j = 0; j < data->selList.size(); ++j) {
             if (this->pop->neuronType->outputs[i]->destination == data->selList[j])
                 destination_deleted = true;
             if (data->selList[j]->type == populationObject) {
                 QSharedPointer <population> pop2 = qSharedPointerDynamicCast <population> (data->selList[j]);
-                for (uint k = 0; k < pop2->projections.size(); ++k)
+                for (int k = 0; k < pop2->projections.size(); ++k)
                     if (this->pop->neuronType->outputs[i]->destination == pop2->projections[k])
                         destination_deleted = true;
-                for (uint k = 0; k < pop2->reverseProjections.size(); ++k)
+                for (int k = 0; k < pop2->reverseProjections.size(); ++k)
                     if (this->pop->neuronType->outputs[i]->destination == pop2->reverseProjections[k])
                         destination_deleted = true;
             }
@@ -198,13 +198,13 @@ delPopulation::delPopulation(rootData * data, QSharedPointer<population> pop, QU
             new delInput(data, this->pop->neuronType->outputs[i], this);
 
     }
-    for (uint i = 0; i < this->pop->projections.size(); ++i) {
+    for (int i = 0; i < this->pop->projections.size(); ++i) {
         new delProjection(data, this->pop->projections[i], this);
     }
     // only delete reverse projections if the source is not in the selList (otherwise we delete twice, which is a problem)
-    for (uint i = 0; i < this->pop->reverseProjections.size(); ++i) {
+    for (int i = 0; i < this->pop->reverseProjections.size(); ++i) {
         bool source_deleted = false;
-        for (uint j = 0; j < data->selList.size(); ++j) {
+        for (int j = 0; j < data->selList.size(); ++j) {
             if (this->pop->reverseProjections[i]->source == data->selList[j])
                 source_deleted = true;
         }
@@ -212,11 +212,11 @@ delPopulation::delPopulation(rootData * data, QSharedPointer<population> pop, QU
             new delProjection(data, this->pop->reverseProjections[i], this);
     }
     // go into experiments and delete all referencing objects
-    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+    for (int i = 0; i < this->data->experiments.size(); ++i) {
         // for each experiment
         experiment * currExpt = this->data->experiments[i];
         // loop through inputs
-        for (uint j = 0; j < currExpt->ins.size(); ++j) {
+        for (int j = 0; j < currExpt->ins.size(); ++j) {
             // if input references deleted pop the push a delete
             exptInput * in = currExpt->ins[j];
             if (in->target == this->pop->neuronType) {
@@ -224,7 +224,7 @@ delPopulation::delPopulation(rootData * data, QSharedPointer<population> pop, QU
             }
         }
         // loop through outputs
-        for (uint j = 0; j < currExpt->outs.size(); ++j) {
+        for (int j = 0; j < currExpt->outs.size(); ++j) {
             // if input references deleted pop the push a delete
             exptOutput * out = currExpt->outs[j];
             if (out->source == this->pop->neuronType) {
@@ -232,7 +232,7 @@ delPopulation::delPopulation(rootData * data, QSharedPointer<population> pop, QU
             }
         }
         // loop through chnaged properties
-        for (uint j = 0; j < currExpt->changes.size(); ++j) {
+        for (int j = 0; j < currExpt->changes.size(); ++j) {
             // if input references deleted pop the push a delete
             exptChangeProp * prop = currExpt->changes[j];
             if (prop->component == this->pop->neuronType) {
@@ -268,15 +268,15 @@ void delPopulation::redo()
     QUndoCommand::redo();
 
     // remove from system
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
         if (pop == data->populations[i]) {
             data->populations.erase(data->populations.begin()+i);
             index = i;
         }
     }
     // must be selected:
-    for (uint i = 0; i < data->selList.size(); ++i) {
-        if (this->pop == data->selList[i]) {
+    for (int i = 0; i < data->selList.size(); ++i) {
+        if (this->pop.data() == data->selList[i].data()) {
             data->selList.erase(data->selList.begin()+i);
             selIndex = i;
             if (data->selList.size()==0) {
@@ -367,8 +367,8 @@ void addProjection::undo()
     proj->isDeleted = true;
     isDeleted = true;
     // might be selected:
-    for (uint i = 0; i < data->selList.size(); ++i) {
-        if (this->proj == data->selList[i]) {
+    for (int i = 0; i < data->selList.size(); ++i) {
+        if (this->proj.data() == data->selList[i].data()) {
             data->selList.erase(data->selList.begin()+i);
             selIndex = i;
             if (data->selList.size()==0) {
@@ -407,15 +407,15 @@ delProjection::delProjection(rootData * data, QSharedPointer<projection> proj, Q
     this->data = data;
     this->setText("delete projection " + this->proj->getName());
     // spawn children
-    for (uint i = 0; i < this->proj->synapses.size(); ++i) {
+    for (int i = 0; i < this->proj->synapses.size(); ++i) {
         new delSynapse(data, this->proj, this->proj->synapses[i], this);
     }
     // go into experiments and delete all referencing objects
-    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+    for (int i = 0; i < this->data->experiments.size(); ++i) {
         // for each experiment
         experiment * currExpt = this->data->experiments[i];
         // loop through lesions
-        for (uint j = 0; j < currExpt->lesions.size(); ++j) {
+        for (int j = 0; j < currExpt->lesions.size(); ++j) {
             // if input references deleted pop the push a delete
             exptLesion * lesion = currExpt->lesions[j];
             if (lesion->proj == this->proj) {
@@ -450,7 +450,7 @@ void delProjection::redo()
     proj->isDeleted = true;
     isDeleted = true;
     // might be selected:
-    for (uint i = 0; i < data->selList.size(); ++i) {
+    for (int i = 0; i < data->selList.size(); ++i) {
         if (this->proj == data->selList[i]) {
             data->selList.erase(data->selList.begin()+i);
             selIndex = i;
@@ -460,7 +460,6 @@ void delProjection::redo()
             }
         }
     }
-
 }
 
 // ######## ADD SYNAPSE #################
@@ -513,21 +512,21 @@ delSynapse::delSynapse(rootData * data, QSharedPointer <projection> proj, QShare
     isUndone = false;
 
     // spawn children
-    for (uint i = 0; i < this->syn->postsynapseType->inputs.size(); ++i) {
+    for (int i = 0; i < this->syn->postsynapseType->inputs.size(); ++i) {
         new delInput(data, this->syn->postsynapseType->inputs[i], this);
     }
-    for (uint i = 0; i < this->syn->postsynapseType->outputs.size(); ++i) {
+    for (int i = 0; i < this->syn->postsynapseType->outputs.size(); ++i) {
         // ok, find out if the input for this output is deleted
         bool destination_deleted = false;
-        for (uint j = 0; j < data->selList.size(); ++j) {
+        for (int j = 0; j < data->selList.size(); ++j) {
             if (this->syn->postsynapseType->outputs[i]->destination == data->selList[j])
                 destination_deleted = true;
             if (data->selList[j]->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (data->selList[j]);
-                for (uint k = 0; k < pop->projections.size(); ++k)
+                for (int k = 0; k < pop->projections.size(); ++k)
                     if (this->syn->postsynapseType->outputs[i]->destination == pop->projections[k])
                         destination_deleted = true;
-                for (uint k = 0; k < pop->reverseProjections.size(); ++k)
+                for (int k = 0; k < pop->reverseProjections.size(); ++k)
                     if (this->syn->postsynapseType->outputs[i]->destination == pop->reverseProjections[k])
                         destination_deleted = true;
             }
@@ -535,21 +534,21 @@ delSynapse::delSynapse(rootData * data, QSharedPointer <projection> proj, QShare
         if (!destination_deleted)
             new delInput(data, this->syn->postsynapseType->outputs[i], this);
     }
-    for (uint i = 0; i < this->syn->weightUpdateType->inputs.size(); ++i) {
+    for (int i = 0; i < this->syn->weightUpdateType->inputs.size(); ++i) {
         new delInput(data, this->syn->weightUpdateType->inputs[i], this);
     }
-    for (uint i = 0; i < this->syn->weightUpdateType->outputs.size(); ++i) {
+    for (int i = 0; i < this->syn->weightUpdateType->outputs.size(); ++i) {
         // ok, find out if the input for this output is deleted
         bool destination_deleted = false;
-        for (uint j = 0; j < data->selList.size(); ++j) {
+        for (int j = 0; j < data->selList.size(); ++j) {
             if (this->syn->weightUpdateType->outputs[i]->destination == data->selList[j])
                 destination_deleted = true;
             if (data->selList[j]->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (data->selList[j]);
-                for (uint k = 0; k < pop->projections.size(); ++k)
+                for (int k = 0; k < pop->projections.size(); ++k)
                     if (this->syn->weightUpdateType->outputs[i]->destination == pop->projections[k])
                         destination_deleted = true;
-                for (uint k = 0; k < pop->reverseProjections.size(); ++k)
+                for (int k = 0; k < pop->reverseProjections.size(); ++k)
                     if (this->syn->weightUpdateType->outputs[i]->destination == pop->reverseProjections[k])
                         destination_deleted = true;
             }
@@ -559,11 +558,11 @@ delSynapse::delSynapse(rootData * data, QSharedPointer <projection> proj, QShare
         }
     }
     // go into experiments and delete all referencing objects
-    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+    for (int i = 0; i < this->data->experiments.size(); ++i) {
         // for each experiment
         experiment * currExpt = this->data->experiments[i];
         // loop through inputs
-        for (uint j = 0; j < currExpt->ins.size(); ++j) {
+        for (int j = 0; j < currExpt->ins.size(); ++j) {
             // if input references deleted pop the push a delete
             exptInput * in = currExpt->ins[j];
             if (in->target == this->syn->weightUpdateType || in->target == this->syn->postsynapseType) {
@@ -571,7 +570,7 @@ delSynapse::delSynapse(rootData * data, QSharedPointer <projection> proj, QShare
             }
         }
         // loop through outputs
-        for (uint j = 0; j < currExpt->outs.size(); ++j) {
+        for (int j = 0; j < currExpt->outs.size(); ++j) {
             // if input references deleted pop the push a delete
             exptOutput * out = currExpt->outs[j];
             if (out->source == this->syn->weightUpdateType || out->source == this->syn->postsynapseType) {
@@ -579,7 +578,7 @@ delSynapse::delSynapse(rootData * data, QSharedPointer <projection> proj, QShare
             }
         }
         // loop through changed properties
-        for (uint j = 0; j < currExpt->changes.size(); ++j) {
+        for (int j = 0; j < currExpt->changes.size(); ++j) {
             // if input references deleted pop the push a delete
             exptChangeProp * prop = currExpt->changes[j];
             if (prop->component == this->syn->weightUpdateType || prop->component == this->syn->postsynapseType) {
@@ -607,7 +606,7 @@ void delSynapse::redo()
     QUndoCommand::redo();
 
     // remove from projection
-    for (uint i = 0; i < proj->synapses.size(); ++i) {
+    for (int i = 0; i < proj->synapses.size(); ++i) {
         if (proj->synapses[i] == syn) {
             proj->synapses.erase(proj->synapses.begin()+i);
             projPos = i;
@@ -686,7 +685,7 @@ void delInput::redo()
     // reconnect ties for input
     input->disconnect();
     // might be selected:
-    for (uint i = 0; i < data->selList.size(); ++i) {
+    for (int i = 0; i < data->selList.size(); ++i) {
         if (this->input == data->selList[i]) {
             data->selList.erase(data->selList.begin()+i);
             selIndex = i;
@@ -1093,15 +1092,19 @@ void updateParType::redo()
     ptr->value.clear();
     ptr->currType = newType;
     if (this->newType == FixedValue) {
-        ptr->value.resize(1,0);
+        ptr->value.resize(1);
+        ptr->value.fill(0);
     }
     if (this->newType == Statistical) {
-        ptr->value.resize(1,0);
+        ptr->value.resize(1);
+        ptr->value.fill(0);
     }
     if (this->newType == ExplicitList) {
-        ptr->value.resize(1,0);
+        ptr->value.resize(1);
+        ptr->value.fill(0);
         ptr->indices.resize(1);
-        ptr->indices[0] = 0;
+        ptr->indices.fill(0);
+        //ptr->indices[0] = 0;
     }
     data->reDrawAll();
 }
@@ -1172,11 +1175,11 @@ updateComponentTypeUndo::updateComponentTypeUndo(rootData * data, QSharedPointer
     this->oldSVDatas = componentData->StateVariableList;
     this->setText("change component from " + this->oldComponent->name + " to " + this->newComponent->name);
     // save port values
-    for (uint i = 0; i < componentData->inputs.size(); ++i){
+    for (int i = 0; i < componentData->inputs.size(); ++i){
         srcPortsInputs.push_back(componentData->inputs[i]->srcPort);
         dstPortsInputs.push_back(componentData->inputs[i]->dstPort);
     }
-    for (uint i = 0; i < componentData->outputs.size(); ++i){
+    for (int i = 0; i < componentData->outputs.size(); ++i){
         srcPortsOutputs.push_back(componentData->outputs[i]->srcPort);
         dstPortsOutputs.push_back(componentData->outputs[i]->dstPort);
     }
@@ -1187,22 +1190,22 @@ updateComponentTypeUndo::updateComponentTypeUndo(rootData * data, QSharedPointer
     this->newSVDatas = this->componentData->StateVariableList;
 
     // find experimental references and update
-    for (uint i = 0; i < this->data->experiments.size(); ++i) {
+    for (int i = 0; i < this->data->experiments.size(); ++i) {
         // for each experiment
         experiment * currExpt = this->data->experiments[i];
         // loop through chnaged properties
-        for (uint j = 0; j < currExpt->changes.size(); ++j) {
+        for (int j = 0; j < currExpt->changes.size(); ++j) {
             // if input references deleted pop the push a delete
             exptChangeProp * prop = currExpt->changes[j];
             // search for parameter name in new component
             if (prop->component == this->componentData) {
                 bool found = false;
-                for (uint k = 0; k < this->newComponent->ParameterList.size(); ++k) {
+                for (int k = 0; k < this->newComponent->ParameterList.size(); ++k) {
                     if (prop->par->name == this->newComponent->ParameterList[k]->name) {
                         found = true;
                     }
                 }
-                for (uint k = 0; k < this->newComponent->StateVariableList.size(); ++k) {
+                for (int k = 0; k < this->newComponent->StateVariableList.size(); ++k) {
                     if (prop->par->name == this->newComponent->StateVariableList[k]->name) {
                         found = true;
                     }
@@ -1222,20 +1225,20 @@ updateComponentTypeUndo::~updateComponentTypeUndo()
     // clear up the lists!
     if (isRedone) {
         // delete old parDatas
-        for (uint i = 0; i < oldParDatas.size(); ++i)
+        for (int i = 0; i < oldParDatas.size(); ++i)
             delete oldParDatas[i];
 
         // delete old SVDatas
-        for (uint i = 0; i < oldSVDatas.size(); ++i)
+        for (int i = 0; i < oldSVDatas.size(); ++i)
             delete oldSVDatas[i];
     }
     if (!isRedone) {
         // delete old parDatas
-        for (uint i = 0; i < newParDatas.size(); ++i)
+        for (int i = 0; i < newParDatas.size(); ++i)
             delete newParDatas[i];
 
         // delete old SVDatas
-        for (uint i = 0; i < newSVDatas.size(); ++i)
+        for (int i = 0; i < newSVDatas.size(); ++i)
             delete newSVDatas[i];
     }
 }
@@ -1247,11 +1250,11 @@ void updateComponentTypeUndo::undo()
     componentData->StateVariableList = oldSVDatas;
     componentData->component = oldComponent;
     // restore port values
-    for (uint i = 0; i < componentData->inputs.size(); ++i){
+    for (int i = 0; i < componentData->inputs.size(); ++i){
         componentData->inputs[i]->srcPort = srcPortsInputs[i];
         componentData->inputs[i]->dstPort = dstPortsInputs[i];
     }
-    for (uint i = 0; i < componentData->outputs.size(); ++i){
+    for (int i = 0; i < componentData->outputs.size(); ++i){
         componentData->outputs[i]->srcPort = srcPortsOutputs[i];
         componentData->outputs[i]->dstPort = dstPortsOutputs[i];
     }
@@ -1387,7 +1390,7 @@ void changeComponent::redo()
 
 }
 
-changeComponentType::changeComponentType(RootComponentItem * root, vector <QSharedPointer<NineMLComponent> > * old_lib, vector <QSharedPointer<NineMLComponent> > * new_lib, QSharedPointer<NineMLComponent> component, QString message, QUndoCommand *parent) :
+changeComponentType::changeComponentType(RootComponentItem * root, QVector <QSharedPointer<NineMLComponent> > * old_lib, QVector <QSharedPointer<NineMLComponent> > * new_lib, QSharedPointer<NineMLComponent> component, QString message, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->viewCL = &root->main->viewCL;
@@ -1402,7 +1405,7 @@ void changeComponentType::undo()
 {
     // move from new to old
     // find new:
-    for (uint i = 0; i < new_lib->size(); ++i) {
+    for (int i = 0; i < new_lib->size(); ++i) {
         if ((*new_lib)[i] == component) {
             new_lib->erase(new_lib->begin()+i);
             old_lib->push_back(component);
@@ -1418,7 +1421,7 @@ void changeComponentType::undo()
 void changeComponentType::redo()
 {
     // find old:
-    for (uint i = 0; i < old_lib->size(); ++i) {
+    for (int i = 0; i < old_lib->size(); ++i) {
         qDebug() << (*old_lib)[i]->name;
         if ((*old_lib)[i] == component) {
             old_lib->erase(old_lib->begin()+i);
@@ -1455,7 +1458,7 @@ void deleteOutputUndo::undo()
 void deleteOutputUndo::redo()
 {
     // remove the reference to the output from the experiment list
-    for (uint i = 0; i < this->expt->outs.size(); ++i) {
+    for (int i = 0; i < this->expt->outs.size(); ++i) {
         if (this->expt->outs[i] == this->output) {
             this->expt->outs.erase(this->expt->outs.begin()+i);
             this->location = i;
@@ -1487,7 +1490,7 @@ void deleteInputUndo::undo()
 void deleteInputUndo::redo()
 {
     // remove the reference to the output from the experiment list
-    for (uint i = 0; i < this->expt->ins.size(); ++i) {
+    for (int i = 0; i < this->expt->ins.size(); ++i) {
         if (this->expt->ins[i] == this->input) {
             this->expt->ins.erase(this->expt->ins.begin()+i);
             this->location = i;
@@ -1519,7 +1522,7 @@ void deleteChangePropUndo::undo()
 void deleteChangePropUndo::redo()
 {
     // remove the reference to the output from the experiment list
-    for (uint i = 0; i < this->expt->changes.size(); ++i) {
+    for (int i = 0; i < this->expt->changes.size(); ++i) {
         if (this->expt->changes[i] == this->prop) {
             this->expt->changes.erase(this->expt->changes.begin()+i);
             this->location = i;
@@ -1551,7 +1554,7 @@ void deleteLesionUndo::undo()
 void deleteLesionUndo::redo()
 {
     // remove the reference to the output from the experiment list
-    for (uint i = 0; i < this->expt->lesions.size(); ++i) {
+    for (int i = 0; i < this->expt->lesions.size(); ++i) {
         if (this->expt->lesions[i] == this->lesion) {
             this->expt->lesions.erase(this->expt->lesions.begin()+i);
             this->location = i;

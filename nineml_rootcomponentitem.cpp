@@ -205,7 +205,7 @@ void RootComponentItem::setComponentClassName(QString name)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(al));
     // find which catalog we are saving to
-    vector < QSharedPointer<NineMLComponent> > * curr_lib;
+    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
     if (al->type == "neuron_body")
         curr_lib = &main->data.catalogNrn;
     if (al->type == "weight_update")
@@ -217,7 +217,7 @@ void RootComponentItem::setComponentClassName(QString name)
 
     bool unique = true;
     // check if name is unique
-    for (uint i = 0; i < curr_lib->size(); ++i) {
+    for (int i = 0; i < curr_lib->size(); ++i) {
         if ((*curr_lib)[i]->name == name) {
             qDebug() << name << " is not unique in the component catalog.";
             unique = false;
@@ -231,7 +231,7 @@ void RootComponentItem::setComponentClassName(QString name)
         // see if there is a component with the same name
         while (!unique) {
             unique = true;
-            for (uint i = 0; i < curr_lib->size(); ++i) {
+            for (int i = 0; i < curr_lib->size(); ++i) {
                 if ((*curr_lib)[i]->name == name + QString::number(float(val))) {
                     unique = false;
                 }
@@ -267,8 +267,8 @@ void RootComponentItem::setComponentClassType(QString type)
     QString oldType = al->type;
     al->type = type;
 
-    vector <QSharedPointer<NineMLComponent> > * old_lib;
-    vector <QSharedPointer<NineMLComponent> > * new_lib;
+    QVector <QSharedPointer<NineMLComponent> > * old_lib;
+    QVector <QSharedPointer<NineMLComponent> > * new_lib;
 
     // pointer to source catalog
     if (oldType == "neuron_body")
@@ -300,7 +300,7 @@ void RootComponentItem::setComponentClassType(QString type)
 void RootComponentItem::setInitialRegime(QString regime)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(al));
-    for (uint i=0; i< al->RegimeList.size(); i++){
+    for (int i=0; i< al->RegimeList.size(); i++){
         if (al->RegimeList[i]->name == regime){
             al->initial_regime = al->RegimeList[i];
             al->initial_regime_name = regime;
@@ -350,19 +350,19 @@ void RootComponentItem::deleteComponent()
         msgBox.exec();
     } else {
         if (alPtr->type == "neuron_body") {
-            for (uint i = 0; i < rootDataPtr->catalogNrn.size(); ++i)
+            for (int i = 0; i < rootDataPtr->catalogNrn.size(); ++i)
                 if (rootDataPtr->catalogNrn[i] == alPtr)
                     rootDataPtr->catalogNrn.erase(rootDataPtr->catalogNrn.begin()+i);
         } else if (alPtr->type == "weight_update") {
-            for (uint i = 0; i < rootDataPtr->catalogWU.size(); ++i)
+            for (int i = 0; i < rootDataPtr->catalogWU.size(); ++i)
                 if (rootDataPtr->catalogWU[i] == alPtr)
                     rootDataPtr->catalogWU.erase(rootDataPtr->catalogWU.begin()+i);
         } else if (alPtr->type == "postsynapse") {
-            for (uint i = 0; i < rootDataPtr->catalogPS.size(); ++i)
+            for (int i = 0; i < rootDataPtr->catalogPS.size(); ++i)
                 if (rootDataPtr->catalogPS[i] == alPtr)
                     rootDataPtr->catalogPS.erase(rootDataPtr->catalogPS.begin()+i);
         } else //generic_component
-            for (uint i = 0; i < rootDataPtr->catalogUnsorted.size(); ++i)
+            for (int i = 0; i < rootDataPtr->catalogUnsorted.size(); ++i)
                 if (rootDataPtr->catalogUnsorted[i] == alPtr)
                     rootDataPtr->catalogUnsorted.erase(rootDataPtr->catalogUnsorted.begin()+i);
 

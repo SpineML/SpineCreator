@@ -66,9 +66,9 @@ public:
     QFile logFile;
     QString logFileXMLname;
     fileFormat dataFormat;
-    vector < column > columns;
+    QVector < column > columns;
     double endTime;
-    vector < int > eventIndices;
+    QVector < int > eventIndices;
     int binaryDataStride;
     QVector < QVector < double > > colData;
     double timeStep;
@@ -82,7 +82,7 @@ public:
     bool setupFromXML();
     double getMax();
     double getMin();
-    vector < double > getRow(int rowNum);
+    QVector < double > getRow(int rowNum);
     bool plotLine(QCustomPlot * plot, int colNum, int update = -1);
     bool plotRaster(QCustomPlot * plot, QList < QVariant > indices, int update = -1);
     bool calculateBinaryDataStride();

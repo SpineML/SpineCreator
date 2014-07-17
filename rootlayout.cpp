@@ -588,7 +588,7 @@ void rootLayout::updateLayoutList(rootData * data) {
     layoutComboBox->clear();
     // we don't want to set stuff while this occurs
     layoutComboBox->disconnect(data);
-    for (unsigned int i = 0; i < data->catalogLayout.size(); ++i) {
+    for (int i = 0; i < data->catalogLayout.size(); ++i) {
         layoutComboBox->addItem(data->catalogLayout[i]->name);
     }
 
@@ -607,7 +607,7 @@ void rootLayout::updateComponentLists(rootData * data) {
 
     // neuron
     neuronComboBox->clear();
-    for (unsigned int i = 0; i < data->catalogNrn.size(); ++i) {
+    for (int i = 0; i < data->catalogNrn.size(); ++i) {
         if (!(data->catalogNrn[i]->name == "none")) {
             neuronComboBox->addItem(data->catalogNrn[i]->name);
         } else {
@@ -619,7 +619,7 @@ void rootLayout::updateComponentLists(rootData * data) {
 
     // weightupdate
     weightUpdateComboBox->clear();
-    for (unsigned int i = 0; i < data->catalogWU.size(); ++i) {
+    for (int i = 0; i < data->catalogWU.size(); ++i) {
         if (!(data->catalogWU[i]->name == "none"))
             weightUpdateComboBox->addItem(data->catalogWU[i]->name);
         else
@@ -630,7 +630,7 @@ void rootLayout::updateComponentLists(rootData * data) {
 
     // postsynapse
     postSynapseComboBox->clear();
-    for (unsigned int i = 0; i < data->catalogPS.size(); ++i) {
+    for (int i = 0; i < data->catalogPS.size(); ++i) {
         if (!(data->catalogPS[i]->name == "none"))
             postSynapseComboBox->addItem(data->catalogPS[i]->name);
         else
@@ -730,13 +730,16 @@ void rootLayout::updatePanel(rootData* data) {
         // find what the selected item is...
         if (data->selList[0]->type == populationObject) {
 
-            popSelected(qSharedPointerDynamicCast<population> (data->selList[0]), data);
+            QSharedPointer<population> pop = qSharedPointerDynamicCast<population> (data->selList[0]);
+            popSelected(pop, data);
             return;
 
         }
         if (data->selList[0]->type == projectionObject) {
 
-            projSelected(qSharedPointerDynamicCast<projection> ( data->selList[0]), data);
+            QSharedPointer<projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
+            if (proj.isNull()) qDebug() << "Pointer is null!";
+            projSelected(proj, data);
             return;
 
         }
@@ -751,10 +754,12 @@ void rootLayout::updatePanel(rootData* data) {
 
 }
 
-void rootLayout::popSelected(QSharedPointer <population> pop, rootData* data) {
+void rootLayout::popSelected(QSharedPointer <population> &pop, rootData* data) {
 
     if (pop->neuronTypeName.compare("noPop") == 0)
         return;
+
+    qDebug() << pop->getName();
 
     // spikesource has none of this info
     if (pop->isSpikeSource) {
@@ -770,7 +775,7 @@ void rootLayout::popSelected(QSharedPointer <population> pop, rootData* data) {
     emit setPopulationName(pop->name);
     emit setPopulationTitle("<u><b>" + pop->name + "</b></u>");
     emit setPopulationSize(pop->numNeurons);
-    for (unsigned int i = 0; i < data->catalogNrn.size(); ++i) {
+    for (int i = 0; i < data->catalogNrn.size(); ++i) {
         if (pop->neuronType->component == data->catalogNrn[i]) {
             emit setNeuronType(i);
         }
@@ -796,16 +801,14 @@ void rootLayout::popSelected(QSharedPointer <population> pop, rootData* data) {
 
 }
 
-void rootLayout::projSelected(QSharedPointer <projection> proj, rootData* data) {
+void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data) {
 
     // configure
     emit showProjection();
     emit setProjectionName("<u><b>" + proj->getName() + "</b></u>");
 
-    // make sure we are not off the end due to deletes, but don't go
-    // negative if there are no synapses.
-    while (proj->currTarg > 0
-           && proj->currTarg > (int) proj->synapses.size()-1) {
+    // make sure we are not off the end due to deletes
+    while (proj->currTarg >= 0 && proj->currTarg > proj->synapses.size()-1) {
         proj->currTarg--;
     }
 
@@ -830,12 +833,12 @@ void rootLayout::projSelected(QSharedPointer <projection> proj, rootData* data) 
     tabs->setTabText(2, "Connectivity");
 
     // set comboboxes
-    for (unsigned int i = 0; i < data->catalogWU.size(); ++i) {
+    for (int i = 0; i < data->catalogWU.size(); ++i) {
         if (proj->synapses[proj->currTarg]->weightUpdateType->component == data->catalogWU[i]) {
             emit setWeightUpdateType(i);
         }
     }
-    for (unsigned int i = 0; i < data->catalogPS.size(); ++i) {
+    for (int i = 0; i < data->catalogPS.size(); ++i) {
         if (proj->synapses[proj->currTarg]->postsynapseType->component == data->catalogPS[i]) {
             emit setPostSynapseType(i);
         }
@@ -889,7 +892,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     // add port options
     QStringList portPairs;
 
-    for (uint i = 0; i < in->dst->inputs.size(); ++i)
+    for (int i = 0; i < in->dst->inputs.size(); ++i)
         if (in == in->dst->inputs[i])
             portPairs = in->dst->getPortMatches(i, false);
 
@@ -1351,7 +1354,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 connect(this, SIGNAL(deleteProperties()), inputLayHeader->itemAt(inputLayHeader->count()-1)->widget(), SLOT(deleteLater()));
                 tabLayout->insertLayout(tabLayout->count()-1, inputLayHeader);
 
-                for (uint input = 0; input < componentData->inputs.size(); ++input) {
+                for (int input = 0; input < componentData->inputs.size(); ++input) {
 
                     QHBoxLayout * inputLay = new QHBoxLayout;
                     connect(this, SIGNAL(deleteProperties()), inputLay, SLOT(deleteLater()));
@@ -1441,10 +1444,10 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 tabLayout->insertLayout(tabLayout->count()-1, addInput);
 
                 QStringList elementList;
-                for (uint i = 0; i < data->populations.size(); ++i) {
+                for (int i = 0; i < data->populations.size(); ++i) {
                     elementList << data->populations[i]->neuronType->getXMLName();
-                    for (uint j = 0; j < data->populations[i]->projections.size(); ++j) {
-                        for (uint k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
+                    for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
+                        for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                             elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                             elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
                         }

@@ -30,7 +30,7 @@ layoutEditPreviewDialog::layoutEditPreviewDialog(QSharedPointer<NineMLLayout> in
 
     srcNineMLLayout = inSrcNineMLLayout;
     glView = glConn;
-    QObject::connect(this, SIGNAL(drawLayout(vector<loc>)), glView, SLOT(drawLocations(vector<loc>)));
+    QObject::connect(this, SIGNAL(drawLayout(QVector <loc>)), glView, SLOT(drawLocations(QVector <loc>)));
 
     this->setModal(true);
     this->setMinimumSize(200, 400);
@@ -65,7 +65,7 @@ layoutEditPreviewDialog::layoutEditPreviewDialog(QSharedPointer<NineMLLayout> in
     }
 
     // add the parameters
-    for (uint i = 0; i < srcNineMLLayout->ParameterList.size(); ++i) {
+    for (int i = 0; i < srcNineMLLayout->ParameterList.size(); ++i) {
 
         if (srcNineMLLayout->ParameterList[i]->name != "numNeurons") {
             // add to main layout
@@ -86,7 +86,7 @@ layoutEditPreviewDialog::layoutEditPreviewDialog(QSharedPointer<NineMLLayout> in
     }
 
     // add the state vars
-    for (uint i = 0; i < srcNineMLLayout->StateVariableList.size(); ++i) {
+    for (int i = 0; i < srcNineMLLayout->StateVariableList.size(); ++i) {
 
         if (srcNineMLLayout->StateVariableList[i]->name != "x" && srcNineMLLayout->StateVariableList[i]->name != "y" && srcNineMLLayout->StateVariableList[i]->name != "z") {
             // add to main layout
@@ -115,8 +115,8 @@ void layoutEditPreviewDialog::reDraw(QString) {
     QSharedPointer<NineMLLayoutData> data = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(srcNineMLLayout));
 
     // populate from the spinboxes:
-    for (uint i = 0; i < data->ParameterList.size(); ++i) {
-        for (uint j = 0; j < (uint) contentLayoutRef->count(); ++j) {
+    for (int i = 0; i < data->ParameterList.size(); ++i) {
+        for (int j = 0; j < (int) contentLayoutRef->count(); ++j) {
             if (contentLayoutRef->itemAt(j)->widget()) {
                 QString clsName = "QDoubleSpinBox";
                 if (clsName.contains(contentLayoutRef->itemAt(j)->widget()->metaObject()->className())) {
@@ -128,8 +128,8 @@ void layoutEditPreviewDialog::reDraw(QString) {
         }
     }
 
-    for (uint i = 0; i < data->StateVariableList.size(); ++i) {
-        for (uint j = 0; j < (uint) contentLayoutRef->count(); ++j) {
+    for (int i = 0; i < data->StateVariableList.size(); ++i) {
+        for (int j = 0; j < (int) contentLayoutRef->count(); ++j) {
             if (contentLayoutRef->itemAt(j)->widget()) {
                 QString clsName = "QDoubleSpinBox";
                 if (clsName.contains(contentLayoutRef->itemAt(j)->widget()->metaObject()->className())) {
@@ -142,7 +142,7 @@ void layoutEditPreviewDialog::reDraw(QString) {
     }
 
     int numNeurons;
-    for (uint j = 0; j < (uint) contentLayoutRef->count(); ++j) {
+    for (int j = 0; j < (int) contentLayoutRef->count(); ++j) {
         if (contentLayoutRef->itemAt(j)->widget()) {
             QString clsName = "QSpinBox";
             if (clsName.contains(contentLayoutRef->itemAt(j)->widget()->metaObject()->className())) {
@@ -153,7 +153,7 @@ void layoutEditPreviewDialog::reDraw(QString) {
 
 
     // ok, data is filled in, now to get the locations
-    vector <loc> locations;
+    QVector <loc> locations;
 
     QString err;
     data->generateLayout(numNeurons, &locations, err);

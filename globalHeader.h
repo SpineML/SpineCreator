@@ -133,8 +133,8 @@ struct loc {
 };
 
 struct conn {
-    uint src;
-    uint dst;
+    int src;
+    int dst;
     float metric;
 };
 

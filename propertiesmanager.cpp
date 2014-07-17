@@ -179,7 +179,7 @@ void PropertiesManager::createEmptySelectionProperties()
     //initial regime
     QComboBox *initial_regime = new QComboBox();
     bool match_init_r = false;
-    for (uint i=0; i<root->al->RegimeList.size(); i++){
+    for (int i=0; i<root->al->RegimeList.size(); i++){
         initial_regime->addItem(root->al->RegimeList[i]->name);
         if (root->al->initial_regime == root->al->RegimeList[i]){
             initial_regime->setCurrentIndex(i);
@@ -253,7 +253,7 @@ void PropertiesManager::createTimeDerivativeProperties(TimeDerivativeTextItem *t
     QLabel *label = new QLabel("<b>Edit Time Derivative</b>");
     addRow(label);
     QComboBox *var = new QComboBox();
-    for (uint i=0; i< root->al->StateVariableList.size(); i++)
+    for (int i=0; i< root->al->StateVariableList.size(); i++)
     {
         var->addItem(root->al->StateVariableList[i]->getName());
         if (td->getVariable() != NULL){
@@ -496,7 +496,7 @@ void PropertiesManager::createOnEventProperties(OnEventGraphicsItem *oei)
     addRow(label);
 
     QComboBox *event = new QComboBox();
-    for (uint i=0; i< root->al->EventPortList.size(); i++)
+    for (int i=0; i< root->al->EventPortList.size(); i++)
     {
         if (root->al->EventPortList[i]->mode == EventRecvPort){
             event->addItem(root->al->EventPortList[i]->getName());
@@ -528,7 +528,7 @@ void PropertiesManager::createOnImpulseProperties(OnImpulseGraphicsItem *oii)
 
     QComboBox *impulse = new QComboBox();
     bool impulse_match = false;
-    for (uint i=0; i< root->al->ImpulsePortList.size(); i++)
+    for (int i=0; i< root->al->ImpulsePortList.size(); i++)
     {
         if (root->al->ImpulsePortList[i]->mode == ImpulseRecvPort){
             impulse->addItem(root->al->ImpulsePortList[i]->getName());
@@ -565,7 +565,7 @@ void PropertiesManager::createStateAssignmentProperties(StateAssignmentTextItem 
     QLabel *label = new QLabel("<b>Edit State Assigment</b>");
     addRow(label);
     QComboBox *var = new QComboBox();
-    for (uint i=0; i< root->al->StateVariableList.size(); i++)
+    for (int i=0; i< root->al->StateVariableList.size(); i++)
     {
         var->addItem(root->al->StateVariableList[i]->getName());
         if (sa->getVariable() != NULL){
@@ -626,7 +626,7 @@ void PropertiesManager::createEventOutProperties(EventOutTextItem *eo)
     QLabel *label = new QLabel("<b>Edit Event Output</b>");
     addRow(label);
     QComboBox *var = new QComboBox();
-    for (uint i=0; i< root->al->EventPortList.size(); i++)
+    for (int i=0; i< root->al->EventPortList.size(); i++)
     {
         if (root->al->EventPortList[i]->mode == EventSendPort){
             var->addItem(root->al->EventPortList[i]->getName());
@@ -652,7 +652,7 @@ void PropertiesManager::createImpulseOutProperties(ImpulseOutTextItem *io)
     QLabel *label = new QLabel("<b>Edit Impulse Output</b>");
     addRow(label);
     QComboBox *var = new QComboBox();
-    for (uint i=0; i< root->al->ImpulsePortList.size(); i++)
+    for (int i=0; i< root->al->ImpulsePortList.size(); i++)
     {
         if (root->al->ImpulsePortList[i]->mode == ImpulseSendPort){
             if (root->al->ImpulsePortList[i]->parameter != NULL){
@@ -686,7 +686,7 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
     //if mode == send
     if (ap->getPortMode() == AnalogSendPort){
         QComboBox *var = new QComboBox();
-        for (uint i=0; i< root->al->StateVariableList.size(); i++)
+        for (int i=0; i< root->al->StateVariableList.size(); i++)
         {
             var->addItem(root->al->StateVariableList[i]->getName());
             if (ap->getVariable() != NULL){
@@ -694,7 +694,7 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
                     var->setCurrentIndex(i);
             }
         }
-        for (uint i=0; i< root->al->AliasList.size(); i++)
+        for (int i=0; i< root->al->AliasList.size(); i++)
         {
             var->addItem(root->al->AliasList[i]->getName());
             if (ap->getVariable() != NULL){
@@ -819,7 +819,7 @@ void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
     //if mode == send
     if (m == ImpulseSendPort){
         QComboBox *param = new QComboBox();
-        for (uint i=0; i< root->al->ParameterList.size(); i++)
+        for (int i=0; i< root->al->ParameterList.size(); i++)
         {
             param->addItem(root->al->ParameterList[i]->getName());
             if (ip->getParameter() != NULL){
@@ -827,7 +827,7 @@ void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
                     param->setCurrentIndex(i);
             }
         }
-        for (uint i=0; i< root->al->StateVariableList.size(); i++)
+        for (int i=0; i< root->al->StateVariableList.size(); i++)
         {
             param->addItem(root->al->StateVariableList[i]->getName());
             if (ip->getParameter() != NULL){
@@ -835,7 +835,7 @@ void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
                     param->setCurrentIndex(i);
             }
         }
-        for (uint i=0; i< root->al->AliasList.size(); i++)
+        for (int i=0; i< root->al->AliasList.size(); i++)
         {
             param->addItem(root->al->AliasList[i]->getName());
             if (ip->getParameter() != NULL){

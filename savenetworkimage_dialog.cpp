@@ -156,13 +156,13 @@ void saveNetworkImageDialog::reDrawPreview() {
 QPixmap saveNetworkImageDialog::drawPixMap() {
 
     // what to draw
-    vector <QSharedPointer<systemObject> > list;
+    QVector <QSharedPointer<systemObject> > list;
     list = data->selList;
 
     QRectF bounds = QRectF(100000,100000,-200000,-200000);
 
     // work out bounding box
-    for (uint p = 0; p < list.size(); ++p) {
+    for (int p = 0; p < list.size(); ++p) {
 
         if (list[p]->type == populationObject) {
             QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (list[p]);
@@ -180,7 +180,7 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
         if (list[p]->type == projectionObject) {
 
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (list[p]);
-            for (uint c = 0; c < proj->curves.size(); ++c) {
+            for (int c = 0; c < proj->curves.size(); ++c) {
                 bezierCurve * bz = &proj->curves[c];
                 if (-bz->C1.y() > bounds.bottom())
                     bounds.setBottom(-bz->C1.y());
@@ -231,7 +231,7 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
 
 
     // Just render selection:
-    for (unsigned int i = 0; i < list.size(); ++i) {
+    for (int i = 0; i < list.size(); ++i) {
 
             list[i]->draw(painter, 200.0*scale, -bounds.center().x(), -bounds.center().y(), bounds.width()*100*scale, bounds.height()*100*scale, data->popImage, microcircuitDrawStyle);
 

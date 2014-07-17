@@ -100,12 +100,12 @@ void glConnectionWidget::clear() {
 void glConnectionWidget::addLogs(QVector < logData * > * logs) {
 
     // for each population
-    for (uint i = 0; i < selectedPops.size(); ++i) {
+    for (int i = 0; i < selectedPops.size(); ++i) {
 
         QSharedPointer <population> pop = selectedPops[i];
 
         // for each analog output port
-        for (uint j = 0; j < pop->neuronType->component->AnalogPortList.size(); ++j) {
+        for (int j = 0; j < pop->neuronType->component->AnalogPortList.size(); ++j) {
 
             AnalogPort * port = pop->neuronType->component->AnalogPortList[j];
             // if send port
@@ -141,14 +141,14 @@ void glConnectionWidget::updateLogData() {
     currentLogTime = newLogTime;
 
     // fetch data from logs
-    for (uint i = 0; i < popLogs.size(); ++i) {
+    for (int i = 0; i < popLogs.size(); ++i) {
 
         // skip where there is no log
         if (popLogs[i] == NULL)
             continue;
 
         // get a row
-        vector < double > logValues = popLogs[i]->getRow(currentLogTime);
+        QVector < double > logValues = popLogs[i]->getRow(currentLogTime);
 
         // data not usable
         if (logValues.size() == 0)
@@ -158,10 +158,11 @@ void glConnectionWidget::updateLogData() {
 
         // resize container
         QColor col(0,0,0,255);
-        popColours[i].resize(selectedPops[i]->numNeurons, col);
+        popColours[i].resize(selectedPops[i]->numNeurons);
+        popColours[i].fill(col);
 
         // remap data
-        for (uint j = 0; j < logValues.size(); ++j) {
+        for (int j = 0; j < logValues.size(); ++j) {
             if (logValues[j] < Q_INFINITY && (popLogs[i]->getMax()-popLogs[i]->getMin()) != 0) {
                 int val = ((logValues[j]-popLogs[i]->getMin())*255.0)/(popLogs[i]->getMax()-popLogs[i]->getMin());
                 val *= 3;
@@ -307,7 +308,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
     // if previewing a layout then override normal drawing
     if (locations.size() > 0) {
-        for (unsigned int i = 0; i < locations[0].size(); ++i) {
+        for (int i = 0; i < locations[0].size(); ++i) {
             glPushMatrix();
 
             glTranslatef(locations[0][i].x, locations[0][i].y, locations[0][i].z);
@@ -330,15 +331,15 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
     // draw with a level of detail dependant on the number on neurons we must draw
     // sum neurons across all pops we'll draw
     int totalNeurons = 0;
-    for (uint locNum = 0; locNum < selectedPops.size(); ++locNum) {
+    for (int locNum = 0; locNum < selectedPops.size(); ++locNum) {
         totalNeurons += selectedPops[locNum]->layoutType->locations.size();
     }
     int LoD = round(250.0f/float(totalNeurons)*pow(2,float(quality)));
 
     // normal drawing
-    for (uint locNum = 0; locNum < selectedPops.size(); ++locNum) {
+    for (int locNum = 0; locNum < selectedPops.size(); ++locNum) {
         QSharedPointer <population> currPop = selectedPops[locNum];
-        for (unsigned int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+        for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
             glPushMatrix();
 
             glTranslatef(currPop->layoutType->locations[i].x, currPop->layoutType->locations[i].y, currPop->layoutType->locations[i].z);
@@ -375,7 +376,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
     }
 
     // draw synapses
-    for (uint targNum = 0; targNum < this->selectedConns.size(); ++targNum) {
+    for (int targNum = 0; targNum < this->selectedConns.size(); ++targNum) {
 
         // draw the connections:
         glDisable(GL_LIGHTING);
@@ -460,7 +461,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
 
             connGenerationMutex->lock();
-            for (uint i = 0; i < connections[targNum].size(); ++i) {
+            for (int i = 0; i < connections[targNum].size(); ++i) {
 
                 if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
                     glLineWidth(1.0*lineScaleFactor);
@@ -494,7 +495,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             // draw selected connections on top
             glDisable(GL_DEPTH_TEST);
             if (selectedConns[targNum] == selectedObject) {
-                for (uint i = 0; i < connections[targNum].size(); ++i) {
+                for (int i = 0; i < connections[targNum].size(); ++i) {
 
                     if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
                         glLineWidth(1.0*lineScaleFactor);
@@ -504,8 +505,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         // find if selected
                         bool isSelected = false;
 
-                        for (uint j = 0; j < (uint) selection.count(); ++j) {
-                            if (i == (uint) selection[j].row())
+                        for (int j = 0; j < (int) selection.count(); ++j) {
+                            if (i == (int) selection[j].row())
                             {
                                 glLineWidth(2.0*lineScaleFactor);
                                 glColor4f(1.0, 0.0, 0.0, 1.0);
@@ -571,7 +572,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                 if (src->layoutType->locations.size() > 0 && dst->layoutType->locations.size() > 0) {
 
-                    for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
+                    for (int i = 0; i < src->layoutType->locations.size(); ++i) {
 
                         glLineWidth(1.5*lineScaleFactor);
                         glColor4f(0.0, 0.0, 1.0, 0.8);
@@ -587,7 +588,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                 if (src->layoutType->locations.size() > 0 && dst->layoutType->locations.size() == 0) {
 
-                    for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
+                    for (int i = 0; i < src->layoutType->locations.size(); ++i) {
 
                         glLineWidth(1.5*lineScaleFactor);
                         glColor4f(0.0, 0.0, 1.0, 0.8);
@@ -602,7 +603,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                 if (src->layoutType->locations.size() == 0 && dst->layoutType->locations.size() > 0) {
 
-                    for (uint i = 0; i < dst->layoutType->locations.size(); ++i) {
+                    for (int i = 0; i < dst->layoutType->locations.size(); ++i) {
 
                         glLineWidth(1.5*lineScaleFactor);
                         glColor4f(0.0, 0.0, 1.0, 0.8);
@@ -621,8 +622,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
             if (src->layoutType->locations.size() > 0 && dst->layoutType->locations.size() > 0) {
 
-                for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
-                    for (uint j = 0; j <  dst->layoutType->locations.size(); ++j) {
+                for (int i = 0; i < src->layoutType->locations.size(); ++i) {
+                    for (int j = 0; j <  dst->layoutType->locations.size(); ++j) {
 
                         glLineWidth(1.5*lineScaleFactor);
                         glColor4f(0.0, 0.0, 1.0, 0.2);
@@ -637,7 +638,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
             if (src->layoutType->locations.size() > 0 && dst->layoutType->locations.size() == 0) {
 
-                for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
+                for (int i = 0; i < src->layoutType->locations.size(); ++i) {
 
                     glLineWidth(1.5*lineScaleFactor);
                     glColor4f(0.0, 0.0, 1.0, 0.2);
@@ -650,7 +651,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
             if (src->layoutType->locations.size() == 0 && dst->layoutType->locations.size() > 0) {
 
-                 for (uint j = 0; j <  dst->layoutType->locations.size(); ++j) {
+                 for (int j = 0; j <  dst->layoutType->locations.size(); ++j) {
 
                     glLineWidth(1.5*lineScaleFactor);
                     glColor4f(0.0, 0.0, 1.0, 0.2);
@@ -673,10 +674,10 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             prob = fpConn->p;
 
             // generate a list of projections to highlight
-            vector < loc > redrawLocs;
+            QVector < loc > redrawLocs;
 
-            for (uint i = 0; i < src->layoutType->locations.size(); ++i) {
-                for (uint j = 0; j <  dst->layoutType->locations.size(); ++j) {
+            for (int i = 0; i < src->layoutType->locations.size(); ++i) {
+                for (int j = 0; j <  dst->layoutType->locations.size(); ++j) {
                     if (random.value() < this->prob) {
                         glLineWidth(1.0*lineScaleFactor);
                         glColor4f(0.0, 0.0, 0.0, 0.1);
@@ -737,7 +738,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             // redraw selected (over the top of everything else so no depth test):
             glDisable(GL_DEPTH_TEST);
 
-            for (uint i=0; i < redrawLocs.size(); i+=2) {
+            for (int i=0; i < redrawLocs.size(); i+=2) {
 
                 // redraw
                 glLineWidth(1.5*lineScaleFactor);
@@ -782,9 +783,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             zoomVal = 0.3;
 
         // draw text
-        for (uint locNum = 0; locNum < selectedPops.size(); ++locNum) {
+        for (int locNum = 0; locNum < selectedPops.size(); ++locNum) {
             QSharedPointer <population> currPop = selectedPops[locNum];
-            for (unsigned int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+            for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
                 glPushMatrix();
 
                 glTranslatef(currPop->layoutType->locations[i].x, currPop->layoutType->locations[i].y, currPop->layoutType->locations[i].z);
@@ -834,7 +835,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
         painter.end();
     } else {
         // if the painter isn't there this doesn't get called!
-        swapBuffers();
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.end();
     }
 
     glPopMatrix();
@@ -910,7 +913,7 @@ void glConnectionWidget::setupView() {
         maxes.x = -INFINITY; maxes.y = -INFINITY; maxes.z = -INFINITY;
         mins.x = INFINITY; mins.y = INFINITY; mins.z = INFINITY;
 
-        for (uint locNum = 0; locNum < locations[0].size(); ++locNum) {
+        for (int locNum = 0; locNum < locations[0].size(); ++locNum) {
             if (locations[0][locNum].x > maxes.x) {
                 maxes.x = locations[0][locNum].x;
             }
@@ -977,7 +980,7 @@ void glConnectionWidget::setupView() {
             selIndex = 0;
         }
         else {
-            for (uint i = 0; i < selectedPops.size(); ++i) {
+            for (int i = 0; i < selectedPops.size(); ++i) {
                 if (selectedObject == selectedPops[i])
                     selIndex = i;
             }
@@ -993,7 +996,7 @@ void glConnectionWidget::setupView() {
         maxes.x = -INFINITY; maxes.y = -INFINITY; maxes.z = -INFINITY;
         mins.x = INFINITY; mins.y = INFINITY; mins.z = INFINITY;
 
-        for (uint locNum = 0; locNum < currPop->layoutType->locations.size(); ++locNum) {
+        for (int locNum = 0; locNum < currPop->layoutType->locations.size(); ++locNum) {
             if (currPop->layoutType->locations[locNum].x > maxes.x) {
                 maxes.x = currPop->layoutType->locations[locNum].x;
             }
@@ -1077,7 +1080,7 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
     QModelIndexList indices = top.indexes();
     TreeItem *item = static_cast<TreeItem*>(indices[0].internalPointer());
 
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
 
         QSharedPointer <population> currPop = qSharedPointerDynamicCast<population> (data->populations[i]);
         CHECK_CAST(currPop)
@@ -1092,7 +1095,7 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
         }
 
         // population inputs
-        for (uint output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
+        for (int output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
             QSharedPointer<genericInput> currOutput = data->populations[i]->neuronType->outputs[output];
 
@@ -1107,7 +1110,7 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
         }
 
         // projections
-        for (uint j = 0; j < currPop->projections.size(); ++j) {
+        for (int j = 0; j < currPop->projections.size(); ++j) {
 
             QSharedPointer <projection> currProj = qSharedPointerDynamicCast<projection> (currPop->projections[j]);
             CHECK_CAST(currProj)
@@ -1116,7 +1119,7 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
                 selectedObject = currProj;
 
             // synapses
-            for (uint k = 0; k < currProj->synapses.size(); ++k) {
+            for (int k = 0; k < currProj->synapses.size(); ++k) {
 
                 QSharedPointer <synapse> currTarg = qSharedPointerDynamicCast<synapse> (currProj->synapses[k]);
                 CHECK_CAST(currTarg)
@@ -1173,7 +1176,7 @@ void glConnectionWidget::typeChanged(int) {
 void glConnectionWidget::parsChangedPopulation(int value) {
 
     // if the selected population is in the list (i.e. checked) then refetch locations
-    for (uint i = 0; i < selectedPops.size(); ++i) {
+    for (int i = 0; i < selectedPops.size(); ++i) {
         if (selectedObject == selectedPops[i]) {
 
             QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (selectedObject);
@@ -1199,7 +1202,7 @@ void glConnectionWidget::parsChangedPopulation(int value) {
 void glConnectionWidget::parsChangedPopulation(double) {
 
     // if the selected population is in the list (i.e. checked) then refetch locations
-    for (uint i = 0; i < selectedPops.size(); ++i) {
+    for (int i = 0; i < selectedPops.size(); ++i) {
         if (selectedObject == selectedPops[i]) {
 
             QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (selectedObject);
@@ -1221,7 +1224,7 @@ void glConnectionWidget::parsChangedPopulation() {
 
 
     // if the selected population is in the list (i.e. checked) then refetch locations
-    for (uint i = 0; i < selectedPops.size(); ++i) {
+    for (int i = 0; i < selectedPops.size(); ++i) {
         if (selectedObject == selectedPops[i]) {
 
             QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (selectedObject);
@@ -1244,7 +1247,7 @@ void glConnectionWidget::parsChangedProjections() {
 
     this->refreshAll();
 
-    for (uint i = 0; i < selectedConns.size(); ++i) {
+    for (int i = 0; i < selectedConns.size(); ++i) {
 
         connection * conn;
 
@@ -1338,7 +1341,7 @@ void glConnectionWidget::parsChangedProjection() {
 
 
             // find selected object
-            for (uint i = 0; i < this->selectedConns.size(); ++i) {
+            for (int i = 0; i < this->selectedConns.size(); ++i) {
 
                 if (selectedObject == selectedConns[i]) {
 
@@ -1366,7 +1369,7 @@ void glConnectionWidget::parsChangedProjection() {
 
 
             // find selected object
-            for (uint i = 0; i < this->selectedConns.size(); ++i) {
+            for (int i = 0; i < this->selectedConns.size(); ++i) {
 
                 if (selectedObject == selectedConns[i]) {
 
@@ -1400,7 +1403,7 @@ void glConnectionWidget::parsChangedProjection() {
 void glConnectionWidget::refreshAll() {
 
     // check on populations
-    for (uint i = 0; i < selectedPops.size(); ++i) {
+    for (int i = 0; i < selectedPops.size(); ++i) {
 
         // check pointer is valid - NOT NEEDED ANYMORE!
         /*if (!data->isValidPointer(selectedPops[i])) {
@@ -1438,7 +1441,7 @@ void glConnectionWidget::refreshAll() {
     }
 
     // check on projections
-    for (uint i = 0; i < selectedConns.size(); ++i) {
+    for (int i = 0; i < selectedConns.size(); ++i) {
 
         // check pointer is valid
         /*if (!data->isValidPointer(selectedConns[i])) {
@@ -1470,10 +1473,10 @@ void glConnectionWidget::setConnType(connectionType cType) {
 
 }
 
-void glConnectionWidget::drawLocations(vector <loc> locs) {
+void glConnectionWidget::drawLocations(QVector <loc> locs) {
 
     // redraw based on a set of location passed in (used for layout previews)
-    for (uint i = 0; i < locations.size(); ++i) {
+    for (int i = 0; i < locations.size(); ++i) {
         locations[i].clear();
     }
     locations.clear();
@@ -1488,7 +1491,7 @@ void glConnectionWidget::drawLocations(vector <loc> locs) {
 void glConnectionWidget::clearLocations() {
 
     // clear the set of location passed in (used for layout previews)
-    for (uint i = 0; i < locations.size(); ++i) {
+    for (int i = 0; i < locations.size(); ++i) {
         locations[i].clear();
     }
     locations.clear();
@@ -1509,7 +1512,7 @@ void glConnectionWidget::getConnections() {
 
             QSharedPointer <synapse> currTarg = qSharedPointerDynamicCast <synapse> (selectedObject);
 
-            for (uint i = 0; i < this->selectedConns.size(); ++i) {
+            for (int i = 0; i < this->selectedConns.size(); ++i) {
 
                 if (selectedObject == selectedConns[i] && currTarg->connectionType->type == CSV) {
 
@@ -1531,7 +1534,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
 
     // this is fired when an item is checked or unchecked
 
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
 
         QSharedPointer <population> currPop = (QSharedPointer <population>) data->populations[i];
 
@@ -1539,7 +1542,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
         if (currPop->isVisualised) {
             // if not in list then add to list
             bool inList = false;
-            for (uint p = 0; p < this->selectedPops.size(); ++p) {
+            for (int p = 0; p < this->selectedPops.size(); ++p) {
                 if (selectedPops[p] == currPop)
                     inList = true;
             }
@@ -1559,7 +1562,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
             }
         } else {
             // if in list then remove from list
-            for (uint p = 0; p < this->selectedPops.size(); ++p) {
+            for (int p = 0; p < this->selectedPops.size(); ++p) {
                 if (selectedPops[p] == currPop) {
                     selectedPops.erase(selectedPops.begin()+p);
                     popLogs.erase(popLogs.begin()+p);
@@ -1571,7 +1574,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
         }
 
         // population inputs:
-        for (uint j = 0; j < currPop->neuronType->inputs.size(); ++j) {
+        for (int j = 0; j < currPop->neuronType->inputs.size(); ++j) {
             QSharedPointer<genericInput> currIn = currPop->neuronType->inputs[j];
 
             // only for pop -> pop inputs
@@ -1580,7 +1583,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                     if (currIn->isVisualised) {
                         // add to list if not in list
                         bool inList = false;
-                        for (uint p = 0; p < this->selectedConns.size(); ++p) {
+                        for (int p = 0; p < this->selectedConns.size(); ++p) {
                             if (selectedConns[p] == currIn)
                                 inList = true;
                         }
@@ -1602,7 +1605,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                     generate_dialog generate(((kernel_connection *) currIn->connectionType), popSrc, popDst, connections.back(), connGenerationMutex, this);
                                     bool retVal = generate.exec();
                                     if (!retVal) {
-                                        return;
+                                        continue;
                                     }
                                     ((kernel_connection *) currIn->connectionType)->connections = connections.back();
                                     ((kernel_connection *) currIn->connectionType)->setUnchanged(true);
@@ -1618,7 +1621,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                     generate_dialog generate(((pythonscript_connection *) currIn->connectionType), popSrc, popDst, connections.back(), connGenerationMutex, this);
                                     bool retVal = generate.exec();
                                     if (!retVal) {
-                                        return;
+                                        continue;
                                     }
                                     ((pythonscript_connection *) currIn->connectionType)->connections = connections.back();
                                     ((pythonscript_connection *) currIn->connectionType)->setUnchanged(true);
@@ -1629,7 +1632,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
 
                     } else {
                         // remove from list if there
-                        for (uint p = 0; p < this->selectedConns.size(); ++p) {
+                        for (int p = 0; p < this->selectedConns.size(); ++p) {
                             if (selectedConns[p] == currIn) {
                                 selectedConns.erase(selectedConns.begin()+p);
                                 connections.erase(connections.begin()+p);
@@ -1642,19 +1645,19 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
         }
 
         // projections
-        for (uint j = 0; j < currPop->projections.size(); ++j) {
+        for (int j = 0; j < currPop->projections.size(); ++j) {
 
             QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[j];
 
             // synapses
-            for (uint k = 0; k < currProj->synapses.size(); ++k) {
+            for (int k = 0; k < currProj->synapses.size(); ++k) {
 
                 QSharedPointer <synapse> currTarg = (QSharedPointer <synapse>) currProj->synapses[k];
 
                 if (currTarg->isVisualised) {
                     // if not in list then add to list
                     bool inList = false;
-                    for (uint p = 0; p < this->selectedConns.size(); ++p) {
+                    for (int p = 0; p < this->selectedConns.size(); ++p) {
                         if (selectedConns[p] == currTarg)
                             inList = true;
                     }
@@ -1698,7 +1701,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                     }
                 } else {
                     // if in list then remove from list
-                    for (uint p = 0; p < this->selectedConns.size(); ++p) {
+                    for (int p = 0; p < this->selectedConns.size(); ++p) {
                         if (selectedConns[p] == currTarg) {
                             selectedConns.erase(selectedConns.begin()+p);
                             connections.erase(connections.begin()+p);
@@ -1738,6 +1741,7 @@ void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelecti
 }
 
 void glConnectionWidget::mousePressEvent(QMouseEvent *event){
+
     setCursor(Qt::ClosedHandCursor);
     button = event->button();
     origPos = event->globalPos();
@@ -1828,7 +1832,7 @@ QPixmap glConnectionWidget::renderImage(int width, int height) {
     imageSaveMode = true;
 
 // renderPixmap is broken in Qt > 5.0 - this fix doesn't currently work correctly, but is better than nothing
-#if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QImage img = renderQImage(width, height);
 
     if (img.isNull()) {
@@ -1855,9 +1859,9 @@ QPixmap glConnectionWidget::renderImage(int width, int height) {
 
     if (popIndicesShown) {
         // draw text
-        for (uint locNum = 0; locNum < selectedPops.size(); ++locNum) {
+        for (int locNum = 0; locNum < selectedPops.size(); ++locNum) {
             QSharedPointer <population> currPop = selectedPops[locNum];
-            for (unsigned int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+            for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
                 glPushMatrix();
 
                 glTranslatef(currPop->layoutType->locations[i].x, currPop->layoutType->locations[i].y, currPop->layoutType->locations[i].z);

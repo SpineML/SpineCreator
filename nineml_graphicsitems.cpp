@@ -90,7 +90,7 @@ void ArrowItem::setPenColour(QColor col)
     this->colour = col;
 }
 
-void ArrowItem::setLineWidth(uint w)
+void ArrowItem::setLineWidth(int w)
 {
     width = w;
 }
@@ -130,7 +130,7 @@ void NineMLNodeItem::addMember(GroupedTextItem *item)
     updateGVData();
 }
 
-void NineMLNodeItem::addMemberAtIndex(GroupedTextItem *item, uint index)
+void NineMLNodeItem::addMemberAtIndex(GroupedTextItem *item, int index)
 {
     members.insert(members.begin()+index, item);
     updateItemDimensions();
@@ -191,7 +191,7 @@ void NineMLTransitionItem::updateLayout()
     QPainterPath path = QPainterPath();
     QPointF spline_start = GVEdge::getGVEdgeSplinesPoint(0);
     path.moveTo(spline_start.x(), spline_start.y());
-    for(uint i=1; i<GVEdge::getGVEdgeSplinesCount(); i+=3)
+    for(int i=1; i<GVEdge::getGVEdgeSplinesCount(); i+=3)
     {
         QPointF p1 = GVEdge::getGVEdgeSplinesPoint(i+0);
         QPointF p2 = GVEdge::getGVEdgeSplinesPoint(i+1);
@@ -219,7 +219,7 @@ void NineMLTransitionItem::addMember(GroupedTextItem *item)
     updateGVData();
 }
 
-void NineMLTransitionItem::addMemberAtIndex(GroupedTextItem *item, uint index)
+void NineMLTransitionItem::addMemberAtIndex(GroupedTextItem *item, int index)
 {
     members.insert(members.begin()+index, item);
     updateItemDimensions();
@@ -263,7 +263,7 @@ RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
     setRegimeName(regime->name);
 
     //create regime equations
-    for(uint i=0; i<r->TimeDerivativeList.size(); i++)
+    for(int i=0; i<r->TimeDerivativeList.size(); i++)
     {
         addTimeDerivativeItem(regime->TimeDerivativeList[i]);
     }
@@ -283,16 +283,16 @@ void RegimeGraphicsItem::setRegimeName(QString n)
     //rename the gv node
     renameGVNode(n);
     //update the dst regime name in any onconditions
-    for (uint i=0;i<root->al->RegimeList.size();i++)
+    for (int i=0;i<root->al->RegimeList.size();i++)
     {
         Regime *r = root->al->RegimeList[i];
-        for (uint c=0;c<r->OnConditionList.size();c++)
+        for (int c=0;c<r->OnConditionList.size();c++)
         {
             OnCondition *oc = r->OnConditionList[c];
             if (oc->target_regime == this->regime)
                 oc->target_regime_name = n;
         }
-        for (uint e=0;e<r->OnEventList.size();e++)
+        for (int e=0;e<r->OnEventList.size();e++)
         {
             OnEvent *oe = r->OnEventList[e];
             if (oe->target_regime == this->regime)
@@ -379,7 +379,7 @@ void TimeDerivativeTextItem::setVariable(QString p)
     {
         disconnect(time_derivative->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
     }
-    for (uint i=0;i<root->al->StateVariableList.size();i++)
+    for (int i=0;i<root->al->StateVariableList.size();i++)
     {
         if (root->al->StateVariableList[i]->getName().compare(p)==0){
             time_derivative->variable = root->al->StateVariableList[i];
@@ -483,19 +483,19 @@ OnConditionGraphicsItem::OnConditionGraphicsItem(Regime *src_r, OnCondition *c, 
     addMember(trigger_item);
 
     //create state assigments equations
-    for(uint i=0; i<on_condition->StateAssignList.size(); i++)
+    for(int i=0; i<on_condition->StateAssignList.size(); i++)
     {
         addStateAssignment(on_condition->StateAssignList[i]);
     }
 
     //create event outputs
-    for(uint i=0; i<on_condition->eventOutList.size(); i++)
+    for(int i=0; i<on_condition->eventOutList.size(); i++)
     {
        addEventOut(on_condition->eventOutList[i]);
     }
 
     //create impulse outputs
-    for(uint i=0; i<on_condition->impulseOutList.size(); i++)
+    for(int i=0; i<on_condition->impulseOutList.size(); i++)
     {
        addImpulseOut(on_condition->impulseOutList[i]);
     }
@@ -567,7 +567,7 @@ void OnConditionGraphicsItem::setSynapseRegime(QString r)
 {
     //QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_condition->target_regime_name = r;
-    for (uint i=0;i<root->al->RegimeList.size();i++)
+    for (int i=0;i<root->al->RegimeList.size();i++)
     {
         if (root->al->RegimeList[i]->name.compare(r)==0)
                 on_condition->target_regime = root->al->RegimeList[i];
@@ -687,7 +687,7 @@ void StateAssignmentTextItem::setVariable(QString p)
     assignment->name = p;
     if (assignment->variable != NULL)
         disconnect(assignment->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (uint i=0;i<root->al->StateVariableList.size();i++)
+    for (int i=0;i<root->al->StateVariableList.size();i++)
     {
         if (root->al->StateVariableList[i]->getName().compare(p)==0)
         {
@@ -787,7 +787,7 @@ void EventOutTextItem::setEventPort(QString m)
     event_out->port_name = m;
     if (event_out->port != NULL)
         disconnect(event_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (uint i=0;i<root->al->EventPortList.size();i++)
+    for (int i=0;i<root->al->EventPortList.size();i++)
     {
         if (root->al->EventPortList[i]->getName().compare(m)==0)
         {
@@ -850,7 +850,7 @@ void ImpulseOutTextItem::setImpulsePort(QString m)
         }
 
     }
-    for (uint i=0;i<root->al->ImpulsePortList.size();i++)
+    for (int i=0;i<root->al->ImpulsePortList.size();i++)
     {
         if (root->al->ImpulsePortList[i]->parameter != NULL){
             if (root->al->ImpulsePortList[i]->parameter->getName().compare(m)==0)
@@ -906,19 +906,19 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     updateGVData();
 
     //create parameter items
-    for (uint i=0;i< r->al->ParameterList.size(); i++)
+    for (int i=0;i< r->al->ParameterList.size(); i++)
     {
         addParameterItem(r->al->ParameterList[i]);
     }
 
     //create state variable items
-    for (uint i=0;i< r->al->StateVariableList.size(); i++)
+    for (int i=0;i< r->al->StateVariableList.size(); i++)
     {
         addStateVariableItem(r->al->StateVariableList[i]);
     }
 
     //create alias items
-    for (uint i=0;i< r->al->AliasList.size(); i++)
+    for (int i=0;i< r->al->AliasList.size(); i++)
     {
         addAliasItem(r->al->AliasList[i]);
     }
@@ -1230,19 +1230,19 @@ PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
     updateGVData();
 
     //create analog port items
-    for (uint i=0;i< r->al->AnalogPortList.size(); i++)
+    for (int i=0;i< r->al->AnalogPortList.size(); i++)
     {
         addAnalogePortItem(r->al->AnalogPortList[i]);
     }
 
     //create event port items
-    for (uint i=0;i< r->al->EventPortList.size(); i++)
+    for (int i=0;i< r->al->EventPortList.size(); i++)
     {
         addEventPortItem(r->al->EventPortList[i]);
     }
 
     //create event port items
-    for (uint i=0;i< r->al->ImpulsePortList.size(); i++)
+    for (int i=0;i< r->al->ImpulsePortList.size(); i++)
     {
         addImpulsePortItem(r->al->ImpulsePortList[i]);
     }
@@ -1395,7 +1395,7 @@ void AnalogPortTextItem::setVariable(QString v)
     //could be either an analog port
     if (port->variable != NULL)
         disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (uint i=0;i<root->al->StateVariableList.size();i++)
+    for (int i=0;i<root->al->StateVariableList.size();i++)
     {
         if (root->al->StateVariableList[i]->getName().compare(v)==0)
         {
@@ -1403,7 +1403,7 @@ void AnalogPortTextItem::setVariable(QString v)
             connect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
-    for (uint i=0;i<root->al->AliasList.size();i++)
+    for (int i=0;i<root->al->AliasList.size();i++)
     {
         if (root->al->AliasList[i]->getName().compare(v)==0)
         {
@@ -1665,7 +1665,7 @@ void ImpulsePortTextItem::setParameter(QString n)
     //could be either an analog port
     if (port->parameter != NULL)
         disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (uint i=0;i<root->al->StateVariableList.size();i++)
+    for (int i=0;i<root->al->StateVariableList.size();i++)
     {
         if (root->al->StateVariableList[i]->getName().compare(n)==0)
         {
@@ -1673,7 +1673,7 @@ void ImpulsePortTextItem::setParameter(QString n)
             connect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
-    for (uint i=0;i<root->al->ParameterList.size();i++)
+    for (int i=0;i<root->al->ParameterList.size();i++)
     {
         if (root->al->ParameterList[i]->getName().compare(n)==0)
         {
@@ -1681,7 +1681,7 @@ void ImpulsePortTextItem::setParameter(QString n)
             connect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
-    for (uint i=0;i<root->al->AliasList.size();i++)
+    for (int i=0;i<root->al->AliasList.size();i++)
     {
         if (root->al->AliasList[i]->getName().compare(n)==0)
         {
@@ -1773,19 +1773,19 @@ OnEventGraphicsItem::OnEventGraphicsItem(Regime *src_r, OnEvent *e, RootComponen
     addMember(trigger_item);
 
     //create state assigments equations
-    for(uint i=0; i<on_event->StateAssignList.size(); i++)
+    for(int i=0; i<on_event->StateAssignList.size(); i++)
     {
         addStateAssignment(on_event->StateAssignList[i]);
     }
 
     //create event outputs
-    for(uint i=0; i<on_event->eventOutList.size(); i++)
+    for(int i=0; i<on_event->eventOutList.size(); i++)
     {
        addEventOut(on_event->eventOutList[i]);
     }
 
     //create impulse outputs
-    for(uint i=0; i<on_event->impulseOutList.size(); i++)
+    for(int i=0; i<on_event->impulseOutList.size(); i++)
     {
        addImpulseOut(on_event->impulseOutList[i]);
     }
@@ -1827,7 +1827,7 @@ void OnEventGraphicsItem::setSynapseRegime(QString r)
 {
    // QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_event->target_regime_name = r;
-    for (uint i=0;i<root->al->RegimeList.size();i++)
+    for (int i=0;i<root->al->RegimeList.size();i++)
     {
         if (root->al->RegimeList[i]->name.compare(r)==0)
                 on_event->target_regime = root->al->RegimeList[i];
@@ -1890,7 +1890,7 @@ void OnEventTriggerTextItem::setEventPort(QString m)
     on_event->src_port_name = m;
     if (on_event->src_port != NULL)
         disconnect(on_event->src_port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (uint i=0;i<root->al->EventPortList.size();i++)
+    for (int i=0;i<root->al->EventPortList.size();i++)
     {
         if (root->al->EventPortList[i]->getName().compare(m) == 0)
         {
@@ -1947,19 +1947,19 @@ OnImpulseGraphicsItem::OnImpulseGraphicsItem(Regime *src_r, OnImpulse *e, RootCo
     addMember(trigger_item);
 
     //create state assigments equations
-    for(uint i=0; i<on_impulse->StateAssignList.size(); i++)
+    for(int i=0; i<on_impulse->StateAssignList.size(); i++)
     {
         addStateAssignment(on_impulse->StateAssignList[i]);
     }
 
     //create event outputs
-    for(uint i=0; i<on_impulse->eventOutList.size(); i++)
+    for(int i=0; i<on_impulse->eventOutList.size(); i++)
     {
        addEventOut(on_impulse->eventOutList[i]);
     }
 
     //create impulse outputs
-    for(uint i=0; i<on_impulse->impulseOutList.size(); i++)
+    for(int i=0; i<on_impulse->impulseOutList.size(); i++)
     {
        addImpulseOut(on_impulse->impulseOutList[i]);
     }
@@ -2000,7 +2000,7 @@ Regime * OnImpulseGraphicsItem::getSourceRegime()
 void OnImpulseGraphicsItem::setSynapseRegime(QString r)
 {
     on_impulse->target_regime_name = r;
-    for (uint i=0;i<root->al->RegimeList.size();i++)
+    for (int i=0;i<root->al->RegimeList.size();i++)
     {
         if (root->al->RegimeList[i]->name.compare(r)==0)
                 on_impulse->target_regime = root->al->RegimeList[i];
@@ -2062,7 +2062,7 @@ void OnImpulseTriggerTextItem::setImpulsePort(QString m)
     on_impulse->src_port_name = m;
     if (on_impulse->src_port != NULL)
         disconnect(on_impulse->src_port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (uint i=0;i<root->al->ImpulsePortList.size();i++)
+    for (int i=0;i<root->al->ImpulsePortList.size();i++)
     {
         if (root->al->ImpulsePortList[i]->getName().compare(m) == 0)
         {

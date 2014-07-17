@@ -85,7 +85,7 @@ public:
     /*!
      * Find the object selected by the mouse (called by onLeftMouseDown)
      */
-    void findSelection (float xGL, float yGL, float GLscale, vector<QSharedPointer<systemObject> >& newlySelectedList);
+    void findSelection (float xGL, float yGL, float GLscale, QVector <QSharedPointer<systemObject> >& newlySelectedList);
     //@}
 
 public:
@@ -93,23 +93,23 @@ public:
      * public attributes
      */
     //@{
-    vector < projectObject * > projects;
+    QVector < projectObject * > projects;
     projectObject * currProject;
 
-    vector < QSharedPointer <population> > populations;
-    vector < QSharedPointer<NineMLComponent> > catalogUnsorted;
-    vector < QSharedPointer<NineMLComponent> > catalogNrn;
-    vector < QSharedPointer<NineMLComponent> > catalogWU;
-    vector < QSharedPointer<NineMLComponent> > catalogPS;
+    QVector < QSharedPointer <population> > populations;
+    QVector < QSharedPointer<NineMLComponent> > catalogUnsorted;
+    QVector < QSharedPointer<NineMLComponent> > catalogNrn;
+    QVector < QSharedPointer<NineMLComponent> > catalogWU;
+    QVector < QSharedPointer<NineMLComponent> > catalogPS;
 
-    vector < QSharedPointer<NineMLLayout> > catalogLayout;
-    vector < QString > catalogConn;
-    vector < experiment *> experiments;
+    QVector < QSharedPointer<NineMLLayout> > catalogLayout;
+    QVector < QString > catalogConn;
+    QVector < experiment *> experiments;
 
-    vector < loadedComponent > loadedComponents;
+    QVector < loadedComponent > loadedComponents;
 
     // structure to hold selected items
-    vector <QSharedPointer<systemObject> > selList;
+    QVector <QSharedPointer<systemObject> > selList;
 
     cursorType cursor;
     int largestIndex;
@@ -165,7 +165,7 @@ public slots:
     void deleteCurrentSelection();
     void changeSynapse();
     void selectColour();
-    void getNeuronLocationsSrc(vector < vector <loc> >*, vector <QColor> *, QString name);
+    void getNeuronLocationsSrc(QVector < QVector <loc> >*, QVector <QColor> *, QString name);
 #ifdef NEED_MOUSE_UP_LOGIC
     void onLeftMouseUp(float xGL, float yGL, float GLscale);
 #endif
@@ -196,7 +196,7 @@ private:
      *
      * \param pops A vector of the populations which are on the move.
      */
-    void populationMoved(const vector<QSharedPointer<population> >& pops);
+    void populationMoved(const QVector <QSharedPointer<population> >& pops);
 
     /*!
      * Add an entry to the undo stack for the move of a projection
@@ -213,7 +213,7 @@ private:
      * \return A vector of pointers to all currently selected
      * populations.
      */
-    vector<QSharedPointer<population> > currSelPopulations();
+    QVector <QSharedPointer<population> > currSelPopulations();
 
     /*!
      * \brief Obtain the currently selected population.
@@ -237,7 +237,7 @@ private:
      * \param objectList The vector of systemObject pointers to look for in selList
      * \return true if selList contains anything from objectList, false otherwise.
      */
-    bool selListContains (const vector<QSharedPointer<systemObject> >& objectList);
+    bool selListContains (const QVector <QSharedPointer<systemObject> >& objectList);
 
     /*!
      * \brief delete any entries from this->selList which exist in
@@ -245,7 +245,7 @@ private:
      *
      * \param objectList the list of systemObject pointers to be deleted from sel
      */
-    void deleteFromSelList (const vector<QSharedPointer<systemObject> >& objectList);
+    void deleteFromSelList (const QVector <QSharedPointer<systemObject> >& objectList);
 
     QString getUniquePopName(QString newName);
     // NB: This is unused. Refactor out.
