@@ -159,7 +159,7 @@ linux-g++-64{
 }
 macx{
     QMAKE_CXXFLAGS += -O0 -g
-    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython -lgvc -lgraph /Users/alex/Documents/gitSpineCreator/libefence.a
+    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython -lgvc -lgraph
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /usr/local/include/graphviz
     INCLUDEPATH += /usr/local/include
