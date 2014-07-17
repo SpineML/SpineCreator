@@ -1732,7 +1732,7 @@ void glConnectionWidget::connectionDataChanged(QModelIndex, QModelIndex) {
 void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection) {
 
     this->selectedIndex = 0;
-    this->selectedType = 1;
+    this->selectedType = 4;
 
     this->selection = ((QItemSelectionModel *) sender())->selectedIndexes();
     // force redraw
