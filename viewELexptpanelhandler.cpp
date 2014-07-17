@@ -269,7 +269,7 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
     // add batch interface
     QPushButton * batch = new QPushButton("Setup");
     connect(batch, SIGNAL(clicked()), this, SLOT(batch_clicked()));
-    formSim->addRow("Batch:",batch);
+    //formSim->addRow("Batch:",batch);
 }
 
 void viewELExptPanelHandler::redrawExpt()
