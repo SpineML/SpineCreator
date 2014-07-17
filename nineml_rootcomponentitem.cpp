@@ -40,7 +40,7 @@ RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QFile 
 
     init();
 
-    al = new NineMLComponent();
+    al = QSharedPointer<NineMLComponent>(new NineMLComponent());
     //load file if one is provided (otherwise create blank doc)
     if (file != NULL)
     {
@@ -53,21 +53,21 @@ RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QFile 
         al->name = "New Component";
         al->type = "neuron_body";
     }
-    alPtr = NULL;
+    alPtr.clear();
 
     //initialise the scene
     scene->initialiseScene(al);
 }
 
-RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, NineMLComponent *component)
+RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QSharedPointer<NineMLComponent>component)
 {
     this->ui =ui;
     this->main = main;
 
     init();
 
-    al = new NineMLComponent(component);
-    alPtr = NULL;
+    al = QSharedPointer<NineMLComponent>(new NineMLComponent(component));
+    alPtr.clear();
 
     //initialise the scene
     scene->initialiseScene(al);
@@ -83,9 +83,8 @@ RootComponentItem::~RootComponentItem()
     scene = NULL;
     delete gvlayout;
     gvlayout = NULL;
-    delete al;
-    al = NULL;
-    alPtr = NULL;
+    al.clear();
+    alPtr.clear();
     delete actionSelectMode;
     actionSelectMode = NULL;
     delete actionAddOnCondition;
@@ -204,9 +203,9 @@ void RootComponentItem::requestLayoutUpdate()
 
 void RootComponentItem::setComponentClassName(QString name)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(al));
     // find which catalog we are saving to
-    vector < NineMLComponent * > * curr_lib;
+    vector < QSharedPointer<NineMLComponent> > * curr_lib;
     if (al->type == "neuron_body")
         curr_lib = &main->data.catalogNrn;
     if (al->type == "weight_update")
@@ -256,7 +255,7 @@ void RootComponentItem::setComponentClassName(QString name)
     if (qobject_cast < QLineEdit *> (sender())) {
         alPtr->undoStack.push(new changeComponent(this, oldComponent, "Set Component name"));
     } else {
-        delete oldComponent;
+        oldComponent.clear();
     }
 
     main->updateTitle();
@@ -264,12 +263,12 @@ void RootComponentItem::setComponentClassName(QString name)
 
 void RootComponentItem::setComponentClassType(QString type)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(al));
     QString oldType = al->type;
     al->type = type;
 
-    vector <NineMLComponent *> * old_lib;
-    vector <NineMLComponent *> * new_lib;
+    vector <QSharedPointer<NineMLComponent> > * old_lib;
+    vector <QSharedPointer<NineMLComponent> > * new_lib;
 
     // pointer to source catalog
     if (oldType == "neuron_body")
@@ -295,12 +294,12 @@ void RootComponentItem::setComponentClassType(QString type)
     if (qobject_cast < QComboBox *> (sender()))
         alPtr->undoStack.push(new changeComponentType(this, old_lib, new_lib, alPtr, "Set Component class type"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void RootComponentItem::setInitialRegime(QString regime)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(al));
     for (uint i=0; i< al->RegimeList.size(); i++){
         if (al->RegimeList[i]->name == regime){
             al->initial_regime = al->RegimeList[i];
@@ -314,18 +313,18 @@ void RootComponentItem::setInitialRegime(QString regime)
     if (qobject_cast < QComboBox *> (sender())) {
         alPtr->undoStack.push(new changeComponent(this, oldComponent, "Set Component Initial Regime"));
     } else {
-        delete oldComponent;
+        oldComponent.clear();
     }
 }
 
 void RootComponentItem::setPath(QString component_path)
 {
-    NineMLComponent * oldComponent = new NineMLComponent(al);
+    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(al));
     al->path = component_path;
     if (qobject_cast < QComboBox *> (sender()))
         alPtr->undoStack.push(new changeComponent(this, oldComponent, "Set Component path"));
     else
-        delete oldComponent;
+        oldComponent.clear();
 }
 
 void RootComponentItem::validateAndStore()

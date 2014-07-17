@@ -156,7 +156,7 @@ void saveNetworkImageDialog::reDrawPreview() {
 QPixmap saveNetworkImageDialog::drawPixMap() {
 
     // what to draw
-    vector <systemObject *> list;
+    vector <QSharedPointer<systemObject> > list;
     list = data->selList;
 
     QRectF bounds = QRectF(100000,100000,-200000,-200000);
@@ -165,7 +165,7 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
     for (uint p = 0; p < list.size(); ++p) {
 
         if (list[p]->type == populationObject) {
-            population * pop = (population * ) list[p];
+            QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (list[p]);
             if (-pop->bottomBound(pop->targy)> bounds.bottom())
                 bounds.setBottom(-pop->bottomBound(pop->targy));
             if (-pop->topBound(pop->targy)< bounds.top())
@@ -179,7 +179,7 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
 
         if (list[p]->type == projectionObject) {
 
-            projection * proj = (projection * ) list[p];
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (list[p]);
             for (uint c = 0; c < proj->curves.size(); ++c) {
                 bezierCurve * bz = &proj->curves[c];
                 if (-bz->C1.y() > bounds.bottom())

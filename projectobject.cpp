@@ -21,19 +21,19 @@ projectObject::projectObject(QObject *parent) :
     this->metaFile = "metaData.xml";
 
     // create the catalog blank entries:
-    this->catalogGC.push_back((new NineMLComponent()));
+    this->catalogGC.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
     this->catalogGC[0]->name = "none";
     this->catalogGC[0]->type = "moo";
-    this->catalogNB.push_back((new NineMLComponent()));
+    this->catalogNB.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
     this->catalogNB[0]->name = "none";
     this->catalogNB[0]->type = "neuron_body";
-    this->catalogWU.push_back((new NineMLComponent()));
+    this->catalogWU.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
     this->catalogWU[0]->name = "none";
     this->catalogWU[0]->type = "weight_update";
-    this->catalogPS.push_back((new NineMLComponent()));
+    this->catalogPS.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
     this->catalogPS[0]->name = "none";
     this->catalogPS[0]->type = "postsynapse";
-    this->catalogLAY.push_back((new NineMLLayout()));
+    this->catalogLAY.push_back(QSharedPointer<NineMLLayout> (new NineMLLayout()));
     this->catalogLAY[0]->name = "none";
 }
 
@@ -51,28 +51,28 @@ projectObject::~projectObject()
     for (uint i = 0; i < network.size(); ++i) {
         for (uint j = 0; j < network[i]->projections.size(); ++j) {
             for (uint k = 0; k < network[i]->projections[j]->synapses.size(); ++k) {
-                delete network[i]->projections[j]->synapses[k];
+                network[i]->projections[j]->synapses[k].clear();
             }
-            delete network[i]->projections[j];
+            network[i]->projections[j].clear();
         }
-        delete network[i];
+        network[i].clear();
     }
 
     // delete catalog components
     for (uint i = 0; i < this->catalogLAY.size(); ++i) {
-        delete this->catalogLAY[i];
+        this->catalogLAY[i].clear();
     }
     for (uint i = 0; i < this->catalogNB.size(); ++i) {
-        delete this->catalogNB[i];
+        this->catalogNB[i].clear();
     }
     for (uint i = 0; i < this->catalogPS.size(); ++i) {
-        delete this->catalogPS[i];
+        this->catalogPS[i].clear();
     }
     for (uint i = 0; i < this->catalogWU.size(); ++i) {
-        delete this->catalogWU[i];
+        this->catalogWU[i].clear();
     }
     for (uint i = 0; i < this->catalogGC.size(); ++i) {
-        delete this->catalogGC[i];
+        this->catalogGC[i].clear();
     }
 
     // clear catalog vectors
@@ -353,7 +353,7 @@ bool projectObject::import_network(QString fileName)
 
         // place populations
         for (uint i = 0; i < this->network.size(); ++i) {
-            population * p = this->network[i];
+            QSharedPointer <population> p = this->network[i];
             p->x = i*2.0; p->targx = i*2.0;
             p->y = i*2.0; p->targy = i*2.0;
             p->size = 1.0;
@@ -363,9 +363,9 @@ bool projectObject::import_network(QString fileName)
 
         // make projection curves
         for (uint i = 0; i < this->network.size(); ++i) {
-            population * p = this->network[i];
+            QSharedPointer <population> p = this->network[i];
             for (uint j = 0; j < p->projections.size(); ++j) {
-                projection * pr = p->projections[j];
+                QSharedPointer <projection> pr = p->projections[j];
                 pr->add_curves();
             }
         }
@@ -772,7 +772,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
         // HANDLE SPINEML COMPONENTS ////////////////
 
         // create a new AL class instance and populate it from the data
-        NineMLComponent *tempALobject = new NineMLComponent();
+        QSharedPointer<NineMLComponent>tempALobject = QSharedPointer<NineMLComponent> (new NineMLComponent());
 
         tempALobject->load(&this->doc);
 
@@ -783,14 +783,14 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
 
         // if there are errors then clean up and leave
         if (num_errs != 0) {
-            delete tempALobject;
+            tempALobject.clear();
             // write tail for errors:
             addError("<b>IN COMPONENT FILE '" + fileName + "'</b>");
             return;
         }
 
         // get lib to add component to
-        vector < NineMLComponent * > * curr_lib;
+        vector < QSharedPointer<NineMLComponent> > * curr_lib;
         if (tempALobject->type == "neuron_body") {
             curr_lib = &this->catalogNB;
         } else if (tempALobject->type == "weight_update") {
@@ -808,7 +808,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
                 && tempALobject->name != "none") {
                 // same name
                 addWarning("Two required files have the same Component Name - this project may be corrupted");
-                delete tempALobject;
+                tempALobject.clear();
                 return;
             }
         }
@@ -821,7 +821,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
     }
 }
 
-void projectObject::saveComponent(QString fileName, QDir project_dir, NineMLComponent * component)
+void projectObject::saveComponent(QString fileName, QDir project_dir, QSharedPointer<NineMLComponent> component)
 {
     // if no extension then append a .xml
     if (!fileName.contains(".")) {
@@ -891,7 +891,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir)
             // HANDLE LAYOUTS ////////////////////
 
             // create a new AL class instance and populate it from the data
-            NineMLLayout *tempALobject = new NineMLLayout();
+            QSharedPointer<NineMLLayout>tempALobject = QSharedPointer<NineMLLayout> (new NineMLLayout());
 
             tempALobject->load(&this->doc);
 
@@ -901,8 +901,8 @@ void projectObject::loadLayout(QString fileName, QDir project_dir)
             settings.endArray();
 
             if (num_errs != 0) {
-                delete tempALobject;
-                // write tail for errors:
+                tempALobject.clear();
+                // tail for errors:
                 addError("<b>IN LAYOUT FILE '" + fileName + "'</b>");
                 return;
             }
@@ -911,7 +911,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir)
                 if (this->catalogLAY[i]->name.compare(tempALobject->name) == 0 && tempALobject->name != "none") {
                     // same name
                     addWarning("Two required files have the same Layout Name - this project may be corrupted");
-                    delete tempALobject;
+                    tempALobject.clear();
                     return;
                 }
             }
@@ -925,7 +925,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir)
 
 }
 
-void projectObject::saveLayout(QString fileName, QDir project_dir, NineMLLayout * layout)
+void projectObject::saveLayout(QString fileName, QDir project_dir, QSharedPointer<NineMLLayout> layout)
 {
     // if no extension then append a .xml
     if (!fileName.contains(".")) {
@@ -1028,7 +1028,9 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population") {
             // add population from population xml:
-            this->network.push_back(new population(e, &this->doc, &this->meta, this));
+            QSharedPointer <population> pop = QSharedPointer<population> (new population());
+            pop->readFromXML(e, &this->doc, &this->meta, this, pop);
+            this->network.push_back(pop);
 
             // check for duplicate names:
             for (uint i = 0; i < this->network.size() - 1; ++i) {
@@ -1091,7 +1093,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
             for (uint i = 0; i < (uint) n2.size(); ++i) {
                 QDomElement e = n2.item(i).toElement();
-                this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this);
+                this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this, this->network[counter]->projections[projCount]);
                 ++projCount;
             }
             ++counter;
@@ -1463,7 +1465,7 @@ bool projectObject::isChanged(rootData * data)
 }
 
 // allow safe usage of systemObject pointers
-bool projectObject::isValidPointer(systemObject * ptr)
+bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
 {
     // find the pop / projection / input reference
     for (uint i = 0; i < this->network.size(); ++i) {
@@ -1512,7 +1514,7 @@ bool projectObject::isValidPointer(systemObject * ptr)
 }
 
 // allow safe usage of NineMLComponentData pointers
-bool projectObject::isValidPointer(NineMLComponentData * ptr)
+bool projectObject::isValidPointer(QSharedPointer <NineMLComponentData> ptr)
 {
     // find the reference
     for (uint i = 0; i < this->network.size(); ++i) {
@@ -1541,7 +1543,7 @@ bool projectObject::isValidPointer(NineMLComponentData * ptr)
 }
 
 // allow safe usage of NineMLComponent pointers
-bool projectObject::isValidPointer(NineMLComponent * ptr)
+bool projectObject::isValidPointer(QSharedPointer<NineMLComponent> ptr)
 {
     for (uint i = 0; i < this->catalogNB.size(); ++i) {
         if (this->catalogNB[i] == ptr) {
@@ -1568,7 +1570,7 @@ bool projectObject::isValidPointer(NineMLComponent * ptr)
     return false;
 }
 
-NineMLComponentData * projectObject::getComponentDataFromName(QString name)
+QSharedPointer <NineMLComponentData> projectObject::getComponentDataFromName(QString name)
 {
     // find the ComponentData requested
     for (uint i = 0; i < this->network.size(); ++i) {
@@ -1578,10 +1580,10 @@ NineMLComponentData * projectObject::getComponentDataFromName(QString name)
         }
         for (uint j = 0; j < this->network[i]->projections.size(); ++j) {
             // current projection
-            projection * proj = this->network[i]->projections[j];
+            QSharedPointer <projection> proj = this->network[i]->projections[j];
             for (uint k = 0; k < proj->synapses.size(); ++k) {
                 // current synapse
-                synapse * syn = proj->synapses[k];
+                QSharedPointer <synapse> syn = proj->synapses[k];
                 if (syn->weightUpdateType->getXMLName() == name) {
                     // found - return the ComponentData
                     return syn->weightUpdateType;
@@ -1595,7 +1597,8 @@ NineMLComponentData * projectObject::getComponentDataFromName(QString name)
     }
 
     // not found
-    return NULL;
+    QSharedPointer <NineMLComponentData> null;
+    return null;
 }
 
 QAction * projectObject::action(int i)

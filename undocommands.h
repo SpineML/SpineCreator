@@ -36,7 +36,7 @@
 class delSelection : public QUndoCommand
 {
 public:
-    delSelection(rootData * data, vector <systemObject * > list, QUndoCommand *parent = 0);
+    delSelection(rootData * data, vector <QSharedPointer<systemObject> > list, QUndoCommand *parent = 0);
     ~delSelection() {/*qDebug() << "Cleaning up selection";*/}
     void undo();
     void redo();
@@ -48,7 +48,7 @@ private:
 class addPopulationCmd : public QUndoCommand
 {
 public:
-    addPopulationCmd(rootData * data, population * pop, QUndoCommand *parent = 0);
+    addPopulationCmd(rootData * data, QSharedPointer <population> pop, QUndoCommand *parent = 0);
     ~addPopulationCmd() {if (isDeleted) {/*qDebug() << "Cleaning up population: " << pop->getName();*/ pop->remove(data);}}
     void undo();
     void redo();
@@ -56,7 +56,7 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    population * pop;
+    QSharedPointer <population> pop;
     int selIndex;
     bool isDeleted;
 };
@@ -64,7 +64,7 @@ private:
 class delPopulation : public QUndoCommand
 {
 public:
-    delPopulation(rootData * data, population * pop, QUndoCommand *parent = 0);
+    delPopulation(rootData * data, QSharedPointer <population> pop, QUndoCommand *parent = 0);
     ~delPopulation() {if (isDeleted) {/*qDebug() << "Cleaning up population: " << pop->getName();*/ pop->remove(data);}}
     void undo();
     void redo();
@@ -72,7 +72,7 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    population * pop;
+    QSharedPointer <population> pop;
     int index;
     int selIndex;
     bool isDeleted;
@@ -81,7 +81,7 @@ private:
 class moveProjectionHandle : public QUndoCommand
 {
 public:
-    moveProjectionHandle(rootData * data, projection * proj,
+    moveProjectionHandle(rootData * data, QSharedPointer <projection> proj,
                          const QPointF& oldPos, const QPointF& newPos,
                          QUndoCommand *parent = 0);
     ~moveProjectionHandle() {};
@@ -98,7 +98,7 @@ private:
     /*!
      * Pointer to the projection whose handle has been moved
      */
-    projection * proj;
+    QSharedPointer <projection> proj;
 
     /*!
      * The old position of the handle, before the move.
@@ -114,7 +114,7 @@ private:
 class movePopulation : public QUndoCommand
 {
 public:
-    movePopulation(rootData * data, population * pop,
+    movePopulation(rootData * data, QSharedPointer <population> pop,
                    const QPointF& oldPos, const QPointF& newPos,
                    QUndoCommand *parent = 0);
     ~movePopulation() {}
@@ -133,7 +133,7 @@ private:
     /*!
      * Pointer to the population which has been moved
      */
-    population * pop;
+    QSharedPointer <population> pop;
 
     /*!
      * The old position of the population, before the move.
@@ -149,7 +149,7 @@ private:
 class addProjection : public QUndoCommand
 {
 public:
-    addProjection(rootData * data, projection * proj, QUndoCommand *parent = 0);
+    addProjection(rootData * data, QSharedPointer <projection> proj, QUndoCommand *parent = 0);
     ~addProjection() {if (isDeleted) proj->remove(data);}
     void undo();
     void redo();
@@ -157,7 +157,7 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    projection * proj;
+    QSharedPointer <projection> proj;
     int selIndex;
     bool isDeleted;
 };
@@ -165,7 +165,7 @@ private:
 class delProjection : public QUndoCommand
 {
 public:
-    delProjection(rootData * data, projection * proj, QUndoCommand *parent = 0);
+    delProjection(rootData * data, QSharedPointer <projection> proj, QUndoCommand *parent = 0);
     ~delProjection() {if (isDeleted) {/*qDebug() << "Cleaning up projection";*/ proj->remove(data);}}
     void undo();
     void redo();
@@ -173,7 +173,7 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    projection * proj;
+    QSharedPointer <projection> proj;
     bool isChild;
     int selIndex;
     bool isDeleted;
@@ -182,23 +182,23 @@ private:
 class addSynapse : public QUndoCommand
 {
 public:
-    addSynapse(rootData * data, projection * proj, QUndoCommand *parent = 0);
-    ~addSynapse() {if (isDeleted) delete syn;}
+    addSynapse(rootData * data, QSharedPointer <projection> proj, QUndoCommand *parent = 0);
+    ~addSynapse() {}
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    projection * proj;
-    synapse * syn;
+    QSharedPointer <projection> proj;
+    QSharedPointer <synapse> syn;
     bool isDeleted;
 };
 
 class delSynapse : public QUndoCommand
 {
 public:
-    delSynapse(rootData * data, projection * proj, synapse * synapse, QUndoCommand *parent = 0);
+    delSynapse(rootData * data, QSharedPointer <projection> proj, QSharedPointer <synapse> synapse, QUndoCommand *parent = 0);
     ~delSynapse() {/*if (!isUndone) {qDebug() << "Cleaning up synapse"; delete syn;}*/}
     void undo();
     void redo();
@@ -206,8 +206,8 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    projection * proj;
-    synapse * syn;
+    QSharedPointer <projection> proj;
+    QSharedPointer <synapse> syn;
     int projPos;
     bool isUndone;
     bool isChild;
@@ -216,24 +216,24 @@ private:
 class addInput : public QUndoCommand
 {
 public:
-    addInput(rootData * data, NineMLComponentData * src, NineMLComponentData * dst, QUndoCommand *parent = 0);
-    ~addInput() {if (isDeleted) delete input;}
+    addInput(rootData * data, QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, QUndoCommand *parent = 0);
+    ~addInput() {}
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    genericInput * input;
-    NineMLComponentData * src;
-    NineMLComponentData * dst;
+    QSharedPointer<genericInput> input;
+    QSharedPointer <NineMLComponentData> src;
+    QSharedPointer <NineMLComponentData> dst;
     bool isDeleted;
 };
 
 class delInput : public QUndoCommand
 {
 public:
-    delInput(rootData * data, genericInput * input, QUndoCommand *parent = 0);
+    delInput(rootData * data, QSharedPointer<genericInput> input, QUndoCommand *parent = 0);
     ~delInput() {if (isDeleted) {/*qDebug() << "Cleaning up input " << input->projInput;*/ input->remove(data);}}
     void undo();
     void redo();
@@ -241,7 +241,7 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    genericInput * input;
+    QSharedPointer<genericInput> input;
     int selIndex;
     bool isChild;
     bool isDeleted;
@@ -250,7 +250,7 @@ private:
 class changeConnection : public QUndoCommand
 {
 public:
-    changeConnection(rootData * data, systemObject * ptr, int index, QUndoCommand *parent = 0);
+    changeConnection(rootData * data, QSharedPointer<systemObject> ptr, int index, QUndoCommand *parent = 0);
     ~changeConnection() {if (!isUndone) delete oldConn;}
     void undo();
     void redo();
@@ -258,7 +258,7 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    systemObject * ptr;
+    QSharedPointer<systemObject> ptr;
     int index;
     QString scriptName;
     connection * oldConn;
@@ -268,14 +268,14 @@ private:
 class setSizeUndo : public QUndoCommand
 {
 public:
-    setSizeUndo(rootData * data, population * ptr, int value, QUndoCommand *parent = 0);
+    setSizeUndo(rootData * data, QSharedPointer <population> ptr, int value, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    population * ptr;
+    QSharedPointer <population> ptr;
     int oldValue;
     int value;
     bool firstRedo;
@@ -284,14 +284,14 @@ private:
 class setLoc3Undo : public QUndoCommand
 {
 public:
-    setLoc3Undo(rootData * data, population * ptr, int index, int value, QUndoCommand *parent = 0);
+    setLoc3Undo(rootData * data, QSharedPointer <population> ptr, int index, int value, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    population * ptr;
+    QSharedPointer <population> ptr;
     int oldValue;
     int value;
     int index;
@@ -382,13 +382,13 @@ private:
 class updateTitle : public QUndoCommand
 {
 public:
-    updateTitle(population * ptr, QString newName, QString oldName, QUndoCommand *parent = 0);
+    updateTitle(QSharedPointer <population> ptr, QString newName, QString oldName, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
-    population * ptr;
+    QSharedPointer <population> ptr;
     QString oldName;
     QString newName;
 };
@@ -411,7 +411,7 @@ private:
 class updateComponentTypeUndo : public QUndoCommand
 {
 public:
-    updateComponentTypeUndo(rootData * data, NineMLComponentData * componentData, NineMLComponent * newComponent, QUndoCommand *parent = 0);
+    updateComponentTypeUndo(rootData * data, QSharedPointer <NineMLComponentData> componentData, QSharedPointer<NineMLComponent> newComponent, QUndoCommand *parent = 0);
     ~updateComponentTypeUndo();
     void undo();
     void redo();
@@ -423,9 +423,9 @@ private:
     vector < StateVariableData * > oldSVDatas;
     vector < ParameterData * > newParDatas;
     vector < StateVariableData * > newSVDatas;
-    NineMLComponent * oldComponent;
-    NineMLComponent * newComponent;
-    NineMLComponentData * componentData;
+    QSharedPointer<NineMLComponent> oldComponent;
+    QSharedPointer<NineMLComponent> newComponent;
+    QSharedPointer <NineMLComponentData> componentData;
     vector <QString> srcPortsInputs;
     vector <QString> dstPortsInputs;
     vector <QString> srcPortsOutputs;
@@ -436,14 +436,14 @@ private:
 class updateLayoutMinDist: public QUndoCommand
 {
 public:
-    updateLayoutMinDist(rootData * data, NineMLLayoutData * ptr, float value, QUndoCommand *parent = 0);
+    updateLayoutMinDist(rootData * data, QSharedPointer<NineMLLayoutData> ptr, float value, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    NineMLLayoutData * ptr;
+    QSharedPointer<NineMLLayoutData> ptr;
     float oldValue;
     float value;
 };
@@ -451,14 +451,14 @@ private:
 class updateLayoutSeed: public QUndoCommand
 {
 public:
-    updateLayoutSeed(rootData * data, NineMLLayoutData * ptr, float value, QUndoCommand *parent = 0);
+    updateLayoutSeed(rootData * data, QSharedPointer<NineMLLayoutData> ptr, float value, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    NineMLLayoutData * ptr;
+    QSharedPointer<NineMLLayoutData> ptr;
     float oldValue;
     float value;
 };
@@ -466,17 +466,17 @@ private:
 class pastePars: public QUndoCommand
 {
 public:
-    pastePars(rootData * data, NineMLComponentData * source, NineMLComponentData * dest, QUndoCommand *parent = 0);
-    ~pastePars() {delete oldData; delete source;}
+    pastePars(rootData * data, QSharedPointer <NineMLComponentData> source, QSharedPointer <NineMLComponentData> dest, QUndoCommand *parent = 0);
+    ~pastePars() {}
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    NineMLComponentData * oldData;
-    NineMLComponentData * source;
-    NineMLComponentData * dest;
+    QSharedPointer <NineMLComponentData> oldData;
+    QSharedPointer <NineMLComponentData> source;
+    QSharedPointer <NineMLComponentData> dest;
 };
 
 ///// components
@@ -486,23 +486,23 @@ struct viewCLstruct;
 class changeComponent: public QUndoCommand
 {
 public:
-    changeComponent(RootComponentItem *root, NineMLComponent * oldComponent, QString message, QUndoCommand *parent = 0);
-    ~changeComponent() {delete changedComponent; delete unChangedComponent;}
+    changeComponent(RootComponentItem *root, QSharedPointer<NineMLComponent> oldComponent, QString message, QUndoCommand *parent = 0);
+    ~changeComponent() {}
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     viewCLstruct * viewCL;
-    NineMLComponent * changedComponent;
-    NineMLComponent * unChangedComponent;
+    QSharedPointer<NineMLComponent> changedComponent;
+    QSharedPointer<NineMLComponent> unChangedComponent;
     bool first_redo;
 };
 
 class changeComponentType: public QUndoCommand
 {
 public:
-    changeComponentType(RootComponentItem *root, vector <NineMLComponent *> * old_lib, vector <NineMLComponent *> * new_lib, NineMLComponent * component, QString message, QUndoCommand *parent = 0);
+    changeComponentType(RootComponentItem *root, vector <QSharedPointer<NineMLComponent> > * old_lib, vector <QSharedPointer<NineMLComponent> > * new_lib, QSharedPointer<NineMLComponent> component, QString message, QUndoCommand *parent = 0);
     ~changeComponentType() {}
     void undo();
     void redo();
@@ -510,9 +510,9 @@ public:
 private:
     // these references are needed for the redo and undo
     viewCLstruct * viewCL;
-    vector <NineMLComponent *> * old_lib;
-    vector <NineMLComponent *> * new_lib;
-    NineMLComponent * component;
+    vector <QSharedPointer<NineMLComponent> > * old_lib;
+    vector <QSharedPointer<NineMLComponent> > * new_lib;
+    QSharedPointer<NineMLComponent> component;
     bool first_redo;
 };
 

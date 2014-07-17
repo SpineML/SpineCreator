@@ -49,7 +49,7 @@ struct cursorType {
 };
 
 struct loadedComponent {
-    NineMLComponent * component;
+    QSharedPointer<NineMLComponent> component;
     QString url;
 };
 
@@ -68,23 +68,24 @@ public:
     int getIndex();
     bool selectionMoved;
     void reDrawPanel();
-    systemObject* getObjectFromName(QString name);
+    QSharedPointer<systemObject> getObjectFromName(QString name);
     void callRedrawGLview();
     void updateStatusBar(QString, int);
     void setTitle();
-    void replaceComponent(NineMLComponent *, NineMLComponent *);
+    void replaceComponent(QSharedPointer<NineMLComponent>, QSharedPointer<NineMLComponent>);
     NineMLRootObject* import_component_xml_single(QString fileName);
-    bool isComponentInUse(NineMLComponent * oldComp);
-    bool removeComponent(NineMLComponent * oldComp);
-    bool isValidPointer(systemObject * ptr);
-    bool isValidPointer(NineMLComponentData * ptr);
-    bool isValidPointer(NineMLComponent * ptr);
+    bool isComponentInUse(QSharedPointer<NineMLComponent> oldComp);
+    bool removeComponent(QSharedPointer<NineMLComponent> oldComp);
+    //bool isValidPointer(systemObject *ptr);
+    QSharedPointer<systemObject> isValidPointer(systemObject *ptr);
+    QSharedPointer<NineMLComponentData> isValidPointer(NineMLComponentData *ptr);
+    QSharedPointer<NineMLComponent> isValidPointer(NineMLComponent *ptr);
     void redrawViews();
 
     /*!
      * Find the object selected by the mouse (called by onLeftMouseDown)
      */
-    void findSelection (float xGL, float yGL, float GLscale, vector<systemObject*>& newlySelectedList);
+    void findSelection (float xGL, float yGL, float GLscale, vector<QSharedPointer<systemObject> >& newlySelectedList);
     //@}
 
 public:
@@ -95,25 +96,25 @@ public:
     vector < projectObject * > projects;
     projectObject * currProject;
 
-    vector < population *> populations;
-    vector < NineMLComponent *> catalogUnsorted;
-    vector < NineMLComponent *> catalogNrn;
-    vector < NineMLComponent *> catalogWU;
-    vector < NineMLComponent *> catalogPS;
+    vector < QSharedPointer <population> > populations;
+    vector < QSharedPointer<NineMLComponent> > catalogUnsorted;
+    vector < QSharedPointer<NineMLComponent> > catalogNrn;
+    vector < QSharedPointer<NineMLComponent> > catalogWU;
+    vector < QSharedPointer<NineMLComponent> > catalogPS;
 
-    vector < NineMLLayout *> catalogLayout;
+    vector < QSharedPointer<NineMLLayout> > catalogLayout;
     vector < QString > catalogConn;
     vector < experiment *> experiments;
 
     vector < loadedComponent > loadedComponents;
 
     // structure to hold selected items
-    vector <systemObject *> selList;
+    vector <QSharedPointer<systemObject> > selList;
 
     cursorType cursor;
     int largestIndex;
     QImage popImage;
-    NineMLComponentData* clipboardCData;
+    QSharedPointer<NineMLComponentData> clipboardCData;
     versionControl* version;
     MainWindow* main;
     QActionGroup* projectActions;
@@ -195,7 +196,7 @@ private:
      *
      * \param pops A vector of the populations which are on the move.
      */
-    void populationMoved(const vector<population*>& pops);
+    void populationMoved(const vector<QSharedPointer<population> >& pops);
 
     /*!
      * Add an entry to the undo stack for the move of a projection
@@ -212,7 +213,7 @@ private:
      * \return A vector of pointers to all currently selected
      * populations.
      */
-    vector<population*> currSelPopulations();
+    vector<QSharedPointer<population> > currSelPopulations();
 
     /*!
      * \brief Obtain the currently selected population.
@@ -224,7 +225,7 @@ private:
      * \return pointer to the selected population, if only a single
      * population is selected; otherwise NULL.
      */
-    population* currSelPopulation();
+    QSharedPointer<population> currSelPopulation();
 
     /*!
      * Action to take when a mouse down event has changed selected objects.
@@ -236,7 +237,7 @@ private:
      * \param objectList The vector of systemObject pointers to look for in selList
      * \return true if selList contains anything from objectList, false otherwise.
      */
-    bool selListContains (const vector<systemObject*>& objectList);
+    bool selListContains (const vector<QSharedPointer<systemObject> >& objectList);
 
     /*!
      * \brief delete any entries from this->selList which exist in
@@ -244,7 +245,7 @@ private:
      *
      * \param objectList the list of systemObject pointers to be deleted from sel
      */
-    void deleteFromSelList (const vector<systemObject*>& objectList);
+    void deleteFromSelList (const vector<QSharedPointer<systemObject> >& objectList);
 
     QString getUniquePopName(QString newName);
     // NB: This is unused. Refactor out.

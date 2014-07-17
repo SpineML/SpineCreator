@@ -179,8 +179,8 @@ public:
     float rotation;
     QString errorLog;
 
-    population * src;
-    population * dst;
+    QSharedPointer <population> src;
+    QSharedPointer <population> dst;
     vector < conn > *conns;
     QMutex * mutex;
     bool isList();
@@ -198,7 +198,7 @@ private:
     int dstSize;
 
 public slots:
-    //void generate_connections(population * src, population * dst, vector < conn > &conns);
+    //void generate_connections(QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns);
     void generate_connections();
     void convertToList(bool);
     void setKernelSize(int);
@@ -215,7 +215,7 @@ class pythonscript_connection : public connection
 {
         Q_OBJECT
 public:
-    pythonscript_connection(population * src, population * dst, csv_connection *conn_targ);
+    pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *conn_targ);
     ~pythonscript_connection();
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
@@ -227,8 +227,8 @@ public:
     float rotation;
     QString errorLog;
 
-    population * src;
-    population * dst;
+    QSharedPointer <population> src;
+    QSharedPointer <population> dst;
     vector < conn > *conns;
     QMutex * mutex;
     bool isList();
@@ -273,7 +273,7 @@ private:
 
 public slots:
     void generate_connections();
-    void convertToList(bool);
+    //void convertToList(bool);
     /*!
      * \brief configureFromScript
      * Get a Python script as a string and parse it to set up the connection

@@ -28,11 +28,11 @@
 #include "experiment.h"
 #include "projectobject.h"
 
-synapse::synapse(projection * proj, projectObject * data, bool dontAddInputs) {
+synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs) {
 
-   this->postsynapseType = new NineMLComponentData(data->catalogPS[0]);
+   this->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogPS[0]));
    this->postsynapseType->owner = proj;
-   this->weightUpdateType = new NineMLComponentData(data->catalogWU[0]);
+   this->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogWU[0]));
    this->weightUpdateType->owner = proj;
    this->connectionType = new alltoAll_connection;
 
@@ -50,8 +50,8 @@ synapse::synapse(projection * proj, projectObject * data, bool dontAddInputs) {
             proj->destination->neuronType->addInput(this->postsynapseType, true);
     }
 
-    //attach to the projection
-    proj->synapses.push_back(this);
+    //attach to the projection (shared pointers mean this must be done elsewhere)
+    //proj->synapses.push_back(QSharedPointer<synapse>(this));
 
     this->proj = proj;
 
@@ -61,11 +61,11 @@ synapse::synapse(projection * proj, projectObject * data, bool dontAddInputs) {
 
 }
 
-synapse::synapse(projection * proj, rootData * data, bool dontAddInputs) {
+synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAddInputs) {
 
-   this->postsynapseType = new NineMLComponentData(data->catalogPS[0]);
+   this->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogPS[0]));
    this->postsynapseType->owner = proj;
-   this->weightUpdateType = new NineMLComponentData(data->catalogWU[0]);
+   this->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogWU[0]));
    this->weightUpdateType->owner = proj;
    this->connectionType = new alltoAll_connection;
 
@@ -83,8 +83,8 @@ synapse::synapse(projection * proj, rootData * data, bool dontAddInputs) {
             proj->destination->neuronType->addInput(this->postsynapseType, true);
     }
 
-    //attach to the projection
-    proj->synapses.push_back(this);
+    //attach to the projection (shared pointers mean this must be done elsewhere)
+    //proj->synapses.push_back(QSharedPointer<synapse>(this));
 
     this->proj = proj;
 
@@ -97,9 +97,11 @@ synapse::synapse(projection * proj, rootData * data, bool dontAddInputs) {
 
 synapse::~synapse() {
 
-    // remove components (they will clean up their inputs themselves)
-    delete this->postsynapseType;
-    delete this->weightUpdateType;
+    // remove components (they will clean up their inputs themselves) NOW QSharedPointers - so no need
+    //delete this->postsynapseType;
+    //delete this->weightUpdateType;
+    this->postsynapseType.clear();
+    this->weightUpdateType.clear();
     delete this->connectionType;
 
 }
@@ -111,8 +113,10 @@ void synapse::delAll(rootData *) {
     this->postsynapseType->removeReferences();
     this->weightUpdateType->removeReferences();
 
-    delete this->postsynapseType;
-    delete this->weightUpdateType;
+    //delete this->postsynapseType;
+    //delete this->weightUpdateType;
+    this->postsynapseType.clear();
+    this->weightUpdateType.clear();
     delete this->connectionType;
 
     delete this;
@@ -124,8 +128,13 @@ QString synapse::getName() {
     // get index:
     int index = -1;
     for (uint i = 0; i < this->proj->synapses.size(); ++i)
-        if (this->proj->synapses[i] == this)
+        if (this->proj->synapses[i].data() == this)
             index = i;
+
+    if (index == -1) {
+        qDebug() << "Can't find synapse! In synapse::getName()";
+        return "Err";
+    }
 
     return this->proj->getName() + ": Synapse " + QString::number(index);
 
@@ -135,8 +144,8 @@ projection::projection()
 {
     this->type = projectionObject;
 
-    this->destination = NULL;
-    this->source = NULL;
+    this->destination.clear();
+    this->source.clear();
 
     currTarg = 0;
     this->start = QPointF(0,0);
@@ -159,24 +168,24 @@ projection::~projection()
 }
 
 
-void projection::connect() {
+void projection::connect(QSharedPointer<projection> in) {
 
     // connect might be called multiple times due to the nature of Undo
     for (uint i = 0; i < destination->reverseProjections.size(); ++i) {
-        if (destination->reverseProjections[i] == this) {
+        if (destination->reverseProjections[i] == in) {
             // already there - give up
             return;
         }
     }
     for (uint i = 0; i < source->projections.size(); ++i) {
-        if (source->projections[i] == this) {
+        if (source->projections[i] == in) {
             // already there - give up
             return;
         }
     }
 
-    destination->reverseProjections.push_back(this);
-    source->projections.push_back(this);
+    destination->reverseProjections.push_back(in);
+    source->projections.push_back(in);
 
     // connect inputs
     /*for (uint i = 0; i < this->disconnectedInputs.size(); ++i) {
@@ -209,7 +218,7 @@ void projection::disconnect() {
 
     // remove inputs & outputs
     /*for (uint i = 0; i < synapses.size(); ++i) {
-        synapse * syn = synapses[i];
+        QSharedPointer <synapse> syn = synapses[i];
         // remove inputs
         for (uint j = 0; j < syn->weightUpdateType->inputs.size(); ++j) {
             disconnectedInputs.push_back(syn->weightUpdateType->inputs[j]);
@@ -236,7 +245,7 @@ void projection::remove(rootData * data) {
 
     // remove from experiment
     for (uint j = 0; j < data->experiments.size(); ++j) {
-        data->experiments[j]->purgeBadPointer(this);
+        //data->experiments[j]->purgeBadPointer(this);
     }
 
     delete this;
@@ -306,19 +315,19 @@ void projection::move(float x, float y) {
 
 }
 
-void projection::animate(systemObject *movingObj, QPointF delta) {
+void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, QSharedPointer<projection>thisSharedPointer) {
 
-    population * movingPop;
+    QSharedPointer <population> movingPop;
 
     if (movingObj->type == populationObject) {
-        movingPop = (population *) movingObj;
+        movingPop = qSharedPointerDynamicCast <population>(movingObj);
     } else {
         qDebug() << "Incorrect object fed to projection animation";
         return;
     }
 
     // if we are a self connection we get moved twice, so only move half as much each time
-    if (!(this->destination == (population *)0)) {
+    if (!(this->destination.isNull())) {
         if (this->source->name == this->destination->name) {
             delta = delta / 2;
         }
@@ -330,7 +339,7 @@ void projection::animate(systemObject *movingObj, QPointF delta) {
         this->curves.front().C1 = this->curves.front().C1 + delta;
     }
     // if destination is set:
-    if (!(this->destination == (population *)0)) {
+    if (!(this->destination.isNull())) {
         // destination is moving
         if (movingPop->name == this->destination->name) {
             this->curves.back().end = this->curves.back().end + delta;
@@ -339,10 +348,10 @@ void projection::animate(systemObject *movingObj, QPointF delta) {
             // update inputs:
             for (uint i = 0; i < this->synapses.size(); ++i) {
                 for (uint j = 0; j < this->synapses[i]->weightUpdateType->inputs.size(); ++j) {
-                    this->synapses[i]->weightUpdateType->inputs[j]->animate(this, delta);
+                    this->synapses[i]->weightUpdateType->inputs[j]->animate(thisSharedPointer, delta);
                 }
                 for (uint j = 0; j < this->synapses[i]->postsynapseType->inputs.size(); ++j) {
-                    this->synapses[i]->postsynapseType->inputs[j]->animate(this, delta);
+                    this->synapses[i]->postsynapseType->inputs[j]->animate(thisSharedPointer, delta);
                 }
             }
         }
@@ -547,7 +556,7 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
 void projection::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage ignored, drawStyle style) {
 
-    if (this->destination != (population *)0) {
+    if (this->destination != (QSharedPointer <population>)0) {
         for (uint i = 0; i < this->synapses.size(); ++i) {
             for (uint j = 0; j < this->synapses[i]->weightUpdateType->inputs.size(); ++j) {
                 this->synapses[i]->weightUpdateType->inputs[j]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
@@ -904,7 +913,7 @@ void projection::insertControlPoint(float xGL, float yGL, float GLscale) {
 
 }
 
-QPointF projection::findBoxEdge(population * pop, float xGL, float yGL) {
+QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL) {
 
     float newX;
     float newY;
@@ -942,7 +951,7 @@ QPointF projection::findBoxEdge(population * pop, float xGL, float yGL) {
 
 }
 
-void projection::setAutoHandles(population * pop1, population * pop2, QPointF end) {
+void projection::setAutoHandles(QSharedPointer <population> pop1, QSharedPointer <population> pop2, QPointF end) {
 
     // line for drawing handles
     QPainterPath startToEnd;
@@ -1061,7 +1070,7 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
 
 }
 
-projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, projectObject * data) {
+void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta, projectObject * data, QSharedPointer<projection> thisSharedPointer) {
 
     this->type = projectionObject;
 
@@ -1093,8 +1102,8 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
         }
     }
 
-    this->source = NULL;
-    this->destination = NULL;
+    this->source.clear();
+    this->destination.clear();
 
     // link up src and dest
     bool linked = false;
@@ -1134,9 +1143,8 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
         return;
     }
 
-
     // add reverse projection
-    this->destination->reverseProjections.push_back(this);
+    this->destination->reverseProjections.push_back(thisSharedPointer);
 
     this->currTarg = 0;
 
@@ -1157,7 +1165,7 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
 
     for (unsigned int i = 0; i < (uint) colList.count(); ++i) {
         // create a new Synapse on the projection
-        synapse * newSynapse = new synapse(this, data, true); // add bool to avoid adding the projInputs - we need to do that later
+        QSharedPointer <synapse> newSynapse = QSharedPointer<synapse>(new synapse(thisSharedPointer, data, true)); // add bool to avoid adding the projInputs - we need to do that later
         QString pspName;
         QString synName;
         QDomNode n = colList.item(i).toElement().firstChild();
@@ -1189,8 +1197,8 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new kernel_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
-                ((kernel_connection *) newSynapse->connectionType)->src = (population *) this->source;
-                ((kernel_connection *) newSynapse->connectionType)->dst = (population *) this->destination;
+                ((kernel_connection *) newSynapse->connectionType)->src = (QSharedPointer <population>) this->source;
+                ((kernel_connection *) newSynapse->connectionType)->dst = (QSharedPointer <population>) this->destination;
             }
             else if (n.toElement().tagName() == "PythonScriptConnection") {
 
@@ -1217,22 +1225,22 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                     pspName = tempName[0];
                 pspName.replace("_", " ");
 
-                newSynapse->postsynapseType = NULL;
+                newSynapse->postsynapseType.clear();
 
                 // see if PS is loaded
                 for (uint u = 0; u < data->catalogPS.size(); ++u) {
                     if (data->catalogPS[u]->name == pspName) {
-                        newSynapse->postsynapseType = new NineMLComponentData(data->catalogPS[u]);
-                        newSynapse->postsynapseType->owner = this;
+                        newSynapse->postsynapseType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogPS[u]));
+                        newSynapse->postsynapseType->owner = thisSharedPointer;
                         newSynapse->postsynapseType->import_parameters_from_xml(n);
                         break;
                     }
                 }
 
                 // if still missing then we have an issue
-                if (newSynapse->postsynapseType == NULL) {
-                    newSynapse->postsynapseType = new NineMLComponentData(data->catalogPS[0]);
-                    newSynapse->postsynapseType->owner = this;
+                if (newSynapse->postsynapseType.isNull()) {
+                    newSynapse->postsynapseType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogPS[0]));
+                    newSynapse->postsynapseType->owner = thisSharedPointer;
                     QSettings settings;
                     int num_errs = settings.beginReadArray("warnings");
                     settings.endArray();
@@ -1264,22 +1272,22 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                     synName = tempName[0];
                 synName.replace("_", " ");
 
-                newSynapse->weightUpdateType = NULL;
+                newSynapse->weightUpdateType.clear();
 
                 // see if WU loaded
                 for (uint u = 0; u < data->catalogWU.size(); ++u) {
                     if (data->catalogWU[u]->name == synName) {
-                        newSynapse->weightUpdateType = new NineMLComponentData(data->catalogWU[u]);
-                        newSynapse->weightUpdateType->owner = this;
+                        newSynapse->weightUpdateType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogWU[u]));
+                        newSynapse->weightUpdateType->owner = thisSharedPointer;
                         newSynapse->weightUpdateType->import_parameters_from_xml(n);
                         break;
                     }
                 }
 
                 // if still missing then we have a load error
-                if (newSynapse->weightUpdateType == NULL) {
-                    newSynapse->weightUpdateType = new NineMLComponentData(data->catalogWU[0]);
-                    newSynapse->weightUpdateType->owner = this;
+                if (newSynapse->weightUpdateType.isNull()) {
+                    newSynapse->weightUpdateType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogWU[0]));
+                    newSynapse->weightUpdateType->owner = thisSharedPointer;
                     QSettings settings;
                     int num_errs = settings.beginReadArray("warnings");
                     settings.endArray();
@@ -1300,6 +1308,9 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
             }
         n = n.nextSibling();
         }
+        // add the synapse
+        this->synapses.push_back(newSynapse);
+
     }
 
     // now load the metadata for the projection:
@@ -1379,7 +1390,8 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
         metaNode = metaNode.nextSibling();
     }
 
-        //this->print_out();
+
+        this->print();
 
 }
 
@@ -1422,7 +1434,7 @@ void projection::add_curves() {
 }
 
 
-void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data) {
+void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data, QSharedPointer<projection> thisSharedPointer) {
 
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
@@ -1446,10 +1458,10 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 for (uint i = 0; i < (uint) nList.size(); ++i) {
                     e2 = nList.item(i).toElement();
 
-                    genericInput * newInput = new genericInput;
-                    newInput->src = (NineMLComponentData *)0;
-                    newInput->dst = (NineMLComponentData *)0;
-                    newInput->destination = this;
+                    QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
+                    newInput->src = (QSharedPointer <NineMLComponentData>)0;
+                    newInput->dst = (QSharedPointer <NineMLComponentData>)0;
+                    newInput->destination = thisSharedPointer;
                     newInput->projInput = false;
 
                     // read in and locate src:
@@ -1510,7 +1522,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     }
 
 
-                    if (newInput->src != (NineMLComponentData *)0)
+                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0)
                     {this->synapses[t]->postsynapseType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->postsynapseType;
                         newInput->src->outputs.push_back(newInput);}
@@ -1520,7 +1532,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 }
 
                 // read in the postsynapse Input
-                genericInput * newInput = new genericInput;
+                QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
                 newInput->src = this->synapses[t]->weightUpdateType;
                 newInput->projInput = true;
 
@@ -1533,8 +1545,8 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 this->synapses[t]->postsynapseType->inputs.push_back(newInput);
 
                 // setup source and destination
-                newInput->source = this;
-                newInput->destination = this;
+                newInput->source = thisSharedPointer;
+                newInput->destination = thisSharedPointer;
 
                 // add output in Synapse:
                 this->synapses[t]->weightUpdateType->outputs.push_back(newInput);
@@ -1544,7 +1556,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
 
                 // read in the postsynapse output
-                newInput = new genericInput;
+                newInput = QSharedPointer<genericInput> (new genericInput);
                 newInput->src = this->synapses[t]->postsynapseType;
                 newInput->projInput = true;
 
@@ -1557,7 +1569,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 this->destination->neuronType->inputs.push_back(newInput);
 
                 // setup source and destination
-                newInput->source = this;
+                newInput->source = thisSharedPointer;
                 newInput->destination = this->destination;
 
                 // add to src output list
@@ -1575,9 +1587,9 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 for (uint i = 0; i < (uint) nList.size(); ++i) {
                     e2 = nList.item(0).toElement();
 
-                    genericInput * newInput = new genericInput;
-                    newInput->src = (NineMLComponentData *)0;
-                    newInput->destination = this;
+                    QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
+                    newInput->src = (QSharedPointer <NineMLComponentData>)0;
+                    newInput->destination = thisSharedPointer;
                     newInput->projInput = false;
 
                     // read in and locate src:
@@ -1629,7 +1641,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
 
-                    if (newInput->src != (NineMLComponentData *)0)
+                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0)
                     {this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->weightUpdateType;
                         newInput->src->outputs.push_back(newInput);}
@@ -1639,7 +1651,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 }
 
                 // read in the synapseInput
-                genericInput * newInput = new genericInput;
+                QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
                 newInput->src = this->source->neuronType;
                 newInput->projInput = true;
 
@@ -1653,7 +1665,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
                 // setup source and destination
                 newInput->source = this->source;
-                newInput->destination = this;
+                newInput->destination = thisSharedPointer;
 
                 newInput->src->outputs.push_back(newInput);
 

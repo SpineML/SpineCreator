@@ -53,7 +53,7 @@ QHBoxLayout * LayoutAliasEditDialog::drawAlias(Alias * currentAlias) {
 
 }
 
-LayoutAliasEditDialog::LayoutAliasEditDialog(NineMLLayout * inSrcNineMLLayout, QWidget *parent) :
+LayoutAliasEditDialog::LayoutAliasEditDialog(QSharedPointer<NineMLLayout> inSrcNineMLLayout, QWidget *parent) :
     QDialog(parent)
 {
 
@@ -156,7 +156,7 @@ void LayoutAliasEditDialog::updateMaths() {
     currAlias->maths->equation = newMaths;
 
     QStringList errs;
-    currAlias->maths->validateMathInLine(this->srcNineMLLayout, &errs);
+    currAlias->maths->validateMathInLine(this->srcNineMLLayout.data(), &errs);
 
     if (errs.size() > 0) {
         QPalette p = src->palette();

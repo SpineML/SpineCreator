@@ -32,7 +32,7 @@ class genericInput : public projection // inherit systemObject through projectio
 {
 public:
     genericInput();
-    genericInput(NineMLComponentData * src, NineMLComponentData * dst, bool projInput = false);
+    genericInput(QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, bool projInput = false);
     ~genericInput();
 
     virtual QString getName();
@@ -43,21 +43,21 @@ public:
     void remove(rootData *);
     void delAll(rootData *);
 
-    void animate(systemObject *movingObj, QPointF delta);
+    void animate(QSharedPointer<systemObject>movingObj, QPointF delta);
     void moveSelectedControlPoint(float xGL, float yGL);
     void write_model_meta_xml(QDomDocument &meta, QDomElement &root) ;
 
     void read_meta_data(QDomDocument * meta);
 
     void addCurves();
-    void connect();
+    void connect(QSharedPointer<genericInput> in);
     void disconnect();
 
-    systemObject * destination;
-    systemObject * source;
+    QSharedPointer<systemObject> destination;
+    QSharedPointer<systemObject> source;
 
-    NineMLComponentData * src;
-    NineMLComponentData * dst;
+    QSharedPointer <NineMLComponentData> src;
+    QSharedPointer <NineMLComponentData> dst;
     QString srcPort;
     QString dstPort;
     bool projInput;

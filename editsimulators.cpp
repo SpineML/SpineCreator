@@ -50,8 +50,10 @@ editSimulators::editSimulators(QWidget *parent) :
     }
     settings.endGroup();
 
-    ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->removeWidget(ui->addEnv);
-    ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->addWidget(ui->addEnv);
+    QHBoxLayout * hbox = qobject_cast<QHBoxLayout *> (ui->scrollAreaWidgetContents->layout());
+    CHECK_CAST(hbox);
+    hbox->removeWidget(ui->addEnv);
+    hbox->addWidget(ui->addEnv);
 
     // connect up comboBox
     connect(ui->comboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(selectSimulator(QString)));
@@ -293,7 +295,9 @@ void editSimulators::addEnvVar()
 
 void editSimulators::delEnvVar()
 {
-    QLineEdit * envNameLineEdit = (QLineEdit *) sender()->property("ptr").value<void *>();
+    QWidget * temp = (QWidget *) (sender()->property("ptr").value<void *>());
+    QLineEdit * envNameLineEdit = qobject_cast<QLineEdit *> (temp);
+    CHECK_CAST(envNameLineEdit);
 
     // remove var
     for (int i = 0; i < keys.size(); ++i) {
@@ -312,10 +316,14 @@ void editSimulators::changeEnvVar()
 {
     edited = true;
 
+    QWidget * temp = (QWidget *) (sender()->property("ptr").value<void *>());
+    QLineEdit * envNameLineEdit = qobject_cast<QLineEdit *> (temp);
+    CHECK_CAST(envNameLineEdit);
+
     if (sender()->property("type").toString() == "key") {
-        keys[sender()->property("index").toInt()] = ((QLineEdit *) sender())->text();
+        keys[sender()->property("index").toInt()] = envNameLineEdit->text();
     } else if (sender()->property("type").toString() == "value")  {
-        values[sender()->property("index").toInt()] = ((QLineEdit *) sender())->text();
+        values[sender()->property("index").toInt()] = envNameLineEdit->text();
     }
 }
 
@@ -358,9 +366,13 @@ void editSimulators::recursiveDeleteLater(QLayout * parentLayout)
 
 void editSimulators::redrawEnvVars()
 {
-    recursiveDeleteLater(((QHBoxLayout *) ui->scrollAreaWidgetContents->layout()));
 
-    ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->addWidget(ui->addEnv);
+    QHBoxLayout * hbox = qobject_cast<QHBoxLayout *> (ui->scrollAreaWidgetContents->layout());
+    CHECK_CAST(hbox);
+
+    recursiveDeleteLater(hbox);
+
+    hbox->addWidget(ui->addEnv);
 
     for (int i = 0; i < keys.size(); ++i) {
 
@@ -393,10 +405,10 @@ void editSimulators::redrawEnvVars()
         newEnv->addWidget(envLineEdit);
         newEnv->addWidget(envDel);
 
-        ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->insertLayout(((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->count()-1,newEnv);
+        hbox->insertLayout(hbox->count()-1,newEnv);
     }
 
-    ((QHBoxLayout *) ui->scrollAreaWidgetContents->layout())->addStretch();
+    hbox->addStretch();
 
     if (edited) {
         // disable this stuff
@@ -533,7 +545,11 @@ void editSimulators::cancelChanges()
 
 void editSimulators::changeScript()
 {
-    path = ((QLineEdit *) sender())->text();
+
+    QLineEdit * edit = qobject_cast<QLineEdit *> (sender());
+    CHECK_CAST(edit)
+
+    path = edit->text();
     edited = true;
     redrawEnvVars();
 }

@@ -24,7 +24,7 @@
 
 #include "layouteditpreviewdialog.h"
 
-layoutEditPreviewDialog::layoutEditPreviewDialog(NineMLLayout * inSrcNineMLLayout, glConnectionWidget * glConn, QWidget *parent) :
+layoutEditPreviewDialog::layoutEditPreviewDialog(QSharedPointer<NineMLLayout> inSrcNineMLLayout, glConnectionWidget * glConn, QWidget *parent) :
     QDialog(parent)
 {
 
@@ -112,7 +112,7 @@ void layoutEditPreviewDialog::reDraw(QString) {
 
     // create a new layoutData from the layout:
 
-    NineMLLayoutData * data = new NineMLLayoutData(srcNineMLLayout);
+    QSharedPointer<NineMLLayoutData> data = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(srcNineMLLayout));
 
     // populate from the spinboxes:
     for (uint i = 0; i < data->ParameterList.size(); ++i) {

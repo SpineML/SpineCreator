@@ -453,7 +453,9 @@ QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * 
             if (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel() != (QAbstractTableModel *)0)
             {
                 // don't fetch data if we already have for this connection
-                if (((csv_connectionModel *) viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel())->getConnection() == this  && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.size() == this->getNumRows()) {
+                csv_connectionModel * connModel = dynamic_cast<csv_connectionModel *> (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel());
+                CHECK_CAST(connModel);
+                if (connModel->getConnection() == this  && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.size() == this->getNumRows()) {
                     viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
                 } else {
                     viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
@@ -547,7 +549,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     // ok, check if we have a generator, and if it is up-to-date
     if (this->generator) {
-        pythonscript_connection * pyConn = (pythonscript_connection *) this->generator;
+        pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (this->generator);
+        CHECK_CAST(pyConn);
         // if we have changes then...
         if (pyConn->changed()) {
             // ... regenerate the connectivity!
@@ -1648,15 +1651,19 @@ void kernel_connection::generate_connections() {
 }
 
 void kernel_connection::convertToList(bool check) {
-
+/*
     // instantiate the connection for simulators etc...
     this->isAList = check;
-    systemObject * ptr;
-    ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
-    src = (population *) ptr;
+    systemObject* ptr;
+    ptr = (systemObject *)  sender()->property("ptrSrc").value<void *>();
+    //CHECK_CAST(ptr);
+    src = dynamic_cast<population *> (ptr);
+    CHECK_CAST(src);
     ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
-    dst = (population *) ptr;
-
+    //CHECK_CAST(ptr);
+    dst = dynamic_cast<population *> (ptr);
+    CHECK_CAST(dst);
+*/
 }
 
 bool kernel_connection::isList() {
@@ -1665,7 +1672,7 @@ bool kernel_connection::isList() {
 
 }
 
-pythonscript_connection::pythonscript_connection(population * src, population * dst, csv_connection *  conn_targ)
+pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
 {
     type = Python;
     this->isAList = false;
@@ -2259,9 +2266,9 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
 
 ParameterData * pythonscript_connection::getPropPointer() {
     for (uint i = 0; i < this->src->projections.size(); ++i) {
-        projection * proj = this->src->projections[i];
+        QSharedPointer <projection> proj = this->src->projections[i];
         for (uint j = 0; j < proj->synapses.size(); ++j) {
-            synapse * syn = proj->synapses[j];
+            QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
             bool isConn = false;
             if (syn->connectionType == this) {
@@ -2269,7 +2276,9 @@ ParameterData * pythonscript_connection::getPropPointer() {
             }
             // if we are the generator of the connection
             if (syn->connectionType->type == CSV) {
-                if (((csv_connection *)syn->connectionType)->generator == this) {
+                csv_connection * csvConn = dynamic_cast<csv_connection *> (syn->connectionType);
+                CHECK_CAST(csvConn);
+                if (csvConn->generator == this) {
                     isConn = true;
                 }
             }
@@ -2297,9 +2306,9 @@ ParameterData * pythonscript_connection::getPropPointer() {
 QStringList pythonscript_connection::getPropList() {
     QStringList list;
     for (uint i = 0; i < this->src->projections.size(); ++i) {
-        projection * proj = this->src->projections[i];
+        QSharedPointer <projection> proj = this->src->projections[i];
         for (uint j = 0; j < proj->synapses.size(); ++j) {
-            synapse * syn = proj->synapses[j];
+            QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
             bool isConn = false;
             if (syn->connectionType == this) {
@@ -2307,7 +2316,9 @@ QStringList pythonscript_connection::getPropList() {
             }
             // if we are the generator of the connection
             if (syn->connectionType->type == CSV) {
-                if (((csv_connection *)syn->connectionType)->generator == this) {
+                csv_connection * csvConn = dynamic_cast<csv_connection *> (syn->connectionType);
+                CHECK_CAST(csvConn);
+                if (csvConn->generator == this) {
                     isConn = true;
                 }
             }
@@ -2613,17 +2624,21 @@ void pythonscript_connection::generate_connections() {
 
 }
 
-void pythonscript_connection::convertToList(bool check) {
+/*void pythonscript_connection::convertToList(bool check) {
 
     // instantiate the connection for simulators etc...
     this->isAList = check;
-    systemObject * ptr;
-    ptr = (systemObject *) sender()->property("ptrSrc").value<void *>();
-    src = (population *) ptr;
-    ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
-    dst = (population *) ptr;
+    QSharedPointer<systemObject> ptr;
+    ptr = (QSharedPointer<systemObject>) sender()->property("ptrSrc").value<void *>();
+    CHECK_CAST(ptr);
+    src = dynamic_cast<QSharedPointer <population>> (ptr);
+    CHECK_CAST(src);
+    ptr = (QSharedPointer<systemObject>) sender()->property("ptrDst").value<void *>();
+    CHECK_CAST(ptr);
+    dst = dynamic_cast<QSharedPointer <population>> (ptr);
+    CHECK_CAST(dst);
 
-}
+}*/
 
 bool pythonscript_connection::isList() {
 

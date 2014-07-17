@@ -27,6 +27,9 @@
 
 // prototype all classes;
 
+// define a macro to test dynamic casts return non-NULL
+#define CHECK_CAST(A) if (A==NULL) {qDebug() << "Bad cast in " << __FILE__ << ", " << __LINE__; exit(0);}
+
 
 class viewELLayoutEditHandler;
 class viewVZLayoutEditHandler;

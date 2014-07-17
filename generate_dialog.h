@@ -37,8 +37,8 @@ class generate_dialog : public QDialog
     Q_OBJECT
     
 public:
-    explicit generate_dialog(kernel_connection * currConn, population *src, population *dst, vector<conn> &conns, QMutex * mutex, QWidget *parent = 0);
-    explicit generate_dialog(pythonscript_connection * currConn, population *src, population *dst, vector<conn> &conns, QMutex * mutex, QWidget *parent = 0);
+    explicit generate_dialog(kernel_connection * currConn, QSharedPointer <population>src, QSharedPointer <population>dst, vector<conn> &conns, QMutex * mutex, QWidget *parent = 0);
+    explicit generate_dialog(pythonscript_connection * currConn, QSharedPointer <population>src, QSharedPointer <population>dst, vector<conn> &conns, QMutex * mutex, QWidget *parent = 0);
     ~generate_dialog();
     
 private:

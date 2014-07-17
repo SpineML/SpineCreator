@@ -730,19 +730,19 @@ void rootLayout::updatePanel(rootData* data) {
         // find what the selected item is...
         if (data->selList[0]->type == populationObject) {
 
-            popSelected((population *) data->selList[0], data);
+            popSelected(qSharedPointerDynamicCast<population> (data->selList[0]), data);
             return;
 
         }
         if (data->selList[0]->type == projectionObject) {
 
-            projSelected((projection *) data->selList[0], data);
+            projSelected(qSharedPointerDynamicCast<projection> ( data->selList[0]), data);
             return;
 
         }
         if (data->selList[0]->type == inputObject) {
 
-            inSelected((genericInput *) data->selList[0], data);
+            inSelected(qSharedPointerDynamicCast<genericInput> (data->selList[0]), data);
             return;
 
         }
@@ -751,7 +751,7 @@ void rootLayout::updatePanel(rootData* data) {
 
 }
 
-void rootLayout::popSelected(population * pop, rootData* data) {
+void rootLayout::popSelected(QSharedPointer <population> pop, rootData* data) {
 
     if (pop->neuronTypeName.compare("noPop") == 0)
         return;
@@ -796,7 +796,7 @@ void rootLayout::popSelected(population * pop, rootData* data) {
 
 }
 
-void rootLayout::projSelected(projection * proj, rootData* data) {
+void rootLayout::projSelected(QSharedPointer <projection> proj, rootData* data) {
 
     // configure
     emit showProjection();
@@ -843,7 +843,7 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
 
     connectionComboBox->disconnect(data);
     connectionComboBox->clear();
-    connectionComboBox->setProperty("ptr", qVariantFromValue((void *) proj->synapses[proj->currTarg]));
+    connectionComboBox->setProperty("ptr", qVariantFromValue((void *) proj->synapses[proj->currTarg].data()));
     connectionComboBox->addItem("All to All");
     connectionComboBox->addItem("One to One");
     // disable 1-2-1 if src and dst pops not the same size
@@ -867,7 +867,7 @@ void rootLayout::projSelected(projection * proj, rootData* data) {
     drawParamsLayout(data);
 }
 
-void rootLayout::inSelected(genericInput * in, rootData* data) {
+void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
 
     emit showInput();
     emit setInputName("<u><b>" + in->getName() + "</b></u>");
@@ -895,7 +895,7 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
 
     QString currPortPair = in->srcPort + "->" + in->dstPort;
 
-    inputPortSelection->setProperty("ptr", qVariantFromValue((void *) in));
+    inputPortSelection->setProperty("ptr", qVariantFromValue((void *) in.data()));
     inputPortSelection->disconnect(data);
     inputPortSelection->clear();
     for (int p = 0; p < portPairs.size(); ++p) {
@@ -915,7 +915,7 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
     // configure connectivity dropdown
     inputConnectionComboBox->disconnect(data);
     inputConnectionComboBox->clear();
-    inputConnectionComboBox->setProperty("ptr", qVariantFromValue((void *) in));
+    inputConnectionComboBox->setProperty("ptr", qVariantFromValue((void *) in.data()));
     inputConnectionComboBox->addItem("All to All");
     inputConnectionComboBox->addItem("One to One");
     inputConnectionComboBox->addItem("Fixed Probability");
@@ -977,6 +977,7 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
     }
 
     // delay
+    QSharedPointer<NineMLData> null;
     switch (in->connectionType->type) {
         case AlltoAll:
         case OnetoOne:
@@ -984,18 +985,18 @@ void rootLayout::inSelected(genericInput * in, rootData* data) {
         case CSA:
         case Kernel:
             // add delay box:
-            drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", NULL, in->connectionType);
+            drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
             break;
         case CSV:
             if (((csv_connection *) in->connectionType)->getNumCols() != 3) {
                 // add delay box:
-                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", NULL, in->connectionType);
+                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
             }
             break;
         case Python:
             // add delay box:
             if (!((pythonscript_connection *)in->connectionType)->hasDelay) {
-                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", NULL, in->connectionType);
+                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
             }
             break;
         case none:
@@ -1062,7 +1063,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
             break;
     }
 
-    NineMLData * type9ml = NULL;
+    QSharedPointer <NineMLData>  type9ml;
     QString type = "layoutParam";
 
     for (int i = 0; i < numBoxes; ++i) {
@@ -1081,10 +1082,10 @@ void rootLayout::drawParamsLayout(rootData * data) {
         switch (data->selList[0]->type) {
         case populationObject:
             if (i == 0) {
-                type9ml = (NineMLData *) ((population *) data->selList[0])->neuronType;
+                type9ml = qSharedPointerDynamicCast < NineMLData > (qSharedPointerDynamicCast <population> (data->selList[0])->neuronType);
                 type = "nrn";
                 // check if current component validates
-                ((NineMLComponentData *) type9ml)->component->validateComponent();
+                (qSharedPointerCast <NineMLComponentData> (type9ml))->component->validateComponent();
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
@@ -1104,17 +1105,18 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 }
             }
             if (i == 1) {
-
-                type9ml = (NineMLData *) ((population *) data->selList[0])->layoutType;
+                QSharedPointer<population> pop = qSharedPointerDynamicCast<population> (data->selList[0]);
+                type9ml = qSharedPointerDynamicCast < NineMLData > (pop->layoutType);
                 type = "layout";
             }
             break;
         case projectionObject:
             if (i == 0) {
-                type9ml = ((projection *) data->selList[0])->synapses[((projection *) data->selList[0])->currTarg]->weightUpdateType;
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
+                type9ml = proj->synapses[proj->currTarg]->weightUpdateType;
                 type = "syn";
                 // check if current component validates
-                ((NineMLComponentData *) type9ml)->component->validateComponent();
+                (qSharedPointerCast <NineMLComponentData> (type9ml))->component->validateComponent();
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
@@ -1134,10 +1136,11 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 }
             }
             if (i == 1) {
-                type9ml = ((projection *) data->selList[0])->synapses[((projection *) data->selList[0])->currTarg]->postsynapseType;
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
+                type9ml = proj->synapses[proj->currTarg]->postsynapseType;
                 type = "psp";
                 // check if current component validates
-                ((NineMLComponentData *) type9ml)->component->validateComponent();
+                (qSharedPointerCast <NineMLComponentData> (type9ml))->component->validateComponent();
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
@@ -1170,12 +1173,13 @@ void rootLayout::drawParamsLayout(rootData * data) {
         }
 
         connection * conn;
-        if (i == 2) // connection
-            conn = ((projection *) data->selList[0])->synapses[((projection *) data->selList[0])->currTarg]->connectionType;
-        else if (type9ml->type == NineMLComponentType) {
+        if (i == 2) { // connection
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (data->selList[0]);
+            conn = proj->synapses[proj->currTarg]->connectionType;
+        } else if (type9ml->type == NineMLComponentType) {
 
             // hide / show copy / paste
-            if (((NineMLComponentData *) type9ml)->component->name != "none") {
+            if ((qSharedPointerCast <NineMLComponentData> (type9ml))->component->name != "none") {
                 // set what the source is
                 if (i == 0)
                     emit showTab0CopyPaste();
@@ -1336,7 +1340,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
 
         if (type9ml->type == NineMLComponentType) {
 
-            NineMLComponentData * componentData = (NineMLComponentData *) type9ml;
+            QSharedPointer <NineMLComponentData> componentData = qSharedPointerDynamicCast <NineMLComponentData> (type9ml);
 
             if (componentData->component->name != "none") {
 
@@ -1373,9 +1377,9 @@ void rootLayout::drawParamsLayout(rootData * data) {
                     connect(this, SIGNAL(deleteProperties()), portMatches, SLOT(deleteLater()));
                     portMatches->setMaximumWidth(200);
                     portMatches->setProperty("type", "portMatches");
-                    portMatches->setProperty("ptr", qVariantFromValue((void *) componentData->inputs[input]));
+                    portMatches->setProperty("ptr", qVariantFromValue((void *) componentData->inputs[input].data()));
 
-                    genericInput * currInput = componentData->inputs[input];
+                    QSharedPointer<genericInput> currInput = componentData->inputs[input];
 
                     QStringList portPairs = componentData->getPortMatches(input, false);
 
@@ -1421,8 +1425,8 @@ void rootLayout::drawParamsLayout(rootData * data) {
                     }
                     inputLay->addWidget(delInput);
 
-                    delInput->setProperty("ptr", qVariantFromValue((void *) componentData->inputs[input]));
-                    delInput->setProperty("ptrDst", qVariantFromValue((void *) componentData));
+                    delInput->setProperty("ptr", qVariantFromValue((void *) componentData->inputs[input].data()));
+                    delInput->setProperty("ptrDst", qVariantFromValue((void *) componentData.data()));
 
                     // add connection:
                     connect(delInput, SIGNAL(clicked()), data, SLOT(delgenericInput()));
@@ -1452,7 +1456,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 QCompleter *completer = new QCompleter(elementList, this);
                 completer->setCaseSensitivity(Qt::CaseInsensitive);
                 lineEdit->setCompleter(completer);
-                lineEdit->setProperty("ptr", qVariantFromValue((void *) componentData));
+                lineEdit->setProperty("ptr", qVariantFromValue((void *) componentData.data()));
                 lineEdit->installEventFilter(new FilterOutUndoRedoEvents);
 
                 // add connection:
@@ -1467,7 +1471,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
 
 }
 
-void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPar, rootData * data, bool connectionBool, QString type, NineMLData* type9ml, connection * conn) {
+void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPar, rootData * data, bool connectionBool, QString type, QSharedPointer<NineMLData>  type9ml, connection * conn) {
 
 
     QString name;
@@ -1796,7 +1800,7 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         buttons->addWidget(currButton);
 
         currButton->setProperty("ptr", qVariantFromValue((void *) currPar));
-        currButton->setProperty("ptrComp", qVariantFromValue((void *) type9ml));
+        currButton->setProperty("ptrComp", qVariantFromValue((void *) type9ml.data()));
 
         // add connection:
         connect(currButton, SIGNAL(clicked()), data, SLOT(updatePar()));

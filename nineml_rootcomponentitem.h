@@ -43,7 +43,7 @@ class RootComponentItem: public QObject
     Q_OBJECT
 public:
     RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QFile *file=0);
-    RootComponentItem(MainWindow *main,Ui::MainWindow *ui, NineMLComponent *);
+    RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QSharedPointer<NineMLComponent>);
     ~RootComponentItem();
 
     void setSelectionMode(ALSceneMode mode);
@@ -81,7 +81,7 @@ public:
      * library. This is the "real" component - the one which will get
      * saved when the user chooses "Save Project".
      */
-    NineMLComponent * alPtr;
+    QSharedPointer<NineMLComponent> alPtr;
 
 
 public slots:
@@ -100,7 +100,7 @@ public:
      * TODO: Use only alPtr, which points to the instance of the
      * component in the rootdata component library.
      */
-    NineMLComponent *al;
+    QSharedPointer<NineMLComponent>al;
     PropertiesManager *properties;
     NineMLALScene *scene;
     Ui::MainWindow *ui;

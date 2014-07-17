@@ -28,7 +28,7 @@
 #include "connection.h"
 #include "glconnectionwidget.h"
 
-generate_dialog::generate_dialog(kernel_connection * currConn, population * src, population * dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
+generate_dialog::generate_dialog(kernel_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::generate_dialog)
 {
@@ -51,8 +51,11 @@ generate_dialog::generate_dialog(kernel_connection * currConn, population * src,
     connect(currConn, SIGNAL(connectionsDone()), this, SLOT(moveFromThread()));
 
     connect(currConn, SIGNAL(progress(int)), ui->progressBar, SLOT(setValue(int)));
-    if (parent != NULL)
-        connect(currConn, SIGNAL(progress(int)), ((glConnectionWidget *)parent), SLOT(redraw()));
+    if (parent != NULL) {
+        glConnectionWidget * p = dynamic_cast<glConnectionWidget *> (parent);
+        CHECK_CAST(p)
+        connect(currConn, SIGNAL(progress(int)), p, SLOT(redraw()));
+    }
 
     currConn->moveToThread(workerThread);
 
@@ -60,7 +63,7 @@ generate_dialog::generate_dialog(kernel_connection * currConn, population * src,
 
 }
 
-generate_dialog::generate_dialog(pythonscript_connection * currConn, population * src, population * dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
+generate_dialog::generate_dialog(pythonscript_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, vector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::generate_dialog)
 {
@@ -103,20 +106,22 @@ generate_dialog::generate_dialog(pythonscript_connection * currConn, population 
 
 void generate_dialog::doPython() {
 
-    ((pythonscript_connection *) currConn)->generate_connections();
+    pythonscript_connection * currConnPy = dynamic_cast <pythonscript_connection *> (currConn);
+    CHECK_CAST(currConnPy)
 
-    if (!((pythonscript_connection *) currConn)->errorLog.isEmpty()) {
-        ui->errors->setText(((pythonscript_connection *) currConn)->errorLog);
-    } else if (!((pythonscript_connection *) currConn)->pythonErrors.isEmpty()) {
-        ui->errors->setText(((pythonscript_connection *) currConn)->pythonErrors);
+    currConnPy->generate_connections();
+
+    if (!currConnPy->errorLog.isEmpty()) {
+        ui->errors->setText(currConnPy->errorLog);
+    } else if (!currConnPy->pythonErrors.isEmpty()) {
+        ui->errors->setText(currConnPy->pythonErrors);
     } else {
         // move the weights across
-        pythonscript_connection * currPyConn = (pythonscript_connection *) currConn;
-        ParameterData * par = currPyConn->getPropPointer();
-        if (par && currPyConn->hasWeight) {
+        ParameterData * par = currConnPy->getPropPointer();
+        if (par && currConnPy->hasWeight) {
             par->currType = ExplicitList;
-            par->value = currPyConn->weights;
-            for (uint i = 0; i < currPyConn->weights.size(); ++i) {
+            par->value = currConnPy->weights;
+            for (uint i = 0; i < currConnPy->weights.size(); ++i) {
                 par->indices.push_back(i);
             }
         }
@@ -130,32 +135,35 @@ void generate_dialog::moveFromThread() {
     workerThread->exit();
     // see if errors:
     if (currConn->type == Kernel) {
-        if (!((kernel_connection *) currConn)->errorLog.isEmpty())
-            ui->errors->setText(((kernel_connection *) currConn)->errorLog);
+        kernel_connection * currConnK = dynamic_cast <kernel_connection *> (currConn);
+        CHECK_CAST(currConnK)
+        if (!currConnK->errorLog.isEmpty())
+            ui->errors->setText(currConnK->errorLog);
         else
             this->accept();
     }
     else if (currConn->type == Python) {
-        if (!((pythonscript_connection *) currConn)->errorLog.isEmpty()) {
-            ui->errors->setText(((pythonscript_connection *) currConn)->errorLog);
-        } else if (!((pythonscript_connection *) currConn)->pythonErrors.isEmpty()) {
-            ui->errors->setText(((pythonscript_connection *) currConn)->pythonErrors);
+        pythonscript_connection * currConnPy = dynamic_cast <pythonscript_connection *> (currConn);
+        CHECK_CAST(currConnPy)
+        if (!currConnPy->errorLog.isEmpty()) {
+            ui->errors->setText(currConnPy->errorLog);
+        } else if (!currConnPy->pythonErrors.isEmpty()) {
+            ui->errors->setText(currConnPy->pythonErrors);
         } else {
             // move the weights across
-            pythonscript_connection * currPyConn = (pythonscript_connection *) currConn;
-            for (uint i = 0; i < currPyConn->src->projections.size(); ++i) {
-                projection * proj = currPyConn->src->projections[i];
+            for (uint i = 0; i < currConnPy->src->projections.size(); ++i) {
+                QSharedPointer <projection> proj = currConnPy->src->projections[i];
                 for (uint j = 0; j < proj->synapses.size(); ++j) {
-                    synapse * syn = proj->synapses[j];
+                    QSharedPointer <synapse> syn = proj->synapses[j];
                     // if we have found the connection
-                    if (syn->connectionType == currPyConn) {
+                    if (syn->connectionType == currConnPy) {
                         // now we know which weight update we have to look at
                         for (uint k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
-                            if (syn->weightUpdateType->ParameterList[k]->name == currPyConn->weightProp) {
+                            if (syn->weightUpdateType->ParameterList[k]->name == currConnPy->weightProp) {
                                 // found the weight - now to alter it
                                 ParameterData * par = syn->weightUpdateType->ParameterList[k];
                                 par->currType = ExplicitList;
-                                par->value = currPyConn->weights;
+                                par->value = currConnPy->weights;
                             }
                         }
                     }

@@ -324,7 +324,7 @@ void viewELExptPanelHandler::redrawExpt()
         if (this->currSystemObject->type == populationObject) {
             // ok, this is a population - draw up the population panel
             // cast to a population
-            population * pop = (population *) this->currSystemObject;
+            QSharedPointer <population> pop = (QSharedPointer <population>) this->currSystemObject;
             // set up some fonts to use
             QFont titleFont("Helvetica [Cronyx]", 16);
             QFont sub1Font("Helvetica [Cronyx]", 14);
@@ -787,7 +787,7 @@ void viewELExptPanelHandler::setInputComponent()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    NineMLComponentData * src = (NineMLComponentData *)0;
+    QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
 
     // find source:
     for (uint i = 0; i < data->populations.size(); ++i) {
@@ -808,7 +808,7 @@ void viewELExptPanelHandler::setInputComponent()
 
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
-    if (src != (NineMLComponentData *)0) {
+    if (src != (QSharedPointer <NineMLComponentData>)0) {
         // if no change...
         if (in->target == src)
             return;
@@ -1211,7 +1211,7 @@ void viewELExptPanelHandler::setOutputComponent()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    NineMLComponentData * src = (NineMLComponentData *)0;
+    QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
 
     // find source:
     for (uint i = 0; i < data->populations.size(); ++i) {
@@ -1232,7 +1232,7 @@ void viewELExptPanelHandler::setOutputComponent()
 
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
 
-    if (src != (NineMLComponentData *)0) {
+    if (src != (QSharedPointer <NineMLComponentData>)0) {
         // if no change
         if (out->source == src) {
             return;
@@ -1393,7 +1393,7 @@ void viewELExptPanelHandler::setLesionProjection()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    projection * lesionedProj = (projection *)0;
+    QSharedPointer <projection> lesionedProj = (QSharedPointer <projection>)0;
 
     // find source:
     for (uint i = 0; i < data->populations.size(); ++i) {
@@ -1405,7 +1405,7 @@ void viewELExptPanelHandler::setLesionProjection()
 
     exptLesion * lesion = (exptLesion *) sender()->property("ptr").value<void *>();
 
-    if (lesionedProj != (projection *)0) {
+    if (lesionedProj != (QSharedPointer <projection>)0) {
         lesion->proj = lesionedProj;
         lesion->set = true;
         QPalette p = ((QLineEdit *) sender())->palette();
@@ -1460,7 +1460,7 @@ void viewELExptPanelHandler::setChangeParComponent()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    NineMLComponentData * src = (NineMLComponentData *)0;
+    QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
 
     // find source:
     for (uint i = 0; i < data->populations.size(); ++i) {
@@ -1481,7 +1481,7 @@ void viewELExptPanelHandler::setChangeParComponent()
 
     exptChangeProp * changeProp = (exptChangeProp *) sender()->property("ptr").value<void *>();
 
-    if (src != (NineMLComponentData *)0) {
+    if (src != (QSharedPointer <NineMLComponentData>)0) {
         changeProp->component = src;
         if (src->ParameterList.size() > 0) {
             changeProp->par = new ParameterData(src->ParameterList.front());
@@ -1857,45 +1857,44 @@ void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float 
     }
 
     // redraw selected object to highlight, if it is not deleted pointer:
-    if (data->isValidPointer(this->currSystemObject) == true) {
-        if (this->currSystemObject->type == populationObject) {
-            population * pop = (population *) this->currSystemObject;
+    if (this->currSystemObject->type == populationObject) {
+        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->currSystemObject);
 
-            float left = ((pop->getLeft()+viewX)*GLscale+float(width))/2;
-            float right = ((pop->getRight()+viewX)*GLscale+float(width))/2;
-            float top = ((-pop->getTop()+viewY)*GLscale+float(height))/2;
-            float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
+        float left = ((pop->getLeft()+viewX)*GLscale+float(width))/2;
+        float right = ((pop->getRight()+viewX)*GLscale+float(width))/2;
+        float top = ((-pop->getTop()+viewY)*GLscale+float(height))/2;
+        float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
 
-            if (pop->isSpikeSource) {
-                for (unsigned int i = 5; i > 1; --i) {
-                    QPen pen(QColor(0,0,0,50/i));
-                    pen.setWidthF(float(i*2));
-                    painter->setPen(pen);
-                    painter->drawEllipse(QPointF((right+left)/2.0, (top+bottom)/2.0),0.5*GLscale/2.0,0.5*GLscale/2.0);
-                }
-
-            } else {
-
-                for (unsigned int i = 5; i > 1; --i) {
-                    QPen pen(QColor(0,0,0,50/i));
-                    pen.setWidthF(float(i*2));
-                    painter->setPen(pen);
-                    QRectF rectangle(left, top, right-left, bottom-top);
-                    painter->drawRect(rectangle);
-                }
-            }
-        }
-
-        if (this->currSystemObject->type == projectionObject) {
-            projection * col = (projection *) this->currSystemObject;
+        if (pop->isSpikeSource) {
             for (unsigned int i = 5; i > 1; --i) {
-                QPen pen(QColor(0,0,0,30/i));
+                QPen pen(QColor(0,0,0,50/i));
                 pen.setWidthF(float(i*2));
                 painter->setPen(pen);
-                col->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, standardDrawStyle);
+                painter->drawEllipse(QPointF((right+left)/2.0, (top+bottom)/2.0),0.5*GLscale/2.0,0.5*GLscale/2.0);
+            }
+
+        } else {
+
+            for (unsigned int i = 5; i > 1; --i) {
+                QPen pen(QColor(0,0,0,50/i));
+                pen.setWidthF(float(i*2));
+                painter->setPen(pen);
+                QRectF rectangle(left, top, right-left, bottom-top);
+                painter->drawRect(rectangle);
             }
         }
     }
+
+    if (this->currSystemObject->type == projectionObject) {
+        QSharedPointer <projection> col = qSharedPointerDynamicCast <projection> (this->currSystemObject);
+        for (unsigned int i = 5; i > 1; --i) {
+            QPen pen(QColor(0,0,0,30/i));
+            pen.setWidthF(float(i*2));
+            painter->setPen(pen);
+            col->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, standardDrawStyle);
+        }
+    }
+
 }
 
 void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLScale)
@@ -1906,7 +1905,7 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
     // A list of things which have been selected with this left mouse
     // down click. Will be added to this->selList after the logic in
     // this method.
-    vector<systemObject*> newlySelectedList;
+    vector<QSharedPointer<systemObject> > newlySelectedList;
     this->data->findSelection (xGL, yGL, GLScale, newlySelectedList);
 
     // if we have an object selected
@@ -1919,7 +1918,7 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
             this->redraw();
         }
     } else {
-        this->currSystemObject = NULL;
+        this->currSystemObject.clear();
         // update the UI
         gl->redrawGLview();
         this->redraw();

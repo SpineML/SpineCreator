@@ -229,7 +229,7 @@ public:
     void writeOut(QDomDocument *doc, QDomElement &parent);
     bool isAnalog();
     virtual NineMLObjectType Type(){return NINEML_ANALOG_PORT;}
-    int validateAnalogPort(NineMLComponent* component, QStringList *);
+    int validateAnalogPort(NineMLComponent *component, QStringList *);
 };
 
 class EventPort: public Port {
@@ -255,7 +255,7 @@ public:
     void writeOut(QDomDocument *doc, QDomElement &parent);
     bool isAnalog();
     virtual NineMLObjectType Type(){return NINEML_IMPULSE_PORT;}
-    int validateImpulsePort(NineMLComponent* component, QStringList *);
+    int validateImpulsePort(NineMLComponent *component, QStringList *);
 };
 
 class MathInLine: public NineMLObject {
@@ -266,8 +266,8 @@ public:
     MathInLine(){}
     virtual ~MathInLine(){}
     QString getHTMLSafeEquation();
-    int validateMathInLine(NineMLComponent* component, QStringList * errs);
-    int validateMathInLine(NineMLLayout* component, QStringList * errs);
+    int validateMathInLine(NineMLComponent *component, QStringList * errs);
+    int validateMathInLine(NineMLLayout * component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_MATHINLINE;}
@@ -279,7 +279,7 @@ public:
     Trigger(Trigger *data);
     Trigger(){maths=new MathInLine;}
     virtual ~Trigger();
-    int validateTrigger(NineMLComponent* component, QStringList * errs);
+    int validateTrigger(NineMLComponent *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_TRIGGER;}
@@ -313,8 +313,8 @@ public:
     Alias(Alias *data);
     Alias(): StateVariable() {maths=new MathInLine();}
     virtual ~Alias();
-    int validateAlias(NineMLComponent* component, QStringList * errs);
-    int validateAlias(NineMLLayout* component, QStringList * errs);
+    int validateAlias(NineMLComponent *component, QStringList * errs);
+    int validateAlias(NineMLLayout *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_ALIAS;}
@@ -331,7 +331,7 @@ public:
     TimeDerivative(TimeDerivative *data);
     TimeDerivative(){variable=NULL; maths=new MathInLine;}
     virtual ~TimeDerivative();
-    int validateTimeDerivative(NineMLComponent* component, QStringList * errs);
+    int validateTimeDerivative(NineMLComponent *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_TIME_DERIVATIVE;}
@@ -347,8 +347,8 @@ public:
     StateAssignment(StateAssignment *data);
     StateAssignment(){variable=NULL; maths=new MathInLine;}
     virtual ~StateAssignment();
-    int validateStateAssignment(NineMLComponent* component, QStringList *);
-    int validateStateAssignment(NineMLLayout* component, QStringList * errs);
+    int validateStateAssignment(NineMLComponent *component, QStringList *);
+    int validateStateAssignment(NineMLLayout *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_STATE_ASSIGNMENT;}
@@ -362,7 +362,7 @@ public:
     EventOut(EventOut *);
     EventOut(){port=NULL;}
     virtual ~EventOut(){}
-    int validateEventOut(NineMLComponent* component, QStringList *);
+    int validateEventOut(NineMLComponent *component, QStringList *);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_EVENT_OUT;}
@@ -376,7 +376,7 @@ public:
     ImpulseOut(ImpulseOut *);
     ImpulseOut(){port=NULL;}
     virtual ~ImpulseOut(){}
-    int validateImpulseOut(NineMLComponent* component, QStringList * errs);
+    int validateImpulseOut(NineMLComponent *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_IMPULSE_OUT;}
@@ -396,7 +396,7 @@ public:
     OnCondition(OnCondition *data);
     OnCondition(){target_regime=NULL; trigger=new Trigger;}
     virtual ~OnCondition();
-    int validateOnCondition(NineMLComponent* component, QStringList * errs);
+    int validateOnCondition(NineMLComponent *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_ON_CONDITION;}
@@ -417,7 +417,7 @@ public:
     OnEvent(OnEvent *data);
     OnEvent(){target_regime=NULL; src_port=NULL;}
     virtual ~OnEvent();
-    int validateOnEvent(NineMLComponent* component, QStringList * errs);
+    int validateOnEvent(NineMLComponent *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_ON_EVENT;}
@@ -437,7 +437,7 @@ public:
     OnImpulse(OnImpulse *data);
     OnImpulse(){target_regime=NULL; src_port=NULL;}
     virtual ~OnImpulse();
-    int validateOnImpulse(NineMLComponent* component, QStringList * errs);
+    int validateOnImpulse(NineMLComponent *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_ON_IMPULSE;}
@@ -453,7 +453,7 @@ public:
     Regime(Regime *data);
     Regime(){}
     virtual ~Regime();
-    int validateRegime(NineMLComponent* component, QStringList * errs);
+    int validateRegime(NineMLComponent *component, QStringList * errs);
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_REGIME;}
@@ -476,17 +476,17 @@ public:
     vector <AnalogPort*> AnalogPortList;
     vector <EventPort*> EventPortList;
     vector <ImpulsePort*> ImpulsePortList;
-    NineMLComponent(NineMLComponent *data);
+    NineMLComponent(QSharedPointer<NineMLComponent>data);
     NineMLComponent& operator=(const NineMLComponent& data);
     NineMLComponent();
     virtual ~NineMLComponent();
-    void updateFrom(NineMLComponent *data);
+    void updateFrom(QSharedPointer<NineMLComponent>data);
     QStringList validateComponent();
     void load(QDomDocument *doc);
     void write(QDomDocument *doc);
     virtual NineMLObjectType Type(){return NINEML_COMPONENT;}
     QUndoStack undoStack;
-    NineMLComponent * editedVersion;
+    QSharedPointer<NineMLComponent> editedVersion;
     QString getXMLName();
 };
 
@@ -500,18 +500,18 @@ public:
     vector <ParameterData*> ParameterList;
     void write_node_xml(QXmlStreamWriter &);
     NineMLData(){}
-    ~NineMLData(){}
+    virtual ~NineMLData(){}
 };
 
 class NineMLComponentData: public NineMLData
 {
 public:
-    vector < genericInput *> inputs;
-    vector < genericInput * > outputs;
-    NineMLComponent * component;
-    NineMLComponentData(NineMLComponent *data);
-    NineMLComponentData(NineMLComponentData *data);
-    NineMLComponentData(NineMLComponentData *, NineMLComponent *);
+    vector < QSharedPointer<genericInput> > inputs;
+    vector < QSharedPointer<genericInput> > outputs;
+    QSharedPointer<NineMLComponent> component;
+    NineMLComponentData(QSharedPointer<NineMLComponent>data);
+    NineMLComponentData(QSharedPointer <NineMLComponentData>data);
+    void copyFrom(QSharedPointer <NineMLComponentData>, QSharedPointer<NineMLComponent>, QSharedPointer<NineMLComponentData> thisSharedPointer);
     NineMLComponentData& operator=(const NineMLComponentData& data);
     NineMLComponentData(){}
     virtual ~NineMLComponentData();
@@ -519,11 +519,11 @@ public:
     void matchPorts();
     QStringList getPortMatches(int index, bool isOutput);
     void removeReferences();
-    systemObject * owner;
+    QSharedPointer<systemObject> owner;
     void import_parameters_from_xml(QDomNode &e);
-    void migrateComponent(NineMLComponent * newComponent);
-    void addInput(NineMLComponentData *, bool = false);
-    void copyParsFrom(NineMLComponentData * data);
+    void migrateComponent(QSharedPointer<NineMLComponent> newComponent);
+    void addInput(QSharedPointer <NineMLComponentData>, bool = false);
+    void copyParsFrom(QSharedPointer <NineMLComponentData> data);
 };
 
 
