@@ -759,8 +759,6 @@ void rootLayout::popSelected(QSharedPointer <population> &pop, rootData* data) {
     if (pop->neuronTypeName.compare("noPop") == 0)
         return;
 
-    qDebug() << pop->getName();
-
     // spikesource has none of this info
     if (pop->isSpikeSource) {
         emit showSpikeSource();

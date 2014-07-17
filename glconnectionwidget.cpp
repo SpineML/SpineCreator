@@ -35,7 +35,6 @@
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
 #include <QOpenGLFramebufferObject>
 #endif
-
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   #define RETINA_SUPPORT 1.0
 #else
@@ -48,6 +47,7 @@
 
 glConnectionWidget::glConnectionWidget(rootData * data, QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
+
     model = (QAbstractTableModel *)0;
     pos = QPointF(0,0);
     zoomFactor = 1.0;
@@ -1810,13 +1810,14 @@ QImage glConnectionWidget:: renderQImage(int w, int h)
     // Set the rendering engine to the size of the image to render
     // Also set the format so that the depth buffer will work
     QOpenGLFramebufferObjectFormat format;
-    //format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setAttachment(QOpenGLFramebufferObject::Depth);
     QOpenGLFramebufferObject qfb(w,h,format);
     qfb.bind();
     // If the frame buffer does not work then return an empty image
     if(!qfb.isValid()) return(QImage());
     resizeGL(w,h);
     // Draw the scene to the buffer
+    glEnable(GL_MULTISAMPLE);
     this->repaint();
     qfb.release();
     resizeGL(width(),height());
@@ -1832,7 +1833,7 @@ QPixmap glConnectionWidget::renderImage(int width, int height) {
     imageSaveMode = true;
 
 // renderPixmap is broken in Qt > 5.0 - this fix doesn't currently work correctly, but is better than nothing
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+#if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
     QImage img = renderQImage(width, height);
 
     if (img.isNull()) {
