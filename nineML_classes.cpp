@@ -2420,33 +2420,26 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLCompone
     return *this;
 }*/
 
-
-
-int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
+void MathInLine::validateMathSetup(QString& testequation, QStringList& FuncList)
 {
-    // remove operators
+    testequation = equation;
+    testequation.replace('+', ' ');
+    testequation = testequation.replace('-', ' ');
+    testequation = testequation.replace('*', ' ');
+    testequation = testequation.replace('/', ' ');
+    testequation = testequation.replace('(', ' ');
+    testequation = testequation.replace(')', ' ');
+    testequation = testequation.replace('<', ' ');
+    testequation = testequation.replace('>', ' ');
+    testequation = testequation.replace('=', ' ');
+    testequation = testequation.replace(',', ' ');
+    testequation = testequation.replace('&', ' ');
+    testequation = testequation.replace('|', ' ');
+    testequation = testequation.replace('!', ' ');
 
-    if (equation.size() == 0) {
-        return 1;
-    }
+    // remove double whitespaces
+    testequation = testequation.simplified();
 
-    QString test = equation;
-
-    test = equation;
-    test.replace('+', ' ');
-    test = test.replace('-', ' ');
-    test = test.replace('*', ' ');
-    test = test.replace('/', ' ');
-    test = test.replace('(', ' ');
-    test = test.replace(')', ' ');
-    test = test.replace('<', ' ');
-    test = test.replace('>', ' ');
-    test = test.replace('=', ' ');
-    test = test.replace(',', ' ');
-    test = test.replace('&', ' ');
-    test = test.replace('|', ' ');
-
-    QStringList FuncList;
     FuncList.push_back("pow");
     FuncList.push_back("exp");
     FuncList.push_back("sin");
@@ -2469,13 +2462,23 @@ int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
     FuncList.push_back("randomUniform");
     FuncList.push_back("randomNormal");
     FuncList.push_back("randomExponential");
+    FuncList.push_back("rand");
+    FuncList.push_back("mod");
 
     // not strictly functions...
     FuncList.push_back("t");
     FuncList.push_back("dt");
+}
 
-    // remove double whitespaces
-    test = test.simplified();
+int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
+{
+    if (equation.size() == 0) {
+        return 1;
+    }
+
+    QString test = equation;
+    QStringList FuncList;
+    this->validateMathSetup (test, FuncList);
 
     // tokenise
     QStringList splitTest;
