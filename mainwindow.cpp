@@ -80,7 +80,7 @@ MainWindow(QWidget *parent) :
    //exit(0);
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
-  #ifdef Q_OS_MAC
+  #ifdef Q_OS_MAC2
 
    settings.setValue("dpi",this->windowHandle()->devicePixelRatio());
 
@@ -621,7 +621,7 @@ MainWindow::~MainWindow()
     clearComponents();
 
     if (viewVZ.OpenGLWidget != NULL) {
-        delete this->viewVZ.errors;
+        //delete this->viewVZ.errors;
         this->viewVZ.layout.clear();
     }
 

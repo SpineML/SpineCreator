@@ -174,13 +174,13 @@ void projection::connect(QSharedPointer<projection> in) {
 
     // connect might be called multiple times due to the nature of Undo
     for (int i = 0; i < destination->reverseProjections.size(); ++i) {
-        if (destination->reverseProjections[i] == in) {
+        if (destination->reverseProjections[i].data() == in.data()) {
             // already there - give up
             return;
         }
     }
     for (int i = 0; i < source->projections.size(); ++i) {
-        if (source->projections[i] == in) {
+        if (source->projections[i].data() == in.data()) {
             // already there - give up
             return;
         }
@@ -203,7 +203,7 @@ void projection::disconnect() {
     if (destination != NULL) {
         // remove projection
         for (int i = 0; i < destination->reverseProjections.size(); ++i) {
-            if (destination->reverseProjections[i] == this) {
+            if (destination->reverseProjections[i].data() == this) {
                 destination->reverseProjections.erase(destination->reverseProjections.begin()+i);
                 dstPos = i;
             }
@@ -211,7 +211,7 @@ void projection::disconnect() {
     }
     if (source != NULL) {
         for (int i = 0; i < source->projections.size(); ++i) {
-            if (source->projections[i] == this) {
+            if (source->projections[i].data() == this) {
                 source->projections.erase(source->projections.begin()+i);
                 srcPos = i;
             }
@@ -603,12 +603,12 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             painter->setPen(linePen);
 
             if (this->type == projectionObject) {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),4*dpi_ratio,4*dpi_ratio);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,0,255,255));
             }
             else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),2*dpi_ratio,2*dpi_ratio);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.015*dpi_ratio*GLscale,0.015*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,210,0,255));
             }
@@ -705,6 +705,10 @@ void projection::drawHandles(QPainter *painter, float GLscale, float viewX, floa
 
         QSettings settings;
         float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+
+#ifdef Q_OS_MAC
+    dpi_ratio *= 0.5;
+#endif
 
         path.addEllipse(this->transformPoint(this->start), 4*dpi_ratio, 4*dpi_ratio);
         lines.moveTo(this->transformPoint(this->start));
