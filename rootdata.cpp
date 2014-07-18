@@ -360,7 +360,11 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
     }
     for (int i = 0; i < this->populations.size(); ++i) {
         QPen pen(QColor(100,0,0,100));
-        pen.setWidthF(float(1));
+
+        QSettings settings;
+        float dpi = settings.value("dpi", "1").toFloat();
+        pen.setWidthF(float(1)/dpi);
+
         painter->setPen(pen);
         this->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
     }

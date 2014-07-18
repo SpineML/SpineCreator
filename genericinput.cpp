@@ -182,7 +182,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             if (source != NULL) {
                 if (source->type == projectionObject) {
                     QSharedPointer <projection> s = qSharedPointerDynamicCast <projection> (source);
-                    CHECK_CAST(s)
+                    CHECK_CAST(s);
                     if (s->curves.size() > 0 && s->destination != NULL) {
                         QLineF temp = QLineF(QPointF(s->destination->x, s->destination->y), s->curves.back().C2);
                         temp.setLength(0.6);
@@ -193,7 +193,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                     }
                 } else if (source->type == populationObject) {
                     QSharedPointer <population> s = qSharedPointerDynamicCast <population> (source);
-                    CHECK_CAST(s)
+                    CHECK_CAST(s);
                     QLineF temp = QLineF(QPointF(s->x, s->y), this->curves.front().C1);
                     temp.setLength(0.6);
                     start = temp.p2();
@@ -205,7 +205,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             if (destination != NULL) {
                 if (destination->type == projectionObject) {
                     QSharedPointer <projection> d = qSharedPointerDynamicCast <projection> (destination);
-                    CHECK_CAST(d)
+                    CHECK_CAST(d);
                     if (d->curves.size() > 0 && d->destination != NULL) {
                         QLineF temp = QLineF(QPointF(d->destination->x, d->destination->y), d->curves.back().C2);
                         temp.setLength(0.55);
@@ -216,7 +216,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                     }
                 } else if (destination->type == populationObject) {
                     QSharedPointer <population> d = qSharedPointerDynamicCast <population> (destination);
-                    CHECK_CAST(d)
+                    CHECK_CAST(d);
                     QLineF temp = QLineF(QPointF(d->x, d->y), this->curves.back().C2);
                     temp.setLength(0.55);
                     end = temp.p2();
@@ -288,7 +288,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             // account for hidpi in line width
             QPen linePen = painter->pen();
-            linePen.setWidthF(linePen.widthF()*dpi_ratio);
+            linePen.setWidthF(linePen.widthF()/dpi_ratio);
             painter->setPen(linePen);
 
             if (this->type == projectionObject) {
@@ -297,7 +297,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                 painter->fillPath(endPoint, QColor(0,0,255,255));
             }
             else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),2*dpi_ratio,2*dpi_ratio);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.02*dpi_ratio*GLscale,0.02*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,210,0,255));
             }

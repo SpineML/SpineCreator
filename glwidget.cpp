@@ -24,22 +24,23 @@
 
 #include "glwidget.h"
 
-#ifdef Q_OS_MAC
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+  #define RETINA_SUPPORT 1.0
+#else
+  #ifdef Q_OS_MAC2
+  #define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
+  #else
+  #define RETINA_SUPPORT 1.0
+  #endif
+#endif
+
+#ifdef Q_OS_MAC2
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 #else
 GLWidget::GLWidget(QWidget *parent):QWidget(parent)
 #endif
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-  #define RETINA_SUPPORT 1.0
-#else
-  #ifdef Q_OS_MAC
-  #define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
-  #else
-  #define RETINA_SUPPORT 1.0
-  #endif
-#endif
 {
     // variable for making sure we don't redraw the openGL when we don't need to
     changed = 100;
@@ -254,7 +255,7 @@ void GLWidget::resizeGL(int, int)
 void GLWidget::paintEvent(QPaintEvent * event)
 {
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC2
     makeCurrent();
     //QPixmap pix((this->width()*RETINA_SUPPORT), (this->height()*RETINA_SUPPORT))
     glViewport (0, 0, (this->width()*RETINA_SUPPORT), (this->height()*RETINA_SUPPORT));
@@ -279,7 +280,7 @@ void GLWidget::paintEvent(QPaintEvent * event)
     // painter.beginNativePainting();
 
     // setup the painter
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC2
     QFont font("Monospace", GLscale/18.0f*1.3f);
     font.setPointSizeF(GLscale/18.0f*1.3f);
 #else
@@ -291,7 +292,7 @@ void GLWidget::paintEvent(QPaintEvent * event)
     painter.setFont(font);
 
     // if grid then draw it up:
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MAC2
     if (this->gridSelect) {
         painter.save();
         painter.translate((this->width()*RETINA_SUPPORT)/2, (this->height()*RETINA_SUPPORT)/2);
@@ -333,7 +334,7 @@ void GLWidget::paintEvent(QPaintEvent * event)
     //painter.endNativePainting();
     painter.end();
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC2
     QImage gldata = QGLWidget::convertToGLFormat(workaround_for_slow_osx_drawing);
     glDrawPixels((this->width()*RETINA_SUPPORT), (this->height()*RETINA_SUPPORT), GL_RGBA, GL_UNSIGNED_BYTE, gldata.bits());
 

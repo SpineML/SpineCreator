@@ -747,6 +747,9 @@ void population::drawSynapses(QPainter *painter, float GLscale, float viewX, flo
     QPen oldPen = painter->pen();
     QPen pen(QColor(0,0,255,255));
     pen.setWidthF(1.5);
+#ifdef Q_OS_MAC
+    pen.setWidthF(0.75);
+#endif
     painter->setPen(pen);
 
     // so we could have an inherited class with this function
