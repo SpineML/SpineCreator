@@ -116,6 +116,8 @@ void NineMLNodeItem::updateLayout()
     offset /= 2.0;
     QPointF pos = GVNode::getGVNodePosition(offset);
     pos += QPointF(padding, padding);
+    qDebug() << "Calling setPos(" << pos << ") on node position...";
+    // setPos is a Qt thing: QGraphicsItem::setPos
     setPos(pos);
 }
 
@@ -144,7 +146,7 @@ void NineMLNodeItem::updateGVData()
     TextItemGroup::updateItemDimensions();
     QRectF bounds = boundingRect();
     GVNode::setGVNodeSize((bounds.width())/GV_DPI,  (bounds.height())/GV_DPI);
-    //qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height();
+    qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height();
     layout->updateLayout();
 }
 
@@ -182,6 +184,7 @@ void NineMLTransitionItem::updateLayout()
     offset /= 2.0;
     QPointF pos = GVEdge::getGVEdgeLabelPosition(offset);
     pos += QPointF(padding,padding);
+    qDebug() << "Calling setPos(" << pos << ") on edge label position...";
     setPos(pos);
 
     //update curve points and set arrow path
@@ -259,7 +262,7 @@ RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
     regime = r;
     this->root = root;
 
-    //create name
+    //create name.
     setRegimeName(regime->name);
 
     //create regime equations
@@ -278,8 +281,11 @@ void RegimeGraphicsItem::setRegimeName(QString n)
 {
     NineMLComponent * oldComponent = new NineMLComponent(root->al);
     regime->name = n;
-    //rename the gv node
-    renameGVNode(n);
+
+    // rename the gv node which is a parent class of RegimeGraphicsItem.
+    // Shouldn't be required - NineMLNodeItem already set name.
+    //renameGVNode(n);
+
     //update the dst regime name in any onconditions
     for (uint i=0;i<root->al->RegimeList.size();i++)
     {
@@ -1272,7 +1278,7 @@ AnalogPortTextItem::AnalogPortTextItem(PortListGraphicsItem *parent, AnalogPort 
     : NineMLTextItem(parent, parent)
 {
     port = p;
-    root = r;  
+    root = r;
     updateContent();
 
 }
@@ -1811,7 +1817,7 @@ void OnEventGraphicsItem::setSynapseRegime(QString r)
 }
 
 void OnEventGraphicsItem::addStateAssignment(StateAssignment *sa)
-{   
+{
     StateAssignmentTextItem *s = new StateAssignmentTextItem(this, sa, root);
     int index;
     for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM

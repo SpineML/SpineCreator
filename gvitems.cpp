@@ -85,7 +85,14 @@ GVItem::GVItem(GVLayout *l)
 GVNode::GVNode(GVLayout *l, QString name)
     : GVItem(l)
 {
-    DBG() << "GVNode constructor...";
+    DBG() << "GVNode constructor for GVNode name " << name << "...";
+    this->init(name);
+}
+
+void
+GVNode::init(QString name)
+{
+    DBG() << "GVNode::init for GVNode name " << name << "...";
     this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE); // TRUE means create if not existent
     agsafeset(this->gv_node, (char*)"fixedsize", (char*)"true", (char*)"");
     agsafeset(this->gv_node, (char*)"shape", (char*)"rectangle", (char*)"");
@@ -120,24 +127,47 @@ QPointF GVNode::getGVNodePosition(QPointF offset)
     DBG() << "offset: " << offset;
     QPointF position = QPointF(ND_coord(this->gv_node).x,
                                (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
+    DBG() << "position before: " << position;
     position -= offset;
-    DBG() << position;
+    DBG() << "position after: " << position;
+    DBG() << "returning: " << position*2;
     return position*2;
 }
 
+#if 0
 // Is the the right approach?
 void GVNode::renameGVNode(QString name)
 {
     // When using libgraph/libgvc, this renamed
     // this->gv_node->name. However, with cgraph you can't rename the
     // node.
+
 #if 0
     // The following is what this used to do:
     agstrfree(this->layout->getGVGraph(), this->gv_node->name);
     this->gv_node->name = agstrdup(this->layout->getGVGraph(), name.toUtf8().data());
 #endif
-}
 
+    // Here's an attempt to replace the node instead, though I still
+    // see a segfault when rendering components.
+#if 0
+    DBG() << "reanmeGVNode called to rename to '" << name << "'";
+    Agnode_t* tmp_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), FALSE);
+    if (tmp_node == NULL) {
+        // Node with that name not found, so..
+        DBG() << "Renaming gv_node...";
+        tmp_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE);
+        agcopyattr (this->gv_node, tmp_node);
+        // This removes data contained in tmp node, too?
+        agdelete(this->layout->getGVGraph(), this->gv_node);
+        this->gv_node = tmp_node;
+    } else {
+        // Node with that name found, no need to rename.
+        DBG() << "No need to rename gv_node...";
+    }
+#endif
+}
+#endif
 
 /* GVEdge */
 GVEdge::GVEdge(GVLayout *l, Agnode_t *src, Agnode_t *dst)
@@ -145,6 +175,9 @@ GVEdge::GVEdge(GVLayout *l, Agnode_t *src, Agnode_t *dst)
 {
     // get src regime
     this->gv_edge = agedge(this->layout->getGVGraph(), src, dst, NULL, 1);
+    // Ensure the edge has a label:
+    // char* s = "default label";
+    // agset (this->gv_edge, "label", agstrdup (this->layout->getGVGraph(),s));
 }
 
 GVEdge::~GVEdge()
@@ -155,30 +188,41 @@ GVEdge::~GVEdge()
 
 void GVEdge::setGVEdgeLabelSize(int width_pixels, int height_pixels)
 {
-    //update GV l width
+    // update GV l width
     char label[256];
     sprintf(label,"<table width=\"%d\" height=\"%d\"><tr><td>Label</td></tr></table>", width_pixels, height_pixels);
     char* html = agstrdup_html(this->layout->getGVGraph(), label);
     agsafeset(this->gv_edge, (char*)"label", html, (char*)"html");
     agstrfree(this->layout->getGVGraph(), html);
 
-    DBG() << "(" << width_pixels<< ", " << height_pixels << ")";
+    DBG() << "(" << width_pixels<< ", " << height_pixels << ") for label '" << agget (this->gv_edge, (char*)"label") << "'";
 }
 
 QPointF GVEdge::getGVEdgeLabelPosition(QPointF offset)
 {
     QPointF position(0,0);
-    position = QPointF(ED_label(this->gv_edge)->pos.x,
-                       (GD_bb(this->layout->getGVGraph()).UR.y - ED_label(this->gv_edge)->pos.y));
+#if 0
+    qreal a = 0;
+    qreal b = 0;
+    // This crashes as the edge label doesn't have a position OR the
+    // edge doesn't even have a label..
+    a = ED_label(this->gv_edge)->pos.x;
 
+    char* l = agget (this->gv_edge, (char*)"label");
+
+    b = (GD_bb(this->layout->getGVGraph()).UR.y - ED_label(this->gv_edge)->pos.y);
+    position = QPointF(a,b);
+
+#endif
+    DBG() << position << " before";
     position -= offset;
-    DBG() << position;
+    DBG() << position << " after";
     return position;
 }
 
 uint GVEdge::getGVEdgeSplinesCount()
 {
-    return ED_spl(this->gv_edge)->list->size; 
+    return ED_spl(this->gv_edge)->list->size;
 }
 
 QPointF GVEdge::getGVEdgeSplinesPoint(uint i)
