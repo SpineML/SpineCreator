@@ -891,6 +891,9 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     title->setColour(Qt::red);
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Params, Vars & Alias");
+
+    this->setGVNodePosition (QPointF(10,100));
+
     updateGVData();
 
     //create parameter items
@@ -1208,6 +1211,9 @@ PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
     title->setColour(Qt::blue);
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Ports");
+
+    this->setGVNodePosition (QPointF(10,0));
+
     updateGVData();
 
     //create analog port items

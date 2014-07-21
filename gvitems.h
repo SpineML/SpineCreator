@@ -80,6 +80,7 @@ public:
     Agnode_t* getGVNode();
     void setGVNodeSize(qreal width_inches, qreal height_inches);
     QPointF getGVNodePosition(QPointF offset);
+    void setGVNodePosition(const QPointF& position);
 #if 0
     void renameGVNode(QString name);
 #endif

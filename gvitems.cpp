@@ -120,10 +120,15 @@ void GVNode::setGVNodeSize(qreal width_inches, qreal height_inches)
     DBG() << "(" << w << ", " << h << ")";
 }
 
+void GVNode::setGVNodePosition (const QPointF& position)
+{
+    ND_coord(this->gv_node).x = position.x();
+    ND_coord(this->gv_node).y = position.y();
+}
+
 // used once only in nineml_graphicsitems.cpp:122
 QPointF GVNode::getGVNodePosition(QPointF offset)
 {
-
     DBG() << "offset: " << offset;
     QPointF position = QPointF(ND_coord(this->gv_node).x,
                                (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
