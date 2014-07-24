@@ -66,8 +66,6 @@ public:
     void removeGVItem(GVItem *item);
 private:
     Agraph_t *gvgraph;
-    // cgraph doesn't use contexts in the way that graph did.
-    //GVC_t *gvc;
     vector <GVItem*> items;
 };
 
@@ -79,14 +77,18 @@ public:
     ~GVNode();
     Agnode_t* getGVNode();
     void setGVNodeSize(qreal width_inches, qreal height_inches);
+    QPointF getPosition(void);
+    QPointF getGVNodePosition(void);
     QPointF getGVNodePosition(QPointF offset);
     void setGVNodePosition(const QPointF& position);
-#if 0
-    void renameGVNode(QString name);
-#endif
 protected:
     void init(QString name);
     Agnode_t *gv_node;
+    // A stored position which is relevant with the frame of reference
+    // of the Qt Graphics environment.
+    QPointF weirdStoredPosition;
+    // The position of the gv_node. Stored here for convenience for now.
+    QPointF storedPosition;
 };
 
 

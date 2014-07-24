@@ -111,10 +111,16 @@ NineMLNodeItem::~NineMLNodeItem()
 
 void NineMLNodeItem::updateLayout()
 {
+    DBG() << "Node item updateLayout (from GVItem virtual method)";
     QRectF bounds = boundingRect();
     QPointF offset = QPointF(bounds.width(), bounds.height());
+    DBG() << "bounding rect: " << offset;
     offset /= 2.0;
-    QPointF pos = GVNode::getGVNodePosition(offset);
+    //QPointF pos = GVNode::getGVNodePosition(offset);
+    QPointF pos = this->getPosition();
+    DBG() << "Applying offset "  << offset;
+    pos -= offset;
+    pos *= 2;
     pos += QPointF(padding, padding);
     qDebug() << "Calling setPos(" << pos << ") on node position...";
     // setPos is a Qt thing: QGraphicsItem::setPos
@@ -146,7 +152,7 @@ void NineMLNodeItem::updateGVData()
     TextItemGroup::updateItemDimensions();
     QRectF bounds = boundingRect();
     GVNode::setGVNodeSize((bounds.width())/GV_DPI,  (bounds.height())/GV_DPI);
-    qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height();
+    qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height() << " pixels";
     layout->updateLayout();
 }
 
@@ -210,7 +216,7 @@ void NineMLTransitionItem::updateGVData()
     TextItemGroup::updateItemDimensions();
     QRectF bounds = TextItemGroup::boundingRect();
     GVEdge::setGVEdgeLabelSize((int)bounds.width(), (int)bounds.height());
-    //qDebug() << "NineMLTransitionItem updateGVData " << bounds.width() << " " << bounds.height();
+    DBG() << "NineMLTransitionItem updateGVData " << bounds.width() << " " << bounds.height();
     layout->updateLayout();
 }
 
@@ -892,8 +898,10 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Params, Vars & Alias");
 
-    this->setGVNodePosition (QPointF(10,100));
+    // Calling this causes a crash in the GVNode destructor (no surprise, it turns out)
+//    this->setGVNodePosition (QPointF(0,0));
 
+    DBG() << "Call updateGVData()...";
     updateGVData();
 
     //create parameter items
@@ -913,7 +921,6 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     {
         addAliasItem(r->al->AliasList[i]);
     }
-
 }
 
 void ParameterListGraphicsItem::addParameterItem(Parameter *p)
@@ -1197,7 +1204,7 @@ void AliasTextItem::handleSelection()
 
 /************************************************************/
 
-PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
+PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r, const QPointF& startingPosition)
     :NineMLNodeItem(r->gvlayout, "Ports")
 {
     root = r;
@@ -1212,7 +1219,8 @@ PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Ports");
 
-    this->setGVNodePosition (QPointF(10,0));
+    DBG() << "Setting initial node position to " << startingPosition;
+//    this->setGVNodePosition (startingPosition);
 
     updateGVData();
 

@@ -62,6 +62,7 @@ void GroupedTextItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *)
 
 void GroupedTextItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    qDebug() << "GroupedTextItem::paint: painting a rectangle!";
     QRectF text_rect = boundingRect();
     painter->setPen(colour);
     painter->setBrush(colour);

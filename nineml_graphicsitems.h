@@ -71,7 +71,7 @@ private:
     QPolygonF arrow_head;
 };
 
-
+// TextItemGroup derives from QGraphicsItem (amoung other things)
 class NineMLNodeItem : public TextItemGroup, public GVNode
 {
     Q_OBJECT
@@ -354,7 +354,7 @@ class PortListGraphicsItem : public NineMLNodeItem
 {
     Q_OBJECT
 public:
-    PortListGraphicsItem(RootComponentItem *root);
+    PortListGraphicsItem(RootComponentItem *root, const QPointF& startingPosition);
     void addAnalogePortItem(AnalogPort *ap);
     void addEventPortItem(EventPort *ep);
     void addImpulsePortItem(ImpulsePort *ip);

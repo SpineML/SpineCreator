@@ -55,6 +55,7 @@ void GVLayout::updateLayout()
     for (uint i=0;i<this->items.size(); i++)
     {
         GVItem *gv_item = this->items[i];
+        DBG() << "update layout on an item...";
         gv_item->updateLayout();
     }
 }
@@ -92,14 +93,15 @@ GVNode::GVNode(GVLayout *l, QString name)
 void
 GVNode::init(QString name)
 {
-    DBG() << "GVNode::init for GVNode name " << name << "...";
     this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE); // TRUE means create if not existent
+    DBG() << "ID for " << name << " is: " << ND_id(this->gv_node);
     agsafeset(this->gv_node, (char*)"fixedsize", (char*)"true", (char*)"");
     agsafeset(this->gv_node, (char*)"shape", (char*)"rectangle", (char*)"");
 }
 
 GVNode::~GVNode()
 {
+    DBG() << "Delete node ID " << ND_id(this->gv_node);
     agdelete(this->layout->getGVGraph(), this->gv_node);
 }
 
@@ -117,62 +119,45 @@ void GVNode::setGVNodeSize(qreal width_inches, qreal height_inches)
     sprintf(h,"%f", height_inches);
     agsafeset(this->gv_node, (char*)"width", w, (char*)"");
     agsafeset(this->gv_node, (char*)"height", h, (char*)"");
-    DBG() << "(" << w << ", " << h << ")";
+    DBG() << "setGVNodeSize (" << w << ", " << h << ") in inches for node " << ND_id(this->gv_node);
 }
 
+// This is not the right way to go about things!
 void GVNode::setGVNodePosition (const QPointF& position)
 {
+    // Need to use agsafeset here somehow to set x & y.
     ND_coord(this->gv_node).x = position.x();
     ND_coord(this->gv_node).y = position.y();
 }
 
+QPointF GVNode::getGVNodePosition(void)
+{
+    return this->weirdStoredPosition;
+}
+
 // used once only in nineml_graphicsitems.cpp:122
+// This doesn't actually _change_ the position. Also, why use that offset?
 QPointF GVNode::getGVNodePosition(QPointF offset)
 {
     DBG() << "offset: " << offset;
     QPointF position = QPointF(ND_coord(this->gv_node).x,
                                (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
-    DBG() << "position before: " << position;
+    DBG() << "getGVNodePosition: actual position: " << position
+          << " for node ID " << ND_id(this->gv_node);
     position -= offset;
-    DBG() << "position after: " << position;
-    DBG() << "returning: " << position*2;
-    return position*2;
+    DBG() << "getGVNodePosition: returning: " << position*2
+          << " for node ID " << ND_id(this->gv_node);
+    this->weirdStoredPosition = position*2;
+    return this->weirdStoredPosition;
 }
 
-#if 0
-// Is the the right approach?
-void GVNode::renameGVNode(QString name)
+QPointF GVNode::getPosition(void)
 {
-    // When using libgraph/libgvc, this renamed
-    // this->gv_node->name. However, with cgraph you can't rename the
-    // node.
-
-#if 0
-    // The following is what this used to do:
-    agstrfree(this->layout->getGVGraph(), this->gv_node->name);
-    this->gv_node->name = agstrdup(this->layout->getGVGraph(), name.toUtf8().data());
-#endif
-
-    // Here's an attempt to replace the node instead, though I still
-    // see a segfault when rendering components.
-#if 0
-    DBG() << "reanmeGVNode called to rename to '" << name << "'";
-    Agnode_t* tmp_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), FALSE);
-    if (tmp_node == NULL) {
-        // Node with that name not found, so..
-        DBG() << "Renaming gv_node...";
-        tmp_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE);
-        agcopyattr (this->gv_node, tmp_node);
-        // This removes data contained in tmp node, too?
-        agdelete(this->layout->getGVGraph(), this->gv_node);
-        this->gv_node = tmp_node;
-    } else {
-        // Node with that name found, no need to rename.
-        DBG() << "No need to rename gv_node...";
-    }
-#endif
+    // Fixme: Prolly don't need storedPosition class attribute.
+    this->storedPosition = QPointF(ND_coord(this->gv_node).x,
+                             (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
+    return this->storedPosition;
 }
-#endif
 
 /* GVEdge */
 GVEdge::GVEdge(GVLayout *l, Agnode_t *src, Agnode_t *dst)

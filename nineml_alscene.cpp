@@ -60,15 +60,26 @@ NineMLALScene::~NineMLALScene()
     portl_item = NULL;
 }
 
+#define NINEMLALSCENE_SIZE 5000
 void NineMLALScene::initialiseScene(NineMLComponent *al)
 {
+    DBG() << "initialise scene..";
 
-    //create paramater list item
+    QRectF sceneRect = this->itemsBoundingRect();
+    DBG() << "original sceneRect: " << sceneRect;
+    sceneRect.setX(sceneRect.x()-NINEMLALSCENE_SIZE);
+    sceneRect.setY(sceneRect.y()-NINEMLALSCENE_SIZE);
+    sceneRect.setWidth(sceneRect.width()+NINEMLALSCENE_SIZE);
+    sceneRect.setHeight(sceneRect.height()+NINEMLALSCENE_SIZE);
+    DBG() << "sceneRect after adding ninemlalscene: " << sceneRect;
+    this->setSceneRect(sceneRect);
+
+    DBG() << "create paramater list item";
     pl_item = new ParameterListGraphicsItem(root);
     addItem(pl_item);
 
-    //create analoge port list item
-    portl_item = new PortListGraphicsItem(root);
+    DBG() << "create analog port list item";
+    portl_item = new PortListGraphicsItem(root, pl_item->getGVNodePosition());
     addItem(portl_item);
 
     //create all regime graphics items
@@ -99,15 +110,6 @@ void NineMLALScene::initialiseScene(NineMLComponent *al)
             addOnImpulseItem(al->RegimeList[i], r->OnImpulseList[j]);
         }
     }
-
-    QRectF sceneRect = this->itemsBoundingRect();
-    sceneRect.setX(sceneRect.x()-5000);
-    sceneRect.setY(sceneRect.y()-5000);
-    sceneRect.setWidth(sceneRect.width()+5000);
-    sceneRect.setHeight(sceneRect.height()+5000);
-    //sceneRect.setRect(-5000.0,-5000.0, 10000.0,10000.0);
-    this->setSceneRect(sceneRect);
-
 }
 
 
