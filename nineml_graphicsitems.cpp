@@ -97,12 +97,11 @@ void ArrowItem::setLineWidth(uint w)
 
 /* NineMLNodeItem */
 
-NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name, const QPointF& startingPosition)
-    : TextItemGroup(), GVNode(layout, name, startingPosition)
+NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name)
+    : TextItemGroup(), GVNode(layout, name)
 {
     //in front of labels
     this->setZValue(1);
-
 }
 
 NineMLNodeItem::~NineMLNodeItem()
@@ -116,15 +115,7 @@ void NineMLNodeItem::updateLayout()
     QPointF offset = QPointF(bounds.width(), bounds.height());
     DBG() << "bounding rect: " << offset;
     offset /= 2.0;
-    //QPointF pos = GVNode::getGVNodePosition(offset);
-    QPointF pos = this->getPosition(); // This doesn't work with cgraph.
-    if (this->getId() > 0) {
-        double h = this->getHeightPoints();
-        offset.setY(offset.y() + 2*h); // should be nodesep*h
-    }
-    DBG() << "Applying offset "  << offset;
-    pos -= offset;
-    pos *= 2;
+    QPointF pos = GVNode::getGVNodePosition(offset);
     pos += QPointF(padding, padding);
     qDebug() << "Calling setPos(" << pos << ") on node position...";
     // setPos is a Qt thing: QGraphicsItem::setPos
@@ -1208,8 +1199,8 @@ void AliasTextItem::handleSelection()
 
 /************************************************************/
 
-PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r, const QPointF& startingPosition)
-    :NineMLNodeItem(r->gvlayout, "Ports", startingPosition)
+PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
+    :NineMLNodeItem(r->gvlayout, "Ports")
 {
     root = r;
 
@@ -1222,9 +1213,6 @@ PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r, const QPointF& 
     title->setColour(Qt::blue);
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Ports");
-
-    DBG() << "Setting initial node position to " << startingPosition;
-//    this->setGVNodePosition (startingPosition);
 
     updateGVData();
 

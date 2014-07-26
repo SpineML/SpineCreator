@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 // graphviz/types.h provides node/graph/edge data access macros
-#define WITH_CGRAPH 1
+//#define WITH_CGRAPH 1
 //#include <graphviz/types.h>
 
 #include "gvitems.h"
@@ -35,22 +35,26 @@
 /* GVLayout */
 GVLayout::GVLayout()
 {
+    this->gv_context = gvContext();
     //GV graph
     this->gvgraph = agopen((char*)"g", Agdirected, NULL);
     agsafeset(this->gvgraph, (char*)"splines", (char*)"true", (char*)"");
     agsafeset(this->gvgraph, (char*)"overlap", (char*)"false", (char*)"");
     agsafeset(this->gvgraph, (char*)"rankdir", (char*)"LR", (char*)"");
-    agsafeset(this->gvgraph, (char*)"nodesep", (char*)"2.0", (char*)"");
+    // nodesep was 2.0 for libgraph, seems to be better set to 0.0 in cgraph:
+    agsafeset(this->gvgraph, (char*)"nodesep", (char*)"0.0", (char*)"");
     agsafeset(this->gvgraph, (char*)"labelloc", (char*)"t", (char*)"");
 }
 
 GVLayout::~GVLayout()
 {
     agclose(this->gvgraph);
+    gvFreeContext (this->gv_context);
 }
 
 void GVLayout::updateLayout()
 {
+    gvLayout (this->gv_context, this->gvgraph, "dot");
     DBG() << "layout update with " << items.size() << " items";
     //update all graphviz items in the layout
     for (uint i=0;i<this->items.size(); i++)
@@ -63,6 +67,10 @@ void GVLayout::updateLayout()
 
     // Debugging:
     agwrite (this->gvgraph, stdout);
+    gvRender (this->gv_context, this->gvgraph, "dot", stdout);
+
+
+    gvFreeLayout (this->gv_context, this->gvgraph);
 }
 
 Agraph_t *GVLayout::getGVGraph()
@@ -88,7 +96,7 @@ GVItem::GVItem(GVLayout *l)
 
 
 /* GVNode */
-GVNode::GVNode(GVLayout *l, QString name, const QPointF& initialPos)
+GVNode::GVNode(GVLayout *l, QString name)
     : GVItem(l)
 {
     DBG() << "GVNode constructor for GVNode name " << name << "...";
@@ -96,9 +104,6 @@ GVNode::GVNode(GVLayout *l, QString name, const QPointF& initialPos)
     DBG() << "ID for " << name << " is: " << ND_id(this->gv_node);
     agsafeset(this->gv_node, (char*)"fixedsize", (char*)"true", (char*)"");
     agsafeset(this->gv_node, (char*)"shape", (char*)"rectangle", (char*)"");
-    stringstream ss;
-    ss << initialPos.x() << "," << initialPos.y();
-    agsafeset(this->gv_node, (char*)"pos", (char*)ss.str().c_str(), (char*)"");
 }
 
 GVNode::~GVNode()
@@ -124,21 +129,8 @@ void GVNode::setGVNodeSize(qreal width_inches, qreal height_inches)
     DBG() << "setGVNodeSize (" << w << ", " << h << ") in inches for node " << ND_id(this->gv_node);
 }
 
-// This is not the right way to go about things!
-void GVNode::setGVNodePosition (const QPointF& position)
-{
-    // Need to use agsafeset here somehow to set x & y.
-    ND_coord(this->gv_node).x = position.x();
-    ND_coord(this->gv_node).y = position.y();
-}
-
-QPointF GVNode::getGVNodePosition(void)
-{
-    return this->weirdStoredPosition;
-}
-
-// used once only in nineml_graphicsitems.cpp:122
-// This doesn't actually _change_ the position. Also, why use that offset?
+// used in nineml_graphicsitems.cpp:122 or thereabouts.
+// This method is a bit bizarre...
 QPointF GVNode::getGVNodePosition(QPointF offset)
 {
     DBG() << "offset: " << offset;
@@ -149,8 +141,15 @@ QPointF GVNode::getGVNodePosition(QPointF offset)
     position -= offset;
     DBG() << "getGVNodePosition: returning: " << position*2
           << " for node ID " << ND_id(this->gv_node);
-    this->weirdStoredPosition = position*2;
-    return this->weirdStoredPosition;
+    return position*2;
+}
+
+// ...I would do this and then apply any changes in the client code:
+QPointF GVNode::getPosition(void)
+{
+    QPointF position = QPointF(ND_coord(this->gv_node).x,
+                               (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
+    return position;
 }
 
 int GVNode::getId(void)
@@ -166,20 +165,6 @@ double GVNode::getHeightPoints (void)
     double h_inches = 0.0;
     hh >> h_inches;
     return h_inches*GV_DPI;
-}
-
-QPointF GVNode::getPosition(void)
-{
-    // Fixme: Prolly don't need storedPosition class attribute.
-    this->storedPosition = QPointF(ND_coord(this->gv_node).x,
-                             (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
-
-    DBG() << "getPosition: actual position: " << this->storedPosition
-          << " for node ID " << ND_id(this->gv_node);
-
-    DBG() << "getPosition: agget pos attr: '" << agget (this->gv_node, (char*)"pos") << "'";
-
-    return this->storedPosition;
 }
 
 /* GVEdge */

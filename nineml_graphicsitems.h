@@ -76,7 +76,7 @@ class NineMLNodeItem : public TextItemGroup, public GVNode
 {
     Q_OBJECT
 public:
-    NineMLNodeItem(GVLayout *layout, QString name, const QPointF& startingPosition = QPointF(0,0));
+    NineMLNodeItem(GVLayout *layout, QString name);
     ~NineMLNodeItem();
     virtual void updateLayout();
     void updateGVData();
@@ -354,7 +354,7 @@ class PortListGraphicsItem : public NineMLNodeItem
 {
     Q_OBJECT
 public:
-    PortListGraphicsItem(RootComponentItem *root, const QPointF& startingPosition);
+    PortListGraphicsItem(RootComponentItem *root);
     void addAnalogePortItem(AnalogPort *ap);
     void addEventPortItem(EventPort *ep);
     void addImpulsePortItem(ImpulsePort *ip);
