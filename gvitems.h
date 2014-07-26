@@ -31,7 +31,10 @@
 #ifndef GVITEMS_H
 #define GVITEMS_H
 
+#define WITH_CGRAPH 1
+
 #include <QtGui>
+#include <graphviz/gvc.h>
 #include <graphviz/cgraph.h>
 #include <vector>
 #include <algorithm>
@@ -73,16 +76,17 @@ private:
 class GVNode : public GVItem
 {
 public:
-    GVNode(GVLayout *layout, QString name);
+    GVNode(GVLayout *layout, QString name, const QPointF& initialPos=QPointF(0,0));
     ~GVNode();
     Agnode_t* getGVNode();
+    int getId(void);
     void setGVNodeSize(qreal width_inches, qreal height_inches);
+    double getHeightPoints (void);
     QPointF getPosition(void);
     QPointF getGVNodePosition(void);
     QPointF getGVNodePosition(QPointF offset);
     void setGVNodePosition(const QPointF& position);
 protected:
-    void init(QString name);
     Agnode_t *gv_node;
     // A stored position which is relevant with the frame of reference
     // of the Qt Graphics environment.

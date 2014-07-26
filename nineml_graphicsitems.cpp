@@ -97,8 +97,8 @@ void ArrowItem::setLineWidth(uint w)
 
 /* NineMLNodeItem */
 
-NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name)
-    : TextItemGroup(), GVNode(layout, name)
+NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name, const QPointF& startingPosition)
+    : TextItemGroup(), GVNode(layout, name, startingPosition)
 {
     //in front of labels
     this->setZValue(1);
@@ -117,7 +117,11 @@ void NineMLNodeItem::updateLayout()
     DBG() << "bounding rect: " << offset;
     offset /= 2.0;
     //QPointF pos = GVNode::getGVNodePosition(offset);
-    QPointF pos = this->getPosition();
+    QPointF pos = this->getPosition(); // This doesn't work with cgraph.
+    if (this->getId() > 0) {
+        double h = this->getHeightPoints();
+        offset.setY(offset.y() + 2*h); // should be nodesep*h
+    }
     DBG() << "Applying offset "  << offset;
     pos -= offset;
     pos *= 2;
@@ -1205,7 +1209,7 @@ void AliasTextItem::handleSelection()
 /************************************************************/
 
 PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r, const QPointF& startingPosition)
-    :NineMLNodeItem(r->gvlayout, "Ports")
+    :NineMLNodeItem(r->gvlayout, "Ports", startingPosition)
 {
     root = r;
 

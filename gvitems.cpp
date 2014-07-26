@@ -24,9 +24,10 @@
 
 // graphviz/types.h provides node/graph/edge data access macros
 #define WITH_CGRAPH 1
-#include <graphviz/types.h>
+//#include <graphviz/types.h>
 
 #include "gvitems.h"
+#include <sstream>
 
 // Debugging define here, as we don't include globalHeader.h
 #define DBG() qDebug() << __FUNCTION__ << ": "
@@ -58,6 +59,10 @@ void GVLayout::updateLayout()
         DBG() << "update layout on an item...";
         gv_item->updateLayout();
     }
+
+
+    // Debugging:
+    agwrite (this->gvgraph, stdout);
 }
 
 Agraph_t *GVLayout::getGVGraph()
@@ -83,20 +88,17 @@ GVItem::GVItem(GVLayout *l)
 
 
 /* GVNode */
-GVNode::GVNode(GVLayout *l, QString name)
+GVNode::GVNode(GVLayout *l, QString name, const QPointF& initialPos)
     : GVItem(l)
 {
     DBG() << "GVNode constructor for GVNode name " << name << "...";
-    this->init(name);
-}
-
-void
-GVNode::init(QString name)
-{
     this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE); // TRUE means create if not existent
     DBG() << "ID for " << name << " is: " << ND_id(this->gv_node);
     agsafeset(this->gv_node, (char*)"fixedsize", (char*)"true", (char*)"");
     agsafeset(this->gv_node, (char*)"shape", (char*)"rectangle", (char*)"");
+    stringstream ss;
+    ss << initialPos.x() << "," << initialPos.y();
+    agsafeset(this->gv_node, (char*)"pos", (char*)ss.str().c_str(), (char*)"");
 }
 
 GVNode::~GVNode()
@@ -151,11 +153,32 @@ QPointF GVNode::getGVNodePosition(QPointF offset)
     return this->weirdStoredPosition;
 }
 
+int GVNode::getId(void)
+{
+    return ND_id(this->gv_node);
+}
+
+double GVNode::getHeightPoints (void)
+{
+    char* h = agget (this->gv_node, (char*)"height");
+    stringstream hh;
+    hh << h;
+    double h_inches = 0.0;
+    hh >> h_inches;
+    return h_inches*GV_DPI;
+}
+
 QPointF GVNode::getPosition(void)
 {
     // Fixme: Prolly don't need storedPosition class attribute.
     this->storedPosition = QPointF(ND_coord(this->gv_node).x,
                              (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
+
+    DBG() << "getPosition: actual position: " << this->storedPosition
+          << " for node ID " << ND_id(this->gv_node);
+
+    DBG() << "getPosition: agget pos attr: '" << agget (this->gv_node, (char*)"pos") << "'";
+
     return this->storedPosition;
 }
 

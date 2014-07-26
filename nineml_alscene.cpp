@@ -79,7 +79,8 @@ void NineMLALScene::initialiseScene(NineMLComponent *al)
     addItem(pl_item);
 
     DBG() << "create analog port list item";
-    portl_item = new PortListGraphicsItem(root, pl_item->getGVNodePosition());
+    // The QPointF() arg is pointless.
+    portl_item = new PortListGraphicsItem(root, QPointF(0, 215)/*pl_item->getGVNodePosition()*/);
     addItem(portl_item);
 
     //create all regime graphics items
