@@ -1376,7 +1376,7 @@ kernel_connection::~kernel_connection()
 {
 }
 
-QLayout * kernel_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay) {
+QLayout * kernel_connection::drawLayout(rootData*, viewVZLayoutEditHandler*, rootLayout*) {
     return new QVBoxLayout();
 }
 

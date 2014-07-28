@@ -527,8 +527,8 @@ void viewVZLayoutEditHandler::initConnection() {
     // draw up the panel for a connection
     QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
 
-    QSettings settings;
-    bool devMode = settings.value("dev_mode_on", "false").toBool();
+    //QSettings settings;
+    //bool devMode = settings.value("dev_mode_on", "false").toBool();
 
     connectionComboBox = this->addDropBox(panelLayout, "Connectivity", "will_be_overriden");
     this->updateConnectionList();

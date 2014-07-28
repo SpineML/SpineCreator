@@ -2208,7 +2208,7 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("command", this->externalInput.commandline);
         // lookup the host name if it is not an IP
         // regular expression for an IP address
-        QRegExp rx("^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$");
+        QRegExp rx("^(?:[0-9]{1,3}[.]){3}[0-9]{1,3}$");
         if (rx.exactMatch(this->externalInput.host)) {
             writer->writeAttribute("host", this->externalInput.host);
         } else {

@@ -1344,7 +1344,6 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
 
                     // extract the name from the tag
                     QString synapseName = metaData.toElement().attribute("name", "");
-                    bool synapseFound = false;
 
                     // if we are not an empty node
                     if (!metaData.firstChildElement().isNull()) {
@@ -1352,7 +1351,7 @@ projection::projection(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                         for (uint i = 0; i < this->synapses.size(); ++i) {
                              // check if we have the current node
                             if (synapseName == this->synapses[i]->weightUpdateType->getXMLName()) {
-                                synapseFound = true;
+                                // A synapse was found!
                                 // add connection generator if we are a csv
                                 if (this->synapses[i]->connectionType->type == CSV) {
                                     csv_connection * conn = (csv_connection *) this->synapses[i]->connectionType;
@@ -1424,7 +1423,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
-    if (colList.count() != this->synapses.size()) {
+    if ((uint)colList.count() != this->synapses.size()) {
         // oh dear, something has gone badly wrong
         qDebug() << "Size mismatch " << colList.count() << " != " << this->synapses.size();
     }
