@@ -805,7 +805,7 @@ void QCPLayer::addChild(QCPLayerable *layerable, bool prepend)
     else
       mChildren.append(layerable);
   } else
-    qDebug() << Q_FUNC_INFO << "layerable is already child of this layer" << reinterpret_cast<qintptr>(layerable);
+    qDebug() << Q_FUNC_INFO << "layerable is already child of this layer" << reinterpret_cast<quintptr>(layerable);
 }
 
 /*! \internal
@@ -820,7 +820,7 @@ void QCPLayer::addChild(QCPLayerable *layerable, bool prepend)
 void QCPLayer::removeChild(QCPLayerable *layerable)
 {
   if (!mChildren.removeOne(layerable))
-    qDebug() << Q_FUNC_INFO << "layerable is not child of this layer" << reinterpret_cast<qintptr>(layerable);
+    qDebug() << Q_FUNC_INFO << "layerable is not child of this layer" << reinterpret_cast<quintptr>(layerable);
 }
 
 
@@ -1757,7 +1757,7 @@ void QCPMarginGroup::addChild(QCP::MarginSide side, QCPLayoutElement *element)
   if (!mChildren[side].contains(element))
     mChildren[side].append(element);
   else
-    qDebug() << Q_FUNC_INFO << "element is already child of this margin group side" << reinterpret_cast<qintptr>(element);
+    qDebug() << Q_FUNC_INFO << "element is already child of this margin group side" << reinterpret_cast<quintptr>(element);
 }
 
 /*! \internal
@@ -1769,7 +1769,7 @@ void QCPMarginGroup::addChild(QCP::MarginSide side, QCPLayoutElement *element)
 void QCPMarginGroup::removeChild(QCP::MarginSide side, QCPLayoutElement *element)
 {
   if (!mChildren[side].removeOne(element))
-    qDebug() << Q_FUNC_INFO << "element is not child of this margin group side" << reinterpret_cast<qintptr>(element);
+    qDebug() << Q_FUNC_INFO << "element is not child of this margin group side" << reinterpret_cast<quintptr>(element);
 }
 
 
@@ -7563,7 +7563,7 @@ void QCPItemAnchor::addChild(QCPItemPosition *pos)
   if (!mChildren.contains(pos))
     mChildren.insert(pos);
   else
-    qDebug() << Q_FUNC_INFO << "provided pos is child already" << reinterpret_cast<qintptr>(pos);
+    qDebug() << Q_FUNC_INFO << "provided pos is child already" << reinterpret_cast<quintptr>(pos);
 }
 
 /*! \internal
@@ -7575,7 +7575,7 @@ void QCPItemAnchor::addChild(QCPItemPosition *pos)
 void QCPItemAnchor::removeChild(QCPItemPosition *pos)
 {
   if (!mChildren.remove(pos))
-    qDebug() << Q_FUNC_INFO << "provided pos isn't child" << reinterpret_cast<qintptr>(pos);
+    qDebug() << Q_FUNC_INFO << "provided pos isn't child" << reinterpret_cast<quintptr>(pos);
 }
 
 
@@ -7707,7 +7707,7 @@ bool QCPItemPosition::setParentAnchor(QCPItemAnchor *parentAnchor, bool keepPixe
   // make sure self is not assigned as parent:
   if (parentAnchor == this)
   {
-    qDebug() << Q_FUNC_INFO << "can't set self as parent anchor" << reinterpret_cast<qintptr>(parentAnchor);
+    qDebug() << Q_FUNC_INFO << "can't set self as parent anchor" << reinterpret_cast<quintptr>(parentAnchor);
     return false;
   }
   // make sure no recursive parent-child-relationships are created:
@@ -7719,7 +7719,7 @@ bool QCPItemPosition::setParentAnchor(QCPItemAnchor *parentAnchor, bool keepPixe
       // is a QCPItemPosition, might have further parent, so keep iterating
       if (currentParentPos == this)
       {
-        qDebug() << Q_FUNC_INFO << "can't create recursive parent-child-relationship" << reinterpret_cast<qintptr>(parentAnchor);
+        qDebug() << Q_FUNC_INFO << "can't create recursive parent-child-relationship" << reinterpret_cast<quintptr>(parentAnchor);
         return false;
       }
       currentParent = currentParentPos->mParentAnchor;
@@ -7730,7 +7730,7 @@ bool QCPItemPosition::setParentAnchor(QCPItemAnchor *parentAnchor, bool keepPixe
       // because they're both on the same item:
       if (currentParent->mParentItem == mParentItem)
       {
-        qDebug() << Q_FUNC_INFO << "can't set parent to be an anchor which itself depends on this position" << reinterpret_cast<qintptr>(parentAnchor);
+        qDebug() << Q_FUNC_INFO << "can't set parent to be an anchor which itself depends on this position" << reinterpret_cast<quintptr>(parentAnchor);
         return false;
       }
       break;
@@ -9551,12 +9551,12 @@ bool QCustomPlot::addPlottable(QCPAbstractPlottable *plottable)
 {
   if (mPlottables.contains(plottable))
   {
-    qDebug() << Q_FUNC_INFO << "plottable already added to this QCustomPlot:" << reinterpret_cast<qintptr>(plottable);
+    qDebug() << Q_FUNC_INFO << "plottable already added to this QCustomPlot:" << reinterpret_cast<quintptr>(plottable);
     return false;
   }
   if (plottable->parentPlot() != this)
   {
-    qDebug() << Q_FUNC_INFO << "plottable not created with this QCustomPlot as parent:" << reinterpret_cast<qintptr>(plottable);
+    qDebug() << Q_FUNC_INFO << "plottable not created with this QCustomPlot as parent:" << reinterpret_cast<quintptr>(plottable);
     return false;
   }
 
@@ -9583,7 +9583,7 @@ bool QCustomPlot::removePlottable(QCPAbstractPlottable *plottable)
 {
   if (!mPlottables.contains(plottable))
   {
-    qDebug() << Q_FUNC_INFO << "plottable not in list:" << reinterpret_cast<qintptr>(plottable);
+    qDebug() << Q_FUNC_INFO << "plottable not in list:" << reinterpret_cast<quintptr>(plottable);
     return false;
   }
 
@@ -9898,7 +9898,7 @@ bool QCustomPlot::addItem(QCPAbstractItem *item)
     return true;
   } else
   {
-    qDebug() << Q_FUNC_INFO << "item either already in list or not created with this QCustomPlot as parent:" << reinterpret_cast<qintptr>(item);
+    qDebug() << Q_FUNC_INFO << "item either already in list or not created with this QCustomPlot as parent:" << reinterpret_cast<quintptr>(item);
     return false;
   }
 }
@@ -9919,7 +9919,7 @@ bool QCustomPlot::removeItem(QCPAbstractItem *item)
     return true;
   } else
   {
-    qDebug() << Q_FUNC_INFO << "item not in list:" << reinterpret_cast<qintptr>(item);
+    qDebug() << Q_FUNC_INFO << "item not in list:" << reinterpret_cast<quintptr>(item);
     return false;
   }
 }
@@ -10104,7 +10104,7 @@ bool QCustomPlot::setCurrentLayer(QCPLayer *layer)
 {
   if (!mLayers.contains(layer))
   {
-    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<qintptr>(layer);
+    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(layer);
     return false;
   }
 
@@ -10141,7 +10141,7 @@ bool QCustomPlot::addLayer(const QString &name, QCPLayer *otherLayer, QCustomPlo
     otherLayer = mLayers.last();
   if (!mLayers.contains(otherLayer))
   {
-    qDebug() << Q_FUNC_INFO << "otherLayer not a layer of this QCustomPlot:" << reinterpret_cast<qintptr>(otherLayer);
+    qDebug() << Q_FUNC_INFO << "otherLayer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(otherLayer);
     return false;
   }
   if (layer(name))
@@ -10174,7 +10174,7 @@ bool QCustomPlot::removeLayer(QCPLayer *layer)
 {
   if (!mLayers.contains(layer))
   {
-    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<qintptr>(layer);
+    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(layer);
     return false;
   }
   if (mLayers.size() < 2)
@@ -10220,12 +10220,12 @@ bool QCustomPlot::moveLayer(QCPLayer *layer, QCPLayer *otherLayer, QCustomPlot::
 {
   if (!mLayers.contains(layer))
   {
-    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<qintptr>(layer);
+    qDebug() << Q_FUNC_INFO << "layer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(layer);
     return false;
   }
   if (!mLayers.contains(otherLayer))
   {
-    qDebug() << Q_FUNC_INFO << "otherLayer not a layer of this QCustomPlot:" << reinterpret_cast<qintptr>(otherLayer);
+    qDebug() << Q_FUNC_INFO << "otherLayer not a layer of this QCustomPlot:" << reinterpret_cast<quintptr>(otherLayer);
     return false;
   }
 
@@ -11952,7 +11952,7 @@ bool QCPAxisRect::removeAxis(QCPAxis *axis)
       return true;
     }
   }
-  qDebug() << Q_FUNC_INFO << "Axis isn't in axis rect:" << reinterpret_cast<qintptr>(axis);
+  qDebug() << Q_FUNC_INFO << "Axis isn't in axis rect:" << reinterpret_cast<quintptr>(axis);
   return false;
 }
 
