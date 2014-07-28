@@ -1,4 +1,3 @@
-/*! ** C++ ** */
 /***************************************************************************
 **                                                                        **
 **  This file is part of SpineCreator, an easy to use GUI for             **
@@ -24,19 +23,26 @@
 ****************************************************************************/
 
 /*
- * NB: Graphviz is used to draw the components in the component view
- * (and not the plots in the graphing/data view window).
+ * NB: Graphviz is used to lay out the components in the component
+ * view (and not the plots in the graphing/data view window).
+ *
+ * The actual rendering of the components in the component view is
+ * handled by Qt code - see GroupedTextItem::paint.
  */
 
 #ifndef GVITEMS_H
 #define GVITEMS_H
 
-// Probably not necessary with graphviz 2.30+
-#define WITH_CGRAPH 1
-
 #include <QtGui>
+// By default, use libcgraph from Graphviz, but if the user requests,
+// use the deprecated libgraph.
 #include <graphviz/gvc.h>
-#include <graphviz/cgraph.h>
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+# include <graphviz/graph.h>
+#else
+# define WITH_CGRAPH 1
+# include <graphviz/cgraph.h>
+#endif
 #include <vector>
 #include <algorithm>
 #include "grouptextitems.h"
@@ -70,7 +76,7 @@ public:
     void removeGVItem(GVItem *item);
 private:
     Agraph_t *gvgraph;
-    GVC_t* gv_context;
+    GVC_t* gvc;
     vector <GVItem*> items;
 };
 
@@ -81,12 +87,11 @@ public:
     GVNode(GVLayout *layout, QString name);
     ~GVNode();
     Agnode_t* getGVNode();
-    int getId(void);
     void setGVNodeSize(qreal width_inches, qreal height_inches);
-    double getHeightPoints (void);
-    QPointF getPosition(void);
-    QPointF getGVNodePosition(void);
     QPointF getGVNodePosition(QPointF offset);
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    void renameGVNode(QString name);
+#endif
 protected:
     Agnode_t *gv_node;
 };

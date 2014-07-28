@@ -22,12 +22,8 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-// graphviz/types.h provides node/graph/edge data access macros
-//#define WITH_CGRAPH 1
-//#include <graphviz/types.h>
-
 #include "gvitems.h"
-#include <sstream>
+
 
 // Debugging define here, as we don't include globalHeader.h
 #define DBG() qDebug() << __FUNCTION__ << ": "
@@ -35,42 +31,54 @@
 /* GVLayout */
 GVLayout::GVLayout()
 {
-    this->gv_context = gvContext();
-    //GV graph
+    this->gvc = gvContext();
+
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    this->gvgraph = agopen((char*)"g", AGDIGRAPH);
+#else
     this->gvgraph = agopen((char*)"g", Agdirected, NULL);
+#endif
+
     agsafeset(this->gvgraph, (char*)"splines", (char*)"true", (char*)"");
     agsafeset(this->gvgraph, (char*)"overlap", (char*)"false", (char*)"");
     agsafeset(this->gvgraph, (char*)"rankdir", (char*)"LR", (char*)"");
     // nodesep was 2.0 for libgraph, seems to be better set to 0.0 in cgraph:
-    agsafeset(this->gvgraph, (char*)"nodesep", (char*)"0.0", (char*)"");
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    agsafeset(this->gvgraph, (char*)"nodesep", (char*)"2.0", (char*)"");
+#else
+    agsafeset(this->gvgraph, (char*)"nodesep", (char*)"2.0", (char*)"");
+#endif
     agsafeset(this->gvgraph, (char*)"labelloc", (char*)"t", (char*)"");
 }
 
 GVLayout::~GVLayout()
 {
     agclose(this->gvgraph);
-    gvFreeContext (this->gv_context);
+    gvFreeContext (this->gvc);
 }
 
 void GVLayout::updateLayout()
 {
-    gvLayout (this->gv_context, this->gvgraph, "dot");
     DBG() << "layout update with " << items.size() << " items";
+    gvLayout (this->gvc, this->gvgraph, "dot");
     //update all graphviz items in the layout
-    for (uint i=0;i<this->items.size(); i++)
+    for (uint i=0; i<this->items.size(); i++)
     {
         GVItem *gv_item = this->items[i];
-        DBG() << "update layout on an item...";
         gv_item->updateLayout();
     }
 
 
-    // Debugging:
-    agwrite (this->gvgraph, stdout);
-    gvRender (this->gv_context, this->gvgraph, "dot", stdout);
+    // For debugging, this shows the content of the graph (ok for libgraph and libcgraph):
+    //gvRender (this->gvc, this->gvgraph, "dot", stdout);
 
-
-    gvFreeLayout (this->gv_context, this->gvgraph);
+    // The original comment for gvFreeLayout() was:
+    // free after update to avoid crashes when node are removed!
+    // When gvc is used with cgraph, this actually causes a crash in Graphviz
+    // 2.26.3 and 2.30.1, due to bug (in Graphviz) 2.32+ are immune.
+    // The crash occurs on a subsequent call to gvLayout().
+    // See http://www.graphviz.org/mantisbt/view.php?id=2467
+    gvFreeLayout (this->gvc, this->gvgraph);
 }
 
 Agraph_t *GVLayout::getGVGraph()
@@ -99,9 +107,12 @@ GVItem::GVItem(GVLayout *l)
 GVNode::GVNode(GVLayout *l, QString name)
     : GVItem(l)
 {
-    DBG() << "GVNode constructor for GVNode name " << name << "...";
-    this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE); // TRUE means create if not existent
-    DBG() << "ID for " << name << " is: " << ND_id(this->gv_node);
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data());
+#else
+    this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE);
+#endif
+    DBG() << "ID for node '" << name << "' is: " << ND_id(this->gv_node);
     agsafeset(this->gv_node, (char*)"fixedsize", (char*)"true", (char*)"");
     agsafeset(this->gv_node, (char*)"shape", (char*)"rectangle", (char*)"");
 }
@@ -126,56 +137,46 @@ void GVNode::setGVNodeSize(qreal width_inches, qreal height_inches)
     sprintf(h,"%f", height_inches);
     agsafeset(this->gv_node, (char*)"width", w, (char*)"");
     agsafeset(this->gv_node, (char*)"height", h, (char*)"");
-    DBG() << "setGVNodeSize (" << w << ", " << h << ") in inches for node " << ND_id(this->gv_node);
+    //DBG() << "setGVNodeSize (" << w << ", " << h << ") in inches for node " << ND_id(this->gv_node);
 }
 
-// used in nineml_graphicsitems.cpp:122 or thereabouts.
-// This method is a bit bizarre...
+// used in nineml_graphicsitems.cpp:122 or thereabouts.  This method
+// is a bit bizarre; I would apply the offset in the client code to
+// make this a pure position accessor.
 QPointF GVNode::getGVNodePosition(QPointF offset)
 {
-    DBG() << "offset: " << offset;
-    QPointF position = QPointF(ND_coord(this->gv_node).x,
+    QPointF position;
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    position = QPointF((gv_node->u.coord.x), (layout->getGVGraph()->u.bb.UR.y - gv_node->u.coord.y));
+#else
+    position = QPointF(ND_coord(this->gv_node).x,
                                (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
-    DBG() << "getGVNodePosition: actual position: " << position
-          << " for node ID " << ND_id(this->gv_node);
+#endif
+    //DBG() << "getGVNodePosition: actual position: " << position
+    //      << " for node ID " << ND_id(this->gv_node);
     position -= offset;
-    DBG() << "getGVNodePosition: returning: " << position*2
-          << " for node ID " << ND_id(this->gv_node);
-    return position*2;
-}
-
-// ...I would do this and then apply any changes in the client code:
-QPointF GVNode::getPosition(void)
-{
-    QPointF position = QPointF(ND_coord(this->gv_node).x,
-                               (GD_bb(this->layout->getGVGraph()).UR.y - ND_coord(this->gv_node).y));
     return position;
 }
 
-int GVNode::getId(void)
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+void GVNode::renameGVNode(QString name)
 {
-    return ND_id(this->gv_node);
+    QString temp(gv_node->name);
+    agstrfree(gv_node->name);
+    gv_node->name = agstrdup(name.toUtf8().data());
 }
-
-double GVNode::getHeightPoints (void)
-{
-    char* h = agget (this->gv_node, (char*)"height");
-    stringstream hh;
-    hh << h;
-    double h_inches = 0.0;
-    hh >> h_inches;
-    return h_inches*GV_DPI;
-}
+#endif
 
 /* GVEdge */
 GVEdge::GVEdge(GVLayout *l, Agnode_t *src, Agnode_t *dst)
     : GVItem(l)
 {
-    // get src regime
+    //get src regime
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    this->gv_edge = agedge(this->layout->getGVGraph(), src, dst);
+#else
     this->gv_edge = agedge(this->layout->getGVGraph(), src, dst, NULL, 1);
-    // Ensure the edge has a label:
-    // char* s = "default label";
-    // agset (this->gv_edge, "label", agstrdup (this->layout->getGVGraph(),s));
+#endif
 }
 
 GVEdge::~GVEdge()
@@ -186,20 +187,31 @@ GVEdge::~GVEdge()
 
 void GVEdge::setGVEdgeLabelSize(int width_pixels, int height_pixels)
 {
-    // update GV l width
+    //update GV l width
     char label[256];
     sprintf(label,"<table width=\"%d\" height=\"%d\"><tr><td>Label</td></tr></table>", width_pixels, height_pixels);
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    char* html = agstrdup_html(label);
+    agsafeset(this->gv_edge, (char*)"label", html, (char*)"html");
+    agstrfree(html);
+#else
     char* html = agstrdup_html(this->layout->getGVGraph(), label);
     agsafeset(this->gv_edge, (char*)"label", html, (char*)"html");
     agstrfree(this->layout->getGVGraph(), html);
-
-    DBG() << "(" << width_pixels<< ", " << height_pixels << ") for label '" << agget (this->gv_edge, (char*)"label") << "'";
+#endif
+    //DBG() << "(" << width_pixels<< ", " << height_pixels << ") for label '" << agget (this->gv_edge, (char*)"label") << "'";
 }
 
 QPointF GVEdge::getGVEdgeLabelPosition(QPointF offset)
 {
     QPointF position(0,0);
-#if 0
+
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    position = QPointF(this->gv_edge->u.label->pos.x,
+                       this->layout->getGVGraph()->u.bb.UR.y - this->gv_edge->u.label->pos.y);
+#else
+// FIXME: I don't have a working equivalent for the above just now. Here was an attempt:
+# if 0
     qreal a = 0;
     qreal b = 0;
     // This crashes as the edge label doesn't have a position OR the
@@ -210,11 +222,10 @@ QPointF GVEdge::getGVEdgeLabelPosition(QPointF offset)
 
     b = (GD_bb(this->layout->getGVGraph()).UR.y - ED_label(this->gv_edge)->pos.y);
     position = QPointF(a,b);
-
+# endif
 #endif
-    DBG() << position << " before";
+
     position -= offset;
-    DBG() << position << " after";
     return position;
 }
 
@@ -227,16 +238,12 @@ QPointF GVEdge::getGVEdgeSplinesPoint(uint i)
 {
     QPointF spline = QPointF(ED_spl(this->gv_edge)->list->list[i].x,
                              GD_bb(this->layout->getGVGraph()).UR.y - ED_spl(this->gv_edge)->list->list[i].y);
-    DBG() << spline;
     return spline;
 }
 
-// Used once only in ./nineml_graphicsitems.cpp:201
 QPointF GVEdge::getGVEdgeSplinesEndPoint()
 {
     QPointF spline = QPointF(ED_spl(this->gv_edge)->list->ep.x,
                              GD_bb(this->layout->getGVGraph()).UR.y - ED_spl(this->gv_edge)->list->ep.y);
-
-    DBG() << spline;
     return spline;
 }

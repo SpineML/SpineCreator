@@ -113,7 +113,6 @@ void NineMLNodeItem::updateLayout()
     DBG() << "Node item updateLayout (from GVItem virtual method)";
     QRectF bounds = boundingRect();
     QPointF offset = QPointF(bounds.width(), bounds.height());
-    DBG() << "bounding rect: " << offset;
     offset /= 2.0;
     QPointF pos = GVNode::getGVNodePosition(offset);
     pos += QPointF(padding, padding);
@@ -147,7 +146,7 @@ void NineMLNodeItem::updateGVData()
     TextItemGroup::updateItemDimensions();
     QRectF bounds = boundingRect();
     GVNode::setGVNodeSize((bounds.width())/GV_DPI,  (bounds.height())/GV_DPI);
-    qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height() << " pixels";
+    //qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height() << " pixels";
     layout->updateLayout();
 }
 
@@ -155,7 +154,6 @@ void NineMLNodeItem::updateGVData()
 NineMLTransitionItem::NineMLTransitionItem(GVLayout *layout, Agnode_t *src, Agnode_t *dst, QGraphicsScene *scene)
     : TextItemGroup(), GVEdge(layout, src, dst)
 {
-    DBG() << "Called";
     arrow = new ArrowItem();
     //add direct to scene if possible for correct z ordering
     if (scene){
@@ -168,7 +166,6 @@ NineMLTransitionItem::NineMLTransitionItem(GVLayout *layout, Agnode_t *src, Agno
 
 NineMLTransitionItem::~NineMLTransitionItem()
 {
-    DBG() << "Called";
     //arrow is a member of the scene (no parent) so remove and then delete
     arrow->scene()->removeItem(arrow);
     //arrow->deleteLater();
@@ -178,14 +175,12 @@ NineMLTransitionItem::~NineMLTransitionItem()
 
 void NineMLTransitionItem::updateLayout()
 {
-    DBG() << "Called";
     //update textboxgroup (i.e. gv label) position
     QRectF bounds = TextItemGroup::boundingRect();
     QPointF offset = QPointF(bounds.width(), bounds.height());
     offset /= 2.0;
     QPointF pos = GVEdge::getGVEdgeLabelPosition(offset);
     pos += QPointF(padding,padding);
-    qDebug() << "Calling setPos(" << pos << ") on edge label position...";
     setPos(pos);
 
     //update curve points and set arrow path
@@ -207,24 +202,21 @@ void NineMLTransitionItem::updateLayout()
 
 void NineMLTransitionItem::updateGVData()
 {
-    DBG() << "Called";
     TextItemGroup::updateItemDimensions();
     QRectF bounds = TextItemGroup::boundingRect();
     GVEdge::setGVEdgeLabelSize((int)bounds.width(), (int)bounds.height());
-    DBG() << "NineMLTransitionItem updateGVData " << bounds.width() << " " << bounds.height();
+    //DBG() << "NineMLTransitionItem updateGVData " << bounds.width() << " " << bounds.height();
     layout->updateLayout();
 }
 
 void NineMLTransitionItem::addMember(GroupedTextItem *item)
 {
-    DBG() << "Called";
     TextItemGroup::addMember(item);
     updateGVData();
 }
 
 void NineMLTransitionItem::addMemberAtIndex(GroupedTextItem *item, uint index)
 {
-    DBG() << "Called";
     members.insert(members.begin()+index, item);
     updateItemDimensions();
     updateGVData();
@@ -232,7 +224,6 @@ void NineMLTransitionItem::addMemberAtIndex(GroupedTextItem *item, uint index)
 
 void NineMLTransitionItem::removeMember(GroupedTextItem *item)
 {
-    DBG() << "Called";
     TextItemGroup::removeMember(item);
     updateItemDimensions();
     updateGVData();
@@ -263,7 +254,7 @@ RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
     regime = r;
     this->root = root;
 
-    //create name.
+    //create name
     setRegimeName(regime->name);
 
     //create regime equations
@@ -283,9 +274,13 @@ void RegimeGraphicsItem::setRegimeName(QString n)
     NineMLComponent * oldComponent = new NineMLComponent(root->al);
     regime->name = n;
 
-    // rename the gv node which is a parent class of RegimeGraphicsItem.
-    // Shouldn't be required - NineMLNodeItem already set name.
-    //renameGVNode(n);
+    // rename the gv node which is a parent class of
+    // RegimeGraphicsItem.  Shouldn't be required - NineMLNodeItem
+    // already set name. Nonetheless, if compiling for libgraph, we'll
+    // call this, as the old implementation of the function works.
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+    renameGVNode(n);
+#endif
 
     //update the dst regime name in any onconditions
     for (uint i=0;i<root->al->RegimeList.size();i++)
@@ -893,10 +888,6 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Params, Vars & Alias");
 
-    // Calling this causes a crash in the GVNode destructor (no surprise, it turns out)
-//    this->setGVNodePosition (QPointF(0,0));
-
-    DBG() << "Call updateGVData()...";
     updateGVData();
 
     //create parameter items

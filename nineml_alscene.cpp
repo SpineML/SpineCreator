@@ -63,23 +63,9 @@ NineMLALScene::~NineMLALScene()
 #define NINEMLALSCENE_SIZE 5000
 void NineMLALScene::initialiseScene(NineMLComponent *al)
 {
-    DBG() << "initialise scene..";
-
-    QRectF sceneRect = this->itemsBoundingRect();
-    DBG() << "original sceneRect: " << sceneRect;
-    sceneRect.setX(sceneRect.x()-NINEMLALSCENE_SIZE);
-    sceneRect.setY(sceneRect.y()-NINEMLALSCENE_SIZE);
-    sceneRect.setWidth(sceneRect.width()+NINEMLALSCENE_SIZE);
-    sceneRect.setHeight(sceneRect.height()+NINEMLALSCENE_SIZE);
-    DBG() << "sceneRect after adding ninemlalscene: " << sceneRect;
-    this->setSceneRect(sceneRect);
-
-    DBG() << "create paramater list item";
     pl_item = new ParameterListGraphicsItem(root);
     addItem(pl_item);
 
-    DBG() << "create analog port list item";
-    // The QPointF() arg is pointless.
     portl_item = new PortListGraphicsItem(root);
     addItem(portl_item);
 
@@ -111,6 +97,13 @@ void NineMLALScene::initialiseScene(NineMLComponent *al)
             addOnImpulseItem(al->RegimeList[i], r->OnImpulseList[j]);
         }
     }
+
+    QRectF sceneRect = this->itemsBoundingRect();
+    sceneRect.setX(sceneRect.x()-NINEMLALSCENE_SIZE);
+    sceneRect.setY(sceneRect.y()-NINEMLALSCENE_SIZE);
+    sceneRect.setWidth(sceneRect.width()+NINEMLALSCENE_SIZE);
+    sceneRect.setHeight(sceneRect.height()+NINEMLALSCENE_SIZE);
+    this->setSceneRect(sceneRect);
 }
 
 
