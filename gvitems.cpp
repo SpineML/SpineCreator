@@ -42,12 +42,7 @@ GVLayout::GVLayout()
     agsafeset(this->gvgraph, (char*)"splines", (char*)"true", (char*)"");
     agsafeset(this->gvgraph, (char*)"overlap", (char*)"false", (char*)"");
     agsafeset(this->gvgraph, (char*)"rankdir", (char*)"LR", (char*)"");
-    // nodesep was 2.0 for libgraph, seems to be better set to 0.0 in cgraph:
-#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
     agsafeset(this->gvgraph, (char*)"nodesep", (char*)"2.0", (char*)"");
-#else
-    agsafeset(this->gvgraph, (char*)"nodesep", (char*)"2.0", (char*)"");
-#endif
     agsafeset(this->gvgraph, (char*)"labelloc", (char*)"t", (char*)"");
 }
 
