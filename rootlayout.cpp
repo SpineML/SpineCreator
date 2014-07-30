@@ -1124,11 +1124,11 @@ void rootLayout::drawParamsLayout(rootData * data) {
         } else if (i == 2) {
             tabLayout = (QVBoxLayout *) tab3->layout();
         }
-
         switch (data->selList[0]->type) {
         case populationObject:
             if (i == 0) {
                 type9ml = qSharedPointerDynamicCast < NineMLData > (qSharedPointerDynamicCast <population> (data->selList[0])->neuronType);
+                QSharedPointer <systemObject> ptr = data->isValidPointer(data->selList[0].data());
                 type = "nrn";
                 // check if current component validates
                 (qSharedPointerCast <NineMLComponentData> (type9ml))->component->validateComponent();
