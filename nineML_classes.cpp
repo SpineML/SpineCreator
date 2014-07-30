@@ -1601,6 +1601,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
 
         QDir saveDir(filePathString);
         saveDir.cdUp();
+
         if (exportBinary) {
             saveDir.setCurrent(settings.value("simulator_export_path").toString());
         }
@@ -1642,8 +1643,12 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
 
         if (!export_file.open( QIODevice::WriteOnly)) {
             QMessageBox msgBox;
+<<<<<<< HEAD
             msgBox.setText("Error creating binary file '" + saveFileName
                            + "' - is there sufficient disk space?");
+=======
+            msgBox.setText("Error creating file - is there sufficient disk space?");
+>>>>>>> Export of Explicit Lists for Paramters and State Variables is not performed as binary data if the list size is greater than 30 and the option is selected, additonally fixed a bug causing an erroneous pointer cast check when the Value Editor dialog was launched
             msgBox.exec();
             return;
         }

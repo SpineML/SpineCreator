@@ -39,7 +39,7 @@ class valueListDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit valueListDialog(ParameterData *par, QWidget *parent=0);
+    explicit valueListDialog(ParameterData *par, QSharedPointer<NineMLComponentData> /*comp*/, QWidget *parent=0);
     ~valueListDialog();
 
 private:
