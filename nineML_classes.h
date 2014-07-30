@@ -198,6 +198,22 @@ public:
     ~ParameterData(){delete dims;}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
+    /*!
+     * \brief writeExplicitListNodeData
+     * \param xmlOut
+     *
+     * Function called to write the data for the explicit list Parameters
+     * and State Variables, either as XML or as binary data
+     */
+    void writeExplicitListNodeData(QXmlStreamWriter &xmlOut);
+    /*!
+     * \brief readExplicitListNodeData
+     * \param n
+     *
+     * Function called to read the data for explicit list Parameters
+     * and State Variables, either as XML lists or binary data
+     */
+    void readExplicitListNodeData(QDomNode &n);
 };
 
 class Port: public QObject, public NineMLObject {
