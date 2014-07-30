@@ -671,13 +671,15 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
 
               }
               if (this->ParameterList[i]->currType == ExplicitList) {
-                  xmlOut.writeStartElement("ValueList");
+                  // Write out the explicit list either to XML or to binary by calling a built in function
+                  this->ParameterList[i]->writeExplicitListNodeData(xmlOut);
+                  /*xmlOut.writeStartElement("ValueList");
                   for (int ind = 0; ind < this->ParameterList[i]->value.size(); ++ind) {
                       xmlOut.writeEmptyElement("Value");
                       xmlOut.writeAttribute("index", QString::number(float(this->ParameterList[i]->indices[ind])));
                       xmlOut.writeAttribute("value", QString::number(float(this->ParameterList[i]->value[ind])));
                   }
-                 xmlOut.writeEndElement(); // valueList
+                  xmlOut.writeEndElement(); // valueList*/
               }
 
               xmlOut.writeEndElement(); // property
@@ -716,6 +718,8 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
                   }
               }
               if (this->StateVariableList[i]->currType == ExplicitList) {
+                  this->StateVariableList[i]->writeExplicitListNodeData(xmlOut);
+                  /*
                   xmlOut.writeStartElement("ValueList");
                   for (int ind = 0; ind < this->StateVariableList[i]->value.size(); ++ind) {
                       xmlOut.writeEmptyElement("Value");
@@ -723,6 +727,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
                       xmlOut.writeAttribute("value", QString::number(float(this->StateVariableList[i]->value[ind])));
                   }
                  xmlOut.writeEndElement(); // valueList
+                 */
               }
 
               xmlOut.writeEndElement(); // property
@@ -1556,6 +1561,177 @@ ParameterData::ParameterData(ParameterData *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = data->currType;
+}
+
+void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
+
+    QSettings settings;
+    // fetch the option for whether we write binary data for saving
+    bool writeBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
+
+    // fetch if we are exporting for simulation
+    bool exportBinary = false;
+    if (settings.value("export_for_simulation", "false").toBool()) {
+        // override save binary option
+        writeBinary = settings.value("export_binary").toBool();
+        qDebug() << "Export for sim detected";
+    }
+
+    // if we have few indices, or we are forbidden from using binary data
+    if (this->indices.size() < 31 || !writeBinary) {
+        xmlOut.writeStartElement("ValueList");
+        for (int ind = 0; ind < this->value.size(); ++ind) {
+            xmlOut.writeEmptyElement("Value");
+            xmlOut.writeAttribute("index", QString::number(float(this->indices[ind])));
+            xmlOut.writeAttribute("value", QString::number(float(this->value[ind])));
+        }
+       xmlOut.writeEndElement(); // valueList
+
+    } else {
+
+        xmlOut.writeStartElement("ValueList");
+
+        // Save as binary data
+        QString filePathString = settings.value("files/currentFileName", "error").toString();
+
+        if (filePathString == "error") {
+            qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN! (nineML_classes.cpp ParameterData::writeExplicitListNodeData)";
+            return;}
+
+        QDir saveDir(filePathString);
+
+        if (exportBinary) {
+            saveDir.setCurrent(settings.value("simulator_export_path").toString());
+        }
+
+        //generate a unique filename to save the par or sv under
+        QStringList filters;
+        filters << "explicitDataBinaryFile*";
+        saveDir.setNameFilters(filters);
+
+        QStringList files = saveDir.entryList();
+
+        QString baseName = "explicitDataBinaryFile";
+        QString uniqueName;
+        bool unique = false;
+        int index = 0;
+        while(!unique) {
+            unique = true;
+            uniqueName = baseName + QString::number(float(index));
+            for (int i = 0; i < (int)files.count(); ++i) {
+                // see if the new name is unique
+                if (uniqueName == files[i]) {
+                    unique = false;
+                    ++index;
+                }
+            }
+        }
+        QString fileName = uniqueName;
+
+        // construct the save file name based upon whether we are saving the project or outputting for simulation
+        QString saveFileName;
+        saveFileName = saveDir.absoluteFilePath(fileName + ".bin");
+
+        // add a tag to the binary file
+        xmlOut.writeEmptyElement("BinaryFile");
+        xmlOut.writeAttribute("file_name", fileName + ".bin");
+        xmlOut.writeAttribute("num_elements", QString::number(float(this->value.size())));
+
+        // write out binary data
+        QFile export_file(saveFileName);
+
+        if (!export_file.open( QIODevice::WriteOnly)) {
+            QMessageBox msgBox;
+            msgBox.setText("Error creating file - is there sufficient disk space?");
+            msgBox.exec();
+            return;
+        }
+
+        // write out the data to the save file, index first, then value, then next index-value pair...
+        QDataStream access(&export_file);
+        for (int i = 0; i < this->value.size(); ++i) {
+            access.writeRawData((char*) &this->indices[i], sizeof(int));
+            access.writeRawData((char*) &this->value[i], sizeof(float));
+        }
+
+        xmlOut.writeEndElement(); // valueList
+
+    }
+
+
+}
+
+void ParameterData::readExplicitListNodeData(QDomNode &n) {
+
+    // read in an XML list
+    QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
+    for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
+        this->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
+        this->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
+    }
+    // read in binary data
+    QDomNodeList binaryValInst = n.toElement().elementsByTagName("BinaryFile");
+    if (binaryValInst.count() == 1) {
+
+        // is a binary file so load accordingly
+
+        // set number of connections
+        int num_elements = binaryValInst.at(0).toElement().attribute("num_elements").toUInt();
+
+        // get a handle to the saved file
+        QSettings settings;
+        QString filePathString = settings.value("files/currentFileName", "error").toString();
+
+        if (filePathString == "error") {
+            qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
+            return;}
+
+        QDir filePath(filePathString);
+
+        // get file name and path
+        QString fileName = binaryValInst.at(0).toElement().attribute("file_name");
+
+        QFile fileIn(filePath.absoluteFilePath(fileName));
+
+        // check that the data file exists!
+        if (!fileIn.open(QIODevice::ReadOnly)) {
+            QSettings settings;
+            int num_errs = settings.beginReadArray("errors");
+            settings.endArray();
+            settings.beginWriteArray("errors");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
+            settings.endArray();
+            return;
+        }
+
+        this->value.clear();
+        this->indices.clear();
+
+        // get the count of the number of value-index pairs we have read in
+        int count = 0;
+
+        // load in the binary packed data
+        while (!(fileIn.atEnd())) {
+
+            // read in the required values:
+            // first two int32s
+            int index;
+            float value;
+
+            fileIn.read((char *) &index,sizeof(int));
+            fileIn.read((char *) &value,sizeof(float));
+
+            this->indices.push_back(index);
+            this->value.push_back(value);
+            ++count;
+        }
+
+        if (count != num_elements) {
+            qDebug() << "Mismatch between the number of rows in the XML and in the binary";
+        }
+
+    }
 }
 
 Port::Port(Port *data)
@@ -2931,12 +3107,17 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
                 propVal = n.toElement().elementsByTagName("ValueList");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = ExplicitList;
+                    // now use the Parameter or StateVariable method to read the data in
+                    QDomNode n2 = propVal.item(0);
+                    this->ParameterList[i]->readExplicitListNodeData(n2);
+                    /*
                     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
                     for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
                         this->ParameterList[i]->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
                         this->ParameterList[i]->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
 //                        this->ParameterList[i]->dims = new dim(propUnit.item(0).toElement().text());
                     }
+                    */
                 }
             }
         }
@@ -2976,12 +3157,17 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
                 propVal = n.toElement().elementsByTagName("ValueList");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = ExplicitList;
+                    // now use the Parameter or StateVariable method to read the data in
+                    QDomNode n2 = propVal.item(0);
+                    this->StateVariableList[i]->readExplicitListNodeData(n2);
+                    /*
                     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
                     for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
                         this->StateVariableList[i]->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
                         this->StateVariableList[i]->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
 //                        this->StateVariableList[i]->dims = new dim(propUnit.item(0).toElement().text());
                     }
+                    */
                 }
 
             }

@@ -657,8 +657,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
             QDataStream access(&export_file);
             for (int i = 0; i < conns.size(); ++i) {
-                access.writeRawData((char*) &conns[i].src, sizeof(uint));
-                access.writeRawData((char*) &conns[i].dst, sizeof(uint));
+                access.writeRawData((char*) &conns[i].src, sizeof(int));
+                access.writeRawData((char*) &conns[i].dst, sizeof(int));
                 access.writeRawData((char*) &conns[i].metric, sizeof(float));
             }
         }
