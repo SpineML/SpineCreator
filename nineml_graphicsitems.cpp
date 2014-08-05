@@ -74,7 +74,6 @@ void ArrowItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidg
     painter->drawPath(path);
     painter->setBrush(colour);
     painter->drawPolygon(arrow_head);
-
 }
 
 QRectF ArrowItem::boundingRect() const
@@ -96,10 +95,6 @@ void ArrowItem::setLineWidth(uint w)
 }
 
 
-
-
-
-
 /* NineMLNodeItem */
 
 NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name)
@@ -107,7 +102,6 @@ NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name)
 {
     //in front of labels
     this->setZValue(1);
-
 }
 
 NineMLNodeItem::~NineMLNodeItem()
@@ -116,11 +110,14 @@ NineMLNodeItem::~NineMLNodeItem()
 
 void NineMLNodeItem::updateLayout()
 {
+    DBG() << "Node item updateLayout (from GVItem virtual method)";
     QRectF bounds = boundingRect();
     QPointF offset = QPointF(bounds.width(), bounds.height());
     offset /= 2.0;
     QPointF pos = GVNode::getGVNodePosition(offset);
     pos += QPointF(padding, padding);
+    qDebug() << "Calling setPos(" << pos << ") on node position...";
+    // setPos is a Qt thing: QGraphicsItem::setPos
     setPos(pos);
 }
 
@@ -144,13 +141,12 @@ void NineMLNodeItem::removeMember(GroupedTextItem *item)
     updateGVData();
 }
 
-
 void NineMLNodeItem::updateGVData()
 {
     TextItemGroup::updateItemDimensions();
     QRectF bounds = boundingRect();
     GVNode::setGVNodeSize((bounds.width())/GV_DPI,  (bounds.height())/GV_DPI);
-    //qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height();
+    //qDebug() << "NineMLNodeItem updateGVData " << bounds.width() << " " << bounds.height() << " pixels";
     layout->updateLayout();
 }
 
@@ -209,7 +205,7 @@ void NineMLTransitionItem::updateGVData()
     TextItemGroup::updateItemDimensions();
     QRectF bounds = TextItemGroup::boundingRect();
     GVEdge::setGVEdgeLabelSize((int)bounds.width(), (int)bounds.height());
-    //qDebug() << "NineMLTransitionItem updateGVData " << bounds.width() << " " << bounds.height();
+    //DBG() << "NineMLTransitionItem updateGVData " << bounds.width() << " " << bounds.height();
     layout->updateLayout();
 }
 
@@ -251,7 +247,6 @@ void NineMLTextItem::setPlainText(const QString &text)
     gv_item->updateGVData();
 }
 
-/***************************************************/
 
 RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
     : NineMLNodeItem(root->gvlayout, r->name)
@@ -269,8 +264,6 @@ RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
     }
 }
 
-
-
 void RegimeGraphicsItem::handleSelection()
 {
     root->properties->createRegimeProperties(this);
@@ -280,8 +273,15 @@ void RegimeGraphicsItem::setRegimeName(QString n)
 {
     NineMLComponent * oldComponent = new NineMLComponent(root->al);
     regime->name = n;
-    //rename the gv node
+
+    // rename the gv node which is a parent class of
+    // RegimeGraphicsItem.  Shouldn't be required - NineMLNodeItem
+    // already set name. Nonetheless, if compiling for libgraph, we'll
+    // call this, as the old implementation of the function works.
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
     renameGVNode(n);
+#endif
+
     //update the dst regime name in any onconditions
     for (uint i=0;i<root->al->RegimeList.size();i++)
     {
@@ -335,15 +335,7 @@ void RegimeGraphicsItem::addTimeDerivativeItem(TimeDerivative *td)
 }
 
 
-
-
-
-
-/************************************************************/
-
-
-
-
+/* TimeDerivativeTextItem implementation */
 TimeDerivativeTextItem::TimeDerivativeTextItem(RegimeGraphicsItem *parent, TimeDerivative* td,  RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -451,8 +443,8 @@ void TimeDerivativeTextItem::updateContent()
         setPlainText("Warning: Select a State Variable");
 }
 
-/************************************************************/
 
+/* OnConditionGraphicsItem */
 OnConditionGraphicsItem::OnConditionGraphicsItem(Regime *src_r, OnCondition *c, RootComponentItem *root)
     : NineMLTransitionItem(root->gvlayout, root->scene->getRegimeGVNode(src_r), root->scene->getRegimeGVNode(c->target_regime), root->scene)
 {
@@ -562,15 +554,14 @@ void OnConditionGraphicsItem::setSynapseRegime(QString r)
 {
     //NineMLComponent * oldComponent = new NineMLComponent(root->al);
     on_condition->target_regime_name = r;
-    for (uint i=0;i<root->al->RegimeList.size();i++)
-    {
+    for (uint i=0;i<root->al->RegimeList.size();i++) {
         if (root->al->RegimeList[i]->name.compare(r)==0)
-                on_condition->target_regime = root->al->RegimeList[i];
+            on_condition->target_regime = root->al->RegimeList[i];
     }
     //Dont need to redraw!!
     //if (qobject_cast < QComboBox *> (sender()))
-   //     root->alPtr->undoStack.push(new changeComponent(root, oldComponent));
-   // else
+    //     root->alPtr->undoStack.push(new changeComponent(root, oldComponent));
+    //else
     //    delete oldComponent;
 }
 
@@ -604,9 +595,8 @@ void OnConditionGraphicsItem::addImpulseOut(ImpulseOut *io)
     addMember(e);
 }
 
-/************************************************************/
 
-
+/* OnConditionTriggerTextItem */
 OnConditionTriggerTextItem::OnConditionTriggerTextItem(OnConditionGraphicsItem *parent, Trigger *t, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -648,8 +638,8 @@ void OnConditionTriggerTextItem::handleSelection()
     //yeahhhhhhh
 }
 
-/************************************************************/
 
+/* StateAssignmentTextItem */
 StateAssignmentTextItem::StateAssignmentTextItem(NineMLTransitionItem *parent, StateAssignment* a,  RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -757,8 +747,8 @@ void StateAssignmentTextItem::updateContent()
         setPlainText("Warning: Select a Variable");
 }
 
-/************************************************************/
 
+/* EventOutTextItem */
 EventOutTextItem::EventOutTextItem(NineMLTransitionItem *parent, EventOut *e, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -812,8 +802,9 @@ void EventOutTextItem::handleSelection()
 {
     root->properties->createEventOutProperties(this);
 }
-/************************************************************/
 
+
+/* ImpulseOutTextItem */
 ImpulseOutTextItem::ImpulseOutTextItem(NineMLTransitionItem *parent, ImpulseOut *i, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -881,8 +872,7 @@ void ImpulseOutTextItem::handleSelection()
 }
 
 
-/************************************************************/
-
+/* ParameterListGraphicsItem */
 ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     :NineMLNodeItem(r->gvlayout, "Parameters")
 {
@@ -897,6 +887,7 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     title->setColour(Qt::red);
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Params, Vars & Alias");
+
     updateGVData();
 
     //create parameter items
@@ -916,9 +907,7 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     {
         addAliasItem(r->al->AliasList[i]);
     }
-
 }
-
 
 void ParameterListGraphicsItem::addParameterItem(Parameter *p)
 {
@@ -946,7 +935,6 @@ void ParameterListGraphicsItem::addStateVariableItem(StateVariable *sv)
     addMemberAtIndex(svti, index);
 }
 
-
 void ParameterListGraphicsItem::addAliasItem(Alias *a)
 {
     AliasTextItem *ati = new AliasTextItem(this, a, root);
@@ -958,9 +946,8 @@ void ParameterListGraphicsItem::handleSelection()
     root->properties->createParameterListProperties();
 }
 
-/************************************************************/
 
-
+/* ParameterTextItem */
 ParameterTextItem::ParameterTextItem(ParameterListGraphicsItem *parent, Parameter *param, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -970,7 +957,6 @@ ParameterTextItem::ParameterTextItem(ParameterListGraphicsItem *parent, Paramete
     setDefaultTextColor(Qt::darkRed);
     updateContent();
 }
-
 
 void ParameterTextItem::updateContent()
 {
@@ -1031,9 +1017,7 @@ void ParameterTextItem::handleSelection()
 }
 
 
-/************************************************************/
-
-
+/* StateVariableTextItem */
 StateVariableTextItem::StateVariableTextItem(ParameterListGraphicsItem *parent, StateVariable *state_var, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -1043,7 +1027,6 @@ StateVariableTextItem::StateVariableTextItem(ParameterListGraphicsItem *parent, 
     root = r;
     updateContent();
 }
-
 
 void StateVariableTextItem::updateContent()
 {
@@ -1221,6 +1204,7 @@ PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
     title->setColour(Qt::blue);
     title->setDefaultTextColor(Qt::white);
     title->setPlainText("Ports");
+
     updateGVData();
 
     //create analog port items
@@ -1291,7 +1275,7 @@ AnalogPortTextItem::AnalogPortTextItem(PortListGraphicsItem *parent, AnalogPort 
     : NineMLTextItem(parent, parent)
 {
     port = p;
-    root = r;  
+    root = r;
     updateContent();
 
 }
@@ -1830,7 +1814,7 @@ void OnEventGraphicsItem::setSynapseRegime(QString r)
 }
 
 void OnEventGraphicsItem::addStateAssignment(StateAssignment *sa)
-{   
+{
     StateAssignmentTextItem *s = new StateAssignmentTextItem(this, sa, root);
     int index;
     for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM

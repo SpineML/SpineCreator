@@ -7,7 +7,6 @@
 VPATH += ../shared
 INCLUDEPATH += ../shared
 
-
 QT       += core gui opengl xml network
 
 greaterThan(QT_MAJOR_VERSION, 4) {
@@ -130,30 +129,42 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     icons.qrc
 
+# Use of the cgraph API from graphviz version 2.32 and above is the default. Can configure
+# to build with the deprecated libgraph API, if required (for Debian 7 and older Linux
+# distros). To do this, add "CONFIG+=use_libgraph_not_libcgraph" to the "Additional
+# arguments" text box under "Build Steps" in the QtCreator project configuration, or call
+# qmake like this: qmake "CONFIG+=use_libgraph_not_libcgraph"
+CONFIG(use_libgraph_not_libcgraph) {
+    DEFINES += USE_LIBGRAPH_NOT_LIBCGRAPH
+    LIBS += -lgvc -lgraph
+} else {
+    LIBS += -lgvc -lcgraph
+}
+
 win32:release{
-    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/release/lib" -lgvc -lgraph -lGLU32
+    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/release/lib" -lGLU32
     INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
     DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/release/lib"
 }
 win32:debug{
-    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/debug/lib" -lgvc -lgraph -lGLU32
+    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/debug/lib" -lGLU32
     INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
     DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/debug/lib"
 }
 linux-g++{
-    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU -lpython2.7
+    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
     INCLUDEPATH += /usr/include/python2.7
-    INCLUDEPATH += /usr/include/graphviz
+    INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include /opt/graphviz/include/graphviz
     DEPENDPATH += /usr/lib/graphviz
 }
 linux-g++-64{
-    LIBS += -L/usr/lib/graphviz -lgvc -lgraph -lGLU -lpython2.7
+    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
     INCLUDEPATH += /usr/include/python2.7
-    INCLUDEPATH += /usr/include/graphviz
+    INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include /opt/graphviz/include/graphviz
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
-    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython -lgvc -lgraph
+    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /usr/local/include/graphviz
     INCLUDEPATH += /usr/local/include

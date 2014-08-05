@@ -71,8 +71,9 @@ private:
     QPolygonF arrow_head;
 };
 
-
-class NineMLNodeItem: public TextItemGroup, public GVNode{
+// TextItemGroup derives from QGraphicsItem (amoung other things)
+class NineMLNodeItem : public TextItemGroup, public GVNode
+{
     Q_OBJECT
 public:
     NineMLNodeItem(GVLayout *layout, QString name);
@@ -85,13 +86,15 @@ public:
 };
 
 
-typedef enum{
+typedef enum {
     TRANSITION_TYPE_ON_EVENT,
     TRANSITION_TYPE_ON_CONDITION,
     TRANSITION_TYPE_ON_IMPULSE
-}NineMLTransitionItemType;
+} NineMLTransitionItemType;
 
-class NineMLTransitionItem: public TextItemGroup, public GVEdge{
+
+class NineMLTransitionItem: public TextItemGroup, public GVEdge
+{
     Q_OBJECT
 public:
     NineMLTransitionItem(GVLayout *layout, Agnode_t *src, Agnode_t *dst, QGraphicsScene *scene = 0);
@@ -107,7 +110,8 @@ protected:
 };
 
 
-class NineMLTextItem: public GroupedTextItem{
+class NineMLTextItem: public GroupedTextItem
+{
     Q_OBJECT
 public:
     NineMLTextItem(GVItem *gv_item, TextItemGroup *parent = 0);
@@ -118,12 +122,12 @@ private:
 };
 
 
-
-
 /******************************************/
 /* Concrete items */
 
-class RegimeGraphicsItem : public NineMLNodeItem{
+
+class RegimeGraphicsItem : public NineMLNodeItem
+{
     Q_OBJECT
 public:
     RegimeGraphicsItem(Regime *r, RootComponentItem *root);
@@ -146,8 +150,8 @@ private :
 };
 
 
-
-class TimeDerivativeTextItem: public NineMLTextItem{
+class TimeDerivativeTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     TimeDerivativeTextItem(RegimeGraphicsItem *parent, TimeDerivative* time_derivative, RootComponentItem *root);
@@ -169,9 +173,8 @@ private :
 };
 
 
-
-
-class OnConditionGraphicsItem : public NineMLTransitionItem{
+class OnConditionGraphicsItem : public NineMLTransitionItem
+{
     Q_OBJECT
 public:
     OnConditionGraphicsItem(Regime *src_regime, OnCondition *c, RootComponentItem *root);
@@ -198,7 +201,9 @@ private :
     RootComponentItem *root;
 };
 
-class OnConditionTriggerTextItem: public NineMLTextItem{
+
+class OnConditionTriggerTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     OnConditionTriggerTextItem(OnConditionGraphicsItem *parent, Trigger* trigger, RootComponentItem *root);
@@ -216,7 +221,9 @@ private :
     RootComponentItem *root;
 };
 
-class StateAssignmentTextItem: public NineMLTextItem{
+
+class StateAssignmentTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     StateAssignmentTextItem(NineMLTransitionItem *parent, StateAssignment* assigment, RootComponentItem *root);
@@ -236,7 +243,9 @@ private :
     RootComponentItem *root;
 };
 
-class EventOutTextItem: public NineMLTextItem{
+
+class EventOutTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     EventOutTextItem(NineMLTransitionItem *parent, EventOut* event_out, RootComponentItem *root);
@@ -255,8 +264,8 @@ private :
 };
 
 
-
-class ParameterListGraphicsItem : public NineMLNodeItem{
+class ParameterListGraphicsItem : public NineMLNodeItem
+{
     Q_OBJECT
 public:
     ParameterListGraphicsItem(RootComponentItem *root);
@@ -274,7 +283,9 @@ private :
     RootComponentItem *root;
 };
 
-class ParameterTextItem: public NineMLTextItem{
+
+class ParameterTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     ParameterTextItem(ParameterListGraphicsItem *parent, Parameter* param, RootComponentItem *root);
@@ -294,7 +305,9 @@ private :
     RootComponentItem *root;
 };
 
-class StateVariableTextItem: public NineMLTextItem{
+
+class StateVariableTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     StateVariableTextItem(ParameterListGraphicsItem *parent, StateVariable* state_var, RootComponentItem *root);
@@ -315,7 +328,8 @@ private :
 };
 
 
-class AliasTextItem: public NineMLTextItem{
+class AliasTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     AliasTextItem(ParameterListGraphicsItem *parent, Alias* alias, RootComponentItem *root);
@@ -336,7 +350,8 @@ private :
 };
 
 
-class PortListGraphicsItem : public NineMLNodeItem{
+class PortListGraphicsItem : public NineMLNodeItem
+{
     Q_OBJECT
 public:
     PortListGraphicsItem(RootComponentItem *root);
@@ -355,7 +370,8 @@ private :
 };
 
 
-class AnalogPortTextItem: public NineMLTextItem{
+class AnalogPortTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     AnalogPortTextItem(PortListGraphicsItem *parent, AnalogPort* p, RootComponentItem *root);
@@ -383,7 +399,9 @@ private :
     RootComponentItem *root;
 };
 
-class EventPortTextItem: public NineMLTextItem{
+
+class EventPortTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     EventPortTextItem(PortListGraphicsItem *parent, EventPort* p, RootComponentItem *root);
@@ -406,7 +424,8 @@ private :
 };
 
 
-class OnEventGraphicsItem : public NineMLTransitionItem{
+class OnEventGraphicsItem : public NineMLTransitionItem
+{
     Q_OBJECT
 public:
     OnEventGraphicsItem(Regime *src_regime, OnEvent *e, RootComponentItem *root);
@@ -436,7 +455,9 @@ private :
     RootComponentItem *root;
 };
 
-class OnEventTriggerTextItem: public NineMLTextItem{
+
+class OnEventTriggerTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     OnEventTriggerTextItem(OnEventGraphicsItem *parent, RootComponentItem *root);
@@ -455,7 +476,9 @@ private :
     RootComponentItem *root;
 };
 
-class ImpulsePortTextItem: public NineMLTextItem{
+
+class ImpulsePortTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     ImpulsePortTextItem(PortListGraphicsItem *parent, ImpulsePort* p, RootComponentItem *root);
@@ -482,7 +505,8 @@ private :
 };
 
 
-class ImpulseOutTextItem: public NineMLTextItem{
+class ImpulseOutTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     ImpulseOutTextItem(NineMLTransitionItem *parent, ImpulseOut* i, RootComponentItem *root);
@@ -500,7 +524,9 @@ private :
     RootComponentItem *root;
 };
 
-class OnImpulseGraphicsItem : public NineMLTransitionItem{
+
+class OnImpulseGraphicsItem : public NineMLTransitionItem
+{
     Q_OBJECT
 public:
     OnImpulseGraphicsItem(Regime *src_regime, OnImpulse *e, RootComponentItem *root);
@@ -530,7 +556,9 @@ private :
     RootComponentItem *root;
 };
 
-class OnImpulseTriggerTextItem: public NineMLTextItem{
+
+class OnImpulseTriggerTextItem: public NineMLTextItem
+{
     Q_OBJECT
 public:
     OnImpulseTriggerTextItem(OnImpulseGraphicsItem *parent, RootComponentItem *root);

@@ -22,12 +22,27 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
+/*
+ * NB: Graphviz is used to lay out the components in the component
+ * view (and not the plots in the graphing/data view window).
+ *
+ * The actual rendering of the components in the component view is
+ * handled by Qt code - see GroupedTextItem::paint.
+ */
+
 #ifndef GVITEMS_H
 #define GVITEMS_H
 
 #include <QtGui>
+// By default, use libcgraph from Graphviz, but if the user requests,
+// use the deprecated libgraph.
 #include <graphviz/gvc.h>
-#include <graphviz/graph.h>
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
+# include <graphviz/graph.h>
+#else
+# define WITH_CGRAPH 1
+# include <graphviz/cgraph.h>
+#endif
 #include <vector>
 #include <algorithm>
 #include "grouptextitems.h"
@@ -41,7 +56,7 @@ class GVLayout;
 class GVItem
 {
 public:
-    GVItem(GVLayout *layout);
+    GVItem(GVLayout *l);
     virtual void updateLayout() = 0;
     virtual void updateGVData() = 0;
 
@@ -61,7 +76,7 @@ public:
     void removeGVItem(GVItem *item);
 private:
     Agraph_t *gvgraph;
-    GVC_t *gvc;
+    GVC_t* gvc;
     vector <GVItem*> items;
 };
 
@@ -74,7 +89,9 @@ public:
     Agnode_t* getGVNode();
     void setGVNodeSize(qreal width_inches, qreal height_inches);
     QPointF getGVNodePosition(QPointF offset);
+#ifdef USE_LIBGRAPH_NOT_LIBCGRAPH
     void renameGVNode(QString name);
+#endif
 protected:
     Agnode_t *gv_node;
 };
@@ -93,8 +110,5 @@ public:
 protected:
     Agedge_t *gv_edge;
 };
-
-
-
 
 #endif // GVITEMS_H

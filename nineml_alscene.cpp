@@ -60,14 +60,12 @@ NineMLALScene::~NineMLALScene()
     portl_item = NULL;
 }
 
+#define NINEMLALSCENE_SIZE 5000
 void NineMLALScene::initialiseScene(NineMLComponent *al)
 {
-
-    //create paramater list item
     pl_item = new ParameterListGraphicsItem(root);
     addItem(pl_item);
 
-    //create analoge port list item
     portl_item = new PortListGraphicsItem(root);
     addItem(portl_item);
 
@@ -101,13 +99,11 @@ void NineMLALScene::initialiseScene(NineMLComponent *al)
     }
 
     QRectF sceneRect = this->itemsBoundingRect();
-    sceneRect.setX(sceneRect.x()-5000);
-    sceneRect.setY(sceneRect.y()-5000);
-    sceneRect.setWidth(sceneRect.width()+5000);
-    sceneRect.setHeight(sceneRect.height()+5000);
-    //sceneRect.setRect(-5000.0,-5000.0, 10000.0,10000.0);
+    sceneRect.setX(sceneRect.x()-NINEMLALSCENE_SIZE);
+    sceneRect.setY(sceneRect.y()-NINEMLALSCENE_SIZE);
+    sceneRect.setWidth(sceneRect.width()+NINEMLALSCENE_SIZE);
+    sceneRect.setHeight(sceneRect.height()+NINEMLALSCENE_SIZE);
     this->setSceneRect(sceneRect);
-
 }
 
 
