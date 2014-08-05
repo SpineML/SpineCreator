@@ -164,13 +164,10 @@ linux-g++-64{
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
-    LIBS += -L/usr/local/lib/ -L/usr/local/lib/graphviz/ -lpython
+    LIBS += -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -lpython
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
-    INCLUDEPATH += /usr/local/include/graphviz
-    INCLUDEPATH += /usr/local/include
-    INCLUDEPATH += /usr/include/graphviz
-    DEPENDPATH += /usr/local/lib/graphviz
-    DEPENDPATH += /usr/local/lib
+    INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
+    DEPENDPATH +=  /opt/local/lib/graphviz
 }
 
 OTHER_FILES += \
