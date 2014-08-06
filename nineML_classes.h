@@ -271,6 +271,15 @@ public:
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_MATHINLINE;}
+
+private:
+    /*!
+     * Remove an approved list of operators from the testequation,
+     * then set up a function list of allowed functions. If what
+     * remains in testequation is only FuncList, then the testequation
+     * will validate.
+     */
+    void validateMathSetup(QString& testequation, QStringList& FuncList);
 };
 
 class Trigger: public NineMLObject {

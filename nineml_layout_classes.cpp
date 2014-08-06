@@ -965,6 +965,7 @@ int MathInLine::validateMathInLine(NineMLLayout* component, QStringList * errs)
     test = test.replace('>', ' ');
     test = test.replace('=', ' ');
     test = test.replace(',', ' ');
+    test = test.replace('!', ' ');
 
     QStringList FuncList;
     FuncList.push_back("pow");
