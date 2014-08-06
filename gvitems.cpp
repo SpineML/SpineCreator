@@ -54,7 +54,6 @@ GVLayout::~GVLayout()
 
 void GVLayout::updateLayout()
 {
-    DBG() << "layout update with " << items.size() << " items";
     gvLayout (this->gvc, this->gvgraph, "dot");
     //update all graphviz items in the layout
     for (uint i=0; i<this->items.size(); i++)
@@ -62,7 +61,6 @@ void GVLayout::updateLayout()
         GVItem *gv_item = this->items[i];
         gv_item->updateLayout();
     }
-
 
     // For debugging, this shows the content of the graph (ok for libgraph and libcgraph):
     //gvRender (this->gvc, this->gvgraph, "dot", stdout);
@@ -107,14 +105,12 @@ GVNode::GVNode(GVLayout *l, QString name)
 #else
     this->gv_node = agnode(this->layout->getGVGraph(), name.toUtf8().data(), TRUE);
 #endif
-    DBG() << "ID for node '" << name << "' is: " << ND_id(this->gv_node);
     agsafeset(this->gv_node, (char*)"fixedsize", (char*)"true", (char*)"");
     agsafeset(this->gv_node, (char*)"shape", (char*)"rectangle", (char*)"");
 }
 
 GVNode::~GVNode()
 {
-    DBG() << "Delete node ID " << ND_id(this->gv_node);
     agdelete(this->layout->getGVGraph(), this->gv_node);
 }
 

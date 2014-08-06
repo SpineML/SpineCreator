@@ -110,13 +110,13 @@ NineMLNodeItem::~NineMLNodeItem()
 
 void NineMLNodeItem::updateLayout()
 {
-    DBG() << "Node item updateLayout (from GVItem virtual method)";
+    //DBG() << "Node item updateLayout (from GVItem virtual method)";
     QRectF bounds = boundingRect();
     QPointF offset = QPointF(bounds.width(), bounds.height());
     offset /= 2.0;
     QPointF pos = GVNode::getGVNodePosition(offset);
     pos += QPointF(padding, padding);
-    qDebug() << "Calling setPos(" << pos << ") on node position...";
+    //DBG() << "Calling setPos(" << pos << ") on node position...";
     // setPos is a Qt thing: QGraphicsItem::setPos
     setPos(pos);
 }
