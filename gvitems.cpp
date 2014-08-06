@@ -56,7 +56,7 @@ void GVLayout::updateLayout()
 {
     gvLayout (this->gvc, this->gvgraph, "dot");
     //update all graphviz items in the layout
-    for (uint i=0; i<this->items.size(); i++)
+    for (int i=0; i<this->items.size(); i++)
     {
         GVItem *gv_item = this->items[i];
         gv_item->updateLayout();

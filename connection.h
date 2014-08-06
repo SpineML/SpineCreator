@@ -198,9 +198,7 @@ private:
     int dstSize;
 
 public slots:
-    //void generate_connections(QSharedPointer <population> src, QSharedPointer <population> dst, QVector < conn > &conns);
     void generate_connections();
-    void convertToList(bool);
     void setKernelSize(int);
     void setKernelScale(float);
     void setKernel(int,int,float);

@@ -1665,22 +1665,6 @@ void kernel_connection::generate_connections() {
     emit connectionsDone();
 }
 
-void kernel_connection::convertToList(bool check) {
-/*
-    // instantiate the connection for simulators etc...
-    this->isAList = check;
-    systemObject* ptr;
-    ptr = (systemObject *)  sender()->property("ptrSrc").value<void *>();
-    //CHECK_CAST(ptr);
-    src = dynamic_cast<population *> (ptr);
-    CHECK_CAST(src);
-    ptr = (systemObject *) sender()->property("ptrDst").value<void *>();
-    //CHECK_CAST(ptr);
-    dst = dynamic_cast<population *> (ptr);
-    CHECK_CAST(dst);
-*/
-}
-
 bool kernel_connection::isList() {
 
     return this->isAList;

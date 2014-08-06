@@ -1555,7 +1555,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
-    if ((uint)colList.count() != this->synapses.size()) {
+    if (colList.count() != this->synapses.size()) {
         // oh dear, something has gone badly wrong
         qDebug() << "Size mismatch " << colList.count() << " != " << this->synapses.size();
     }

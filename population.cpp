@@ -660,9 +660,9 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         return;
     }
     case layersDrawStyle:
-
         return;
     case standardDrawStyle:
+    case standardDrawStyleExcitatory:
         // do nothing
         break;
     case spikeSourceDrawStyle:
@@ -696,7 +696,6 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         painter->drawImage(imRect, ssimage);
         return;
         break;
-
     }
 
     // transform the co-ordinates manually (using the qt transformation leads to blurry fonts!)

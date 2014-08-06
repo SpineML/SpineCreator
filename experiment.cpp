@@ -254,36 +254,6 @@ void experiment::deselect() {
 
 }
 
-void experiment::purgeBadPointer(QSharedPointer<systemObject> ptr) {
-/* NOT NECESSARY ANYMORE
-    if (ptr->type == populationObject) {
-        QSharedPointer <population> pop = dynamic_cast<QSharedPointer <population>> (ptr);
-        CHECK_CAST(pop)
-        purgeBadPointer(pop->neuronType);
-    }
-    if (ptr->type == projectionObject) {
-        QSharedPointer <projection> proj = dynamic_cast<QSharedPointer <projection>> (ptr);
-        CHECK_CAST(proj)
-        for (int i = 0; i < proj->synapses.size(); ++i) {
-            purgeBadPointer(proj->synapses[i]->postsynapseType);
-            purgeBadPointer(proj->synapses[i]->weightUpdateType);
-        }
-    }
-    if (ptr->type == inputObject) {
-        // no components, only need to remove from lesions (AJC 25/09/2012 - actually we are not having generic input lesions, so no need)
-    }
-
-    // lesions
-    for (int i = 0; i < lesions.size(); ++i) {
-        if (lesions[i]->proj == ptr) {
-            delete lesions[i];
-            lesions.erase(lesions.begin()+i);
-            --i;
-        }
-    }
-*/
-}
-
 void experiment::purgeBadPointer(QSharedPointer <NineMLComponentData> ptr)
 {
     // inputs
@@ -2318,19 +2288,15 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
 
 }
 
-void exptLesion::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
-
-    // NOT NEEDED ANYMORE
-    /*if (!data->isValidPointer(proj))
-        return;*/
-
-    if (!set || edit)
+void exptLesion::writeXML(QXmlStreamWriter * xmlOut, projectObject*)
+{
+    if (!set || edit) {
         return;
+    }
 
     xmlOut->writeEmptyElement("Lesion");
     xmlOut->writeAttribute("src_population",this->proj->source->neuronType->getXMLName());
     xmlOut->writeAttribute("dst_population",this->proj->destination->neuronType->getXMLName());
-
 }
 
 void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {

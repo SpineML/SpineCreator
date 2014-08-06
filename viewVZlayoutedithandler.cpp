@@ -1021,7 +1021,7 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     QString parsString;
 
     // add comma separated parameters to parsString
-    for (uint i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
         if (this->viewVZ->editLayout->ParameterList[i]->name != "numNeurons")
             parsString += this->viewVZ->editLayout->ParameterList[i]->name + ",";
     }
@@ -1050,7 +1050,7 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     QString stateVarsString;
 
     // add comma separated parameters to parsString
-    for (uint i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
         if (this->viewVZ->editLayout->StateVariableList[i]->name != "x" && this->viewVZ->editLayout->StateVariableList[i]->name != "y" && this->viewVZ->editLayout->StateVariableList[i]->name != "z")
             stateVarsString += this->viewVZ->editLayout->StateVariableList[i]->name + ",";
     }

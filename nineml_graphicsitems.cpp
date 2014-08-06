@@ -559,7 +559,7 @@ void OnConditionGraphicsItem::setSynapseRegime(QString r)
 {
     //QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_condition->target_regime_name = r;
-    for (uint i=0;i<root->al->RegimeList.size();i++) {
+    for (int i=0;i<root->al->RegimeList.size();i++) {
         if (root->al->RegimeList[i]->name.compare(r)==0)
             on_condition->target_regime = root->al->RegimeList[i];
     }

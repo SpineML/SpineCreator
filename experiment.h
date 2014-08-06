@@ -191,7 +191,7 @@ public:
     bool set;
 
     QVBoxLayout * drawLesion(rootData *data, viewELExptPanelHandler * handler);
-    void writeXML(QXmlStreamWriter *, projectObject * data);
+    void writeXML(QXmlStreamWriter *, projectObject *);
     void readXML(QXmlStreamReader * , projectObject *);
 
 };
@@ -236,7 +236,6 @@ public:
     void writeXML(QXmlStreamWriter *, projectObject *data);
     void readXML(QXmlStreamReader * , projectObject *);
 
-    void purgeBadPointer(QSharedPointer<systemObject>ptr);
     void purgeBadPointer(QSharedPointer <NineMLComponentData>ptr);
     void purgeBadPointer(QSharedPointer<NineMLComponent>ptr, QSharedPointer<NineMLComponent>newPtr);
     void updateChanges(QSharedPointer <NineMLComponentData> ptr);

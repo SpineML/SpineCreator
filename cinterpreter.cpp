@@ -249,13 +249,13 @@ float getVarVal(QString in, vector <lookup> varList) {
     builtin.push_back(lookup("e", M_E));
     builtin.push_back(lookup("pi", M_PI));
 
-    for (int i = 0; i < builtin.size(); ++i) {
+    for (uint i = 0; i < builtin.size(); ++i) {
         if (in == builtin[i].name) {
             return builtin[i].value;
         }
     }
 
-    for (int i = 0; i < varList.size(); ++i) {
+    for (uint i = 0; i < varList.size(); ++i) {
         if (in == varList[i].name) {
             return varList[i].value;
         }
@@ -277,7 +277,7 @@ float * getVarPtr(QString in, vector <lookup> &varList) {
         }
     }*/
 
-    for (int i = 0; i < varList.size(); ++i) {
+    for (uint i = 0; i < varList.size(); ++i) {
         if (in == varList[i].name) {
             return &(varList[i].value);
         }
@@ -325,7 +325,7 @@ float doFunction(float val1, float val2, float opf) {
 void printStack(vector <valop> opstackIn) {
 
     cerr << "STACK: \n";
-    for (int i = 0; i < opstackIn.size(); ++i) {
+    for (uint i = 0; i < opstackIn.size(); ++i) {
         cerr << float(i) << ": ";
         cerr << float(opstackIn[i].op) << " " << float(opstackIn[i].val) << "\n";
     }
@@ -758,7 +758,7 @@ float interpretMaths(vector <valop> stack) {
     // evaluate the stack:
     vector <valop> tempStack;
 
-    for (int i = 0; i < stack.size(); ++i) {
+    for (uint i = 0; i < stack.size(); ++i) {
 
         switch (stack[i].op) {
         case VAL:

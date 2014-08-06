@@ -276,6 +276,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             return;
         case standardDrawStyle:
+        case standardDrawStyleExcitatory:
         {
             start = this->start;
             end = this->curves.back().end;

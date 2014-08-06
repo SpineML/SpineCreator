@@ -689,7 +689,7 @@ int RegimeSpace::validateRegime(NineMLLayout * component, QStringList * errs)
         if (order[this->TransformList[i]->order] != -1) {++failures; errs->push_back("Duplicate Transform order value in Regime");}
         order[this->TransformList[i]->order] = i;
     }
-    for (int i = 0; i < order.size(); ++i) {
+    for (uint i = 0; i < order.size(); ++i) {
         if (i == 0 && order[i] != -1) {++failures; errs->push_back("Transform ordering must start from 1, not 0 in Regime");}
         if (order[i] == -1 && i != 0) {++failures; errs->push_back("Transform order is not contiguous in Regime");}
     }
@@ -815,7 +815,7 @@ int OnConditionSpace::validateOnCondition(NineMLLayout * component, QStringList 
         if (order[this->TransformList[i]->order] != -1) {++failures; errs->push_back("Duplicate Transform order value in OnCondition");}
         order[this->TransformList[i]->order] = i;
     }
-    for (int i = 0; i < order.size(); ++i) {
+    for (uint i = 0; i < order.size(); ++i) {
         if (i == 0 && order[i] != -1) {++failures; errs->push_back("Transform ordering must start from 1, not 0 in OnCondition");}
         if (order[i] == -1 && i != 0) {++failures; errs->push_back("Transform order is not contiguous in OnCondition");}
     }
