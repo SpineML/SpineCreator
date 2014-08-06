@@ -280,11 +280,11 @@ void viewGVpropertieslayout::dataSelectionChanged(int index) {
 
     // setup log indices
     if (logs[index]->dataClass == ANALOGDATA) {
-        for (uint i = 0; i < logs[index]->columns.size(); ++i) {
+        for (int i = 0; i < logs[index]->columns.size(); ++i) {
             indices->addItem("Index " + QString::number(logs[index]->columns[i].index));
         }
     } else if (logs[index]->dataClass == EVENTDATA) {
-        for (uint i = 0; i < logs[index]->eventIndices.size(); ++i) {
+        for (int i = 0; i < logs[index]->eventIndices.size(); ++i) {
             indices->addItem("Index " + QString::number(logs[index]->eventIndices[i]));
         }
     }

@@ -89,9 +89,9 @@ systemmodel::systemmodel(rootData * dataPtr, QObject *parent) :
      if ( role == Qt::CheckStateRole && index.column() == 0 ) {
          item->setChecked(value.toBool());
          // find and set status of item in system:
-         for (uint i = 0; i < dataPtr->populations.size(); ++i) {
+         for (int i = 0; i < dataPtr->populations.size(); ++i) {
 
-             population * currPop = (population *) dataPtr->populations[i];
+             QSharedPointer <population> currPop = (QSharedPointer <population>) dataPtr->populations[i];
 
              // populations
              if (currPop->getName() == item->name) {
@@ -99,14 +99,14 @@ systemmodel::systemmodel(rootData * dataPtr, QObject *parent) :
              }
 
              // projections
-             for (uint j = 0; j < currPop->projections.size(); ++j) {
+             for (int j = 0; j < currPop->projections.size(); ++j) {
 
-                 projection * currProj = (projection *) currPop->projections[j];
+                 QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[j];
 
                  // synapses
-                 for (uint k = 0; k < currProj->synapses.size(); ++k) {
+                 for (int k = 0; k < currProj->synapses.size(); ++k) {
 
-                     synapse * currTarg = (synapse *) currProj->synapses[k];
+                     QSharedPointer <synapse> currTarg = (QSharedPointer <synapse>) currProj->synapses[k];
 
                      if (currProj->getName() + ": Synapse " + QString::number(k) == item->name) {
                          currTarg->isVisualised = value.toBool();
@@ -199,10 +199,10 @@ void systemmodel::setupModelData(TreeItem *parent)
     QList<TreeItem*> parents;
     parents << parent;
 
-    for (uint pop = 0; pop < dataPtr->populations.size();++pop) {
+    for (int pop = 0; pop < dataPtr->populations.size();++pop) {
 
         // add population
-        population * currPop = (population *) dataPtr->populations[pop];
+        QSharedPointer <population> currPop = (QSharedPointer <population>) dataPtr->populations[pop];
         QList<QVariant> columnDataPop;
         columnDataPop << currPop->getName();
 
@@ -213,10 +213,10 @@ void systemmodel::setupModelData(TreeItem *parent)
 
         // add generic inputs for Populations
 
-        for (uint output = 0; output < dataPtr->populations[pop]->neuronType->outputs.size(); ++output) {
+        for (int output = 0; output < dataPtr->populations[pop]->neuronType->outputs.size(); ++output) {
 
             // add output
-            genericInput * currOutput = dataPtr->populations[pop]->neuronType->outputs[output];
+            QSharedPointer<genericInput> currOutput = dataPtr->populations[pop]->neuronType->outputs[output];
 
             // really we can only currently display pop -> pop inputs sensibly...
             if (!currOutput->projInput) {
@@ -234,10 +234,10 @@ void systemmodel::setupModelData(TreeItem *parent)
 
         // add projections
 
-        for (uint proj = 0; proj < currPop->projections.size(); ++proj) {
+        for (int proj = 0; proj < currPop->projections.size(); ++proj) {
 
             // add projection
-            projection * currProj = (projection *) currPop->projections[proj];
+            QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[proj];
             QList<QVariant> columnDataProj;
             columnDataProj << currProj->getName();
 
@@ -246,10 +246,10 @@ void systemmodel::setupModelData(TreeItem *parent)
             parents.last()->child(parents.last()->childCount()-1)->type = currProj->type;
             parents << parents.last()->child(parents.last()->childCount()-1);
 
-            for (uint targ = 0; targ < dataPtr->populations[pop]->projections[proj]->synapses.size(); ++targ) {
+            for (int targ = 0; targ < dataPtr->populations[pop]->projections[proj]->synapses.size(); ++targ) {
 
                 // add Synapse
-                //projection * currTarg = (projection *) currProj->synapses[targ];
+                //QSharedPointer <projection> currTarg = (QSharedPointer <projection>) currProj->synapses[targ];
                 QList<QVariant> columnDataTarg;
                 columnDataTarg << currProj->getName() + ": Synapse " + QString::number(targ);
 

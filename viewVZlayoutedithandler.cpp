@@ -34,9 +34,10 @@ viewVZLayoutEditHandler::viewVZLayoutEditHandler(rootData * data, viewNLstruct *
     this->data = data;
     this->viewVZ = viewVZ;
     this->viewNL = viewNL;
-    this->viewVZ->currObject = (systemObject *)0;
+    this->viewVZ->currObject = (QSharedPointer<systemObject>)0;
     this->viewVZ->treeView = NULL;
 
+    this->playBackTimeStep = 17;
     connect(&playBack, SIGNAL(timeout()), this, SLOT(playBackTimeout()));
 
     initGlobal();
@@ -151,18 +152,18 @@ void viewVZLayoutEditHandler::restoreTreeState(void)
 
 void viewVZLayoutEditHandler::setAllSelectState(bool selectState) {
 
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->populations[i];
+        QSharedPointer <population> currPop = (QSharedPointer <population>) data->populations[i];
 
         // populations
         currPop->isVisualised = selectState;
 
         // population generic outputs:
 
-        for (uint output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
+        for (int output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
-            genericInput * currOutput = data->populations[i]->neuronType->outputs[output];
+            QSharedPointer<genericInput> currOutput = data->populations[i]->neuronType->outputs[output];
 
             // add output if is not a projection input
             if (!currOutput->projInput) {
@@ -172,14 +173,14 @@ void viewVZLayoutEditHandler::setAllSelectState(bool selectState) {
         }
 
         // projections
-        for (uint j = 0; j < currPop->projections.size(); ++j) {
+        for (int j = 0; j < currPop->projections.size(); ++j) {
 
-            projection * currProj = (projection *) currPop->projections[j];
+            QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[j];
 
             // synapses
-            for (uint k = 0; k < currProj->synapses.size(); ++k) {
+            for (int k = 0; k < currProj->synapses.size(); ++k) {
 
-                synapse * currTarg = (synapse *) currProj->synapses[k];
+                QSharedPointer <synapse> currTarg = (QSharedPointer <synapse>) currProj->synapses[k];
 
                 currTarg->isVisualised = selectState;
 
@@ -291,7 +292,20 @@ void viewVZLayoutEditHandler::initGlobal() {
     // connect for change
     connect(playButton, SIGNAL(clicked()), this, SLOT(togglePlay()));
 
+    playTimeStep = new QSpinBox;
+    playTimeStep->setMaximum(1000);
+    playTimeStep->setValue(this->playBackTimeStep);
+
+    time->addWidget(playTimeStep);
+    // connect for hide
+    connect(this, SIGNAL(hideAll()), playTimeStep, SLOT(hide()));
+    // connect for show
+    connect(this, SIGNAL(showAll()), playTimeStep, SLOT(show()));
+    // connect for change
+    connect(playTimeStep, SIGNAL(valueChanged(int)), this, SLOT(setPlayTimeStep(int)));
+
     ((QVBoxLayout *) this->viewVZ->panel->layout())->addLayout(time);
+
 
     // view toggle //////////
 
@@ -459,7 +473,7 @@ void viewVZLayoutEditHandler::initPopulation() {
 
     // draw up the combobox
     layoutComboBox = this->addDropBox(panelLayout, "Layout", "layout");
-    for (unsigned int i = 0; i < this->data->catalogLayout.size(); ++i) {
+    for (int i = 0; i < this->data->catalogLayout.size(); ++i) {
         layoutComboBox->addItem(this->data->catalogLayout[i]->name);
     }
     // connect for hide
@@ -559,7 +573,7 @@ void viewVZLayoutEditHandler::initConnection() {
     kernelComboBox->setProperty("action","changeConnKerSize");
     kernelComboBox->setFocusPolicy(Qt::StrongFocus);
     kernelComboBox->installEventFilter(new FilterOutUndoRedoEvents);
-    for (uint i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) {
         qint32 ksize = i *2 + 3;
         QString kstring = QString::number(ksize) + " x " + QString::number(ksize);
         kernelComboBox->addItem(kstring);
@@ -593,14 +607,13 @@ void viewVZLayoutEditHandler::updateLayoutList(rootData * data) {
     layoutComboBox->clear();
     // we don't want to set stuff while this occurs
     layoutComboBox->disconnect(data);
-    for (unsigned int i = 0; i < data->catalogLayout.size(); ++i) {
+    for (int i = 0; i < data->catalogLayout.size(); ++i) {
         layoutComboBox->addItem(data->catalogLayout[i]->name);
 
-        // safe way of updating the layout list index
-        if (data->isValidPointer(viewVZ->currObject))
-            if (viewVZ->currObject->type == populationObject)
-                if (((population *) viewVZ->currObject)->layoutType->component == data->catalogLayout[i])
-                    layoutComboBox->setCurrentIndex(i);
+        // safe way of updating the layout list index]
+        if (viewVZ->currObject->type == populationObject)
+            if ((qSharedPointerDynamicCast <population> (viewVZ->currObject))->layoutType->component == data->catalogLayout[i])
+                layoutComboBox->setCurrentIndex(i);
     }
 
     connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
@@ -656,7 +669,7 @@ void viewVZLayoutEditHandler::togglePlay() {
 
     } else {
 
-        playBack.setInterval(15);
+        playBack.setInterval(playBackTimeStep);
         playBack.start();
         QPushButton * but = (QPushButton *) sender();
         QCommonStyle style;
@@ -669,7 +682,7 @@ void viewVZLayoutEditHandler::togglePlay() {
 void viewVZLayoutEditHandler::playBackTimeout() {
 
     if (timeSlider->value() < timeSlider->maximum()) {
-        timeSlider->setValue(timeSlider->value()+50);
+        timeSlider->setValue(timeSlider->value()+1);
         viewVZ->OpenGLWidget->updateLogDataTime(timeSlider->value());
     } else {
         playBack.stop();
@@ -677,6 +690,10 @@ void viewVZLayoutEditHandler::playBackTimeout() {
         playButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
     }
 
+}
+
+void viewVZLayoutEditHandler::setPlayTimeStep(int tstep) {
+    this->playBackTimeStep = tstep;
 }
 
 void viewVZLayoutEditHandler::clearAll() {
@@ -703,7 +720,7 @@ void viewVZLayoutEditHandler::redrawFromObject(QString name) {
         this->viewVZ->currObject = this->data->getObjectFromName(name);
     }
 
-    if (this->viewVZ->currObject == (systemObject *)0) {
+    if (this->viewVZ->currObject == (QSharedPointer<systemObject>)0) {
         // oops, this shouldn't happen
         //cerr << "OOPS - looked up a name for an object that wasn't there: " << name.toStdString() << "\n";
         return;
@@ -736,14 +753,14 @@ void viewVZLayoutEditHandler::redrawHeaders()
     this->updateConnectionList();
 
     // configure timeSlider
-    for (uint i = 0; i < data->experiments.size(); ++i) {
+    for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {
             timeSlider->setMinimum(0);
             timeSlider->setMaximum((int) ((data->experiments[i]->setup.duration * 1000) / data->experiments[i]->setup.dt));
         }
     }
 
-    if (this->viewVZ->currObject != (systemObject *)0) {
+    if (this->viewVZ->currObject != (QSharedPointer<systemObject>)0) {
         // draw the parameters
         redrawProperties();
         drawDeletables();
@@ -753,15 +770,15 @@ void viewVZLayoutEditHandler::redrawHeaders()
 
 void viewVZLayoutEditHandler::redrawProperties() {
 
-    if(!data->isValidPointer(this->viewVZ->currObject)) {
-        this->viewVZ->currObject = (systemObject *)0;
+    /*if(!data->isValidPointer(this->viewVZ->currObject)) {
+        this->viewVZ->currObject = (QSharedPointer<systemObject>)0;
         return;
-    }
+    } NOT NEEDED ANYMORE */
 
     if (this->viewVZ->currObject->type == populationObject) {
 
         // draw up the panel for a population
-        NineMLLayoutData * currLayout = ((population *) this->viewVZ->currObject)->layoutType;
+        QSharedPointer<NineMLLayoutData> currLayout = qSharedPointerDynamicCast<population> (this->viewVZ->currObject)->layoutType;
 
         // show widgets
         emit showPopulation();
@@ -772,10 +789,11 @@ void viewVZLayoutEditHandler::redrawProperties() {
         xSpin->disconnect(this->viewVZ->OpenGLWidget);
         ySpin->disconnect(this->viewVZ->OpenGLWidget);
         zSpin->disconnect(this->viewVZ->OpenGLWidget);
-        emit setPopulationSize(((population *) this->viewVZ->currObject)->numNeurons);
-        emit setPopulationX(((population *) this->viewVZ->currObject)->loc3.x);
-        emit setPopulationY(((population *) this->viewVZ->currObject)->loc3.y);
-        emit setPopulationZ(((population *) this->viewVZ->currObject)->loc3.z);
+        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->viewVZ->currObject);
+        emit setPopulationSize(pop->numNeurons);
+        emit setPopulationX(pop->loc3.x);
+        emit setPopulationY(pop->loc3.y);
+        emit setPopulationZ(pop->loc3.z);
         connect(sizeSpin, SIGNAL(valueChanged(int)), this->viewVZ->OpenGLWidget, SLOT (parsChangedPopulation(int)));
         connect(xSpin, SIGNAL(valueChanged(int)), this->viewVZ->OpenGLWidget, SLOT (redraw(int)));
         connect(ySpin, SIGNAL(valueChanged(int)), this->viewVZ->OpenGLWidget, SLOT (redraw(int)));
@@ -789,7 +807,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
 
     if (this->viewVZ->currObject->type == inputObject) {
 
-        genericInput * input = (genericInput *) this->viewVZ->currObject;
+        QSharedPointer<genericInput> input = qSharedPointerDynamicCast <genericInput> ( this->viewVZ->currObject);
 
         // show widgets
         emit showConnection();
@@ -801,8 +819,8 @@ void viewVZLayoutEditHandler::redrawProperties() {
             return;
         }
 
-        population * src = (population *) input->source;
-        population * dst = (population *) input->destination;
+        QSharedPointer <population> src = qSharedPointerDynamicCast <population> ( input->source);
+        QSharedPointer <population> dst = qSharedPointerDynamicCast <population> ( input->destination);
 
         // disable 1-2-1 for unequal population sizes
         if (src->numNeurons != dst->numNeurons) {
@@ -823,15 +841,15 @@ void viewVZLayoutEditHandler::redrawProperties() {
     if (this->viewVZ->currObject->type == synapseObject) {
 
         // draw up the panel for a projection
-        synapse * syn = (synapse *) this->viewVZ->currObject;
+        QSharedPointer <synapse> syn = qSharedPointerDynamicCast <synapse> (this->viewVZ->currObject);
 
         // show widgets
         emit showConnection();
 
         connectionComboBox->setProperty("type", "conn");
 
-        population * src = (population *) syn->proj->source;
-        population * dst = (population *) syn->proj->destination;
+        QSharedPointer <population> src = qSharedPointerDynamicCast <population> (syn->proj->source);
+        QSharedPointer <population> dst = qSharedPointerDynamicCast <population> (syn->proj->destination);
 
         // disable 1-2-1 for unequal population sizes
         if (src->numNeurons != dst->numNeurons) {
@@ -860,9 +878,9 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
     // sanity check
     bool found = false;
 
-    for (uint i = 0; i < data->populations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); ++i) {
 
-        population * currPop = (population *) data->populations[i];
+        QSharedPointer <population> currPop = (QSharedPointer <population>) data->populations[i];
 
         // populations
         if (currPop->getName() == item->name) {
@@ -871,9 +889,9 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
 
         // population generic outputs:
 
-        for (uint output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
+        for (int output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
-            genericInput * currOutput = data->populations[i]->neuronType->outputs[output];
+            QSharedPointer<genericInput> currOutput = data->populations[i]->neuronType->outputs[output];
 
             // add output if is not a projection input
             if (!currOutput->projInput) {
@@ -885,17 +903,17 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
         }
 
         // projections
-        for (uint j = 0; j < currPop->projections.size(); ++j) {
+        for (int j = 0; j < currPop->projections.size(); ++j) {
 
-            projection * currProj = (projection *) currPop->projections[j];
+            QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[j];
 
             if (currProj->getName() == item->name)
                 viewVZ->currObject = currProj; found = true;
 
             // synapses
-            for (uint k = 0; k < currProj->synapses.size(); ++k) {
+            for (int k = 0; k < currProj->synapses.size(); ++k) {
 
-                synapse * currTarg = (synapse *) currProj->synapses[k];
+                QSharedPointer <synapse> currTarg = (QSharedPointer <synapse>) currProj->synapses[k];
 
                 if (currProj->getName() + ": Synapse " + QString::number(k) == item->name) {
                     viewVZ->currObject = currTarg; found = true;
@@ -932,7 +950,8 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     clearLayout(this->viewVZ->panel->layout(), "select");
 
     // create copy of current layout
-    this->viewVZ->editLayout = new NineMLLayout(((population *) this->viewVZ->currObject)->layoutType->component);
+    QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->viewVZ->currObject);
+    this->viewVZ->editLayout = QSharedPointer<NineMLLayout> (new NineMLLayout(pop->layoutType->component));
 
     // check if 'none'
     if (viewVZ->editLayout->name == "none")
@@ -947,7 +966,7 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     bool isY = false;
     bool isZ = false;
     bool isNumNeurons = false;
-    for (uint i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
         if (this->viewVZ->editLayout->StateVariableList[i]->name == "x")
             isX = true;
         if (this->viewVZ->editLayout->StateVariableList[i]->name == "y")
@@ -956,7 +975,7 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
             isZ = true;
     }
 
-    for (uint i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
         if (this->viewVZ->editLayout->ParameterList[i]->name == "numNeurons")
             isNumNeurons = true;
     }
@@ -972,7 +991,7 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     err = this->viewVZ->editLayout->validateComponent();
 
     if (err.size() > 1) {
-        for (uint j = 0; j < (uint) err.size(); ++j) {
+        for (int j = 0; j < (int) err.size(); ++j) {
             cerr << err[j].toStdString() << "\n";
         }
     }
@@ -1068,7 +1087,7 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
 
     // ADD REGIMES
 
-    for (uint i = 0; i < this->viewVZ->editLayout->RegimeList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->RegimeList.size(); ++i) {
 
         editLayout->addLayout(this->drawRegime(this->viewVZ->editLayout->RegimeList[i]));
 
@@ -1119,7 +1138,8 @@ void viewVZLayoutEditHandler::drawDeletables() {
     if (this->viewVZ->currObject->type == populationObject) {
 
         // draw up the panel for a population
-        NineMLLayoutData * currLayout = ((population *) this->viewVZ->currObject)->layoutType;
+        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->viewVZ->currObject);
+        QSharedPointer<NineMLLayoutData> currLayout = pop->layoutType;
 
         // draw up the parameters:
         for (int j = 0; j < 2; ++j) {
@@ -1211,10 +1231,10 @@ void viewVZLayoutEditHandler::drawDeletables() {
         // HACK - quick table:
         connection * currConn;
         if (this->viewVZ->currObject->type == synapseObject) {
-            synapse * currSyn = (synapse *) this->viewVZ->currObject;
+            QSharedPointer <synapse> currSyn = qSharedPointerDynamicCast <synapse> (this->viewVZ->currObject);
             currConn = currSyn->connectionType;
         } else {
-            genericInput * currIn = (genericInput *) this->viewVZ->currObject;
+            QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (this->viewVZ->currObject);
             currConn = currIn->connectionType;
         }
 
@@ -1338,13 +1358,13 @@ void viewVZLayoutEditHandler::drawDeletables() {
             connect(this, SIGNAL(deleteProperties()), convert, SLOT(deleteLater()));
             convert->setChecked(((kernel_connection *)currConn)->isList());
             if (this->viewVZ->currObject->type == synapseObject) {
-                synapse * currSyn = (synapse *) this->viewVZ->currObject;
-                convert->setProperty("ptrSrc", qVariantFromValue((void *) currSyn->proj->source));
-                convert->setProperty("ptrDst", qVariantFromValue((void *) currSyn->proj->destination));
+                QSharedPointer <synapse> currSyn = qSharedPointerDynamicCast<synapse> (this->viewVZ->currObject);
+                convert->setProperty("ptrSrc", qVariantFromValue((void *) currSyn->proj->source.data()));
+                convert->setProperty("ptrDst", qVariantFromValue((void *) currSyn->proj->destination.data()));
             } else {
-                genericInput * currIn = (genericInput *) this->viewVZ->currObject;
-                convert->setProperty("ptrSrc", qVariantFromValue((void *) currIn->source));
-                convert->setProperty("ptrDst", qVariantFromValue((void *) currIn->destination));
+                QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (this->viewVZ->currObject);
+                convert->setProperty("ptrSrc", qVariantFromValue((void *) currIn->source.data()));
+                convert->setProperty("ptrDst", qVariantFromValue((void *) currIn->destination.data()));
             }
             connect(convert, SIGNAL(toggled(bool)), currConn, SLOT (convertToList(bool)));
 
@@ -1420,8 +1440,8 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
     regimeLay->addWidget(bar2b);
 
     // draw transforms up in order
-    vector < int > order;
-    for (uint j = 0; j < srcRegime->TransformList.size(); ++j) {
+    QVector < int > order;
+    for (int j = 0; j < srcRegime->TransformList.size(); ++j) {
         if (srcRegime->TransformList[j]->order > (int) order.size()) order.resize(srcRegime->TransformList[j]->order);
         order[srcRegime->TransformList[j]->order-1] = j;
     }
@@ -1431,7 +1451,7 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
     transformsLayout->setProperty("container", "regime");
     regimeLay->addLayout(transformsLayout);
 
-    for (uint j = 0; j < order.size(); ++j) {
+    for (int j = 0; j < order.size(); ++j) {
 
         // send a pointer to the container as a QVariant
         QVariant transContainer = QVariant(qVariantFromValue((void *) srcRegime));
@@ -1478,12 +1498,12 @@ void viewVZLayoutEditHandler::changeTypeOfTransition(QString type) {
 
     Transform * trans = (Transform *) src->property("ptr").value<void *>();
 
-    NineMLLayout * lay = this->viewVZ->editLayout;
+    QSharedPointer<NineMLLayout> lay = this->viewVZ->editLayout;
 
     // find pointer to new variable
     StateVariable * var;
     bool found = false;
-    for (uint i = 0; i < lay->StateVariableList.size(); ++i) {
+    for (int i = 0; i < lay->StateVariableList.size(); ++i) {
         if (type == lay->StateVariableList[i]->name) {
             var = lay->StateVariableList[i];
             found = true;
@@ -1503,7 +1523,7 @@ void viewVZLayoutEditHandler::changeTransitionMaths() {
 
     Transform * trans = (Transform *) src->property("ptr").value<void *>();
 
-    NineMLLayout * lay = this->viewVZ->editLayout;
+    QSharedPointer<NineMLLayout> lay = this->viewVZ->editLayout;
 
     QString maths = src->text();
 
@@ -1511,7 +1531,7 @@ void viewVZLayoutEditHandler::changeTransitionMaths() {
 
     QStringList errs;
 
-    trans->maths->validateMathInLine(lay, &errs);
+    trans->maths->validateMathInLine(lay.data(), &errs);
 
     viewVZeditDisplayErrors(errs);
 
@@ -1541,7 +1561,7 @@ QHBoxLayout * viewVZLayoutEditHandler::drawTransform(QVariant transContainer, Tr
     trans->setProperty("typeCBox", "stateVar");
 
     // load in the options, and set the current one
-    for (uint i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
 
         trans->addItem(this->viewVZ->editLayout->StateVariableList[i]->name);
         if (this->viewVZ->editLayout->StateVariableList[i]->name == srcTrans->variable->name)
@@ -1639,7 +1659,7 @@ void viewVZLayoutEditHandler::transformOrderDown() {
             regimeLayout->insertLayout(trans->order-2, parentLayout);
 
             // change the order:
-            for (uint i = 0; i < regime->TransformList.size(); ++i){
+            for (int i = 0; i < regime->TransformList.size(); ++i){
                 if (regime->TransformList[i]->order == trans->order-1)
                     regime->TransformList[i]->order = trans->order;
             }
@@ -1661,7 +1681,7 @@ void viewVZLayoutEditHandler::transformOrderDown() {
             regimeLayout->insertLayout(trans->order-2, parentLayout);
 
             // change the order:
-            for (uint i = 0; i < oncond->TransformList.size(); ++i){
+            for (int i = 0; i < oncond->TransformList.size(); ++i){
 
                 if (oncond->TransformList[i]->order == trans->order-1)
                     oncond->TransformList[i]->order = trans->order;
@@ -1694,7 +1714,7 @@ void viewVZLayoutEditHandler::transformOrderUp() {
             regimeLayout->insertLayout(trans->order, parentLayout);
 
             // change the order:
-            for (uint i = 0; i < regime->TransformList.size(); ++i){
+            for (int i = 0; i < regime->TransformList.size(); ++i){
                 if (regime->TransformList[i]->order == trans->order+1)
                     regime->TransformList[i]->order = trans->order;
             }
@@ -1716,7 +1736,7 @@ void viewVZLayoutEditHandler::transformOrderUp() {
             regimeLayout->insertLayout(trans->order, parentLayout);
 
             // change the order:
-            for (uint i = 0; i < oncond->TransformList.size(); ++i){
+            for (int i = 0; i < oncond->TransformList.size(); ++i){
                 if (oncond->TransformList[i]->order == trans->order+1)
                     oncond->TransformList[i]->order = trans->order;
             }
@@ -1743,13 +1763,13 @@ void viewVZLayoutEditHandler::deleteTransform() {
         trans->order = -100;
 
         // apply to regime
-        for (uint i = 0; i < regime->TransformList.size(); ++i) {
+        for (int i = 0; i < regime->TransformList.size(); ++i) {
             if (regime->TransformList[i]->order == -100)
                 regime->TransformList.erase(regime->TransformList.begin()+i, regime->TransformList.begin()+i+1);
         }
 
         // redo order
-        for (uint i = 0; i < regime->TransformList.size(); ++i) {
+        for (int i = 0; i < regime->TransformList.size(); ++i) {
             if (regime->TransformList[i]->order > removedOrder)
                 --(regime->TransformList[i]->order);
         }
@@ -1781,10 +1801,10 @@ void viewVZLayoutEditHandler::addTransform() {
 
         RegimeSpace * regime = (RegimeSpace *) src->property("ptr").value<void *>();
 
-        NineMLLayout * lay = this->viewVZ->editLayout;
+        QSharedPointer<NineMLLayout> lay = this->viewVZ->editLayout;
 
         // add the transform to the transform list for the regime:
-        regime->TransformList.resize(regime->TransformList.size()+1, new Transform);
+        regime->TransformList.append(new Transform);
         regime->TransformList.back()->maths = new MathInLine;
         regime->TransformList.back()->maths->equation = "0";
         regime->TransformList.back()->variableName = "x";
@@ -1792,7 +1812,7 @@ void viewVZLayoutEditHandler::addTransform() {
         regime->TransformList.back()->order = regime->TransformList.size();
 
         QStringList errs;
-        regime->TransformList.back()->validateTransform(lay, &errs);
+        regime->TransformList.back()->validateTransform(lay.data(), &errs);
 
         this->viewVZeditDisplayErrors(errs);
 
@@ -1823,7 +1843,7 @@ void viewVZLayoutEditHandler::updateStateVariableRefs(QLayout * lay) {
 
     QLayoutItem * item;
 
-    for (uint i = 0; i < (uint) lay->count(); ++i) {
+    for (int i = 0; i < (int) lay->count(); ++i) {
 
         item = lay->itemAt(i);
 
@@ -1846,7 +1866,7 @@ void viewVZLayoutEditHandler::updateStateVariableRefs(QLayout * lay) {
                     Transform * srcTr = (Transform *) tempCBox->property("ptr").value<void *>();
 
                     // add options:
-                    for (uint j = 0; j < this->viewVZ->editLayout->StateVariableList.size(); ++j) {
+                    for (int j = 0; j < this->viewVZ->editLayout->StateVariableList.size(); ++j) {
 
                         tempCBox->addItem(this->viewVZ->editLayout->StateVariableList[j]->name);
                         if (this->viewVZ->editLayout->StateVariableList[j]->name == srcTr->variable->name)
@@ -1874,7 +1894,7 @@ void viewVZLayoutEditHandler::updateParameters() {
     QStringList pars = text.split(",");
 
     // remove empty tokens:
-    for (uint i=0; i < (uint) pars.size(); ++i) {
+    for (int i=0; i < (int) pars.size(); ++i) {
         if (pars[i].size() == 0){
             pars.removeAt(i);
             --i;}
@@ -1906,11 +1926,11 @@ void viewVZLayoutEditHandler::updateParameters() {
     }
 
     // now match and remove all pars
-    for (uint i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
 
         bool found = false;
 
-        for (uint j = 0; j < (uint) pars.size(); ++j) {
+        for (int j = 0; j < (int) pars.size(); ++j) {
             if (pars[j] == this->viewVZ->editLayout->ParameterList[i]->name) {
                 found = true;
                 pars.removeAt(j);
@@ -1926,7 +1946,7 @@ void viewVZLayoutEditHandler::updateParameters() {
     }
 
     // now add left over pars
-    for (uint j = 0; j < (uint) pars.size(); ++j) {
+    for (int j = 0; j < (int) pars.size(); ++j) {
         this->viewVZ->editLayout->ParameterList.push_back(new Parameter);
         this->viewVZ->editLayout->ParameterList.back()->name = pars[j];
     }
@@ -1946,7 +1966,7 @@ void viewVZLayoutEditHandler::updateStateVariables() {
     QStringList pars = text.split(",");
 
     // remove empty tokens:
-    for (uint i=0; i < (uint) pars.size(); ++i) {
+    for (int i=0; i < (int) pars.size(); ++i) {
         if (pars[i].size() == 0){
             pars.removeAt(i);
             --i;}
@@ -1978,11 +1998,11 @@ void viewVZLayoutEditHandler::updateStateVariables() {
     }
 
     // now match and remove all pars
-    for (uint i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
 
         bool found = false;
 
-        for (uint j = 0; j < (uint) pars.size(); ++j) {
+        for (int j = 0; j < (int) pars.size(); ++j) {
             if (pars[j] == this->viewVZ->editLayout->StateVariableList[i]->name) {
                 found = true;
                 pars.removeAt(j);
@@ -1998,7 +2018,7 @@ void viewVZLayoutEditHandler::updateStateVariables() {
     }
 
     // now add left over pars
-    for (uint j = 0; j < (uint) pars.size(); ++j) {
+    for (int j = 0; j < (int) pars.size(); ++j) {
         this->viewVZ->editLayout->StateVariableList.push_back(new StateVariable);
         this->viewVZ->editLayout->StateVariableList.back()->name = pars[j];
     }
@@ -2018,7 +2038,7 @@ void viewVZLayoutEditHandler::editAliases() {
 void viewVZLayoutEditHandler::discardEditedLayout() {
 
     // remove the edited version from memory
-    delete this->viewVZ->editLayout;
+    this->viewVZ->editLayout.clear();
 
     // clear existing elements:
     clearLayout(this->viewVZ->panel->layout(), "body");
@@ -2048,13 +2068,14 @@ void viewVZLayoutEditHandler::saveEditedLayout() {
         this->viewVZ->editLayout->name = text;
         bool saved = false;
         // overwrite
-        for (uint i = 0; i < this->data->catalogLayout.size(); ++i) {
+        for (int i = 0; i < this->data->catalogLayout.size(); ++i) {
             if (this->data->catalogLayout[i]->name == text) {
-                NineMLLayout * test = data->catalogLayout[i];
+                QSharedPointer<NineMLLayout> test = data->catalogLayout[i];
                 data->catalogLayout[i] = this->viewVZ->editLayout;
-                delete ((population *) this->viewVZ->currObject)->layoutType;
-                ((population *) this->viewVZ->currObject)->layoutType = new NineMLLayoutData(data->catalogLayout[i]);
-                delete test;
+                QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->viewVZ->currObject);
+                pop->layoutType.clear();
+                pop->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(data->catalogLayout[i]));
+                test.clear();
                 saved = true;
             }
         }
@@ -2110,7 +2131,7 @@ void viewVZLayoutEditHandler::viewVZeditDisplayErrors(QStringList errs) {
         this->viewVZ->errors->setStyleSheet("QLabel { background: rgba(255,255,255,0); }");
     }
 
-    for (uint i = 0; i < (uint) errs.size(); ++i) {
+    for (int i = 0; i < (int) errs.size(); ++i) {
         errString += errs[i] + "\n";
     }
 

@@ -40,9 +40,9 @@ public:
 
     // general helpers
     bool isChanged(rootData *);
-    bool isValidPointer(systemObject *);
-    bool isValidPointer(NineMLComponentData *);
-    bool isValidPointer(NineMLComponent *);
+    bool isValidPointer(QSharedPointer<systemObject>);
+    bool isValidPointer(QSharedPointer <NineMLComponentData>);
+    bool isValidPointer(QSharedPointer<NineMLComponent>);
     QAction * action(int);
     /*!
      * \brief getComponentDataFromName
@@ -50,7 +50,7 @@ public:
      * \return
      * Look up a ComponentData by its name - this is used to reconnect pointers after a project is loaded in
      */
-    NineMLComponentData* getComponentDataFromName(QString name);
+    QSharedPointer<NineMLComponentData> getComponentDataFromName(QString name);
 
     // info
     QString name;
@@ -63,15 +63,15 @@ public:
     QStringList layouts;
 
     // storage for objects
-    vector < population * > network;
-    vector < NineMLComponent * > catalogNB;
-    vector < NineMLComponent * > catalogWU;
-    vector < NineMLComponent * > catalogPS;
-    vector < NineMLComponent * > catalogGC;
+    QVector < QSharedPointer <population> > network;
+    QVector < QSharedPointer<NineMLComponent> > catalogNB;
+    QVector < QSharedPointer<NineMLComponent> > catalogWU;
+    QVector < QSharedPointer<NineMLComponent> > catalogPS;
+    QVector < QSharedPointer<NineMLComponent> > catalogGC;
 
-    vector < NineMLLayout * > catalogLAY;
+    QVector < QSharedPointer<NineMLLayout> > catalogLAY;
 
-    vector < experiment * > experimentList;
+    QVector < experiment * > experimentList;
 
     // features
     versionControl version;
@@ -86,9 +86,9 @@ private:
     bool isComponent(QString);
     bool isLayout(QString);
     void loadComponent(QString, QDir);
-    void saveComponent(QString, QDir, NineMLComponent *);
+    void saveComponent(QString, QDir, QSharedPointer<NineMLComponent>);
     void loadLayout(QString, QDir);
-    void saveLayout(QString, QDir, NineMLLayout *);
+    void saveLayout(QString, QDir, QSharedPointer<NineMLLayout>);
     void loadNetwork(QString, QDir, bool isProject = true);
     void saveNetwork(QString, QDir);
     void saveMetaData(QString, QDir);

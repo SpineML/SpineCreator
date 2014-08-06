@@ -51,19 +51,19 @@ rootData::rootData(QObject *parent) :
     this->cursor.x = 0;
     this->cursor.y = 0;
     this->largestIndex = 0;
-    this->catalogUnsorted.push_back((new NineMLComponent()));
+    this->catalogUnsorted.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
     this->catalogUnsorted[0]->name = "none";
     this->catalogUnsorted[0]->type = "moo";
-    this->catalogNrn.push_back((new NineMLComponent()));
+    this->catalogNrn.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
     this->catalogNrn[0]->name = "none";
     this->catalogNrn[0]->type = "neuron_body";
-    this->catalogWU.push_back((new NineMLComponent()));
+    this->catalogWU.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
     this->catalogWU[0]->name = "none";
     this->catalogWU[0]->type = "weight_update";
-    this->catalogPS.push_back((new NineMLComponent()));
+    this->catalogPS.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
     this->catalogPS[0]->name = "none";
     this->catalogPS[0]->type = "postsynapse";
-    this->catalogLayout.push_back((new NineMLLayout()));
+    this->catalogLayout.push_back(QSharedPointer<NineMLLayout>(new NineMLLayout()));
     this->catalogLayout[0]->name = "none";
     this->selectionMoved = false;
 
@@ -74,7 +74,7 @@ rootData::rootData(QObject *parent) :
     // update version and name
     setCaption("");
 
-    clipboardCData = NULL;
+    clipboardCData.clear();
     projectActions = NULL;
 
     catalogConn.push_back("1");
@@ -104,7 +104,7 @@ void rootData::redrawViews()
         // redraw viz
         main->viewVZ.OpenGLWidget->refreshAll();
         // clear away old stuff
-        main->viewVZ.currObject = (systemObject *)0;
+        main->viewVZ.currObject = (QSharedPointer<systemObject>)0;
         main->viewVZhandler->clearAll();
         main->viewVZ.OpenGLWidget->clear();
         // configure TreeView
@@ -133,50 +133,50 @@ void rootData::selectProject(QAction * action)
     main->updateTitle();
 }
 
-void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * newComp)
+void rootData::replaceComponent(QSharedPointer<NineMLComponent> oldComp, QSharedPointer<NineMLComponent> newComp)
 {
-    for (uint p = 0; p < this->populations.size(); ++p) {
+    for (int p = 0; p < this->populations.size(); ++p) {
 
-        population * pop = this->populations[p];
+        QSharedPointer <population> pop = this->populations[p];
 
         // replace references
         if (pop->neuronType->component == oldComp) {
             // has the type changed?
             if (newComp->type != "neuron_body") {
                 pop->neuronType->migrateComponent(catalogNrn[0]);
-                for (uint i = 0; i < experiments.size(); ++i) {
+                for (int i = 0; i < experiments.size(); ++i) {
                     experiment * currExpt = experiments[i];
                     currExpt->updateChanges(pop->neuronType);
                 }
             } else {
                 pop->neuronType->migrateComponent(newComp);
-                for (uint i = 0; i < experiments.size(); ++i) {
+                for (int i = 0; i < experiments.size(); ++i) {
                     experiment * currExpt = experiments[i];
                     currExpt->updateChanges(pop->neuronType);
                 }
             }
         }
 
-        for (uint pr = 0; pr < pop->projections.size(); ++pr) {
+        for (int pr = 0; pr < pop->projections.size(); ++pr) {
 
-            projection * proj = pop->projections[pr];
+            QSharedPointer <projection> proj = pop->projections[pr];
 
-            for (uint sy = 0; sy < proj->synapses.size(); ++sy) {
+            for (int sy = 0; sy < proj->synapses.size(); ++sy) {
 
-                synapse * syn = proj->synapses[sy];
+                QSharedPointer <synapse> syn = proj->synapses[sy];
 
                 // replace references
                 if (syn->weightUpdateType->component == oldComp) {
                     // has the type changed?
                     if (newComp->type != "weight_update") {
                         syn->weightUpdateType->migrateComponent(catalogWU[0]);
-                        for (uint i = 0; i < experiments.size(); ++i) {
+                        for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
                             currExpt->updateChanges(syn->weightUpdateType);
                         }
                     } else {
                         syn->weightUpdateType->migrateComponent(newComp);
-                        for (uint i = 0; i < experiments.size(); ++i) {
+                        for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
                             currExpt->updateChanges(syn->weightUpdateType);
                         }
@@ -188,13 +188,13 @@ void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * new
                     // has the type changed?
                     if (newComp->type != "postsynapse") {
                         syn->postsynapseType->migrateComponent(catalogPS[0]);
-                        for (uint i = 0; i < experiments.size(); ++i) {
+                        for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
                             currExpt->updateChanges(syn->postsynapseType);
                         }
                     } else {
                         syn->postsynapseType->migrateComponent(newComp);
-                        for (uint i = 0; i < experiments.size(); ++i) {
+                        for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
                             currExpt->updateChanges(syn->postsynapseType);
                         }
@@ -204,7 +204,7 @@ void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * new
         }
 
         // also fix experiments with bad pointers to PORTS and PARS & COMPONENTS
-        for (uint i = 0; i < experiments.size(); ++i) {
+        for (int i = 0; i < experiments.size(); ++i) {
             experiment * currExpt = experiments[i];
             currExpt->purgeBadPointer(oldComp, newComp);
         }
@@ -216,24 +216,24 @@ void rootData::replaceComponent(NineMLComponent * oldComp, NineMLComponent * new
 }
 
 // centralised function for finding if a component is in the model
-bool rootData::isComponentInUse(NineMLComponent * oldComp)
+bool rootData::isComponentInUse(QSharedPointer<NineMLComponent> oldComp)
 {
-    for (uint p = 0; p < populations.size(); ++p) {
+    for (int p = 0; p < populations.size(); ++p) {
 
-        population * pop = populations[p];
+        QSharedPointer <population> pop = populations[p];
 
         // replace references
         if (pop->neuronType->component == oldComp) {
             return true;
         }
 
-        for (uint pr = 0; pr < pop->projections.size(); ++pr) {
+        for (int pr = 0; pr < pop->projections.size(); ++pr) {
 
-            projection * proj = pop->projections[pr];
+            QSharedPointer <projection> proj = pop->projections[pr];
 
-            for (uint sy = 0; sy < proj->synapses.size(); ++sy) {
+            for (int sy = 0; sy < proj->synapses.size(); ++sy) {
 
-                synapse * syn = proj->synapses[sy];
+                QSharedPointer <synapse> syn = proj->synapses[sy];
 
                 // replace references
                 if (syn->weightUpdateType->component == oldComp) {
@@ -254,7 +254,7 @@ bool rootData::isComponentInUse(NineMLComponent * oldComp)
 }
 
 // centralised function for finding if a component is in the model
-bool rootData::removeComponent(NineMLComponent * oldComp)
+bool rootData::removeComponent(QSharedPointer<NineMLComponent> oldComp)
 {
     if (isComponentInUse(oldComp)) {
         return false;
@@ -264,7 +264,7 @@ bool rootData::removeComponent(NineMLComponent * oldComp)
         return true;
     }
 
-    vector < NineMLComponent * > * curr_lib;
+    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
     if (oldComp->type == "neuron_body") {
         curr_lib = &this->catalogNrn;
     }
@@ -275,10 +275,10 @@ bool rootData::removeComponent(NineMLComponent * oldComp)
         curr_lib = &this->catalogPS;
     }
 
-    for (uint i = 0; i < curr_lib->size(); ++i) {
+    for (int i = 0; i < curr_lib->size(); ++i) {
         if ((*curr_lib)[i] == oldComp) {
             curr_lib->erase(curr_lib->begin()+i);
-            delete oldComp;
+            oldComp.clear();
             return true;
         }
     }
@@ -319,9 +319,9 @@ void rootData::reDrawAll()
 void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
 {
     if (style == standardDrawStyle) {
-        for (uint i = 0; i < selList.size(); ++i) {
+        for (int i = 0; i < selList.size(); ++i) {
             if (selList[i]->type == populationObject) {
-                population * pop = (population *) selList[i];
+                QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (selList[i]);
 
                 float left = ((pop->getLeft()+viewX)*GLscale+float(width))/2;
                 float right = ((pop->getRight()+viewX)*GLscale+float(width))/2;
@@ -329,7 +329,7 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                 float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
 
                 if (pop->isSpikeSource) {
-                    for (unsigned int i = 5; i > 1; --i) {
+                    for (int i = 5; i > 1; --i) {
                         QPen pen(QColor(0,0,0,50/i));
                         pen.setWidthF(float(i*2));
                         painter->setPen(pen);
@@ -338,12 +338,13 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
 
                 } else {
 
-                    for (unsigned int i = 5; i > 1; --i) {
+                    for (int i = 5; i > 1; --i) {
                         QPen pen(QColor(0,0,0,50/i));
                         pen.setWidthF(float(i*2));
                         painter->setPen(pen);
                         QRectF rectangle(left, top, right-left, bottom-top);
-                        painter->drawRect(rectangle);
+                        painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
+                        //painter->drawRect(rectangle);
                     }
                 }
             }
@@ -351,28 +352,32 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
     }
 
     // populations
-    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
         this->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, style);
     }
-    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
         this->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
     }
-    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
         QPen pen(QColor(100,0,0,100));
-        pen.setWidthF(float(1));
+
+        QSettings settings;
+        float dpi = settings.value("dpi", "1").toFloat();
+        pen.setWidthF(float(1)/dpi);
+
         painter->setPen(pen);
         this->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
     }
 
     // selected object
     if (style == standardDrawStyle) {
-        for (uint i = 0; i < selList.size(); ++i) {
+        for (int i = 0; i < selList.size(); ++i) {
 
             if (selList[i]->type == projectionObject) {
 
-                projection * col = (projection *) selList[i];
+                QSharedPointer <projection> col = qSharedPointerDynamicCast <projection> (selList[i]);
 
-                for (unsigned int i = 5; i > 1; --i) {
+                for (int i = 5; i > 1; --i) {
                     QPen pen(QColor(0,0,0,30/i));
                     pen.setWidthF(float(i*2));
                     painter->setPen(pen);
@@ -386,9 +391,9 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
 
             if (selList[i]->type == inputObject) {
 
-                genericInput * input = (genericInput *) selList[i];
+                QSharedPointer<genericInput> input = qSharedPointerDynamicCast<genericInput> (selList[i]);
 
-                for (unsigned int i = 5; i > 1; --i) {
+                for (int i = 5; i > 1; --i) {
                     QPen pen(QColor(0,0,0,30/i));
                     pen.setWidthF(float(i*2));
                     painter->setPen(pen);
@@ -414,8 +419,8 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
     painter->drawLine(QLineF(x-14.0f, y, x+14.0f, y));
 
     // update positions
-    for (unsigned int i = 0; i < this->populations.size(); ++i) {
-        this->populations[i]->animate();
+    for (int i = 0; i < this->populations.size(); ++i) {
+        this->populations[i]->animate(this->populations[i]);
     }
 
     // draw dragselect if present
@@ -461,7 +466,7 @@ void rootData::onRightMouseDown(float xGL, float yGL, float GLscale)
     if (selList.size() == 1) {
         if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {
             // try to delete control point, if that fails then add one!
-            projection * proj = (projection *) selList[0];
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
             if (!proj->deleteControlPoint(xGL, yGL, GLscale)) {
                 proj->insertControlPoint(xGL, yGL, GLscale);
             }
@@ -478,7 +483,7 @@ void rootData::dragSelect(float xGL, float yGL)
     // setup the QRect for the selection
     this->dragSelection = QRectF(this->dragListStart, QPointF(xGL, yGL));
 
-    vector <systemObject *> oldSel = selList;
+    QVector <QSharedPointer<systemObject> > oldSel = selList;
 
     // clear slection list if shift not held
     if (!addSelection) {
@@ -486,13 +491,13 @@ void rootData::dragSelect(float xGL, float yGL)
     }
 
     // add selected objects to list
-    for (uint i = 0; i < this->populations.size(); ++i) {
-        population * pop = populations[i];
+    for (int i = 0; i < this->populations.size(); ++i) {
+        QSharedPointer <population> pop = populations[i];
 
         if (dragSelection.contains(pop->x, pop->y)) {
             // if not already selected
             bool alreadySelected = false;
-            for (uint s = 0; s < this->selList.size(); ++s) {
+            for (int s = 0; s < this->selList.size(); ++s) {
                 if (selList[s] == pop) {
                     alreadySelected = true;
                 }
@@ -502,14 +507,14 @@ void rootData::dragSelect(float xGL, float yGL)
             }
         }
 
-        for (uint j = 0; j < pop->neuronType->inputs.size(); ++j) {
-            genericInput * in = pop->neuronType->inputs[j];
+        for (int j = 0; j < pop->neuronType->inputs.size(); ++j) {
+            QSharedPointer<genericInput> in = pop->neuronType->inputs[j];
 
             if (in->curves.size() > 0) {
                 if (dragSelection.contains(in->start) && dragSelection.contains(in->curves.back().end)) {
                     // if not already selected
                     bool alreadySelected = false;
-                    for (uint s = 0; s < this->selList.size(); ++s) {
+                    for (int s = 0; s < this->selList.size(); ++s) {
                         if (selList[s] == in) {
                             alreadySelected = true;
                         }
@@ -521,14 +526,14 @@ void rootData::dragSelect(float xGL, float yGL)
             }
         }
 
-        for (uint j = 0; j < pop->projections.size(); ++j) {
-            projection * proj = pop->projections[j];
+        for (int j = 0; j < pop->projections.size(); ++j) {
+            QSharedPointer <projection> proj = pop->projections[j];
 
             if (proj->curves.size() > 0) {
                 if (dragSelection.contains(proj->start) && dragSelection.contains(proj->curves.back().end)) {
                     // if not already selected
                     bool alreadySelected = false;
-                    for (uint s = 0; s < this->selList.size(); ++s) {
+                    for (int s = 0; s < this->selList.size(); ++s) {
                         if (selList[s] == proj) {
                             alreadySelected = true;
                         }
@@ -539,21 +544,21 @@ void rootData::dragSelect(float xGL, float yGL)
                 }
             }
 
-            for (uint pt = 0; pt < proj->synapses.size(); ++pt) {
+            for (int pt = 0; pt < proj->synapses.size(); ++pt) {
 
-                synapse * projT = proj->synapses[pt];
+                QSharedPointer <synapse> projT = proj->synapses[pt];
 
 
                 // select generic inputs for weightupdate
-                for (uint c = 0; c < projT->weightUpdateType->inputs.size(); ++c) {
+                for (int c = 0; c < projT->weightUpdateType->inputs.size(); ++c) {
 
-                    genericInput * in = projT->weightUpdateType->inputs[c];
+                    QSharedPointer<genericInput> in = projT->weightUpdateType->inputs[c];
 
                     if (in->curves.size() > 0) {
                         if (dragSelection.contains(in->start) && dragSelection.contains(in->curves.back().end)) {
                             // if not already selected
                             bool alreadySelected = false;
-                            for (uint s = 0; s < this->selList.size(); ++s) {
+                            for (int s = 0; s < this->selList.size(); ++s) {
                                 if (selList[s] == in) {
                                     alreadySelected = true;
                                 }
@@ -566,15 +571,15 @@ void rootData::dragSelect(float xGL, float yGL)
                 }
 
                 // select generic inputs for postsynapse
-                for (uint c = 0; c < projT->postsynapseType->inputs.size(); ++c) {
+                for (int c = 0; c < projT->postsynapseType->inputs.size(); ++c) {
 
-                    genericInput * in = projT->postsynapseType->inputs[c];
+                    QSharedPointer<genericInput> in = projT->postsynapseType->inputs[c];
 
                     if (in->curves.size() > 0) {
                         if (dragSelection.contains(in->start) && dragSelection.contains(in->curves.back().end)) {
                             // if not already selected
                             bool alreadySelected = false;
-                            for (uint s = 0; s < this->selList.size(); ++s) {
+                            for (int s = 0; s < this->selList.size(); ++s) {
                                 if (selList[s] == in) {
                                     alreadySelected = true;
                                 }
@@ -592,7 +597,7 @@ void rootData::dragSelect(float xGL, float yGL)
     // check if the selection has changed to prevent unecessary redrawing
     bool selectionChanged = false;
     if (oldSel.size() == selList.size()) {
-        for (uint i = 0; i < oldSel.size(); ++i) {
+        for (int i = 0; i < oldSel.size(); ++i) {
             if (oldSel[i] != selList[i]) {
                 selectionChanged = true;
             }
@@ -625,7 +630,7 @@ void rootData::itemWasMoved()
         // We have a pointer(s) to the moved item(s). Check types to
         // see what to do with it/them.  If ANY object in selList is a
         // population, then call populationMoved.
-        vector<population*> pops = this->currSelPopulations();
+        QVector <QSharedPointer<population> > pops = this->currSelPopulations();
         if (!pops.empty()) {
             this->populationMoved (pops);
         } // else do nothing
@@ -646,13 +651,13 @@ void rootData::projectionHandleMoved()
         && (this->selList[0]->type == projectionObject
             || this->selList[0]->type == inputObject)) {
         // New position of the handle
-        projection* projptr = static_cast<projection*>(this->selList[0]);
+        QSharedPointer<projection> projptr = qSharedPointerDynamicCast<projection>(this->selList[0]);
         QPointF newPos = projptr->selectedControlPointLocation();
         currProject->undoStack->push(new moveProjectionHandle(this, projptr, lastLeftMouseDownPos, newPos));
     }
 }
 
-void rootData::populationMoved(const vector<population*>& pops)
+void rootData::populationMoved(const QVector <QSharedPointer<population> >& pops)
 {
     if (pops.empty()) {
         return;
@@ -663,7 +668,7 @@ void rootData::populationMoved(const vector<population*>& pops)
     // widget to be re-drawn as it's moved. However, what we DO need
     // to do is to record that the population moved in the undo stack.
 
-    vector<population*>::const_iterator popsi = pops.begin();
+    QVector <QSharedPointer<population> >::const_iterator popsi = pops.begin();
 
     // A parent undocommand which will group together potentially multiple undos.
     QUndoCommand* parentCmd = new QUndoCommand();
@@ -694,16 +699,16 @@ void rootData::onNewSelections (float xGL, float yGL)
 {
     qDebug() << __FUNCTION__ << " emitting updatePanel";
     emit updatePanel(this);
-    for (uint i = 0; i < this->selList.size(); ++i) {
+    for (int i = 0; i < this->selList.size(); ++i) {
         // register locations relative to cursor:
         qDebug() << "Setting a location offset...";
         this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
     }
 }
 
-bool rootData::selListContains (const vector<systemObject*>& objectList)
+bool rootData::selListContains (const QVector <QSharedPointer<systemObject> >& objectList)
 {
-    vector<systemObject*>::const_iterator i = objectList.begin();
+    QVector <QSharedPointer<systemObject> >::const_iterator i = objectList.begin();
     while (i != objectList.end()) {
         if (std::find (this->selList.begin(), this->selList.end(), *i) != this->selList.end()) {
             return true;
@@ -713,11 +718,11 @@ bool rootData::selListContains (const vector<systemObject*>& objectList)
     return false;
 }
 
-void rootData::deleteFromSelList (const vector<systemObject*>& objectList)
+void rootData::deleteFromSelList (const QVector <QSharedPointer<systemObject> >& objectList)
 {
-    vector<systemObject*>::const_iterator i = objectList.begin();
+    QVector <QSharedPointer<systemObject> >::const_iterator i = objectList.begin();
     while (i != objectList.end()) {
-        vector<systemObject*>::iterator j = this->selList.begin();
+        QVector <QSharedPointer<systemObject> >::iterator j = this->selList.begin();
         while (j != this->selList.end()) {
             if (*i == *j) { // That is, selList contains a member of objectList
                 j = this->selList.erase (j);
@@ -742,7 +747,8 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
     // projection/input and if so, if user has clicked on a handle.
     if (!this->selList.empty() && this->selList.size() == 1) {
         if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {
-            if ( ((projection *)selList[0])->selectControlPoint(xGL, yGL, GLscale) ) {
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+            if ( proj->selectControlPoint(xGL, yGL, GLscale) ) {
                 return;
             } // else no handle on the inputObject/projectionObject was selected
         } // else the previously selected object was not an input or projection
@@ -751,7 +757,7 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
     // A list of things which have been selected with this left mouse
     // down click. Will be added to this->selList after the logic in
     // this method.
-    vector<systemObject*> newlySelectedList;
+    QVector <QSharedPointer<systemObject> > newlySelectedList;
     this->findSelection (xGL, yGL, GLscale, newlySelectedList);
 
     // Possibilities:
@@ -808,7 +814,9 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
                 // User still has shift down; append, leaving cursor unchanged
                 if (!this->selListContains (newlySelectedList)) {
                     qDebug() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
-                    this->selList.insert (this->selList.end(), newlySelectedList.begin(), newlySelectedList.end());
+                    //this->selList.insert (this->selList.end(), newlySelectedList.begin(), newlySelectedList.end());
+                    // since we have moved to QVectors this should have the same effect as the above - Alex 17 July 2014
+                    this->selList += newlySelectedList;
                 } else {
                     // user has shift down,. but newlySelected is already in selList, so in this case REMOVE it!
                     qDebug() << "user has shift down clicking on existing object, so delete";
@@ -827,7 +835,7 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
                 }
 #if 0
                 // Or maybe:?
-                for (uint i = 0; i < selList.size(); ++i) {
+                for (int i = 0; i < selList.size(); ++i) {
                     // register locations relative to cursor:
                     this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
                 }
@@ -840,13 +848,13 @@ void rootData::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDo
     }
 }
 
-void rootData::findSelection (float xGL, float yGL, float GLscale, vector<systemObject*>& newlySelectedList)
+void rootData::findSelection (float xGL, float yGL, float GLscale, QVector <QSharedPointer<systemObject> >& newlySelectedList)
 {
     // Now look at populations and their inputs.
-    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
 
         // check population inputs:
-        for (unsigned int j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j) {
+        for (int j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j) {
             // find if an edge of the input is hit
             if (this->populations[i]->neuronType->inputs[j]->is_clicked(xGL, yGL, GLscale)) {
                 // add the input to the selection list
@@ -857,7 +865,7 @@ void rootData::findSelection (float xGL, float yGL, float GLscale, vector<system
         } // for loop checking population inputs
 
         // check projections
-        for (unsigned int j = 0; j < this->populations[i]->projections.size(); ++j) {
+        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
 
             // find if an edge of the projection is hit
             if (this->populations[i]->projections[j]->is_clicked(xGL, yGL, GLscale)) {
@@ -868,11 +876,11 @@ void rootData::findSelection (float xGL, float yGL, float GLscale, vector<system
             }
 
             // check proj inputs:
-            for (unsigned int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+            for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
 
-                synapse * col = this->populations[i]->projections[j]->synapses[k];
+                QSharedPointer <synapse> col = this->populations[i]->projections[j]->synapses[k];
 
-                for (unsigned int l = 0; l < col->weightUpdateType->inputs.size(); ++l) {
+                for (int l = 0; l < col->weightUpdateType->inputs.size(); ++l) {
 
                     // find if an edge of the input is hit
                     if (col->weightUpdateType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
@@ -883,7 +891,7 @@ void rootData::findSelection (float xGL, float yGL, float GLscale, vector<system
                     }
                 }
 
-                for (unsigned int l = 0; l < col->postsynapseType->inputs.size(); ++l) {
+                for (int l = 0; l < col->postsynapseType->inputs.size(); ++l) {
                     // find if an edge of the input is hit
                     if (col->postsynapseType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
                         //  add to selection list
@@ -925,15 +933,19 @@ void rootData::deleteCurrentSelection()
     } else if (selList.size() == 1) {
         // separate out:
         if (selList[0]->type == populationObject) {
-            currProject->undoStack->push(new delPopulation(this,(population *) selList[0]));
+            QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (selList[0]);
+            currProject->undoStack->push(new delPopulation(this,pop));
         }
-        if (selList[0]->type == projectionObject) {
-            currProject->undoStack->push(new delProjection(this, (projection *) selList[0]));
+        else if (selList[0]->type == projectionObject) {
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+            currProject->undoStack->push(new delProjection(this, proj));
         }
-        if (selList[0]->type == inputObject) {
-            currProject->undoStack->push(new delInput(this,(genericInput *) selList[0]));
+        else if (selList[0]->type == inputObject) {
+            QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (selList[0]);
+            currProject->undoStack->push(new delInput(this,in));
         }
     }
+    this->undoOrRedoPerformed(0);
 }
 
 void rootData::addPopulation()
@@ -943,10 +955,10 @@ void rootData::addPopulation()
         // go and get a decent number:
         popName = getUniquePopName(popName);
 
-        population * pop = new population(cursor.x, cursor.y, 1.0f,  5.0/3.0f, popName);
+        QSharedPointer <population> pop = QSharedPointer<population> (new population(cursor.x, cursor.y, 1.0f,  5.0/3.0f, popName));
         pop->tag = this->getIndex();
-        pop->layoutType = new NineMLLayoutData(this->catalogLayout[0]);
-        pop->neuronType = new NineMLComponentData(this->catalogNrn[0]);
+        pop->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(this->catalogLayout[0]));
+        pop->neuronType = QSharedPointer <NineMLComponentData> (new NineMLComponentData(this->catalogNrn[0]));
         pop->neuronType->owner = pop;
 
         currProject->undoStack->push(new addPopulationCmd(this, pop));
@@ -963,12 +975,12 @@ void rootData::addSpikeSource()
         // go and get a decent number:
         popName = getUniquePopName(popName);
 
-        population * pop = new population(cursor.x, cursor.y, 1.0f,  5.0/3.0f, popName);
+        QSharedPointer <population> pop = QSharedPointer <population> (new population(cursor.x, cursor.y, 1.0f,  5.0/3.0f, popName));
         pop->tag = this->getIndex();
-        pop->layoutType = new NineMLLayoutData(this->catalogLayout[0]);
+        pop->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(this->catalogLayout[0]));
 
         // make a spikes source
-        pop->makeSpikeSource();
+        pop->makeSpikeSource(pop);
 
         currProject->undoStack->push(new addPopulationCmd(this, pop));
 
@@ -983,11 +995,11 @@ void rootData::addBezierOrProjection(float xGL, float yGL)
         if (this->selList[0]->type == projectionObject) {
 
             // shortcuts to the projection and population
-            projection * proj = (projection *) this->selList[0];
-            population * pop = proj->source;
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (this->selList[0]);
+            QSharedPointer <population> pop = proj->source;
 
             // find if we have hit a population:
-            for (unsigned int i = 0; i < this->populations.size(); ++i) {
+            for (int i = 0; i < this->populations.size(); ++i) {
 
                 // ignore spike sources
                 if (this->populations[i]->isSpikeSource) continue;
@@ -996,7 +1008,7 @@ void rootData::addBezierOrProjection(float xGL, float yGL)
                 if (this->populations[i]->addToPath(&box)->contains(QPointF(xGL,yGL))) {
 
                     // we have a collision, so fix up the connection and return:
-                    population * dest = this->populations[i];
+                    QSharedPointer <population> dest = this->populations[i];
 
                     // first check for an existing connection...
                     if (dest->connectsTo(pop)) {
@@ -1032,14 +1044,14 @@ void rootData::startAddBezier(float xGL, float yGL)
     if (this->selList.size() == 1) {
         if (this->selList[0]->type == populationObject) {
 
-            population * pop = (population *) selList[0];
+            QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (selList[0]);
 
             emit statusBarUpdate(tr("Adding new connection"), 2000);
             // create new bezierCurve
             bezierCurve newCurve;
 
             // add the new projection (for now)
-            pop->projections.push_back(new projection());
+            pop->projections.push_back(QSharedPointer<projection> (new projection()));
             pop->projections.back()->tag = getIndex();
             pop->projections.back()->source = pop;
 
@@ -1053,9 +1065,9 @@ void rootData::startAddBezier(float xGL, float yGL)
         if (this->selList[0]->type == projectionObject) {
 
             //shortcut to projection:
-            projection * col = (projection *) selList[0];
+            QSharedPointer <projection> col = qSharedPointerDynamicCast <projection> (selList[0]);
             // and source pop
-            population * pop = col->source;
+            QSharedPointer <population> pop = col->source;
 
             // setup the curve
             // add start where the line from pop to cursor hits the bounding box of the pop
@@ -1074,7 +1086,7 @@ void rootData::startAddBezier(float xGL, float yGL)
 
                 // see if any of the other populations are under the mouse cursor
                 int selPop = -1;
-                for (unsigned int i = 0; i < this->populations.size(); ++i) {
+                for (int i = 0; i < this->populations.size(); ++i) {
                     // ignore spike sources
                     if (this->populations[i]->isSpikeSource) continue;
                     QPainterPath * tempPP = new QPainterPath;
@@ -1086,7 +1098,7 @@ void rootData::startAddBezier(float xGL, float yGL)
 
                 if (selPop != -1) {
 
-                    population * dest = this->populations[selPop];
+                    QSharedPointer <population> dest = this->populations[selPop];
 
                     if (col->curves.size() == 1) {
                         // if first curve then setup start point
@@ -1132,7 +1144,7 @@ void rootData::abortProjection()
 {
     // the new projection should be the only one in the selList, but may not be...
     if (selList[0]->type == projectionObject) {
-        projection * proj = (projection *) this->selList[0];
+        QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (this->selList[0]);
         // remove from the selList so we don't break when it is deleted
         selList.clear();
         // remove references from other components
@@ -1149,6 +1161,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
+        CHECK_CAST(dynamic_cast<GLWidget *>(sender()))
         GLWidget * source = (GLWidget *) sender();
         source->move(xGL+source->viewX-cursor.x,yGL-source->viewY-cursor.y);
         return;
@@ -1157,6 +1170,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
     // revised move code for multiple objects
 
     // if grid is on, snap to grid
+    CHECK_CAST(dynamic_cast<GLWidget *>(sender()))
     GLWidget * source = (GLWidget *) sender();
     if (source->gridSelect) {
         xGL = round(xGL/source->gridScale)*source->gridScale;
@@ -1164,7 +1178,7 @@ void rootData::mouseMoveGL(float xGL, float yGL)
     }
 
     if (selList.size() > 1) {
-        for (uint i = 0; i < selList.size(); ++i) {
+        for (int i = 0; i < selList.size(); ++i) {
             selList[i]->move(xGL, yGL);
         }
     } else {
@@ -1172,10 +1186,10 @@ void rootData::mouseMoveGL(float xGL, float yGL)
 
         if (this->selList[0]->type == populationObject) {
             bool collision = false;
-            population * pop = (population *) selList[0];
+            QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (selList[0]);
 
             // avoid collisions
-            for (unsigned int i = 0; i < populations.size(); ++i) {
+            for (int i = 0; i < populations.size(); ++i) {
                 if (populations[i]->getName() != pop->getName()) {
                     if (populations[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->topBound(yGL)-0.01)) collision = true;
                     if (populations[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->topBound(yGL)-0.01)) collision = true;
@@ -1195,11 +1209,15 @@ void rootData::mouseMoveGL(float xGL, float yGL)
 
         } else if (this->selList[0]->type == projectionObject) {
             // not a population in this case...
-            ((projection*) selList[0])->moveSelectedControlPoint(xGL, yGL);
+            QSharedPointer<projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+            CHECK_CAST(proj)
+            proj->moveSelectedControlPoint(xGL, yGL);
 
         } else if (this->selList[0]->type == inputObject) {
             // not a population in this case either
-            ((genericInput*) selList[0])->moveSelectedControlPoint(xGL, yGL);
+            QSharedPointer<genericInput> in = qSharedPointerDynamicCast <genericInput> (selList[0]);
+            CHECK_CAST(in)
+            in->moveSelectedControlPoint(xGL, yGL);
         }
     }
 }
@@ -1208,6 +1226,11 @@ void rootData::updatePortMap(QString var)
 {
     // update the variables to connect up the stages of the currently selected projection
     genericInput * ptr = (genericInput *) sender()->property("ptr").value<void *>();
+
+    if (!this->isValidPointer(ptr)) {
+        qDebug() << "Found a bad pointer in updatePortMap";
+        exit(0);
+    }
 
     QStringList ports = var.split("->");
     // for safety
@@ -1220,23 +1243,23 @@ void rootData::updatePortMap(QString var)
 void rootData::updateComponentType(int index)
 {
     // update the components of the currently selected object
-    population * currSel;
-    synapse * targSel;
-    genericInput * inSel;
+    QSharedPointer <population> currSel;
+    QSharedPointer <synapse> targSel;
+    QSharedPointer<genericInput> inSel;
 
-    systemObject * ptr = NULL;
+    QSharedPointer<systemObject> ptr;
     // get ptr
     if (selList.size() ==1) {
         ptr = selList[0];
     }
 
-    if (ptr == NULL) {
+    if (ptr.isNull()) {
         return;
     }
 
     // if projection we need the current synapse
     if (ptr->type == projectionObject) {
-        projection * proj = (projection *) ptr;
+        QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (ptr);
         ptr = proj->synapses[proj->currTarg];
     }
 
@@ -1247,13 +1270,13 @@ void rootData::updateComponentType(int index)
     switch (ptr->type) {
         case populationObject:
             // if there is a mis-match between the type and the selected type then update
-            currSel = (population *) ptr;
+            currSel = qSharedPointerDynamicCast <population> (ptr);
 
             if (type == "layout") {
                 if (index >= 0) {
                     if (currSel->layoutType->component->name.compare(this->catalogLayout[index]->name) != 0) {
-                        delete currSel->layoutType;
-                        currSel->layoutType = new NineMLLayoutData(this->catalogLayout[index]);
+                        currSel->layoutType.clear();
+                        currSel->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(this->catalogLayout[index]));
                         this->reDrawAll();
                     }
                 }
@@ -1268,7 +1291,7 @@ void rootData::updateComponentType(int index)
             }
             break;
         case synapseObject:
-            targSel = (synapse *) ptr;
+            targSel = qSharedPointerDynamicCast <synapse> (ptr);
             if (type == "weight_update") {
                 if (index >= 0) {
                     if (targSel->weightUpdateType->component->name != this->catalogWU[index]->name || \
@@ -1294,7 +1317,7 @@ void rootData::updateComponentType(int index)
             }
             break;
         case inputObject:
-            inSel = (genericInput *) ptr;
+            inSel = qSharedPointerDynamicCast<genericInput> (ptr);
             if (type == "input") {
                 if (index >= 0) {
                     if (inSel->connectionType->getIndex() != index) {
@@ -1327,6 +1350,7 @@ void rootData::updatePar()
     // update the type of parameter
     if (action == "updateType") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterData *>(par))
         QString newType = sender()->property("newType").toString();
         currProject->undoStack->push(new updateParType(this, par, newType));
     }
@@ -1334,14 +1358,24 @@ void rootData::updatePar()
     // launch the list editor dialog
     if (action == "editList") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterData *>(par))
         NineMLComponent * comp = (NineMLComponent *) sender()->property("ptrComp").value<void *>();
-        valueListDialog * dialog  = new valueListDialog(par, comp);
+
+        QSharedPointer<NineMLComponent> compShr = this->isValidPointer(comp);
+
+        if (compShr.isNull()) {
+            qDebug() << "Found a bad pointer in updatePar/editList";
+            exit(0);
+        }
+
+        valueListDialog * dialog  = new valueListDialog(par, compShr);
         dialog->show();
     }
 
     if (action == "changeVal") {
         // Update the parameter value
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterData *>(par))
         int index = sender()->property("valToChange").toInt();
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
@@ -1353,6 +1387,7 @@ void rootData::updatePar()
     if (action == "changeConnProb") {
         // Update the parameter value
         fixedProb_connection * conn = (fixedProb_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<fixedProb_connection *>(conn))
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
         if (value != conn->p) {
@@ -1363,6 +1398,7 @@ void rootData::updatePar()
     if (action == "changeConnKerSize") {
         // Update the parameter value
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
         int kernel_size = ((QComboBox *) sender())->currentIndex() * 2 + 3;
         // only add undo if value has changed
         conn->setKernelSize(kernel_size);
@@ -1372,7 +1408,9 @@ void rootData::updatePar()
     if (action == "changeConnKerScale") {
         // Update the parameter value
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
         float kernel_scale = ((QDoubleSpinBox *) sender())->value();
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
         // only add undo if value has changed
         conn->setKernelScale(kernel_scale);
     }
@@ -1380,7 +1418,9 @@ void rootData::updatePar()
     if (action == "changeConnKernel") {
         // Update the parameter value
         kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
         float kernel_value = ((QDoubleSpinBox *) sender())->value();
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
         int i = sender()->property("i").toInt();
         int j = sender()->property("j").toInt();
         // only add undo if value has changed
@@ -1390,8 +1430,10 @@ void rootData::updatePar()
     if (action == "changePythonScriptPar") {
         // Update the parameter value
         pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<pythonscript_connection *>(conn))
         float par_value = ((QDoubleSpinBox *) sender())->value();
         QString par_name = ((QDoubleSpinBox *) sender())->property("par_name").toString();
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
         // only add undo if value has changed
         currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
     }
@@ -1399,7 +1441,9 @@ void rootData::updatePar()
     if (action == "changePythonScriptProp") {
         // Update the property affected by the connection
         pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<pythonscript_connection *>(conn))
         QString par_name = ((QComboBox *) sender())->currentText();
+        CHECK_CAST(dynamic_cast<QComboBox *>(sender()))
         // only add undo if value has changed
         currProject->undoStack->push(new undoUpdatePythonConnectionScriptProp(this, conn, par_name));
     }
@@ -1409,19 +1453,20 @@ void rootData::updatePar(int value)
 {
     // Update the parameter value
     ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
+    CHECK_CAST(dynamic_cast<ParameterData *>(par))
     par->value[0] = value;
 
     switch (value) {
     case 0:
-        par->value.resize(4,0);
+        par->value.resize(4);
         break;
     case 1:
-        par->value.resize(4,0);
+        par->value.resize(4);
         par->value[2] = 1;
         par->value[3] = 123;
         break;
     case 2:
-        par->value.resize(4,0);
+        par->value.resize(4);
         par->value[2] = 1;
         par->value[3] = 123;
         break;
@@ -1431,27 +1476,45 @@ void rootData::updatePar(int value)
     updatePanel(this);
 }
 
-vector<population*> rootData::currSelPopulations()
+void rootData::updateDrawStyle() {
+
+    drawStyle style = (drawStyle) sender()->property("style").toUInt();
+
+    if (this->selList.size() == 1) {
+        // have we only got a proj selected (this should always be the case)
+        if (this->selList[0]->type == projectionObject) {
+            // cast to a proj
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+            // test if the cast succeeded
+            if (!proj.isNull()) {
+                currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
+            }
+        }
+    }
+    emit updatePanel(this);
+}
+
+QVector <QSharedPointer<population> > rootData::currSelPopulations()
 {
     // get the currently selected populations (ALL of them)
-    vector<population*> currSel;
-    vector<systemObject*>::const_iterator i = this->selList.begin();
+    QVector <QSharedPointer<population> > currSel;
+    QVector <QSharedPointer<systemObject> >::const_iterator i = this->selList.begin();
     while (i != this->selList.end()) {
         if ((*i)->type == populationObject) {
-            currSel.push_back (static_cast<population*>(*i));
+            currSel.push_back (qSharedPointerDynamicCast<population> (*i));
         }
         ++i;
     }
     return currSel;
 }
 
-population* rootData::currSelPopulation()
+QSharedPointer<population> rootData::currSelPopulation()
 {
     // get the currently selected population
-    population* currSel = NULL;
+    QSharedPointer<population> currSel;
     if (this->selList.size() == 1) {
         if (this->selList[0]->type == populationObject) {
-            currSel = (population*) this->selList[0];
+            currSel = qSharedPointerDynamicCast<population> (this->selList[0]);
         }
     }
     return currSel;
@@ -1460,9 +1523,9 @@ population* rootData::currSelPopulation()
 void rootData::updateLayoutPar()
 {
     // get the currently selected population
-    population * currSel = this->currSelPopulation();
+    QSharedPointer <population> currSel = this->currSelPopulation();
 
-    if (currSel == NULL) {
+    if (currSel.isNull()) {
         return;
     }
 
@@ -1471,7 +1534,8 @@ void rootData::updateLayoutPar()
     case 0:
     {
         QDoubleSpinBox * source = (QDoubleSpinBox *) sender();
-        NineMLLayoutData * layout = currSel->layoutType;
+        CHECK_CAST(dynamic_cast<QDoubleSpinBox *> (sender()))
+        QSharedPointer<NineMLLayoutData> layout = currSel->layoutType;
         if (layout->minimumDistance != source->value())
             currProject->undoStack->push(new updateLayoutMinDist(this,layout,source->value()));
         break;
@@ -1479,7 +1543,8 @@ void rootData::updateLayoutPar()
     case 1:
     {
         QSpinBox * source = (QSpinBox *) sender();
-        NineMLLayoutData * layout = currSel->layoutType;
+        CHECK_CAST(dynamic_cast<QSpinBox *> (sender()))
+        QSharedPointer<NineMLLayoutData> layout = currSel->layoutType;
         if (layout->seed != source->value())
             currProject->undoStack->push(new updateLayoutSeed(this,layout,source->value()));
         break;
@@ -1490,7 +1555,7 @@ void rootData::updateLayoutPar()
 void rootData::setSize()
 {
     // get the currently selected population
-    population * currSel = this->currSelPopulation();
+    QSharedPointer <population> currSel = this->currSelPopulation();
 
     if (currSel == NULL) {
         return;
@@ -1498,6 +1563,7 @@ void rootData::setSize()
 
     // get value
     int value = ((QSpinBox *) sender())->value();
+    CHECK_CAST(dynamic_cast<QSpinBox *>(sender()))
 
     // only update if we have a change
     if (value != currSel->numNeurons) {
@@ -1508,7 +1574,7 @@ void rootData::setSize()
 void rootData::setLoc3()
 {
     // get the currently selected population
-    population * currSel = this->currSelPopulation();
+    QSharedPointer <population> currSel = this->currSelPopulation();
 
     if (currSel == NULL) {
         return;
@@ -1516,6 +1582,7 @@ void rootData::setLoc3()
 
     int index = sender()->property("type").toInt();
     int value = ((QSpinBox *) sender())->value();
+    CHECK_CAST(dynamic_cast<QSpinBox *>(sender()))
 
     currProject->undoStack->push(new setLoc3Undo(this, currSel, index, value));
 }
@@ -1523,7 +1590,7 @@ void rootData::setLoc3()
 void rootData::renamePopulation()
 {
     // get the currently selected population
-    population * currSel = this->currSelPopulation();
+    QSharedPointer <population> currSel = this->currSelPopulation();
 
     if (currSel == NULL) {
         return;
@@ -1531,9 +1598,11 @@ void rootData::renamePopulation()
 
     // get the title label so we can update it with the new name
     QLabel * titleLabel = (QLabel *) sender()->property("ptrTitle").value<void *>();
+    CHECK_CAST(dynamic_cast<QLabel *>(titleLabel))
 
     // get the rename box so we can get the new title (it isn't necessarily the sender)
     QLineEdit * renameBox = (QLineEdit *) sender()->property("ptrRename").value<void *>();
+    CHECK_CAST(dynamic_cast<QLineEdit *>(renameBox))
 
     QString newName = renameBox->text();
     // check name is unique
@@ -1562,13 +1631,13 @@ QString rootData::getUniquePopName(QString newName)
     if (selList.size() == 0) {
         ind = -1;
     } else if (selList.size() == 1) {
-        for (uint i = 0; i < populations.size(); ++i) {
+        for (int i = 0; i < populations.size(); ++i) {
             if (populations[i]->getName() == selList[0]->getName()) ind = i;
         }
     }
 
     // is the root name used? If not we can just pass it back
-    for (unsigned int i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
         if (this->populations[i]->name.compare(newName) == 0 && (int) i != ind) {
 
             // name in use - find the lowest number we can add to make a unique name
@@ -1582,7 +1651,7 @@ QString rootData::getUniquePopName(QString newName)
                 testName.append(" " + QString::number(j));
 
                 // check name against populations
-                for (unsigned int k = 0; k < this->populations.size(); ++k) {
+                for (int k = 0; k < this->populations.size(); ++k) {
                     if (ind == -1) {
                         if (this->populations[k]->name.compare(testName) == 0) {
                             nameGood = false;
@@ -1612,17 +1681,18 @@ int rootData::getIndex()
 void rootData::changeSynapse()
 {
     QPushButton * source = (QPushButton *) sender();
+    CHECK_CAST(dynamic_cast<QPushButton *>(sender()))
     QString dir = source->property("direction").toString();
 
     // get the currently selected projection
-    projection * currSel = NULL;
+    QSharedPointer <projection> currSel;
     if (this->selList.size() == 1) {
         if (this->selList[0]->type == projectionObject) {
-            currSel = (projection *)  this->selList[0];
+            currSel = qSharedPointerDynamicCast<projection> (this->selList[0]);
         }
     }
 
-    if (currSel == NULL) {
+    if (currSel.isNull()) {
         return;
     }
 
@@ -1660,7 +1730,7 @@ void rootData::changeSynapse()
 void rootData::selectColour()
 {
     // get the currently selected population
-    population * currSel = this->currSelPopulation();
+    QSharedPointer <population> currSel = this->currSelPopulation();
 
     if (currSel == NULL) {
         return;
@@ -1673,9 +1743,9 @@ void rootData::selectColour()
     emit redrawGLview();
 }
 
-void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QColor> * cols, QString name)
+void rootData::getNeuronLocationsSrc(QVector <QVector <loc> > *locations,QVector <QColor> * cols, QString name)
 {
-    vector <loc> tempLoc;
+    QVector <loc> tempLoc;
     cols->clear();
 
     if (name == "") {
@@ -1683,17 +1753,18 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
         if (this->selList.size() == 1) {
 
             if (this->selList[0]->type == populationObject) {
-                if (((population *) selList[0])->layoutType->component->name == "none") {
 
-                    population * pop = (population *) selList[0];
+                QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (selList[0]);
 
-                    for (uint i = 0; i < locations->size(); ++i) {
+                if (pop->layoutType->component->name == "none") {
+
+                    for (int i = 0; i < locations->size(); ++i) {
                         locations[i].clear();
                     }
                     locations->clear();
 
                     // linear layout by default:
-                    for (unsigned int i = 0; i < (uint) pop->numNeurons; ++i) {
+                    for (int i = 0; i < (int) pop->numNeurons; ++i) {
 
                         loc newLoc;
                         //do a square:
@@ -1708,7 +1779,7 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
 
                 } else {
 
-                    population * pop = (population *) selList[0];
+                    QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (selList[0]);
 
                     locations->clear();
                     cols->push_back(pop->colour);
@@ -1716,7 +1787,7 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                     // generate the locations!
                     QString err = "";
                     locations->resize(1);
-                    pop->layoutType->generateLayout(pop->numNeurons, &(locations->at(0)), err);
+                    pop->layoutType->generateLayout(pop->numNeurons, &((*locations)[0]), err);
                     if (err != "") {
                         emit statusBarUpdate(err, 2000);
                     }
@@ -1728,18 +1799,18 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
     } else {
 
         // find what has that name, and send back the details
-        for (unsigned int ind = 0; ind < this->populations.size(); ++ind) {
+        for (int ind = 0; ind < this->populations.size(); ++ind) {
             if (this->populations[ind]->name == name) {
 
                 if (this->populations[ind]->layoutType->component->name == "none") {
 
-                    for (uint i = 0; i < locations->size(); ++i) {
+                    for (int i = 0; i < locations->size(); ++i) {
                         locations[i].clear();
                     }
                     locations->clear();
 
                     // linear layout by default:
-                    for (unsigned int i = 0; i < (uint) this->populations[ind]->numNeurons; ++i) {
+                    for (int i = 0; i < (int) this->populations[ind]->numNeurons; ++i) {
                         loc newLoc;
                         //do a square:
                         newLoc.x = i%10;
@@ -1753,7 +1824,7 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
 
                 } else {
 
-                    for (uint i = 0; i < locations->size(); ++i) {
+                    for (int i = 0; i < locations->size(); ++i) {
                         locations[i].clear();
                     }
                     locations->clear();
@@ -1761,7 +1832,7 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                     // generate the locations!
                     QString err = "";
                     locations->resize(1);
-                    this->populations[ind]->layoutType->generateLayout(this->populations[ind]->numNeurons, &(locations->at(0)), err);
+                    this->populations[ind]->layoutType->generateLayout(this->populations[ind]->numNeurons, &((*locations)[0]), err);
                     if (err != "") {
                         emit statusBarUpdate(err, 2000);
                     }
@@ -1769,11 +1840,11 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                 }
             }
 
-            for (unsigned int cInd = 0; cInd < this->populations[ind]->projections.size(); ++cInd) {
+            for (int cInd = 0; cInd < this->populations[ind]->projections.size(); ++cInd) {
 
                 if (this->populations[ind]->projections[cInd]->getName() == name) {
 
-                    for (uint i = 0; i < locations->size(); ++i) {
+                    for (int i = 0; i < locations->size(); ++i) {
                         locations[i].clear();
                     }
                     locations->clear();
@@ -1783,12 +1854,12 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                     QString err = "";
                     locations->resize(2);
                     if (this->populations[ind]->projections[cInd]->source->layoutType->component->name != "none") {
-                        this->populations[ind]->projections[cInd]->source->layoutType->generateLayout(this->populations[ind]->projections[cInd]->source->numNeurons, &(locations->at(0)), err);
+                        this->populations[ind]->projections[cInd]->source->layoutType->generateLayout(this->populations[ind]->projections[cInd]->source->numNeurons, &((*locations)[0]), err);
                         cols->push_back(this->populations[ind]->projections[cInd]->source->colour);
                     } else {
                         // linear layout by default:
                         tempLoc.clear();
-                        for (unsigned int i = 0; i < (uint) this->populations[ind]->projections[cInd]->source->numNeurons; ++i) {
+                        for (int i = 0; i < (int) this->populations[ind]->projections[cInd]->source->numNeurons; ++i) {
                             loc newLoc;
                             //do a square:
                             newLoc.x = i%10;
@@ -1796,7 +1867,7 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                             newLoc.z = 0;
                             tempLoc.push_back(newLoc);
                         }
-                        locations->at(0) = tempLoc;
+                        (*locations)[0] = tempLoc;
                         cols->push_back(this->populations[ind]->projections[cInd]->source->colour);
                     }
                     if (err != "") {
@@ -1805,12 +1876,12 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
 
                     // DESTINATION
                     if (this->populations[ind]->projections[cInd]->destination->layoutType->component->name != "none") {
-                        this->populations[ind]->projections[cInd]->destination->layoutType->generateLayout(this->populations[ind]->projections[cInd]->destination->numNeurons, &(locations->at(1)), err);
+                        this->populations[ind]->projections[cInd]->destination->layoutType->generateLayout(this->populations[ind]->projections[cInd]->destination->numNeurons, &((*locations)[1]), err);
                         cols->push_back(this->populations[ind]->projections[cInd]->destination->colour);
                     } else {
                         // linear layout by default:
                         tempLoc.clear();
-                        for (unsigned int i = 0; i < (uint) this->populations[ind]->projections[cInd]->destination->numNeurons; ++i) {
+                        for (int i = 0; i < (int) this->populations[ind]->projections[cInd]->destination->numNeurons; ++i) {
 
                             loc newLoc;
 
@@ -1821,7 +1892,7 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
                             tempLoc.push_back(newLoc);
 
                         }
-                        locations->at(1) = tempLoc;
+                        (*locations)[1] = tempLoc;
                         cols->push_back(this->populations[ind]->projections[cInd]->destination->colour);
                     }
                     if (err != "") {
@@ -1834,17 +1905,17 @@ void rootData::getNeuronLocationsSrc(vector<vector<loc> > *locations,vector <QCo
     }
 }
 
-systemObject * rootData::getObjectFromName(QString name)
+QSharedPointer<systemObject> rootData::getObjectFromName(QString name)
 {
-    systemObject * currObject = (systemObject *)0;
+    QSharedPointer<systemObject> currObject = (QSharedPointer<systemObject>)0;
 
     // find the pop / projection that is being displayed
-    for (uint i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
         if (this->populations[i]->getName() == name) {
             currObject = this->populations[i];
             break;
         }
-        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
             if (this->populations[i]->projections[j]->getName() == name) {
                 currObject = this->populations[i]->projections[j];
                 break;
@@ -1857,38 +1928,38 @@ systemObject * rootData::getObjectFromName(QString name)
 
 
 // allow safe usage of systemObject pointers
-bool rootData::isValidPointer(systemObject * ptr)
+/*bool rootData::isValidPointer(systemObject * ptr)
 {
     // find the pop / projection / input reference
-    for (uint i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
 
-        if (this->populations[i] == ptr) {
+        if (this->populations[i].data() == ptr) {
             return true;
         }
 
-        for (uint j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j)
-            if (this->populations[i]->neuronType->inputs[j] == ptr) {
+        for (int j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j)
+            if (this->populations[i]->neuronType->inputs[j].data() == ptr) {
                 return true;
             }
 
-        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
 
-            if (this->populations[i]->projections[j] == ptr) {
+            if (this->populations[i]->projections[j].data() == ptr) {
                 return true;
             }
 
-            for (uint k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (this->populations[i]->projections[j]->synapses[k] == ptr) {
+            for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (this->populations[i]->projections[j]->synapses[k].data() == ptr) {
                     return true;
                 }
-                for (uint l = 0; l < this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
-                    if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l] == ptr) {
+                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l].data() == ptr) {
                         return true;
                     }
                 }
 
-                for (uint l = 0; l < this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
-                    if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l] == ptr) {
+                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l].data() == ptr) {
                         return true;
                     }
                 }
@@ -1898,71 +1969,117 @@ bool rootData::isValidPointer(systemObject * ptr)
 
     // not found
     return false;
+}*/
+
+QSharedPointer<systemObject> rootData::isValidPointer(systemObject * ptr)
+{
+    // find the pop / projection / input reference
+    for (int i = 0; i < this->populations.size(); ++i) {
+
+        if (this->populations[i].data() == ptr) {
+            return this->populations[i];
+        }
+
+        for (int j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j)
+            if (this->populations[i]->neuronType->inputs[j].data() == ptr) {
+                return this->populations[i]->neuronType->inputs[j];
+            }
+
+        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
+
+            if (this->populations[i]->projections[j].data() == ptr) {
+                return this->populations[i]->projections[j];
+            }
+
+            for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (this->populations[i]->projections[j]->synapses[k].data() == ptr) {
+                    return this->populations[i]->projections[j]->synapses[k];
+                }
+                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l].data() == ptr) {
+                        return this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l];
+                    }
+                }
+
+                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l].data() == ptr) {
+                        return this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l];
+                    }
+                }
+            }
+        }
+    }
+
+    // not found
+    QSharedPointer<systemObject> null;
+    return null;
 }
 
 // allow safe usage of NineMLComponentData pointers
-bool rootData::isValidPointer(NineMLComponentData * ptr)
+QSharedPointer<NineMLComponentData> rootData::isValidPointer(NineMLComponentData * ptr)
 {
     // find the reference
-    for (uint i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
 
-        if (this->populations[i]->neuronType == ptr) {
-            return true;
+        if (this->populations[i]->neuronType.data() == ptr) {
+            return this->populations[i]->neuronType;
         }
 
-        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
-            for (uint k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType == ptr) {
-                    return true;
+        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
+            for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType.data() == ptr) {
+                    return this->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
-                if (this->populations[i]->projections[j]->synapses[k]->postsynapseType == ptr) {
-                        return true;
+                if (this->populations[i]->projections[j]->synapses[k]->postsynapseType.data() == ptr) {
+                    return this->populations[i]->projections[j]->synapses[k]->postsynapseType;
                 }
             }
         }
     }
 
     // not found
-    return false;
+    QSharedPointer<NineMLComponentData> null;
+    return null;
 }
 
 // allow safe usage of NineMLComponent pointers
-bool rootData::isValidPointer(NineMLComponent * ptr)
+QSharedPointer<NineMLComponent> rootData::isValidPointer(NineMLComponent * ptr)
 {
-    for (uint i = 0; i < this->catalogNrn.size(); ++i)
-        if (catalogNrn[i] == ptr) {
-            return true;
+    for (int i = 0; i < this->catalogNrn.size(); ++i)
+        if (catalogNrn[i].data() == ptr) {
+            return catalogNrn[i];
         }
-    for (uint i = 0; i < this->catalogPS.size(); ++i)
-        if (catalogPS[i] == ptr) {
-            return true;
+    for (int i = 0; i < this->catalogPS.size(); ++i)
+        if (catalogPS[i].data()  == ptr) {
+            return catalogPS[i];
         }
-    for (uint i = 0; i < this->catalogUnsorted.size(); ++i)
-        if (catalogUnsorted[i] == ptr) {
-            return true;
+    for (int i = 0; i < this->catalogUnsorted.size(); ++i)
+        if (catalogUnsorted[i].data()  == ptr) {
+            return catalogUnsorted[i];
         }
-    for (uint i = 0; i < this->catalogWU.size(); ++i)
-        if (catalogWU[i] == ptr) {
-            return true;
+    for (int i = 0; i < this->catalogWU.size(); ++i)
+        if (catalogWU[i].data()  == ptr) {
+            return catalogWU[i];
         }
 
     // not found
-    return false;
+    QSharedPointer<NineMLComponent> null;
+    return null;
 }
 
 void rootData::setSelectionbyName(QString name)
 {
-    systemObject * currObject = (systemObject *)0;
+    QSharedPointer<systemObject> currObject = (QSharedPointer<systemObject>)0;
 
     // find the pop / projection that is being displayed
-    for (uint i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
 
         if (this->populations[i]->getName() == name) {
             currObject = this->populations[i];
             break;
         }
 
-        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
+        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
             if (this->populations[i]->projections[j]->getName() == name) {
                 currObject = this->populations[i]->projections[j];
                 break;
@@ -1978,15 +2095,16 @@ void rootData::addgenericInput()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    NineMLComponentData * src = (NineMLComponentData *)0;
+    CHECK_CAST(dynamic_cast<QLineEdit *>(sender()))
+    QSharedPointer <NineMLComponentData> src;
 
     // find source:
-    for (uint i = 0; i < this->populations.size(); ++i) {
+    for (int i = 0; i < this->populations.size(); ++i) {
         if (this->populations[i]->neuronType->getXMLName() == text) {
             src = this->populations[i]->neuronType;
         }
-        for (uint j = 0; j < this->populations[i]->projections.size(); ++j) {
-            for (uint k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
+        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
+            for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
                 if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
                     src = this->populations[i]->projections[j]->synapses[k]->weightUpdateType;
                 }
@@ -1997,15 +2115,23 @@ void rootData::addgenericInput()
         }
     }
 
-    if (src != (NineMLComponentData *)0) {
+    if (!src.isNull()) {
 
         NineMLComponentData * dst = (NineMLComponentData *) sender()->property("ptr").value<void *>();
+
+        // check it is valid
+        QSharedPointer<NineMLComponentData> dstShr = isValidPointer(dst);
+
+        if (dstShr.isNull()) {
+            qDebug() << "Found a bad pointer in addGenericInput";
+            exit(0);
+        }
 
         // disconnect so we don't get multiples
         sender()->disconnect((QObject *) 0);
 
         // add the genericInput
-        currProject->undoStack->push(new addInput(this, src, dst));
+        currProject->undoStack->push(new addInput(this, src, dstShr));
 
         // redraw panel
         emit updatePanel(this);
@@ -2014,6 +2140,7 @@ void rootData::addgenericInput()
     } else {
         // src not found - set the LineEdit background red-ish
         QPalette p = ((QLineEdit *) sender())->palette();
+        CHECK_CAST(dynamic_cast<QLineEdit *>(sender()))
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
         ((QLineEdit *) sender())->setPalette(p);
     }
@@ -2022,8 +2149,16 @@ void rootData::addgenericInput()
 void rootData::delgenericInput()
 {
     genericInput * ptr = (genericInput *) sender()->property("ptr").value<void *>();
+
+    QSharedPointer <genericInput> ptrShr = qSharedPointerDynamicCast<genericInput> (this->isValidPointer(ptr));
+
+    if (ptrShr.isNull()) {
+        qDebug() << "Found a bad pointer in delGenericInput";
+        exit(0);
+    }
+
     // delete the genericInput
-    currProject->undoStack->push(new delInput(this, ptr));
+    currProject->undoStack->push(new delInput(this, ptrShr));
     emit updatePanel(this);
 }
 
@@ -2031,6 +2166,7 @@ void rootData::editConnections()
 {
     // launch the list editor dialog
     csv_connection * conn = (csv_connection *) sender()->property("ptr").value<void *>();
+    CHECK_CAST(dynamic_cast<csv_connection *>(conn))
     connectionListDialog * dialog  = new connectionListDialog(conn);
     dialog->show();
 
@@ -2059,6 +2195,8 @@ void rootData::undoOrRedoPerformed(int)
     setCaptionOut(this->currProject->name);
     // update file list for components
     emit setWindowTitle();
+    emit updatePanel(this);
+    qDebug() << "Here";
 }
 
 void rootData::copyParsToClipboard()
@@ -2069,26 +2207,29 @@ void rootData::copyParsToClipboard()
         // if population
         if (selList[0]->type == populationObject) {
             if (sender()->property("source").toString() == "tab1") {
-                if (clipboardCData != NULL) {
-                    delete clipboardCData;
+                if (clipboardCData.isNull()) {
+                    clipboardCData.clear();
                 }
-                clipboardCData = new NineMLComponentData(((population *) selList[0])->neuronType);
+                QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (selList[0]);
+                clipboardCData = QSharedPointer<NineMLComponentData> (new NineMLComponentData(pop->neuronType));
             }
         }
 
         // if projection
         if (selList[0]->type == projectionObject) {
             if (sender()->property("source").toString() == "tab1") {
-                if (clipboardCData != NULL) {
-                    delete clipboardCData;
+                if (clipboardCData.isNull()) {
+                    clipboardCData.clear();
                 }
-                clipboardCData = new NineMLComponentData(((projection *) selList[0])->synapses[((projection *) selList[0])->currTarg]->weightUpdateType);
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
+                clipboardCData = QSharedPointer<NineMLComponentData> (new NineMLComponentData(proj->synapses[proj->currTarg]->weightUpdateType));
             }
             if (sender()->property("source").toString() == "tab2") {
-                if (clipboardCData != NULL) {
-                    delete clipboardCData;
+                if (clipboardCData.isNull()) {
+                    clipboardCData.clear();
                 }
-                clipboardCData = new NineMLComponentData(((projection *) selList[0])->synapses[((projection *) selList[0])->currTarg]->postsynapseType);
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
+                clipboardCData = QSharedPointer<NineMLComponentData> (new NineMLComponentData(proj->synapses[proj->currTarg]->postsynapseType));
             }
         }
     }
@@ -2103,17 +2244,19 @@ void rootData::pasteParsFromClipboard()
         // if population
         if (selList[0]->type == populationObject) {
             if (sender()->property("source").toString() == "tab1") {
-                currProject->undoStack->push(new pastePars(this,clipboardCData,((population *) selList[0])->neuronType));
+                QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (selList[0]);
+                currProject->undoStack->push(new pastePars(this,clipboardCData,pop->neuronType));
             }
         }
 
         // if projection
         if (selList[0]->type == projectionObject) {
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
             if (sender()->property("source").toString() == "tab1") {
-                currProject->undoStack->push(new pastePars(this,clipboardCData,((projection *) selList[0])->synapses[((projection *) selList[0])->currTarg]->weightUpdateType));
+                currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->weightUpdateType)));
             }
             if (sender()->property("source").toString() == "tab2") {
-                currProject->undoStack->push(new pastePars(this,clipboardCData,((projection *) selList[0])->synapses[((projection *) selList[0])->currTarg]->postsynapseType));
+                currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->postsynapseType)));
             }
         }
     }

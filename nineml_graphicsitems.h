@@ -63,9 +63,9 @@ public:
     QRectF boundingRect() const;
     void setPath(QPainterPath path);
     void setPenColour(QColor col);
-    void setLineWidth(uint w);
+    void setLineWidth(int w);
 private:
-    uint width;
+    int width;
     QColor colour;
     QPainterPath path;
     QPolygonF arrow_head;
@@ -81,7 +81,7 @@ public:
     virtual void updateLayout();
     void updateGVData();
     void addMember(GroupedTextItem *item);            //overwrite TextItemGroup addMember
-    void addMemberAtIndex(GroupedTextItem *item, uint index);
+    void addMemberAtIndex(GroupedTextItem *item, int index);
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
 };
 
@@ -102,7 +102,7 @@ public:
     virtual void updateLayout();
     void updateGVData();
     void addMember(GroupedTextItem * item);            //overwrite TextItemGroup addMember
-    void addMemberAtIndex(GroupedTextItem *item, uint index);
+    void addMemberAtIndex(GroupedTextItem *item, int index);
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
     virtual NineMLTransitionItemType transitionType() = 0;
 protected:

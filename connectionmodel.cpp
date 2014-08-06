@@ -61,7 +61,7 @@ csv_connectionModel::csv_connectionModel(QObject *parent) :
      return QVariant();
  }
 
- void csv_connectionModel::allData(vector < conn > &conns) {
+ void csv_connectionModel::allData(QVector < conn > &conns) {
 
     // read all data into memory for displaying connection lists:
     this->currentConnection->getAllData(conns);

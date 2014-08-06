@@ -218,12 +218,12 @@ QPointF GVEdge::getGVEdgeLabelPosition(QPointF offset)
     return position;
 }
 
-uint GVEdge::getGVEdgeSplinesCount()
+int GVEdge::getGVEdgeSplinesCount()
 {
     return ED_spl(this->gv_edge)->list->size;
 }
 
-QPointF GVEdge::getGVEdgeSplinesPoint(uint i)
+QPointF GVEdge::getGVEdgeSplinesPoint(int i)
 {
     QPointF spline = QPointF(ED_spl(this->gv_edge)->list->list[i].x,
                              GD_bb(this->layout->getGVGraph()).UR.y - ED_spl(this->gv_edge)->list->list[i].y);

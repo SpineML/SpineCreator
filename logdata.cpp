@@ -42,11 +42,11 @@ double logData::getMax() {
 
     // no max, must calculate
     double tempMax = -Q_INFINITY;
-    vector < double > rowData;
+    QVector < double > rowData;
     rowData.push_back(-Q_INFINITY);
     int i = 0;
     while (rowData.size() > 0) {
-        for (uint j = 0; j < rowData.size(); ++j)
+        for (int j = 0; j < rowData.size(); ++j)
             if (rowData[j] > tempMax && rowData[j] < Q_INFINITY)
                 tempMax = rowData[j];
                 //qDebug() << rowData[0] << rowData[1]<< rowData[2]<< rowData[3]<< rowData[4]<< rowData[5]<< rowData[6]<< rowData[7]<< rowData[8]<< rowData[9];}
@@ -65,11 +65,11 @@ double logData::getMin() {
 
     // no min, must calculate
     double tempMin = Q_INFINITY;
-    vector < double > rowData;
+    QVector < double > rowData;
     rowData.push_back(Q_INFINITY);
     int i = 0;
     while (rowData.size() > 0) {
-        for (uint j = 0; j < rowData.size(); ++j)
+        for (int j = 0; j < rowData.size(); ++j)
             if (rowData[j] < tempMin)
                 tempMin = rowData[j];
         rowData = getRow(i);
@@ -79,10 +79,10 @@ double logData::getMin() {
     return min;
 }
 
-vector < double > logData::getRow(int rowNum) {
+QVector < double > logData::getRow(int rowNum) {
 
 
-    vector < double > rowData;
+    QVector < double > rowData;
 
     // is not analog return empty
     if (this->dataClass != ANALOGDATA)
@@ -108,7 +108,7 @@ vector < double > logData::getRow(int rowNum) {
         // check that all are same type
         dataType mainType;
         mainType = columns[0].type;
-        for (uint i = 0; i < columns.size(); ++i) {
+        for (int i = 0; i < columns.size(); ++i) {
             if (columns[i].type != mainType)
                 return rowData;
         }
@@ -120,14 +120,18 @@ vector < double > logData::getRow(int rowNum) {
                 rowData.resize(columns.size());
                 data.readRawData((char *) &rowData[0], sizeof(double)*rowData.size());
             } else {
-                vector < double > tempDbl;
+                QVector < double > tempDbl;
                 tempDbl.resize(columns.size());
                 data.readRawData((char *) &tempDbl[0], sizeof(double)*tempDbl.size());
                 // a good first guess
-                rowData.resize(columns.back().index+1, Q_INFINITY);
-                for (uint i = 0; i < columns.size(); ++i) {
-                    if (static_cast<uint>(columns[i].index) > rowData.size()) {
-                        rowData.resize(columns[i].index+1, Q_INFINITY);
+                vector <double> temp = rowData.toStdVector();
+                temp.resize(columns.back().index+1, Q_INFINITY);
+                rowData = QVector <double>::fromStdVector(temp);
+                for (int i = 0; i < columns.size(); ++i) {
+                    if (static_cast<int>(columns[i].index) > rowData.size()) {
+                        vector <double> temp = rowData.toStdVector();
+                        temp.resize(columns[i].index+1, Q_INFINITY);
+                        rowData = QVector <double>::fromStdVector(temp);
                     }
                     rowData[columns[i].index] = tempDbl[i];
                 }
@@ -137,15 +141,19 @@ vector < double > logData::getRow(int rowNum) {
         break;
         case TYPE_FLOAT:
         {
-            vector < float > tempFloat;
+            QVector < float > tempFloat;
             tempFloat.resize(columns.size());
             data.setFloatingPointPrecision(QDataStream::SinglePrecision);
             data.readRawData((char *) &tempFloat[0], sizeof(float)*tempFloat.size());
             // a good first guess
-            rowData.resize(columns.back().index+1, Q_INFINITY);
-            for (uint i = 0; i < columns.size(); ++i) {
-                if (static_cast<uint>(columns[i].index) > rowData.size()) {
-                    rowData.resize(columns[i].index+1, Q_INFINITY);
+            vector <double> temp = rowData.toStdVector();
+            temp.resize(columns.back().index+1, Q_INFINITY);
+            rowData = QVector <double>::fromStdVector(temp);
+            for (int i = 0; i < columns.size(); ++i) {
+                if (static_cast<int>(columns[i].index) > rowData.size()) {
+                    vector <double> temp = rowData.toStdVector();
+                    temp.resize(columns[i].index+1, Q_INFINITY);
+                    rowData = QVector <double>::fromStdVector(temp);
                 }
                 rowData[columns[i].index] = tempFloat[i];
             }
@@ -161,14 +169,18 @@ vector < double > logData::getRow(int rowNum) {
         break;
         case TYPE_INT32:
         {
-            vector < int > tempInt;
+            QVector < int > tempInt;
             tempInt.resize(columns.size());
             data.readRawData((char *) &tempInt[0], sizeof(int)*tempInt.size());
             // a good first guess
-            rowData.resize(columns.back().index+1, Q_INFINITY);
-            for (uint i = 0; i < columns.size(); ++i) {
-                if (static_cast<uint>(columns[i].index) > rowData.size()) {
-                    rowData.resize(columns[i].index+1, Q_INFINITY);
+            vector <double> temp = rowData.toStdVector();
+            temp.resize(columns.back().index+1, Q_INFINITY);
+            rowData = QVector <double>::fromStdVector(temp);
+            for (int i = 0; i < columns.size(); ++i) {
+                if (static_cast<int>(columns[i].index) > rowData.size()) {
+                    vector <double> temp = rowData.toStdVector();
+                    temp.resize(columns[i].index+1, Q_INFINITY);
+                    rowData = QVector <double>::fromStdVector(temp);
                 }
                 rowData[columns[i].index] = tempInt[i];
             }
@@ -768,10 +780,12 @@ bool logData::setupFromXML() {
                             reader->readNextStartElement();
 
                             // add columns
-                            columns.resize(size, newCol);
+                            vector <column> temp = columns.toStdVector();
+                            temp.resize(size, newCol);
+                            columns = QVector<column>::fromStdVector(temp);
 
                             // setup indices
-                            for (uint i = 0; i < columns.size(); ++i)
+                            for (int i = 0; i < columns.size(); ++i)
                                 columns[i].index = i;
 
                         } else if (reader->name() == "TimeStep") {

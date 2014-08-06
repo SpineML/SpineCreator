@@ -46,18 +46,18 @@ public:
 
 private:
     // draw functions for systemObject types
-    void popSelected(population *, rootData*);
-    void projSelected(projection*, rootData*);
-    void inSelected(genericInput *, rootData*);
+    void popSelected(QSharedPointer<population> &, rootData*);
+    void projSelected(QSharedPointer<projection> &, rootData*);
+    void inSelected(QSharedPointer<genericInput>, rootData*);
 
     // draw the params
     void drawParamsLayout(rootData * data);
-    void drawSingleParam(QFormLayout * varLayout, ParameterData * currPar, rootData * data, bool connectionBool, QString type, NineMLData* type9ml, connection * conn);
+    void drawSingleParam(QFormLayout * varLayout, ParameterData * currPar, rootData * data, bool connectionBool, QString type, QSharedPointer<NineMLData>  type9ml, connection * conn);
 
     // are these needed anymore?
     void recursiveDeleteLater(QLayout * parentLayout);
-    vector <QWidget *> forDeleting;
-    systemObject * lastObject;
+    QVector <QWidget *> forDeleting;
+    QSharedPointer<systemObject> lastObject;
 
     // initialisation
     void initModelHeader(rootData *);
@@ -85,6 +85,10 @@ private:
     // port selection for input
     QComboBox * inputPortSelection;
     QComboBox * inputConnectionComboBox;
+
+    // Projection style radio buttons
+    QRadioButton * exc;
+    QRadioButton * inh;
 
     QLabel * inputSrcName; // we need to set the tooltip, which we cannot do through slots
 

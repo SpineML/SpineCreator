@@ -43,6 +43,9 @@ population::population(float x, float y, float size, float aspect_ratio, QString
     this->right = this->x+this->size/(2.0)*this->aspect_ratio;
     this->top = this->y+this->size/2.0;
     this->bottom = this->y-this->size/2.0;
+    if (name.isEmpty()) {
+        name = "New population";
+    }
     this->name = name;
     this->neuronTypeName = "none";
     this->numNeurons = 1;
@@ -57,7 +60,7 @@ population::population(float x, float y, float size, float aspect_ratio, QString
 
 }
 
-population::population(population * data)
+population::population(QSharedPointer <population> data, QSharedPointer<population> thisSharedPointer)
 {
     this->x = data->x;
     this->y = data->y;
@@ -79,15 +82,15 @@ population::population(population * data)
     loc3.x = data->loc3.x;
     loc3.y = data->loc3.y;
     loc3.z = data->loc3.z;
-    this->neuronType = new NineMLComponentData(this->neuronType);
+    this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType));
     // fix owner
-    this->neuronType->owner = this;
+    this->neuronType->owner = thisSharedPointer;
 
     isSpikeSource = false;
 
 }
 
-population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, projectObject * data)
+void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta, projectObject * data, QSharedPointer<population> thisSharedPointer)
 {
     // defaults
     this->x = 0;
@@ -118,7 +121,7 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
     // //////////////////  fetch in the model data /////////////////////
 
     // make sure we don't get all crashy if layout not specified
-    this->layoutType = new NineMLLayoutData(data->catalogLAY[0]);
+    this->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(data->catalogLAY[0]));
     //this->layoutType->component = data->catalogLAY[0];
 
     this->type = populationObject;
@@ -179,21 +182,23 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
 
             ///////////// FIND AND LOAD NEURON
 
-            this->neuronType = NULL;
+            this->neuronType.clear();
 
-            if (this->neuronTypeName == "SpikeSource")
+            if (this->neuronTypeName == "SpikeSource") {
                 // make a spikes source
-                makeSpikeSource();
-            else
+                makeSpikeSource(thisSharedPointer);
+            }
+            else {
                 this->isSpikeSource = false;
+            }
 
             // if not found then match
             if (!this->isSpikeSource) {
 
-                for (uint i = 0; i < data->catalogNB.size(); ++i) {
+                for (int i = 0; i < data->catalogNB.size(); ++i) {
                     if (neuronTypeName == data->catalogNB[i]->name) {
-                        this->neuronType = new NineMLComponentData((NineMLComponent *) data->catalogNB[i]);
-                        this->neuronType->owner = this;
+                        this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData((QSharedPointer<NineMLComponent>) data->catalogNB[i]));
+                        this->neuronType->owner = thisSharedPointer;
                         this->neuronType->import_parameters_from_xml(n);
                     }
                 }
@@ -202,8 +207,8 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
 
             // if still missing then we have a problem
             if (this->neuronType == NULL) {
-                this->neuronType = new NineMLComponentData(data->catalogNB[0]);
-                this->neuronType->owner = this;
+                this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogNB[0]));
+                this->neuronType->owner = thisSharedPointer;
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
@@ -238,10 +243,10 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
             bool layFound = false;
 
             // DO FETCH OF LAYOUT NODE HERE -  IF WE HAVE IT
-            for (unsigned int i = 0; i < data->catalogLAY.size(); ++i) {
+            for (int i = 0; i < data->catalogLAY.size(); ++i) {
                 if (this->layoutName == data->catalogLAY[i]->name) {
-                    delete this->layoutType;
-                    this->layoutType = new NineMLLayoutData(data->catalogLAY[i]);
+                    this->layoutType.clear();
+                    this->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(data->catalogLAY[i]));
                     this->layoutType->component = data->catalogLAY[i];
                     this->layoutType->import_parameters_from_xml(n);
                     layFound = true;
@@ -249,8 +254,8 @@ population::population(QDomElement  &e, QDomDocument *, QDomDocument * meta, pro
                 }
             }
             if (!layFound) {
-                delete this->layoutType;
-                this->layoutType = new NineMLLayoutData(data->catalogLAY[0]);
+                this->layoutType.clear();
+                this->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(data->catalogLAY[0]));
                 QSettings settings;
                 int num_errs = settings.beginReadArray("warnings");
                 settings.endArray();
@@ -372,31 +377,36 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
         e = nListNRN.item(0).toElement();
 
         QDomNodeList nList = e.elementsByTagName("LL:Input");
-        for (uint i = 0; i < (uint) nList.size(); ++i) {
+        for (int nrni = 0; nrni < (int) nList.size(); ++nrni) {
 
-            QDomElement e2 = nList.item(i).toElement();
+            QDomElement e2 = nList.item(nrni).toElement();
 
-            genericInput * newInput = new genericInput;
-            newInput->src = (NineMLComponentData *)0;
-            newInput->dst = (NineMLComponentData *)0;
-            newInput->destination = this;
+            QSharedPointer<genericInput> newInput = QSharedPointer<genericInput>(new genericInput);
+            newInput->src.clear();
+            newInput->dst.clear();
+            newInput->destination = this->neuronType->owner;
             newInput->projInput = false;
 
             // read in and locate src:
             QString srcName = e2.attribute("src");
 
-            for (uint i = 0; i < data->network.size(); ++i) {
+            for (int i = 0; i < data->network.size(); ++i) {
+                qDebug() << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
                     newInput->src = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
-                for (uint j = 0; j < data->network[i]->projections.size(); ++j) {
-                    for (uint k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
+                for (int j = 0; j < data->network[i]->projections.size(); ++j) {
+                    qDebug() << "   " << data->network[i]->projections[j]->getName();
+                    for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
+                        qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->getName();
                         if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
+                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
                             newInput->source = data->network[i]->projections[j];
                         }
                         if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
+                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
                             newInput->source = data->network[i]->projections[j];
                         }
@@ -443,12 +453,12 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new kernel_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
-                ((kernel_connection *) newInput->connectionType)->src = (population *) newInput->source;
-                ((kernel_connection *) newInput->connectionType)->dst = (population *) newInput->destination;
+                ((kernel_connection *) newInput->connectionType)->src = qSharedPointerDynamicCast <population> (newInput->source);
+                ((kernel_connection *) newInput->connectionType)->dst = qSharedPointerDynamicCast <population> (newInput->destination);
             }
 
 
-            if (newInput->src != (NineMLComponentData *)0) {
+            if (newInput->src != (QSharedPointer <NineMLComponentData>)0) {
                 newInput->dst = this->neuronType;
                 this->neuronType->inputs.push_back(newInput);
                 newInput->src->outputs.push_back(newInput);}
@@ -460,7 +470,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     }
 
     // read metadata
-    for (uint i = 0; i < this->neuronType->inputs.size(); ++i)
+    for (int i = 0; i < this->neuronType->inputs.size(); ++i)
         this->neuronType->inputs[i]->read_meta_data(meta);
 
     this->neuronType->matchPorts();
@@ -469,17 +479,17 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 void population::remove(rootData * data)
 {
     // remove from experiment
-    for (uint j = 0; j < data->experiments.size(); ++j) {
-        data->experiments[j]->purgeBadPointer(this);
+    for (int j = 0; j < data->experiments.size(); ++j) {
+        //data->experiments[j]->purgeBadPointer(this);
     }
-    delete this;
+    //delete this;
 }
 
 void population::delAll(rootData * data)
 {
     // remove from experiment
-    for (uint j = 0; j < data->experiments.size(); ++j) {
-        data->experiments[j]->purgeBadPointer(this);
+    for (int j = 0; j < data->experiments.size(); ++j) {
+        //data->experiments[j]->purgeBadPointer(this);
     }
 
     // remove the projections (they'll take themselves off the vector)
@@ -496,14 +506,14 @@ void population::delAll(rootData * data)
 
     neuronType->removeReferences();
 
-    delete this;
+    //delete this;
 }
 
 void population::delAll(projectObject * data) {
 
     // remove from experiment
     for (int j = 0; j < data->experiments.size(); ++j) {
-        data->experimentList[j]->purgeBadPointer(this); // But purgeBadPointer will delete this!?
+        //data->experimentList[j]->purgeBadPointer(this); // But purgeBadPointer will delete this!?
     }
 
     // remove the projections (they'll take themselves off the vector)
@@ -520,7 +530,7 @@ void population::delAll(projectObject * data) {
 
     neuronType->removeReferences();
 
-    delete this;
+    //delete this;
 }
 
 population::~population()
@@ -529,10 +539,10 @@ population::~population()
     // remove componentData
 
     if (isSpikeSource) {
-        delete this->neuronType->component;
+        this->neuronType->component.clear();
     }
 
-    delete neuronType;
+    neuronType.clear();
 }
 
 
@@ -561,7 +571,7 @@ bool population::is_clicked(float x, float y, float) {
 
 }
 
-void population::animate() {
+void population::animate(QSharedPointer<population>thisSharedPointer) {
 
     // do animation:
     //cout << "stuff " << float(this->targx) << " " << float(this->targy) << endl;
@@ -577,23 +587,23 @@ void population::animate() {
     this->bottom = this->y-this->size/2.0;
 
     // update projections:
-    for (unsigned int i = 0; i < this->projections.size(); ++i) {
-        this->projections[i]->animate(this, QPointF(delta[HORIZ], delta[VERT]));
+    for (int i = 0; i < this->projections.size(); ++i) {
+        this->projections[i]->animate(thisSharedPointer, QPointF(delta[HORIZ], delta[VERT]), this->projections[i]);
     }
 
     // update reverse projections
-    for (unsigned int i = 0; i < this->reverseProjections.size(); ++i) {
-        this->reverseProjections[i]->animate(this, QPointF(delta[HORIZ], delta[VERT]));
+    for (int i = 0; i < this->reverseProjections.size(); ++i) {
+        this->reverseProjections[i]->animate(thisSharedPointer, QPointF(delta[HORIZ], delta[VERT]), this->reverseProjections[i]);
     }
 
     // update inputs
-    for (unsigned int i = 0; i < this->neuronType->inputs.size(); ++i) {
-        this->neuronType->inputs[i]->animate((systemObject *) this, QPointF(delta[HORIZ], delta[VERT]));
+    for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
+        this->neuronType->inputs[i]->animate(thisSharedPointer, QPointF(delta[HORIZ], delta[VERT]));
     }
 
     // update outputs
-    for (unsigned int i = 0; i < this->neuronType->outputs.size(); ++i) {
-        this->neuronType->outputs[i]->animate((systemObject *) this, QPointF(delta[HORIZ], delta[VERT]));
+    for (int i = 0; i < this->neuronType->outputs.size(); ++i) {
+        this->neuronType->outputs[i]->animate(thisSharedPointer, QPointF(delta[HORIZ], delta[VERT]));
     }
 
 }
@@ -697,16 +707,20 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
     QRectF rectangle(left, top, right-left, bottom-top);
 
-    QRectF rectangleInner(left+2, top+2, right-left-4, bottom-top-4);
+    QRectF rectangleInner(left+2, top+2, right-left-8, bottom-top-4);
 
     QColor col(this->colour);
     col.setAlpha(100);
-    painter->fillRect(rectangle, col);
+    QPainterPath path;
+    path.addRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
+
+    //painter->fillRect(rectangle, col);
+    painter->fillPath(path, col);
 
     painter->drawImage(rectangle, image);
 
     painter->setPen(QColor(200,200,200,255));
-    painter->drawRect(rectangle);
+    painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
     painter->setPen(QColor(0,0,0,255));
 
     QString displayed_name = this->name;
@@ -733,13 +747,16 @@ void population::drawSynapses(QPainter *painter, float GLscale, float viewX, flo
     QPen oldPen = painter->pen();
     QPen pen(QColor(0,0,255,255));
     pen.setWidthF(1.5);
+#ifdef Q_OS_MAC
+    pen.setWidthF(0.75);
+#endif
     painter->setPen(pen);
 
     // so we could have an inherited class with this function
     QImage ignored;
 
     // draw projections
-    for (unsigned int i = 0; i < this->projections.size(); ++i) {
+    for (int i = 0; i < this->projections.size(); ++i) {
         this->projections[i]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
     }
     painter->setPen(oldPen);
@@ -755,12 +772,12 @@ void population::drawInputs(QPainter *painter, float GLscale, float viewX, float
     QImage ignored;
 
     // draw neuron inputs
-    for (unsigned int i = 0; i < this->neuronType->inputs.size(); ++i) {
+    for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
         this->neuronType->inputs[i]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
     }
 
     // draw projection inputs
-    for (unsigned int i = 0; i < this->projections.size(); ++i) {
+    for (int i = 0; i < this->projections.size(); ++i) {
         this->projections[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, ignored, style);
     }
     painter->setPen(QColor(0,0,0,255));
@@ -823,9 +840,9 @@ float population::getSide(int dir, int which) {
     return -10000.0;
 }
 
-bool population::connectsTo(population * pop) {
+bool population::connectsTo(QSharedPointer <population> pop) {
 
-    for (unsigned int i = 0; i < this->reverseProjections.size(); ++i) {
+    for (int i = 0; i < this->reverseProjections.size(); ++i) {
         if (this->reverseProjections[i]->source->name == pop->name) {
             return true;
         }
@@ -877,20 +894,20 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
 
     if (this->projections.size()>0) {
 
-        for (unsigned int i = 0; i < this->projections.size(); ++i) {
+        for (int i = 0; i < this->projections.size(); ++i) {
 
-            projection * projection = this->projections[i];
+            QSharedPointer <projection> projection = this->projections[i];
 
             // locate the src and dst so we can easily access information from them:
-            //population * src = this;
-            population * dst = projection->destination;
+            //QSharedPointer <population> src = this;
+            QSharedPointer <population> dst = projection->destination;
 
 
             // write out projection synapses:
             xmlOut.writeStartElement("LL:Projection");
             xmlOut.writeAttribute("dst_population", dst->name);
 
-            for (unsigned int j = 0; j < projection->synapses.size(); ++j) {
+            for (int j = 0; j < projection->synapses.size(); ++j) {
 
                 // add each Synapse
                 xmlOut.writeStartElement("LL:Synapse");
@@ -970,12 +987,12 @@ void population::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     tag.setAttribute("value", this->tag);
 
     // this->neuronType->inputs;
-    for (unsigned int i = 0; i < this->neuronType->inputs.size(); ++i) {
+    for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
         this->neuronType->inputs[i]->write_model_meta_xml(meta, root);
     }
 
     // this->projections;
-    for (unsigned int i = 0; i < this->projections.size(); ++i) {
+    for (int i = 0; i < this->projections.size(); ++i) {
         this->projections[i]->write_model_meta_xml(meta, root);
     }
 
@@ -1006,14 +1023,15 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
     ///// ADD Synapses:
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
 
-    for (unsigned int i = 0; i < (uint) cList.count(); ++i) {
-        QDomElement e2 = cList.item(i).toElement();
-        this->projections.push_back(new projection(e2, doc, meta, data));
+    for (int i = 0; i < (int) cList.count(); ++i) {
+        QDomElement e2 = cList.item(i).toElement();      
+        this->projections.push_back(QSharedPointer<projection>(new projection()));
+        this->projections.back()->readFromXML(e2, doc, meta, data, this->projections.back());
     }
 
 }
 
-void population::getNeuronLocations(vector<loc> *locations,QColor * cols) {
+void population::getNeuronLocations(QVector <loc> *locations,QColor * cols) {
 
     // find what has that name, and send back the details
 
@@ -1022,7 +1040,7 @@ void population::getNeuronLocations(vector<loc> *locations,QColor * cols) {
         locations->clear();
 
         // linear layout by default:
-        for (unsigned int i = 0; i < (uint) this->numNeurons; ++i) {
+        for (int i = 0; i < (int) this->numNeurons; ++i) {
 
             loc newLoc;
 
@@ -1050,19 +1068,19 @@ void population::getNeuronLocations(vector<loc> *locations,QColor * cols) {
 
 }
 
-void population::makeSpikeSource() {
+void population::makeSpikeSource(QSharedPointer<population> thisSharedPointer) {
 
     this->isSpikeSource = true;
 
     // make component
-    NineMLComponent * ss = new NineMLComponent();
+    QSharedPointer<NineMLComponent> ss = QSharedPointer<NineMLComponent>(new NineMLComponent());
     ss->name = "SpikeSource";
     ss->EventPortList.push_back(new EventPort);
     ss->EventPortList.back()->name = "spike";
     ss->EventPortList.back()->mode = EventSendPort;
     this->neuronTypeName = "SpikeSource";
-    this->neuronType = new NineMLComponentData(ss);
-    this->neuronType->owner = this;
+    this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(ss));
+    this->neuronType->owner = thisSharedPointer;
 }
 
 void population::print() {
@@ -1076,7 +1094,7 @@ void population::print() {
     cerr << "numNeurons = " << this->numNeurons << "\n";
 
     cerr << "Number of projections out = " << float(this->projections.size()) << "\n";
-    for (uint i = 0; i < this->projections.size(); ++i) {
+    for (int i = 0; i < this->projections.size(); ++i) {
         this->projections[i]->print();
     }
 

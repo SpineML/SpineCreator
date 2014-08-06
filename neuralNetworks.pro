@@ -62,7 +62,9 @@ SOURCES += main.cpp \
     logdata.cpp \
     aboutdialog.cpp \
     projectobject.cpp \
-    filteroutundoredoevents.cpp
+    filteroutundoredoevents.cpp \
+    batchexperimentwindow.cpp \
+    vectorlistmodel.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -111,7 +113,9 @@ HEADERS  += mainwindow.h \
     aboutdialog.h \
     projectobject.h \
     rootlayout.h \
-    filteroutundoredoevents.h
+    filteroutundoredoevents.h \
+    batchexperimentwindow.h \
+    vectorlistmodel.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \
@@ -124,7 +128,8 @@ FORMS    += mainwindow.ui \
     savenetworkimage_dialog.ui \
     generate_dialog.ui \
     commitdialog.ui \
-    aboutdialog.ui
+    aboutdialog.ui \
+    batchexperimentwindow.ui
 
 RESOURCES += \
     icons.qrc
@@ -164,6 +169,7 @@ linux-g++-64{
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
+    QMAKE_CXXFLAGS += -O0 -g
     LIBS += -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -lpython
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
@@ -175,3 +181,5 @@ OTHER_FILES += \
 
 target.path = /usr/bin
 INSTALLS += target
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android

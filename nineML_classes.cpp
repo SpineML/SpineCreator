@@ -427,7 +427,7 @@ void NineMLComponent::load(QDomDocument *doc)
     if (validated.size() > 1) {
        /* QMessageBox msgBox;
         QString message;
-        for (uint i = 0; i < (uint) validated.size(); ++i) {
+        for (int i = 0; i < (int) validated.size(); ++i) {
             message += validated[i] + "\n";
         }
         msgBox.setText(message);
@@ -512,27 +512,27 @@ void NineMLComponent::write(QDomDocument *doc)
     CClass.appendChild(dynamics);
 
     // declarations
-    for (unsigned int i = 0; i < this->AnalogPortList.size(); ++i) {
+    for (int i = 0; i < this->AnalogPortList.size(); ++i) {
         AnalogPortList[i]->writeOut(doc, CClass);
     }
-    for (unsigned int i = 0; i < this->EventPortList.size(); ++i) {
+    for (int i = 0; i < this->EventPortList.size(); ++i) {
         EventPortList[i]->writeOut(doc, CClass);
     }
-    for (unsigned int i = 0; i < this->ImpulsePortList.size(); ++i) {
+    for (int i = 0; i < this->ImpulsePortList.size(); ++i) {
         ImpulsePortList[i]->writeOut(doc, CClass);
     }
-    for (unsigned int i = 0; i < this->ParameterList.size(); ++i) {
+    for (int i = 0; i < this->ParameterList.size(); ++i) {
         ParameterList[i]->writeOut(doc, CClass);
     }
 
     // dynamics
-    for (unsigned int i = 0; i < this->RegimeList.size(); ++i) {
+    for (int i = 0; i < this->RegimeList.size(); ++i) {
         RegimeList[i]->writeOut(doc, dynamics);
     }
-    for (unsigned int i = 0; i < this->AliasList.size(); ++i) {
+    for (int i = 0; i < this->AliasList.size(); ++i) {
         AliasList[i]->writeOut(doc, dynamics);
     }
-    for (unsigned int i = 0; i < this->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->StateVariableList.size(); ++i) {
         StateVariableList[i]->writeOut(doc, dynamics);
     }
 
@@ -543,61 +543,63 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     // definition
     QString simpleName;
     if (this->type == NineMLLayoutType) {
-        simpleName = ((NineMLLayoutData *) this)->component->name.simplified();
+        simpleName = (static_cast<NineMLLayoutData *> (this))->component->name.simplified();
     }
     if (this->type == NineMLComponentType) {
-        simpleName = ((NineMLComponentData *) this)->component->name.simplified();
+        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
+        simpleName = ptr->component->name.simplified();
     }
     simpleName.replace( " ", "_" );
     xmlOut.writeAttribute("url", simpleName + ".xml");
 
     // wriet the seed and minumum distance for the Layout
     if (this->type == NineMLLayoutType) {
-        NineMLLayoutData * lay = (NineMLLayoutData *) this;
+        NineMLLayoutData * lay = static_cast<NineMLLayoutData *> (this);
         xmlOut.writeAttribute("seed", QString::number(lay->seed));
         xmlOut.writeAttribute("minimum_distance", QString::number(lay->minimumDistance));
     }
 
     if (this->type == NineMLComponentType) {
-        for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
-            if (((NineMLComponentData *) this)->inputs[i]->projInput == true) {
+        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
+        for (int i = 0; i < ptr->inputs.size(); ++i) {
+            if (ptr->inputs[i]->projInput == true) {
 
                 // add the special input for the synapse
-                if (((NineMLComponentData *) this)->component->type == "weight_update") {
+                if (ptr->component->type == "weight_update") {
 
                     // check we have ports
-                    if (((NineMLComponentData *) this)->inputs[i]->srcPort.size() == 0 || ((NineMLComponentData *) this)->inputs[i]->dstPort.size() == 0) {
+                    if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ((NineMLComponentData *) this)->inputs[i]->src->getXMLName() + "' and '" + ((NineMLComponentData *) this)->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" + ptr->inputs[i]->dst->getXMLName() + "'");
                         settings.endArray();
                     }
 
-                    xmlOut.writeAttribute("input_src_port", ((NineMLComponentData *) this)->inputs[i]->srcPort);
-                    xmlOut.writeAttribute("input_dst_port", ((NineMLComponentData *) this)->inputs[i]->dstPort);
+                    xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
+                    xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
 
                 }
 
                 // add the special input for the postsynapse
-                if (((NineMLComponentData *) this)->component->type == "postsynapse") {
+                if (ptr->component->type == "postsynapse") {
 
                     // check we have ports
-                    if (((NineMLComponentData *) this)->inputs[i]->srcPort.size() == 0 || ((NineMLComponentData *) this)->inputs[i]->dstPort.size() == 0) {
+                    if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ((NineMLComponentData *) this)->inputs[i]->src->getXMLName() + "' and '" + ((NineMLComponentData *) this)->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" +ptr->inputs[i]->dst->getXMLName() + "'");
                         settings.endArray();
                     }
 
 
-                    xmlOut.writeAttribute("input_src_port", ((NineMLComponentData *) this)->inputs[i]->srcPort);
-                    xmlOut.writeAttribute("input_dst_port", ((NineMLComponentData *) this)->inputs[i]->dstPort);
+                    xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
+                    xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
 
                 }
 
@@ -605,27 +607,27 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
         }
 
 
-        if (((NineMLComponentData *) this)->component->type == "postsynapse") {
+        if (ptr->component->type == "postsynapse") {
 
             // search out the Synapse population and add the postsynapticMapping
-            for (uint i = 0; i < ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs.size(); ++i) {
-                if (((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->src == this && \
-                    ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->projInput == true) {
+            for (int i = 0; i < (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs.size(); ++i) {
+                if ((qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->src == this && \
+                    (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->projInput == true) {
 
                     // check we have ports
-                    if (((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->srcPort.size() == 0 || ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->dstPort.size() == 0) {
+                    if (qSharedPointerDynamicCast<projection> (ptr->owner)->destination->neuronType->inputs[i]->srcPort.size() == 0 || (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->src->getXMLName() + "' and '" + ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->src->getXMLName() + "' and '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dst->getXMLName() + "'");
                         settings.endArray();
                     }
 
 
-                    xmlOut.writeAttribute("output_src_port", ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->srcPort);
-                    xmlOut.writeAttribute("output_dst_port", ((projection *) ((NineMLComponentData *) this)->owner)->destination->neuronType->inputs[i]->dstPort);
+                    xmlOut.writeAttribute("output_src_port", (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcPort);
+                    xmlOut.writeAttribute("output_dst_port", (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstPort);
 
                 }
             }
@@ -634,7 +636,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     }
 
     if (this->ParameterList.size()+this->StateVariableList.size() > 0) {
-        for (uint i = 0; i < this->ParameterList.size(); ++i) {
+        for (int i = 0; i < this->ParameterList.size(); ++i) {
             xmlOut.writeStartElement("Property");
 
             xmlOut.writeAttribute("name",this->ParameterList[i]->name);
@@ -670,7 +672,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
               }
               if (this->ParameterList[i]->currType == ExplicitList) {
                   xmlOut.writeStartElement("ValueList");
-                  for (uint ind = 0; ind < this->ParameterList[i]->value.size(); ++ind) {
+                  for (int ind = 0; ind < this->ParameterList[i]->value.size(); ++ind) {
                       xmlOut.writeEmptyElement("Value");
                       xmlOut.writeAttribute("index", QString::number(float(this->ParameterList[i]->indices[ind])));
                       xmlOut.writeAttribute("value", QString::number(float(this->ParameterList[i]->value[ind])));
@@ -680,7 +682,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
 
               xmlOut.writeEndElement(); // property
         }
-        for (uint i = 0; i < this->StateVariableList.size(); ++i) {
+        for (int i = 0; i < this->StateVariableList.size(); ++i) {
             xmlOut.writeStartElement("Property");
 
             xmlOut.writeAttribute("name",this->StateVariableList[i]->name);
@@ -715,7 +717,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
               }
               if (this->StateVariableList[i]->currType == ExplicitList) {
                   xmlOut.writeStartElement("ValueList");
-                  for (uint ind = 0; ind < this->StateVariableList[i]->value.size(); ++ind) {
+                  for (int ind = 0; ind < this->StateVariableList[i]->value.size(); ++ind) {
                       xmlOut.writeEmptyElement("Value");
                       xmlOut.writeAttribute("index", QString::number(float(this->StateVariableList[i]->indices[ind])));
                       xmlOut.writeAttribute("value", QString::number(float(this->StateVariableList[i]->value[ind])));
@@ -730,43 +732,44 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     // if it is not a layout, add the inputs
     if (this->type == NineMLComponentType) {
 
+        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
         bool inputsTag = false;
 
-        for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
-           if (((NineMLComponentData *) this)->inputs[i]->projInput == false) {
+        for (int i = 0; i < ptr->inputs.size(); ++i) {
+           if (ptr->inputs[i]->projInput == false) {
                inputsTag = true;
            }
         }
 
         if (inputsTag) {
             // inputs
-            for (uint i = 0; i < ((NineMLComponentData *) this)->inputs.size(); ++i) {
-               if (((NineMLComponentData *) this)->inputs[i]->projInput == false) {
+            for (int i = 0; i < ptr->inputs.size(); ++i) {
+               if (ptr->inputs[i]->projInput == false) {
 
                    // check we have ports
-                   if (((NineMLComponentData *) this)->inputs[i]->srcPort.size() == 0 || ((NineMLComponentData *) this)->inputs[i]->dstPort.size() == 0) {
+                   if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                        QSettings settings;
                        int num_errs = settings.beginReadArray("warnings");
                        settings.endArray();
                        settings.beginWriteArray("warnings");
                            settings.setArrayIndex(num_errs + 1);
-                           settings.setValue("warnText",  "No matched ports between '" + ((NineMLComponentData *) this)->inputs[i]->src->getXMLName() + "' and '" + ((NineMLComponentData *) this)->inputs[i]->dst->getXMLName() + "'");
+                           settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" + ptr->inputs[i]->dst->getXMLName() + "'");
                        settings.endArray();
                    }
 
                   xmlOut.writeStartElement("LL:Input");
-                  xmlOut.writeAttribute("src", ((NineMLComponentData *) this)->inputs[i]->src->getXMLName());
-                  xmlOut.writeAttribute("src_port", ((NineMLComponentData *) this)->inputs[i]->srcPort);
-                  xmlOut.writeAttribute("dst_port", ((NineMLComponentData *) this)->inputs[i]->dstPort);
-                  if (((NineMLComponentData *) this)->inputs[i]->connectionType->type == Kernel) {
-                      ((kernel_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->src = (population *) ((NineMLComponentData *) this)->inputs[i]->source;
-                      ((kernel_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->dst = (population *) ((NineMLComponentData *) this)->inputs[i]->destination;
+                  xmlOut.writeAttribute("src", ptr->inputs[i]->src->getXMLName());
+                  xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
+                  xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
+                  if (ptr->inputs[i]->connectionType->type == Kernel) {
+                      ((kernel_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((kernel_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
                   }
-                  if (((NineMLComponentData *) this)->inputs[i]->connectionType->type == Python) {
-                      ((pythonscript_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->src = (population *) ((NineMLComponentData *) this)->inputs[i]->source;
-                      ((pythonscript_connection *) ((NineMLComponentData *) this)->inputs[i]->connectionType)->dst = (population *) ((NineMLComponentData *) this)->inputs[i]->destination;
+                  if (ptr->inputs[i]->connectionType->type == Python) {
+                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
                   }
-                  ((NineMLComponentData *) this)->inputs[i]->connectionType->write_node_xml(xmlOut);
+                  ptr->inputs[i]->connectionType->write_node_xml(xmlOut);
                   xmlOut.writeEndElement(); // input
               }
 
@@ -927,13 +930,13 @@ void OnEvent::writeOut(QDomDocument * doc, QDomElement &parent)
     else
         OnEvent.setAttribute("src_port", "Error: No Source Event Port!");
 
-    for (unsigned int i = 0; i < this->StateAssignList.size(); ++i) {
+    for (int i = 0; i < this->StateAssignList.size(); ++i) {
         this->StateAssignList[i]->writeOut(doc, OnEvent);
     }
-    for (unsigned int i = 0; i < this->eventOutList.size(); ++i) {
+    for (int i = 0; i < this->eventOutList.size(); ++i) {
         this->eventOutList[i]->writeOut(doc, OnEvent);
     }
-    for (unsigned int i = 0; i < this->impulseOutList.size(); ++i) {
+    for (int i = 0; i < this->impulseOutList.size(); ++i) {
         this->impulseOutList[i]->writeOut(doc, OnEvent);
     }
 }
@@ -1008,13 +1011,13 @@ void OnImpulse::writeOut(QDomDocument * doc, QDomElement &parent)
     else
         OnImpulse.setAttribute("src_port", "");
 
-    for (unsigned int i = 0; i < this->StateAssignList.size(); ++i) {
+    for (int i = 0; i < this->StateAssignList.size(); ++i) {
         this->StateAssignList[i]->writeOut(doc, OnImpulse);
     }
-    for (unsigned int i = 0; i < this->eventOutList.size(); ++i) {
+    for (int i = 0; i < this->eventOutList.size(); ++i) {
         this->eventOutList[i]->writeOut(doc, OnImpulse);
     }
-    for (unsigned int i = 0; i < this->impulseOutList.size(); ++i) {
+    for (int i = 0; i < this->impulseOutList.size(); ++i) {
         this->impulseOutList[i]->writeOut(doc, OnImpulse);
     }
 }
@@ -1106,13 +1109,13 @@ void OnCondition::writeOut(QDomDocument * doc, QDomElement &parent)
     else
         OnCondition.setAttribute("target_regime", "Error: No Synapse Regime!");
 
-    for (unsigned int i = 0; i < this->StateAssignList.size(); ++i) {
+    for (int i = 0; i < this->StateAssignList.size(); ++i) {
         this->StateAssignList[i]->writeOut(doc, OnCondition);
     }
-    for (unsigned int i = 0; i < this->eventOutList.size(); ++i) {
+    for (int i = 0; i < this->eventOutList.size(); ++i) {
         this->eventOutList[i]->writeOut(doc, OnCondition);
     }
-    for (unsigned int i = 0; i < this->impulseOutList.size(); ++i) {
+    for (int i = 0; i < this->impulseOutList.size(); ++i) {
         this->impulseOutList[i]->writeOut(doc, OnCondition);
     }
 
@@ -1517,16 +1520,16 @@ void Regime::writeOut(QDomDocument *doc, QDomElement &parent)
     parent.appendChild(regime);
 
     // write children
-    for (unsigned int i = 0; i < this->TimeDerivativeList.size(); ++i) {
+    for (int i = 0; i < this->TimeDerivativeList.size(); ++i) {
         this->TimeDerivativeList[i]->writeOut(doc, regime);
     }
-    for (unsigned int i = 0; i < this->OnEventList.size(); ++i) {
+    for (int i = 0; i < this->OnEventList.size(); ++i) {
         this->OnEventList[i]->writeOut(doc, regime);
     }
-    for (unsigned int i = 0; i < this->OnConditionList.size(); ++i) {
+    for (int i = 0; i < this->OnConditionList.size(); ++i) {
         this->OnConditionList[i]->writeOut(doc, regime);
     }
-    for (unsigned int i = 0; i < this->OnImpulseList.size(); ++i) {
+    for (int i = 0; i < this->OnImpulseList.size(); ++i) {
         this->OnImpulseList[i]->writeOut(doc, regime);
     }
 
@@ -1583,7 +1586,7 @@ AnalogPort::AnalogPort(AnalogPort *data): Port(data)
 
 bool AnalogPort::isAnalog() {return true;}
 
-int AnalogPort::validateAnalogPort(NineMLComponent *component, QStringList * )
+int AnalogPort::validateAnalogPort(NineMLComponent * component, QStringList * )
 {
     //if mode is send then validate
     int failures = 0;
@@ -1591,7 +1594,7 @@ int AnalogPort::validateAnalogPort(NineMLComponent *component, QStringList * )
     if (mode == AnalogSendPort)
     {
         bool match = false;
-        for(uint i=0;i<component->StateVariableList.size();i++)
+        for(int i=0;i<component->StateVariableList.size();i++)
         {
             if (component->StateVariableList[i]->getName() == name)
             {
@@ -1601,7 +1604,7 @@ int AnalogPort::validateAnalogPort(NineMLComponent *component, QStringList * )
         }
         if (!match)
         {
-            for(uint i=0;i<component->AliasList.size();i++)
+            for(int i=0;i<component->AliasList.size();i++)
             {
                 if (component->AliasList[i]->getName() == name)
                 {
@@ -1644,7 +1647,7 @@ ImpulsePort::ImpulsePort(ImpulsePort *data): Port(data)
 
 bool ImpulsePort::isAnalog() {return false;}
 
-int ImpulsePort::validateImpulsePort(NineMLComponent *component, QStringList * )
+int ImpulsePort::validateImpulsePort(NineMLComponent * component, QStringList * )
 {
     //if mode is send then validate
     int failures = 0;
@@ -1652,7 +1655,7 @@ int ImpulsePort::validateImpulsePort(NineMLComponent *component, QStringList * )
     if (mode == ImpulseSendPort)
     {
         bool match = false;
-        for(uint i=0;i<component->ParameterList.size();i++)
+        for(int i=0;i<component->ParameterList.size();i++)
         {
             if (component->ParameterList[i]->getName() == name)
             {
@@ -1660,7 +1663,7 @@ int ImpulsePort::validateImpulsePort(NineMLComponent *component, QStringList * )
                 match = true;
             }
         }
-        for(uint i=0;i<component->StateVariableList.size();i++)
+        for(int i=0;i<component->StateVariableList.size();i++)
         {
             if (component->StateVariableList[i]->getName() == name)
             {
@@ -1668,7 +1671,7 @@ int ImpulsePort::validateImpulsePort(NineMLComponent *component, QStringList * )
                 match = true;
             }
         }
-        for(uint i=0;i<component->AliasList.size();i++)
+        for(int i=0;i<component->AliasList.size();i++)
         {
             if (component->AliasList[i]->getName() == name)
             {
@@ -1800,18 +1803,18 @@ OnCondition::OnCondition(OnCondition *data)
     target_regime = NULL;
     target_regime_name = data->target_regime_name;
     trigger = new Trigger(data->trigger);
-    StateAssignList = vector<StateAssignment*>(data->StateAssignList.size());
-    eventOutList = vector<EventOut*>(data->eventOutList.size());
-    impulseOutList = vector<ImpulseOut*>(data->impulseOutList.size());
-    for (uint i=0; i<data->StateAssignList.size(); i++)
+    StateAssignList = QVector <StateAssignment*>(data->StateAssignList.size());
+    eventOutList = QVector <EventOut*>(data->eventOutList.size());
+    impulseOutList = QVector <ImpulseOut*>(data->impulseOutList.size());
+    for (int i=0; i<data->StateAssignList.size(); i++)
     {
         StateAssignList[i] = new StateAssignment(data->StateAssignList[i]);
     }
-    for (uint i=0; i<data->eventOutList.size(); i++)
+    for (int i=0; i<data->eventOutList.size(); i++)
     {
         eventOutList[i] = new EventOut(data->eventOutList[i]);
     }
-    for (uint i=0; i<data->impulseOutList.size(); i++)
+    for (int i=0; i<data->impulseOutList.size(); i++)
     {
         impulseOutList[i] = new ImpulseOut(data->impulseOutList[i]);
     }
@@ -1820,15 +1823,15 @@ OnCondition::OnCondition(OnCondition *data)
 OnCondition::~OnCondition()
 {
     delete trigger;
-    for (uint i=0; i<StateAssignList.size(); i++)
+    for (int i=0; i<StateAssignList.size(); i++)
     {
         delete StateAssignList[i];
     }
-    for (uint i=0; i<eventOutList.size(); i++)
+    for (int i=0; i<eventOutList.size(); i++)
     {
         delete eventOutList[i];
     }
-    for (uint i=0; i<impulseOutList.size(); i++)
+    for (int i=0; i<impulseOutList.size(); i++)
     {
         delete impulseOutList[i];
     }
@@ -1840,18 +1843,18 @@ OnEvent::OnEvent(OnEvent *data)
     this->target_regime_name = data->target_regime_name;
     src_port = NULL;
     this->src_port_name = data->src_port_name;
-    StateAssignList = vector<StateAssignment*>(data->StateAssignList.size());
-    eventOutList = vector<EventOut*>(data->eventOutList.size());
-    impulseOutList = vector<ImpulseOut*>(data->impulseOutList.size());
-    for (uint i=0; i<data->StateAssignList.size(); i++)
+    StateAssignList = QVector <StateAssignment*>(data->StateAssignList.size());
+    eventOutList = QVector <EventOut*>(data->eventOutList.size());
+    impulseOutList = QVector <ImpulseOut*>(data->impulseOutList.size());
+    for (int i=0; i<data->StateAssignList.size(); i++)
     {
         StateAssignList[i] = new StateAssignment(data->StateAssignList[i]);
     }
-    for (uint i=0; i<data->eventOutList.size(); i++)
+    for (int i=0; i<data->eventOutList.size(); i++)
     {
         eventOutList[i] = new EventOut(data->eventOutList[i]);
     }
-    for (uint i=0; i<data->impulseOutList.size(); i++)
+    for (int i=0; i<data->impulseOutList.size(); i++)
     {
         impulseOutList[i] = new ImpulseOut(data->impulseOutList[i]);
     }
@@ -1860,15 +1863,15 @@ OnEvent::OnEvent(OnEvent *data)
 
 OnEvent::~OnEvent()
 {
-    for (uint i=0; i<StateAssignList.size(); i++)
+    for (int i=0; i<StateAssignList.size(); i++)
     {
         delete StateAssignList[i];
     }
-    for (uint i=0; i<eventOutList.size(); i++)
+    for (int i=0; i<eventOutList.size(); i++)
     {
         delete eventOutList[i];
     }
-    for (uint i=0; i<impulseOutList.size(); i++)
+    for (int i=0; i<impulseOutList.size(); i++)
     {
         delete impulseOutList[i];
     }
@@ -1880,18 +1883,18 @@ OnImpulse::OnImpulse(OnImpulse *data)
     this->target_regime_name = data->target_regime_name;
     src_port = NULL;
     this->src_port_name = data->src_port_name;
-    StateAssignList = vector<StateAssignment*>(data->StateAssignList.size());
-    eventOutList = vector<EventOut*>(data->eventOutList.size());
-    impulseOutList = vector<ImpulseOut*>(data->impulseOutList.size());
-    for (uint i=0; i<data->StateAssignList.size(); i++)
+    StateAssignList = QVector <StateAssignment*>(data->StateAssignList.size());
+    eventOutList = QVector <EventOut*>(data->eventOutList.size());
+    impulseOutList = QVector <ImpulseOut*>(data->impulseOutList.size());
+    for (int i=0; i<data->StateAssignList.size(); i++)
     {
         StateAssignList[i] = new StateAssignment(data->StateAssignList[i]);
     }
-    for (uint i=0; i<data->eventOutList.size(); i++)
+    for (int i=0; i<data->eventOutList.size(); i++)
     {
         eventOutList[i] = new EventOut(data->eventOutList[i]);
     }
-    for (uint i=0; i<data->impulseOutList.size(); i++)
+    for (int i=0; i<data->impulseOutList.size(); i++)
     {
         impulseOutList[i] = new ImpulseOut(data->impulseOutList[i]);
     }
@@ -1900,15 +1903,15 @@ OnImpulse::OnImpulse(OnImpulse *data)
 
 OnImpulse::~OnImpulse()
 {
-    for (uint i=0; i<StateAssignList.size(); i++)
+    for (int i=0; i<StateAssignList.size(); i++)
     {
         delete StateAssignList[i];
     }
-    for (uint i=0; i<eventOutList.size(); i++)
+    for (int i=0; i<eventOutList.size(); i++)
     {
         delete eventOutList[i];
     }
-    for (uint i=0; i<impulseOutList.size(); i++)
+    for (int i=0; i<impulseOutList.size(); i++)
     {
         delete impulseOutList[i];
     }
@@ -1917,23 +1920,23 @@ OnImpulse::~OnImpulse()
 Regime::Regime(Regime *data)
 {
     name = data->name;
-    TimeDerivativeList = vector<TimeDerivative*>(data->TimeDerivativeList.size());
-    OnConditionList = vector<OnCondition*>(data->OnConditionList.size());
-    OnEventList = vector<OnEvent*>(data->OnEventList.size());
-    OnImpulseList = vector<OnImpulse*>(data->OnImpulseList.size());
-    for (uint i=0; i<data->TimeDerivativeList.size(); i++)
+    TimeDerivativeList = QVector <TimeDerivative*>(data->TimeDerivativeList.size());
+    OnConditionList = QVector <OnCondition*>(data->OnConditionList.size());
+    OnEventList = QVector <OnEvent*>(data->OnEventList.size());
+    OnImpulseList = QVector <OnImpulse*>(data->OnImpulseList.size());
+    for (int i=0; i<data->TimeDerivativeList.size(); i++)
     {
         TimeDerivativeList[i] = new TimeDerivative(data->TimeDerivativeList[i]);
     }
-    for (uint i=0; i<data->OnConditionList.size(); i++)
+    for (int i=0; i<data->OnConditionList.size(); i++)
     {
         OnConditionList[i] = new OnCondition(data->OnConditionList[i]);
     }
-    for (uint i=0; i<data->OnEventList.size(); i++)
+    for (int i=0; i<data->OnEventList.size(); i++)
     {
         OnEventList[i] = new OnEvent(data->OnEventList[i]);
     }
-    for (uint i=0; i<data->OnImpulseList.size(); i++)
+    for (int i=0; i<data->OnImpulseList.size(); i++)
     {
         OnImpulseList[i] = new OnImpulse(data->OnImpulseList[i]);
     }
@@ -1941,22 +1944,22 @@ Regime::Regime(Regime *data)
 
 Regime::~Regime()
 {
-    for (uint i=0; i<TimeDerivativeList.size(); i++)
+    for (int i=0; i<TimeDerivativeList.size(); i++)
     {
         delete TimeDerivativeList[i];
         TimeDerivativeList[i] = NULL;
     }
-    for (uint i=0; i<OnConditionList.size(); i++)
+    for (int i=0; i<OnConditionList.size(); i++)
     {
         delete OnConditionList[i];
         OnConditionList[i] = NULL;
     }
-    for (uint i=0; i<OnEventList.size(); i++)
+    for (int i=0; i<OnEventList.size(); i++)
     {
         delete OnEventList[i];
         OnEventList[i] = NULL;
     }
-    for (uint i=0; i<OnImpulseList.size(); i++)
+    for (int i=0; i<OnImpulseList.size(); i++)
     {
         delete OnImpulseList[i];
         OnImpulseList[i] = NULL;
@@ -1966,50 +1969,50 @@ Regime::~Regime()
 NineMLComponent::NineMLComponent()
 {
     initial_regime = NULL;
-    editedVersion = NULL;
+    editedVersion.clear();
     path = "temp";
     type = "neuron_body";
 }
 
-NineMLComponent::NineMLComponent(NineMLComponent *data)
+NineMLComponent::NineMLComponent(QSharedPointer<NineMLComponent>data)
 {
     name = data->name;
     this->type = data->type;
     this->path = data->path;
     this->filePath = data->filePath;
     this->initial_regime_name = data->initial_regime_name;
-    RegimeList = vector<Regime*>(data->RegimeList.size());
-    StateVariableList = vector<StateVariable*>(data->StateVariableList.size());
-    ParameterList = vector<Parameter*>(data->ParameterList.size());
-    AliasList = vector<Alias*>(data->AliasList.size());
-    AnalogPortList = vector<AnalogPort*>(data->AnalogPortList.size());
-    EventPortList = vector<EventPort*>(data->EventPortList.size());
-    ImpulsePortList = vector<ImpulsePort*>(data->ImpulsePortList.size());
-    for (uint i=0; i<data->RegimeList.size(); i++)
+    RegimeList = QVector <Regime*>(data->RegimeList.size());
+    StateVariableList = QVector <StateVariable*>(data->StateVariableList.size());
+    ParameterList = QVector <Parameter*>(data->ParameterList.size());
+    AliasList = QVector <Alias*>(data->AliasList.size());
+    AnalogPortList = QVector <AnalogPort*>(data->AnalogPortList.size());
+    EventPortList = QVector <EventPort*>(data->EventPortList.size());
+    ImpulsePortList = QVector <ImpulsePort*>(data->ImpulsePortList.size());
+    for (int i=0; i<data->RegimeList.size(); i++)
     {
         RegimeList[i] = new Regime(data->RegimeList[i]);
     }
-    for (uint i=0; i<data->StateVariableList.size(); i++)
+    for (int i=0; i<data->StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariable(data->StateVariableList[i]);
     }
-    for (uint i=0; i<data->ParameterList.size(); i++)
+    for (int i=0; i<data->ParameterList.size(); i++)
     {
         ParameterList[i] = new Parameter(data->ParameterList[i]);
     }
-    for (uint i=0; i<data->AliasList.size(); i++)
+    for (int i=0; i<data->AliasList.size(); i++)
     {
         AliasList[i] = new Alias(data->AliasList[i]);
     }
-    for (uint i=0; i<data->AnalogPortList.size(); i++)
+    for (int i=0; i<data->AnalogPortList.size(); i++)
     {
         AnalogPortList[i] = new AnalogPort(data->AnalogPortList[i]);
     }
-    for (uint i=0; i<data->EventPortList.size(); i++)
+    for (int i=0; i<data->EventPortList.size(); i++)
     {
         EventPortList[i] = new EventPort(data->EventPortList[i]);
     }
-    for (uint i=0; i<data->ImpulsePortList.size(); i++)
+    for (int i=0; i<data->ImpulsePortList.size(); i++)
     {
         ImpulsePortList[i] = new ImpulsePort(data->ImpulsePortList[i]);
     }
@@ -2063,7 +2066,7 @@ NineMLComponent::NineMLComponent(NineMLComponent *data)
     }*/
 
     // don't copy this...
-    editedVersion = NULL;
+    editedVersion.clear();
 }
 
 NineMLComponent::~NineMLComponent()
@@ -2104,8 +2107,10 @@ NineMLComponent::~NineMLComponent()
         ip = NULL;
     }
 
-    if (editedVersion != NULL)
-        delete editedVersion;
+    // decrement the shared pointer
+    if (!editedVersion.isNull()) {
+        editedVersion.clear();
+    }
 }
 
 // assignment operator required for the base class
@@ -2115,39 +2120,39 @@ NineMLComponent& NineMLComponent::operator=(const NineMLComponent& data)
     type = data.type;
     path = data.path;
     filePath = data.filePath;
-    RegimeList = vector<Regime*>(data.RegimeList.size());
-    StateVariableList = vector<StateVariable*>(data.StateVariableList.size());
-    ParameterList = vector<Parameter*>(data.ParameterList.size());
-    AliasList = vector<Alias*>(data.AliasList.size());
-    AnalogPortList = vector<AnalogPort*>(data.AnalogPortList.size());
-    EventPortList = vector<EventPort*>(data.EventPortList.size());
-    ImpulsePortList = vector<ImpulsePort*>(data.ImpulsePortList.size());
+    RegimeList = QVector <Regime*>(data.RegimeList.size());
+    StateVariableList = QVector <StateVariable*>(data.StateVariableList.size());
+    ParameterList = QVector <Parameter*>(data.ParameterList.size());
+    AliasList = QVector <Alias*>(data.AliasList.size());
+    AnalogPortList = QVector <AnalogPort*>(data.AnalogPortList.size());
+    EventPortList = QVector <EventPort*>(data.EventPortList.size());
+    ImpulsePortList = QVector <ImpulsePort*>(data.ImpulsePortList.size());
     initial_regime_name = data.initial_regime_name;
-    for (uint i=0; i<data.RegimeList.size(); i++)
+    for (int i=0; i<data.RegimeList.size(); i++)
     {
         RegimeList[i] = new Regime(data.RegimeList[i]);
     }
-    for (uint i=0; i<data.StateVariableList.size(); i++)
+    for (int i=0; i<data.StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariable(data.StateVariableList[i]);
     }
-    for (uint i=0; i<data.ParameterList.size(); i++)
+    for (int i=0; i<data.ParameterList.size(); i++)
     {
         ParameterList[i] = new Parameter(data.ParameterList[i]);
     }
-    for (uint i=0; i<data.AliasList.size(); i++)
+    for (int i=0; i<data.AliasList.size(); i++)
     {
         AliasList[i] = new Alias(data.AliasList[i]);
     }
-    for (uint i=0; i<data.AnalogPortList.size(); i++)
+    for (int i=0; i<data.AnalogPortList.size(); i++)
     {
         AnalogPortList[i] = new AnalogPort(data.AnalogPortList[i]);
     }
-    for (uint i=0; i<data.EventPortList.size(); i++)
+    for (int i=0; i<data.EventPortList.size(); i++)
     {
         EventPortList[i] = new EventPort(data.EventPortList[i]);
     }
-    for (uint i=0; i<data.ImpulsePortList.size(); i++)
+    for (int i=0; i<data.ImpulsePortList.size(); i++)
     {
         ImpulsePortList[i] = new ImpulsePort(data.ImpulsePortList[i]);
     }
@@ -2201,7 +2206,7 @@ NineMLComponent& NineMLComponent::operator=(const NineMLComponent& data)
     return *this;
 }
 
-void NineMLComponent::updateFrom(NineMLComponent* data)
+void NineMLComponent::updateFrom(QSharedPointer<NineMLComponent>  data)
 {
     // remove existing data
     foreach (Regime *r, RegimeList)
@@ -2240,9 +2245,10 @@ void NineMLComponent::updateFrom(NineMLComponent* data)
         ip = NULL;
     }
 
-    if (editedVersion != NULL)
-        delete editedVersion;
-    editedVersion = NULL;
+    // decrement shared pointer
+    if (!editedVersion.isNull()) {
+        editedVersion.clear();
+    }
 
     name = data->name;
     type = data->type;
@@ -2250,38 +2256,38 @@ void NineMLComponent::updateFrom(NineMLComponent* data)
     filePath = data->filePath;
     initial_regime_name = data->initial_regime_name;
 
-    RegimeList = vector<Regime*>(data->RegimeList.size());
-    StateVariableList = vector<StateVariable*>(data->StateVariableList.size());
-    ParameterList = vector<Parameter*>(data->ParameterList.size());
-    AliasList = vector<Alias*>(data->AliasList.size());
-    AnalogPortList = vector<AnalogPort*>(data->AnalogPortList.size());
-    EventPortList = vector<EventPort*>(data->EventPortList.size());
-    ImpulsePortList = vector<ImpulsePort*>(data->ImpulsePortList.size());
-    for (uint i=0; i<data->RegimeList.size(); i++)
+    RegimeList = QVector <Regime*>(data->RegimeList.size());
+    StateVariableList = QVector <StateVariable*>(data->StateVariableList.size());
+    ParameterList = QVector <Parameter*>(data->ParameterList.size());
+    AliasList = QVector <Alias*>(data->AliasList.size());
+    AnalogPortList = QVector <AnalogPort*>(data->AnalogPortList.size());
+    EventPortList = QVector <EventPort*>(data->EventPortList.size());
+    ImpulsePortList = QVector <ImpulsePort*>(data->ImpulsePortList.size());
+    for (int i=0; i<data->RegimeList.size(); i++)
     {
         RegimeList[i] = new Regime(data->RegimeList[i]);
     }
-    for (uint i=0; i<data->StateVariableList.size(); i++)
+    for (int i=0; i<data->StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariable(data->StateVariableList[i]);
     }
-    for (uint i=0; i<data->ParameterList.size(); i++)
+    for (int i=0; i<data->ParameterList.size(); i++)
     {
         ParameterList[i] = new Parameter(data->ParameterList[i]);
     }
-    for (uint i=0; i<data->AliasList.size(); i++)
+    for (int i=0; i<data->AliasList.size(); i++)
     {
         AliasList[i] = new Alias(data->AliasList[i]);
     }
-    for (uint i=0; i<data->AnalogPortList.size(); i++)
+    for (int i=0; i<data->AnalogPortList.size(); i++)
     {
         AnalogPortList[i] = new AnalogPort(data->AnalogPortList[i]);
     }
-    for (uint i=0; i<data->EventPortList.size(); i++)
+    for (int i=0; i<data->EventPortList.size(); i++)
     {
         EventPortList[i] = new EventPort(data->EventPortList[i]);
     }
-    for (uint i=0; i<data->ImpulsePortList.size(); i++)
+    for (int i=0; i<data->ImpulsePortList.size(); i++)
     {
         ImpulsePortList[i] = new ImpulsePort(data->ImpulsePortList[i]);
     }
@@ -2302,17 +2308,17 @@ void NineMLComponent::updateFrom(NineMLComponent* data)
 }
 
 // copy constructor required for the base class
-NineMLComponentData::NineMLComponentData(NineMLComponent *data)
+NineMLComponentData::NineMLComponentData(QSharedPointer<NineMLComponent>data)
 {
 
     type = NineMLComponentType;
-    StateVariableList = vector<StateVariableData*>(data->StateVariableList.size());
-    ParameterList = vector<ParameterData*>(data->ParameterList.size());
-    for (uint i=0; i<data->StateVariableList.size(); i++)
+    StateVariableList = QVector <StateVariableData*>(data->StateVariableList.size());
+    ParameterList = QVector <ParameterData*>(data->ParameterList.size());
+    for (int i=0; i<data->StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
     }
-    for (uint i=0; i<data->ParameterList.size(); i++)
+    for (int i=0; i<data->ParameterList.size(); i++)
     {
         ParameterList[i] = new ParameterData(data->ParameterList[i]);
     }
@@ -2320,17 +2326,17 @@ NineMLComponentData::NineMLComponentData(NineMLComponent *data)
 }
 
 // duplicate
-NineMLComponentData::NineMLComponentData(NineMLComponentData *data)
+NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>data)
 {
 
     type = NineMLComponentType;
-    StateVariableList = vector<StateVariableData*>(data->StateVariableList.size());
-    ParameterList = vector<ParameterData*>(data->ParameterList.size());
-    for (uint i=0; i<data->StateVariableList.size(); i++)
+    StateVariableList = QVector <StateVariableData*>(data->StateVariableList.size());
+    ParameterList = QVector <ParameterData*>(data->ParameterList.size());
+    for (int i=0; i<data->StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
     }
-    for (uint i=0; i<data->ParameterList.size(); i++)
+    for (int i=0; i<data->ParameterList.size(); i++)
     {
         ParameterList[i] = new ParameterData(data->ParameterList[i]);
     }
@@ -2341,7 +2347,7 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *data)
     this->component = data->component;
 }
 
-NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLComponent *data)
+void NineMLComponentData::copyFrom(QSharedPointer <NineMLComponentData>src, QSharedPointer<NineMLComponent>data, QSharedPointer<NineMLComponentData> thisSharedPointer)
 {
 
     // copy owner
@@ -2349,40 +2355,38 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLCompone
 
 
     //copy inputs and outputs across and delete originals:
-    for (uint i = 0; i < src->inputs.size(); ++i) {
+    for (int i = 0; i < src->inputs.size(); ++i) {
         inputs.push_back(src->inputs[i]);
     }
     src->inputs.clear();
 
-    for (uint i = 0; i < src->outputs.size(); ++i) {
+    for (int i = 0; i < src->outputs.size(); ++i) {
         outputs.push_back(src->outputs[i]);
     }
     src->outputs.clear();
 
     // update reference in outputs:
-    for (uint i = 0; i < outputs.size(); ++i) {
-        outputs[i]->src = this;
+    for (int i = 0; i < outputs.size(); ++i) {
+        outputs[i]->src = thisSharedPointer;
         // remove the port name reference
         outputs[i]->srcPort.clear();
     }
 
     // update reference in inputs:
-    for (uint i = 0; i < inputs.size(); ++i) {
-        inputs[i]->dst = this;
+    for (int i = 0; i < inputs.size(); ++i) {
+        inputs[i]->dst = thisSharedPointer;
         // remove dstPort name reference
         this->inputs[i]->dstPort.clear();
     }
 
-    delete src;
-
     type = NineMLComponentType;
-    StateVariableList = vector<StateVariableData*>(data->StateVariableList.size());
-    ParameterList = vector<ParameterData*>(data->ParameterList.size());
-    for (uint i=0; i<data->StateVariableList.size(); i++)
+    StateVariableList = QVector <StateVariableData*>(data->StateVariableList.size());
+    ParameterList = QVector <ParameterData*>(data->ParameterList.size());
+    for (int i=0; i<data->StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
     }
-    for (uint i=0; i<data->ParameterList.size(); i++)
+    for (int i=0; i<data->ParameterList.size(); i++)
     {
         ParameterList[i] = new ParameterData(data->ParameterList[i]);
     }
@@ -2393,7 +2397,7 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLCompone
     this->matchPorts();
 
     // also do this on outputs:
-    for (uint i = 0; i < this->outputs.size(); ++i) {
+    for (int i = 0; i < this->outputs.size(); ++i) {
         this->outputs[i]->dst->matchPorts();
     }
 }
@@ -2401,18 +2405,18 @@ NineMLComponentData::NineMLComponentData(NineMLComponentData *src, NineMLCompone
 // assignment operator required for the base class
 /*NineMLComponentData& NineMLComponentData::operator=(const NineMLComponentData& data)
 {
-    StateVariableList = vector<StateVariableData*>(data.StateVariableList.size());
-    ParameterList = vector<ParameterData*>(data.ParameterList.size());
-    AliasList = vector<AliasData*>(data.AliasList.size());
-    for (uint i=0; i<data.StateVariableList.size(); i++)
+    StateVariableList = QVector <StateVariableData*>(data.StateVariableList.size());
+    ParameterList = QVector <ParameterData*>(data.ParameterList.size());
+    AliasList = QVector <AliasData*>(data.AliasList.size());
+    for (int i=0; i<data.StateVariableList.size(); i++)
     {
         StateVariableList[i] = new StateVariable(data.StateVariableList[i]);
     }
-    for (uint i=0; i<data.ParameterList.size(); i++)
+    for (int i=0; i<data.ParameterList.size(); i++)
     {
         ParameterList[i] = new Parameter(data.ParameterList[i]);
     }
-    for (uint i=0; i<data.AliasList.size(); i++)
+    for (int i=0; i<data.AliasList.size(); i++)
     {
         AliasList[i] = new Alias(data.AliasList[i]);
     }
@@ -2485,32 +2489,32 @@ int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
     splitTest = test.split(' ');
 
     // check each token...
-    for (unsigned int i = 0; i < (uint) splitTest.count(); ++i) {
+    for (int i = 0; i < (int) splitTest.count(); ++i) {
 
         bool recognised = false;
 
         // see if it is in the component
-        for (unsigned int j = 0; j<component->ParameterList.size(); j++) {
+        for (int j = 0; j<component->ParameterList.size(); j++) {
             if (component->ParameterList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<component->StateVariableList.size(); j++) {
+        for (int j = 0; j<component->StateVariableList.size(); j++) {
             if (component->StateVariableList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<component->AliasList.size(); j++) {
+        for (int j = 0; j<component->AliasList.size(); j++) {
             if (component->AliasList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<component->AnalogPortList.size(); j++) {
+        for (int j = 0; j<component->AnalogPortList.size(); j++) {
             if (component->AnalogPortList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<component->ImpulsePortList.size(); j++) {
+        for (int j = 0; j<component->ImpulsePortList.size(); j++) {
             if (component->ImpulsePortList[j]->name.compare(splitTest[i]) == 0)
                 recognised = true;
         }
-        for (unsigned int j = 0; j<(uint)FuncList.size(); j++) {
+        for (int j = 0; j<(int)FuncList.size(); j++) {
             if (FuncList[j].compare(splitTest[i]) == 0)
                 recognised = true;
         }
@@ -2544,7 +2548,7 @@ int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
     return 0;
 }
 
-int Trigger::validateTrigger(NineMLComponent *component, QStringList * errs)
+int Trigger::validateTrigger(NineMLComponent * component, QStringList * errs)
 {
     // mathinline pointer may be null
     if (maths != (MathInLine *)0) {
@@ -2556,7 +2560,7 @@ int Trigger::validateTrigger(NineMLComponent *component, QStringList * errs)
     }
 }
 
-int Alias::validateAlias(NineMLComponent *component, QStringList * errs)
+int Alias::validateAlias(NineMLComponent * component, QStringList * errs)
 {
     // mathinline pointer may be null
     if (maths != (MathInLine *)0) {
@@ -2567,7 +2571,7 @@ int Alias::validateAlias(NineMLComponent *component, QStringList * errs)
     }
 }
 
-int TimeDerivative::validateTimeDerivative(NineMLComponent *component, QStringList * errs)
+int TimeDerivative::validateTimeDerivative(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     // mathinline pointer may be null
@@ -2578,7 +2582,7 @@ int TimeDerivative::validateTimeDerivative(NineMLComponent *component, QStringLi
         failures += 1;
     }
     bool match = false;
-    for(uint i=0; i<component->StateVariableList.size(); i++)
+    for(int i=0; i<component->StateVariableList.size(); i++)
     {
         if (component->StateVariableList[i]->getName() == variable_name)
         {variable = component->StateVariableList[i];
@@ -2597,7 +2601,7 @@ int TimeDerivative::validateTimeDerivative(NineMLComponent *component, QStringLi
     return failures;
 }
 
-int StateAssignment::validateStateAssignment(NineMLComponent *component, QStringList * errs)
+int StateAssignment::validateStateAssignment(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     // mathinline pointer may be null
@@ -2614,7 +2618,7 @@ int StateAssignment::validateStateAssignment(NineMLComponent *component, QString
         settings.endArray();
     }
     bool match = false;
-    for(uint i=0; i<component->StateVariableList.size(); i++)
+    for(int i=0; i<component->StateVariableList.size(); i++)
     {
         if (component->StateVariableList[i]->name.compare(name) == 0)
         {variable = component->StateVariableList[i];
@@ -2633,11 +2637,11 @@ int StateAssignment::validateStateAssignment(NineMLComponent *component, QString
     return failures;
 }
 
-int EventOut::validateEventOut(NineMLComponent *component, QStringList * )
+int EventOut::validateEventOut(NineMLComponent * component, QStringList * )
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0; i<component->EventPortList.size(); i++)
+    for(int i=0; i<component->EventPortList.size(); i++)
     {
         if (component->EventPortList[i]->name.compare(port_name) == 0)
         {port = component->EventPortList[i];
@@ -2656,11 +2660,11 @@ int EventOut::validateEventOut(NineMLComponent *component, QStringList * )
 }
 
 
-int ImpulseOut::validateImpulseOut(NineMLComponent *component, QStringList * )
+int ImpulseOut::validateImpulseOut(NineMLComponent * component, QStringList * )
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0; i<component->ImpulsePortList.size(); i++)
+    for(int i=0; i<component->ImpulsePortList.size(); i++)
     {
         if (component->ImpulsePortList[i]->name.compare(port_name) == 0)
         {
@@ -2683,11 +2687,11 @@ int ImpulseOut::validateImpulseOut(NineMLComponent *component, QStringList * )
     return failures;
 }
 
-int OnCondition::validateOnCondition(NineMLComponent *component, QStringList * errs)
+int OnCondition::validateOnCondition(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0;i<component->RegimeList.size();i++)
+    for(int i=0;i<component->RegimeList.size();i++)
     {
         if (component->RegimeList[i]->name.compare(target_regime_name) == 0)
         {target_regime = component->RegimeList[i];
@@ -2703,26 +2707,26 @@ int OnCondition::validateOnCondition(NineMLComponent *component, QStringList * e
         settings.endArray();
       }
     failures += !match;
-    for(uint i=0; i<StateAssignList.size(); i++)
+    for(int i=0; i<StateAssignList.size(); i++)
     {
         failures += StateAssignList[i]->validateStateAssignment(component, errs);
     }
-    for(uint i=0; i<eventOutList.size(); i++)
+    for(int i=0; i<eventOutList.size(); i++)
     {
         failures += eventOutList[i]->validateEventOut(component, errs);
     }
-    for(uint i=0; i<impulseOutList.size(); i++)
+    for(int i=0; i<impulseOutList.size(); i++)
     {
         failures += impulseOutList[i]->validateImpulseOut(component, errs);
     }
     return failures;
 }
 
-int OnEvent::validateOnEvent(NineMLComponent *component, QStringList * errs)
+int OnEvent::validateOnEvent(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0;i<component->RegimeList.size();i++)
+    for(int i=0;i<component->RegimeList.size();i++)
     {
         if (component->RegimeList[i]->name.compare(target_regime_name) == 0)
         {target_regime = component->RegimeList[i];
@@ -2739,7 +2743,7 @@ int OnEvent::validateOnEvent(NineMLComponent *component, QStringList * errs)
       }
     failures += !match;
     match = false;
-    for(uint i=0; i<component->EventPortList.size(); i++)
+    for(int i=0; i<component->EventPortList.size(); i++)
     {
         if (component->EventPortList[i]->name.compare(src_port_name) == 0)
         {src_port = component->EventPortList[i];
@@ -2755,15 +2759,15 @@ int OnEvent::validateOnEvent(NineMLComponent *component, QStringList * errs)
         settings.endArray();
       }
     failures += !match;
-    for(uint i=0; i<StateAssignList.size(); i++)
+    for(int i=0; i<StateAssignList.size(); i++)
     {
         failures += StateAssignList[i]->validateStateAssignment(component, errs);
     }
-    for(uint i=0; i<eventOutList.size(); i++)
+    for(int i=0; i<eventOutList.size(); i++)
     {
         failures += eventOutList[i]->validateEventOut(component, errs);
     }
-    for(uint i=0; i<impulseOutList.size(); i++)
+    for(int i=0; i<impulseOutList.size(); i++)
     {
         failures += impulseOutList[i]->validateImpulseOut(component, errs);
     }
@@ -2771,11 +2775,11 @@ int OnEvent::validateOnEvent(NineMLComponent *component, QStringList * errs)
 }
 
 
-int OnImpulse::validateOnImpulse(NineMLComponent *component, QStringList * errs)
+int OnImpulse::validateOnImpulse(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
-    for(uint i=0;i<component->RegimeList.size();i++)
+    for(int i=0;i<component->RegimeList.size();i++)
     {
         if (component->RegimeList[i]->name.compare(target_regime_name) == 0)
         {target_regime = component->RegimeList[i];
@@ -2792,7 +2796,7 @@ int OnImpulse::validateOnImpulse(NineMLComponent *component, QStringList * errs)
       }
     failures += !match;
     match = false;
-    for(uint i=0; i<component->ImpulsePortList.size(); i++)
+    for(int i=0; i<component->ImpulsePortList.size(); i++)
     {
         if (component->ImpulsePortList[i]->name.compare(src_port_name) == 0)
         {src_port = component->ImpulsePortList[i];
@@ -2807,37 +2811,37 @@ int OnImpulse::validateOnImpulse(NineMLComponent *component, QStringList * errs)
             settings.setValue("errorText",   "Error: OnImpulse references missing Regime " + src_port_name);
         settings.endArray();
       }
-    for(uint i=0; i<StateAssignList.size(); i++)
+    for(int i=0; i<StateAssignList.size(); i++)
     {
         failures += StateAssignList[i]->validateStateAssignment(component, errs);
     }
-    for(uint i=0; i<eventOutList.size(); i++)
+    for(int i=0; i<eventOutList.size(); i++)
     {
         failures += eventOutList[i]->validateEventOut(component, errs);
     }
-    for(uint i=0; i<impulseOutList.size(); i++)
+    for(int i=0; i<impulseOutList.size(); i++)
     {
         failures += impulseOutList[i]->validateImpulseOut(component, errs);
     }
     return failures;
 }
 
-int Regime::validateRegime(NineMLComponent *component, QStringList * errs)
+int Regime::validateRegime(NineMLComponent * component, QStringList * errs)
 {
     int failures = 0;
-    for(uint i=0; i<TimeDerivativeList.size(); i++)
+    for(int i=0; i<TimeDerivativeList.size(); i++)
     {
         failures += TimeDerivativeList[i]->validateTimeDerivative(component, errs);
     }
-    for(uint i=0; i<OnConditionList.size(); i++)
+    for(int i=0; i<OnConditionList.size(); i++)
     {
         failures += OnConditionList[i]->validateOnCondition(component, errs);
     }
-    for(uint i=0; i<OnEventList.size(); i++)
+    for(int i=0; i<OnEventList.size(); i++)
     {
         failures += OnEventList[i]->validateOnEvent(component, errs);
     }
-    for(uint i=0; i<OnImpulseList.size(); i++)
+    for(int i=0; i<OnImpulseList.size(); i++)
     {
         failures += OnImpulseList[i]->validateOnImpulse(component, errs);
     }
@@ -2851,7 +2855,7 @@ QStringList NineMLComponent::validateComponent()
     this->initial_regime = NULL;
     int failures = 0;
 
-    for(uint i=0; i<RegimeList.size(); i++)
+    for(int i=0; i<RegimeList.size(); i++)
     {
         failures += RegimeList[i]->validateRegime(this, &errs);
         if (this->initial_regime_name == RegimeList[i]->name){
@@ -2859,15 +2863,15 @@ QStringList NineMLComponent::validateComponent()
             this->initial_regime = RegimeList[i];
         }
     }
-    for(uint i=0; i<AliasList.size(); i++)
+    for(int i=0; i<AliasList.size(); i++)
     {
         failures += AliasList[i]->validateAlias(this, &errs);
     }
-    for (uint i=0; i<AnalogPortList.size(); ++i)
+    for (int i=0; i<AnalogPortList.size(); ++i)
     {
         failures += AnalogPortList[i]->validateAnalogPort(this, &errs);
     }
-    for (uint i=0; i<ImpulsePortList.size(); ++i)
+    for (int i=0; i<ImpulsePortList.size(); ++i)
     {
         failures += ImpulsePortList[i]->validateImpulsePort(this, &errs);
     }
@@ -2893,19 +2897,21 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
         QDomNode n = nList.item(j);
 
         // extract value and dimensions from node
-        for (unsigned int i = 0; i < this->ParameterList.size(); ++i) {
+        for (int i = 0; i < this->ParameterList.size(); ++i) {
             if (n.toElement().attribute("name") == this->ParameterList[i]->name) {
 
                 QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = FixedValue;
-                    this->ParameterList[i]->value.resize(1,0);
+                    this->ParameterList[i]->value.resize(1);
+                    this->ParameterList[i]->value.fill(0);
                     this->ParameterList[i]->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
                 }
                 propVal = n.toElement().elementsByTagName("UniformDistribution");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = Statistical;
-                    this->ParameterList[i]->value.resize(4,0);
+                    this->ParameterList[i]->value.resize(4);
+                    this->ParameterList[i]->value.fill(0);
                     this->ParameterList[i]->value[0] = 1;
                     this->ParameterList[i]->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
                     this->ParameterList[i]->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
@@ -2914,7 +2920,8 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
                 propVal = n.toElement().elementsByTagName("NormalDistribution");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = Statistical;
-                    this->ParameterList[i]->value.resize(4,0);
+                    this->ParameterList[i]->value.resize(4);
+                    this->ParameterList[i]->value.fill(0);
                     this->ParameterList[i]->value[0] = 2;
                     this->ParameterList[i]->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
                     this->ParameterList[i]->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
@@ -2925,7 +2932,7 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = ExplicitList;
                     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
-                    for (uint ind = 0; ind < (uint) propValInst.count(); ++ind) {
+                    for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
                         this->ParameterList[i]->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
                         this->ParameterList[i]->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
 //                        this->ParameterList[i]->dims = new dim(propUnit.item(0).toElement().text());
@@ -2935,19 +2942,21 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
         }
 
         // extract value and dimensions from node
-        for (unsigned int i = 0; i < this->StateVariableList.size(); ++i) {
+        for (int i = 0; i < this->StateVariableList.size(); ++i) {
             if (n.toElement().attribute("name") == this->StateVariableList[i]->name) {
 
                 QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = FixedValue;
-                    this->StateVariableList[i]->value.resize(1,0);
+                    this->StateVariableList[i]->value.resize(1);
+                    this->StateVariableList[i]->value.fill(0);
                     this->StateVariableList[i]->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
                 }
                 propVal = n.toElement().elementsByTagName("UniformDistribution");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = Statistical;
-                    this->StateVariableList[i]->value.resize(4,0);
+                    this->StateVariableList[i]->value.resize(4);
+                    this->StateVariableList[i]->value.fill(0);
                     this->StateVariableList[i]->value[0] = 1;
                     this->StateVariableList[i]->value[1] = propVal.item(0).toElement().attribute("minimum").toFloat();
                     this->StateVariableList[i]->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
@@ -2956,7 +2965,8 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
                 propVal = n.toElement().elementsByTagName("NormalDistribution");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = Statistical;
-                    this->StateVariableList[i]->value.resize(4,0);
+                    this->StateVariableList[i]->value.resize(4);
+                    this->StateVariableList[i]->value.fill(0);
                     this->StateVariableList[i]->value[0] = 2;
                     this->StateVariableList[i]->value[1] = propVal.item(0).toElement().attribute("mean").toFloat();
                     this->StateVariableList[i]->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
@@ -2967,7 +2977,7 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = ExplicitList;
                     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
-                    for (uint ind = 0; ind < (uint) propValInst.count(); ++ind) {
+                    for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
                         this->StateVariableList[i]->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
                         this->StateVariableList[i]->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
 //                        this->StateVariableList[i]->dims = new dim(propUnit.item(0).toElement().text());
@@ -2996,16 +3006,20 @@ QString NineMLComponentData::getXMLName() {
     }
     if (this->component->type == "weight_update") {
         // find which Synapse we are attached to
-        for (uint i = 0; i < ((projection *) owner)->synapses.size(); ++i) {
-            if (((projection *) owner)->synapses[i]->weightUpdateType == this) {
+        QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
+        CHECK_CAST(projOwner)
+        for (int i = 0; i < projOwner->synapses.size(); ++i) {
+            if (projOwner->synapses[i]->weightUpdateType == this) {
                 return this->owner->getName() + " Synapse " + QString::number(float(i)) + " weight_update";
             }
         }
     }
     if (this->component->type == "postsynapse") {
         // find which Synapse we are attached to
-        for (uint i = 0; i < ((projection *) owner)->synapses.size(); ++i) {
-            if (((projection *) owner)->synapses[i]->postsynapseType == this) {
+        QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
+        CHECK_CAST(projOwner)
+        for (int i = 0; i < projOwner->synapses.size(); ++i) {
+            if (projOwner->synapses[i]->postsynapseType == this) {
                 return this->owner->getName() + " Synapse " +  QString::number(float(i)) + " postsynapse";
             }
         }
@@ -3033,11 +3047,11 @@ void NineMLComponentData::removeReferences() {
 
 }
 
-void NineMLComponentData::addInput(NineMLComponentData *, bool) {
+void NineMLComponentData::addInput(QSharedPointer <NineMLComponentData>, bool) {
 
-    qDebug() << "This shouldn't be called - NineMLComponentData::addInput(NineMLComponentData * src, bool isProj)";
+    qDebug() << "This shouldn't be called - NineMLComponentData::addInput(QSharedPointer <NineMLComponentData> src, bool isProj)";
 
-    //genericInput * newInput = new genericInput(src, this, isProj);
+    //QSharedPointer<genericInput> newInput = new genericInput(src, this, isProj);
 
     // suppress warning
     //newInput = NULL;
@@ -3049,15 +3063,15 @@ NineMLComponentData::~NineMLComponentData() {
     // not needed anymore
     //this->removeReferences();
 
-    /*for (uint i = 0; i < this->inputs.size(); ++i) {
+    /*for (int i = 0; i < this->inputs.size(); ++i) {
         delete inputs[i];
     }*/
 
-    for (uint i = 0; i < this->ParameterList.size(); ++i) {
+    for (int i = 0; i < this->ParameterList.size(); ++i) {
         delete this->ParameterList[i];
     }
 
-    for (uint i = 0; i < this->StateVariableList.size(); ++i) {
+    for (int i = 0; i < this->StateVariableList.size(); ++i) {
         delete this->StateVariableList[i];
     }
 
@@ -3067,7 +3081,7 @@ NineMLComponentData::~NineMLComponentData() {
 void NineMLComponentData::matchPorts() {
 
     // attempt to match by type and dimensions
-    for (uint i = 0; i < this->inputs.size();  ++i) {
+    for (int i = 0; i < this->inputs.size();  ++i) {
 
         QStringList portPairs = this->getPortMatches(i, false);
 
@@ -3102,7 +3116,7 @@ void NineMLComponentData::matchPorts() {
     }
 
     // attempt to match by type and dimensions (outputs)
-    for (uint i = 0; i < this->outputs.size();  ++i) {
+    for (int i = 0; i < this->outputs.size();  ++i) {
 
         if (outputs[i]->srcPort.isEmpty() || outputs[i]->dstPort.isEmpty()) {
 
@@ -3128,21 +3142,21 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
     // find pairs of ports that could match
     QStringList portPairs;
 
-    genericInput * currInput;
+    QSharedPointer<genericInput> currInput;
     if (!isOutput) {
         currInput = this->inputs[index];
     } else {
         currInput = this->outputs[index];
     }
 
-    for (uint j = 0; j < currInput->src->component->AnalogPortList.size(); ++j) {
+    for (int j = 0; j < currInput->src->component->AnalogPortList.size(); ++j) {
 
         AnalogPort * currSendPort = currInput->src->component->AnalogPortList[j];
 
         // if is a send port
         if (currSendPort->mode == AnalogSendPort) {
 
-            for (uint k = 0; k < currInput->dst->component->AnalogPortList.size(); ++k) {
+            for (int k = 0; k < currInput->dst->component->AnalogPortList.size(); ++k) {
 
                 AnalogPort * currRecvPort = currInput->dst->component->AnalogPortList[k];
 
@@ -3160,14 +3174,14 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
         }
     }
 
-    for (uint j = 0; j < currInput->src->component->EventPortList.size(); ++j) {
+    for (int j = 0; j < currInput->src->component->EventPortList.size(); ++j) {
 
         EventPort * currSendPort = currInput->src->component->EventPortList[j];
 
         // if is a send port
         if (currSendPort->mode == EventSendPort) {
 
-            for (uint k = 0; k < currInput->dst->component->EventPortList.size(); ++k) {
+            for (int k = 0; k < currInput->dst->component->EventPortList.size(); ++k) {
 
                 EventPort * currRecvPort = currInput->dst->component->EventPortList[k];
 
@@ -3182,14 +3196,14 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
         }
     }
 
-    for (uint j = 0; j < currInput->src->component->ImpulsePortList.size(); ++j) {
+    for (int j = 0; j < currInput->src->component->ImpulsePortList.size(); ++j) {
 
         ImpulsePort * currSendPort = currInput->src->component->ImpulsePortList[j];
 
         // if is a send port
         if (currSendPort->mode == ImpulseSendPort) {
 
-            for (uint k = 0; k < currInput->dst->component->ImpulsePortList.size(); ++k) {
+            for (int k = 0; k < currInput->dst->component->ImpulsePortList.size(); ++k) {
 
                 ImpulsePort * currRecvPort = currInput->dst->component->ImpulsePortList[k];
 
@@ -3208,10 +3222,10 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
     return portPairs;
 }
 
-void NineMLComponentData::migrateComponent(NineMLComponent * newComponent) {
+void NineMLComponentData::migrateComponent(QSharedPointer<NineMLComponent> newComponent) {
 
-    vector < ParameterData * > oldParList;
-    vector < StateVariableData * > oldSVList;
+    QVector < ParameterData * > oldParList;
+    QVector < StateVariableData * > oldSVList;
 
     // copy old list
     oldParList = this->ParameterList;
@@ -3220,9 +3234,9 @@ void NineMLComponentData::migrateComponent(NineMLComponent * newComponent) {
     this->ParameterList.clear();
 
     // add new list - copying across as needed
-    for (uint i = 0; i < newComponent->ParameterList.size(); ++i) {
+    for (int i = 0; i < newComponent->ParameterList.size(); ++i) {
         bool inNew = false;
-        for (uint j = 0; j < oldParList.size(); ++j) {
+        for (int j = 0; j < oldParList.size(); ++j) {
             if (newComponent->ParameterList[i]->name == oldParList[j]->name) {
                 this->ParameterList.push_back(new ParameterData(oldParList[j]));
                 // but may change dims!
@@ -3242,9 +3256,9 @@ void NineMLComponentData::migrateComponent(NineMLComponent * newComponent) {
     this->StateVariableList.clear();
 
     // add new list - copying across as needed
-    for (uint i = 0; i < newComponent->StateVariableList.size(); ++i) {
+    for (int i = 0; i < newComponent->StateVariableList.size(); ++i) {
         bool inNew = false;
-        for (uint j = 0; j < oldSVList.size(); ++j) {
+        for (int j = 0; j < oldSVList.size(); ++j) {
             if (newComponent->StateVariableList[i]->name == oldSVList[j]->name) {
                 this->StateVariableList.push_back(new StateVariableData(oldSVList[j]));
                 // but may change dims!
@@ -3261,14 +3275,14 @@ void NineMLComponentData::migrateComponent(NineMLComponent * newComponent) {
 
 }
 
-void NineMLComponentData::copyParsFrom(NineMLComponentData * data) {
+void NineMLComponentData::copyParsFrom(QSharedPointer <NineMLComponentData> data) {
 
     if (this->component->name == "none")
         return;
 
     // add new list - copying across as needed
-    for (uint i = 0; i < data->ParameterList.size(); ++i) {
-        for (uint j = 0; j < this->ParameterList.size(); ++j) {
+    for (int i = 0; i < data->ParameterList.size(); ++i) {
+        for (int j = 0; j < this->ParameterList.size(); ++j) {
             if (data->ParameterList[i]->name == this->ParameterList[j]->name) {
                 dim * oldDims = new dim(this->ParameterList[j]->dims->toString());
                 delete this->ParameterList[j];
@@ -3280,8 +3294,8 @@ void NineMLComponentData::copyParsFrom(NineMLComponentData * data) {
     }
 
     // add new list - copying across as needed
-    for (uint i = 0; i < data->StateVariableList.size(); ++i) {
-        for (uint j = 0; j < this->StateVariableList.size(); ++j) {
+    for (int i = 0; i < data->StateVariableList.size(); ++i) {
+        for (int j = 0; j < this->StateVariableList.size(); ++j) {
             if (data->StateVariableList[i]->name == this->StateVariableList[j]->name) {
                 dim * oldDims = new dim(this->StateVariableList[j]->dims->toString());
                 delete this->StateVariableList[j];

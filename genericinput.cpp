@@ -31,17 +31,17 @@
 genericInput::genericInput()
 {
     // only used for loading from file - and all info will be specified so no need to muck about here - except this:
-    this->connectionType = new onetoOne_connection;
+    this->connectionType = new alltoAll_connection;
     this->type = inputObject;
     // for reinserting on undo / redo
     srcPos = -1;
     dstPos = -1;
     isVisualised = false;
-    source = NULL;
-    destination = NULL;
+    source.clear();
+    destination.clear();
 }
 
-genericInput::genericInput(NineMLComponentData * src, NineMLComponentData * dst, bool projInput) {
+genericInput::genericInput(QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, bool projInput) {
 
     this->type = inputObject;
 
@@ -65,28 +65,28 @@ genericInput::genericInput(NineMLComponentData * src, NineMLComponentData * dst,
     this->connectionType = new onetoOne_connection;
 
     // add to src and dst lists
-    connect();
+    //connect();
 
     // add curves if we are not a projection input
     if (!projInput)
         addCurves();
 
     // make sure we sort out the ports!
-    dst->matchPorts();
+    //dst->matchPorts();
 
     isVisualised = false;
 }
 
-void genericInput::connect() {
+void genericInput::connect(QSharedPointer<genericInput> in) {
 
     // connect can be called multiple times due to the nature of Undo
-    for (uint i = 0; i < dst->inputs.size(); ++i) {
+    for (int i = 0; i < dst->inputs.size(); ++i) {
         if (dst->inputs[i] == this) {
             // already there - give up
             return;
         }
     }
-    for (uint i = 0; i < src->outputs.size(); ++i) {
+    for (int i = 0; i < src->outputs.size(); ++i) {
         if (src->outputs[i] == this) {
             // already there - give up
             return;
@@ -94,8 +94,8 @@ void genericInput::connect() {
     }
 
     //if (srcPos == -1 && dstPos == -1) {
-        dst->inputs.push_back(this);
-        src->outputs.push_back(this);
+        dst->inputs.push_back(in);
+        src->outputs.push_back(in);
     /*}
     else
     {
@@ -103,18 +103,20 @@ void genericInput::connect() {
         src->outputs.insert(src->outputs.begin()+srcPos, this);
     }*/
 
+        dst->matchPorts();
+
 }
 
 void genericInput::disconnect() {
 
-    for (uint i = 0; i < dst->inputs.size(); ++i) {
-        if (dst->inputs[i] == this) {
+    for (int i = 0; i < dst->inputs.size(); ++i) {
+        if (dst->inputs[i].data() == this) {
             dst->inputs.erase(dst->inputs.begin()+i);
             dstPos = i;
         }
     }
-    for (uint i = 0; i < src->outputs.size(); ++i) {
-        if (src->outputs[i] == this) {
+    for (int i = 0; i < src->outputs.size(); ++i) {
+        if (src->outputs[i].data() == this) {
             src->outputs.erase(src->outputs.begin()+i);
             srcPos = i;
         }
@@ -142,11 +144,11 @@ QString genericInput::getName() {
 void genericInput::remove(rootData * data) {
 
     // remove from experiment
-    for (uint j = 0; j < data->experiments.size(); ++j) {
-        data->experiments[j]->purgeBadPointer(this);
+    for (int j = 0; j < data->experiments.size(); ++j) {
+        //data->experiments[j]->purgeBadPointer(this);
     }
 
-    delete this;
+    //delete this;
 
 }
 
@@ -179,7 +181,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             if (source != NULL) {
                 if (source->type == projectionObject) {
-                    projection * s = (projection *) source;
+                    QSharedPointer <projection> s = qSharedPointerDynamicCast <projection> (source);
+                    CHECK_CAST(s);
                     if (s->curves.size() > 0 && s->destination != NULL) {
                         QLineF temp = QLineF(QPointF(s->destination->x, s->destination->y), s->curves.back().C2);
                         temp.setLength(0.6);
@@ -189,7 +192,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                         start = QPointF(0.0,0.0);
                     }
                 } else if (source->type == populationObject) {
-                    population * s = (population *) source;
+                    QSharedPointer <population> s = qSharedPointerDynamicCast <population> (source);
+                    CHECK_CAST(s);
                     QLineF temp = QLineF(QPointF(s->x, s->y), this->curves.front().C1);
                     temp.setLength(0.6);
                     start = temp.p2();
@@ -200,7 +204,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             if (destination != NULL) {
                 if (destination->type == projectionObject) {
-                    projection * d = (projection *) destination;
+                    QSharedPointer <projection> d = qSharedPointerDynamicCast <projection> (destination);
+                    CHECK_CAST(d);
                     if (d->curves.size() > 0 && d->destination != NULL) {
                         QLineF temp = QLineF(QPointF(d->destination->x, d->destination->y), d->curves.back().C2);
                         temp.setLength(0.55);
@@ -210,7 +215,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                         start = QPointF(0.0,0.0);
                     }
                 } else if (destination->type == populationObject) {
-                    population * d = (population *) destination;
+                    QSharedPointer <population> d = qSharedPointerDynamicCast <population> (destination);
+                    CHECK_CAST(d);
                     QLineF temp = QLineF(QPointF(d->x, d->y), this->curves.back().C2);
                     temp.setLength(0.55);
                     end = temp.p2();
@@ -230,7 +236,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             path.moveTo(this->transformPoint(start));
 
 
-            for (unsigned int i = 0; i < this->curves.size(); ++i) {
+            for (int i = 0; i < this->curves.size(); ++i) {
                 if (this->curves.size()-1 == i)
                     path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
                 else
@@ -282,7 +288,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             // account for hidpi in line width
             QPen linePen = painter->pen();
-            linePen.setWidthF(linePen.widthF()*dpi_ratio);
+            linePen.setWidthF(linePen.widthF()/dpi_ratio);
             painter->setPen(linePen);
 
             if (this->type == projectionObject) {
@@ -291,7 +297,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                 painter->fillPath(endPoint, QColor(0,0,255,255));
             }
             else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),2*dpi_ratio,2*dpi_ratio);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.02*dpi_ratio*GLscale,0.02*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,210,0,255));
             }
@@ -302,7 +308,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             path.moveTo(this->transformPoint(start));
 
             // draw curves
-            for (unsigned int i = 0; i < this->curves.size(); ++i) {
+            for (int i = 0; i < this->curves.size(); ++i) {
                 if (this->curves.size()-1 == i)
                     path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
                 else
@@ -314,7 +320,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                 QPen pen = painter->pen();
                 QVector<qreal> dash;
                 dash.push_back(4);
-                for (uint syn = 1; syn < this->synapses.size(); ++syn) {
+                for (int syn = 1; syn < this->synapses.size(); ++syn) {
                     dash.push_back(2.0);
                     dash.push_back(1.0);
                 }
@@ -364,7 +370,9 @@ void genericInput::addCurves() {
         bool handled = false;
         // if we are from a population to a projection and the pop is the Synapse of the proj, handle differently for aesthetics
         if (this->destination->type == projectionObject) {
-            if (((projection *) this->destination)->destination == (population *) this->source) {
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (this->destination);
+            CHECK_CAST(proj)
+            if (proj->destination == this->source) {
                 handled = true;
                 QLineF line;
                 line.setP1(this->source->currentLocation());
@@ -373,30 +381,38 @@ void genericInput::addCurves() {
                 line.setLength(1.6);
                 this->curves.back().C2 = line.p2();
                 line.setAngle(line.angle()+30.0);
-                QPointF boxEdge = this->findBoxEdge((population *) this->source, line.p2().x(), line.p2().y());
+                QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->source);
+                CHECK_CAST(pop)
+                QPointF boxEdge = this->findBoxEdge(pop, line.p2().x(), line.p2().y());
                 this->start = boxEdge;
                 this->curves.back().C1 = line.p2();
             }
         }
         if (!handled) {
-            QPointF boxEdge = this->findBoxEdge((population *) this->source, dst->owner->currentLocation().x(), dst->owner->currentLocation().y());
+            QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->source);
+            CHECK_CAST(pop)
+            QPointF boxEdge = this->findBoxEdge(pop, dst->owner->currentLocation().x(), dst->owner->currentLocation().y());
             this->start = boxEdge;
         }
 
 
     }
     if (this->destination->type == populationObject) {
-
-        QPointF boxEdge = this->findBoxEdge((population *) this->destination, src->owner->currentLocation().x(), src->owner->currentLocation().y());
+        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->destination);
+        CHECK_CAST(pop)
+        QPointF boxEdge = this->findBoxEdge(pop, src->owner->currentLocation().x(), src->owner->currentLocation().y());
         this->curves.back().end = boxEdge;
 
     }
     // self connection population aesthetics
     if (this->destination == this->source && this->destination->type == populationObject) {
-
-        QPointF boxEdge = this->findBoxEdge((population *) this->destination, this->destination->currentLocation().x(), 1000000.0);
+        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->destination);
+        CHECK_CAST(pop)
+        QPointF boxEdge = this->findBoxEdge(pop, this->destination->currentLocation().x(), 1000000.0);
         this->curves.back().end = boxEdge;
-        boxEdge = this->findBoxEdge((population *) this->source, 1000000.0, 1000000.0);
+        pop = qSharedPointerDynamicCast <population> (this->source);
+        CHECK_CAST(pop)
+        boxEdge = this->findBoxEdge(pop, 1000000.0, 1000000.0);
         this->start = boxEdge;
         this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0, this->destination->currentLocation().y()+1.0);
         this->curves.back().C2 = QPointF(this->destination->currentLocation().x(), this->destination->currentLocation().y()+1.4);
@@ -405,9 +421,11 @@ void genericInput::addCurves() {
     // self projection connection aesthetics
     if (this->destination->type == projectionObject && this->source->type == projectionObject && this->destination == this->source) {
 
+        QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (this->destination);
+        CHECK_CAST(proj)
         QLineF line;
         line.setP1(this->source->currentLocation());
-        line.setP2(((projection *) this->destination)->curves.back().C2);
+        line.setP2(proj->curves.back().C2);
         line = line.unitVector();
         line.setLength(1.6);
         line.setAngle(line.angle()+20.0);
@@ -420,11 +438,11 @@ void genericInput::addCurves() {
 
 
 
-void genericInput::animate(systemObject * movingObj, QPointF delta) {
+void genericInput::animate(QSharedPointer<systemObject> movingObj, QPointF delta) {
 
     if (this->curves.size() > 0) {
         // if we are a self connection we get moved twice, so only move half as much each time
-        if (!(this->destination == (systemObject *)0)) {
+        if (!(this->destination == (QSharedPointer<systemObject>)0)) {
             if (this->source->getName() == this->destination->getName()) {
                 delta = delta / 2;
             }
@@ -435,7 +453,7 @@ void genericInput::animate(systemObject * movingObj, QPointF delta) {
             this->curves.front().C1 = this->curves.front().C1 + delta;
         }
         // if destination is set:
-        if (!(this->destination == (systemObject *)0)) {
+        if (!(this->destination == (QSharedPointer<systemObject>)0)) {
             // destination is moving
             if (movingObj->getName() == this->destination->getName()) {
                 this->curves.back().end = this->curves.back().end + delta;
@@ -457,15 +475,17 @@ void genericInput::moveSelectedControlPoint(float xGL, float yGL) {
             return;
 
         if (source->type == populationObject) {
-            QLineF line(QPointF(((population *)this->source)->x, ((population *)this->source)->y), cursor);
+            QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->source);
+            CHECK_CAST(pop)
+            QLineF line(QPointF(pop->x, pop->y), cursor);
             QLineF nextLine = line.unitVector();
             nextLine.setLength(1000.0);
             QPointF point = nextLine.p2();
 
-            QPointF boxEdge = findBoxEdge(((population *)this->source), point.x(), point.y());
+            QPointF boxEdge = findBoxEdge(pop, point.x(), point.y());
 
             // realign the handle
-            QLineF handle(QPointF(((population *)this->source)->x, ((population *)this->source)->y), this->curves.front().C1);
+            QLineF handle(QPointF(pop->x, pop->y), this->curves.front().C1);
             handle.setAngle(nextLine.angle());
             this->curves.front().C1 = handle.p2();
 
@@ -483,16 +503,18 @@ void genericInput::moveSelectedControlPoint(float xGL, float yGL) {
                 return;
 
             if (source->type == populationObject) {
+                QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->destination);
+                CHECK_CAST(pop)
                 // work out closest point on edge of destination population
-                QLineF line(QPointF(((population *)this->destination)->x, ((population *)this->destination)->y), cursor);
+                QLineF line(QPointF(pop->x, pop->y), cursor);
                 QLineF nextLine = line.unitVector();
                 nextLine.setLength(1000.0);
                 QPointF point = nextLine.p2();
 
-                QPointF boxEdge = findBoxEdge(((population *)this->destination), point.x(), point.y());
+                QPointF boxEdge = findBoxEdge(pop, point.x(), point.y());
 
                 // realign the handle
-                QLineF handle(QPointF(((population *)this->destination)->x, ((population *)this->destination)->y), this->curves.back().C2);
+                QLineF handle(QPointF(pop->x, pop->y), this->curves.back().C2);
                 handle.setAngle(nextLine.angle());
                 this->curves.back().C2 = handle.p2();
 
@@ -554,7 +576,7 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     QDomElement curves = meta.createElement( "curves" );
     col.appendChild(curves);
 
-    for (unsigned int i = 0; i < this->curves.size(); ++i) {
+    for (int i = 0; i < this->curves.size(); ++i) {
 
         QDomElement curve = meta.createElement( "curve" );
         QDomElement C1 = meta.createElement( "C1" );
@@ -614,7 +636,7 @@ void genericInput::read_meta_data(QDomDocument * meta) {
 
                     // add each curve
                     QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
-                    for (unsigned int i = 0; i < (uint) edgeNodeList.count(); ++i) {
+                    for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
                         QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
                         bezierCurve newCurve;
                         while (!vals.isNull()) {
@@ -645,13 +667,20 @@ void genericInput::read_meta_data(QDomDocument * meta) {
 
                         // add connection generator if we are a csv
                         if (this->connectionType->type == CSV) {
-                            csv_connection * conn = (csv_connection *) this->connectionType;
+                            csv_connection * conn = dynamic_cast<csv_connection *> (this->connectionType);
+                            CHECK_CAST(conn)
+                            QSharedPointer <population> popsrc = qSharedPointerDynamicCast <population>(this->source);
+                            CHECK_CAST(popsrc)
+                            QSharedPointer <population> popdst = qSharedPointerDynamicCast <population>(this->destination);
+                            CHECK_CAST(popdst)
                             // add generator
-                            conn->generator = new pythonscript_connection((population *) this->source, (population *) this->destination, conn);
+                            conn->generator = new pythonscript_connection(popsrc, popdst, conn);
+                            pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
+                            CHECK_CAST(pyConn)
                             // extract data for connection generator
-                            ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
+                            pyConn->read_metadata_xml(metaData);
                             // prevent regeneration
-                            ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                            pyConn->setUnchanged(true);
                         }
                     }
 

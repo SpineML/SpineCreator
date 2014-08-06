@@ -33,10 +33,10 @@ class LayoutAliasEditDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit LayoutAliasEditDialog(NineMLLayout * , QWidget *parent = 0);
+    explicit LayoutAliasEditDialog(QSharedPointer<NineMLLayout> , QWidget *parent = 0);
 
 private:
-    NineMLLayout * srcNineMLLayout;
+    QSharedPointer<NineMLLayout> srcNineMLLayout;
     QHBoxLayout * drawAlias(Alias *);
     
 signals:

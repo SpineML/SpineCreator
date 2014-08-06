@@ -49,20 +49,20 @@ private:
     QVBoxLayout * exptOutputs;
     QVBoxLayout * exptChanges;
 
-    QPushButton * runButton;
+    QToolButton * runButton;
     QString simulatorStdOutText;
     QString simulatorStdErrText;
 
     QStringList errorStrings;
     QStringList errorMessages;
 
-    vector <QWidget * > forDeleting;
+    QVector <QWidget * > forDeleting;
 
     void recursiveDeleteLoop(QLayout * parentLayout);
     void recursiveDelete(QLayout * parentLayout);
     void recursiveDeleteExpt(QLayout * parentLayout);
 
-    void reorderParams (vector<float>& params);
+    void reorderParams (QVector<float> &params);
 
     /*!
      * \brief Redraw the simulator parameters - this is called if there is no current systemObject selected
@@ -72,12 +72,14 @@ private:
 
     QPointF cursor;
 
-    systemObject * currSystemObject;
+    QSharedPointer<systemObject> currSystemObject;
 
     GLWidget * gl;
 
+
 signals:
     void enableRun(bool);
+    void simulationDone();
     
 public slots:
     void addExperiment();
@@ -165,6 +167,12 @@ public slots:
      * \param GLScale
      */
     void selectByMouseDown(float xGL, float yGL, float GLScale);
+
+    /*!
+     * \brief batch_clicked
+     * Launch the batch window for running more complex experiments
+     */
+    void batch_clicked();
 };
 
 #endif // VIEWVISEXPTPANELHANDLER_H

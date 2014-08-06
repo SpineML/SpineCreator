@@ -39,14 +39,14 @@ class valueListDialog : public QDialog
     Q_OBJECT
     
 public:
-    explicit valueListDialog(ParameterData *par, NineMLComponent * /*comp*/, QWidget *parent=0);
+    explicit valueListDialog(ParameterData *par, QSharedPointer<NineMLComponent> /*comp*/, QWidget *parent=0);
     ~valueListDialog();
     
 private:
     Ui::valueListDialog *ui;
     vectorModel * vModel;
-    vector <float> vals;
-    vector <int> inds;
+    QVector <float> vals;
+    QVector <int> inds;
     ParameterData * par;
     void import_csv(QString);
 

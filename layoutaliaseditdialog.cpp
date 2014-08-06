@@ -53,7 +53,7 @@ QHBoxLayout * LayoutAliasEditDialog::drawAlias(Alias * currentAlias) {
 
 }
 
-LayoutAliasEditDialog::LayoutAliasEditDialog(NineMLLayout * inSrcNineMLLayout, QWidget *parent) :
+LayoutAliasEditDialog::LayoutAliasEditDialog(QSharedPointer<NineMLLayout> inSrcNineMLLayout, QWidget *parent) :
     QDialog(parent)
 {
 
@@ -88,7 +88,7 @@ LayoutAliasEditDialog::LayoutAliasEditDialog(NineMLLayout * inSrcNineMLLayout, Q
     contentLayout->addLayout(header);
 
     // add the aliases
-    for (uint i = 0; i < srcNineMLLayout->AliasList.size(); ++i) {
+    for (int i = 0; i < srcNineMLLayout->AliasList.size(); ++i) {
 
         // add to main layout
         contentLayout->addLayout(drawAlias(srcNineMLLayout->AliasList[i]));
@@ -131,7 +131,7 @@ void LayoutAliasEditDialog::updateName() {
     QString newName = src->text().replace(" ", "");
 
     // check if name unique:
-    for (uint i = 0; i < this->srcNineMLLayout->AliasList.size(); ++i) {
+    for (int i = 0; i < this->srcNineMLLayout->AliasList.size(); ++i) {
         if (newName == this->srcNineMLLayout->AliasList[i]->name) {
             // not unique, reset and return
             src->setText(currAlias->name);
@@ -156,7 +156,7 @@ void LayoutAliasEditDialog::updateMaths() {
     currAlias->maths->equation = newMaths;
 
     QStringList errs;
-    currAlias->maths->validateMathInLine(this->srcNineMLLayout, &errs);
+    currAlias->maths->validateMathInLine(this->srcNineMLLayout.data(), &errs);
 
     if (errs.size() > 0) {
         QPalette p = src->palette();
@@ -189,7 +189,7 @@ void LayoutAliasEditDialog::deleteAlias() {
     Alias * currAlias = (Alias *) src->property("ptr").value<void *>();
     QHBoxLayout * aliasLayout = (QHBoxLayout *) src->property("layout").value<void *>();
 
-    for (uint i = 0; i < srcNineMLLayout->AliasList.size(); ++i) {
+    for (int i = 0; i < srcNineMLLayout->AliasList.size(); ++i) {
         if (srcNineMLLayout->AliasList[i] == currAlias) {
             srcNineMLLayout->AliasList.erase(srcNineMLLayout->AliasList.begin()+i, srcNineMLLayout->AliasList.begin()+i+1);
             recursiveDeleteLater2(aliasLayout);

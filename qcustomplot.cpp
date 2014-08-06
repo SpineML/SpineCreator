@@ -16179,7 +16179,7 @@ const QPolygonF QCPGraph::getChannelFillPolygon(const QVector<QPointF> *lineData
   if (otherData.isEmpty()) return QPolygonF();
   QVector<QPointF> thisData;
   thisData.reserve(lineData->size()+otherData.size()); // because we will join both vectors at end of this function
-  for (int i=0; i<lineData->size(); ++i) // don't use the vector<<(vector),  it squeezes internally, which ruins the performance tuning with reserve()
+  for (int i=0; i<lineData->size(); ++i) // don't use the QVector <<(vector),  it squeezes internally, which ruins the performance tuning with reserve()
     thisData << lineData->at(i);
 
   // pointers to be able to swap them, depending which data range needs cropping:
@@ -16698,7 +16698,7 @@ QCPRange QCPGraph::getValueRange(bool &foundRange, SignDomain inSignDomain, bool
   The container for storing multiple data points is \ref QCPCurveDataMap.
 
   The stored data is:
-  \li \a t: the free parameter of the curve at this curve point (cp. the mathematical vector <em>(x(t), y(t))</em>)
+  \li \a t: the free parameter of the curve at this curve point (cp. the mathematical QVector <em>(x(t), y(t))</em>)
   \li \a key: coordinate on the key axis of this curve point
   \li \a value: coordinate on the value axis of this curve point
 

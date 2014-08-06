@@ -46,8 +46,8 @@ public:
     virtual void move(float, float) {}
     virtual void draw(QPainter *, float, float, float, int, int, QImage, drawStyle){}
     virtual bool is_clicked(float, float, float) {return true;}
-    virtual void remove(rootData *) {delete this;}
-    virtual void delAll(rootData *) {delete this;}
+    virtual void remove(rootData *) {/*delete this;*/}
+    virtual void delAll(rootData *) {/*delete this;*/}
 
     /*!
      * Set location offset for the object relative to the points x and

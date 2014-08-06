@@ -142,7 +142,7 @@ bool isFunction(QString in) {
     functions.push_back("rand");
     functions.push_back("mod");
 
-    for (unsigned int i = 0; i < (uint) functions.size(); ++i) {
+    for (int i = 0; i < (int) functions.size(); ++i) {
         if (in == functions[i]) {
             return true;
         }
@@ -177,7 +177,7 @@ float getFuncVal(QString in) {
     functions.push_back("mod");
 
 
-    for (unsigned int i = 0; i < (uint) functions.size(); ++i) {
+    for (int i = 0; i < (int) functions.size(); ++i) {
         if (in == functions[i]) {
             return float(i);
         }
@@ -249,13 +249,13 @@ float getVarVal(QString in, vector <lookup> varList) {
     builtin.push_back(lookup("e", M_E));
     builtin.push_back(lookup("pi", M_PI));
 
-    for (unsigned int i = 0; i < builtin.size(); ++i) {
+    for (int i = 0; i < builtin.size(); ++i) {
         if (in == builtin[i].name) {
             return builtin[i].value;
         }
     }
 
-    for (unsigned int i = 0; i < varList.size(); ++i) {
+    for (int i = 0; i < varList.size(); ++i) {
         if (in == varList[i].name) {
             return varList[i].value;
         }
@@ -271,13 +271,13 @@ float * getVarPtr(QString in, vector <lookup> &varList) {
     builtin.push_back(lookup("e", M_E));
     builtin.push_back(lookup("pi", M_PI));
 
-    for (unsigned int i = 0; i < builtin.size(); ++i) {
+    for (int i = 0; i < builtin.size(); ++i) {
         if (in == builtin[i].name) {
             return builtin[i].value;
         }
     }*/
 
-    for (unsigned int i = 0; i < varList.size(); ++i) {
+    for (int i = 0; i < varList.size(); ++i) {
         if (in == varList[i].name) {
             return &(varList[i].value);
         }
@@ -325,7 +325,7 @@ float doFunction(float val1, float val2, float opf) {
 void printStack(vector <valop> opstackIn) {
 
     cerr << "STACK: \n";
-    for (unsigned int i = 0; i < opstackIn.size(); ++i) {
+    for (int i = 0; i < opstackIn.size(); ++i) {
         cerr << float(i) << ": ";
         cerr << float(opstackIn[i].op) << " " << float(opstackIn[i].val) << "\n";
     }
@@ -347,12 +347,12 @@ float doCond(float val1, float val2, float type) {
 float doMaths(int startInd, int endInd, vector <valop> opstackIn) {
 
     vector <valop> opstack;
-    for (unsigned int i = (uint) startInd; i < (uint) endInd; ++i) {
+    for (int i = (int) startInd; i < (int) endInd; ++i) {
         opstack.push_back(opstackIn[i]);
     }
 
     // multiplication and division first
-    for (unsigned int i = 0; i < opstack.size(); ++i) {
+    for (int i = 0; i < opstack.size(); ++i) {
 
         //printStack(opstack);
 
@@ -394,7 +394,7 @@ float doMaths(int startInd, int endInd, vector <valop> opstackIn) {
     }
 
     // now onto addition and subtraction:
-    for (unsigned int i = 0; i < opstack.size(); ++i) {
+    for (int i = 0; i < opstack.size(); ++i) {
         valop newValOp;
         if (opstack[i].op == OP && opstack[i].val == float(ADD)) {
             // if we have an add first it makes no odds, so just remove it
@@ -452,7 +452,7 @@ QString doBrackets(int startInd, int endInd, vector <valop> opstackIn, float * o
 
 
     vector <valop> opstack;
-    for (unsigned int i = (uint) startInd; i < (uint) endInd; ++i) {
+    for (int i = (int) startInd; i < (int) endInd; ++i) {
         opstack.push_back(opstackIn[i]);
     }
 
@@ -467,7 +467,7 @@ QString doBrackets(int startInd, int endInd, vector <valop> opstackIn, float * o
         int closeIndex = -1;
         bool isFunc = false;
         // find innermost set of brackets
-        for (unsigned int i = 0; i < opstack.size(); ++i) {
+        for (int i = 0; i < opstack.size(); ++i) {
 
             if (opstack[i].op == BRACKET && opstack[i].val == 1) {
                 isFunc = false;
@@ -487,7 +487,7 @@ QString doBrackets(int startInd, int endInd, vector <valop> opstackIn, float * o
                 if (isFunc) {
                     // look for commas
                     int commaIndex = -1;
-                    for (unsigned int j = (uint) openIndex; j < (uint) closeIndex; ++j) {
+                    for (int j = (int) openIndex; j < (int) closeIndex; ++j) {
                         if (opstack[j].op == COMMA) {
                             commaIndex = j;
                         }
@@ -546,7 +546,7 @@ QString doBrackets(int startInd, int endInd, vector <valop> opstackIn, float * o
 QString doConditional(int startInd, int endInd, vector <valop> opstackIn, float * outVal) {
 
     vector <valop> opstack;
-    for (unsigned int i = (uint) startInd; i < (uint) endInd; ++i) {
+    for (int i = (int) startInd; i < (int) endInd; ++i) {
         opstack.push_back(opstackIn[i]);
     }
 
@@ -554,7 +554,7 @@ QString doConditional(int startInd, int endInd, vector <valop> opstackIn, float 
 
     // find the conditional, check there is only one, and then evaluate both sides
     int condInd = -1;
-    for (unsigned int i = 0; i < opstack.size(); ++i) {
+    for (int i = 0; i < opstack.size(); ++i) {
         if (opstack[i].op == COND) {
             if (condInd != -1) return doError(10);
             condInd = i;
@@ -575,7 +575,7 @@ QString doConditional(int startInd, int endInd, vector <valop> opstackIn, float 
 
     // find surrounding brackets
     int brackets = 0;
-    for (unsigned int i = 0; i < (uint) condInd; ++i) {
+    for (int i = 0; i < (int) condInd; ++i) {
         if ((opstack[i].op == BRACKET && opstack[i].val == 1) || opstack[i].op == FUNC) {
             ++brackets;
         }
@@ -611,7 +611,7 @@ QString doConditional(int startInd, int endInd, vector <valop> opstackIn, float 
 QString doBoolean(int startInd, int endInd, vector <valop> opstackIn, float * outVal)  {
 
     vector <valop> opstack;
-    for (unsigned int i = (uint) startInd; i < (uint) endInd; ++i) {
+    for (int i = (int) startInd; i < (int) endInd; ++i) {
         opstack.push_back(opstackIn[i]);
     }
 
@@ -621,7 +621,7 @@ QString doBoolean(int startInd, int endInd, vector <valop> opstackIn, float * ou
     vector <int> boolInds;
     vector <int> boolTypes;
 
-    for (unsigned int i = 0; i < opstack.size(); ++i) {
+    for (int i = 0; i < opstack.size(); ++i) {
         if (opstack[i].op == BOOL_OP) {
             boolInds.push_back(i);
             boolTypes.push_back(opstack[i].val);
@@ -632,7 +632,7 @@ QString doBoolean(int startInd, int endInd, vector <valop> opstackIn, float * ou
     outs.resize(boolInds.size()+1);
 
     // split and eval each
-    for (unsigned int i = 0; i < boolInds.size() + 1; ++i) {
+    for (int i = 0; i < boolInds.size() + 1; ++i) {
 
         QString err;
         if (i == 0) {
@@ -650,7 +650,7 @@ QString doBoolean(int startInd, int endInd, vector <valop> opstackIn, float * ou
 
     // now evaluate all the booleans
     *outVal = outs[0];
-    for (unsigned int i = 1; i < outs.size(); ++i) {
+    for (int i = 1; i < outs.size(); ++i) {
         if (boolTypes[i-1] == 1) *outVal = *outVal && outs[i];
         if (boolTypes[i-1] == 2) *outVal = *outVal || outs[i];
     }
@@ -662,7 +662,7 @@ QString doBoolean(int startInd, int endInd, vector <valop> opstackIn, float * ou
 QString doBoolBrackets(int startInd, int endInd, vector <valop> opstackIn, float * outVal)  {
 
     vector <valop> opstack;
-    for (unsigned int i = (uint) startInd; i < (uint) endInd; ++i) {
+    for (int i = (int) startInd; i < (int) endInd; ++i) {
         opstack.push_back(opstackIn[i]);
     }
 
@@ -678,7 +678,7 @@ QString doBoolBrackets(int startInd, int endInd, vector <valop> opstackIn, float
         sectionState.push_back(0);
 
         boolLocs.push_back(-1);
-        for (unsigned int i = 0; i < opstack.size(); ++i) {
+        for (int i = 0; i < opstack.size(); ++i) {
 
             if (opstack[i].op == BRACKET && opstack[i].val == 1) {
                 sectionState.back() += 1;
@@ -698,7 +698,7 @@ QString doBoolBrackets(int startInd, int endInd, vector <valop> opstackIn, float
 
         // we now have a list of all the open and closed sections, which must add to zero:
         int sum = 0;
-        for (unsigned int i = 0; i < sectionState.size(); ++i) {
+        for (int i = 0; i < sectionState.size(); ++i) {
             sum += sectionState[i];
         }
         if (sum !=0) return doError(1);
@@ -708,7 +708,7 @@ QString doBoolBrackets(int startInd, int endInd, vector <valop> opstackIn, float
         int openSection = -1;
         int maxOpen = 0;
         sum = 0;
-        for (unsigned int i = 0; i < sectionState.size(); ++ i) {
+        for (int i = 0; i < sectionState.size(); ++ i) {
             sum += sectionState[i];
             if (sum > maxOpen) openSection = i;
         }
@@ -717,7 +717,7 @@ QString doBoolBrackets(int startInd, int endInd, vector <valop> opstackIn, float
         int closedSection = -1;
         if (openSection != -1) {
             isStuffToDo = true;
-            for (unsigned int i = openSection; i < sectionState.size(); ++ i) {
+            for (int i = openSection; i < sectionState.size(); ++ i) {
                 if (sectionState[i] < 0) {closedSection = i; break;}
             }
 
@@ -758,7 +758,7 @@ float interpretMaths(vector <valop> stack) {
     // evaluate the stack:
     vector <valop> tempStack;
 
-    for (uint i = 0; i < stack.size(); ++i) {
+    for (int i = 0; i < stack.size(); ++i) {
 
         switch (stack[i].op) {
         case VAL:

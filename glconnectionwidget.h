@@ -48,7 +48,7 @@ private:
 
 struct popLocs {
 
-    vector < loc > locations;
+    QVector < loc > locations;
     QString name;
     float x;
     float y;
@@ -67,12 +67,12 @@ class glConnectionWidget : public QGLWidget
     Q_OBJECT
 public:
     explicit glConnectionWidget(rootData * data, QWidget *parent = 0);
-    vector <population *> selectedPops;
-    vector < popLocs> pops;
-    vector <systemObject *> selectedConns;
-    vector < vector < loc > > locations; // temp readded
-    vector < QColor > cols;
-    vector < vector < conn > > connections;
+    QVector <QSharedPointer <population> > selectedPops;
+    QVector < popLocs> pops;
+    QVector <QSharedPointer<systemObject> > selectedConns;
+    QVector < QVector < loc > > locations; // temp readded
+    QVector < QColor > cols;
+    QVector < QVector < conn > > connections;
     void setConnectionsModel(QAbstractTableModel *);
     QAbstractTableModel * getConnectionsModel();
     void getConnections();
@@ -102,7 +102,7 @@ private:
     RNG random;
     rootData * data;
     loc3f loc3Offset;
-    systemObject * selectedObject;
+    QSharedPointer<systemObject> selectedObject;
     int selectedIndex;
     int selectedType;
     QString last_distance_based_equation;
@@ -110,8 +110,8 @@ private:
     bool imageSaveMode;
     int imageSaveWidth;
     int imageSaveHeight;
-    vector < vector < QColor > > popColours;
-    vector < logData * > popLogs;
+    QVector < QVector < QColor > > popColours;
+    QVector < logData * > popLogs;
     int currentLogTime;
     int newLogTime;
     QTimer timer;
@@ -124,7 +124,7 @@ private:
 signals:
     void currElement(int type, int index);
     //void reDraw(QPainter*, float, float, float, int, int);
-    void getNeuronLocationsSrc(vector < vector <loc> > *, vector < QColor > *, QString name = "");
+    void getNeuronLocationsSrc(QVector < QVector <loc> > *, QVector < QColor > *, QString name = "");
     void updatePanel(QString);
     void setSelectionbyName(QString);
     
@@ -138,7 +138,7 @@ public slots:
     void parsChangedProjection();
     void parsChangedProjections();
     void typeChanged(int);
-    void drawLocations(vector <loc> locs);
+    void drawLocations(QVector <loc> locs);
     void clearLocations();
     void connectionDataChanged(QModelIndex, QModelIndex);
     void connectionSelectionChanged(QItemSelection,QItemSelection);

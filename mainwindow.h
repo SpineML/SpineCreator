@@ -84,9 +84,9 @@ struct viewVZstruct {
     glConnectionWidget * OpenGLWidget;
     QTreeView * treeView;
     QLabel * mathOut;
-    NineMLLayout * layout;
-    systemObject * currObject;
-    NineMLLayout * editLayout;
+    QSharedPointer<NineMLLayout> layout;
+    QSharedPointer<systemObject> currObject;
+    QSharedPointer<NineMLLayout> editLayout;
     QLabel * errors;
     systemmodel * sysModel;
     QFrame * toolbar;
@@ -183,7 +183,7 @@ public slots:
     void new_project();
     void saveImageAction();
     void launchSimulatorEditor();
-    void initialiseModel(NineMLComponent *);
+    void initialiseModel(QSharedPointer<NineMLComponent>);
     void updateNetworkButtons(rootData *);
     void undoOrRedoPerformed(int);
 
@@ -239,8 +239,8 @@ signals:
     void import_component_xml(QStringList fileNames);
     void import_layout_xml(QStringList fileNames);
     void import_model_xml(QString fileName);
-    void export_component_xml(QString fileName, NineMLComponent * component);
-    void export_layout_xml(QString fileName, NineMLLayout * component);
+    void export_component_xml(QString fileName, QSharedPointer<NineMLComponent> component);
+    void export_layout_xml(QString fileName, QSharedPointer<NineMLLayout> component);
     void export_model_xml(QString fileName);
     void import_csv_signal(QString fileName);
     void launchComponentSorter();

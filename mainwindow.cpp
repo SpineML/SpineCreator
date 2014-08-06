@@ -49,7 +49,8 @@
 #include "aboutdialog.h"
 
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::
+MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     maxRecentFiles(12) // Number of files which show in the recent projects menu
@@ -79,7 +80,7 @@ MainWindow::MainWindow(QWidget *parent) :
    //exit(0);
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
-  #ifdef Q_OS_MAC
+  #ifdef Q_OS_MAC2
 
    settings.setValue("dpi",this->windowHandle()->devicePixelRatio());
 
@@ -148,7 +149,7 @@ MainWindow::MainWindow(QWidget *parent) :
         //
         // It may be that this directory will be used - the convert_script_s2b may create this in the home dir.
         QFile convert_script_s2b("/usr/bin/convert_script_s2b");
-        QFile convert_script_home(QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script"));
+        QFile convert_script_home(QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
         if (convert_script_s2b.exists()) {
             // We have the packaged version of the convert script
             settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
@@ -181,7 +182,7 @@ MainWindow::MainWindow(QWidget *parent) :
         settings.setValue("simulators/BRAHMS/present", true);
         
         // Is this used? Yes, in viewELexptpanelhandler.cpp
-        settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS"));
+        settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
 
         QDir brahmspath = qApp->applicationDirPath();
         brahmspath.cd("SystemML");
@@ -467,7 +468,7 @@ void MainWindow::osxHack()
 
 bool MainWindow::isChanged()
 {
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i]->isChanged(&data))
             return true;
     }
@@ -486,7 +487,7 @@ void MainWindow::setProjectMenu()
     // create a new action group
     data.projectActions = new QActionGroup(this);
     // add actions to select projects to the action group
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         data.projectActions->addAction(data.projects[i]->action(i));
     }
     // select the current project
@@ -525,7 +526,7 @@ bool MainWindow::promptToSave()
 void MainWindow::closeEvent(QCloseEvent * event)
 {
     // if there are changes
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i]->isChanged(&data)) {
             data.currProject->deselect_project(&data);
             data.projects[i]->select_project(&data);
@@ -550,20 +551,20 @@ void MainWindow::closeEvent(QCloseEvent * event)
 void MainWindow::clearComponents()
 {
     // delete catalog components
-    for (uint i = 0; i < this->data.catalogLayout.size(); ++i) {
-        delete this->data.catalogLayout[i];
+    for (int i = 0; i < this->data.catalogLayout.size(); ++i) {
+        this->data.catalogLayout[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogNrn.size(); ++i) {
-        delete this->data.catalogNrn[i];
+    for (int i = 0; i < this->data.catalogNrn.size(); ++i) {
+        this->data.catalogNrn[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogPS.size(); ++i) {
-        delete this->data.catalogPS[i];
+    for (int i = 0; i < this->data.catalogPS.size(); ++i) {
+        this->data.catalogPS[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogWU.size(); ++i) {
-        delete this->data.catalogWU[i];
+    for (int i = 0; i < this->data.catalogWU.size(); ++i) {
+        this->data.catalogWU[i].clear();
     }
-    for (uint i = 0; i < this->data.catalogUnsorted.size(); ++i) {
-        delete this->data.catalogUnsorted[i];
+    for (int i = 0; i < this->data.catalogUnsorted.size(); ++i) {
+        this->data.catalogUnsorted[i].clear();
     }
 
     // clear catalog vectors
@@ -606,7 +607,7 @@ MainWindow::~MainWindow()
     QStringList connFiles = lib_dir.entryList();
 
     // remove temporary connection list files
-    for (uint i = 0; i < (uint) connFiles.size(); ++i)
+    for (int i = 0; i < (int) connFiles.size(); ++i)
        QFile::remove(lib_dir.absoluteFilePath(connFiles[i]));
 
     if (this->emsg != (QErrorMessage*)0) {
@@ -620,8 +621,8 @@ MainWindow::~MainWindow()
     clearComponents();
 
     if (viewVZ.OpenGLWidget != NULL) {
-        delete this->viewVZ.errors;
-        delete this->viewVZ.layout;
+        //delete this->viewVZ.errors;
+        this->viewVZ.layout.clear();
     }
 
     // clear up python
@@ -961,7 +962,7 @@ void MainWindow::connectViewCL()
 void MainWindow::initViewVZ()
 {
     // adding VIEWVZ (populations and projections) ####################################################################################
-    this->viewVZ.layout = new NineMLLayout(this->data.catalogLayout[0]);
+    this->viewVZ.layout = QSharedPointer<NineMLLayout> (new NineMLLayout(this->data.catalogLayout[0]));
 
     this->viewVZ.sysModel = NULL;
 
@@ -1057,7 +1058,7 @@ void MainWindow::connectViewVZ()
 {
     // viewVZ
     QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(setSelectionbyName(QString)), &(data), SLOT(setSelectionbyName(QString)));
-    QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(getNeuronLocationsSrc(vector< vector<loc> >*,vector <QColor>*, QString)), &(data), SLOT(getNeuronLocationsSrc(vector< vector<loc> >*,vector <QColor>*, QString)));
+    QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(getNeuronLocationsSrc(QVector < QVector <loc> >*,QVector <QColor>*, QString)), &(data), SLOT(getNeuronLocationsSrc(QVector < QVector <loc> >*,QVector <QColor>*, QString)));
     QObject::connect(this->viewVZ.OpenGLWidget, SIGNAL(updatePanel(QString)), this->viewVZhandler, SLOT(redrawFromObject(QString)));
     QObject::connect(&(data), SIGNAL(updatePanelView2(QString)), this->viewVZhandler, SLOT(redrawFromObject(QString)));
 }
@@ -1096,12 +1097,12 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
 
     // extract the current item component:
     // select catalog
-    vector < NineMLComponent * > currCatalog;
+    QVector < QSharedPointer<NineMLComponent> > currCatalog;
     QString catalogString;
 
-    NineMLComponent * selectedComponent = NULL;
+    QSharedPointer<NineMLComponent> selectedComponent;
 
-    for (uint catNum = 0; catNum < 3; ++catNum) {
+    for (int catNum = 0; catNum < 3; ++catNum) {
 
         switch (catNum) {
         case 0:
@@ -1119,10 +1120,10 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
         }
 
         // add components
-        for (uint i = 0; i < currCatalog.size(); ++i) {
+        for (int i = 0; i < currCatalog.size(); ++i) {
 
             // get reference for component
-            NineMLComponent * component = currCatalog[i];
+            QSharedPointer<NineMLComponent> component = currCatalog[i];
 
             // create the text for this component
             QString title = catalogString;
@@ -1133,12 +1134,12 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
                 selectedComponent = component;
 
             // break out if we have a match
-            if (selectedComponent != NULL)
+            if (!selectedComponent.isNull())
                 break;
         }
 
         // break out if we have a match
-        if (selectedComponent != NULL)
+        if (!selectedComponent.isNull())
             break;
     }
 
@@ -1188,9 +1189,9 @@ void MainWindow::addComponentsToFileList()
     }
 
     // select catalog
-    vector < NineMLComponent * > currCatalog;
+    QVector < QSharedPointer<NineMLComponent> > currCatalog;
     QString catalogString;
-    for (uint catNum = 0; catNum < 3; ++catNum) {
+    for (int catNum = 0; catNum < 3; ++catNum) {
 
         switch (catNum) {
         case 0:
@@ -1208,10 +1209,10 @@ void MainWindow::addComponentsToFileList()
         }
 
         // add components
-        for (uint i = 1; i < currCatalog.size(); ++i) {
+        for (int i = 1; i < currCatalog.size(); ++i) {
 
             // get reference for component
-            NineMLComponent * component = currCatalog[i];
+            QSharedPointer<NineMLComponent> component = currCatalog[i];
 
             // create the text for this component
             QString title = catalogString;
@@ -1265,6 +1266,7 @@ void MainWindow::addComponentsToFileList()
                 if (viewCL.root->alPtr == component)
                     newItem->setBackgroundColor(QColor(255,255,255,255));
         }
+
     }
 }
 
@@ -1306,6 +1308,7 @@ void MainWindow::createActions()
 
 void MainWindow::new_project()
 {
+
     // check for unsaved changes?: if (isChanged()) { promptToSave(); }
 
     // create new project
@@ -1541,7 +1544,7 @@ void MainWindow::close_project()
 
     // close the current project
     // find current project
-    for (uint i = 0; i < data.projects.size(); ++i) {
+    for (int i = 0; i < data.projects.size(); ++i) {
         if (data.projects[i] == data.currProject) {
 
             // find another project to switch to:
@@ -1649,7 +1652,7 @@ void MainWindow::import_csv()
 void MainWindow::duplicate_component()
 {
     // find which catalog we are saving to
-    vector < NineMLComponent * > * curr_lib;
+    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
     if (viewCL.root->al->type == "neuron_body")
         curr_lib = &data.catalogNrn;
     if (viewCL.root->al->type == "weight_update")
@@ -1665,7 +1668,7 @@ void MainWindow::duplicate_component()
     // see if there is a component with the same name
     while (!unique) {
         unique = true;
-        for (uint i = 0; i < curr_lib->size(); ++i) {
+        for (int i = 0; i < curr_lib->size(); ++i) {
             if ((*curr_lib)[i]->name == viewCL.root->al->name + QString::number(float(val))) {
                 unique = false;
             }
@@ -1676,7 +1679,7 @@ void MainWindow::duplicate_component()
     }
 
     // duplicate
-    curr_lib->push_back(new NineMLComponent(viewCL.root->al));
+    curr_lib->push_back(QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al)));
     curr_lib->back()->name += QString::number(float(val));
 
 
@@ -1824,7 +1827,7 @@ void MainWindow::export_layout()
 
     // add layouts to list and add to dialog
     QStringList options;
-    for (uint i = 1; i < data.catalogLayout.size(); ++i) {
+    for (int i = 1; i < data.catalogLayout.size(); ++i) {
         options <<  data.catalogLayout[i]->name;
     }
     dialog->setComboBoxItems(options);
@@ -1835,7 +1838,7 @@ void MainWindow::export_layout()
     dialog->setModal(true);
 
     if (dialog->exec()) {
-        for (uint i = 1; i < data.catalogLayout.size(); ++i) {
+        for (int i = 1; i < data.catalogLayout.size(); ++i) {
             if (dialog->textValue() == data.catalogLayout[i]->name) {
                 index = i;
             }
@@ -1891,7 +1894,7 @@ void MainWindow::saveImageAction()
     if (viewCL.frame->isVisible()) {
         // components
         actionAs_Image_triggered();
-    } else if (viewVZ.view->isVisible()) {
+    } else if (viewVZ.OpenGLWidget != NULL && viewVZ.view->isVisible()) {
         // visualisation
         QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
         if (!fileName.isEmpty()) {
@@ -2098,7 +2101,7 @@ void MainWindow::viewVZshow()
     this->viewCL.dock->hide();
 
     // clear away old stuff
-    this->viewVZ.currObject = (systemObject *)0;
+    this->viewVZ.currObject = (QSharedPointer<systemObject>)0;
     this->viewVZhandler->clearAll();
     this->viewVZ.OpenGLWidget->clear();
 
@@ -2227,7 +2230,7 @@ void MainWindow::launchSimulatorEditor()
 
 ////////////////////////////////////////////// AL editor slots
 
-void MainWindow::initialiseModel(NineMLComponent * component)
+void MainWindow::initialiseModel(QSharedPointer<NineMLComponent> component)
 {
     //todo: cleanup any old scene and root stuff
     if (viewCL.root != NULL) {
@@ -2265,11 +2268,11 @@ void MainWindow::initialiseModel(NineMLComponent * component)
 void MainWindow::actionAddParamater_triggered()
 {
     if (viewCL.root != NULL) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         Parameter *p = new Parameter();
         p->name = "New_Parameter_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->ParameterList.size(); i++) {
+        for (int i=0; i< viewCL.root->al->ParameterList.size(); i++) {
             QString name = viewCL.root->al->ParameterList[i]->getName();
             if (name.startsWith("New_Parameter_")) {
                 QString temp = name.remove(0,14);
@@ -2294,11 +2297,11 @@ void MainWindow::actionAddRegime_triggered()
 {
     if (viewCL.root != NULL) {
         // store previous iteration for undo / redo
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         Regime *r = new Regime();
         r->name = "New_Regime_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->RegimeList.size(); i++)
+        for (int i=0; i< viewCL.root->al->RegimeList.size(); i++)
         {
             QString name = viewCL.root->al->RegimeList[i]->name;
             if (name.startsWith("New_Regime_"))
@@ -2356,7 +2359,7 @@ void MainWindow::actionSelectMode_triggered()
 void MainWindow::actionDeleteItems_triggered()
 {
     if (viewCL.frame->isVisible()) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         viewCL.root->scene->deleteSelectedItem();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Delete selected"));
     }
@@ -2375,7 +2378,7 @@ void MainWindow::actionAddTimeDerivative_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             if (g->type() == RegimeGraphicsItem::Type) {
-                NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+                QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
                 RegimeGraphicsItem *rgi = ((RegimeGraphicsItem*)g);
                 TimeDerivative * td = new TimeDerivative();
                 // shouldn't be validating a brand new td...
@@ -2396,13 +2399,13 @@ void MainWindow::actionAddTimeDerivative_triggered()
 void MainWindow::actionAddAnalogePort_triggered()
 {
     if (viewCL.root!= NULL) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         AnalogPort *ap = new AnalogPort();
         ap->mode = AnalogSendPort;
         // validate to set up pointers
         QStringList errs;
-        ap->validateAnalogPort(viewCL.root->al, &errs);
+        ap->validateAnalogPort(viewCL.root->al.data(), &errs);
         // clear errors
         QSettings settings;
         settings.remove("errors");
@@ -2417,7 +2420,7 @@ void MainWindow::actionAddAnalogePort_triggered()
 void MainWindow::actionAddEventPort_triggered()
 {
     if (viewCL.root!= NULL) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         EventPort *ep = new EventPort();
         viewCL.root->al->EventPortList.push_back(ep);
@@ -2431,7 +2434,7 @@ void MainWindow::actionAddEventPort_triggered()
 void MainWindow::actionAddImpulsePort_triggered()
 {
     if (viewCL.root!= NULL) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         ImpulsePort *ip = new ImpulsePort();
         viewCL.root->al->ImpulsePortList.push_back(ip);
@@ -2444,11 +2447,11 @@ void MainWindow::actionAddImpulsePort_triggered()
 void MainWindow::actionAddStateVariable_triggered()
 {
     if (viewCL.root != NULL) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         StateVariable * sv = new StateVariable();
         sv->name = "New_State_Var_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->StateVariableList.size(); i++) {
+        for (int i=0; i< viewCL.root->al->StateVariableList.size(); i++) {
             QString name = viewCL.root->al->StateVariableList[i]->getName();
             if (name.startsWith("New_State_Var_")) {
                 QString temp = name.remove(0,14);
@@ -2472,11 +2475,11 @@ void MainWindow::actionAddStateVariable_triggered()
 void MainWindow::actionAddAlias_triggered()
 {
     if (viewCL.root != NULL) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         Alias * a = new Alias();
         a->name = "New_Alias_";
         int n = 1;
-        for (uint i=0; i< viewCL.root->al->AliasList.size(); i++) {
+        for (int i=0; i< viewCL.root->al->AliasList.size(); i++) {
             QString name = viewCL.root->al->AliasList[i]->name;
             if (name.startsWith("New_Alias_")) {
                 QString temp = name.remove(0,10);
@@ -2503,7 +2506,7 @@ void MainWindow::actionAddStateAssignment_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             StateAssignment *sa = new StateAssignment();
-            NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2535,7 +2538,7 @@ void MainWindow::actionAddEventOut_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             EventOut *eo = new EventOut();
-            NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2566,7 +2569,7 @@ void MainWindow::actionAddImpulseOut_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             ImpulseOut *io = new ImpulseOut();
-            NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2648,7 +2651,7 @@ void MainWindow::actionNew_triggered()
     // see if there is a component with the same name
     while (!unique) {
         unique = true;
-        for (uint i = 0; i < data.catalogNrn.size(); ++i) {
+        for (int i = 0; i < data.catalogNrn.size(); ++i) {
             if (data.catalogNrn[i]->name == "New Component " + QString::number(float(val)))
                 unique = false;
         }
@@ -2657,7 +2660,7 @@ void MainWindow::actionNew_triggered()
     }
 
     // add the new component
-    data.catalogNrn.push_back(new NineMLComponent());
+    data.catalogNrn.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
     data.catalogNrn.back()-> name = "New Component " + QString::number(float(val));
     initialiseModel(data.catalogNrn.back());
     viewCL.root->alPtr = data.catalogNrn.back();
@@ -2686,7 +2689,7 @@ void MainWindow::actionShowHidePorts_triggered(bool checked)
 void MainWindow::actionMove_Up_triggered()
 {
     if (viewCL.root) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         viewCL.root->scene->moveItemUp();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
         updateTitle(true);
@@ -2696,7 +2699,7 @@ void MainWindow::actionMove_Up_triggered()
 void MainWindow::actionMove_Down_triggered()
 {
     if (viewCL.root) {
-        NineMLComponent * oldComponent = new NineMLComponent(viewCL.root->al);
+        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
         viewCL.root->scene->moveItemDown();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
         updateTitle(true);

@@ -120,7 +120,6 @@ public:
         edit = true;
         set=false;
         eventport.name="spike";
-        target = NULL;
         portIsAnalog = false;
         inType = constant;
         params.push_back(0);
@@ -137,9 +136,9 @@ public:
     int currentIndex;
 
     exptInType inType;
-    vector <float> params;
+    QVector <float> params;
     externalObject externalInput;
-    NineMLComponentData * target;
+    QSharedPointer <NineMLComponentData> target;
     QString portName;
     bool portIsAnalog;
     bool edit;
@@ -157,12 +156,12 @@ class exptOutput : QObject {
     Q_OBJECT
 public:
 
-    exptOutput() {edit = true; set=false; isExternal = false; name = "New Output"; source = NULL; portIsAnalog = true; indices="all"; \
+    exptOutput() {edit = true; set=false; isExternal = false; name = "New Output"; portIsAnalog = true; indices="all"; \
                   externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "localhost"; externalOutput.timestep = 0.0;}
 
     //exptOutput outType;
-    //vector < float > params;
-    NineMLComponentData * source;
+    //QVector < float > params;
+    QSharedPointer <NineMLComponentData> source;
     QString portName;
     bool portIsAnalog;
     bool edit;
@@ -182,11 +181,11 @@ class exptLesion : QObject {
     Q_OBJECT
 public:
 
-    exptLesion() {edit = true; set=false; proj = NULL;}
+    exptLesion() {edit = true; set=false;}
 
     //exptOutput outType;
-    //vector < float > params;
-    projection * proj;
+    //QVector < float > params;
+    QSharedPointer <projection> proj;
     Port * port;
     bool edit;
     bool set;
@@ -201,10 +200,10 @@ class exptChangeProp : QObject {
     Q_OBJECT
 public:
 
-    exptChangeProp() {edit = true; set=false; component = NULL; par = NULL;}
+    exptChangeProp() {edit = true; set=false; par = NULL;}
 
     ParameterData * par;
-    NineMLComponentData * component;
+    QSharedPointer <NineMLComponentData> component;
     bool edit;
     bool set;
 
@@ -225,10 +224,10 @@ public:
     ~experiment();
 
     simulatorSetup setup;
-    vector < exptInput * > ins;
-    vector < exptOutput * > outs;
-    vector < exptChangeProp * > changes;
-    vector < exptLesion * > lesions;
+    QVector < exptInput * > ins;
+    QVector < exptOutput * > outs;
+    QVector < exptChangeProp * > changes;
+    QVector < exptLesion * > lesions;
 
     QString name;
     QString description;
@@ -237,13 +236,13 @@ public:
     void writeXML(QXmlStreamWriter *, projectObject *data);
     void readXML(QXmlStreamReader * , projectObject *);
 
-    void purgeBadPointer(systemObject *ptr);
-    void purgeBadPointer(NineMLComponentData *ptr);
-    void purgeBadPointer(NineMLComponent *ptr, NineMLComponent *newPtr);
-    void updateChanges(NineMLComponentData * ptr);
+    void purgeBadPointer(QSharedPointer<systemObject>ptr);
+    void purgeBadPointer(QSharedPointer <NineMLComponentData>ptr);
+    void purgeBadPointer(QSharedPointer<NineMLComponent>ptr, QSharedPointer<NineMLComponent>newPtr);
+    void updateChanges(QSharedPointer <NineMLComponentData> ptr);
 
     bool selected;
-    void select(vector < experiment * > *);
+    void select(QVector < experiment * > *);
     void deselect();
     bool editing;
 
@@ -271,9 +270,9 @@ class TVGraph : public QWidget
 
 public:
     TVGraph();
-    TVGraph(vector <float>);
+    TVGraph(QVector <float>);
     ~TVGraph();
-    vector <float> vals;
+    QVector <float> vals;
 
 protected:
     void paintEvent(QPaintEvent *);

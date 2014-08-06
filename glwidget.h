@@ -31,7 +31,7 @@
 #define GL_MULTISAMPLE 0x809D
 #endif
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MAC2
 class GLWidget : public QGLWidget
 #else
 class GLWidget : public QWidget
