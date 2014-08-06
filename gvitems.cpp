@@ -205,19 +205,17 @@ QPointF GVEdge::getGVEdgeLabelPosition(QPointF offset)
     position = QPointF(this->gv_edge->u.label->pos.x,
                        this->layout->getGVGraph()->u.bb.UR.y - this->gv_edge->u.label->pos.y);
 #else
-// FIXME: I don't have a working equivalent for the above just now. Here was an attempt:
-# if 0
     qreal a = 0;
     qreal b = 0;
-    // This crashes as the edge label doesn't have a position OR the
-    // edge doesn't even have a label..
-    a = ED_label(this->gv_edge)->pos.x;
-
-    char* l = agget (this->gv_edge, (char*)"label");
-
+    textlabel_t* edgelabel = ED_label(this->gv_edge);
+    if (edgelabel != NULL) {
+        a = edgelabel->pos.x;
+    } else {
+        DBG() << "Warning: edge label doesn't exist in this->gv_edge...";
+    }
+    //char* l = agget (this->gv_edge, (char*)"label");
     b = (GD_bb(this->layout->getGVGraph()).UR.y - ED_label(this->gv_edge)->pos.y);
     position = QPointF(a,b);
-# endif
 #endif
 
     position -= offset;
