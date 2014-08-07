@@ -1230,9 +1230,10 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
 
 void projectObject::saveExperiment(QString fileName, QDir project_dir, experiment * expt)
 {
-    QFile file (project_dir.absoluteFilePath(fileName));
+    QString absPath = project_dir.absoluteFilePath(fileName);
+    QFile file (absPath);
     if (!file.open(QIODevice::WriteOnly)) {
-        addError("Error creating file - is there sufficient disk space?");
+        addError("Error creating file '" + absPath + "' - is there sufficient disk space?");
         return;
     }
 
@@ -1426,7 +1427,7 @@ void projectObject::addError(QString text)
     settings.endArray();
 }
 
-void projectObject::addWarning(QString text) 
+void projectObject::addWarning(QString text)
 {
     QSettings settings;
     int num_errs = settings.beginReadArray("warnings");
