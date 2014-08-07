@@ -114,6 +114,11 @@ public:
 private:
 };
 
+/*!
+ * \brief The csv_connection class
+ * This class is a subclass of connection. It allows the use of explicit connection lists
+ * in the form of source-destination pairs, with an optional individual or global delay.
+ */
 class csv_connection : public connection
 {
         Q_OBJECT
@@ -124,7 +129,21 @@ public:
     ~csv_connection();
 
     QStringList values;
+    /*!
+     * \brief import_csv
+     * \param filename
+     * Import data into the connection from a file written in Comma Seperated Variable format.
+     * This format consists of ASCII text data written as S,D,L/n where S is the source index,
+     * D is the destination index and L (optional) is the delay.
+     */
     void import_csv(QString filename);
+    /*!
+     * \brief import_packed_binary
+     * \param fileIn
+     * Import data into the connection from a file written in the packed binary format. This
+     * format consists of close packed binary data with the structure (int S)(int D)(opt float L)
+     * where S is the source index, D is the dest index, and optionally L is the delay.
+     */
     void import_packed_binary(QFile &fileIn);
     QVector <float> fetchData(int index);
     void getAllData(QVector < conn > &conns);

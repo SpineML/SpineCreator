@@ -657,8 +657,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
             QDataStream access(&export_file);
             for (int i = 0; i < conns.size(); ++i) {
-                access.writeRawData((char*) &conns[i].src, sizeof(uint));
-                access.writeRawData((char*) &conns[i].dst, sizeof(uint));
+                access.writeRawData((char*) &conns[i].src, sizeof(int));
+                access.writeRawData((char*) &conns[i].dst, sizeof(int));
                 access.writeRawData((char*) &conns[i].metric, sizeof(float));
             }
         }
@@ -1074,6 +1074,7 @@ void csv_connection::import_csv(QString fileName) {
 
 }
 
+
 void csv_connection::import_packed_binary(QFile &fileIn) {
 
     this->changes.clear();
@@ -1095,8 +1096,8 @@ void csv_connection::import_packed_binary(QFile &fileIn) {
         int srcVal, dstVal;
         float delayVal;
 
-        fileIn.read((char *) &srcVal,4);
-        fileIn.read((char *) &dstVal,4);
+        fileIn.read((char *) &srcVal,sizeof(int));
+        fileIn.read((char *) &dstVal,sizeof(int));
 
         // add the row...
         qint32 num = srcVal;
@@ -1107,14 +1108,14 @@ void csv_connection::import_packed_binary(QFile &fileIn) {
         // if we have a delay then read that too
         if (this->values.size() == 3) {
             // we have a delay
-            fileIn.read((char *) &delayVal,4);
+            fileIn.read((char *) &delayVal,sizeof(float));
             access << delayVal;
         }
         ++count;
     }
 
     if (count != this->getNumRows()) {
-        qDebug() << "Mismatch between the number of rows in the XML and in the binary";
+        qDebug() << "Mismatch between the number of rows in the XML and in the binary file";
     }
 
     // flush out the output...

@@ -283,14 +283,18 @@ QPointF projection::currentLocation()
 QPointF projection::selectedControlPointLocation()
 {
     QPointF rtn(0,0);
-    if (this->selectedControlPoint.type == C1) {
-        rtn = this->curves[this->selectedControlPoint.ind].C1;
-    } else if (this->selectedControlPoint.type == C2) {
-        rtn = this->curves[this->selectedControlPoint.ind].C2;
-    } else if (this->selectedControlPoint.type == p_end) {
-        rtn = this->curves[this->selectedControlPoint.ind].end;
+    if (this->selectedControlPoint.start == true) {
+        rtn = this->start;
     } else {
-        // error.
+        if (this->selectedControlPoint.type == C1) {
+            rtn = this->curves[this->selectedControlPoint.ind].C1;
+        } else if (this->selectedControlPoint.type == C2) {
+            rtn = this->curves[this->selectedControlPoint.ind].C2;
+        } else if (this->selectedControlPoint.type == p_end) {
+            rtn = this->curves[this->selectedControlPoint.ind].end;
+        } else {
+            // error.
+        }
     }
     return rtn;
 }
