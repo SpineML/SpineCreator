@@ -650,7 +650,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
             if (!export_file.open( QIODevice::WriteOnly)) {
                 QMessageBox msgBox;
-                msgBox.setText("Error creating file - is there sufficient disk space?");
+                msgBox.setText("Error creating exported binary connection file '" + saveFileName
+                               + "' (Check disk space; permissions)");
                 msgBox.exec();
                 return;
             }
@@ -671,7 +672,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
             if (!export_file.open( QIODevice::WriteOnly)) {
                 QMessageBox msgBox;
-                msgBox.setText("Error creating file - is there sufficient disk space?");
+                msgBox.setText("Error creating exported binary connection file '" + saveFileName
+                               + "' (Check disk space; permissions)");
                 msgBox.exec();
                 return;
             }
@@ -1523,7 +1525,8 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             QFile export_file(saveFileName);
             if (!export_file.open( QIODevice::WriteOnly)) {
                 QMessageBox msgBox;
-                msgBox.setText("Error creating file - is there sufficient disk space?");
+                msgBox.setText("Error creating binary connection file '" + saveFileName
+                               + "' (Check disk space; permissions)");
                 msgBox.exec();
                 return;
             }
