@@ -1761,7 +1761,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         if (simulatorStdOutText.contains(errorStrings[i])) {
             // error found
             QMessageBoxResizable msgBox;
-            msgBox.setWindowTitle("Simulator Error");
+            msgBox.setWindowTitle("Simulator Error Report");
             msgBox.setIcon(QMessageBox::Critical);
             msgBox.setText(errorMessages[i]);
             msgBox.setDetailedText(simulatorStdOutText);
@@ -1790,7 +1790,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     // get status
     if (status == QProcess::CrashExit) {
         QMessageBox msgBox;
-        msgBox.setWindowTitle("Simulator Error");
+        msgBox.setWindowTitle("Simulator Crash");
         msgBox.setText(simulatorStdErrText);
         msgBox.addButton(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
