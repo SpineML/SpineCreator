@@ -1361,14 +1361,14 @@ void rootData::updatePar()
         CHECK_CAST(dynamic_cast<ParameterData *>(par))
         NineMLComponent * comp = (NineMLComponent *) sender()->property("ptrComp").value<void *>();
 
-        QSharedPointer<NineMLComponent> compShr = this->isValidPointer(comp);
+        //QSharedPointer<NineMLComponent> compShr = this->isValidPointer(comp);
 
-        if (compShr.isNull()) {
+        /*if (compShr.isNull()) {
             qDebug() << "Found a bad pointer in updatePar/editList";
             exit(0);
-        }
+        }*/
 
-        valueListDialog * dialog  = new valueListDialog(par, compShr);
+        valueListDialog * dialog  = new valueListDialog(par);
         dialog->show();
     }
 
