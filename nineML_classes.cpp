@@ -1574,6 +1574,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
     if (settings.value("export_for_simulation", "false").toBool()) {
         // override save binary option
         writeBinary = settings.value("export_binary").toBool();
+        exportBinary = true;
         qDebug() << "Export for sim detected";
     }
 
@@ -1600,9 +1601,8 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
         }
 
         QDir saveDir(filePathString);
-        saveDir.cdUp();
         if (exportBinary) {
-            saveDir.setCurrent(settings.value("simulator_export_path").toString());
+            saveDir.setPath(settings.value("simulator_export_path").toString());
         }
 
         //generate a unique filename to save the par or sv under
@@ -1618,7 +1618,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
         int index = 0;
         while(!unique) {
             unique = true;
-            uniqueName = baseName + QString::number(float(index));
+            uniqueName = baseName + QString::number(float(index)) + ".bin";
             for (int i = 0; i < (int)files.count(); ++i) {
                 // see if the new name is unique
                 if (uniqueName == files[i]) {
@@ -1627,14 +1627,13 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
                 }
             }
         }
-        QString fileName = uniqueName;
 
         // construct the save file name based upon whether we are saving the project or outputting for simulation
         QString saveFileName;
-        saveFileName = saveDir.absoluteFilePath(fileName + ".bin");
+        saveFileName = saveDir.absoluteFilePath(uniqueName);
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
-        xmlOut.writeAttribute("file_name", fileName + ".bin");
+        xmlOut.writeAttribute("file_name", uniqueName);
         xmlOut.writeAttribute("num_elements", QString::number(float(this->value.size())));
 
         // write out binary data
