@@ -35,6 +35,7 @@
 #include "projectobject.h"
 #include "undocommands.h"
 #include "batchexperimentwindow.h"
+#include "qmessageboxresizable.h"
 
 #define NEW_EXPERIMENT_VIEW11
 
@@ -1618,7 +1619,7 @@ void viewELExptPanelHandler::run()
     QFile the_script(path);
     if (!the_script.exists()) {
         // Error - convert_script file doesn't exist
-        QMessageBox msgBox;
+        QMessageBoxResizable msgBox;
         msgBox.setWindowTitle("Simulator Error");
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("The simulator '" + path + "' does not exist.");
@@ -1632,7 +1633,7 @@ void viewELExptPanelHandler::run()
             // Probably Ok - we have execute permission of some kind.
         } else {
             // Error - no execute permission on script
-            QMessageBox msgBox;
+            QMessageBoxResizable msgBox;
             msgBox.setWindowTitle("Simulator Error");
             msgBox.setIcon(QMessageBox::Critical);
             msgBox.setText("The simulator '" + path + "' is not executable.");
@@ -1759,7 +1760,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         // check if error there
         if (simulatorStdOutText.contains(errorStrings[i])) {
             // error found
-            QMessageBox msgBox;
+            QMessageBoxResizable msgBox;
             msgBox.setWindowTitle("Simulator Error");
             msgBox.setIcon(QMessageBox::Critical);
             msgBox.setText(errorMessages[i]);
@@ -1800,7 +1801,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     if (status == QProcess::NormalExit) {
         // check if we are running in batch mode (i.e. run button is not set)
         if (runButton) {
-            QMessageBox msgBox;
+            QMessageBoxResizable msgBox;
             msgBox.setWindowTitle("Simulator Complete");
             msgBox.setIcon(QMessageBox::Information);
             msgBox.setText("Simulator has finished. See below for more details.");
