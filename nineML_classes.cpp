@@ -1596,10 +1596,11 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
 
         if (filePathString == "error") {
             qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN! (nineML_classes.cpp ParameterData::writeExplicitListNodeData)";
-            return;}
+            return;
+        }
 
         QDir saveDir(filePathString);
-
+        saveDir.cdUp();
         if (exportBinary) {
             saveDir.setCurrent(settings.value("simulator_export_path").toString());
         }
@@ -1631,7 +1632,6 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
         // construct the save file name based upon whether we are saving the project or outputting for simulation
         QString saveFileName;
         saveFileName = saveDir.absoluteFilePath(fileName + ".bin");
-
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
         xmlOut.writeAttribute("file_name", fileName + ".bin");
@@ -1642,7 +1642,8 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
 
         if (!export_file.open( QIODevice::WriteOnly)) {
             QMessageBox msgBox;
-            msgBox.setText("Error creating file - is there sufficient disk space?");
+            msgBox.setText("Error creating binary file '" + saveFileName
+                           + "' - is there sufficient disk space?");
             msgBox.exec();
             return;
         }
