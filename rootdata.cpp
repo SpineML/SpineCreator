@@ -1359,7 +1359,7 @@ void rootData::updatePar()
     if (action == "editList") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
         CHECK_CAST(dynamic_cast<ParameterData *>(par))
-        NineMLComponentData * comp = (NineMLComponentData *) sender()->property("ptrComp").value<void *>();
+        //NineMLComponentData * comp = (NineMLComponentData *) sender()->property("ptrComp").value<void *>();
 
         //QSharedPointer<NineMLComponentData> compShr = this->isValidPointer(comp);
 

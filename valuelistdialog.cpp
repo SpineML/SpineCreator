@@ -25,7 +25,7 @@
 #include "valuelistdialog.h"
 #include "ui_valuelistdialog.h"
 
-valueListDialog::valueListDialog(ParameterData * par, QSharedPointer<NineMLComponentData> /*comp*/, QWidget *parent) :
+valueListDialog::valueListDialog(ParameterData * par, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::valueListDialog)
 {
