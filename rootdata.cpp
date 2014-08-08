@@ -1359,15 +1359,6 @@ void rootData::updatePar()
     if (action == "editList") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
         CHECK_CAST(dynamic_cast<ParameterData *>(par))
-        //NineMLComponentData * comp = (NineMLComponentData *) sender()->property("ptrComp").value<void *>();
-
-        //QSharedPointer<NineMLComponentData> compShr = this->isValidPointer(comp);
-
-        /*if (compShr.isNull()) {
-            qDebug() << "Found a bad pointer in updatePar/editList";
-            exit(0);
-        }*/
-
         valueListDialog * dialog  = new valueListDialog(par);
         dialog->show();
     }
