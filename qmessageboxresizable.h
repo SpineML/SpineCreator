@@ -18,44 +18,46 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Alex Cope                                            **
+**          Authors: Alex Cope, Seb James                                 **
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-#ifndef VALUELISTDIALOG_H
-#define VALUELISTDIALOG_H
+#ifndef _QMESSAGEBOXRESIZABLE_H_
+#define _QMESSAGEBOXRESIZABLE_H_ 1
 
-#include <QDialog>
-#include "globalHeader.h"
-#include "nineML_classes.h"
-#include "vectormodel.h"
+#include <QMessageBox>
 
-namespace Ui {
-class valueListDialog;
-}
-
-class valueListDialog : public QDialog
+/*!
+ * This is a resizable version of the Qt message box. Necessary for
+ * showing brahms error messages so that you can actually read them!
+ *
+ * Copied from the end of this thread:
+ *
+ * http://www.qtcentre.org/threads/24888-Resizing-a-QMessageBox
+ */
+class QMessageBoxResizable: public QMessageBox
 {
-    Q_OBJECT
-
 public:
-    explicit valueListDialog(ParameterData *par, QWidget *parent=0);
-    ~valueListDialog();
-
+    QMessageBoxResizable() {
+        setMouseTracking(true);
+        setSizeGripEnabled(true);
+    }
 private:
-    Ui::valueListDialog *ui;
-    vectorModel * vModel;
-    QVector <float> vals;
-    QVector <int> inds;
-    ParameterData * par;
-    void import_csv(QString);
-
-public slots:
-    void accept();
-    void reject();
-    void updateValSize(int val);
-    void import();
-
+    virtual bool event(QEvent *e) {
+        bool res = QMessageBox::event(e);
+        switch (e->type()) {
+        case QEvent::MouseMove:
+        case QEvent::MouseButtonPress:
+            setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+            if (QWidget *textEdit = findChild<QTextEdit *>()) {
+                textEdit->setMaximumHeight(QWIDGETSIZE_MAX);
+            }
+            break;
+        default:
+            break;
+        }
+        return res;
+    }
 };
 
-#endif // VALUELISTDIALOG_H
+#endif // _QMESSAGEBOXRESIZABLE_H_

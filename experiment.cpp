@@ -308,7 +308,8 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
         exptInput * in = ins[i];
 
         // are we using the component?
-        if (in->target->component == ptr && in->portName.size() > 0) {
+        if (!in->target.isNull()
+            && in->target->component == ptr && in->portName.size() > 0) {
 
             // if so, update
             // port
@@ -339,6 +340,8 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
             // component
             in->target->component = newPtr;
 
+        } else if (in->target.isNull()) {
+            DBG() << "Warning: one of the experiment inputs had a null target in experiment::purgeBadPointer";
         }
     }
 
@@ -348,7 +351,7 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
         exptOutput * out = outs[i];
 
         // are we using the component?
-        if (out->source->component == ptr && out->portName.size() > 0) {
+        if (out->source && out->source->component == ptr && out->portName.size() > 0) {
 
             // if so, update
             // port
@@ -377,14 +380,13 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
                 qDebug() << "moo3";
             }
 
-
             // component
             out->source->component = newPtr;
 
+        } else if (!out->source) {
+            DBG() << "Warning: one of the experiment outputs had a null source in experiment::purgeBadPointer";
         }
-
     }
-
 }
 
 void experiment::updateChanges(QSharedPointer <NineMLComponentData> ptr) {
@@ -666,7 +668,9 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 spin->setMaximum(10000.0);
                 spin->setMinimum(0.0);
                 spin->setDecimals(6);
-                spin->setValue(this->params[0]);
+                if (!this->params.empty()) {
+                    spin->setValue(this->params[0]);
+                }
                 frameLay->addLayout(formLay);
                 if (this->portIsAnalog)
                     formLay->addRow(" Value:", spin);
@@ -748,6 +752,9 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 }
                 table->setColumnCount(1);
                 table->setRowCount(componentSize);
+                if (componentSize == 0) {
+                    DBG() << "Warning: resizing this->params to 0 (exptInput::drawInput)";
+                }
                 this->params.resize(componentSize);
                 this->params.fill(0);
                 // add items from params
@@ -1001,10 +1008,12 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
         desc = "Input to component <b>" + this->target->getXMLName() + "</b> port <b>" + this->portName + "</b>.\n";
 
         if (this->inType == constant) {
-            if (this->portIsAnalog)
+            // FIXME: What if this->params is empty here?
+            if (this->portIsAnalog) {
                 desc += "Constant analog input with a value of <b>" + QString::number(this->params[0]) + "</b>.";
-            else
+            } else {
                 desc += "Spiking input with a constant spike rate of <b>" + QString::number(this->params[0]) + "</b>.";
+            }
         }
         if (this->inType == timevarying) {
 
