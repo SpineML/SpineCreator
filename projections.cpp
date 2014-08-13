@@ -283,7 +283,7 @@ QPointF projection::currentLocation()
 QPointF projection::selectedControlPointLocation()
 {
     QPointF rtn(0,0);
-    if (this->selectedControlPoint.start == true) {
+    if (this->selectedControlPoint.start == true || this->selectedControlPoint.ind == -1) {
         rtn = this->start;
     } else {
         if (this->selectedControlPoint.type == C1) {
@@ -836,6 +836,7 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale) {
     test.addEllipse(this->start, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
     if (test.contains(cursor)) {
         this->selectedControlPoint.start = true;
+        // NB: What happends to selectedControlPoint.ind here?
         return true;
     }
 
