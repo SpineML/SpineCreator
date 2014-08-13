@@ -53,7 +53,7 @@ private:
 public slots:
     void accept();
     void reject();
-    void updateValSize(int val);
+    void updateValSize();
     void import();
 
 };

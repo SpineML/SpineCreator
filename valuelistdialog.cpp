@@ -31,7 +31,7 @@ valueListDialog::valueListDialog(ParameterData * par, QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->spinBox->setRange(0, 1000000); // set max from the component
+    ui->spinBox->setRange(0, INT_MAX); // set max from the component
     ui->spinBox->setValue(par->value.size());
 
     connect(ui->spinBox,SIGNAL(valueChanged(int)), this, SLOT(updateValSize(int)));

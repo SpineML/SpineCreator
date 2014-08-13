@@ -101,9 +101,9 @@ bool vectorModel::setData(const QModelIndex & index, const QVariant & value, int
             } else if (index.row() == (int) currPar->indices.size()) {
                 beginInsertRows(this->createIndex(currPar->indices.size()-1, 0).parent(),currPar->indices.size(),currPar->indices.size());
                 currPar->value.resize(currPar->value.size()+1);
-                currPar->value.fill(0);
+                currPar->value.back() = 0;
                 currPar->indices.resize(currPar->indices.size()+1);
-                currPar->indices.fill(value.toInt());
+                currPar->indices.back() = value.toInt();
                 endInsertRows();
                 emit setSpinBoxVal(currPar->value.size());
             }
@@ -115,9 +115,9 @@ bool vectorModel::setData(const QModelIndex & index, const QVariant & value, int
             } else if (index.row() == (int) currPar->indices.size()) {
                 beginInsertRows(this->createIndex(currPar->indices.size()-1, 0).parent(),currPar->indices.size(),currPar->indices.size());
                 currPar->value.resize(currPar->value.size()+1);
-                currPar->value.fill(value.toFloat());
+                currPar->value.back() = value.toFloat();
                 currPar->indices.resize(currPar->indices.size()+1);
-                currPar->indices.fill(0);
+                currPar->indices.back() = 0;
                 endInsertRows();
                 emit setSpinBoxVal(currPar->value.size());
             }
@@ -134,9 +134,7 @@ bool vectorModel::insertConnRows(int row) {
 
         int start = currPar->indices.size();
         currPar->value.resize(row);
-        currPar->value.fill(0);
         currPar->indices.resize(row);
-        currPar->indices.fill(0);
         // and fill in indices
         for (int i = start; i < currPar->indices.size(); ++i)
             currPar->indices[i] = i;
@@ -147,9 +145,7 @@ bool vectorModel::insertConnRows(int row) {
     if (row < (int) currPar->indices.size()) {
         beginRemoveRows(this->createIndex(currPar->indices.size()-1, 0).parent(),row, currPar->indices.size()-1);
         currPar->value.resize(row);
-        currPar->value.fill(0);
         currPar->indices.resize(row);
-        currPar->indices.fill(0);
 
         endRemoveRows();
         emit setSpinBoxVal(currPar->value.size());

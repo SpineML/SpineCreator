@@ -1583,7 +1583,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
         xmlOut.writeStartElement("ValueList");
         for (int ind = 0; ind < this->value.size(); ++ind) {
             xmlOut.writeEmptyElement("Value");
-            xmlOut.writeAttribute("index", QString::number(float(this->indices[ind])));
+            xmlOut.writeAttribute("index", QString::number(this->indices[ind]));
             xmlOut.writeAttribute("value", QString::number(float(this->value[ind])));
         }
        xmlOut.writeEndElement(); // valueList
@@ -1634,7 +1634,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
         xmlOut.writeAttribute("file_name", uniqueName);
-        xmlOut.writeAttribute("num_elements", QString::number(float(this->value.size())));
+        xmlOut.writeAttribute("num_elements", QString::number(this->value.size()));
 
         // write out binary data
         QFile export_file(saveFileName);
