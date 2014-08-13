@@ -308,7 +308,8 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
         exptInput * in = ins[i];
 
         // are we using the component?
-        if (in->target->component == ptr && in->portName.size() > 0) {
+        if (!in->target.isNull()
+            && in->target->component == ptr && in->portName.size() > 0) {
 
             // if so, update
             // port
@@ -339,6 +340,8 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
             // component
             in->target->component = newPtr;
 
+        } else if (in->target.isNull()) {
+            DBG() << "Warning: one of the experiment inputs had a null target in experiment::purgeBadPointer";
         }
     }
 
@@ -348,7 +351,7 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
         exptOutput * out = outs[i];
 
         // are we using the component?
-        if (out->source->component == ptr && out->portName.size() > 0) {
+        if (out->source && out->source->component == ptr && out->portName.size() > 0) {
 
             // if so, update
             // port
@@ -377,14 +380,13 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
                 qDebug() << "moo3";
             }
 
-
             // component
             out->source->component = newPtr;
 
+        } else if (!out->source) {
+            DBG() << "Warning: one of the experiment outputs had a null source in experiment::purgeBadPointer";
         }
-
     }
-
 }
 
 void experiment::updateChanges(QSharedPointer <NineMLComponentData> ptr) {
