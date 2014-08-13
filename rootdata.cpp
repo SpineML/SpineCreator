@@ -1359,15 +1359,6 @@ void rootData::updatePar()
     if (action == "editList") {
         ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
         CHECK_CAST(dynamic_cast<ParameterData *>(par))
-        NineMLComponent * comp = (NineMLComponent *) sender()->property("ptrComp").value<void *>();
-
-        //QSharedPointer<NineMLComponent> compShr = this->isValidPointer(comp);
-
-        /*if (compShr.isNull()) {
-            qDebug() << "Found a bad pointer in updatePar/editList";
-            exit(0);
-        }*/
-
         valueListDialog * dialog  = new valueListDialog(par);
         dialog->show();
     }
@@ -2045,22 +2036,33 @@ QSharedPointer<NineMLComponentData> rootData::isValidPointer(NineMLComponentData
 // allow safe usage of NineMLComponent pointers
 QSharedPointer<NineMLComponent> rootData::isValidPointer(NineMLComponent * ptr)
 {
-    for (int i = 0; i < this->catalogNrn.size(); ++i)
-        if (catalogNrn[i].data() == ptr) {
+    qDebug() << ptr;
+    qDebug() << "/////";
+
+    for (int i = 0; i < this->catalogNrn.size(); ++i) {
+        qDebug() << catalogNrn[i].data();
+        if (catalogNrn[i] == ptr) {
             return catalogNrn[i];
         }
-    for (int i = 0; i < this->catalogPS.size(); ++i)
-        if (catalogPS[i].data()  == ptr) {
+    }
+    for (int i = 0; i < this->catalogPS.size(); ++i) {
+        qDebug() << catalogPS[i].data();
+        if (catalogPS[i]  == ptr) {
             return catalogPS[i];
         }
-    for (int i = 0; i < this->catalogUnsorted.size(); ++i)
-        if (catalogUnsorted[i].data()  == ptr) {
+    }
+    for (int i = 0; i < this->catalogUnsorted.size(); ++i) {
+        qDebug() << catalogUnsorted[i].data();
+        if (catalogUnsorted[i]  == ptr) {
             return catalogUnsorted[i];
         }
-    for (int i = 0; i < this->catalogWU.size(); ++i)
-        if (catalogWU[i].data()  == ptr) {
+    }
+    for (int i = 0; i < this->catalogWU.size(); ++i) {
+        qDebug() << catalogWU[i].data();
+        if (catalogWU[i] == ptr) {
             return catalogWU[i];
         }
+    }
 
     // not found
     QSharedPointer<NineMLComponent> null;

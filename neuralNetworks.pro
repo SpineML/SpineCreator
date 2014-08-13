@@ -115,7 +115,8 @@ HEADERS  += mainwindow.h \
     rootlayout.h \
     filteroutundoredoevents.h \
     batchexperimentwindow.h \
-    vectorlistmodel.h
+    vectorlistmodel.h \
+    qmessageboxresizable.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \
