@@ -2168,8 +2168,8 @@ void rootData::editConnections()
     csv_connection * conn = (csv_connection *) sender()->property("ptr").value<void *>();
     CHECK_CAST(dynamic_cast<csv_connection *>(conn))
     connectionListDialog * dialog  = new connectionListDialog(conn);
+    connect(dialog,SIGNAL(completed()), this, SLOT(reDrawAll()));
     dialog->show();
-
 }
 
 void rootData::setTitle()

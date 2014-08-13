@@ -81,7 +81,11 @@ csv_connectionModel::csv_connectionModel(QObject *parent) :
      if (role == Qt::DisplayRole)
      {
          if (orientation == Qt::Horizontal) {
-             return this->currentConnection->getHeader(section);
+             if (section < this->currentConnection->getNumCols()) {
+                return this->currentConnection->getHeader(section);
+             } else {
+                return QVariant(QString("No delay"));
+             }
          }
          if (orientation == Qt::Vertical) {
              return section;

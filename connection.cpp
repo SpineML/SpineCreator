@@ -636,7 +636,7 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
         xmlOut.writeAttribute("file_name", this->filename + ".bin");
-        xmlOut.writeAttribute("num_connections", QString::number(float(getNumRows())));
+        xmlOut.writeAttribute("num_connections", QString::number(getNumRows()));
         xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(getNumCols()==3)));
         xmlOut.writeAttribute("packed_data", "true");
 
@@ -760,6 +760,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
         // set number of connections
         this->setNumRows(BinaryFileList.at(0).toElement().attribute("num_connections").toUInt());
+        DBG() << "Conn text = " << BinaryFileList.at(0).toElement().attribute("num_connections");
+        DBG() << "Conn value = " << BinaryFileList.at(0).toElement().attribute("num_connections").toUInt();
 
         // do we have explicit delays
         bool explicit_delay = BinaryFileList.at(0).toElement().attribute("explicit_delay_flag").toInt();

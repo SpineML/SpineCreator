@@ -35,7 +35,7 @@ connectionListDialog::connectionListDialog(csv_connection * conn, QWidget *paren
 
     this->conn = conn;
 
-    ui->spinBox->setRange(0, 10000000); // set max from the component
+    ui->spinBox->setRange(0, INT_MAX); // set max from the component
     ui->spinBox->setValue(conn->getNumRows());
 
     connect(ui->spinBox,SIGNAL(valueChanged(int)), this, SLOT(updateValSize(int)));
@@ -72,12 +72,14 @@ void connectionListDialog::accept() {
 
     //this->conn->flushChangesToDisk();
     // nothing to do
+    emit completed();
     delete this;
 
 }
 
 void connectionListDialog::reject() {
 
+    emit completed();
     this->conn->abortChanges();
     delete this;
 

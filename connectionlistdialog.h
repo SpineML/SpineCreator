@@ -45,6 +45,9 @@ private:
     csv_connectionModel * vModel;
     csv_connection * conn;
 
+signals:
+    void completed();
+
 public slots:
     void accept();
     void reject();
