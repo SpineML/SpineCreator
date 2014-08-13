@@ -316,8 +316,7 @@ void editSimulators::changeEnvVar()
 {
     edited = true;
 
-    QWidget * temp = (QWidget *) (sender()->property("ptr").value<void *>());
-    QLineEdit * envNameLineEdit = qobject_cast<QLineEdit *> (temp);
+    QLineEdit * envNameLineEdit = qobject_cast<QLineEdit *> (sender());
     CHECK_CAST(envNameLineEdit);
 
     if (sender()->property("type").toString() == "key") {
