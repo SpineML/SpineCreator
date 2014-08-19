@@ -34,7 +34,7 @@ valueListDialog::valueListDialog(ParameterData * par, QWidget *parent) :
     ui->spinBox->setRange(0, INT_MAX); // set max from the component
     ui->spinBox->setValue(par->value.size());
 
-    connect(ui->spinBox,SIGNAL(valueChanged(int)), this, SLOT(updateValSize(int)));
+    connect(ui->spinBox,SIGNAL(editingFinished()), this, SLOT(updateValSize()));
 
     this->par = par;
 
@@ -82,6 +82,13 @@ void valueListDialog::import() {
 
     import_csv(fileName);
 
+}
+
+void valueListDialog::keyPressEvent(QKeyEvent *evt)
+{
+    if(evt->key() == Qt::Key_Enter || evt->key() == Qt::Key_Return)
+        return;
+    QDialog::keyPressEvent(evt);
 }
 
 void valueListDialog::import_csv(QString fileName) {
@@ -163,7 +170,9 @@ void valueListDialog::import_csv(QString fileName) {
     this->vModel->emitDataChanged();
 }
 
-void valueListDialog::updateValSize(int val) {
+void valueListDialog::updateValSize() {
+
+    int val = qobject_cast < QSpinBox * > (sender())->value();
 
     /*bool returnVal;
     returnVal = */this->vModel->insertConnRows(val);

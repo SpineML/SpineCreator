@@ -49,11 +49,12 @@ private:
     QVector <int> inds;
     ParameterData * par;
     void import_csv(QString);
+    void keyPressEvent(QKeyEvent *evt);
 
 public slots:
     void accept();
     void reject();
-    void updateValSize(int val);
+    void updateValSize();
     void import();
 
 };
