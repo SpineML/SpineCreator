@@ -91,15 +91,15 @@ QComboBox *PropertiesManager::getPrefixCombo(Prefix selected)
 {
     QComboBox *dims_prefix = new QComboBox();
     dims_prefix->addItem("");
-    dims_prefix->addItem("G");
-    dims_prefix->addItem("M");
-    dims_prefix->addItem("k");
-    dims_prefix->addItem("c");
-    dims_prefix->addItem("m");
-    dims_prefix->addItem("u");
-    dims_prefix->addItem("n");
-    dims_prefix->addItem("p");
-    dims_prefix->addItem("f");
+    dims_prefix->addItem("G giga");
+    dims_prefix->addItem("M mega");
+    dims_prefix->addItem("k kilo");
+    dims_prefix->addItem("c centi");
+    dims_prefix->addItem("m milli");
+    dims_prefix->addItem("u micro");
+    dims_prefix->addItem("n nano");
+    dims_prefix->addItem("p pico");
+    dims_prefix->addItem("f femto");
     dims_prefix->setCurrentIndex(selected);
     return dims_prefix;
 }
@@ -108,18 +108,18 @@ QComboBox *PropertiesManager::getUnitCombo(Unit selected)
 {
     QComboBox *dims_unit = new QComboBox();
     dims_unit->addItem("");
-    dims_unit->addItem("V");
+    dims_unit->addItem("V volt");
     dims_unit->addItem("Ohm");
-    dims_unit->addItem("g");
-    dims_unit->addItem("m");
-    dims_unit->addItem("S");
-    dims_unit->addItem("A");
-    dims_unit->addItem("cd");
+    dims_unit->addItem("g gram");
+    dims_unit->addItem("m metre");
+    dims_unit->addItem("S seimen");
+    dims_unit->addItem("A ampere");
+    dims_unit->addItem("cd candela");
     dims_unit->addItem("mol");
     dims_unit->addItem("degC");
-    dims_unit->addItem("s");
-    dims_unit->addItem("F");
-    dims_unit->addItem("Hz");
+    dims_unit->addItem("s second");
+    dims_unit->addItem("F farad");
+    dims_unit->addItem("Hz hertz");
     dims_unit->setCurrentIndex(selected);
     return dims_unit;
 }

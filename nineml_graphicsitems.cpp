@@ -998,7 +998,11 @@ void ParameterTextItem::setName(QString n)
 void ParameterTextItem::setDimsPrefix(QString p)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
-    parameter->dims->setPrefix(p);
+    QStringList list = p.split(" ");
+    if (list.size() == 0) {
+        return;
+    }
+    parameter->dims->setPrefix(list[0]);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Par dims prefix"));
@@ -1009,7 +1013,11 @@ void ParameterTextItem::setDimsPrefix(QString p)
 void ParameterTextItem::setDimsUnit(QString u)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
-    parameter->dims->setUnit(u);
+    QStringList list = u.split(" ");
+    if (list.size() == 0) {
+        return;
+    }
+    parameter->dims->setUnit(list[0]);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Par dims suffix"));
@@ -1069,7 +1077,11 @@ void StateVariableTextItem::setName(QString n)
 void StateVariableTextItem::setDimsPrefix(QString p)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
-    state_variable->dims->setPrefix(p);
+    QStringList list = p.split(" ");
+    if (list.size() == 0) {
+        return;
+    }
+    state_variable->dims->setPrefix(list[0]);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV dims prefix"));
@@ -1080,7 +1092,11 @@ void StateVariableTextItem::setDimsPrefix(QString p)
 void StateVariableTextItem::setDimsUnit(QString u)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
-    state_variable->dims->setUnit(u);
+    QStringList list = u.split(" ");
+    if (list.size() == 0) {
+        return;
+    }
+    state_variable->dims->setUnit(list[0]);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV dims suffix"));
@@ -1467,7 +1483,11 @@ void AnalogPortTextItem::setDimsPrefix(QString p)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)){
-        port->dims->setPrefix(p);
+        QStringList list = p.split(" ");
+        if (list.size() == 0) {
+            return;
+        }
+        port->dims->setPrefix(list[0]);
         updateContent();
     }
     if (qobject_cast < QComboBox *> (sender()))
@@ -1480,7 +1500,11 @@ void AnalogPortTextItem::setDimsUnit(QString u)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)){
-        port->dims->setUnit(u);
+        QStringList list = u.split(" ");
+        if (list.size() == 0) {
+            return;
+        }
+        port->dims->setUnit(list[0]);
         updateContent();
     }
     if (qobject_cast < QComboBox *> (sender()))
@@ -1713,7 +1737,11 @@ void ImpulsePortTextItem::setPortMode(QString p)
 void ImpulsePortTextItem::setDimsPrefix(QString p)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
-    port->dims->setPrefix(p);
+    QStringList list = p.split(" ");
+    if (list.size() == 0) {
+        return;
+    }
+    port->dims->setPrefix(list[0]);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP dims prefix"));
@@ -1724,7 +1752,11 @@ void ImpulsePortTextItem::setDimsPrefix(QString p)
 void ImpulsePortTextItem::setDimsUnit(QString u)
 {
     QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
-    port->dims->setUnit(u);
+    QStringList list = u.split(" ");
+    if (list.size() == 0) {
+        return;
+    }
+    port->dims->setUnit(list[0]);
     updateContent();
     if (qobject_cast < QComboBox *> (sender()))
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP dims suffix"));
