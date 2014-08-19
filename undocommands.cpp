@@ -1096,7 +1096,7 @@ void updateParType::redo()
         ptr->value.fill(0);
     }
     if (this->newType == Statistical) {
-        ptr->value.resize(1);
+        ptr->value.resize(4);
         ptr->value.fill(0);
     }
     if (this->newType == ExplicitList) {
