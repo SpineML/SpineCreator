@@ -132,6 +132,8 @@ public:
     ~SpineMLConnection()
         {
             if (this->connectingSocket > 0) {
+                INFO("Closing connected socket " << this->connectingSocket
+                     << " in destructor");
                 this->closeSocket();
             }
             pthread_mutex_destroy(&this->dataMutex);
@@ -832,7 +834,8 @@ SpineMLConnection::closeSocket (void)
 {
     if (close (this->connectingSocket)) {
         int theError = errno;
-        INFO ("SpineMLConnection::closeSocket: Error closing connecting socket: " << theError);
+        INFO ("SpineMLConnection::closeSocket: Error closing connecting socket "
+              << this->connectingSocket << ": " << theError);
     } else {
         this->connectingSocket = 0;
     }

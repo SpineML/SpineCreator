@@ -110,10 +110,12 @@ void closeSockets (int& listening_socket)
  */
 void closeSocket (int& listening_socket)
 {
-    INFO ("start-closeSocket: Closing listening socket.");
     if (close (listening_socket)) {
         int theError = errno;
-        INFO ("start-closeSocket: Error closing listening socket: " << theError);
+        INFO ("start-closeSocket: Error closing listening socket "
+              << listening_socket << ": " << theError);
+    } else {
+        INFO ("start-closeSocket: Successfully closed listening socket " << listening_socket);
     }
 }
 
@@ -149,6 +151,8 @@ int initServer (void)
         // error.
         INFO ("start-initServer: Failed to open listening socket.");
         return -1;
+    } else {
+        INFO ("start-initServer: Opened listening_socket " << listening_socket);
     }
 
     struct sockaddr_in servaddr;
@@ -162,6 +166,8 @@ int initServer (void)
         int theError = errno;
         INFO ("start-initServer: Failed to bind listening socket (error " << theError << ").");
         return -1;
+    } else {
+        INFO ("start-initServer: Bound port " << port << " to socket " << listening_socket);
     }
 
     int listen_rtn = listen (listening_socket, LISTENQ);
@@ -426,6 +432,7 @@ void* theThread (void* nothing)
 
     // Clean up.
     deleteConnections();
+    INFO("Connections all deleted, now close listening socket " << listening_socket);
     closeSocket (listening_socket);
 
     threadFinished = true;
