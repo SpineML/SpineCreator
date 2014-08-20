@@ -2,11 +2,17 @@
  * Stop tcpip server.
  */
 
-// To enable compilation on Mac OS X 10.8
-#ifndef char16_t
+#ifdef COMPILE_OCTFILE
+# include <octave/oct.h>
+//# include <octave/uint64NDArray.h>
+#else
+# ifndef char16_t
+// To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
+# endif
+# include "mex.h"
 #endif
-#include "mex.h"
+
 #include <iostream>
 #include <map>
 #include <deque>
@@ -21,21 +27,44 @@ pthread_mutex_t* coutMutex;
 
 using namespace std;
 
+#ifdef COMPILE_OCTFILE
+DEFUN_DLD (spinemlnetStart, rhs, nrhs, "Stop the spinemlnet server environment")
+#else
 void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+#endif
 {
-    cout << "SpineMLNet: stop-mexFunction: Called" << endl;
-    unsigned long long int *context; // Or some other type?
+    cout << "SpineMLNet: stop-" << __FUNCTION__<< ": Called" << endl;
+
     if (nrhs==0) {
-       mexErrMsgTxt("failed");
+#ifdef COMPILE_OCTFILE
+        cerr << "failed" << endl;
+        return octave_value_list();
+#else
+        mexErrMsgTxt("failed");
+#endif
     }
 
-    context = (unsigned long long int*)mxGetData(prhs[0]);
+#ifdef COMPILE_OCTFILE
+    uint64NDArray context = rhs(0).uint64_array_value();
+    long unsigned int val = context(0);
+    pthread_t *thread = (pthread_t*) val;
+    val = context(1);
+    volatile bool *stopRequested = (volatile bool*) val;
+    val = context(4);
+    map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) val;
+    val = context(5);
+    pthread_mutex_t* dCacheMutex = (pthread_mutex_t*) val;
+    val = context(6);
+    coutMutex = (pthread_mutex_t*) val;
+#else
+    unsigned long long int* context = (unsigned long long int*)mxGetData(prhs[0]);
     pthread_t *thread = ((pthread_t*) context[0]);
     volatile bool *stopRequested = ((volatile bool*) context[1]);
     map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) context[4];
     pthread_mutex_t* dCacheMutex = (pthread_mutex_t*)context[5];
     coutMutex = (pthread_mutex_t*)context[6];
+#endif
 
     // request termination
     *stopRequested = true;
@@ -48,11 +77,11 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 
     // wait for thread to terminate
-    cout << "SpineMLNet: stop-mexFunction: Wait for thread to join..." << endl;
+    cout << "SpineMLNet: stop-" << __FUNCTION__<< ": Wait for thread to join..." << endl;
     pthread_join(*thread, 0);
 
     // free the dataCache memory (allocated in spinemlnetStart.cpp)
-    cout << "SpineMLNet: stop-mexFunction: deallocate dataCache memory" << endl;
+    cout << "SpineMLNet: stop-" << __FUNCTION__<< ": deallocate dataCache memory" << endl;
     delete dCache;
     // And the mutex:
     pthread_mutex_destroy(dCacheMutex);
@@ -60,5 +89,9 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     pthread_mutex_destroy(coutMutex);
     delete coutMutex;
 
-    cout << "SpineMLNet: stop-mexFunction: Returning" << endl;
+    cout << "SpineMLNet: stop-" << __FUNCTION__<< ": Returning" << endl;
+
+#ifdef COMPILE_OCTFILE
+    return octave_value_list();
+#endif
 }

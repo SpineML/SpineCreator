@@ -2,11 +2,11 @@
  * Start tcpip server
  */
 
-// To enable compilation on Mac OS X 10.8.
 #ifdef COMPILE_OCTFILE
 # include <octave/oct.h>
 #else
 # ifndef char16_t
+// To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
 # endif
 # include "mex.h"
@@ -435,7 +435,7 @@ void* theThread (void* nothing)
 }
 
 #ifdef COMPILE_OCTFILE
-DEFUN_DLD (spinemlnetStart, rhs, nargout, "Start the spinemlnet server environment")
+DEFUN_DLD (spinemlnetStart, rhs, nrhs, "Start the spinemlnet server environment")
 #else
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 #endif
