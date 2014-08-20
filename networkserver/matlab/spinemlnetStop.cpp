@@ -4,7 +4,6 @@
 
 #ifdef COMPILE_OCTFILE
 # include <octave/oct.h>
-//# include <octave/uint64NDArray.h>
 #else
 # ifndef char16_t
 // To enable compilation on Mac OS X 10.8.
@@ -28,7 +27,7 @@ pthread_mutex_t* coutMutex;
 using namespace std;
 
 #ifdef COMPILE_OCTFILE
-DEFUN_DLD (spinemlnetStart, rhs, nrhs, "Stop the spinemlnet server environment")
+DEFUN_DLD (spinemlnetStop, rhs, nrhs, "Stop the spinemlnet server environment")
 #else
 void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
