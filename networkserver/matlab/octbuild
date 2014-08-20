@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "Building oct functions..."
+mkoctfile -DCOMPILE_OCTFILE spinemlnetStart.cpp
+mkoctfile -DCOMPILE_OCTFILE spinemlnetStop.cpp
+mkoctfile -DCOMPILE_OCTFILE spinemlnetQuery.cpp
+mkoctfile -DCOMPILE_OCTFILE spinemlnetAddData.cpp
+mkoctfile -DCOMPILE_OCTFILE spinemlnetGetData.cpp
+echo "Building oct functions complete!"
