@@ -32,12 +32,16 @@ pthread_mutex_t* coutMutex;
 using namespace std;
 
 #ifdef COMPILE_OCTFILE
-DEFUN_DLD (spinemlnetQuery, rhs, nrhs, "Query the spinemlnet server environment")
+DEFUN_DLD (spinemlnetQuery, rhs, nlhs, "Query the spinemlnet server environment")
 #else
 void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 #endif
 {
+#ifdef COMPILE_OCTFILE
+    int nrhs = rhs.length();
+#endif
+
     if (nrhs==0) {
 #ifdef COMPILE_OCTFILE
         cerr << "Please pass in a context matrix as the first argument." << endl;
@@ -77,7 +81,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 
 #ifdef COMPILE_OCTFILE
-    dim_vector dv(2); // Note: Produces compiler warning.
+    dim_vector dv (1, 2);
     dv(0) = 1; dv(1) = 2;
     uint16NDArray lhs(dv);
     lhs(0,0) = (*threadFinished?1:0);

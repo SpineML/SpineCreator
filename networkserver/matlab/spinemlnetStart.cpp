@@ -435,7 +435,7 @@ void* theThread (void* nothing)
 }
 
 #ifdef COMPILE_OCTFILE
-DEFUN_DLD (spinemlnetStart, rhs, nrhs, "Start the spinemlnet server environment")
+DEFUN_DLD (spinemlnetStart, rhs, nlhs, "Start the spinemlnet server environment")
 #else
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 #endif
@@ -514,7 +514,7 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     // details of output
 #ifdef COMPILE_OCTFILE
-    dim_vector dv(2); // Note: Produces compiler warning.
+    dim_vector dv(1, 2);
     dv(0) = 1; dv(1) = 16;
     uint64NDArray context(dv);
 

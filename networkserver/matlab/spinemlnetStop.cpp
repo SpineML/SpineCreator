@@ -27,13 +27,17 @@ pthread_mutex_t* coutMutex;
 using namespace std;
 
 #ifdef COMPILE_OCTFILE
-DEFUN_DLD (spinemlnetStop, rhs, nrhs, "Stop the spinemlnet server environment")
+DEFUN_DLD (spinemlnetStop, rhs, nlhs, "Stop the spinemlnet server environment")
 #else
 void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 #endif
 {
     cout << "SpineMLNet: stop-" << __FUNCTION__<< ": Called" << endl;
+
+#ifdef COMPILE_OCTFILE
+    int nrhs = rhs.length();
+#endif
 
     if (nrhs==0) {
 #ifdef COMPILE_OCTFILE

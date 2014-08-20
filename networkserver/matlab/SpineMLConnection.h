@@ -220,7 +220,7 @@ public:
      * Add dataSize elements from the double array d to the data
      * deque. Calls push_back dataSize times.
      */
-    void addData (double* d, size_t dataSize);
+    void addData (const double* d, size_t dataSize);
 
     /*!
      * Return the number of data elements in data - the number of
@@ -852,7 +852,7 @@ SpineMLConnection::addNum (double& d)
 }
 
 void
-SpineMLConnection::addData (double* d, size_t dataSize)
+SpineMLConnection::addData (const double* d, size_t dataSize)
 {
     if (!this->established || this->failed) {
         return;
