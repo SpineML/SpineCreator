@@ -96,8 +96,8 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) context[4];
     pthread_mutex_t* dCacheMutex = (pthread_mutex_t*)context[5];
 
-    // It's very important to get coutMutex set up from teh context,
-    // so that INFO() and DBG() calls won't crash matlab.
+    // It's very important to get coutMutex set up from the context,
+    // so that INFO() and DBG() calls won't crash matlab/octave.
     coutMutex = (pthread_mutex_t*)context[6];
 #endif
 

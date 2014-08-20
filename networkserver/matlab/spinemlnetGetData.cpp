@@ -41,7 +41,7 @@ pthread_mutex_t* coutMutex;
 using namespace std;
 
 #ifdef COMPILE_OCTFILE
-DEFUN_DLD (spinemlnetQuery, rhs, nlhs, "Get buffered data from the spinemlnet server environment")
+DEFUN_DLD (spinemlnetGetData, rhs, nlhs, "Get buffered data from the spinemlnet server environment")
 #else
 void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
