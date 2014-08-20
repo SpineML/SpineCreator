@@ -98,6 +98,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 #ifdef COMPILE_OCTFILE
     NDArray lhs;
+    INFO ("octfile-version of getdata for target connection '" << targetConnection << "'....");
 #endif
 
     if (!tf) {
@@ -110,13 +111,15 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         while (connIter != connections->end()) {
             if (connIter->second->getClientConnectionName() == targetConnection) {
 
+                INFO ("Matched connection!");
                 gotmatch = true;
                 // Find out how much data there is in the matched connection.
                 connectionDataSize = connIter->second->getDataSize();
+                INFO ("connectionDataSize: " << connectionDataSize);
                 // We'll make a clientDataSize by connectionDataSize/clientDataSize matrix.
                 unsigned int matrixRows = connIter->second->getClientDataSize();
                 unsigned int matrixCols = connectionDataSize/matrixRows;
-
+                INFO ("rows: " << matrixRows << " cols: " << matrixCols);
                 // Now need to copy this data into our output.
                 unsigned int i = 0;
 #ifdef COMPILE_OCTFILE
@@ -125,12 +128,12 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 lhs.resize(datadv);
                 octave_idx_type row_idx = 0;
                 octave_idx_type col_idx = 0;
-                while (i < connectionDataSize && col_idx < matrixCols) {
-                    while (i < connectionDataSize && row_idx < matrixRows) {
+                while (i < connectionDataSize && row_idx < matrixRows) {
+                    while (i < connectionDataSize && col_idx < matrixCols) {
                         lhs (row_idx, col_idx) = connIter->second->popFront();
-                        ++i; ++row_idx;
+                        ++i; ++col_idx;
                     }
-                    ++col_idx;
+                    ++row_idx;
                 }
 #else
                 const mwSize res[2] = { matrixRows, matrixCols };
