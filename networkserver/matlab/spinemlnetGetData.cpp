@@ -128,12 +128,13 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 lhs.resize(datadv);
                 octave_idx_type row_idx = 0;
                 octave_idx_type col_idx = 0;
-                while (i < connectionDataSize && row_idx < matrixRows) {
-                    while (i < connectionDataSize && col_idx < matrixCols) {
+                while (i < connectionDataSize && col_idx < matrixCols) {
+                    while (i < connectionDataSize && row_idx < matrixRows) {
                         lhs (row_idx, col_idx) = connIter->second->popFront();
-                        ++i; ++col_idx;
+                        ++i; ++row_idx;
                     }
-                    ++row_idx;
+                    ++col_idx;
+                    row_idx = 0;
                 }
 #else
                 const mwSize res[2] = { matrixRows, matrixCols };
