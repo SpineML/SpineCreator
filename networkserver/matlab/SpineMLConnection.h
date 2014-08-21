@@ -132,6 +132,8 @@ public:
     ~SpineMLConnection()
         {
             if (this->connectingSocket > 0) {
+                INFO("Closing connected socket " << this->connectingSocket
+                     << " in destructor");
                 this->closeSocket();
             }
             pthread_mutex_destroy(&this->dataMutex);
@@ -220,7 +222,7 @@ public:
      * Add dataSize elements from the double array d to the data
      * deque. Calls push_back dataSize times.
      */
-    void addData (double* d, size_t dataSize);
+    void addData (const double* d, size_t dataSize);
 
     /*!
      * Return the number of data elements in data - the number of
@@ -832,7 +834,8 @@ SpineMLConnection::closeSocket (void)
 {
     if (close (this->connectingSocket)) {
         int theError = errno;
-        INFO ("SpineMLConnection::closeSocket: Error closing connecting socket: " << theError);
+        INFO ("SpineMLConnection::closeSocket: Error closing connecting socket "
+              << this->connectingSocket << ": " << theError);
     } else {
         this->connectingSocket = 0;
     }
@@ -852,7 +855,7 @@ SpineMLConnection::addNum (double& d)
 }
 
 void
-SpineMLConnection::addData (double* d, size_t dataSize)
+SpineMLConnection::addData (const double* d, size_t dataSize)
 {
     if (!this->established || this->failed) {
         return;

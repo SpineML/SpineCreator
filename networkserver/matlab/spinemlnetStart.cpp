@@ -2,11 +2,15 @@
  * Start tcpip server
  */
 
+#ifdef COMPILE_OCTFILE
+# include <octave/oct.h>
+#else
+# ifndef char16_t
 // To enable compilation on Mac OS X 10.8.
-#ifndef char16_t
 typedef unsigned short char16_t;
+# endif
+# include "mex.h"
 #endif
-#include "mex.h"
 
 #include <iostream>
 #include <map>
@@ -106,10 +110,12 @@ void closeSockets (int& listening_socket)
  */
 void closeSocket (int& listening_socket)
 {
-    INFO ("start-closeSocket: Closing listening socket.");
     if (close (listening_socket)) {
         int theError = errno;
-        INFO ("start-closeSocket: Error closing listening socket: " << theError);
+        INFO ("start-closeSocket: Error closing listening socket "
+              << listening_socket << ": " << theError);
+    } else {
+        INFO ("start-closeSocket: Successfully closed listening socket " << listening_socket);
     }
 }
 
@@ -145,6 +151,8 @@ int initServer (void)
         // error.
         INFO ("start-initServer: Failed to open listening socket.");
         return -1;
+    } else {
+        INFO ("start-initServer: Opened listening_socket " << listening_socket);
     }
 
     struct sockaddr_in servaddr;
@@ -158,6 +166,8 @@ int initServer (void)
         int theError = errno;
         INFO ("start-initServer: Failed to bind listening socket (error " << theError << ").");
         return -1;
+    } else {
+        INFO ("start-initServer: Bound port " << port << " to socket " << listening_socket);
     }
 
     int listen_rtn = listen (listening_socket, LISTENQ);
@@ -422,6 +432,7 @@ void* theThread (void* nothing)
 
     // Clean up.
     deleteConnections();
+    INFO("Connections all deleted, now close listening socket " << listening_socket);
     closeSocket (listening_socket);
 
     threadFinished = true;
@@ -430,7 +441,11 @@ void* theThread (void* nothing)
     return NULL;
 }
 
+#ifdef COMPILE_OCTFILE
+DEFUN_DLD (spinemlnetStart, rhs, nlhs, "Start the spinemlnet server environment")
+#else
 void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+#endif
 {
     // initialise flags
     stopRequested = false;
@@ -446,10 +461,17 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     coutMutex = new pthread_mutex_t;
     pthread_mutex_init (coutMutex, NULL);
 
+#ifdef COMPILE_OCTFILE
+    int nrhs = rhs.length();
+#endif
     // Get port from the function args.
     if (nrhs>0) {
         // First argument to spinemlnetStart is the port number
+#ifdef COMPILE_OCTFILE
+        port = rhs(0).int_value();
+#else
         port = (int)mxGetScalar(prhs[0]);
+#endif
         if (port < 1) {
             INFO ("start-mexFunction: port " << port
                   << " is out of range, using default.");
@@ -476,7 +498,11 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     int rtn = pthread_create (&thread, NULL, &theThread, NULL);
     if (rtn < 0) {
         INFO ("start-mexFunction: Failed to create main thread.");
+#ifdef COMPILE_OCTFILE
+        return octave_value_list();
+#else
         return;
+#endif
     }
 
     // wait until initialisation in the thread is complete before continuing
@@ -494,6 +520,23 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     INFO ("start-mexFunction: SpineMLNet environment is initialised.");
 
     // details of output
+#ifdef COMPILE_OCTFILE
+    dim_vector dv(1, 2);
+    dv(0) = 1; dv(1) = 16;
+    uint64NDArray context(dv);
+
+    // store thread information - this passed back to octave as context.
+    context(0) = (unsigned long long int)&thread;
+    context(1) = (unsigned long long int)&stopRequested;
+    context(2) = (unsigned long long int)&threadFinished;
+    context(3) = (unsigned long long int)connections;
+    context(4) = (unsigned long long int)dataCache;
+    context(5) = (unsigned long long int)&dataCacheMutex;
+    context(6) = (unsigned long long int)coutMutex;
+    context(7) = (unsigned long long int)&connectionsFinished;
+
+    return octave_value (context);
+#else
     mwSize dims[2] = { 1, 16 };
     plhs[0] = mxCreateNumericArray (2, dims, mxUINT64_CLASS, mxREAL);
     // pointer to pass back the context to matlab
@@ -508,4 +551,5 @@ void mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     context[5] = (unsigned long long int)&dataCacheMutex;
     context[6] = (unsigned long long int)coutMutex;
     context[7] = (unsigned long long int)&connectionsFinished;
+#endif
 }

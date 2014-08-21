@@ -17,12 +17,17 @@
  * or a column vector).
  */
 
-// To enable compilation on Mac OS X 10.8
-#ifndef char16_t
+#ifdef COMPILE_OCTFILE
+# include <octave/oct.h>
+#else
+# ifndef char16_t
+// To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
+# endif
+# include "mex.h"
+# include "matrix.h"
 #endif
-#include "mex.h"
-#include "matrix.h"
+
 #include <iostream>
 #include <map>
 #include <deque>
@@ -38,13 +43,45 @@ pthread_mutex_t* coutMutex;
 
 using namespace std;
 
+#ifdef COMPILE_OCTFILE
+DEFUN_DLD (spinemlnetAddData, rhs, nlhs, // The arg 'rhs' is of type octave_value.
+           "Add data to the spinemlnet server environment's data buffers")
+#else
 void
 mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+#endif
 {
+#ifdef COMPILE_OCTFILE
+    int nrhs = rhs.length();
+#endif
+
     if (nrhs!=3) {
+#ifdef COMPILE_OCTFILE
+        cerr << "Need 3 arguments for this mex function." << endl;
+        return octave_value_list();
+#else
         mexErrMsgTxt ("Need 3 arguments for this mex function.");
+#endif
     }
 
+
+#ifdef COMPILE_OCTFILE
+    uint64NDArray context = rhs(0).uint64_array_value();
+    long unsigned int val = context(0);
+    pthread_t *thread = (pthread_t*) val;
+    val = context(1);
+    volatile bool *stopRequested = (volatile bool*) val;
+    val = context(2);
+    volatile bool *threadFinished = (volatile bool*) val;
+    val = context(3);
+    map<pthread_t, SpineMLConnection*>* connections = (map<pthread_t, SpineMLConnection*>*) val;
+    val = context(4);
+    map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) val;
+    val = context(5);
+    pthread_mutex_t* dCacheMutex = (pthread_mutex_t*) val;
+    val = context(6);
+    coutMutex = (pthread_mutex_t*) val;
+#else
     unsigned long long int *context; // Or some other type?
     context = (unsigned long long int*)mxGetData (prhs[0]);
     // This points to the main thread
@@ -59,26 +96,53 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     map<string, deque<double>*>* dCache = (map <string, deque<double>*>*) context[4];
     pthread_mutex_t* dCacheMutex = (pthread_mutex_t*)context[5];
 
-    // It's very important to get coutMutex set up from teh context,
-    // so that INFO() and DBG() calls won't crash matlab.
+    // It's very important to get coutMutex set up from the context,
+    // so that INFO() and DBG() calls won't crash matlab/octave.
     coutMutex = (pthread_mutex_t*)context[6];
+#endif
 
     bool tf = *threadFinished; // Seems to be necessary to make a copy
                                // of the thing pointed to by
                                // threadFinished.
 
     // Get connection name from input arguments.
+#ifdef COMPILE_OCTFILE
+    string targetConnection = rhs(1).string_value();
+#else
     char* targetConn = mxArrayToString(prhs[1]);
     // Lazily stick the char array into a string, as strings are easier to manipulate.
     string targetConnection(targetConn); // get from input args
     mxFree (targetConn);
+#endif
 
     string errormsg("");
 
+#ifdef COMPILE_OCTFILE
+    const double* inputData = (const double*)0;
+#else
     double* inputData = (double*)0;
+#endif
     size_t ncols = 0, nrows = 0, inputDataLength = 0;
 
     // Get input data vector
+#ifdef COMPILE_OCTFILE
+    NDArray m = rhs(2).array_value();
+    dim_vector dims = m.dims();
+    nrows = dims(0);
+    ncols = dims(1);
+    if (ncols > 0 && nrows > 0) { // We have a matrix
+
+        // Can we get a pointer to the underlying data in m?
+        inputData = m.data();
+
+        // Need to interleave the data as we have >1 row and therefore >1 time series.
+        INFO ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
+        inputDataLength = nrows * ncols;
+
+    } else { // At least one dimension is 0.
+        errormsg = "No data passed in.";
+    }
+#else
     if (!mxIsDouble (prhs[2])) {
         errormsg = "Need doubles in the array";
     } else {
@@ -96,6 +160,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             errormsg = "No data passed in.";
         }
     }
+#endif
 
     // This will be used to retrieve the amount of data stored in the connection.
     unsigned int connectionDataSize = 0;
@@ -174,6 +239,18 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // plhs[0] takes the "threadFinished" bool, and the current data
     // size.
 
+#ifdef COMPILE_OCTFILE
+    dim_vector dv(1, 2); // Note: Produces compiler warning.
+    dv(0) = 1; dv(1) = 2;
+    uint16NDArray lhs(dv);
+    lhs(0,0) = (*threadFinished?1:0);
+    lhs(0,1) = connectionDataSize;
+    octave_value_list return_vals;
+    return_vals(0) = lhs;
+    charMatrix ch(errormsg);
+    return_vals(1) = octave_value(ch, '\'');
+    return return_vals;
+#else
     const mwSize res[2] = { 1, 2 }; // 1 by 2 matrix
     plhs[0] = mxCreateNumericArray (2, res, mxUINT16_CLASS, mxREAL);
     // set up a pointer to the output array
@@ -188,4 +265,5 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         strncpy (output_buf, errormsg.c_str(), errormsg.size());
         plhs[1] = mxCreateString (output_buf);
     }
+#endif
 }

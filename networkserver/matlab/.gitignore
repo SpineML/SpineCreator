@@ -2,3 +2,4 @@
 *.h.gch
 *.mexmaci64
 *.mexa32
+*.oct
