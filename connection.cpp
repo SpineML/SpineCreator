@@ -24,6 +24,11 @@
 
 #include <Python.h>
 
+// emb (see emb.h) is something Seb found on the internet to help with
+// Python stdout redirection (as users need to be able to debug their
+// python scripts). Can't use it for now, but review in future.
+// #include "emb.h"
+
 #include "connection.h"
 #include "cinterpreter.h"
 #include "generate_dialog.h"
@@ -1696,8 +1701,8 @@ pythonscript_connection::~pythonscript_connection()
 {
 }
 
-int pythonscript_connection::getIndex() {
-
+int pythonscript_connection::getIndex()
+{
     QSettings settings;
     settings.beginGroup("pythonscripts");
     QStringList scripts = settings.childKeys();
@@ -1715,7 +1720,6 @@ int pythonscript_connection::getIndex() {
 
 QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
 {
-
     // refetch the script text
     QSettings settings;
     // enter group of scripts
@@ -1848,7 +1852,6 @@ QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditH
             connect(weightTarget, SIGNAL(currentIndexChanged(int)), this, SLOT(enableGen(int)));
             // add to the HBoxLayout
             buttons->addWidget(weightTarget);
-
         }
 
 
@@ -2007,19 +2010,18 @@ QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditH
 
 }
 
-void pythonscript_connection::enableGen(double) {
-
+void pythonscript_connection::enableGen(double)
+{
     emit setGenEnabled(true);
-
 }
 
-void pythonscript_connection::enableGen(int) {
-
+void pythonscript_connection::enableGen(int)
+{
     emit setGenEnabled(true);
-
 }
 
-bool pythonscript_connection::changed() {
+bool pythonscript_connection::changed()
+{
     // check all pars
     bool par_changed = false;
     for (int i = 0; i <this->lastGeneratedParValues.size(); ++i) {
@@ -2043,7 +2045,8 @@ bool pythonscript_connection::changed() {
     }
 }
 
-void pythonscript_connection::setUnchanged(bool state) {
+void pythonscript_connection::setUnchanged(bool state)
+{
     if (state) {
         srcSize = src->numNeurons;
         dstSize = dst->numNeurons;
@@ -2056,7 +2059,8 @@ void pythonscript_connection::setUnchanged(bool state) {
     hasChanged = !state;
 }
 
-void pythonscript_connection::configureFromScript(QString script) {
+void pythonscript_connection::configureFromScript(QString script)
+{
     // add the script to the class variable
     this->scriptText = script;
     // store old pars
@@ -2104,11 +2108,10 @@ void pythonscript_connection::configureFromScript(QString script) {
     this->lastGeneratedParValues.clear();
     this->lastGeneratedParValues.resize(this->parValues.size());
     this->lastGeneratedParValues.fill(0);
-
 }
 
-void pythonscript_connection::regenerateConnections() {
-
+void pythonscript_connection::regenerateConnections()
+{
     // refetch the script text
     QSettings settings;
     // enter group of scripts
@@ -2154,14 +2157,13 @@ void pythonscript_connection::regenerateConnections() {
     delete connGenerationMutex;
 }
 
-void pythonscript_connection::write_node_xml(QXmlStreamWriter &) {
-
+void pythonscript_connection::write_node_xml(QXmlStreamWriter &)
+{
     // this should never be called
-
 }
 
-void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e) {
-
+void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e)
+{
     // write out the settings for this generator
 
     // write out the script and parameters
@@ -2185,11 +2187,10 @@ void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e
     if (!this->weightProp.isEmpty()) {
         config.setAttribute("weightProperty", this->weightProp);
     }
-
 }
 
-void pythonscript_connection::read_metadata_xml(QDomNode &e) {
-
+void pythonscript_connection::read_metadata_xml(QDomNode &e)
+{
     // read in the settings for this generator
     QDomNode node = e.firstChild();
 
@@ -2214,7 +2215,6 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
                 qDebug() << "ParName = " << this->parNames[i];
                 this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
             }
-
         }
 
         // read the config metadata
@@ -2255,7 +2255,10 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
             }
 
             // make sure the name is unique
-            while (scripts.contains(this->scriptName+extra)) {
+            // HACK ALERT - Seb stuck this in here as a
+            // workaround for an inf. loop. Attention required!
+            int tcount = 0;
+            while (scripts.contains(this->scriptName+extra) && tcount++ < 5) {
                 extra = QString(" ") + QString::number(i);
             }
             // add the script to the library
@@ -2266,10 +2269,10 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
     }
     // exit the scripts group
     settings.endGroup();
-
 }
 
-ParameterData * pythonscript_connection::getPropPointer() {
+ParameterData * pythonscript_connection::getPropPointer()
+{
     for (int i = 0; i < this->src->projections.size(); ++i) {
         QSharedPointer <projection> proj = this->src->projections[i];
         for (int j = 0; j < proj->synapses.size(); ++j) {
@@ -2308,7 +2311,8 @@ ParameterData * pythonscript_connection::getPropPointer() {
     return NULL;
 }
 
-QStringList pythonscript_connection::getPropList() {
+QStringList pythonscript_connection::getPropList()
+{
     QStringList list;
     for (int i = 0; i < this->src->projections.size(); ++i) {
         QSharedPointer <projection> proj = this->src->projections[i];
@@ -2344,10 +2348,9 @@ QStringList pythonscript_connection::getPropList() {
     return list;
 }
 
-void pythonscript_connection::import_parameters_from_xml(QDomNode &) {
-
+void pythonscript_connection::import_parameters_from_xml(QDomNode &)
+{
     // this should never be called
-
 }
 
 /*!
@@ -2356,7 +2359,8 @@ void pythonscript_connection::import_parameters_from_xml(QDomNode &) {
  * \return
  * A simple function to take a QVector and put it into a Python List
  */
-PyObject * vectorToList(QVector <float> * vect) {
+PyObject * vectorToList(QVector <float> * vect)
+{
     PyObject * vectList = PyList_New(vect->size());
     for (int i = 0; i < vect->size(); ++i) {
         PyList_SetItem(vectList, i, PyFloat_FromDouble((double) (*vect)[i]));
@@ -2371,7 +2375,8 @@ PyObject * vectorToList(QVector <float> * vect) {
  * A simple function to take a vector of locations and pack them into a Python list of Python tuples
  * each containing the three values (x,y,z)
  */
-PyObject * vectorLocToList(QVector <loc> * vect) {
+PyObject * vectorLocToList(QVector <loc> * vect)
+{
     // create the new PyList
     PyObject * vectList = PyList_New(vect->size());
     for (int i = 0; i < vect->size(); ++i) {
@@ -2388,7 +2393,8 @@ PyObject * vectorLocToList(QVector <loc> * vect) {
  * \return
  * A simple function to take  Python list and extract it into a QVector
  */
-QVector <float> listToVector(PyObject * list) {
+QVector <float> listToVector(PyObject * list)
+{
     QVector <float> vect;
     if (PyList_Size(list) < 1) {
         vect.push_back(-234.56);
@@ -2412,21 +2418,37 @@ struct outputUnPackaged {
  * \return
  * A simple function to take the output of a connection function and unpack it
  */
-outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight) {
+outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
+{
+    // output[0] now contains out and output[1] is stdoutCatcher
+    PyObject* actualOutput = PyList_GetItem(output, 0);
+
     // create the structure to hold the unpacked output
     outputUnPackaged outUnPacked;
-    if (PyList_Size(output) < 1) {
+    if (PyList_Size(actualOutput) < 1) {
         outUnPacked.weights.push_back(-234.56);
+        Py_XDECREF(actualOutput);
         return outUnPacked;
     }
-    outUnPacked.connections.resize(PyList_Size(output));
+
+    // dbgOutput is a string list containing the stdout from the user-defined function.
+    PyObject* dbgOutput = PyList_GetItem(output, 1);
+    for (int i = 0; i < PyList_Size(dbgOutput); ++i) {
+        // Here, we send the debug output from the python function to stdout for the user.
+        // It may be nicer to place this in a dialog for them?
+        QString s(PyString_AsString(PyList_GetItem(dbgOutput,i)));
+        qDebug() << "python output: " << s;
+    }
+    Py_XDECREF(dbgOutput);
+
+    outUnPacked.connections.resize(PyList_Size(actualOutput));
     if (outUnPacked.connections.size()>0) {
         outUnPacked.connections[0].metric = NO_DELAY;
     }
-    outUnPacked.weights.resize(PyList_Size(output));
-    for (int i = 0; i < PyList_Size(output); ++i) {
+    outUnPacked.weights.resize(PyList_Size(actualOutput));
+    for (int i = 0; i < PyList_Size(actualOutput); ++i) {
         // get the element
-        PyObject * element = PyList_GetItem(output,i);
+        PyObject * element = PyList_GetItem(actualOutput,i);
         // check it is a tuple
         if (PyTuple_Check(element)) {
             // if the tuple has enough items for a src index and dst index
@@ -2446,6 +2468,8 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
             }
         }
     }
+
+    Py_XDECREF(actualOutput);
     return outUnPacked;
 }
 
@@ -2455,8 +2479,8 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
  * \return
  * A simple function to take a string and make it into a Python function which can then be called
  */
-PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs) {
-
+PyObject * createPyFunc(PyObject * pymod, QString usercode, QString &errs)
+{
     // get the default dict, so we have access to the built in modules
     PyObject * main = PyImport_AddModule("__main__");
     PyObject *pGlobal = PyModule_GetDict(main);
@@ -2466,8 +2490,77 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs) {
     //Get the dictionary object from my module so I can pass this to PyRun_String
     PyObject * pLocal = PyModule_GetDict(pymod);
 
+    // We need this in the global scope.
+    QString pycode_importsys("import sys\n");
+
+    // Place the class inside the user-specified function, to redirect stdout.
+    QString pycode_StdoutCatcher(
+"\tclass StdoutCatcher:\n\
+\t    def __init__(self):\n\
+\t        self.data = []\n\
+\t        self.data.append(\"Stdoutput:\")\n\
+\t    def write(self, txt):\n\
+\t        self.data.append(txt)\n\
+");
+
+    // This also goes in the user-provided function, after the StdoutCatcher class.
+    QString pycode_catcherinstance (
+"\tstdoutCatcher = StdoutCatcher()\n\
+\tsys.stdout = stdoutCatcher\n\
+\tsys.stderr = stdoutCatcher\n\
+");
+
+    QString pycode_replacereturnout (
+"\tfinal_out = [out, stdoutCatcher.data]\n\
+\treturn final_out\n\
+");
+
+#ifdef NEED_STDOUT_RESET // This is how to reset the sys.stdout objects.
+    QString finishCode("\n\
+sys.stdout = sys.__stdout__\n\
+sys.stderr = sys.__stderr__\n\
+");
+#endif
+
+    // Now unpack usercode, and insert the code in the right places.
+    QString fnCode("");
+
+    // usercode, line by line, but with pycode above inserted. Also,
+    // trailing line, needs to pack up users's "out" return thing in
+    // another return object which contains the stdout data.
+    // Search for "return out" and replace with
+    // final_out = [out, stdoutCatcher]\n return final_out
+    QStringList usercodelines = usercode.split (QRegExp("[\r\n]"), QString::SkipEmptyParts);
+    QStringList::const_iterator usercodeIter = usercodelines.constBegin();
+    QString newl("\n");
+    while (usercodeIter != usercodelines.constEnd()) {
+        int idx = -1;
+        if ((idx = usercodeIter->indexOf ("def")) > -1
+            && usercodeIter->indexOf ("connectionFunc", idx) > -1) {
+            fnCode += *usercodeIter + newl;
+            // That was the function definition, so now add the in-func code:
+            DBG() << "Adding StdoutCatcher..";
+            fnCode += "\t" + pycode_importsys;
+            fnCode += pycode_StdoutCatcher;
+            fnCode += pycode_catcherinstance;
+        } else if ((idx = usercodeIter->indexOf ("return")) > -1
+                   && usercodeIter->indexOf ("out", idx) > -1) {
+            // Trailing code.
+            fnCode += pycode_replacereturnout;
+        } else {
+            // Most lines just get copied into fnCode.
+            fnCode += *usercodeIter + newl;
+        }
+
+        ++usercodeIter;
+    }
+
+    DBG() << "---- Post-processed function code ----";
+    DBG() << "\n" << fnCode;
+
     //Define my function in the newly created module
-    PyObject * pValue = PyRun_String((char *) text.toStdString().c_str(), Py_file_input, pGlobal, pLocal);
+    PyObject * pValue = PyRun_String((char *) fnCode.toStdString().c_str(), Py_file_input, pGlobal, pLocal);
+
     if (!pValue) {
         PyObject * errtype, * errval, * errtrace;
         PyErr_Fetch(&(errtype), &(errval), &(errtrace));
@@ -2500,8 +2593,8 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs) {
  * function called to generate the connection into an explicit list -
  * used to draw the connections in the 3D view or export for simulation
  */
-void pythonscript_connection::generate_connections() {
-
+void pythonscript_connection::generate_connections()
+{
     conns->clear();
 
     this->pythonErrors.clear();
@@ -2518,6 +2611,8 @@ void pythonscript_connection::generate_connections() {
         qDebug() << "no dst locs";
         return;
     }
+    DBG() << "Generate connections for " << src->numNeurons << " src neurons and "
+          << dst->numNeurons << " dest neurons";
 
     // a tuple to hold the arguments to the Python Script - size of the scripts pars + the src and dst locations
     PyObject * argsPy = PyTuple_New(this->parNames.size()+2/* 2 for the src and dst locations*/);
@@ -2547,7 +2642,6 @@ void pythonscript_connection::generate_connections() {
     //Create a new module object
     PyObject *pymod = PyModule_New("mymod");
 
-    // add the function to Python, and get a PyObject for it
     PyObject * pyFunc = createPyFunc(pymod, this->scriptText, this->pythonErrors);
 
     // check that function creation worked
@@ -2586,6 +2680,7 @@ void pythonscript_connection::generate_connections() {
                 errtraceObj = errtraceObj->tb_next;
             }
             pythonErrors += QString("Error found on line:") + QString::number(errtraceObj->tb_lineno);
+            DBG() << pythonErrors;
         }
         return;
     }
@@ -2631,204 +2726,14 @@ void pythonscript_connection::generate_connections() {
 
     // transfer the unpacked output to the local storage location for weights
     this->weights = unpacked.weights;
+    DBG() << "Python script generated " << this->weights.size() << " weights.";
 
     // if we get to the end then that's good enough
     this->scriptValidates = true;
     this->setUnchanged(true);
-
 }
 
-/*void pythonscript_connection::convertToList(bool check) {
-
-    // instantiate the connection for simulators etc...
-    this->isAList = check;
-    QSharedPointer<systemObject> ptr;
-    ptr = (QSharedPointer<systemObject>) sender()->property("ptrSrc").value<void *>();
-    CHECK_CAST(ptr);
-    src = dynamic_cast<QSharedPointer <population>> (ptr);
-    CHECK_CAST(src);
-    ptr = (QSharedPointer<systemObject>) sender()->property("ptrDst").value<void *>();
-    CHECK_CAST(ptr);
-    dst = dynamic_cast<QSharedPointer <population>> (ptr);
-    CHECK_CAST(dst);
-
-}*/
-
-bool pythonscript_connection::isList() {
-
+bool pythonscript_connection::isList()
+{
     return this->isAList;
-
 }
-
-
-
-
-/*
-
-void csv_connection::flushChangesToDisk() {
-
-    // not used anymore!
-    return;
-
-    // set the filename
-    QString lib_path = QApplication::applicationDirPath();
-    QDir lib_dir = QDir(lib_path + "/lib");
-    this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
-
-    //open file for reading
-    if( !this->file.open( QIODevice::ReadOnly ) ) {
-        QMessageBox msgBox;
-        msgBox.setText("Error opening internal file - is the drive out of space?");
-        msgBox.exec();
-        }
-
-    // start investigating the library and find a new filename to transfer the file to
-    QStringList filters;
-    filters << "conn*";
-    lib_dir.setNameFilters(filters);
-
-    QStringList files = lib_dir.entryList();
-
-    QString baseName = "connection";
-    QString uniqueName;
-    bool unique = false;
-    int index = 0;
-    while(!unique) {
-        unique = true;
-        uniqueName = baseName + QString::number(float(index));
-        for (int i = 0; i < (int)files.count(); ++i) {
-            // see if the new name is unique
-            if (uniqueName == files[i]) {
-                unique = false;
-                ++index;
-            }
-        }
-    }
-    QString newFilename = uniqueName;
-
-    QFile newFile;
-    newFile.setFileName(lib_dir.absoluteFilePath(newFilename));
-
-    //open new file for writing
-    if( !newFile.open( QIODevice::WriteOnly ) ) {
-        QMessageBox msgBox;
-        msgBox.setText("Error opening internal file - is the drive out of space?");
-        msgBox.exec();
-        }
-
-
-    // sort the changes so that we have a list where the first change to be applied is first
-    QVector < change > sortedChanges;
-    while (changes.size() > 0) {
-        int ind = 0;
-        int minRow = 1000000000;
-        int minCol = 1000000000;
-        for (int i = 0; i < changes.size(); ++i) {
-
-            if (changes[i].row < minRow) {
-                ind = i;
-                minRow = changes[i].row;
-                minCol = changes[i].col;
-            }
-            else if (changes[i].row == minRow && changes[i].col < minCol) {
-                ind = i;
-                minRow = changes[i].row;
-                minCol = changes[i].col;
-            } else if (changes[i].row == minRow && changes[i].col == minCol) {
-                // remove superseded change
-                changes.erase(changes.begin()+ind, changes.begin()+ind+1);
-                --i;
-                // set new lowest change
-                ind = i;
-                minRow = changes[i].row;
-                minCol = changes[i].col;
-            }
-
-        }
-        // add lowest change to new list and erase from main list;
-        sortedChanges.push_back(changes[ind]);
-        changes.erase(changes.begin()+ind, changes.begin()+ind+1);
-    }
-
-    this->xmlIn.setDevice(&this->file);
-
-    this->xmlOut.setDevice(&newFile);
-
-    int counter = 0;
-
-    // start the document
-    this->xmlOut.setAutoFormatting(true);
-    this->xmlOut.writeStartDocument();
-    this->xmlOut.writeStartElement("NineMLConnection");
-
-    // stream from one file to the other, applying changes as we go!
-    while(!this->xmlIn.atEnd()) {
-        if(xmlIn.readNext()) {
-
-            if (this->xmlIn.isStartElement() && this->xmlIn.name() == "connection") {
-
-                QVector < float > returnVals;
-
-                // read in
-                for (int i = 0; i < (int)this->xmlIn.attributes().count(); ++i) {
-                    returnVals.push_back(this->xmlIn.attributes().value("value"+QString::number(float(i))).toString().toFloat());
-                }
-
-                // apply changes
-                if (sortedChanges.size()) {
-                    while (sortedChanges.front().row == counter) {
-                        returnVals[sortedChanges.front().col] = sortedChanges.front().value;
-                        sortedChanges.erase(sortedChanges.begin());
-                        // get out if we have run out of changes
-                        if (!sortedChanges.size()) break;
-                    }
-                }
-
-                // write out
-                this->xmlOut.writeEmptyElement("connection");
-                for (int i = 0; i < returnVals.size(); ++i) {
-                    QString attr = "value" + QString::number(float(i));
-                    this->xmlOut.writeAttribute(attr, QString::number(returnVals[i]));
-                }
-
-                // increase the number of connections seen
-                ++counter;
-
-            }
-
-        }
-    }
-
-    // flush remaining changes
-    while (sortedChanges.size()) {
-        QVector < float > returnVals;
-
-        while (sortedChanges.front().row == counter) {
-            // changes should be in order
-            returnVals.push_back(sortedChanges.front().value);
-            sortedChanges.erase(sortedChanges.begin());
-            // if we run our then get out of here
-            if (!sortedChanges.size()) break;
-        }
-
-        this->xmlOut.writeEmptyElement("connection");
-        for (int i = 0; i < returnVals.size(); ++i) {
-            QString attr = "value" + QString::number(float(i));
-            this->xmlOut.writeAttribute(attr, QString::number(returnVals[i]));
-        }
-
-        ++counter;
-    }
-    this->xmlOut.writeEndElement();
-    this->xmlOut.writeEndDocument();
-
-    // close up
-    this->file.close();
-    newFile.close();
-    // remove old file
-    QFile::remove(lib_dir.absoluteFilePath(this->filename));
-    // update filename to new file
-    filename = newFilename;
-}
-
-*/
