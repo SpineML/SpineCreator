@@ -94,7 +94,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     string errormsg("");
     unsigned int connectionDataSize = 0;
-    bool gotdata = false, gotmatch = false;
+    bool gotdata = false, gotmatch = false, notready = false;
 
 #ifdef COMPILE_OCTFILE
     NDArray lhs;
@@ -113,6 +113,13 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
                 INFO ("Matched connection!");
                 gotmatch = true;
+
+                if (connIter->second->getEstablished() == false) {
+                    // We got a matched connection, but it's not ready yet, so break out.
+                    notready = true;
+                    break;
+                }
+
                 // Find out how much data there is in the matched connection.
                 connectionDataSize = connIter->second->getDataSize();
                 INFO ("connectionDataSize: " << connectionDataSize);
@@ -168,6 +175,8 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         if (errormsg.empty()) {
             if (!gotmatch) {
                 errormsg = "No matching connection found.";
+            } else if (notready) {
+                errormsg = "Matching connection not ready.";
             } else {
                 errormsg = "Connection contained no data.";
             }
