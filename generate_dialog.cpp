@@ -121,6 +121,7 @@ void generate_dialog::doPython() {
         if (par && currConnPy->hasWeight) {
             par->currType = ExplicitList;
             par->value = currConnPy->weights;
+            par->indices.clear();
             for (int i = 0; i < currConnPy->weights.size(); ++i) {
                 par->indices.push_back(i);
             }
