@@ -206,12 +206,6 @@ bool versionControl::runMercurial(QString options) {
 
     QSettings settings;
 
-    // extracts simulation state
-    bool is_simulation = settings.value("export_for_simulation", false).toBool();
-
-    // abort if we are running a simulation
-    if (is_simulation) return true;
-
     // get current model path from QSettings
 
     QString path = settings.value("files/currentFileName", "No model").toString();
