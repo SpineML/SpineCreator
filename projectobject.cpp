@@ -206,11 +206,9 @@ bool projectObject::save_project(QString fileName, rootData * data)
     this->filePath = fileName;
 
     if (printErrors("Errors found")) {
-        settings.remove("export_for_simulation");
         return false;
     }
     if (printWarnings("Warnings found")) {
-        settings.remove("export_for_simulation");
         return false;
     }
 
@@ -219,6 +217,7 @@ bool projectObject::save_project(QString fileName, rootData * data)
     return true;
 }
 
+#if 0 // Gone as we will no longer export for simulator. This MAY become "copy for simulator" though
 bool projectObject::export_for_simulator(QString fileName, rootData * data)
 {
     QSettings settings;
@@ -317,6 +316,7 @@ bool projectObject::export_for_simulator(QString fileName, rootData * data)
 
     return true;
 }
+#endif
 
 bool projectObject::import_network(QString fileName)
 {

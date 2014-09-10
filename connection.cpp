@@ -543,15 +543,18 @@ csv_connection::csv_connection(QString fileName) {
 
 }
 
-void csv_connection::setFileName(QString name) {
+void csv_connection::setFileName(QString name)
+{
     filename = name;
 }
 
-QString csv_connection::getFileName() {
+QString csv_connection::getFileName()
+{
     return filename;
 }
 
-void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
+void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
+{
 
     file.seek(0);
     QDataStream access(&file);
@@ -581,57 +584,16 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     bool writeBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
 
     // load path
-    bool exportBinary = false;
-    if (settings.value("export_for_simulation", "false").toBool()) {
-        writeBinary = false;
-        exportBinary = settings.value("export_binary").toBool();
-    }
+    bool exportBinary = settings.value("export_binary").toBool();
 
     // write containing tag
     xmlOut.writeStartElement("ConnectionList");
 
     // if we have greater than 30 rows and we want to write to binary then write binary file
     // (less than 30 rows is sufficiently compacy that it should go in the XML)
-    // Alex: this is the old code that just copied the QStreamData written file. This is
-    // undesirable as this file cannot be read by BRAHMS or any generic program. Current
-    // procedure is to write the file as a packed binary data file as when writing for
-    // simulation.
-    /*if (writeBinary && this->getNumRows() > 30) {
+    if (exportBinary && this->getNumRows() > 30) {
 
-        QString saveFileName = this->filename + ".bin";
-
-        // add a tag to the binary file
-        xmlOut.writeEmptyElement("BinaryFile");
-        xmlOut.writeAttribute("file_name", saveFileName);
-        xmlOut.writeAttribute("num_connections", QString::number(float(getNumRows())));
-        xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(getNumCols()==3)));
-
-        // copy the file
-        file.copy(saveDir.absoluteFilePath(saveFileName));
-
-        // reopen the file that copy helpfully closed grrr....
-        file.open(QIODevice::ReadWrite);
-
-    } else */
-
-    // if we have greater than 30 rows and we want to write to binary then write binary file
-    // (less than 30 rows is sufficiently compacy that it should go in the XML)
-    if ((writeBinary || exportBinary) && this->getNumRows() > 30) {
-
-        // construct the save file name based upon whether we are saving the project or outputting for simulation
-        QString saveFileName;
-        if (exportBinary) {
-
-            saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
-
-        } else if (writeBinary) {
-
-            saveFileName = saveDir.absoluteFilePath(this->filename + ".bin");
-
-        } else {
-            qDebug() << "Error - this shouldn't happen! (connection.cpp write_node_xml)";
-            return;
-        }
+        QString saveFileName = saveDir.absoluteFilePath(this->filename + ".bin");
 
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
@@ -688,13 +650,12 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     } else {
 
-        // loop through connections writing them out
+        // loop through connections writing them out in XML format.
         for (int i=0; i < this->getNumRows(); ++i) {
 
             xmlOut.writeEmptyElement("Connection");
 
             qint32 val;
-
             access >> val;
             xmlOut.writeAttribute("src_neuron", QString::number(float(val)));
 
@@ -702,13 +663,10 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             xmlOut.writeAttribute("dst_neuron", QString::number(float(val)));
 
             if (this->getNumCols() == 3) {
-
                 float valf;
                 access >> valf;
                 xmlOut.writeAttribute("delay", QString::number(float(valf)));
-
             }
-
         }
     }
 
@@ -717,7 +675,6 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     }
 
     xmlOut.writeEndElement(); // connectionList
-
 }
 
 /*!
@@ -1436,18 +1393,13 @@ void kernel_connection::setKernel(int i, int j, float value) {
     }
 }
 
-void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
-
+void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut)
+{
     // are we outputting for simulation
     bool forSim = false;
     QSettings settings;
-    QString sim = settings.value("export_for_simulation", "no").toString();
 
-    if (sim != "no") {
-        forSim = true;
-    }
-
-    if (!this->isAList && !forSim) {
+    if (!this->isAList) {
         xmlOut.writeStartElement("KernelConnection");
         // extra stuff
         xmlOut.writeStartElement("Kernel");
@@ -1461,9 +1413,7 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
         xmlOut.writeEndElement(); // Kernel
         this->writeDelay(xmlOut);
         xmlOut.writeEndElement(); // KernelConnection
-    }
-
-    else {
+    } else {
 
         xmlOut.writeStartElement("ConnectionList");
 
@@ -1490,10 +1440,7 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
         delete connGenerationMutex;
 
         // load path
-        bool exportBinary = false;
-        if (settings.value("export_for_simulation", "error").toBool()) {
-            exportBinary = settings.value("export_binary").toBool();
-        }
+        bool exportBinary = settings.value("export_binary").toBool();
 
         if (!exportBinary || connections.size() < 30) {
 
