@@ -1599,10 +1599,15 @@ void viewELExptPanelHandler::run()
 
     // fetch current experiment sim engine
     experiment * currentExperiment = NULL;
+    int currentExptNum = -1;
 
     // find currentExperiment
     for (int i = 0; i < data->experiments.size(); ++i) {
-        if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
+        if (data->experiments[i]->selected) {
+            currentExperiment = data->experiments[i];
+            currentExptNum = i;
+            break;
+        }
     }
 
     if (currentExperiment == NULL) {
@@ -1699,7 +1704,7 @@ void viewELExptPanelHandler::run()
     }
 
     // write out model
-    if (!this->data->currProject->export_for_simulator(QDir::toNativeSeparators(wk_dir_string + "/model/"), data)) {
+    if (!this->data->currProject->save_project(QDir::toNativeSeparators(wk_dir_string + "/model/"), data)) {
         settings.remove("simulator_export_path");
         settings.remove("export_binary");
         runButton->setEnabled(true);
@@ -1726,7 +1731,7 @@ void viewELExptPanelHandler::run()
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
 
-    simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath());
+    simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath() << " -e" << QString(currentExptNum));
 
     // Wait a couple of seconds for the process to start
     if (!simulator->waitForStarted(100)) {
