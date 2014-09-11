@@ -580,9 +580,6 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 
     QDir saveDir(filePathString);
 
-    // fetch the option
-    bool writeBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
-
     // load path
     bool exportBinary = settings.value("export_binary").toBool();
 
@@ -1395,8 +1392,6 @@ void kernel_connection::setKernel(int i, int j, float value) {
 
 void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 {
-    // are we outputting for simulation
-    bool forSim = false;
     QSettings settings;
 
     if (!this->isAList) {
