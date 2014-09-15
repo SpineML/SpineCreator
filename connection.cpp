@@ -1491,6 +1491,7 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 
 }
 
+//  fixme. copy this into spineml2brahms
 void kernel_connection::import_parameters_from_xml(QDomNode &e) {
 
     QDomNodeList kernelNode = e.toElement().elementsByTagName("Kernel");
