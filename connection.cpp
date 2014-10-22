@@ -30,6 +30,12 @@
 #include "viewVZlayoutedithandler.h"
 #include "filteroutundoredoevents.h"
 
+// This is the number of connections there has to be for the system to
+// start writing these connections into a binary file. If there are
+// fewer connections than this number, the connections will be written
+// inline into the XML.
+#define MIN_CONNS_TO_FORCE_BINARY 30
+
 connection::connection()
 {
     type = none;
@@ -616,7 +622,7 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     // if we have greater than 30 rows and we want to write to binary then write binary file
     // (less than 30 rows is sufficiently compacy that it should go in the XML)
-    if ((writeBinary || exportBinary) && this->getNumRows() > 30) {
+    if ((writeBinary || exportBinary) && this->getNumRows() > MIN_CONNS_TO_FORCE_BINARY) {
 
         // construct the save file name based upon whether we are saving the project or outputting for simulation
         QString saveFileName;
@@ -1495,7 +1501,7 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             exportBinary = settings.value("export_binary").toBool();
         }
 
-        if (!exportBinary || connections.size() < 30) {
+        if (!exportBinary || connections.size() < MIN_CONNS_TO_FORCE_BINARY) {
 
             // loop through connections writing them out
             for (int i=0; i < connections.size(); ++i) {
