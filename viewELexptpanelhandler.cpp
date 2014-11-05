@@ -1511,6 +1511,19 @@ void viewELExptPanelHandler::setChangeParComponent()
     redrawExpt();
 }
 
+void viewELExptPanelHandler::setChangeParName() {
+
+    exptChangeProp * changeProp = (exptChangeProp *) sender()->property("ptr").value<void *>();
+
+    QLineEdit * name = qobject_cast < QLineEdit * > (sender());
+
+    // this should not happen!
+    if (name ==  NULL) return;
+
+    changeProp->name = name->text();
+
+}
+
 void viewELExptPanelHandler::setChangeProp(QString name)
 {
     exptChangeProp * changeProp = (exptChangeProp *) sender()->property("ptr").value<void *>();

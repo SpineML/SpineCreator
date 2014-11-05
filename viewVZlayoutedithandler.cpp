@@ -603,17 +603,21 @@ void viewVZLayoutEditHandler::updateConnectionList() {
 
 void viewVZLayoutEditHandler::updateLayoutList(rootData * data) {
 
-    // upadte the layout list
-    layoutComboBox->clear();
-    // we don't want to set stuff while this occurs
-    layoutComboBox->disconnect(data);
-    for (int i = 0; i < data->catalogLayout.size(); ++i) {
-        layoutComboBox->addItem(data->catalogLayout[i]->name);
+    if (this->viewVZ->OpenGLWidget) {
+        // upadte the layout list
+        layoutComboBox->clear();
+        // we don't want to set stuff while this occurs
+        layoutComboBox->disconnect(data);
+        for (int i = 0; i < data->catalogLayout.size(); ++i) {
+            layoutComboBox->addItem(data->catalogLayout[i]->name);
 
-        // safe way of updating the layout list index]
-        if (viewVZ->currObject->type == populationObject)
-            if ((qSharedPointerDynamicCast <population> (viewVZ->currObject))->layoutType->component == data->catalogLayout[i])
-                layoutComboBox->setCurrentIndex(i);
+            // safe way of updating the layout list index]
+            if (viewVZ->currObject) {
+                if (viewVZ->currObject->type == populationObject)
+                    if ((qSharedPointerDynamicCast <population> (viewVZ->currObject))->layoutType->component == data->catalogLayout[i])
+                        layoutComboBox->setCurrentIndex(i);
+            }
+        }
     }
 
     connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));

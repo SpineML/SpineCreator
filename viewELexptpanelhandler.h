@@ -127,6 +127,7 @@ public slots:
     void editLesion();
     void delLesion();
     void setChangeParComponent();
+    void setChangeParName();
     void setChangeProp(QString name);
     void addChangedProp();
     void acceptChangedProp();

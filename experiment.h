@@ -200,12 +200,13 @@ class exptChangeProp : QObject {
     Q_OBJECT
 public:
 
-    exptChangeProp() {edit = true; set=false; par = NULL;}
+    exptChangeProp() {edit = true; set=false; par = NULL; name = "New changed property";}
 
     ParameterData * par;
     QSharedPointer <NineMLComponentData> component;
     bool edit;
     bool set;
+    QString name;
 
     QVBoxLayout * drawChangeProp(rootData *data, viewELExptPanelHandler * handler);
     void writeXML(QXmlStreamWriter *, projectObject * data);

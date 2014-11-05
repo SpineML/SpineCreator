@@ -1807,7 +1807,9 @@ void MainWindow::import_layout()
     // make sure layouts appear
     data.currProject->copy_out_data(&data);
 
-    viewVZhandler->updateLayoutList(&data);
+    if (this->viewVZ.OpenGLWidget) {
+        viewVZhandler->updateLayoutList(&data);
+    }
 
     // Save the directory from the first of the fileNames
     QDir lastDirectory (fileNames[0]);

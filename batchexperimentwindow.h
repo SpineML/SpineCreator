@@ -27,6 +27,7 @@ private:
     exptOutput * selectedLog;
     QVector < double > results;
     int currIndex;
+    bool all_logs;
 
 public slots:
     void addExpt();
