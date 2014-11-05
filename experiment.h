@@ -245,6 +245,7 @@ public:
     void select(QVector < experiment * > *);
     void deselect();
     bool editing;
+    bool subEdit;
 
 private:
     exptBox * currBoxPtr;

@@ -311,6 +311,28 @@ void viewELExptPanelHandler::redrawExpt()
     if (currentExperiment->editing)
         return;
 
+    // check if we have any edits going on - if we do then disable the Run Simulator button
+    bool edit_going_on = false;
+    for (int i = 0; i < currentExperiment->ins.size(); ++i) {
+        if (currentExperiment->ins[i]->edit == true) edit_going_on = true;
+    }
+    for (int i = 0; i < currentExperiment->outs.size(); ++i) {
+        if (currentExperiment->outs[i]->edit == true) edit_going_on = true;
+    }
+    for (int i = 0; i < currentExperiment->lesions.size(); ++i) {
+        if (currentExperiment->lesions[i]->edit == true) edit_going_on = true;
+    }
+    for (int i = 0; i < currentExperiment->changes.size(); ++i) {
+        if (currentExperiment->changes[i]->edit == true) edit_going_on = true;
+    }
+    if (edit_going_on) {
+        currentExperiment->subEdit = true;
+    } else {
+        currentExperiment->subEdit = false;
+    }
+    this->redrawPanel();
+
+
 #ifdef NEW_EXPERIMENT_VIEW
 
     // if pointer is not valid it is either NULL or the selected object was deleted
@@ -1603,6 +1625,8 @@ void viewELExptPanelHandler::run()
     runButton = qobject_cast < QToolButton * > (sender());
     if (runButton) {
         runButton->setEnabled(false);
+        QCommonStyle style;
+        runButton->setIcon(style.standardIcon(QStyle::SP_MediaStop));
     } else {
         runButton = NULL;
     }
@@ -1765,6 +1789,8 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     // update run button
     if (runButton) {
         runButton->setEnabled(true);
+        QCommonStyle style;
+        runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
     }
 
     // check for errors we can present

@@ -39,6 +39,7 @@ experiment::experiment()
     description = "add a description for the experiment here";
     selected = false;
     editing = true;
+    subEdit = false;
 
 }
 
@@ -196,6 +197,24 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
         del->setProperty("index", (int) index);
         layout->addWidget(del,2,3,1,1);
         QObject::connect(del, SIGNAL(clicked()), panel, SLOT(delExperiment()));
+
+        // run button...
+        QCommonStyle style;
+        QToolButton * run = new QToolButton();
+        // if any subcomponents of the experiment asre being edited we should disable this
+        if (this->subEdit) {
+            run->setText("Run (disabled while editing)");
+            run->setEnabled(false);
+        } else {
+            run->setText("Run experiment");
+        }
+        run->setStyleSheet("QToolButton { color: black; border: 0px; background-color :transparent;}");
+        run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        run->setToolTip("Run the experiment in the chosen simulator");
+        run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+        layout->addWidget(run,3,0,1,1);
+        QObject::connect(run, SIGNAL(clicked()), panel, SLOT(run()));
+
     }
     else
     {

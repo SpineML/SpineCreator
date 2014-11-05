@@ -775,7 +775,7 @@ void MainWindow::initViewEL()
     run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     run->setToolTip("Run the selected experiment in the chosen simulator");
     run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-    toolbar0->layout()->addWidget(run);
+    //toolbar0->layout()->addWidget(run);
     ((QHBoxLayout *) toolbar0->layout())->addStretch();
 
     QFrame* line0b = new QFrame();
