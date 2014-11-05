@@ -247,6 +247,9 @@ public:
     bool editing;
     bool subEdit;
 
+    bool subEdit;
+    QLabel * progressBar;
+
 private:
     exptBox * currBoxPtr;
 

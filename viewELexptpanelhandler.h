@@ -78,6 +78,7 @@ private:
 
     QTimer simTimeChecker;
     QString simTimeFileName;
+    QString simCancelFileName;
     float simTimeMax;
     experiment * runExpt;
 
@@ -143,6 +144,7 @@ public slots:
     void redraw(double);
 
     void run();
+    void cancelRun();
     void simulatorFinished(int, QProcess::ExitStatus);
     void simulatorStandardOutput();
     void simulatorStandardError();
