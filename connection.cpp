@@ -563,7 +563,7 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
     QDir saveDir(filePathString);
 
     // load path
-    bool exportBinary = settings.value("export_binary").toBool();
+    bool exportBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
 
     // write containing tag
     xmlOut.writeStartElement("ConnectionList");
@@ -573,6 +573,7 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
     QString saveFullFileName;
     if (exportBinary && this->getNumRows() > 30) {
 
+        // FIXME: simulator_export_path isn't set at this point, when saving the project.
         saveFullFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
 
         // extract the filename without the path...
