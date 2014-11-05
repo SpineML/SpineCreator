@@ -604,23 +604,30 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
     if ((writeBinary || exportBinary) && this->getNumRows() > MIN_CONNS_TO_FORCE_BINARY) {
 
         // construct the save file name based upon whether we are saving the project or outputting for simulation
-        QString saveFileName;
+        QString saveFullFileName;
         if (exportBinary) {
 
-            saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
+            saveFullFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
 
         } else if (writeBinary) {
 
-            saveFileName = saveDir.absoluteFilePath(this->filename + ".bin");
+            // get a new unique name for the save directory...
+            saveFullFileName = saveDir.absolutePath();
+            this->setUniqueName(&saveFullFileName);
 
         } else {
             qDebug() << "Error - this shouldn't happen! (connection.cpp write_node_xml)";
             return;
         }
 
+        // extract the filename without the path...
+        QString saveFileName;
+        QStringList fileBits = saveFullFileName.split(QDir::toNativeSeparators("/"));
+        saveFileName = fileBits.last();
+
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
-        xmlOut.writeAttribute("file_name", this->filename + ".bin");
+        xmlOut.writeAttribute("file_name", saveFileName);
         xmlOut.writeAttribute("num_connections", QString::number(getNumRows()));
         xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(getNumCols()==3)));
         xmlOut.writeAttribute("packed_data", "true");
@@ -631,11 +638,11 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
             this->getAllData(conns);
 
             // write out
-            QFile export_file(saveFileName);
+            QFile export_file(saveFullFileName);
 
             if (!export_file.open( QIODevice::WriteOnly)) {
                 QMessageBox msgBox;
-                msgBox.setText("Error creating exported binary connection file '" + saveFileName
+                msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
                                + "' (Check disk space; permissions)");
                 msgBox.exec();
                 return;
@@ -653,11 +660,11 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
             this->getAllData(conns);
 
             // write out
-            QFile export_file(saveFileName);
+            QFile export_file(saveFullFileName);
 
             if (!export_file.open( QIODevice::WriteOnly)) {
                 QMessageBox msgBox;
-                msgBox.setText("Error creating exported binary connection file '" + saveFileName
+                msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
                                + "' (Check disk space; permissions)");
                 msgBox.exec();
                 return;
@@ -1237,20 +1244,29 @@ float csv_connection::getData(QModelIndex &index)
     return -0.1f;
 }
 
-void csv_connection::setUniqueName()
+void csv_connection::setUniqueName(QString *path)
 {
     // generate a unique filename to save the weights under
 
-    // start investigating the library
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
-#else
-    QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-#endif
-    if (!lib_dir.exists()) {
-        if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-            qDebug() << "error creating library";
+    // are we writing to the Library or to a save dir?
+    QDir lib_dir;
+    if (path == NULL) {
+        // start investigating the library
+    #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+        lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
+    #else
+        lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+    #endif
+        if (!lib_dir.exists()) {
+            if (!lib_dir.mkpath(lib_dir.absolutePath())) {
+                qDebug() << "error creating library";
+            }
         }
+    }
+    else
+    {
+        lib_dir = QDir(*path);
+        qDebug() << lib_dir;
     }
 
     // Get a list of the existing files in the directory. The
@@ -1271,6 +1287,9 @@ void csv_connection::setUniqueName()
     while(!unique) {
         unique = true;
         uniqueName = baseName + QString::number(float(index));
+        if (path != NULL) {
+            uniqueName += ".bin";
+        }
         for (int i = 0; i < (int)files.count(); ++i) {
             // see if the new name is unique
             if (uniqueName == files[i]) {
@@ -1279,7 +1298,15 @@ void csv_connection::setUniqueName()
             }
         }
     }
-    this->filename = uniqueName;
+
+    if (path == NULL) {
+        this->filename = uniqueName;
+    }
+    else
+    {
+        *path = *path + QDir::toNativeSeparators("/") + uniqueName;
+        qDebug() << *path;
+    }
 }
 
 QString csv_connection::getHeader(int section)
