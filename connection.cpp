@@ -41,36 +41,30 @@ connection::connection()
     type = none;
     delay = new ParameterData("ms");
     delay->name = "delay";
-    //delay->dims = new dim("");
     delay->currType = Undefined;
 }
 
-connection::~connection() {
-    //delete delay->dims;
+connection::~connection()
+{
     delete delay;
 }
 
-int connection::getIndex() {
-
+int connection::getIndex()
+{
     return (int) this->type;
-
 }
 
-void connection::writeDelay(QXmlStreamWriter &xmlOut) {
-
+void connection::writeDelay(QXmlStreamWriter &xmlOut)
+{
     xmlOut.writeStartElement("Delay");
 
     xmlOut.writeAttribute("Dimension", this->delay->dims->toString());
 
     if (this->delay->currType == FixedValue) {
-
         xmlOut.writeEmptyElement("FixedValue");
         xmlOut.writeAttribute("value", QString::number(this->delay->value[0]));
-
     }
     else if (this->delay->currType == Statistical) {
-        //xmlOut.writeStartElement("stochasticValue");
-
         switch (int(round(this->delay->value[0]))) {
         case 0:
             break;
@@ -91,7 +85,6 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut) {
          }
             break;
         }
-        //xmlOut.writeEndElement(); // stochasticValue
     }
     else if (this->delay->currType == ExplicitList) {
         xmlOut.writeStartElement("ValueList");
@@ -103,12 +96,9 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut) {
        xmlOut.writeEndElement(); // valueList
     }
     else {
-
         xmlOut.writeEmptyElement("FixedValue");
         xmlOut.writeAttribute("value", QString::number(0.0)); // default to fixed zero delay
-
     }
-
 
     xmlOut.writeEndElement(); // delay
 }
@@ -126,7 +116,6 @@ alltoAll_connection::~alltoAll_connection()
 
 QLayout * alltoAll_connection::drawLayout(rootData *, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
 {
-
     QHBoxLayout * hlay = new QHBoxLayout();
     if (viewVZhandler) {
         connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
@@ -135,19 +124,17 @@ QLayout * alltoAll_connection::drawLayout(rootData *, viewVZLayoutEditHandler * 
         connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
     }
     return hlay;
-
 }
 
-void alltoAll_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
-
+void alltoAll_connection::write_node_xml(QXmlStreamWriter &xmlOut)
+{
     xmlOut.writeStartElement("AllToAllConnection");
     this->writeDelay(xmlOut);
     xmlOut.writeEndElement(); // allToAllConnection
-
 }
 
-void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
-
+void alltoAll_connection::import_parameters_from_xml(QDomNode &e)
+{
     QDomNodeList delayProp = e.toElement().elementsByTagName("Delay");
     if (delayProp.size() == 1) {
 
@@ -180,7 +167,6 @@ void alltoAll_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
             this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
-
     }
 }
 
@@ -197,7 +183,6 @@ onetoOne_connection::~onetoOne_connection()
 
 QLayout * onetoOne_connection::drawLayout(rootData *, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
 {
-
     QHBoxLayout * hlay = new QHBoxLayout();
     if (viewVZhandler) {
         connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
@@ -206,18 +191,17 @@ QLayout * onetoOne_connection::drawLayout(rootData *, viewVZLayoutEditHandler * 
         connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
     }
     return hlay;
-
 }
 
-void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
-
+void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut)
+{
     xmlOut.writeStartElement("OneToOneConnection");
     this->writeDelay(xmlOut);
     xmlOut.writeEndElement(); // oneToOneConnection
-
 }
 
-void onetoOne_connection::import_parameters_from_xml(QDomNode &e) {
+void onetoOne_connection::import_parameters_from_xml(QDomNode &e)
+{
     QDomNodeList delayProp = e.toElement().elementsByTagName("Delay");
     if (delayProp.size() == 1) {
 
@@ -250,7 +234,6 @@ void onetoOne_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
             this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
-
     }
 }
 
@@ -278,8 +261,8 @@ fixedProb_connection::~fixedProb_connection()
  * Draw the UI for the Fixed Probability connection - caller can be either the Visualiser layout handler, or the Network layout
  * handler, so we allow both to be passed and ignore the one set to NULL
  */
-QLayout * fixedProb_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay) {
-
+QLayout * fixedProb_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
+{
     // draw up probability changer
     QHBoxLayout * hlay = new QHBoxLayout;
 
@@ -315,21 +298,19 @@ QLayout * fixedProb_connection::drawLayout(rootData * data, viewVZLayoutEditHand
     hlay->addWidget(pSpin);
 
     return hlay;
-
 }
 
-void fixedProb_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
-
+void fixedProb_connection::write_node_xml(QXmlStreamWriter &xmlOut)
+{
     xmlOut.writeStartElement("FixedProbabilityConnection");
     xmlOut.writeAttribute("probability", QString::number(this->p));
     xmlOut.writeAttribute("seed", QString::number(this->seed));
     this->writeDelay(xmlOut);
     xmlOut.writeEndElement(); // fixedProbabilityConnection
-
 }
 
-void fixedProb_connection::import_parameters_from_xml(QDomNode &e) {
-
+void fixedProb_connection::import_parameters_from_xml(QDomNode &e)
+{
     this->p = e.toElement().attribute("probability").toFloat();
     this->seed = e.toElement().attribute("seed").toInt();
 
@@ -365,14 +346,13 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
             this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
-
     }
 }
 
 /////////////////////////////////// EXPLICIT LIST
 
-csv_connection::csv_connection() {
-
+csv_connection::csv_connection()
+{
     type = CSV;
     numRows = 0;
     setUniqueName();
@@ -386,7 +366,7 @@ csv_connection::csv_connection() {
     // create the file:
 
     // start investigating the library
-    #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
 #else
     QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
@@ -406,12 +386,12 @@ csv_connection::csv_connection() {
         QMessageBox msgBox;
         msgBox.setText("Could not open output file for conversion");
         msgBox.exec();
-        return;}
-
+        return;
+    }
 }
 
-csv_connection::~csv_connection() {
-
+csv_connection::~csv_connection()
+{
     // remove generator
     if (this->generator) {
         delete this->generator;
@@ -419,25 +399,22 @@ csv_connection::~csv_connection() {
     }
 
     // remove memory usage
-
     if (this->file.isOpen()) {
         this->file.close();
     }
-
 }
 
-int csv_connection::getIndex() {
-
+int csv_connection::getIndex()
+{
     if (!this->generator) {
         return (int) this->type;
     } else {
         return this->generator->getIndex();
     }
-
 }
 
-QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay) {
-
+QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
+{
     // if we do not have a generator...
     if (this->generator == NULL) {
 
@@ -501,11 +478,10 @@ QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * 
         return generator->drawLayout(data, viewVZhandler, rootLay);
 
     }
-
 }
 
-csv_connection::csv_connection(QString fileName) {
-
+csv_connection::csv_connection(QString fileName)
+{
     type = CSV;
     numRows = 0;
     setUniqueName();
@@ -520,7 +496,7 @@ csv_connection::csv_connection(QString fileName) {
 
     // set the filepath
     // start investigating the library
-    #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
 #else
     QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
@@ -534,11 +510,12 @@ csv_connection::csv_connection(QString fileName) {
     this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
 
     // open the storage file
-    if( !this->file.open( QIODevice::ReadWrite ) ) {
+    if (!this->file.open(QIODevice::ReadWrite)) {
         QMessageBox msgBox;
         msgBox.setText("Could not open output file for conversion");
         msgBox.exec();
-        return;}
+        return;
+    }
 
     QStringList list;
     list = fileName.split("/", QString::SkipEmptyParts);
@@ -546,19 +523,20 @@ csv_connection::csv_connection(QString fileName) {
 
     this->name = list.back();
     this->import_csv(fileName);
-
 }
 
-void csv_connection::setFileName(QString name) {
+void csv_connection::setFileName(QString name)
+{
     filename = name;
 }
 
-QString csv_connection::getFileName() {
+QString csv_connection::getFileName()
+{
     return filename;
 }
 
-void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
-
+void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
+{
     file.seek(0);
     QDataStream access(&file);
 
@@ -579,7 +557,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     if (filePathString == "error") {
         qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
-        return;}
+        return;
+    }
 
     QDir saveDir(filePathString);
 
@@ -625,23 +604,30 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     if ((writeBinary || exportBinary) && this->getNumRows() > MIN_CONNS_TO_FORCE_BINARY) {
 
         // construct the save file name based upon whether we are saving the project or outputting for simulation
-        QString saveFileName;
+        QString saveFullFileName;
         if (exportBinary) {
 
-            saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
+            saveFullFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
 
         } else if (writeBinary) {
 
-            saveFileName = saveDir.absoluteFilePath(this->filename + ".bin");
+            // get a new unique name for the save directory...
+            saveFullFileName = saveDir.absolutePath();
+            this->setUniqueName(&saveFullFileName);
 
         } else {
             qDebug() << "Error - this shouldn't happen! (connection.cpp write_node_xml)";
             return;
         }
 
+        // extract the filename without the path...
+        QString saveFileName;
+        QStringList fileBits = saveFullFileName.split(QDir::toNativeSeparators("/"));
+        saveFileName = fileBits.last();
+
         // add a tag to the binary file
         xmlOut.writeEmptyElement("BinaryFile");
-        xmlOut.writeAttribute("file_name", this->filename + ".bin");
+        xmlOut.writeAttribute("file_name", saveFileName);
         xmlOut.writeAttribute("num_connections", QString::number(getNumRows()));
         xmlOut.writeAttribute("explicit_delay_flag", QString::number(float(getNumCols()==3)));
         xmlOut.writeAttribute("packed_data", "true");
@@ -652,11 +638,11 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             this->getAllData(conns);
 
             // write out
-            QFile export_file(saveFileName);
+            QFile export_file(saveFullFileName);
 
             if (!export_file.open( QIODevice::WriteOnly)) {
                 QMessageBox msgBox;
-                msgBox.setText("Error creating exported binary connection file '" + saveFileName
+                msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
                                + "' (Check disk space; permissions)");
                 msgBox.exec();
                 return;
@@ -674,11 +660,11 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
             this->getAllData(conns);
 
             // write out
-            QFile export_file(saveFileName);
+            QFile export_file(saveFullFileName);
 
             if (!export_file.open( QIODevice::WriteOnly)) {
                 QMessageBox msgBox;
-                msgBox.setText("Error creating exported binary connection file '" + saveFileName
+                msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
                                + "' (Check disk space; permissions)");
                 msgBox.exec();
                 return;
@@ -723,7 +709,6 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
     }
 
     xmlOut.writeEndElement(); // connectionList
-
 }
 
 /*!
@@ -734,13 +719,12 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
  * Accessor for getting the connectivity generator to write its description into the Project
  * metaData.xml file.
  */
-void csv_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e) {
-
+void csv_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e)
+{
     // pass this task on to the generator connection
     if (this->generator != NULL) {
         this->generator->write_metadata_xml(meta, e);
     }
-
 }
 
 /*!
@@ -749,17 +733,16 @@ void csv_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e) {
  *
  * Read the metaData for a connection generator - may be blank if there is not one
  */
-void csv_connection::read_metadata_xml(QDomNode &e) {
-
+void csv_connection::read_metadata_xml(QDomNode &e)
+{
     // pass this task on to the generator connection
     if (this->generator != NULL) {
         this->generator->read_metadata_xml(e);
     }
-
 }
 
-void csv_connection::import_parameters_from_xml(QDomNode &e) {
-
+void csv_connection::import_parameters_from_xml(QDomNode &e)
+{
     QDomNodeList BinaryFileList = e.toElement().elementsByTagName("BinaryFile");
 
     if (BinaryFileList.count() == 1) {
@@ -794,7 +777,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
             if (filePathString == "error") {
                 qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
-                return;}
+                return;
+            }
 
             QDir filePath(filePathString);
 
@@ -835,7 +819,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
                 QMessageBox msgBox;
                 msgBox.setText("Could not open temporary file for Explicit Connection");
                 msgBox.exec();
-                return;}
+                return;
+            }
 
             // now we need to read from the savedData file and put this into a QDataStream...
             this->import_packed_binary(savedData);
@@ -856,7 +841,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
             if (filePathString == "error") {
                 qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
-                return;}
+                return;
+            }
 
             QDir filePath(filePathString);
 
@@ -900,7 +886,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
                 QMessageBox msgBox;
                 msgBox.setText("Could not open temporary file for Explicit Connection");
                 msgBox.exec();
-                return;}
+                return;
+            }
         }
 
     }
@@ -975,16 +962,14 @@ void csv_connection::import_parameters_from_xml(QDomNode &e) {
 
     // flush out the output...
     file.flush();
-
 }
 
-void csv_connection::fetch_headings() {
-
-
+void csv_connection::fetch_headings()
+{
 }
 
-void csv_connection::import_csv(QString fileName) {
-
+void csv_connection::import_csv(QString fileName)
+{
     this->numRows = 0;
 
     this->changes.clear();
@@ -995,18 +980,19 @@ void csv_connection::import_csv(QString fileName) {
     // open the input csv file for reading
     QFile fileIn(fileName);
 
-    if( !fileIn.open( QIODevice::ReadOnly ) ) {
+    if (!fileIn.open(QIODevice::ReadOnly)) {
         QMessageBox msgBox;
         msgBox.setText("Could not open the selected file");
         msgBox.exec();
-        return;}
+        return;
+    }
 
     // if no filename already
     if (this->filename.size() < 1) {
         setUniqueName();
     }
 
-   // use textstream so we can read lines into a QString
+    // use textstream so we can read lines into a QString
     QTextStream stream(&fileIn);
 
     file.seek(0);
@@ -1044,13 +1030,15 @@ void csv_connection::import_csv(QString fileName) {
             QMessageBox msgBox;
             msgBox.setText("CSV file has too many columns");
             msgBox.exec();
-            return;}
+            return;
+        }
 
         if (fields.size() < 2) {
             QMessageBox msgBox;
             msgBox.setText("CSV file has too few columns");
             msgBox.exec();
-            return;}
+            return;
+        }
 
         if (numFields == -1) {
             numFields = fields.size();
@@ -1081,12 +1069,11 @@ void csv_connection::import_csv(QString fileName) {
 
     // flush out the output...
     this->file.flush();
-
 }
 
 
-void csv_connection::import_packed_binary(QFile &fileIn) {
-
+void csv_connection::import_packed_binary(QFile &fileIn)
+{
     this->changes.clear();
 
     //wipe file;
@@ -1130,22 +1117,25 @@ void csv_connection::import_packed_binary(QFile &fileIn) {
 
     // flush out the output...
     this->file.flush();
-
 }
 
-int csv_connection::getNumRows() {
+int csv_connection::getNumRows()
+{
     return this->numRows;
 }
 
-void csv_connection::setNumRows(int num) {
+void csv_connection::setNumRows(int num)
+{
     this->numRows = num;
 }
 
-int csv_connection::getNumCols() {
+int csv_connection::getNumCols()
+{
     return this->values.size();
 }
 
-void csv_connection::setNumCols(int num) {
+void csv_connection::setNumCols(int num)
+{
     if (num == 2) {
         this->values.clear();
         this->values.push_back("src");
@@ -1160,8 +1150,8 @@ void csv_connection::setNumCols(int num) {
 }
 
 
-void csv_connection::getAllData(QVector < conn > &conns) {
-
+void csv_connection::getAllData(QVector < conn > &conns)
+{
     //qDebug() << "ALL CONN DATA FETCHED";
 
     // rewind file
@@ -1193,13 +1183,11 @@ void csv_connection::getAllData(QVector < conn > &conns) {
 
         conns[counter] = (newConn);
         ++counter;
-
-
     }
 }
 
-float csv_connection::getData(int rowV, int col) {
-
+float csv_connection::getData(int rowV, int col)
+{
     int colVal = getNumCols();
     if (colVal > 2) ++colVal;
     // we multiply by cols +1 as QT seems to do some padding on the stream
@@ -1225,11 +1213,10 @@ float csv_connection::getData(int rowV, int col) {
     }
 
     return -0.1f;
-
 }
 
-float csv_connection::getData(QModelIndex &index) {
-
+float csv_connection::getData(QModelIndex &index)
+{
     int colVal = getNumCols();
     if (colVal > 2) ++colVal;
     // we multiply by cols +1 as QT seems to do some padding on the stream
@@ -1255,32 +1242,43 @@ float csv_connection::getData(QModelIndex &index) {
     }
 
     return -0.1f;
-
 }
 
-void csv_connection::setUniqueName() {
+void csv_connection::setUniqueName(QString *path)
+{
+    // generate a unique filename to save the weights under
 
-    //generate a unique filename to save the weights under
-
-    // start investigating the library
+    // are we writing to the Library or to a save dir?
+    QDir lib_dir;
+    if (path == NULL) {
+        // start investigating the library
     #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
-#else
-    QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-#endif
-    if (!lib_dir.exists()) {
-        if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-            qDebug() << "error creating library";
+        lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
+    #else
+        lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
+    #endif
+        if (!lib_dir.exists()) {
+            if (!lib_dir.mkpath(lib_dir.absolutePath())) {
+                qDebug() << "error creating library";
+            }
         }
     }
+    else
+    {
+        lib_dir = QDir(*path);
+        qDebug() << lib_dir;
+    }
 
+    // Get a list of the existing files in the directory. The
+    // behaviour here was previously to avoid over-writing any
+    // connectionN.bin files. I believe it's preferable to over-write
+    // connection files, which makes it easier to track a model in
+    // git. To do this, we need to clear out the connection binaries
+    // before calling this function the first time.
     QStringList filters;
     filters << "conn*";
     lib_dir.setNameFilters(filters);
-
     QStringList files = lib_dir.entryList();
-
-
 
     QString baseName = "connection";
     QString uniqueName;
@@ -1289,6 +1287,9 @@ void csv_connection::setUniqueName() {
     while(!unique) {
         unique = true;
         uniqueName = baseName + QString::number(float(index));
+        if (path != NULL) {
+            uniqueName += ".bin";
+        }
         for (int i = 0; i < (int)files.count(); ++i) {
             // see if the new name is unique
             if (uniqueName == files[i]) {
@@ -1297,20 +1298,24 @@ void csv_connection::setUniqueName() {
             }
         }
     }
-    this->filename = uniqueName;
 
+    if (path == NULL) {
+        this->filename = uniqueName;
+    }
+    else
+    {
+        *path = *path + QDir::toNativeSeparators("/") + uniqueName;
+        qDebug() << *path;
+    }
 }
 
-QString csv_connection::getHeader(int section) {
-
+QString csv_connection::getHeader(int section)
+{
     return this->values[section];
-
 }
 
-void csv_connection::setData(const QModelIndex & index, float value) {
-
-
-
+void csv_connection::setData(const QModelIndex & index, float value)
+{
     // get a datastream to serialise the data
     file.seek(file.size());
 
@@ -1338,8 +1343,8 @@ void csv_connection::setData(const QModelIndex & index, float value) {
     file.flush();
 }
 
-void csv_connection::setData(int row, int col, float value) {
-
+void csv_connection::setData(int row, int col, float value)
+{
     // get a datastream to serialise the data
     file.seek(file.size());
 
@@ -1367,17 +1372,20 @@ void csv_connection::setData(int row, int col, float value) {
     file.flush();
 }
 
-void csv_connection::clearData() {
+void csv_connection::clearData()
+{
     file.remove();
     // open the storage file
     if( !this->file.open( QIODevice::ReadWrite ) ) {
         QMessageBox msgBox;
         msgBox.setText("Could not open output file for conversion");
         msgBox.exec();
-        return;}
+        return;
+    }
 }
 
-void csv_connection::abortChanges() {
+void csv_connection::abortChanges()
+{
     changes.clear();
 }
 
@@ -1401,11 +1409,13 @@ kernel_connection::~kernel_connection()
 {
 }
 
-QLayout * kernel_connection::drawLayout(rootData*, viewVZLayoutEditHandler*, rootLayout*) {
+QLayout * kernel_connection::drawLayout(rootData*, viewVZLayoutEditHandler*, rootLayout*)
+{
     return new QVBoxLayout();
 }
 
-bool kernel_connection::changed() {
+bool kernel_connection::changed()
+{
     if (src->numNeurons != srcSize || dst->numNeurons != dstSize) {
         return true;
     } else {
@@ -1413,7 +1423,8 @@ bool kernel_connection::changed() {
     }
 }
 
-void kernel_connection::setUnchanged(bool state) {
+void kernel_connection::setUnchanged(bool state)
+{
     if (state) {
         srcSize = src->numNeurons;
         dstSize = dst->numNeurons;
@@ -1421,29 +1432,32 @@ void kernel_connection::setUnchanged(bool state) {
     hasChanged = !state;
 }
 
-void kernel_connection::setKernelSize(int size) {
+void kernel_connection::setKernelSize(int size)
+{
     if (kernel_size != size) {
         hasChanged = true;
         kernel_size = size;
     }
 }
 
-void kernel_connection::setKernelScale(float scale) {
+void kernel_connection::setKernelScale(float scale)
+{
     if (kernel_scale != scale) {
         hasChanged = true;
         kernel_scale = scale;
     }
 }
 
-void kernel_connection::setKernel(int i, int j, float value) {
+void kernel_connection::setKernel(int i, int j, float value)
+{
     if (kernel[i][j] != value) {
         hasChanged = true;
         kernel[i][j] = value;
     }
 }
 
-void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
-
+void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut)
+{
     // are we outputting for simulation
     bool forSim = false;
     QSettings settings;
@@ -1544,19 +1558,16 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut) {
                 access.writeRawData((char*) &connections[i].src, sizeof(int));
                 access.writeRawData((char*) &connections[i].dst, sizeof(int));
             }
-
         }
 
         this->writeDelay(xmlOut);
 
         xmlOut.writeEndElement(); // ConnectionList
     }
-
-
 }
 
-void kernel_connection::import_parameters_from_xml(QDomNode &e) {
-
+void kernel_connection::import_parameters_from_xml(QDomNode &e)
+{
     QDomNodeList kernelNode = e.toElement().elementsByTagName("Kernel");
     if (kernelNode.size() == 1) {
         QDomNode n = kernelNode.item(0);
@@ -1567,7 +1578,6 @@ void kernel_connection::import_parameters_from_xml(QDomNode &e) {
             for (int j = 0; j < this->kernel_size; ++j)
                 kernel[i][j] = rows.item(i).toElement().attribute("col" + QString::number(float(j))).toFloat();
         }
-
     }
 
     QDomNodeList delayProp = e.toElement().elementsByTagName("Delay");
@@ -1602,28 +1612,22 @@ void kernel_connection::import_parameters_from_xml(QDomNode &e) {
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
             this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
-
     }
 }
 
-void kernel_connection::generate_connections() {
-
+void kernel_connection::generate_connections()
+{
     conns->clear();
 
-    // if src or dst hasn't generated locations then do it
     QString errorLog;
-    //if (src->layoutType->locations.size() == 0) {
-            src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
-            if (!errorLog.isEmpty()) {
-                return;
-            }
-    //}
-    //if (dst->layoutType->locations.size() == 0) {
-            dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
-            if (!errorLog.isEmpty()) {
-                return;
-            }
-    //}
+    src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
+    if (!errorLog.isEmpty()) {
+        return;
+    }
+    dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
+    if (!errorLog.isEmpty()) {
+        return;
+    }
 
     float total_ops = src->layoutType->locations.size();
     int scale_val = round(100000000.0/(src->layoutType->locations.size()*dst->layoutType->locations.size()));
@@ -1677,10 +1681,9 @@ void kernel_connection::generate_connections() {
     emit connectionsDone();
 }
 
-bool kernel_connection::isList() {
-
+bool kernel_connection::isList()
+{
     return this->isAList;
-
 }
 
 pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
@@ -1702,8 +1705,8 @@ pythonscript_connection::~pythonscript_connection()
 {
 }
 
-int pythonscript_connection::getIndex() {
-
+int pythonscript_connection::getIndex()
+{
     QSettings settings;
     settings.beginGroup("pythonscripts");
     QStringList scripts = settings.childKeys();
@@ -1721,7 +1724,6 @@ int pythonscript_connection::getIndex() {
 
 QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)
 {
-
     // refetch the script text
     QSettings settings;
     // enter group of scripts
@@ -2010,22 +2012,20 @@ QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditH
     }
 
     return vlay;
-
 }
 
-void pythonscript_connection::enableGen(double) {
-
+void pythonscript_connection::enableGen(double)
+{
     emit setGenEnabled(true);
-
 }
 
-void pythonscript_connection::enableGen(int) {
-
+void pythonscript_connection::enableGen(int)
+{
     emit setGenEnabled(true);
-
 }
 
-bool pythonscript_connection::changed() {
+bool pythonscript_connection::changed()
+{
     // check all pars
     bool par_changed = false;
     for (int i = 0; i <this->lastGeneratedParValues.size(); ++i) {
@@ -2049,7 +2049,8 @@ bool pythonscript_connection::changed() {
     }
 }
 
-void pythonscript_connection::setUnchanged(bool state) {
+void pythonscript_connection::setUnchanged(bool state)
+{
     if (state) {
         srcSize = src->numNeurons;
         dstSize = dst->numNeurons;
@@ -2062,7 +2063,8 @@ void pythonscript_connection::setUnchanged(bool state) {
     hasChanged = !state;
 }
 
-void pythonscript_connection::configureFromScript(QString script) {
+void pythonscript_connection::configureFromScript(QString script)
+{
     // add the script to the class variable
     this->scriptText = script;
     // store old pars
@@ -2110,11 +2112,10 @@ void pythonscript_connection::configureFromScript(QString script) {
     this->lastGeneratedParValues.clear();
     this->lastGeneratedParValues.resize(this->parValues.size());
     this->lastGeneratedParValues.fill(0);
-
 }
 
-void pythonscript_connection::regenerateConnections() {
-
+void pythonscript_connection::regenerateConnections()
+{
     // refetch the script text
     QSettings settings;
     // enter group of scripts
@@ -2160,14 +2161,13 @@ void pythonscript_connection::regenerateConnections() {
     delete connGenerationMutex;
 }
 
-void pythonscript_connection::write_node_xml(QXmlStreamWriter &) {
-
+void pythonscript_connection::write_node_xml(QXmlStreamWriter &)
+{
     // this should never be called
-
 }
 
-void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e) {
-
+void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e)
+{
     // write out the settings for this generator
 
     // write out the script and parameters
@@ -2191,11 +2191,10 @@ void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e
     if (!this->weightProp.isEmpty()) {
         config.setAttribute("weightProperty", this->weightProp);
     }
-
 }
 
-void pythonscript_connection::read_metadata_xml(QDomNode &e) {
-
+void pythonscript_connection::read_metadata_xml(QDomNode &e)
+{
     // read in the settings for this generator
     QDomNode node = e.firstChild();
 
@@ -2272,10 +2271,10 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e) {
     }
     // exit the scripts group
     settings.endGroup();
-
 }
 
-ParameterData * pythonscript_connection::getPropPointer() {
+ParameterData * pythonscript_connection::getPropPointer()
+{
     for (int i = 0; i < this->src->projections.size(); ++i) {
         QSharedPointer <projection> proj = this->src->projections[i];
         for (int j = 0; j < proj->synapses.size(); ++j) {
@@ -2314,7 +2313,8 @@ ParameterData * pythonscript_connection::getPropPointer() {
     return NULL;
 }
 
-QStringList pythonscript_connection::getPropList() {
+QStringList pythonscript_connection::getPropList()
+{
     QStringList list;
     for (int i = 0; i < this->src->projections.size(); ++i) {
         QSharedPointer <projection> proj = this->src->projections[i];
@@ -2350,10 +2350,9 @@ QStringList pythonscript_connection::getPropList() {
     return list;
 }
 
-void pythonscript_connection::import_parameters_from_xml(QDomNode &) {
-
+void pythonscript_connection::import_parameters_from_xml(QDomNode &)
+{
     // this should never be called
-
 }
 
 /*!
@@ -2362,7 +2361,8 @@ void pythonscript_connection::import_parameters_from_xml(QDomNode &) {
  * \return
  * A simple function to take a QVector and put it into a Python List
  */
-PyObject * vectorToList(QVector <float> * vect) {
+PyObject * vectorToList(QVector <float> * vect)
+{
     PyObject * vectList = PyList_New(vect->size());
     for (int i = 0; i < vect->size(); ++i) {
         PyList_SetItem(vectList, i, PyFloat_FromDouble((double) (*vect)[i]));
@@ -2377,13 +2377,16 @@ PyObject * vectorToList(QVector <float> * vect) {
  * A simple function to take a vector of locations and pack them into a Python list of Python tuples
  * each containing the three values (x,y,z)
  */
-PyObject * vectorLocToList(QVector <loc> * vect) {
+PyObject * vectorLocToList(QVector <loc> * vect)
+{
     // create the new PyList
     PyObject * vectList = PyList_New(vect->size());
     for (int i = 0; i < vect->size(); ++i) {
         // create a tuple from the three vector values then
         // add the tuple to the list
-        PyList_SetItem(vectList, i, PyTuple_Pack(3,PyFloat_FromDouble((double) (*vect)[i].x), PyFloat_FromDouble((double) (*vect)[i].y), PyFloat_FromDouble((double) (*vect)[i].z)));
+        PyList_SetItem(vectList, i, PyTuple_Pack(3,PyFloat_FromDouble((double) (*vect)[i].x),
+                                                 PyFloat_FromDouble((double) (*vect)[i].y),
+                                                 PyFloat_FromDouble((double) (*vect)[i].z)));
     }
     return vectList;
 }
@@ -2394,7 +2397,8 @@ PyObject * vectorLocToList(QVector <loc> * vect) {
  * \return
  * A simple function to take  Python list and extract it into a QVector
  */
-QVector <float> listToVector(PyObject * list) {
+QVector <float> listToVector(PyObject * list)
+{
     QVector <float> vect;
     if (PyList_Size(list) < 1) {
         vect.push_back(-234.56);
@@ -2407,7 +2411,8 @@ QVector <float> listToVector(PyObject * list) {
     return vect;
 }
 
-struct outputUnPackaged {
+struct outputUnPackaged
+{
     QVector <conn> connections;
     QVector <float> weights;
 };
@@ -2418,7 +2423,8 @@ struct outputUnPackaged {
  * \return
  * A simple function to take the output of a connection function and unpack it
  */
-outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight) {
+outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
+{
     // create the structure to hold the unpacked output
     outputUnPackaged outUnPacked;
     if (PyList_Size(output) < 1) {
@@ -2461,8 +2467,8 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
  * \return
  * A simple function to take a string and make it into a Python function which can then be called
  */
-PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs) {
-
+PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
+{
     // get the default dict, so we have access to the built in modules
     PyObject * main = PyImport_AddModule("__main__");
     PyObject *pGlobal = PyModule_GetDict(main);
@@ -2506,8 +2512,8 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs) {
  * function called to generate the connection into an explicit list -
  * used to draw the connections in the 3D view or export for simulation
  */
-void pythonscript_connection::generate_connections() {
-
+void pythonscript_connection::generate_connections()
+{
     conns->clear();
 
     this->pythonErrors.clear();
@@ -2641,200 +2647,9 @@ void pythonscript_connection::generate_connections() {
     // if we get to the end then that's good enough
     this->scriptValidates = true;
     this->setUnchanged(true);
-
 }
 
-/*void pythonscript_connection::convertToList(bool check) {
-
-    // instantiate the connection for simulators etc...
-    this->isAList = check;
-    QSharedPointer<systemObject> ptr;
-    ptr = (QSharedPointer<systemObject>) sender()->property("ptrSrc").value<void *>();
-    CHECK_CAST(ptr);
-    src = dynamic_cast<QSharedPointer <population>> (ptr);
-    CHECK_CAST(src);
-    ptr = (QSharedPointer<systemObject>) sender()->property("ptrDst").value<void *>();
-    CHECK_CAST(ptr);
-    dst = dynamic_cast<QSharedPointer <population>> (ptr);
-    CHECK_CAST(dst);
-
-}*/
-
-bool pythonscript_connection::isList() {
-
+bool pythonscript_connection::isList()
+{
     return this->isAList;
-
 }
-
-
-
-
-/*
-
-void csv_connection::flushChangesToDisk() {
-
-    // not used anymore!
-    return;
-
-    // set the filename
-    QString lib_path = QApplication::applicationDirPath();
-    QDir lib_dir = QDir(lib_path + "/lib");
-    this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
-
-    //open file for reading
-    if( !this->file.open( QIODevice::ReadOnly ) ) {
-        QMessageBox msgBox;
-        msgBox.setText("Error opening internal file - is the drive out of space?");
-        msgBox.exec();
-        }
-
-    // start investigating the library and find a new filename to transfer the file to
-    QStringList filters;
-    filters << "conn*";
-    lib_dir.setNameFilters(filters);
-
-    QStringList files = lib_dir.entryList();
-
-    QString baseName = "connection";
-    QString uniqueName;
-    bool unique = false;
-    int index = 0;
-    while(!unique) {
-        unique = true;
-        uniqueName = baseName + QString::number(float(index));
-        for (int i = 0; i < (int)files.count(); ++i) {
-            // see if the new name is unique
-            if (uniqueName == files[i]) {
-                unique = false;
-                ++index;
-            }
-        }
-    }
-    QString newFilename = uniqueName;
-
-    QFile newFile;
-    newFile.setFileName(lib_dir.absoluteFilePath(newFilename));
-
-    //open new file for writing
-    if( !newFile.open( QIODevice::WriteOnly ) ) {
-        QMessageBox msgBox;
-        msgBox.setText("Error opening internal file - is the drive out of space?");
-        msgBox.exec();
-        }
-
-
-    // sort the changes so that we have a list where the first change to be applied is first
-    QVector < change > sortedChanges;
-    while (changes.size() > 0) {
-        int ind = 0;
-        int minRow = 1000000000;
-        int minCol = 1000000000;
-        for (int i = 0; i < changes.size(); ++i) {
-
-            if (changes[i].row < minRow) {
-                ind = i;
-                minRow = changes[i].row;
-                minCol = changes[i].col;
-            }
-            else if (changes[i].row == minRow && changes[i].col < minCol) {
-                ind = i;
-                minRow = changes[i].row;
-                minCol = changes[i].col;
-            } else if (changes[i].row == minRow && changes[i].col == minCol) {
-                // remove superseded change
-                changes.erase(changes.begin()+ind, changes.begin()+ind+1);
-                --i;
-                // set new lowest change
-                ind = i;
-                minRow = changes[i].row;
-                minCol = changes[i].col;
-            }
-
-        }
-        // add lowest change to new list and erase from main list;
-        sortedChanges.push_back(changes[ind]);
-        changes.erase(changes.begin()+ind, changes.begin()+ind+1);
-    }
-
-    this->xmlIn.setDevice(&this->file);
-
-    this->xmlOut.setDevice(&newFile);
-
-    int counter = 0;
-
-    // start the document
-    this->xmlOut.setAutoFormatting(true);
-    this->xmlOut.writeStartDocument();
-    this->xmlOut.writeStartElement("NineMLConnection");
-
-    // stream from one file to the other, applying changes as we go!
-    while(!this->xmlIn.atEnd()) {
-        if(xmlIn.readNext()) {
-
-            if (this->xmlIn.isStartElement() && this->xmlIn.name() == "connection") {
-
-                QVector < float > returnVals;
-
-                // read in
-                for (int i = 0; i < (int)this->xmlIn.attributes().count(); ++i) {
-                    returnVals.push_back(this->xmlIn.attributes().value("value"+QString::number(float(i))).toString().toFloat());
-                }
-
-                // apply changes
-                if (sortedChanges.size()) {
-                    while (sortedChanges.front().row == counter) {
-                        returnVals[sortedChanges.front().col] = sortedChanges.front().value;
-                        sortedChanges.erase(sortedChanges.begin());
-                        // get out if we have run out of changes
-                        if (!sortedChanges.size()) break;
-                    }
-                }
-
-                // write out
-                this->xmlOut.writeEmptyElement("connection");
-                for (int i = 0; i < returnVals.size(); ++i) {
-                    QString attr = "value" + QString::number(float(i));
-                    this->xmlOut.writeAttribute(attr, QString::number(returnVals[i]));
-                }
-
-                // increase the number of connections seen
-                ++counter;
-
-            }
-
-        }
-    }
-
-    // flush remaining changes
-    while (sortedChanges.size()) {
-        QVector < float > returnVals;
-
-        while (sortedChanges.front().row == counter) {
-            // changes should be in order
-            returnVals.push_back(sortedChanges.front().value);
-            sortedChanges.erase(sortedChanges.begin());
-            // if we run our then get out of here
-            if (!sortedChanges.size()) break;
-        }
-
-        this->xmlOut.writeEmptyElement("connection");
-        for (int i = 0; i < returnVals.size(); ++i) {
-            QString attr = "value" + QString::number(float(i));
-            this->xmlOut.writeAttribute(attr, QString::number(returnVals[i]));
-        }
-
-        ++counter;
-    }
-    this->xmlOut.writeEndElement();
-    this->xmlOut.writeEndDocument();
-
-    // close up
-    this->file.close();
-    newFile.close();
-    // remove old file
-    QFile::remove(lib_dir.absoluteFilePath(this->filename));
-    // update filename to new file
-    filename = newFilename;
-}
-
-*/

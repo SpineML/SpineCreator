@@ -177,8 +177,7 @@ private:
     QXmlStreamReader xmlIn;
     int numRows;
     QVector < change > changes;
-    void setUniqueName();
-
+    void setUniqueName(QString *path = NULL);
 };
 
 
