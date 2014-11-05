@@ -4,6 +4,7 @@
 vectorListModel::vectorListModel(QObject *parent) :
     QAbstractTableModel(parent)
 {
+    this->selectedData = -1;
 }
 
 int vectorListModel::rowCount(const QModelIndex & /*parent = QModelIndex()*/) const
@@ -37,6 +38,12 @@ QVariant vectorListModel::data(const QModelIndex &index, int role) const
         }
         return list[index.column()][index.row()];
 
+    }
+    if (role == Qt::ForegroundRole) {
+        if (index.row() == selectedData) {
+            return QBrush(QColor::fromRgb(255,0,0));
+        }
+        return QBrush(QColor::fromRgb(0,0,0));
     }
     return QVariant();
 }

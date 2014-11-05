@@ -36,6 +36,7 @@
 #include "undocommands.h"
 #include "batchexperimentwindow.h"
 #include "qmessageboxresizable.h"
+#include <QTimer>
 
 #define NEW_EXPERIMENT_VIEW11
 
@@ -592,6 +593,11 @@ void viewELExptPanelHandler::addExperiment()
 void viewELExptPanelHandler::delExperiment()
 {
     int index = sender()->property("index").toUInt();
+
+    // check we aren't running - don't delete if we are
+    if (data->experiments[index] == this->runExpt) {
+        return;
+    }
 
     data->experiments.erase(data->experiments.begin() + index);
 
@@ -1647,6 +1653,8 @@ void viewELExptPanelHandler::run()
         return;
     }
 
+    this->runExpt = currentExperiment;
+
     QString simName = currentExperiment->setup.simType;
 
     // load path
@@ -1782,6 +1790,38 @@ void viewELExptPanelHandler::run()
     connect(simulator, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(simulatorFinished(int, QProcess::ExitStatus)));
     connect(simulator, SIGNAL(readyReadStandardOutput()), this, SLOT(simulatorStandardOutput()));
     connect(simulator, SIGNAL(readyReadStandardError()), this, SLOT(simulatorStandardError()));
+
+    // now start a timer to check on the simulation progress
+    connect(&simTimeChecker, SIGNAL(timeout()), this, SLOT(checkForSimTime()));
+    this->simTimeMax = currentExperiment->setup.duration;
+    this->simTimeFileName = QDir::toNativeSeparators(wk_dir_string + "/model/time.txt");
+    simTimeChecker.start(17);
+
+}
+
+void viewELExptPanelHandler::checkForSimTime() {
+
+    if (!runExpt) return;
+
+    QFile simTimeFile(simTimeFileName);
+
+    simTimeFile.open(QFile::ReadOnly);
+
+    if (simTimeFile.isOpen()) {
+        qDebug() << "here3";
+        float simTimeCurr = 0;
+        QTextStream tStream(&simTimeFile);
+        QString line = tStream.readLine();
+        simTimeCurr = line.toFloat();
+        // update the UI progress bar
+        float time = simTimeCurr / this->simTimeMax*1000;
+        if (runButton) {
+            runButton->setText(QString::number(simTimeCurr) + "/" + QString::number(simTimeMax*1000));
+        }
+        //runButton->setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(255, 255, 255, 255), stop:" + QString::number(time) + " rgba(255, 255, 255, 255), stop:" + QString::number(time+0.01)  + " rgba(255, 0, 0, 255), stop:1 rgba(255, 0, 0, 255))");
+        //runExpt->
+    }
+
 }
 
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
@@ -1791,6 +1831,14 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         runButton->setEnabled(true);
         QCommonStyle style;
         runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+    }
+
+    // stop updating the bar
+    simTimeChecker.disconnect();
+    simTimeChecker.stop();
+    this->runExpt = NULL;
+    if (runButton) {
+        runButton->setText("Run experiment");
     }
 
     // check for errors we can present
