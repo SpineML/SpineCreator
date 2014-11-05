@@ -768,14 +768,14 @@ void MainWindow::initViewEL()
     QCommonStyle style;
 
     // add a run button to the toolbar
-    QToolButton * run = new QToolButton();
+    /*QToolButton * run = new QToolButton();
     run->setMinimumHeight(27);
     run->setStyleSheet("QToolButton { color: white; border: 0px; }");
     run->setText("Run experiment");
     run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     run->setToolTip("Run the selected experiment in the chosen simulator");
     run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-    toolbar0->layout()->addWidget(run);
+    toolbar0->layout()->addWidget(run);*/
     ((QHBoxLayout *) toolbar0->layout())->addStretch();
 
     QFrame* line0b = new QFrame();
@@ -788,8 +788,8 @@ void MainWindow::initViewEL()
     this->viewELhandler = new viewELExptPanelHandler(&(this->viewEL), &(this->data));
 
     // internal connections
-    connect(run, SIGNAL(clicked()), this->viewELhandler, SLOT(run()));
-    connect(this->viewELhandler, SIGNAL(enableRun(bool)), run, SLOT(setEnabled(bool)));
+    //connect(run, SIGNAL(clicked()), this->viewELhandler, SLOT(run()));
+    //connect(this->viewELhandler, SIGNAL(enableRun(bool)), run, SLOT(setEnabled(bool)));
 }
 
 void MainWindow::connectViewEL()
