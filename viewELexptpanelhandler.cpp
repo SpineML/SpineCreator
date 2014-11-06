@@ -1693,6 +1693,8 @@ void viewELExptPanelHandler::run()
     }
     settings.endGroup();
 
+    // Note: SpineML_2_BRAHMS now works directly on the model, as saved by SC, so no need to duplicate.
+#ifdef MODEL_NEEDS_DUPLICATING_BEFORE_SIM_RUNS
     settings.setValue("simulator_export_path",QDir::toNativeSeparators(wk_dir_string + "/model/"));
     settings.setValue("export_binary",settings.value("simulators/" + simName + "/binary").toBool());
 
@@ -1713,6 +1715,7 @@ void viewELExptPanelHandler::run()
 
     settings.remove("simulator_export_path");
     settings.remove("export_binary");
+#endif
 
     QProcess * simulator = new QProcess;
     if (!simulator) {
@@ -1731,7 +1734,15 @@ void viewELExptPanelHandler::run()
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
 
-    simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath() << " -e" << QString(currentExptNum));
+    QFileInfo projFileInfo(this->data->currProject->filePath);
+    QString modelpath(projFileInfo.dir().path());
+    {
+        QStringList al;
+        al << "-m" << modelpath
+           << "-w" << wk_dir.absolutePath()
+           << "-e" << QString("%1").arg(currentExptNum);
+        simulator->start(path, al);
+    }
 
     // Wait a couple of seconds for the process to start
     if (!simulator->waitForStarted(100)) {
