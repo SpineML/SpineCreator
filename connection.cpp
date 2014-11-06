@@ -562,19 +562,17 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 
     QDir saveDir(filePathString);
 
-    // load path
-    bool exportBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
+    bool saveBinaryConnections = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
 
     // write containing tag
     xmlOut.writeStartElement("ConnectionList");
 
-    // if we have greater than 30 rows and we want to write to binary then write binary file
+    // if we have more than 30 rows and we want to write to binary then write binary file
     // (less than 30 rows is sufficiently compact that it should go in the XML)
     QString saveFullFileName;
-    if (exportBinary && this->getNumRows() > 30) {
+    if (saveBinaryConnections && this->getNumRows() > MIN_CONNS_TO_FORCE_BINARY) {
 
-        // FIXME: simulator_export_path isn't set at this point, when saving the project.
-        saveFullFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + this->filename + ".bin");
+        saveFullFileName = QDir::toNativeSeparators(settings.value("files/currentFileName").toString() + "/" + this->filename + ".bin");
 
         // extract the filename without the path...
         QString saveFileName;
@@ -1453,9 +1451,9 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut)
         delete connGenerationMutex;
 
         // load path
-        bool exportBinary = settings.value("export_binary").toBool();
+        bool saveBinaryConnections = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
 
-        if (!exportBinary || connections.size() < MIN_CONNS_TO_FORCE_BINARY) {
+        if (!saveBinaryConnections || connections.size() < MIN_CONNS_TO_FORCE_BINARY) {
 
             // loop through connections writing them out
             for (int i=0; i < connections.size(); ++i) {
@@ -1473,7 +1471,7 @@ void kernel_connection::write_node_xml(QXmlStreamWriter &xmlOut)
             export_filename.chop(1);
             export_filename[0] = 'C';
             export_filename += ".bin"; // need to generate a unique filename - preferably a descriptive one... but not for now!
-            QString saveFileName = QDir::toNativeSeparators(settings.value("simulator_export_path").toString() + "/" + export_filename);
+            QString saveFileName = QDir::toNativeSeparators(settings.value("current_model_path").toString() + "/" + export_filename);
 
             // add a tag to the binary file
             xmlOut.writeEmptyElement("BinaryFile");
