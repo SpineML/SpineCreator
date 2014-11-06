@@ -254,44 +254,6 @@ void BatchExperimentWindow::simulationDone() {
                 } else {
                     results.push_back(-1);
                 }
-<<<<<<< HEAD
-            }
-        }
-    } else {
-        qDebug() << "All logs...";
-        for (int i = 0; i < logs->logs.size(); ++i) {
-            qDebug() << "Log " << i;
-            logData * log = logs->logs[i];
-            // extract the required data and store
-            for (int j = 0; j < this->currExpt->outs.size(); ++j) {
-                // for each logged value in the experiment
-                if (this->currExpt->outs[j]->portIsAnalog) {
-                    QString possibleLogName = this->currExpt->outs[j]->source->getXMLName() + "_" + this->currExpt->outs[j]->portName + "_log.bin";
-                    possibleLogName.replace(" ", "_");
-                    if (log->logName == possibleLogName) {
-                        QVector < double > rowData;
-                        float timeIndex = ui->time_log->value();
-                        if (timeIndex < 0) {
-                            rowData = log->getRow(log->endTime/currExpt->setup.dt);
-                            qDebug() << "rowData size = " << rowData.size();
-                            if (rowData.size() > ui->index_log->value()) {
-                                results.push_back(rowData[ui->index_log->value()]);
-                                num_logged_vals++;
-                            }
-                        } else if (timeIndex < log->endTime) {
-                            rowData = log->getRow(timeIndex/currExpt->setup.dt);
-                            if (rowData.size() > ui->index_log->value()) {
-                                results.push_back(rowData[ui->index_log->value()]);
-                                num_logged_vals++;
-                            }
-                        } else {
-                            results.push_back(-1);
-                            num_logged_vals++;
-                        }
-                    }
-                }
-=======
->>>>>>> Stuff for interfacing with BRAHMS through files
             }
         }
     } else {

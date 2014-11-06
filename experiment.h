@@ -250,6 +250,9 @@ public:
     bool subEdit;
     QLabel * progressBar;
 
+    bool subEdit;
+    QLabel * progressBar;
+
 private:
     exptBox * currBoxPtr;
 

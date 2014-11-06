@@ -1874,6 +1874,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
         QCommonStyle style;
         runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+
     }
 
     // stop updating the bar

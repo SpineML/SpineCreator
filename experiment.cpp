@@ -48,6 +48,13 @@ experiment::experiment()
                                + QString("stop:") + QString::number(0.0) + QString(" rgba(150, 255, 150, 255), stop:")  + QString::number(0.0+0.0) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
     //this->progressBar->setStyleSheet("background-color: red");
 
+    subEdit = false;
+    this->progressBar = new QLabel;
+    this->progressBar->setMaximumHeight(10);
+    this->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 255), ") \
+                               + QString("stop:") + QString::number(0.0) + QString(" rgba(150, 255, 150, 255), stop:")  + QString::number(0.0+0.0) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
+    //this->progressBar->setStyleSheet("background-color: red");
+
 }
 
 experiment::~experiment() {
