@@ -42,8 +42,11 @@ saveNetworkImageDialog::saveNetworkImageDialog(rootData * data, QString fileName
     this->fileName = fileName;
 
     // setup combobox
+    this->style = standardDrawStyle;
+    ui->comboBox->addItem("SpineCreator");
     ui->comboBox->addItem("Circle and Arrow");
     ui->comboBox->setCurrentIndex(0);
+    connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeDrawStyle(int)));
 
     // setup sizes
     ui->scale_spin->setValue(1.0);
@@ -233,7 +236,7 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
     // Just render selection:
     for (int i = 0; i < list.size(); ++i) {
 
-            list[i]->draw(painter, 200.0*scale, -bounds.center().x(), -bounds.center().y(), bounds.width()*100*scale, bounds.height()*100*scale, data->popImage, microcircuitDrawStyle);
+            list[i]->draw(painter, 200.0*scale, -bounds.center().x(), -bounds.center().y(), bounds.width()*100*scale, bounds.height()*100*scale, data->popImage, this->style);
 
     }
 
@@ -281,8 +284,25 @@ void saveNetworkImageDialog::changeHeight(double value) {
     reDrawPreview();
 }
 
+void saveNetworkImageDialog::changeDrawStyle(int index) {
+    switch (index) {
+    case 0:
+        this->style = standardDrawStyle;
+        break;
+    case 1:
+        this->style = microcircuitDrawStyle;
+        break;
+    }
+    reDrawPreview();
+}
 
 void saveNetworkImageDialog::save() {
+
+    this->fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), qgetenv("HOME"), tr("Png (*.png)"));
+
+    if (this->fileName.isEmpty()) {
+        return;
+    }
 
     QPixmap pix;
     if (height > 0)
