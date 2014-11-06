@@ -928,7 +928,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 host->setProperty("ptr", qVariantFromValue((void *) this));
                 host->setProperty("type", "host");
                 host->setText(externalInput.host);
-                host->setToolTip("The host computer IP address, or localhost if the external input is on the same computer as the experiment");
+                host->setToolTip("The host computer IP address, or 127.0.0.1 if the external input is on the same computer as the experiment");
                 QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setInputExternalData()));
                 formlay->addRow("Host IP:", host);
 
@@ -1316,7 +1316,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             host->setText(externalOutput.host);
             if (!isExternal)
                 host->setEnabled(false);
-            host->setToolTip("The host computer IP address, or localhost if the external output is on the same computer as the experiment");
+            host->setToolTip("The host computer IP address, or 127.0.0.1 if the external output is on the same computer as the experiment");
             QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setOutputExternalData()));
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), host, SLOT(setEnabled(bool)));
             formlay->addRow("Host IP:", host);
