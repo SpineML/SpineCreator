@@ -245,10 +245,6 @@ public:
     void select(QVector < experiment * > *);
     void deselect();
     bool editing;
-    bool subEdit;
-
-    bool subEdit;
-    QLabel * progressBar;
 
     bool subEdit;
     QLabel * progressBar;
