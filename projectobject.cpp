@@ -500,7 +500,7 @@ bool projectObject::save_project_file(QString fileName)
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
         QMessageBox msgBox;
-        msgBox.setText("Could not create the project file");
+        msgBox.setText("Could not create the project file '" + fileName + "'");
         msgBox.exec();
         return false;
     }
