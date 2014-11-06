@@ -30,12 +30,6 @@
 #include "viewVZlayoutedithandler.h"
 #include "filteroutundoredoevents.h"
 
-// This is the number of connections there has to be for the system to
-// start writing these connections into a binary file. If there are
-// fewer connections than this number, the connections will be written
-// inline into the XML.
-#define MIN_CONNS_TO_FORCE_BINARY 30
-
 connection::connection()
 {
     type = none;
@@ -2007,7 +2001,7 @@ void pythonscript_connection::configureFromScript(QString script)
     this->scriptText = script;
     // store old pars
     QStringList oldNames = this->parNames;
-    QVector <float> oldValues = this->parValues;
+    QVector <double> oldValues = this->parValues;
     // clear previous pars
     this->parNames.clear();
     this->parValues.clear();
@@ -2352,7 +2346,7 @@ QVector <float> listToVector(PyObject * list)
 struct outputUnPackaged
 {
     QVector <conn> connections;
-    QVector <float> weights;
+    QVector <double> weights;
 };
 
 /*!

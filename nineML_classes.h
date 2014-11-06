@@ -28,6 +28,12 @@
 #include "globalHeader.h"
 #include "systemobject.h"
 
+// This is the number of connections there has to be for the system to
+// start writing these connections into a binary file. If there are
+// fewer connections than this number, the connections will be written
+// inline into the XML.
+#define MIN_CONNS_TO_FORCE_BINARY 30
+
 using namespace std;
 
 typedef enum{
@@ -187,7 +193,7 @@ class ParameterData {
 public:
     QString name;
     dim * dims;
-    QVector < float > value;
+    QVector < double > value;
     QVector < int > indices;
     ParameterType currType;
     int seed;

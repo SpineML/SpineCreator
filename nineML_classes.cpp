@@ -1570,12 +1570,12 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
     bool writeBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
 
     // if we have few indices, or we are forbidden from using binary data
-    if (this->indices.size() < 31 || !writeBinary) {
+    if (this->indices.size() <= MIN_CONNS_TO_FORCE_BINARY || !writeBinary) {
         xmlOut.writeStartElement("ValueList");
         for (int ind = 0; ind < this->value.size(); ++ind) {
             xmlOut.writeEmptyElement("Value");
             xmlOut.writeAttribute("index", QString::number(this->indices[ind]));
-            xmlOut.writeAttribute("value", QString::number(float(this->value[ind])));
+            xmlOut.writeAttribute("value", QString::number(double(this->value[ind])));
         }
        xmlOut.writeEndElement(); // valueList
 
@@ -1643,7 +1643,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
         QDataStream access(&export_file);
         for (int i = 0; i < this->value.size(); ++i) {
             access.writeRawData((char*) &this->indices[i], sizeof(int));
-            access.writeRawData((char*) &this->value[i], sizeof(float));
+            access.writeRawData((char*) &this->value[i], sizeof(double));
         }
 
         xmlOut.writeEndElement(); // valueList
@@ -1656,7 +1656,7 @@ void ParameterData::readExplicitListNodeData(QDomNode &n) {
     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
     for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
         this->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
-        this->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
+        this->value.push_back(propValInst.item(ind).toElement().attribute("value").toDouble());
     }
     // read in binary data
     QDomNodeList binaryValInst = n.toElement().elementsByTagName("BinaryFile");
@@ -1704,12 +1704,11 @@ void ParameterData::readExplicitListNodeData(QDomNode &n) {
         while (!(fileIn.atEnd())) {
 
             // read in the required values:
-            // first two int32s
             int index;
-            float value;
+            double value;
 
             fileIn.read((char *) &index,sizeof(int));
-            fileIn.read((char *) &value,sizeof(float));
+            fileIn.read((char *) &value,sizeof(double));
 
             this->indices.push_back(index);
             this->value.push_back(value);
