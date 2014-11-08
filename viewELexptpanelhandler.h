@@ -26,6 +26,7 @@
 #define VIEWVISEXPTPANELHANDLER_H
 
 #include "globalHeader.h"
+#include <QTemporaryDir>
 
 struct viewELstruct;
 
@@ -43,6 +44,12 @@ private:
     viewELstruct * viewEL;
     void redrawExpt();
     void redrawPanel();
+
+    /*!
+     * A temporary directory into which the model is copied if the
+     * simulation is in an unsaved state.
+     */
+    QTemporaryDir tdir;
 
     QVBoxLayout * exptSetup;
     QVBoxLayout * exptInputs;
@@ -80,7 +87,7 @@ private:
 signals:
     void enableRun(bool);
     void simulationDone();
-    
+
 public slots:
     void addExperiment();
     void delExperiment();

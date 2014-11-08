@@ -1693,29 +1693,35 @@ void viewELExptPanelHandler::run()
     }
     settings.endGroup();
 
-    // Note: SpineML_2_BRAHMS now works directly on the model, as saved by SC, so no need to duplicate.
-#ifdef MODEL_NEEDS_DUPLICATING_BEFORE_SIM_RUNS
-    settings.setValue("simulator_export_path",QDir::toNativeSeparators(wk_dir_string + "/model/"));
-    settings.setValue("export_binary",settings.value("simulators/" + simName + "/binary").toBool());
+    // If the model has changed compared with the one currently saved,
+    // then we must write out the current in-memory model to a
+    // temporary location and execute that model.
+    if (this->data->currProject->isChanged (this->data)) {
 
-    // clear directory
-    QDir model_dir(QDir::toNativeSeparators(wk_dir_string + "/model/"));
-    QStringList files = model_dir.entryList(QDir::Files);
-    for (int i = 0; i < files.size(); ++i) {
-        model_dir.remove(files[i]);
+        // Check the temporary directory is valid for use:
+        if (!this->tdir.isValid()) {
+            qDebug() << "Can't use temporary simulator directory!";
+            runButton->setEnabled(true);
+            return;
+        }
+
+        // clear directory
+        QDir model_dir(this->tdir.path());
+        QStringList files = model_dir.entryList(QDir::Files);
+        for (int i = 0; i < files.size(); ++i) {
+            model_dir.remove(files[i]);
+        }
+
+        // Write the model into the temporary dir
+        QString tFilePath = this->tdir.path()+ QDir::separator() + "temp.proj";
+        settings.setValue("files/currentFileName", tFilePath);
+        qDebug() << "Saving project temporarily to: " << tFilePath;
+        if (!this->data->currProject->save_project(tFilePath, data)) {
+            qDebug() << "Failed to save the model into the temporary model directory";
+            runButton->setEnabled(true);
+            return;
+        }
     }
-
-    // write out model
-    if (!this->data->currProject->save_project(QDir::toNativeSeparators(wk_dir_string + "/model/"), data)) {
-        settings.remove("simulator_export_path");
-        settings.remove("export_binary");
-        runButton->setEnabled(true);
-        return;
-    }
-
-    settings.remove("simulator_export_path");
-    settings.remove("export_binary");
-#endif
 
     QProcess * simulator = new QProcess;
     if (!simulator) {
@@ -1732,15 +1738,16 @@ void viewELExptPanelHandler::run()
     simulator->setWorkingDirectory(wk_dir.absolutePath());
     simulator->setProcessEnvironment(env);
 
-    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
+    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "run");
 
     QFileInfo projFileInfo(this->data->currProject->filePath);
     QString modelpath(projFileInfo.dir().path());
     {
         QStringList al;
-        al << "-m" << modelpath
-           << "-w" << wk_dir.absolutePath()
-           << "-e" << QString("%1").arg(currentExptNum);
+        al << "-m" << modelpath                          // path to input mode
+           << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
+           << "-o" << wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
+           << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
         simulator->start(path, al);
     }
 

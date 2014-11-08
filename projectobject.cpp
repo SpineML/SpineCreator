@@ -140,14 +140,12 @@ bool projectObject::save_project(QString fileName, rootData * data)
         msgBox.exec();
         return false;
     }
+    qDebug() << "save_project ('" << fileName << "', rootData*)";
 
     QDir project_dir(fileName);
 
     // remove filename
     project_dir.cdUp();
-
-    QSettings settings;
-    settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // check for version control
     this->version.setupVersion();
@@ -223,6 +221,10 @@ bool projectObject::import_network(QString fileName)
 
     // remove filename
     project_dir.cdUp();
+
+    // Set currentFileName
+    QSettings settings;
+    settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // get a list of the files in the directory
     QStringList files = project_dir.entryList();
@@ -874,9 +876,6 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         addError("Could not parse the Network file XML - is the selected file correctly formed XML?");
         return;
     }
-
-    QSettings settings;
-    settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // we have loaded the XML file - discard the file handle
     file.close();

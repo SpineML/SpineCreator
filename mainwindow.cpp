@@ -625,6 +625,11 @@ MainWindow::~MainWindow()
     // clear up python
     Py_Finalize();
 
+    // Ensure viewELhandler's destructor is called to clean up temporary model directory
+    delete this->viewELhandler;
+
+    // FIXME - there's probably more cleanup to do here.
+
     delete ui;
 }
 
@@ -1481,6 +1486,9 @@ void MainWindow::export_project(const QString& filePath)
         ++iter;
     }
 
+    QDir project_dir(filePath);
+    QSettings settings;
+    settings.setValue("files/currentFileName", project_dir.absolutePath());
     this->data.currProject->save_project(filePath, &this->data);
 
     // Clean up the component undostack (the project itself doesn't
