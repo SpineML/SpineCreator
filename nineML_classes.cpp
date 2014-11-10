@@ -1594,6 +1594,9 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
         }
 
         QDir saveDir(filePathString);
+        // Because files/currentFileName includes the .proj portion of
+        // the file, cdUp to get rid of this:
+        saveDir.cdUp();
 
         //generate a unique filename to save the par or sv under
         QStringList filters;
