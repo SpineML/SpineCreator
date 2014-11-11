@@ -76,6 +76,12 @@ private:
 
     GLWidget * gl;
 
+    QTimer simTimeChecker;
+    QString simTimeFileName;
+    QString simCancelFileName;
+    float simTimeMax;
+    experiment * runExpt;
+
 
 signals:
     void enableRun(bool);
@@ -138,9 +144,11 @@ public slots:
     void redraw(double);
 
     void run();
+    void cancelRun();
     void simulatorFinished(int, QProcess::ExitStatus);
     void simulatorStandardOutput();
     void simulatorStandardError();
+    void checkForSimTime();
 
     /*!
      * \brief Called when the mouse moves on the model view

@@ -33,6 +33,8 @@ public:
 
     void moveIndex(int row);
 
+   int selectedData;
+
 private:
     QVector < QVector < double > > list;
     QVector < ParameterData * > destinations;

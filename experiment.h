@@ -245,7 +245,9 @@ public:
     void select(QVector < experiment * > *);
     void deselect();
     bool editing;
+
     bool subEdit;
+    QLabel * progressBar;
 
 private:
     exptBox * currBoxPtr;
