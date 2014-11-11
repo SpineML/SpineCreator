@@ -1738,7 +1738,7 @@ void viewELExptPanelHandler::run()
     simulator->setWorkingDirectory(wk_dir.absolutePath());
     simulator->setProcessEnvironment(env);
 
-    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "run");
+    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
 
     QFileInfo projFileInfo(this->data->currProject->filePath);
     QString modelpath(projFileInfo.dir().path());
@@ -1748,6 +1748,15 @@ void viewELExptPanelHandler::run()
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
            << "-o" << wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
+
+        // There's no REBUILD env var set, even though it's in my settings.
+        QByteArray rbuild = qgetenv ("REBUILD");
+        if (rbuild == "true") {
+            al << "-r"; // Add the -r option for rebuilding
+        } else {
+            // Don't rebuild
+        }
+
         simulator->start(path, al);
     }
 
