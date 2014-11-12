@@ -1782,7 +1782,7 @@ void viewELExptPanelHandler::run()
     simulator->setProcessEnvironment(env);
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
-
+//return;
     simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath());
 
     // Wait a couple of seconds for the process to start
@@ -1874,7 +1874,6 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
         QCommonStyle style;
         runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-
     }
 
     // stop updating the bar
@@ -1959,6 +1958,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         }
         // signal others
         emit simulationDone();
+        runButton = NULL;
         return;
     }
 

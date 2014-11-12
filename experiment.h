@@ -248,6 +248,7 @@ public:
 
     bool subEdit;
     QLabel * progressBar;
+    QToolButton * runButton;
 
 private:
     exptBox * currBoxPtr;
