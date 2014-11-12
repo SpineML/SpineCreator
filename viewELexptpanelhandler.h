@@ -82,6 +82,8 @@ private:
     float simTimeMax;
     experiment * runExpt;
 
+    void cleanUpPostRun(QString, QString);
+
 
 signals:
     void enableRun(bool);

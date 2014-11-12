@@ -1660,9 +1660,7 @@ void viewELExptPanelHandler::run()
     }
 
     if (currentExperiment == NULL) {
-        runButton->disconnect();
-        runButton->setText("Run experiment");
-        connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
+        this->cleanUpPostRun("", "");
         return;
     }
 
@@ -1677,14 +1675,7 @@ void viewELExptPanelHandler::run()
     QFile the_script(path);
     if (!the_script.exists()) {
         // Error - convert_script file doesn't exist
-        QMessageBoxResizable msgBox;
-        msgBox.setWindowTitle("Simulator Error");
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("The simulator '" + path + "' does not exist.");
-        msgBox.exec();
-        runButton->disconnect();
-        runButton->setText("Run experiment");
-        connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
+        this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' does not exist.");
         return;
     } else {
         // Path exists, check it's a file and is executable
@@ -1693,14 +1684,7 @@ void viewELExptPanelHandler::run()
             // Probably Ok - we have execute permission of some kind.
         } else {
             // Error - no execute permission on script
-            QMessageBoxResizable msgBox;
-            msgBox.setWindowTitle("Simulator Error");
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText("The simulator '" + path + "' is not executable.");
-            msgBox.exec();
-            runButton->disconnect();
-            runButton->setText("Run experiment");
-            connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
+            this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' is not executable.");
             return;
         }
     }
@@ -1764,9 +1748,7 @@ void viewELExptPanelHandler::run()
     if (!this->data->currProject->export_for_simulator(QDir::toNativeSeparators(wk_dir_string + "/model/"), data)) {
         settings.remove("simulator_export_path");
         settings.remove("export_binary");
-        runButton->disconnect();
-        runButton->setText("Run experiment");
-        connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
+        this->cleanUpPostRun("", "");
         return;
     }
 
@@ -1776,14 +1758,7 @@ void viewELExptPanelHandler::run()
     QProcess * simulator = new QProcess;
     if (!simulator) {
         // Really bad error - memory allocation error. The following will probably fail:
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Memory Allocation Error");
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("The simulator failed to start - you're out of RAM.");
-        msgBox.exec();
-        runButton->disconnect();
-        runButton->setText("Run experiment");
-        connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
+        this->cleanUpPostRun("Memory Allocation Error", "The simulator failed to start - you're out of RAM.");
         return;
     }
 
@@ -1797,14 +1772,7 @@ void viewELExptPanelHandler::run()
     // Wait a couple of seconds for the process to start
     if (!simulator->waitForStarted(100)) {
         // Error - simulator failed to start
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Simulator Error");
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("The simulator '" + path + "' failed to start.");
-        msgBox.exec();
-        runButton->disconnect();
-        runButton->setText("Run experiment");
-        connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
+        this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
         //delete simulator; // Alex: this appears to be dangerous - we can have the wait for started fail, without the simulator crashing
                             // - in which case deleting the simulator causes a crash later on... for this reason I have left it as a memory leak
         return;
@@ -1821,6 +1789,32 @@ void viewELExptPanelHandler::run()
     this->simCancelFileName = QDir::toNativeSeparators(wk_dir_string + "/model/stop.txt");
     simTimeChecker.start(17);
 
+}
+
+/*!
+ * \brief viewELExptPanelHandler::cleanUpPostRun
+ * \param msg
+ * \param msgDetail
+ * If a run ends due to being aborted (user or code) or successfully we have to do some clean up - this
+ * was duplicated code so it is now merged into this function. Can pass an optional error message and
+ * message detail.
+ */
+void viewELExptPanelHandler::cleanUpPostRun(QString msg, QString msgDetail) {
+    if (!msg.isEmpty()) {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(msg);
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(msgDetail);
+        msgBox.exec();
+    }
+    if (this->runButton) {
+        this->runButton->disconnect();
+        this->runButton->setText("Run experiment");
+        QCommonStyle style;
+        runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+        connect(this->runButton, SIGNAL(clicked()), this, SLOT(run()));
+        this->runButton = NULL;
+    }
 }
 
 /*!
@@ -1877,22 +1871,12 @@ void viewELExptPanelHandler::checkForSimTime() {
 
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 {
-    // update run button
-    if (runButton) {
-        runButton->disconnect();
-        connect(runButton, SIGNAL(clicked()), this, SLOT(run()));
-        QCommonStyle style;
-        runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-    }
 
     // stop updating the bar
     simTimeChecker.disconnect();
     simTimeChecker.stop();
     QFile::remove(simCancelFileName);
     this->runExpt = NULL;
-    if (runButton) {
-        runButton->setText("Run experiment");
-    }
 
     experiment * currentExperiment = NULL;
 
@@ -1902,6 +1886,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     }
 
     if (currentExperiment == NULL) {
+        this->cleanUpPostRun("", "");
         return;
     }
     float proportion = 0;
@@ -1922,7 +1907,8 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDetailedText(simulatorStdOutText);
             msgBox.addButton(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
+            msgBox.exec();           
+            this->cleanUpPostRun("", "");
             return;
         }
     }
@@ -1949,7 +1935,8 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.setText(simulatorStdErrText);
         msgBox.addButton(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        msgBox.exec();        
+        this->cleanUpPostRun("", "");
         return;
     }
 
@@ -1965,11 +1952,13 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
         }
-        // signal others
+        // signal others        
+        this->cleanUpPostRun("", "");
         emit simulationDone();
-        runButton = NULL;
         return;
     }
+
+    this->cleanUpPostRun("", "");
 
 }
 
