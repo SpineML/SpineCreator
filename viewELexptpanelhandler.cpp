@@ -128,15 +128,17 @@ void viewELExptPanelHandler::recursiveDeleteLoop(QLayout * parentLayout)
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget()) {
-            item->widget()->disconnect((QObject *)0);
-            item->widget()->hide();
-            forDeleting.push_back(item->widget());
+            if (item->widget()->property("noDelete")!=true) {
+                item->widget()->disconnect((QObject *)0);
+                item->widget()->hide();
+                connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
+            }
         }
         if (item->layout())
             recursiveDeleteLoop(item->layout());
         delete item;
     }
-    parentLayout->deleteLater();
+    connect(this, SIGNAL(deleteWidgets()),parentLayout, SLOT(deleteLater()));
 }
 
 void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
@@ -144,9 +146,11 @@ void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(2))) {
         if (item->widget()) {
-            item->widget()->disconnect((QObject *)0);
-            item->widget()->hide();
-            forDeleting.push_back(item->widget());
+            if (item->widget()->property("noDelete")!=true) {
+                item->widget()->disconnect((QObject *)0);
+                item->widget()->hide();
+                connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
+            }
         }
         if (item->layout())
             recursiveDeleteLoop(item->layout());
@@ -160,9 +164,11 @@ void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget()) {
-            item->widget()->disconnect((QObject *)0);
-            item->widget()->hide();
-            forDeleting.push_back(item->widget());
+            if (item->widget()->property("noDelete")!=true) {
+                item->widget()->disconnect((QObject *)0);
+                item->widget()->hide();
+                connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
+            }
         }
         if (item->layout())
             recursiveDeleteLoop(item->layout());
@@ -294,6 +300,8 @@ void viewELExptPanelHandler::redrawExpt()
         //forDeleting[0]->deleteLater();
         //forDeleting.erase(forDeleting.begin());
     //}
+
+    emit this->deleteWidgets();
 
     recursiveDeleteExpt(exptSetup);
     recursiveDeleteExpt(exptInputs);
@@ -534,6 +542,7 @@ void viewELExptPanelHandler::redrawPanel()
     QVBoxLayout * panel = ((QVBoxLayout *) viewEL->panel->layout());
 
     // clear panel except toolbar
+    emit this->deleteWidgets();
     recursiveDelete(panel);
 
     // add strech to avoid layout spacing out items

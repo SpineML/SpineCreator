@@ -86,6 +86,7 @@ private:
 signals:
     void enableRun(bool);
     void simulationDone();
+    void deleteWidgets();
     
 public slots:
     void addExperiment();
