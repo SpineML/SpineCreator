@@ -1899,15 +1899,14 @@ void MainWindow::saveImageAction()
         actionAs_Image_triggered();
     } else if (viewVZ.OpenGLWidget != NULL && viewVZ.view->isVisible()) {
         // visualisation
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
-        if (!fileName.isEmpty()) {
-            saveNetworkImageDialog svImDiag(viewVZ.OpenGLWidget, fileName);
+        //if (!fileName.isEmpty()) {
+            saveNetworkImageDialog svImDiag(viewVZ.OpenGLWidget, "");
             svImDiag.exec();
-        }
+        //}
     } else {
         // network
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
-        data.saveImage(fileName);
+        //QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
+        data.saveImage("");
     }
 }
 

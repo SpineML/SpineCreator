@@ -53,12 +53,14 @@ private:
     int width;
     void reDrawPreview();
     QString fileName;
+    drawStyle style;
 
 public slots:
     void changeScale(double);
     void changeBorder(double);
     void changeWidth(double);
     void changeHeight(double);
+    void changeDrawStyle(int);
     void save();
 };
 

@@ -41,13 +41,16 @@ experiment::experiment()
     editing = true;
     subEdit = false;
 
-    subEdit = false;
     this->progressBar = new QLabel;
     this->progressBar->setMaximumHeight(10);
     this->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 255), ") \
                                + QString("stop:") + QString::number(0.0) + QString(" rgba(150, 255, 150, 255), stop:")  + QString::number(0.0+0.0) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
+    this->progressBar->setProperty("noDelete", true);
     //this->progressBar->setStyleSheet("background-color: red");
 
+    this->runButton = new QToolButton();
+    QCommonStyle style;
+    this->runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
 }
 
 experiment::~experiment() {
@@ -207,18 +210,19 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
 
         // run button...
         QCommonStyle style;
-        QToolButton * run = new QToolButton();
+        QToolButton * run = this->runButton;
         // if any subcomponents of the experiment asre being edited we should disable this
         if (this->subEdit) {
             run->setText("Run (disabled while editing)");
             run->setEnabled(false);
         } else {
             run->setText("Run experiment");
+            run->setEnabled(true);
         }
+        run->setProperty("noDelete", true);
         run->setStyleSheet("QToolButton { color: black; border: 0px; background-color :transparent;}");
         run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         run->setToolTip("Run the experiment in the chosen simulator");
-        run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
         layout->addWidget(run,3,0,1,1);
         QObject::connect(run, SIGNAL(clicked()), panel, SLOT(run()));
 
@@ -937,7 +941,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 host->setProperty("ptr", qVariantFromValue((void *) this));
                 host->setProperty("type", "host");
                 host->setText(externalInput.host);
-                host->setToolTip("The host computer IP address, or localhost if the external input is on the same computer as the experiment");
+                host->setToolTip("The host computer IP address, or 127.0.0.1 if the external input is on the same computer as the experiment");
                 QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setInputExternalData()));
                 formlay->addRow("Host IP:", host);
 
@@ -1325,7 +1329,7 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             host->setText(externalOutput.host);
             if (!isExternal)
                 host->setEnabled(false);
-            host->setToolTip("The host computer IP address, or localhost if the external output is on the same computer as the experiment");
+            host->setToolTip("The host computer IP address, or 127.0.0.1 if the external output is on the same computer as the experiment");
             QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setOutputExternalData()));
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), host, SLOT(setEnabled(bool)));
             formlay->addRow("Host IP:", host);

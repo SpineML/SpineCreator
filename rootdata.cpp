@@ -304,10 +304,10 @@ void rootData::callRedrawGLview()
 
 void rootData::saveImage(QString fileName)
 {
-    if (!fileName.isEmpty()) {
+    //if (!fileName.isEmpty()) {
         saveNetworkImageDialog svImDiag(this, fileName);
         svImDiag.exec();
-    }
+    //}
 }
 
 void rootData::reDrawAll()

@@ -128,7 +128,7 @@ public:
         rateDistribution = Poisson;                                     \
         externalInput.size=1;
         externalInput.port = 50091;
-        externalInput.host = "localhost";
+        externalInput.host = "127.0.0.1";
         externalInput.timestep = 0.0;
     }
 
@@ -157,7 +157,7 @@ class exptOutput : QObject {
 public:
 
     exptOutput() {edit = true; set=false; isExternal = false; name = "New Output"; portIsAnalog = true; indices="all"; \
-                  externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "localhost"; externalOutput.timestep = 0.0;}
+                  externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "127.0.0.1"; externalOutput.timestep = 0.0;}
 
     //exptOutput outType;
     //QVector < float > params;
