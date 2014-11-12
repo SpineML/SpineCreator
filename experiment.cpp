@@ -48,9 +48,8 @@ experiment::experiment()
     this->progressBar->setProperty("noDelete", true);
     //this->progressBar->setStyleSheet("background-color: red");
 
-    this->runButton = new QToolButton();
-    QCommonStyle style;
-    this->runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+    this->runButton = NULL;
+
 }
 
 experiment::~experiment() {
@@ -209,7 +208,13 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
         QObject::connect(del, SIGNAL(clicked()), panel, SLOT(delExperiment()));
 
         // run button...
-        QCommonStyle style;
+        if (!this->runButton) {
+            this->runButton = new QToolButton;
+            QCommonStyle style;
+            this->runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+            QObject::connect(this->runButton, SIGNAL(clicked()), panel, SLOT(run()));
+        }
+
         QToolButton * run = this->runButton;
         // if any subcomponents of the experiment asre being edited we should disable this
         if (this->subEdit) {
@@ -224,7 +229,7 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
         run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         run->setToolTip("Run the experiment in the chosen simulator");
         layout->addWidget(run,3,0,1,1);
-        QObject::connect(run, SIGNAL(clicked()), panel, SLOT(run()));
+
 
         layout->addWidget(this->progressBar,4,0,1,4);
 
