@@ -1696,6 +1696,8 @@ void viewELExptPanelHandler::run()
     // If the model has changed compared with the one currently saved,
     // then we must write out the current in-memory model to a
     // temporary location and execute that model.
+    QString previousFilePath = this->data->currProject->filePath;
+    QString tFilePath = this->data->currProject->filePath;
     if (this->data->currProject->isChanged (this->data)) {
 
         // Check the temporary directory is valid for use:
@@ -1713,14 +1715,19 @@ void viewELExptPanelHandler::run()
         }
 
         // Write the model into the temporary dir
-        QString tFilePath = this->tdir.path()+ QDir::separator() + "temp.proj";
+        tFilePath = this->tdir.path()+ QDir::separator() + "temp.proj";
         settings.setValue("files/currentFileName", tFilePath);
         qDebug() << "Saving project temporarily to: " << tFilePath;
-        if (!this->data->currProject->save_project(tFilePath, data)) {
+        // save_project changes the current project's filepath.
+        if (!this->data->currProject->save_project(tFilePath, this->data)) {
             qDebug() << "Failed to save the model into the temporary model directory";
             runButton->setEnabled(true);
+            // Revert currProject->filePath here
+            this->data->currProject->filePath = previousFilePath;
             return;
         }
+        // Revert currProject->filePath here
+        this->data->currProject->filePath = previousFilePath;
     }
 
     QProcess * simulator = new QProcess;
@@ -1740,7 +1747,10 @@ void viewELExptPanelHandler::run()
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
 
-    QFileInfo projFileInfo(this->data->currProject->filePath);
+    QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
+                                       // to the model being executed,
+                                       // either in the original location
+                                       // or in the temporary directory.
     QString modelpath(projFileInfo.dir().path());
     {
         QStringList al;
