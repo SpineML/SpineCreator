@@ -1698,8 +1698,14 @@ void viewELExptPanelHandler::run()
     // temporary location and execute that model.
     QString previousFilePath = this->data->currProject->filePath;
     QString tFilePath = this->data->currProject->filePath;
-    if (this->data->currProject->isChanged (this->data)) {
 
+    // In an ideal world, this->data->currProject->isChanged() would
+    // reliably give us whether or not a change had been made in the
+    // project. Instead, don't rely on that; save a fresh copy of the
+    // project out every time.
+#ifdef CURRPROJECT_ISCHANGED_WAS_RELIABLE
+    if (this->data->currProject->isChanged (this->data)) {
+#endif
         // Check the temporary directory is valid for use:
         if (!this->tdir.isValid()) {
             qDebug() << "Can't use temporary simulator directory!";
@@ -1728,7 +1734,9 @@ void viewELExptPanelHandler::run()
         }
         // Revert currProject->filePath here
         this->data->currProject->filePath = previousFilePath;
+#ifdef CURRPROJECT_ISCHANGED_WAS_RELIABLE
     }
+#endif
 
     QProcess * simulator = new QProcess;
     if (!simulator) {
