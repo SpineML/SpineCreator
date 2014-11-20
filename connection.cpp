@@ -566,7 +566,14 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
     QString saveFullFileName;
     if (saveBinaryConnections && this->getNumRows() > MIN_CONNS_TO_FORCE_BINARY) {
 
-        saveFullFileName = QDir::toNativeSeparators(settings.value("files/currentFileName").toString() + "/" + this->filename + ".bin");
+        QString saveProjectName = settings.value("files/currentFileName").toString();
+
+        QDir project_dir(saveProjectName);
+
+        // remove filename
+        project_dir.cdUp();
+
+        saveFullFileName = QDir::toNativeSeparators(project_dir.absoluteFilePath(this->filename + ".bin"));
 
         // extract the filename without the path...
         QString saveFileName;

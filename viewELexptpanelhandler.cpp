@@ -1693,6 +1693,10 @@ void viewELExptPanelHandler::run()
     }
     settings.endGroup();
 
+    // add the working dir to the path - this allows Mac users to have the preflight in
+    // SpineML_2_BRAHMS
+    env.insert("PATH", env.value("PATH", "") + ":" + wk_dir.absolutePath());
+
     // If the model has changed compared with the one currently saved,
     // then we must write out the current in-memory model to a
     // temporary location and execute that model.
@@ -1762,7 +1766,7 @@ void viewELExptPanelHandler::run()
     QString modelpath(projFileInfo.dir().path());
     {
         QStringList al;
-        al << "-m" << modelpath                          // path to input mode
+        al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
            << "-o" << wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
