@@ -2296,7 +2296,15 @@ void rootData::copySelectionToClipboard()
 
 void rootData::pasteSelectionFromClipboard()
 {
-    // naive:
+
+    bool ok;
+    QString text = QInputDialog::getText(main, tr("Append to object names"),tr("Text to append:"), QLineEdit::Normal," 1", &ok);
+    if (!ok || text.isEmpty()) {
+        return;
+    }
+
+    text.replace("_", " ");
+
     // get the currently selected populations (ALL of them)
     QVector <QSharedPointer<population> > allPops;
     QVector <QSharedPointer<systemObject> >::const_iterator i = this->clipboardObjects.begin();
@@ -2307,12 +2315,15 @@ void rootData::pasteSelectionFromClipboard()
         ++i;
     }
 
+    // go through and rename populations
     for (int i = 0; i < allPops.size(); ++i) {
-        allPops[i]->print();
+        allPops[i]->name += text;
     }
 
     this->populations = this->populations + allPops;
 
-    this->reDrawAll();
+    this->selList = this->clipboardObjects;
 
+    emit reDrawAll();
+    emit redrawGLview();
 }

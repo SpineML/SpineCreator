@@ -185,7 +185,6 @@ QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QS
 
 void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
 {
-
     this->weightUpdateType->remapPointers(objectMap);
     this->postsynapseType->remapPointers(objectMap);
 
@@ -1940,6 +1939,13 @@ void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <syste
         qDebug() << "Error casting objectMap lookup to population in projection::remapSharedPointers";
         exit(-1);
     }
+
+    // now do the synapses
+    for (int i = 0; i < this->synapses.size(); ++i) {
+        this->synapses[i]->remapSharedPointers(objectMap);
+    }
+
+
 }
 
 

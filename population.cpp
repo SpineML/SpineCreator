@@ -1136,7 +1136,6 @@ QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, 
 
 void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemObject> > pointerMap)
 {
-qDebug() << this->projections.size();
     // let's do this!
     this->neuronType->remapPointers(pointerMap);
 
