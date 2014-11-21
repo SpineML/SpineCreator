@@ -82,7 +82,7 @@ population::population(QSharedPointer <population> data, QSharedPointer<populati
     loc3.x = data->loc3.x;
     loc3.y = data->loc3.y;
     loc3.z = data->loc3.z;
-    this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType));
+    this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->neuronType));
     // fix owner
     this->neuronType->owner = thisSharedPointer;
 
@@ -1085,6 +1085,89 @@ void population::makeSpikeSource(QSharedPointer<population> thisSharedPointer) {
     this->neuronTypeName = "SpikeSource";
     this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(ss));
     this->neuronType->owner = thisSharedPointer;
+}
+
+QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > & objectMap)
+{
+    // create a new, identical, population
+
+    QSharedPointer <population> newPop = QSharedPointer <population>(new population());
+
+    newPop->x = this->x;
+    newPop->y = this->y;
+    newPop->targx = this->targx;
+    newPop->targy = this->targy;
+    newPop->animspeed = this->animspeed;
+    newPop->size = this->size;
+    newPop->aspect_ratio = this->aspect_ratio;
+    newPop->left = this->left;
+    newPop->right = this->right;
+    newPop->top = this->top;
+    newPop->bottom = this->bottom;
+    newPop->name = this->name;
+    newPop->neuronTypeName = this->neuronTypeName;
+    newPop->numNeurons = this->numNeurons;
+    newPop->colour = this->colour;
+    newPop->type = populationObject;
+    newPop->isVisualised = this->isVisualised;
+    loc3.x = this->loc3.x;
+    loc3.y = this->loc3.y;
+    loc3.z = this->loc3.z;
+
+    // neuron body...
+    newPop->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType, true/*copy inputs / outputs*/));
+    // fix owner
+    newPop->neuronType->owner = newPop;
+
+    // layout...
+    newPop->layoutType = QSharedPointer<NineMLLayoutData>(new NineMLLayoutData(this->layoutType));
+
+    newPop->isSpikeSource = this->isSpikeSource;
+
+    objectMap.insert(this, newPop);
+
+    return newPop;
+
+}
+
+void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemObject> > pointerMap)
+{
+
+    // let's do this!
+    this->neuronType->remapPointers(pointerMap);
+
+    // and update any projections:
+    for (int i = 0; i < this->projections.size(); ++i) {
+        // if the proj is in the pointermap...
+        if (pointerMap.contains(this->projections[i].data())) {
+            // remap input
+            this->projections[i] = qSharedPointerDynamicCast <projection> (pointerMap[this->projections[i].data()]);
+            if (!this->projections[i]) {
+                qDebug() << "Error casting shared pointer to projection in population::remapSharedPointers";
+                exit(-1);
+            }
+        } else {
+            // remove input
+            this->projections.erase(this->projections.begin()+i);
+            --i;
+        }
+    }
+    // and reverse projections:
+    for (int i = 0; i < this->reverseProjections.size(); ++i) {
+        // if the proj is in the pointermap...
+        if (pointerMap.contains(this->reverseProjections[i].data())) {
+            // remap input
+            this->reverseProjections[i] = qSharedPointerDynamicCast <projection> (pointerMap[this->reverseProjections[i].data()]);
+            if (!this->reverseProjections[i]) {
+                qDebug() << "Error casting shared pointer to reverse projection in population::remapSharedPointers";
+                exit(-1);
+            }
+        } else {
+            // remove input
+            this->reverseProjections.erase(this->reverseProjections.begin()+i);
+            --i;
+        }
+    }
 }
 
 void population::print() {

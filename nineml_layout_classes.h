@@ -122,6 +122,7 @@ public:
     double minimumDistance;
     QSharedPointer<NineMLLayout> component;
     NineMLLayoutData(QSharedPointer<NineMLLayout>data);
+    NineMLLayoutData(QSharedPointer<NineMLLayoutData>data);
     NineMLLayoutData& operator=(const NineMLLayoutData& data);
     NineMLLayoutData(){}
     ~NineMLLayoutData(){}

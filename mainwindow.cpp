@@ -1305,6 +1305,10 @@ void MainWindow::createActions()
     connect(ui->actionRe_scan_for_VCS, SIGNAL(triggered()), this, SLOT(actionRescanVCS_triggered()));
 
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
+
+    connect(ui->action_Copy_objects, SIGNAL(triggered()), &data, SLOT(copySelectionToClipboard()));
+    connect(ui->actionPaste_objects, SIGNAL(triggered()), &data, SLOT(pasteSelectionFromClipboard()));
+
 }
 
 void MainWindow::new_project()

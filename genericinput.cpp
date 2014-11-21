@@ -702,3 +702,45 @@ void genericInput::read_meta_data(QDomDocument * meta) {
 
 
 }
+
+QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap)
+{
+    // create a new, identical, genericInput
+
+    QSharedPointer <genericInput> newIn = QSharedPointer <genericInput>(new genericInput());
+
+    newIn->curves = this->curves;
+    newIn->start = this->start;
+    newIn->isVisualised = this->isVisualised;
+
+    newIn->connectionType = this->connectionType->newFromExisting();
+    newIn->source = this->source;
+    newIn->destination = this->destination;
+    newIn->projInput = this->projInput;
+
+    objectMap.insert(this, newIn);
+
+    return qSharedPointerCast <systemObject> (newIn);
+
+}
+
+void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemObject> > objectMap)
+{
+
+    // connection, if it has a generator
+    if (this->connectionType->type == CSV) {
+        csv_connection * c = dynamic_cast < csv_connection * > (this->connectionType);
+        if (c && c->generator != NULL) {
+            pythonscript_connection * g = dynamic_cast < pythonscript_connection * > (c->generator);
+            if (g) {
+                g->src = qSharedPointerDynamicCast <population> (objectMap[g->src.data()]);
+                g->dst = qSharedPointerDynamicCast <population> (objectMap[g->dst.data()]);
+                if (!g->src || !g->dst) {
+                    qDebug() << "Error casting objectMap lookup to population in genericInput::remapSharedPointers";
+                    exit(-1);
+                }
+            }
+        }
+    }
+
+}

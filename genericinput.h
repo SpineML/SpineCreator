@@ -68,7 +68,9 @@ public:
 
     bool isVisualised;
 
+    QSharedPointer <systemObject> newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap);
 
+    void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
 };
 
 #endif // GENERICINPUT_H

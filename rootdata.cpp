@@ -2263,3 +2263,56 @@ void rootData::pasteParsFromClipboard()
         }
     }
 }
+
+void rootData::copySelectionToClipboard()
+{
+
+    // we want to access the current selection, copy it to
+    // a new set of objects, update all the pointers and store
+
+    // first, do we have a selection?
+    if (this->selList.size() == 0) return;
+
+    // First, we need a map to reassign the pointers from old to new
+    QMap <systemObject *, QSharedPointer <systemObject> > objectMap;
+
+    // now create the new objects and add them to the clipboard
+    // we can just clear the clipboard, and with no references the
+    // objects will QSharedPointers will delete themselves
+    this->clipboardObjects.clear();
+
+    // for all objects...
+    for (int i = 0; i < this->selList.size(); ++i) {
+        // create and populate a new object using the virtual function
+        this->clipboardObjects.push_back(this->selList[i]->newFromExisting(objectMap));
+    }
+    // now we have the full map: remap all the references!
+    for (int i = 0; i < this->clipboardObjects.size(); ++i) {
+        // create and populate a new object using the virtual function
+        this->clipboardObjects[i]->remapSharedPointers(objectMap);
+    }
+
+}
+
+void rootData::pasteSelectionFromClipboard()
+{
+    // naive:
+    // get the currently selected populations (ALL of them)
+    QVector <QSharedPointer<population> > allPops;
+    QVector <QSharedPointer<systemObject> >::const_iterator i = this->clipboardObjects.begin();
+    while (i != this->clipboardObjects.end()) {
+        if ((*i)->type == populationObject) {
+            allPops.push_back (qSharedPointerDynamicCast<population> (*i));
+        }
+        ++i;
+    }
+
+    for (int i = 0; i < allPops.size(); ++i) {
+        allPops[i]->print();
+    }
+
+    this->populations = this->populations + allPops;
+
+    this->reDrawAll();
+
+}

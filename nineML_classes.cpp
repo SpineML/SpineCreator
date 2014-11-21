@@ -2502,7 +2502,7 @@ NineMLComponentData::NineMLComponentData(QSharedPointer<NineMLComponent>data)
 }
 
 // duplicate
-NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>data)
+NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>data, bool copy_io)
 {
 
     type = NineMLComponentType;
@@ -2517,10 +2517,52 @@ NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>dat
         ParameterList[i] = new ParameterData(data->ParameterList[i]);
     }
 
-    // we don't copy inputs / outputs or owner
+    // we don't copy inputs / outputs , unless specified
+    if (copy_io) {
+        this->inputs = data->inputs;
+        this->outputs = data->outputs;
+    }
 
     // copy component reference
     this->component = data->component;
+}
+
+void NineMLComponentData::remapPointers(QMap <systemObject *, QSharedPointer <systemObject> > pointerMap)
+{
+
+    // for all inputs
+    for (int i = 0; i < this->inputs.size(); ++i) {
+        // if the input is in the pointermap...
+        if (pointerMap.contains(this->inputs[i].data())) {
+            // remap input
+            this->inputs[i] = qSharedPointerDynamicCast <genericInput> (pointerMap[this->inputs[i].data()]);
+            if (!this->inputs[i]) {
+                qDebug() << "Error casting shared pointer to genericInput in NineMLComponentData::remapPointers";
+                exit(-1);
+            }
+        } else {
+            // remove input
+            this->inputs.erase(this->inputs.begin()+i);
+            --i;
+        }
+    }
+    // and all outputs
+    for (int i = 0; i < this->outputs.size(); ++i) {
+        // if the input is in the pointermap...
+        if (pointerMap.contains(this->outputs[i].data())) {
+            // remap input
+            this->outputs[i] = qSharedPointerDynamicCast <genericInput> (pointerMap[this->outputs[i].data()]);
+            if (!this->outputs[i]) {
+                qDebug() << "Error casting shared pointer to genericInput in NineMLComponentData::remapPointers";
+                exit(-1);
+            }
+        } else {
+            // remove input
+            this->outputs.erase(this->outputs.begin()+i);
+            --i;
+        }
+    }
+
 }
 
 void NineMLComponentData::copyFrom(QSharedPointer <NineMLComponentData>src, QSharedPointer<NineMLComponent>data, QSharedPointer<NineMLComponentData> thisSharedPointer)

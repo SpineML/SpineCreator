@@ -1389,6 +1389,32 @@ void csv_connection::abortChanges()
     changes.clear();
 }
 
+connection * csv_connection::newFromExisting()
+{
+
+    // create a new csv_connection
+    csv_connection * c = new csv_connection;
+
+    // only use the same columns
+    c->values = this->values;
+
+    // now copy the data...
+    for (int i = 0; i < this->getNumRows(); ++i) {
+        for (int j = 0; j < this->getNumCols(); ++j) {
+            c->setData(i,j,this->getData(i,j));
+        }
+    }
+
+    // now, do we have a generator?
+    if (this->generator != NULL) {
+        // copy generator
+        c->generator = this->generator->newFromExisting();
+    }
+
+    return c;
+
+}
+
 kernel_connection::kernel_connection()
 {
     type = Kernel;
@@ -2647,6 +2673,30 @@ void pythonscript_connection::generate_connections()
     // if we get to the end then that's good enough
     this->scriptValidates = true;
     this->setUnchanged(true);
+}
+
+connection * pythonscript_connection::newFromExisting()
+{
+
+    // create a new, identical, python connection
+
+    pythonscript_connection * c = new pythonscript_connection();
+
+    c->isAList = this->isList();
+    c->selfConnections = this->selfConnections;
+    c->rotation = this->rotation;
+    //c->setUnchanged(!this->hasChanged);
+    c->scriptValidates = this->scriptValidates;
+    c->hasWeight = this->hasWeight;
+    c->hasDelay = this->hasDelay;
+    c->connection_target = this->connection_target;
+    c->scriptName = this->scriptName;
+    c->scriptText = this->scriptText;
+    c->src = this->src;
+    c->dst = this->dst;
+
+    return c;
+
 }
 
 bool pythonscript_connection::isList()

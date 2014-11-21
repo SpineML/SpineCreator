@@ -808,6 +808,8 @@
     <addaction name="actionDelete_current_selection"/>
     <addaction name="actionEdit_Simulators"/>
     <addaction name="separator"/>
+    <addaction name="action_Copy_objects"/>
+    <addaction name="actionPaste_objects"/>
    </widget>
    <widget class="QMenu" name="menuNeuron">
     <property name="title">
@@ -1080,6 +1082,16 @@
   <action name="actionClear_list">
    <property name="text">
     <string>Clear list</string>
+   </property>
+  </action>
+  <action name="action_Copy_objects">
+   <property name="text">
+    <string>&amp;Copy objects</string>
+   </property>
+  </action>
+  <action name="actionPaste_objects">
+   <property name="text">
+    <string>Paste objects</string>
    </property>
   </action>
  </widget>
