@@ -1398,6 +1398,9 @@ connection * csv_connection::newFromExisting()
     // only use the same columns
     c->values = this->values;
 
+    // use the same delay
+    c->delay = new ParameterData(this->delay);
+
     // now copy the data...
     for (int i = 0; i < this->getNumRows(); ++i) {
         for (int j = 0; j < this->getNumCols(); ++j) {
@@ -2694,6 +2697,11 @@ connection * pythonscript_connection::newFromExisting()
     c->scriptText = this->scriptText;
     c->src = this->src;
     c->dst = this->dst;
+
+    // copy script pars
+    c->parNames = this->parNames;
+    c->parValues = this->parValues;
+    c->parPos = this->parPos;
 
     return c;
 

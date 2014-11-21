@@ -78,7 +78,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
-    connection * newFromExisting() {return new alltoAll_connection;}
+    connection * newFromExisting() {alltoAll_connection * c = new alltoAll_connection; c->delay = new ParameterData(this->delay); return c;}
 
 private:
 };
@@ -93,7 +93,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
-    connection * newFromExisting() {return new onetoOne_connection;}
+    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterData(this->delay); return c;}
 
 private:
 };
@@ -113,6 +113,7 @@ public:
         fixedProb_connection * c = new fixedProb_connection;
         c->p = this->p;
         c->seed = this->seed;
+        c->delay = new ParameterData(this->delay);
         return c;
     }
 

@@ -1117,12 +1117,16 @@ QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, 
     // neuron body...
     newPop->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType, true/*copy inputs / outputs*/));
     // fix owner
-    newPop->neuronType->owner = newPop;
+    //newPop->neuronType->owner = newPop;
 
     // layout...
     newPop->layoutType = QSharedPointer<NineMLLayoutData>(new NineMLLayoutData(this->layoutType));
 
     newPop->isSpikeSource = this->isSpikeSource;
+
+    // copy across the projections!
+    newPop->projections = this->projections;
+    newPop->reverseProjections = this->reverseProjections;
 
     objectMap.insert(this, newPop);
 
@@ -1132,13 +1136,14 @@ QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, 
 
 void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemObject> > pointerMap)
 {
-
+qDebug() << this->projections.size();
     // let's do this!
     this->neuronType->remapPointers(pointerMap);
 
     // and update any projections:
     for (int i = 0; i < this->projections.size(); ++i) {
         // if the proj is in the pointermap...
+        qDebug() << pointerMap << this->projections[i].data();
         if (pointerMap.contains(this->projections[i].data())) {
             // remap input
             this->projections[i] = qSharedPointerDynamicCast <projection> (pointerMap[this->projections[i].data()]);

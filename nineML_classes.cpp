@@ -2521,6 +2521,9 @@ NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>dat
     if (copy_io) {
         this->inputs = data->inputs;
         this->outputs = data->outputs;
+
+        // copy owner too
+        this->owner = data->owner;
     }
 
     // copy component reference
@@ -2529,6 +2532,9 @@ NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>dat
 
 void NineMLComponentData::remapPointers(QMap <systemObject *, QSharedPointer <systemObject> > pointerMap)
 {
+
+    // first for the owner
+    this->owner = pointerMap[this->owner.data()];
 
     // for all inputs
     for (int i = 0; i < this->inputs.size(); ++i) {

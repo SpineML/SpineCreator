@@ -718,6 +718,12 @@ QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *,
     newIn->destination = this->destination;
     newIn->projInput = this->projInput;
 
+    newIn->srcPort = this->srcPort;
+    newIn->dstPort = this->dstPort;
+
+    newIn->src = this->src;
+    newIn->dst = this->dst;
+
     objectMap.insert(this, newIn);
 
     return qSharedPointerCast <systemObject> (newIn);
@@ -739,6 +745,41 @@ void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<syste
                     qDebug() << "Error casting objectMap lookup to population in genericInput::remapSharedPointers";
                     exit(-1);
                 }
+            }
+        }
+    }
+
+    // also we must do our own src, dst, source, and destination
+    QSharedPointer < systemObject > oldSource = this->source;
+    QSharedPointer < systemObject > oldDestination = this->destination;
+
+    this->source = objectMap[this->source.data()];
+    this->destination = objectMap[this->destination.data()];
+
+    // now remap src and dst by finding out what they were, and using the new version
+    if (oldSource->type == populationObject) {
+        this->src = (qSharedPointerDynamicCast < population > (oldSource))->neuronType;
+    } else if (oldSource->type == projectionObject) {
+        QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldSource);
+        for (int i = 0; i < p->synapses.size(); ++i) {
+            if (this->src == p->synapses[i]->weightUpdateType) {
+                this->src = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->weightUpdateType;
+            }
+            if (this->src == p->synapses[i]->postsynapseType) {
+                this->src = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->postsynapseType;
+            }
+        }
+    }
+    if (oldDestination->type == populationObject) {
+        this->dst = (qSharedPointerDynamicCast < population > (oldDestination))->neuronType;
+    } else if (oldDestination->type == projectionObject) {
+        QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldDestination);
+        for (int i = 0; i < p->synapses.size(); ++i) {
+            if (this->dst == p->synapses[i]->weightUpdateType) {
+                this->dst = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->weightUpdateType;
+            }
+            if (this->dst == p->synapses[i]->postsynapseType) {
+                this->dst = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->postsynapseType;
             }
         }
     }

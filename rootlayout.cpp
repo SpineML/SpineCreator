@@ -1050,7 +1050,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
 
     this->insertLayout(this->count()-2,varLayout);
 
-
 }
 
 
@@ -1124,12 +1123,10 @@ void rootLayout::drawParamsLayout(rootData * data) {
         } else if (i == 2) {
             tabLayout = (QVBoxLayout *) tab3->layout();
         }
-        qDebug() << "Moo = " << data->selList[0] << " " << (data->selList[0]->type == populationObject) << " " << i;
         switch (data->selList[0]->type) {
         case populationObject:
             if (i == 0) {
                 type9ml = qSharedPointerDynamicCast < NineMLData > (qSharedPointerDynamicCast <population> (data->selList[0])->neuronType);
-                qDebug() << "lala";
                 QSharedPointer <systemObject> ptr = data->isValidPointer(data->selList[0].data());
                 type = "nrn";
                 // check if current component validates
