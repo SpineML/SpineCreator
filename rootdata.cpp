@@ -2320,6 +2320,21 @@ void rootData::pasteSelectionFromClipboard()
         allPops[i]->name += text;
     }
 
+    // now find top left corner
+    QPointF topLeft(10000, -10000);
+    for (int i = 0; i < allPops.size(); ++i) {
+        if (allPops[i]->getLeft() < topLeft.x()) topLeft.setX(allPops[i]->getLeft());
+        if (allPops[i]->getTop() > topLeft.y()) topLeft.setY(allPops[i]->getTop());
+    }
+
+    // find the offset from the cursor to this point:
+    QPointF csr(this->cursor.x, this->cursor.y);
+    QPointF diff = topLeft - csr;
+
+    for (int i = 0; i < allPops.size(); ++i) {
+        allPops[i]->move(allPops[i]->getLeft()-diff.x(), allPops[i]->getTop()-diff.y());
+    }
+
     this->populations = this->populations + allPops;
 
     this->selList = this->clipboardObjects;
