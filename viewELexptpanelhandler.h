@@ -123,6 +123,8 @@ public slots:
     void setOutputPort(int);
     void setOutputType();
     void setOutputIndices();
+    void setOutputStartT(double);
+    void setOutputEndT(double);
     void acceptOutput();
     void editOutput();
     void delOutput();

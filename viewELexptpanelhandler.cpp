@@ -1312,6 +1312,18 @@ void viewELExptPanelHandler::setOutputIndices()
     out->indices = text;
 }
 
+void viewELExptPanelHandler::setOutputStartT(double t)
+{
+    exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
+    out->startTime = t;
+}
+
+void viewELExptPanelHandler::setOutputEndT(double t)
+{
+    exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
+    out->endTime = t;
+}
+
 void viewELExptPanelHandler::acceptOutput()
 {
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
@@ -1768,7 +1780,7 @@ void viewELExptPanelHandler::run()
         QStringList al;
         al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
-           << "-o" << wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
+           << "-o" << "/Users/alex/outtemp"//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
 
         // There's no REBUILD env var set, even though it's in my settings.
