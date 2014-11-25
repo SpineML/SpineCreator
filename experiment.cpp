@@ -39,6 +39,7 @@ experiment::experiment()
     description = "add a description for the experiment here";
     selected = false;
     editing = true;
+    subEdit = false;
 
 }
 
@@ -196,6 +197,24 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
         del->setProperty("index", (int) index);
         layout->addWidget(del,2,3,1,1);
         QObject::connect(del, SIGNAL(clicked()), panel, SLOT(delExperiment()));
+
+        // run button...
+        QCommonStyle style;
+        QToolButton * run = new QToolButton();
+        // if any subcomponents of the experiment asre being edited we should disable this
+        if (this->subEdit) {
+            run->setText("Run (disabled while editing)");
+            run->setEnabled(false);
+        } else {
+            run->setText("Run experiment");
+        }
+        run->setStyleSheet("QToolButton { color: black; border: 0px; background-color :transparent;}");
+        run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        run->setToolTip("Run the experiment in the chosen simulator");
+        run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+        layout->addWidget(run,3,0,1,1);
+        QObject::connect(run, SIGNAL(clicked()), panel, SLOT(run()));
+
     }
     else
     {
@@ -1552,6 +1571,14 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
         frameLay->setContentsMargins(0,0,0,0);
         frameLay->setSpacing(0);
 
+        // add an alias to the changed property
+        QHBoxLayout * nameLay = new QHBoxLayout;
+        QLineEdit * nameEdit = new QLineEdit(this->name);
+        nameLay->addWidget(nameEdit);
+        nameEdit->setProperty("ptr", qVariantFromValue((void *) this));
+        connect(nameEdit, SIGNAL(editingFinished()), handler, SLOT(setChangeParName()));
+        frameLay->addLayout(nameLay);
+
         QHBoxLayout * componentLay = new QHBoxLayout;
         QVBoxLayout * vbox = qobject_cast<QVBoxLayout *> (frame->layout());
         CHECK_CAST(vbox)
@@ -1940,11 +1967,19 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
         frame->setStyleSheet("background-color :rgba(255,255,255,255)");
         layout->addWidget(frame);
 
-        QHBoxLayout * descAndEdit = new QHBoxLayout;
+        QGridLayout * descAndEdit = new QGridLayout;
         frame->setLayout(descAndEdit);
 
+        // add name
+        QLabel * name = new QLabel(this->name);
+        name->setMaximumWidth(200);
+        name->setWordWrap(true);
+        descAndEdit->addWidget(name,0,0,1,2);
+        QFont nameFont("Helvetica [Cronyx]", 12);
+        name->setFont(nameFont);
+
         QString labelText;
-        labelText = "Property " + par->name + " of <b>" + this->component->getXMLName() + "</b> changed from ";
+        labelText = "<b>" + this->name + "</b>\n" + "Property " + par->name + " of <b>" + this->component->getXMLName() + "</b> changed from ";
 
         for (int i = 0; i < component->ParameterList.size(); ++i) {
             if (par->name == component->ParameterList[i]->name) {
@@ -2030,12 +2065,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
             break;
         }
 
-        QLabel * name = new QLabel(labelText);
-        name->setMaximumWidth(200);
-        name->setWordWrap(true);
-        descAndEdit->addWidget(name);
+        QLabel * desc = new QLabel(labelText);
+        desc->setMaximumWidth(200);
+        desc->setWordWrap(true);
+        descAndEdit->addWidget(desc,1,0,1,1);
         QFont descFont("Helvetica [Cronyx]", 8);
-        name->setFont(descFont);
+        desc->setFont(descFont);
 
         // edit button
         QPushButton * edit = new QPushButton;
@@ -2043,7 +2078,7 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
         edit->setFlat(true);
         edit->setIcon(QIcon(":/icons/toolbar/edit.png"));
         edit->setProperty("ptr", qVariantFromValue((void *) this));
-        descAndEdit->addWidget(edit);
+        descAndEdit->addWidget(edit,1,1,1,1);
         QObject::connect(edit, SIGNAL(clicked()), handler, SLOT(editLesion()));
     }
 
@@ -2342,6 +2377,7 @@ void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
     xmlOut->writeAttribute("target", this->component->getXMLName());
     xmlOut->writeStartElement("UL:Property");
 
+    xmlOut->writeAttribute("alias", this->name);
     xmlOut->writeAttribute("name",this->par->name);
     xmlOut->writeAttribute("dimension", this->par->dims->toString());
 
@@ -3146,6 +3182,10 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
 }
 
 void exptChangeProp::readXML(QXmlStreamReader * reader) {
+
+    if (reader->attributes().hasAttribute("alias")) {
+        this->name = reader->attributes().value("alias").toString();
+    }
 
     if (reader->attributes().hasAttribute("name")) {
         QString tempName = reader->attributes().value("name").toString();

@@ -10,6 +10,7 @@ BatchExperimentWindow::BatchExperimentWindow(experiment * currExpt, viewELExptPa
     ui->setupUi(this);
 
     this->selectedLog = NULL;
+    this->all_logs = true;
 
     // assign the experiment and log handler locally
     this->currExpt = currExpt;
@@ -57,11 +58,13 @@ BatchExperimentWindow::BatchExperimentWindow(experiment * currExpt, viewELExptPa
     connect(ui->export_but, SIGNAL(clicked()), this, SLOT(exportData()));
 
     // set up the log 'getter'
+    this->ui->par_log->addItem("All logs");
     for (int i = 0; i < this->currExpt->outs.size(); ++i) {
         if (this->currExpt->outs[i]->portIsAnalog) {
             this->ui->par_log->addItem(this->currExpt->outs[i]->source->getXMLName() + " " + this->currExpt->outs[i]->portName);
         }
     }
+
 
 }
 
@@ -189,7 +192,13 @@ void BatchExperimentWindow::addExpt() {
 
 void BatchExperimentWindow::logSelected(int index) {
     // find the log so we can reference it...
-    int currIndex = 0;
+    if (index == 0) {
+        // this means we have selected the "All logs thing"
+        this->all_logs = true;
+        return;
+    }
+    this->all_logs = false;
+    int currIndex = 1;
     for (int i = 0; i < this->currExpt->outs.size(); ++i) {
         if (this->currExpt->outs[i]->portIsAnalog) {
             if (currIndex == index) {
@@ -217,30 +226,70 @@ void BatchExperimentWindow::simulationDone() {
 
     // we have a completion so log the required data and then launch next in the batch!
 
+    qDebug() << "Sim done " << all_logs;
+    int num_logged_vals = 0;
+
     // find the log:
-    for (int i = 0; i < logs->logs.size(); ++i) {
-        logData * log = logs->logs[i];
-        // construct log name! This should be replaced by XML data from the log
-        if (selectedLog == NULL) continue;
-        QString possibleLogName = selectedLog->source->getXMLName() + "_" + selectedLog->portName + "_log.bin";
-        possibleLogName.replace(" ", "_");
-        if (log->logName == possibleLogName) {
+    if (all_logs == false) {
+        for (int i = 0; i < logs->logs.size(); ++i) {
+            logData * log = logs->logs[i];
+            // construct log name! This should be replaced by XML data from the log
+            if (selectedLog == NULL) continue;
+            QString possibleLogName = selectedLog->source->getXMLName() + "_" + selectedLog->portName + "_log.bin";
+            possibleLogName.replace(" ", "_");
+            if (log->logName == possibleLogName) {
+                // extract the required data and store
+                QVector < double > rowData;
+                float timeIndex = ui->time_log->value();
+                if (timeIndex < 0) {
+                    rowData = log->getRow(log->endTime/currExpt->setup.dt);
+                    qDebug() << "rowData size = " << rowData.size();
+                    if (rowData.size() > ui->index_log->value()) {
+                        results.push_back(rowData[ui->index_log->value()]);
+                    }
+                } else if (timeIndex < log->endTime) {
+                    rowData = log->getRow(timeIndex/currExpt->setup.dt);
+                    if (rowData.size() > ui->index_log->value()) {
+                        results.push_back(rowData[ui->index_log->value()]);
+                    }
+                } else {
+                    results.push_back(-1);
+                }
+            }
+        }
+    } else {
+        qDebug() << "All logs...";
+        for (int i = 0; i < logs->logs.size(); ++i) {
+            qDebug() << "Log " << i;
+            logData * log = logs->logs[i];
             // extract the required data and store
-            QVector < double > rowData;
-            float timeIndex = ui->time_log->value();
-            if (timeIndex < 0) {
-                rowData = log->getRow(log->endTime/currExpt->setup.dt);
-                qDebug() << "rowData size = " << rowData.size();
-                if (rowData.size() > ui->index_log->value()) {
-                    results.push_back(rowData[ui->index_log->value()]);
+            for (int j = 0; j < this->currExpt->outs.size(); ++j) {
+                // for each logged value in the experiment
+                if (this->currExpt->outs[j]->portIsAnalog) {
+                    QString possibleLogName = this->currExpt->outs[j]->source->getXMLName() + "_" + this->currExpt->outs[j]->portName + "_log.bin";
+                    possibleLogName.replace(" ", "_");
+                    if (log->logName == possibleLogName) {
+                        QVector < double > rowData;
+                        float timeIndex = ui->time_log->value();
+                        if (timeIndex < 0) {
+                            rowData = log->getRow(log->endTime/currExpt->setup.dt);
+                            qDebug() << "rowData size = " << rowData.size();
+                            if (rowData.size() > ui->index_log->value()) {
+                                results.push_back(rowData[ui->index_log->value()]);
+                                num_logged_vals++;
+                            }
+                        } else if (timeIndex < log->endTime) {
+                            rowData = log->getRow(timeIndex/currExpt->setup.dt);
+                            if (rowData.size() > ui->index_log->value()) {
+                                results.push_back(rowData[ui->index_log->value()]);
+                                num_logged_vals++;
+                            }
+                        } else {
+                            results.push_back(-1);
+                            num_logged_vals++;
+                        }
+                    }
                 }
-            } else if (timeIndex < log->endTime) {
-                rowData = log->getRow(timeIndex/currExpt->setup.dt);
-                if (rowData.size() > ui->index_log->value()) {
-                    results.push_back(rowData[ui->index_log->value()]);
-                }
-            } else {
-                results.push_back(-1);
             }
         }
     }
@@ -249,8 +298,23 @@ void BatchExperimentWindow::simulationDone() {
     if (currIndex + 1 >= this->model->rowCount()) {
         // show results
         QString finalResults;
-        for (int i = 0; i < this->results.size(); ++i) {
-            finalResults.append(QString::number(this->results[i]) + "\n");
+        if (this->all_logs == false) {
+            for (int i = 0; i < this->results.size(); ++i) {
+                finalResults.append(QString::number(this->results[i]) + "\n");
+            }
+        } else {
+            int count = 1;
+            qDebug() << num_logged_vals;
+            for (int i = 0; i < this->results.size(); ++i) {
+                qDebug() << "Count = " << count;
+                if (count > num_logged_vals) {
+                    // new line
+                    count = 1;
+                    finalResults.append("\n");
+                }
+                finalResults.append(QString::number(this->results[i]) + "\t");
+                ++count;
+            }
         }
         QMessageBox msgBox;
         msgBox.setWindowTitle("Batch Complete");

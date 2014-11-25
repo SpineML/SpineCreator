@@ -777,7 +777,7 @@ void MainWindow::initViewEL()
     run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     run->setToolTip("Run the selected experiment in the chosen simulator");
     run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-    toolbar0->layout()->addWidget(run);
+    //toolbar0->layout()->addWidget(run);
     ((QHBoxLayout *) toolbar0->layout())->addStretch();
 
     QFrame* line0b = new QFrame();
@@ -1812,7 +1812,9 @@ void MainWindow::import_layout()
     // make sure layouts appear
     data.currProject->copy_out_data(&data);
 
-    viewVZhandler->updateLayoutList(&data);
+    if (this->viewVZ.OpenGLWidget) {
+        viewVZhandler->updateLayoutList(&data);
+    }
 
     // Save the directory from the first of the fileNames
     QDir lastDirectory (fileNames[0]);
@@ -1901,15 +1903,14 @@ void MainWindow::saveImageAction()
         actionAs_Image_triggered();
     } else if (viewVZ.OpenGLWidget != NULL && viewVZ.view->isVisible()) {
         // visualisation
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
-        if (!fileName.isEmpty()) {
-            saveNetworkImageDialog svImDiag(viewVZ.OpenGLWidget, fileName);
+        //if (!fileName.isEmpty()) {
+            saveNetworkImageDialog svImDiag(viewVZ.OpenGLWidget, "");
             svImDiag.exec();
-        }
+        //}
     } else {
         // network
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
-        data.saveImage(fileName);
+        //QString fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), "", tr("Png (*.png)"));
+        data.saveImage("");
     }
 }
 
