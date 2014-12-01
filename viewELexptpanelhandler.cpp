@@ -1782,14 +1782,6 @@ void viewELExptPanelHandler::run()
             model_dir.remove(files[i]);
         }
 
-<<<<<<< HEAD
-    // write out model
-    if (!this->data->currProject->export_for_simulator(QDir::toNativeSeparators(wk_dir_string + "/model/"), data)) {
-        settings.remove("simulator_export_path");
-        settings.remove("export_binary");
-        this->cleanUpPostRun("", "");
-        return;
-=======
         // Write the model into the temporary dir
         tFilePath = this->tdir.path()+ QDir::separator() + "temp.proj";
         settings.setValue("files/currentFileName", tFilePath);
@@ -1805,7 +1797,7 @@ void viewELExptPanelHandler::run()
         // Revert currProject->filePath here
         this->data->currProject->filePath = previousFilePath;
 #ifdef CURRPROJECT_ISCHANGED_WAS_RELIABLE
->>>>>>> model_expansion_code
+
     }
 #endif
 
@@ -1819,11 +1811,7 @@ void viewELExptPanelHandler::run()
     simulator->setWorkingDirectory(wk_dir.absolutePath());
     simulator->setProcessEnvironment(env);
 
-<<<<<<< HEAD
-    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
-//return;
-    simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath());
-=======
+
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
 
     QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
@@ -1835,7 +1823,7 @@ void viewELExptPanelHandler::run()
         QStringList al;
         al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
-           << "-o" << "/Users/alex/outtemp"//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
+           << "-o" << "/home/alex/outtemp"//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
 
         // There's no REBUILD env var set, even though it's in my settings.
@@ -1848,7 +1836,6 @@ void viewELExptPanelHandler::run()
 
         simulator->start(path, al);
     }
->>>>>>> model_expansion_code
 
     // Wait a couple of seconds for the process to start
     if (!simulator->waitForStarted(100)) {

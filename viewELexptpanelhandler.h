@@ -95,12 +95,8 @@ private:
 signals:
     void enableRun(bool);
     void simulationDone();
-<<<<<<< HEAD
     void deleteWidgets();
-    
-=======
 
->>>>>>> model_expansion_code
 public slots:
     void addExperiment();
     void delExperiment();
