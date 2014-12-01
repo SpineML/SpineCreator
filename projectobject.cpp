@@ -140,14 +140,12 @@ bool projectObject::save_project(QString fileName, rootData * data)
         msgBox.exec();
         return false;
     }
+    qDebug() << "save_project ('" << fileName << "', rootData*)";
 
     QDir project_dir(fileName);
 
     // remove filename
     project_dir.cdUp();
-
-    QSettings settings;
-    settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // check for version control
     this->version.setupVersion();
@@ -206,114 +204,13 @@ bool projectObject::save_project(QString fileName, rootData * data)
     this->filePath = fileName;
 
     if (printErrors("Errors found")) {
-        settings.remove("export_for_simulation");
         return false;
     }
     if (printWarnings("Warnings found")) {
-        settings.remove("export_for_simulation");
         return false;
     }
 
     this->undoStack->setClean();
-
-    return true;
-}
-
-bool projectObject::export_for_simulator(QString fileName, rootData * data)
-{
-    QSettings settings;
-
-    settings.setValue("export_for_simulation", QString::number((float) true));
-
-    // fetch current experiment
-    experiment * currentExperiment = NULL;
-
-    // transfer model back from data
-    this->copy_back_data(data);
-
-    // find currentExperiment
-    for (int i = 0; i < this->experimentList.size(); ++i) {
-        if (this->experimentList[i]->selected) {currentExperiment = this->experimentList[i]; break;}
-    }
-
-    if (currentExperiment == NULL) { return false; }
-
-    QDir project_dir(fileName);
-    // Before writing components out, ensure that the simulator working
-    // directory exists.
-    if (!project_dir.exists()) {
-        // Create directory.
-        if (project_dir.mkpath(fileName)) {
-            // fileName now exists.
-        } else {
-            // failure.
-            addError("export_for_simulator: Error creating working directory " + fileName);
-            if (printErrors("Errors found")) {
-                settings.remove("export_for_simulation");
-                return false;
-            }
-        }
-    }
-
-    // remove old files
-    project_dir.setNameFilters(QStringList() << "*");
-    QStringList files = project_dir.entryList(QDir::Files);
-    for (int i = 0; i < files.size(); ++i) {
-        // delete
-        project_dir.remove(files[i]);
-        // and remove from version control (not needed for simulation)
-        /*if (version.isModelUnderVersion()) {
-            version.removeFromVersion(files[i]);
-        }*/
-    }
-
-    // sync project
-    copy_back_data(data);
-
-    // write components
-    for (int i = 1; i < this->catalogNB.size(); ++i) {
-        QString fileName = this->catalogNB[i]->getXMLName();
-        fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, this->catalogNB[i]);
-    }
-    for (int i = 1; i < this->catalogWU.size(); ++i) {
-        QString fileName = this->catalogWU[i]->getXMLName();
-        fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, this->catalogWU[i]);
-    }
-    for (int i = 1; i < this->catalogPS.size(); ++i) {
-        QString fileName = this->catalogPS[i]->getXMLName();
-        fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, this->catalogPS[i]);
-    }
-    for (int i = 1; i < this->catalogGC.size(); ++i) {
-        QString fileName = this->catalogGC[i]->getXMLName();
-        fileName.replace(" ", "_");
-        saveComponent(fileName, project_dir, this->catalogGC[i]);
-    }
-
-    // write layouts
-    for (int i = 1; i < this->catalogLAY.size(); ++i) {
-        saveLayout(this->catalogLAY[i]->getXMLName(), project_dir, this->catalogLAY[i]);
-    }
-
-    // write network
-    saveNetwork(this->networkFile, project_dir);
-
-    // write experiment
-    saveExperiment("experiment.xml", project_dir, currentExperiment);
-
-
-    if (printErrors("Errors found")) {
-        settings.remove("export_for_simulation");
-        return false;
-    }
-    if (printWarnings("Warnings found")) {
-        settings.remove("export_for_simulation");
-        return false;
-    }
-
-    settings.remove("export_for_simulation");
 
     return true;
 }
@@ -324,6 +221,10 @@ bool projectObject::import_network(QString fileName)
 
     // remove filename
     project_dir.cdUp();
+
+    // Set currentFileName
+    QSettings settings;
+    settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // get a list of the files in the directory
     QStringList files = project_dir.entryList();
@@ -601,7 +502,7 @@ bool projectObject::save_project_file(QString fileName)
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
         QMessageBox msgBox;
-        msgBox.setText("Could not create the project file");
+        msgBox.setText("Could not create the project file '" + fileName + "'");
         msgBox.exec();
         return false;
     }
@@ -975,9 +876,6 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         addError("Could not parse the Network file XML - is the selected file correctly formed XML?");
         return;
     }
-
-    QSettings settings;
-    settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // we have loaded the XML file - discard the file handle
     file.close();

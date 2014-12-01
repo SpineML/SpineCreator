@@ -1349,6 +1349,18 @@ void viewELExptPanelHandler::setOutputIndices()
     out->indices = text;
 }
 
+void viewELExptPanelHandler::setOutputStartT(double t)
+{
+    exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
+    out->startTime = t;
+}
+
+void viewELExptPanelHandler::setOutputEndT(double t)
+{
+    exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
+    out->endTime = t;
+}
+
 void viewELExptPanelHandler::acceptOutput()
 {
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
@@ -1653,10 +1665,15 @@ void viewELExptPanelHandler::run()
 
     // fetch current experiment sim engine
     experiment * currentExperiment = NULL;
+    int currentExptNum = -1;
 
     // find currentExperiment
     for (int i = 0; i < data->experiments.size(); ++i) {
-        if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
+        if (data->experiments[i]->selected) {
+            currentExperiment = data->experiments[i];
+            currentExptNum = i;
+            break;
+        }
     }
 
     if (currentExperiment == NULL) {
@@ -1734,26 +1751,63 @@ void viewELExptPanelHandler::run()
     }
     settings.endGroup();
 
-    settings.setValue("simulator_export_path",QDir::toNativeSeparators(wk_dir_string + "/model/"));
-    settings.setValue("export_binary",settings.value("simulators/" + simName + "/binary").toBool());
+    // add the working dir to the path - this allows Mac users to have the preflight in
+    // SpineML_2_BRAHMS
+    env.insert("PATH", env.value("PATH", "") + ":" + wk_dir.absolutePath());
 
-    // clear directory
-    QDir model_dir(QDir::toNativeSeparators(wk_dir_string + "/model/"));
-    QStringList files = model_dir.entryList(QDir::Files);
-    for (int i = 0; i < files.size(); ++i) {
-        model_dir.remove(files[i]);
-    }
+    // If the model has changed compared with the one currently saved,
+    // then we must write out the current in-memory model to a
+    // temporary location and execute that model.
+    QString previousFilePath = this->data->currProject->filePath;
+    QString tFilePath = this->data->currProject->filePath;
 
+    // In an ideal world, this->data->currProject->isChanged() would
+    // reliably give us whether or not a change had been made in the
+    // project. Instead, don't rely on that; save a fresh copy of the
+    // project out every time.
+#ifdef CURRPROJECT_ISCHANGED_WAS_RELIABLE
+    if (this->data->currProject->isChanged (this->data)) {
+#endif
+        // Check the temporary directory is valid for use:
+        if (!this->tdir.isValid()) {
+            qDebug() << "Can't use temporary simulator directory!";
+            runButton->setEnabled(true);
+            return;
+        }
+
+        // clear directory
+        QDir model_dir(this->tdir.path());
+        QStringList files = model_dir.entryList(QDir::Files);
+        for (int i = 0; i < files.size(); ++i) {
+            model_dir.remove(files[i]);
+        }
+
+<<<<<<< HEAD
     // write out model
     if (!this->data->currProject->export_for_simulator(QDir::toNativeSeparators(wk_dir_string + "/model/"), data)) {
         settings.remove("simulator_export_path");
         settings.remove("export_binary");
         this->cleanUpPostRun("", "");
         return;
+=======
+        // Write the model into the temporary dir
+        tFilePath = this->tdir.path()+ QDir::separator() + "temp.proj";
+        settings.setValue("files/currentFileName", tFilePath);
+        qDebug() << "Saving project temporarily to: " << tFilePath;
+        // save_project changes the current project's filepath.
+        if (!this->data->currProject->save_project(tFilePath, this->data)) {
+            qDebug() << "Failed to save the model into the temporary model directory";
+            runButton->setEnabled(true);
+            // Revert currProject->filePath here
+            this->data->currProject->filePath = previousFilePath;
+            return;
+        }
+        // Revert currProject->filePath here
+        this->data->currProject->filePath = previousFilePath;
+#ifdef CURRPROJECT_ISCHANGED_WAS_RELIABLE
+>>>>>>> model_expansion_code
     }
-
-    settings.remove("simulator_export_path");
-    settings.remove("export_binary");
+#endif
 
     QProcess * simulator = new QProcess;
     if (!simulator) {
@@ -1765,9 +1819,36 @@ void viewELExptPanelHandler::run()
     simulator->setWorkingDirectory(wk_dir.absolutePath());
     simulator->setProcessEnvironment(env);
 
+<<<<<<< HEAD
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp");
 //return;
     simulator->start(path, QStringList() << "-w" << wk_dir.absolutePath());
+=======
+    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
+
+    QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
+                                       // to the model being executed,
+                                       // either in the original location
+                                       // or in the temporary directory.
+    QString modelpath(projFileInfo.dir().path());
+    {
+        QStringList al;
+        al << "-m" << modelpath                          // path to input model
+           << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
+           << "-o" << "/Users/alex/outtemp"//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
+           << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
+
+        // There's no REBUILD env var set, even though it's in my settings.
+        QByteArray rbuild = qgetenv ("REBUILD");
+        if (rbuild == "true") {
+            al << "-r"; // Add the -r option for rebuilding
+        } else {
+            // Don't rebuild
+        }
+
+        simulator->start(path, al);
+    }
+>>>>>>> model_expansion_code
 
     // Wait a couple of seconds for the process to start
     if (!simulator->waitForStarted(100)) {

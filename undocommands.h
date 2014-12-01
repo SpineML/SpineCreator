@@ -376,7 +376,7 @@ private:
     ParameterData * ptr;
     ParameterType oldType;
     ParameterType newType;
-    QVector <float> oldValues;
+    QVector <double> oldValues;
 };
 
 class updateTitle : public QUndoCommand

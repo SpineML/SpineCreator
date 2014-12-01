@@ -161,7 +161,7 @@ MainWindow(QWidget *parent) :
             // No SpineML to BRAHMS. Set a default value for simulators/BRAHMS/path
             settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
         }
-        
+
         // set to use binaries
         settings.setValue("simulators/BRAHMS/binary", true);
 
@@ -180,7 +180,7 @@ MainWindow(QWidget *parent) :
 
         // add BRAHMS (assumes it's present)
         settings.setValue("simulators/BRAHMS/present", true);
-        
+
         // Is this used? Yes, in viewELexptpanelhandler.cpp
         settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
 
@@ -247,9 +247,6 @@ MainWindow(QWidget *parent) :
 
     connect(undoStacks, SIGNAL(indexChanged(int)), this, SLOT(undoOrRedoPerformed(int)));
     connect(undoStacks, SIGNAL(cleanChanged(bool)), this, SLOT(updateTitle()));
-
-    // in case of crash
-    settings.remove("export_for_simulation");
 
     // check for version control
     configureVCSMenu();
@@ -627,6 +624,11 @@ MainWindow::~MainWindow()
 
     // clear up python
     Py_Finalize();
+
+    // Ensure viewELhandler's destructor is called to clean up temporary model directory
+    delete this->viewELhandler;
+
+    // FIXME - there's probably more cleanup to do here.
 
     delete ui;
 }
@@ -1485,6 +1487,9 @@ void MainWindow::export_project(const QString& filePath)
         ++iter;
     }
 
+    QDir project_dir(filePath);
+    QSettings settings;
+    settings.setValue("files/currentFileName", project_dir.absolutePath());
     this->data.currProject->save_project(filePath, &this->data);
 
     // Clean up the component undostack (the project itself doesn't

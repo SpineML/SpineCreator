@@ -1563,28 +1563,19 @@ ParameterData::ParameterData(ParameterData *data)
     currType = data->currType;
 }
 
-void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
-
+void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
+{
     QSettings settings;
     // fetch the option for whether we write binary data for saving
     bool writeBinary = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
 
-    // fetch if we are exporting for simulation
-    bool exportBinary = false;
-    if (settings.value("export_for_simulation", "false").toBool()) {
-        // override save binary option
-        writeBinary = settings.value("export_binary").toBool();
-        exportBinary = true;
-        qDebug() << "Export for sim detected";
-    }
-
     // if we have few indices, or we are forbidden from using binary data
-    if (this->indices.size() < 31 || !writeBinary) {
+    if (this->indices.size() <= MIN_CONNS_TO_FORCE_BINARY || !writeBinary) {
         xmlOut.writeStartElement("ValueList");
         for (int ind = 0; ind < this->value.size(); ++ind) {
             xmlOut.writeEmptyElement("Value");
             xmlOut.writeAttribute("index", QString::number(this->indices[ind]));
-            xmlOut.writeAttribute("value", QString::number(float(this->value[ind])));
+            xmlOut.writeAttribute("value", QString::number(double(this->value[ind])));
         }
        xmlOut.writeEndElement(); // valueList
 
@@ -1596,14 +1587,16 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
         QString filePathString = settings.value("files/currentFileName", "error").toString();
 
         if (filePathString == "error") {
-            qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN! (nineML_classes.cpp ParameterData::writeExplicitListNodeData)";
+            qDebug() << "Error getting current project path - "
+                     << "THIS SHOULD NEVER HAPPEN! "
+                     << "(nineML_classes.cpp ParameterData::writeExplicitListNodeData)";
             return;
         }
 
         QDir saveDir(filePathString);
-        if (exportBinary) {
-            saveDir.setPath(settings.value("simulator_export_path").toString());
-        }
+        // Because files/currentFileName includes the .proj portion of
+        // the file, cdUp to get rid of this:
+        saveDir.cdUp();
 
         //generate a unique filename to save the par or sv under
         QStringList filters;
@@ -1628,7 +1621,8 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
             }
         }
 
-        // construct the save file name based upon whether we are saving the project or outputting for simulation
+        // construct the save file name based upon whether we are
+        // saving the project or outputting for simulation
         QString saveFileName;
         saveFileName = saveDir.absoluteFilePath(uniqueName);
         // add a tag to the binary file
@@ -1647,18 +1641,16 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut) {
             return;
         }
 
-        // write out the data to the save file, index first, then value, then next index-value pair...
+        // write out the data to the save file, index first, then
+        // value, then next index-value pair...
         QDataStream access(&export_file);
         for (int i = 0; i < this->value.size(); ++i) {
             access.writeRawData((char*) &this->indices[i], sizeof(int));
-            access.writeRawData((char*) &this->value[i], sizeof(float));
+            access.writeRawData((char*) &this->value[i], sizeof(double));
         }
 
         xmlOut.writeEndElement(); // valueList
-
     }
-
-
 }
 
 void ParameterData::readExplicitListNodeData(QDomNode &n) {
@@ -1667,7 +1659,7 @@ void ParameterData::readExplicitListNodeData(QDomNode &n) {
     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
     for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
         this->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
-        this->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
+        this->value.push_back(propValInst.item(ind).toElement().attribute("value").toDouble());
     }
     // read in binary data
     QDomNodeList binaryValInst = n.toElement().elementsByTagName("BinaryFile");
@@ -1715,12 +1707,11 @@ void ParameterData::readExplicitListNodeData(QDomNode &n) {
         while (!(fileIn.atEnd())) {
 
             // read in the required values:
-            // first two int32s
             int index;
-            float value;
+            double value;
 
             fileIn.read((char *) &index,sizeof(int));
-            fileIn.read((char *) &value,sizeof(float));
+            fileIn.read((char *) &value,sizeof(double));
 
             this->indices.push_back(index);
             this->value.push_back(value);

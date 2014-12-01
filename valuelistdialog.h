@@ -45,7 +45,7 @@ public:
 private:
     Ui::valueListDialog *ui;
     vectorModel * vModel;
-    QVector <float> vals;
+    QVector <double> vals;
     QVector <int> inds;
     ParameterData * par;
     void import_csv(QString);

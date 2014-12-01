@@ -157,7 +157,9 @@ class exptOutput : QObject {
 public:
 
     exptOutput() {edit = true; set=false; isExternal = false; name = "New Output"; portIsAnalog = true; indices="all"; \
-                  externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "127.0.0.1"; externalOutput.timestep = 0.0;}
+                           externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "127.0.0.1"; externalOutput.timestep = 0.0; \
+                           startTime = 0; endTime = 100000000;}
+
 
     //exptOutput outType;
     //QVector < float > params;
@@ -170,6 +172,8 @@ public:
     QString name;
     externalObject externalOutput;
     QString indices;
+    double startTime;
+    double endTime;
 
     QVBoxLayout * drawOutput(rootData *data, viewELExptPanelHandler * handler);
     void writeXML(QXmlStreamWriter *, projectObject * data);

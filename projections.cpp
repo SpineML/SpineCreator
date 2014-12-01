@@ -1313,6 +1313,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "KernelConnection") {
+                // fixme: fix this
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new kernel_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
