@@ -205,7 +205,6 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
 
         // run button...
         if (!this->runButton) {
-            qDebug() << "Reinstantiated!";
             this->runButton = new QToolButton;
             QCommonStyle style;
             if (this->running == false) {
@@ -218,7 +217,6 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
 
             QObject::connect(this->runButton, SIGNAL(destroyed()), this, SLOT(runDestroyed()));
         }
-        qDebug() << "after instantiation";
         QToolButton * run = this->runButton;
         // if any subcomponents of the experiment asre being edited we should disable this
         if (this->subEdit) {
@@ -283,9 +281,9 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
 
 }
 
-void experiment::runDestroyed() {
+void experiment::runDestroyed()
+{
 
-    qDebug() << "Destroyed!";
     this->runButton = NULL;
     this->progressBar = NULL;
 
