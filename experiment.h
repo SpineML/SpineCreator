@@ -245,6 +245,7 @@ public:
     void select(QVector < experiment * > *);
     void deselect();
     bool editing;
+    bool running;
 
     bool subEdit;
     QLabel * progressBar;
@@ -252,6 +253,9 @@ public:
 
 private:
     exptBox * currBoxPtr;
+
+public slots:
+    void runDestroyed();
 
 };
 

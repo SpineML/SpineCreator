@@ -1636,16 +1636,13 @@ void viewELExptPanelHandler::run()
 
     QSettings settings;
 
-    //runButton = (QPushButton *) (sender());
-    runButton = qobject_cast < QToolButton * > (sender());
+    QToolButton * runButton = qobject_cast < QToolButton * > (sender());
     if (runButton) {
-        runButton->disconnect();
+        runButton->disconnect(this);
         runButton->setText("Run experiment");
         QCommonStyle style;
         runButton->setIcon(style.standardIcon(QStyle::SP_MediaStop));
         connect(runButton, SIGNAL(clicked()), this, SLOT(cancelRun()));
-    } else {
-        runButton = NULL;
     }
 
     simulatorStdOutText = "";
@@ -1665,6 +1662,7 @@ void viewELExptPanelHandler::run()
     }
 
     this->runExpt = currentExperiment;
+    this->runExpt->running = true;
 
     QString simName = currentExperiment->setup.simType;
 
@@ -1807,13 +1805,17 @@ void viewELExptPanelHandler::cleanUpPostRun(QString msg, QString msgDetail) {
         msgBox.setText(msgDetail);
         msgBox.exec();
     }
-    if (this->runButton) {
-        this->runButton->disconnect();
-        this->runButton->setText("Run experiment");
-        QCommonStyle style;
-        runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-        connect(this->runButton, SIGNAL(clicked()), this, SLOT(run()));
-        this->runButton = NULL;
+    if (runExpt) {
+        if (this->runExpt->runButton) {
+            this->runExpt->runButton->disconnect(this);
+            this->runExpt->runButton->setText("Run experiment");
+            QCommonStyle style;
+            this->runExpt->runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+            connect(this->runExpt->runButton, SIGNAL(clicked()), this, SLOT(run()));
+            this->runExpt->runButton = NULL;
+        }
+        this->runExpt->running = false;
+        this->runExpt = NULL;
     }
 }
 
@@ -1852,14 +1854,14 @@ void viewELExptPanelHandler::checkForSimTime() {
         QTextStream tStream(&simTimeFile);
         QString line = tStream.readLine();
         if (line.contains("*")) {
-            if (runButton) {
-                runButton->setText(line);
+            if (runExpt->runButton) {
+                runExpt->runButton->setText(line);
             }
         } else {
             simTimeCurr = line.toFloat();
             // update the UI progress bar
-            if (runButton) {
-                runButton->setText("Running: " + QString::number(simTimeCurr) + "ms");
+            if (runExpt->runButton) {
+                runExpt->runButton->setText("Running: " + QString::number(simTimeCurr) + "ms");
             }
             float proportion = simTimeCurr / (this->simTimeMax*1000);
             runExpt->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 255), ") \
@@ -1876,7 +1878,6 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     simTimeChecker.disconnect();
     simTimeChecker.stop();
     QFile::remove(simCancelFileName);
-    this->runExpt = NULL;
 
     experiment * currentExperiment = NULL;
 
@@ -1942,7 +1943,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 
     if (status == QProcess::NormalExit) {
         // check if we are running in batch mode (i.e. run button is not set)
-        if (runButton) {
+        if (this->runExpt->runButton) {
             QMessageBoxResizable msgBox;
             msgBox.setWindowTitle("Simulator Complete");
             msgBox.setIcon(QMessageBox::Information);
