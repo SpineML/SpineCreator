@@ -213,7 +213,7 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
                 QObject::connect(this->runButton, SIGNAL(clicked()), panel, SLOT(run()));
             } else {
                 runButton->setIcon(style.standardIcon(QStyle::SP_MediaStop));
-                connect(runButton, SIGNAL(clicked()), this, SLOT(cancelRun()));
+                connect(runButton, SIGNAL(clicked()), panel, SLOT(cancelRun()));
             }
 
             QObject::connect(this->runButton, SIGNAL(destroyed()), this, SLOT(runDestroyed()));

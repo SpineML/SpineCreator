@@ -1786,6 +1786,7 @@ void viewELExptPanelHandler::run()
     this->simTimeFileName = QDir::toNativeSeparators(wk_dir_string + "/model/time.txt");
     this->simCancelFileName = QDir::toNativeSeparators(wk_dir_string + "/model/stop.txt");
     simTimeChecker.start(17);
+                qDebug() << "HERE";
 
 }
 
@@ -1805,14 +1806,13 @@ void viewELExptPanelHandler::cleanUpPostRun(QString msg, QString msgDetail) {
         msgBox.setText(msgDetail);
         msgBox.exec();
     }
-    if (runExpt) {
+    if (this->runExpt) {
         if (this->runExpt->runButton) {
             this->runExpt->runButton->disconnect(this);
             this->runExpt->runButton->setText("Run experiment");
             QCommonStyle style;
             this->runExpt->runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
             connect(this->runExpt->runButton, SIGNAL(clicked()), this, SLOT(run()));
-            this->runExpt->runButton = NULL;
         }
         this->runExpt->running = false;
         this->runExpt = NULL;
@@ -1862,10 +1862,11 @@ void viewELExptPanelHandler::checkForSimTime() {
             // update the UI progress bar
             if (runExpt->runButton) {
                 runExpt->runButton->setText("Running: " + QString::number(simTimeCurr) + "ms");
-            }
-            float proportion = simTimeCurr / (this->simTimeMax*1000);
-            runExpt->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 255), ") \
+                float proportion = simTimeCurr / (this->simTimeMax*1000);
+                runExpt->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 255), ") \
                                        + QString("stop:") + QString::number(proportion) + QString(" rgba(150, 255, 150, 255), stop:")  + QString::number(proportion+0.01) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
+
+            }
         }
     }
 
@@ -1891,9 +1892,10 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         return;
     }
     float proportion = 0;
-    currentExperiment->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 0), ") \
+    if (currentExperiment->progressBar) {
+        currentExperiment->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 0), ") \
                                + QString("stop:") + QString::number(proportion) + QString(" rgba(150, 255, 150, 0), stop:")  + QString::number(proportion+0.01) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
-
+    }
 
     // check for errors we can present
     for (int i = 0; i < (int) errorStrings.size(); ++i) {
