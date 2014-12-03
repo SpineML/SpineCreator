@@ -164,18 +164,24 @@ QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QS
         if (this->weightUpdateType->inputs[i]->projInput) {
             // create a new copy
             QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (this->weightUpdateType->inputs[i]->newFromExisting(objectMap));
+            // add it to the pointer map!
+            objectMap.insert(this->weightUpdateType->inputs[i].data(),in);
         }
     }
     for (int i = 0; i < this->postsynapseType->inputs.size(); ++i) {
         if (this->postsynapseType->inputs[i]->projInput) {
             // create a new copy
             QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (this->postsynapseType->inputs[i]->newFromExisting(objectMap));
+            // add it to the pointer map!
+            objectMap.insert(this->postsynapseType->inputs[i].data(),in);
         }
     }
     for (int i = 0; i < this->postsynapseType->outputs.size(); ++i) {
         if (this->postsynapseType->outputs[i]->projInput) {
             // create a new copy
             QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (this->postsynapseType->outputs[i]->newFromExisting(objectMap));
+            // add it to the pointer map!
+            objectMap.insert(this->postsynapseType->outputs[i].data(),in);
         }
     }
 
@@ -187,6 +193,23 @@ void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemOb
 {
     this->weightUpdateType->remapPointers(objectMap);
     this->postsynapseType->remapPointers(objectMap);
+
+    // we must also manually call remap on the projInputs:
+    for (int i = 0; i < this->weightUpdateType->inputs.size(); ++i) {
+        if (this->weightUpdateType->inputs[i]->projInput) {
+            this->weightUpdateType->inputs[i]->remapSharedPointers(objectMap);
+        }
+    }
+    for (int i = 0; i < this->postsynapseType->inputs.size(); ++i) {
+        if (this->postsynapseType->inputs[i]->projInput) {
+            this->postsynapseType->inputs[i]->remapSharedPointers(objectMap);
+        }
+    }
+    for (int i = 0; i < this->postsynapseType->outputs.size(); ++i) {
+        if (this->postsynapseType->outputs[i]->projInput) {
+            this->postsynapseType->outputs[i]->remapSharedPointers(objectMap);
+        }
+    }
 
     // connection, if it has a generator
     if (this->connectionType->type == CSV) {
