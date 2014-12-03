@@ -56,7 +56,6 @@ private:
     QVBoxLayout * exptOutputs;
     QVBoxLayout * exptChanges;
 
-    QToolButton * runButton;
     QString simulatorStdOutText;
     QString simulatorStdErrText;
 
