@@ -915,7 +915,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     emit setInputName("<u><b>" + in->getName() + "</b></u>");
     emit deleteProperties();
 
-    QString XMLname = in->src->getXMLName();
+    QString XMLname = in->src->getXMLName() + " to " + in->dst->getXMLName();
     inputSrcName->setToolTip(XMLname);
     // shorten if too long (tooltip will have full name)
     if (XMLname.size() > 12) {
@@ -951,7 +951,11 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
         // make sure we don't have gibberish loaded in
         in->srcPort.clear();
         in->dstPort.clear();
+    } else {
+        // in case we were previously disabled
+        inputPortSelection->setDisabled(false);
     }
+
     connect(inputPortSelection, SIGNAL(currentIndexChanged(QString)), data, SLOT(updatePortMap(QString)));
 
     // configure connectivity dropdown
@@ -1049,7 +1053,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     }
 
     this->insertLayout(this->count()-2,varLayout);
-
 
 }
 
@@ -1217,7 +1220,6 @@ void rootLayout::drawParamsLayout(rootData * data) {
         case nullObject:
             break;
         }
-
         connection * conn;
         if (i == 2) { // connection
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (data->selList[0]);

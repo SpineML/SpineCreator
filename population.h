@@ -85,6 +85,8 @@ public:
     void print();
     void setupBounds();
     void makeSpikeSource(QSharedPointer<population> thisSharedPointer);
+    QSharedPointer <systemObject> newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &);
+    void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
 
     QColor colour;
     int dlIndex;

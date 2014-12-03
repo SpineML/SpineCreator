@@ -33,11 +33,6 @@
 #define HORIZ 0
 #define VERT 1
 
-struct edge {
-    int dir;
-    float len;
-};
-
 struct bezierCurve {
     QPointF C1;
     QPointF C2;
@@ -78,6 +73,9 @@ public:
     int strength;
     int colorScheme;
 
+    QSharedPointer < systemObject > newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > &);
+    void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
+
 };
 
 class projection : public systemObject
@@ -86,7 +84,6 @@ public:
     projection();
     void readFromXML(QDomElement  &e, QDomDocument * , QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
     virtual ~projection();
-    QVector < edge > edges;
     QVector < bezierCurve > curves;
     QPointF start;
     bool is_clicked(float, float,float);
@@ -129,6 +126,9 @@ public:
     {
         locationOffset =  this->start - QPointF(x,y);
     }
+
+    QSharedPointer < systemObject > newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &);
+    void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
 
     trans tempTrans;
     void setupTrans(float GLscale, float viewX, float viewY, int width, int height);

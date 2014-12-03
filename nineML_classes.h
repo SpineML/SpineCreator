@@ -541,7 +541,8 @@ public:
     QVector < QSharedPointer<genericInput> > outputs;
     QSharedPointer<NineMLComponent> component;
     NineMLComponentData(QSharedPointer<NineMLComponent>data);
-    NineMLComponentData(QSharedPointer <NineMLComponentData>data);
+    NineMLComponentData(QSharedPointer <NineMLComponentData>data, bool copy_io = false);
+    void remapPointers(QMap <systemObject *, QSharedPointer <systemObject> > pointerMap);
     void copyFrom(QSharedPointer <NineMLComponentData>, QSharedPointer<NineMLComponent>, QSharedPointer<NineMLComponentData> thisSharedPointer);
     NineMLComponentData& operator=(const NineMLComponentData& data);
     NineMLComponentData(){}

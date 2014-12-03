@@ -115,6 +115,7 @@ public:
     int largestIndex;
     QImage popImage;
     QSharedPointer<NineMLComponentData> clipboardCData;
+    QVector <QSharedPointer<systemObject> > clipboardObjects;
     versionControl* version;
     MainWindow* main;
     QActionGroup* projectActions;
@@ -183,8 +184,26 @@ public slots:
     void undoOrRedoPerformed(int);
     void abortProjection();
     void updatePanelView2Accessor();
+    /*!
+     * \brief copyParsToClipboard
+     * Copy the Properties of the selected object to a temporary 'Clipboard'
+     */
     void copyParsToClipboard();
+    /*!
+     * \brief pasteParsFromClipboard
+     * Paste the Properties from teh 'Clipboard' to the current selected object
+     */
     void pasteParsFromClipboard();
+    /*!
+     * \brief copySelectionToClipboard
+     * Copy the selected objects to a 'Clipboard' and update pointers
+     */
+    void copySelectionToClipboard();
+    /*!
+     * \brief pasteSelectionFromClipboard
+     * Paste the 'Clipboard' back at the cursor location
+     */
+    void pasteSelectionFromClipboard();
     void selectProject(QAction *);
     void reDrawAll();
 
