@@ -216,6 +216,7 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
                 connect(runButton, SIGNAL(clicked()), this, SLOT(cancelRun()));
             }
 
+
             QObject::connect(this->runButton, SIGNAL(destroyed()), this, SLOT(runDestroyed()));
         }
         qDebug() << "after instantiation";
