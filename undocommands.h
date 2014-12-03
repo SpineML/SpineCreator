@@ -281,6 +281,39 @@ private:
     bool firstRedo;
 };
 
+
+class setStrengthSynapseUndo : public QUndoCommand
+{
+public:
+    setStrengthSynapseUndo(rootData * data, QSharedPointer <synapse> ptr, int value, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    QSharedPointer <synapse> ptr;
+    int oldValue;
+    int value;
+    bool firstRedo;
+};
+
+class setStrengthInputUndo : public QUndoCommand
+{
+public:
+    setStrengthInputUndo(rootData * data, QSharedPointer <genericInput> ptr, int value, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    QSharedPointer <genericInput> ptr;
+    int oldValue;
+    int value;
+    bool firstRedo;
+};
+
 class setLoc3Undo : public QUndoCommand
 {
 public:
@@ -292,6 +325,39 @@ private:
     // these references are needed for the redo and undo
     rootData * data;
     QSharedPointer <population> ptr;
+    int oldValue;
+    int value;
+    int index;
+};
+
+
+class setCenterSynapseUndo : public QUndoCommand
+{
+public:
+    setCenterSynapseUndo(rootData * data, QSharedPointer <synapse> ptr, int index, int value, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    QSharedPointer <synapse> ptr;
+    int oldValue;
+    int value;
+    int index;
+};
+
+class setCenterInputUndo : public QUndoCommand
+{
+public:
+    setCenterInputUndo(rootData * data, QSharedPointer <genericInput> ptr, int index, int value, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    rootData * data;
+    QSharedPointer <genericInput> ptr;
     int oldValue;
     int value;
     int index;

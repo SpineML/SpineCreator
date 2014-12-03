@@ -55,6 +55,8 @@ population::population(float x, float y, float size, float aspect_ratio, QString
     loc3.x = 0;
     loc3.y = 0;
     loc3.z = 0;
+    this->dlIndex = -1;
+    this->dlIndexCol = -1;
 
     isSpikeSource = false;
 
@@ -82,6 +84,8 @@ population::population(QSharedPointer <population> data, QSharedPointer<populati
     loc3.x = data->loc3.x;
     loc3.y = data->loc3.y;
     loc3.z = data->loc3.z;
+    this->dlIndex = -1;
+    this->dlIndexCol = -1;
     this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType));
     // fix owner
     this->neuronType->owner = thisSharedPointer;

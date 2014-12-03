@@ -88,6 +88,8 @@ public:
 private:
     void drawNeuron(GLfloat, int, int, QColor);
     void setupView();
+    void createPopulationsDL();
+    void createConnectionsDL();
     QString currentObjectName;
     QAbstractTableModel * model;
     QAbstractItemModel * sysModel;
@@ -103,6 +105,8 @@ private:
     rootData * data;
     loc3f loc3Offset;
     QSharedPointer<systemObject> selectedObject;
+    int clickedPopulation;
+    int clickedNeuron;
     int selectedIndex;
     int selectedType;
     QString last_distance_based_equation;
@@ -131,6 +135,7 @@ signals:
 public slots:
     void redraw();
     void redraw(int);
+    void updateConnections();
     void selectionChanged(QItemSelection top, QItemSelection);
     void parsChangedPopulation(double);
     void parsChangedPopulation(int);

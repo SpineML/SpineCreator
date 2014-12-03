@@ -156,7 +156,10 @@ public slots:
     void updatePar(int);
     void updateLayoutPar();
     void setSize();
+    void setStrength();
     void setLoc3();
+    void setCenter();
+    void setColorScheme();
     void addPopulation();
     void addSpikeSource();
     void renamePopulation();
@@ -228,6 +231,46 @@ private:
      * population is selected; otherwise NULL.
      */
     QSharedPointer<population> currSelPopulation();
+
+    /*!
+     * \brief Obtain the currently selected synapses
+     *
+     * \return A vector of pointers to all currently selected
+     * synapses.
+     */
+    QVector <QSharedPointer <synapse> > currSelConnections();
+
+    /*!
+     * \brief Obtain the currently selected synapse.
+     *
+     * Obtain the currently selected synapse if only a single
+     * synapse is selected. If no synapses are selected, return
+     * NULL. If more than one synapse is selected, return NULL.
+     *
+     * \return pointer to the selected synapse, if only a single
+     * synapse is selected; otherwise NULL.
+     */
+    QSharedPointer <synapse> currSelConnection();
+
+    /*!
+     * \brief Obtain the currently selected inputs
+     *
+     * \return A vector of pointers to all currently selected
+     * inputs.
+     */
+    QVector <QSharedPointer <genericInput> > currSelInputs();
+
+    /*!
+     * \brief Obtain the currently selected input.
+     *
+     * Obtain the currently selected input if only a single
+     * input is selected. If no inputs are selected, return
+     * NULL. If more than one input is selected, return NULL.
+     *
+     * \return pointer to the selected input, if only a single
+     * input is selected; otherwise NULL.
+     */
+    QSharedPointer < genericInput > currSelInput();
 
     /*!
      * Action to take when a mouse down event has changed selected objects.

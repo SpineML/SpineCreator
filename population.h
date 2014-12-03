@@ -87,6 +87,8 @@ public:
     void makeSpikeSource(QSharedPointer<population> thisSharedPointer);
 
     QColor colour;
+    int dlIndex;
+    int dlIndexCol;
 
 //private:
     float x;

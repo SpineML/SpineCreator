@@ -71,6 +71,13 @@ public:
     QSharedPointer <projection> proj;
     QString getName();
     virtual void delAll(rootData *);
+
+    int dlIndex;
+
+    GLfloat center[3];
+    int strength;
+    int colorScheme;
+
 };
 
 class projection : public systemObject
@@ -129,6 +136,7 @@ public:
     QPainterPath makeIntersectionLine(int first, int last);
 
     QVector < QSharedPointer<genericInput> > disconnectedInputs;
+
 
 protected:
     cPoint selectedControlPoint;

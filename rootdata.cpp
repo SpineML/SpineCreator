@@ -1511,6 +1511,58 @@ QSharedPointer<population> rootData::currSelPopulation()
     return currSel;
 }
 
+QVector <QSharedPointer <synapse> > rootData::currSelConnections()
+{
+    // get the currently selected synapses (ALL of them)
+    QVector< QSharedPointer <synapse> > currSel;
+    QVector< QSharedPointer <systemObject> >::const_iterator i = this->selList.begin();
+    while (i != this->selList.end()) {
+        if ((*i)->type == synapseObject) {
+            currSel.push_back (qSharedPointerDynamicCast <synapse> (*i));
+        }
+        ++i;
+    }
+    return currSel;
+}
+
+QSharedPointer <synapse> rootData::currSelConnection()
+{
+    // get the currently selected synapse
+    QSharedPointer<synapse> currSel;
+    if (this->selList.size() == 1) {
+        if (this->selList[0]->type == synapseObject) {
+            currSel = qSharedPointerDynamicCast <synapse> (this->selList[0]);
+        }
+    }
+    return currSel;
+}
+
+QVector <QSharedPointer <genericInput> > rootData::currSelInputs()
+{
+    // get the currently selected inputs (ALL of them)
+    QVector< QSharedPointer <genericInput> > currSel;
+    QVector< QSharedPointer <systemObject> >::const_iterator i = this->selList.begin();
+    while (i != this->selList.end()) {
+        if ((*i)->type == inputObject) {
+            currSel.push_back (qSharedPointerDynamicCast <genericInput> (*i));
+        }
+        ++i;
+    }
+    return currSel;
+}
+
+QSharedPointer < genericInput > rootData::currSelInput()
+{
+    // get the currently selected input
+    QSharedPointer<genericInput> currSel;
+    if (this->selList.size() == 1) {
+        if (this->selList[0]->type == inputObject) {
+            currSel = qSharedPointerDynamicCast <genericInput> (this->selList[0]);
+        }
+    }
+    return currSel;
+}
+
 void rootData::updateLayoutPar()
 {
     // get the currently selected population
@@ -1562,6 +1614,38 @@ void rootData::setSize()
     }
 }
 
+void rootData::setStrength()
+{
+    // get the currently selected connection
+    QSharedPointer <synapse> currSel = this->currSelConnection();
+
+    // get value
+    int value = ((QSpinBox *) sender())->value();
+
+    //Could not find a synapse, lets try an input
+    if (currSel == NULL) {
+        // get the currently selected connection
+        QSharedPointer <genericInput> currInp = this->currSelInput();
+
+        if (currInp != NULL) {
+            // Found a input, save the value
+            if (value != currInp->strength) {
+                currProject->undoStack->push(new setStrengthInputUndo(this, currInp, value));
+            }
+        }
+        else {
+            return;
+        }
+    }
+    else {
+        //Found a selected synpase, save the value
+        // only update if we have a change
+        if (value != currSel->strength) {
+            currProject->undoStack->push(new setStrengthSynapseUndo(this, currSel, value));
+        }
+    }
+}
+
 void rootData::setLoc3()
 {
     // get the currently selected population
@@ -1576,6 +1660,63 @@ void rootData::setLoc3()
     CHECK_CAST(dynamic_cast<QSpinBox *>(sender()))
 
     currProject->undoStack->push(new setLoc3Undo(this, currSel, index, value));
+}
+
+void rootData::setCenter()
+{
+    // get the currently selected population
+    QSharedPointer <synapse> currSel = this->currSelConnection();
+
+    // Get the value and the index
+    int index = sender()->property("type").toInt();
+    int value = ((QSpinBox *) sender())->value();
+
+    //Could not find a synapse, lets try an input
+    if (currSel == NULL) {
+        // get the currently selected connection
+        QSharedPointer <genericInput> currInp = this->currSelInput();
+
+        if (currInp != NULL) {
+            // Found a input, save the value
+            if (value != currInp->strength) {
+                currProject->undoStack->push(new setCenterInputUndo(this, currInp, index, value));
+            }
+        }
+        else {
+            return;
+        }
+    }
+    else {
+        currProject->undoStack->push(new setCenterSynapseUndo(this, currSel, index, value));
+    }
+}
+
+void rootData::setColorScheme()
+{
+    // get the currently selected population
+    QSharedPointer <synapse> currSel = this->currSelConnection();
+    bool value = ((QCheckBox *) sender())->isChecked();
+
+    //Could not find a synapse, lets try an input
+    if (currSel == NULL) {
+        // get the currently selected connection
+        QSharedPointer <genericInput> currInp = this->currSelInput();
+
+        if (currInp != NULL) {
+            // Found a input, save the value
+            if (value != currInp->colorScheme) {
+                currInp->colorScheme = value;
+            }
+        }
+        else {
+            return;
+        }
+    }
+    else {
+        if (value != currSel->colorScheme) {
+            currSel->colorScheme = value;
+        }
+    }
 }
 
 void rootData::renamePopulation()

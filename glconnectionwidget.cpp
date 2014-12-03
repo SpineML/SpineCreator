@@ -54,7 +54,9 @@ glConnectionWidget::glConnectionWidget(rootData * data, QWidget *parent) : QGLWi
     this->data = data;
     setAutoFillBackground(false);
     popIndicesShown = false;
-    selectedIndex = 0;
+    clickedPopulation = -1;
+    clickedNeuron = -1;
+    selectedIndex = -1;
     selectedType = 1;
     connGenerationMutex = new QMutex;
     imageSaveMode = false;
@@ -74,7 +76,11 @@ glConnectionWidget::glConnectionWidget(rootData * data, QWidget *parent) : QGLWi
 void glConnectionWidget::initializeGL()
 {
 
+    createPopulationsDL();
+    createConnectionsDL();
+
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_MAP1_VERTEX_3);
 
 
 }
@@ -86,12 +92,13 @@ void glConnectionWidget::toggleOrthoView(bool toggle) {
 
 void glConnectionWidget::clear() {
 
+    selectedObject.clear();
     selectedPops.clear();
     popColours.clear();
     popLogs.clear();
     selectedConns.clear();
     connections.clear();
-    selectedIndex = 0;
+    selectedIndex = -1;
     selectedType = 1;
     model = (QAbstractTableModel *)0;
 
@@ -203,6 +210,10 @@ void glConnectionWidget::redraw() {
             currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
         }
     }
+
+    createPopulationsDL();
+    createConnectionsDL();
+
     this->repaint();
 }
 
@@ -224,6 +235,17 @@ void glConnectionWidget::redraw(int)
     loc3Offset.x = xSpin->value();
     loc3Offset.y = ySpin->value();
     loc3Offset.z = zSpin->value();
+
+    createPopulationsDL();
+    createConnectionsDL();
+
+    this->repaint();
+
+}
+
+void glConnectionWidget::updateConnections()
+{
+    createConnectionsDL();
 
     this->repaint();
 
@@ -328,49 +350,19 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
         return;
     }
 
-    // draw with a level of detail dependant on the number on neurons we must draw
-    // sum neurons across all pops we'll draw
-    int totalNeurons = 0;
-    for (int locNum = 0; locNum < selectedPops.size(); ++locNum) {
-        totalNeurons += selectedPops[locNum]->layoutType->locations.size();
-    }
-    int LoD = round(250.0f/float(totalNeurons)*pow(2,float(quality)));
-
     // normal drawing
-    for (int locNum = 0; locNum < selectedPops.size(); ++locNum) {
-        QSharedPointer <population> currPop = selectedPops[locNum];
-        for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+    for (int i = 0; i < data->populations.size(); i++) {
+        if (data->populations[i]->isVisualised) {
             glPushMatrix();
-
-            glTranslatef(currPop->layoutType->locations[i].x, currPop->layoutType->locations[i].y, currPop->layoutType->locations[i].z);
-
             // if currently selected
-            if (currPop == selectedObject) {
+            if (data->populations[i] == selectedObject) {
                 // move to pop location denoted by the spinboxes for x, y, z
                 glTranslatef(loc3Offset.x, loc3Offset.y,loc3Offset.z);
             } else {
-                glTranslatef(currPop->loc3.x, currPop->loc3.y,currPop->loc3.z);
+                glTranslatef(data->populations[i]->loc3.x, data->populations[i]->loc3.y,data->populations[i]->loc3.z);
             }
 
-            // draw with a level of detail dependant on the number on neurons we must draw
-            // put some bounds on
-            if (LoD < 4) LoD = 4; if (LoD > 32) LoD = 32;
-            if (imageSaveMode)
-                LoD = 64;
-
-            // check we haven't broken stuff
-            if (popColours[locNum].size() > currPop->layoutType->locations.size()) {
-
-                popColours[locNum].clear();
-                popLogs[locNum] = NULL;
-
-            }
-
-            if (popColours[locNum].size() > 0) {
-                this->drawNeuron(0.5, LoD, LoD, popColours[locNum][i]);
-            } else
-                this->drawNeuron(0.5, LoD, LoD, QColor(100 + 0.5*currPop->colour.red(),100 + 0.5*currPop->colour.green(),100 + 0.5*currPop->colour.blue(),255));
-
+            glCallList(data->populations[i]->dlIndex);
             glPopMatrix();
         }
     }
@@ -461,38 +453,22 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
 
             connGenerationMutex->lock();
-            for (int i = 0; i < connections[targNum].size(); ++i) {
+            int aux_strength;
+            GLfloat * center;
+            if (selectedConns[targNum]->type == synapseObject) {
 
-                if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
-                    glLineWidth(1.0*lineScaleFactor);
-
-                    glColor4f(0.0, 0.0, 0.0, 0.1);
-
-                    // draw in
-                    glBegin(GL_TRIANGLES);
-                    if (src->isVisualised && dst->isVisualised) {
-                        glVertex3f(src->layoutType->locations[connections[targNum][i].src].x+srcX, src->layoutType->locations[connections[targNum][i].src].y+srcY, src->layoutType->locations[connections[targNum][i].src].z+srcZ);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ+0.05);
-                    }
-                    if (src->isVisualised && !dst->isVisualised) {
-                        glVertex3f(src->layoutType->locations[connections[targNum][i].src].x, src->layoutType->locations[connections[targNum][i].src].y, src->layoutType->locations[connections[targNum][i].src].z);
-                        glVertex3f(dstX, dstY, dstZ);
-                        glVertex3f(dstX, dstY, dstZ+0.01);
-                    }
-                    if (!src->isVisualised && dst->isVisualised) {
-                        glVertex3f(src->loc3.x, src->loc3.y, src->loc3.z);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z+0.01);
-                    }
-                    glEnd();
-
-
-
-                } else {
-                    // ERR - CONNECTION INDEX OUT OF RANGE
-                }
-
+                QSharedPointer <synapse> currObj = qSharedPointerDynamicCast <synapse> (selectedConns[targNum]);
+                CHECK_CAST(currObj);
+                glCallList(currObj->dlIndex);
+                aux_strength = currObj->strength;
+                center = currObj->center;
+            }
+            else {
+                QSharedPointer <genericInput> currObj = qSharedPointerDynamicCast <genericInput> (selectedConns[targNum]);
+                if (!currObj) exit(-1);
+                glCallList(currObj->dlIndex);
+                aux_strength = currObj->strength;
+                center = currObj->center;
             }
 
             // draw selected connections on top
@@ -539,25 +515,53 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         }
 
                         if (isSelected) {
-                            // draw in
-                            glBegin(GL_LINES);
-                            if (src->isVisualised && dst->isVisualised) {
-                                glVertex3f(src->layoutType->locations[connections[targNum][i].src].x+srcX, src->layoutType->locations[connections[targNum][i].src].y+srcY, src->layoutType->locations[connections[targNum][i].src].z+srcZ);
-                                glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ);
-                            }
-                            if (src->isVisualised && !dst->isVisualised) {
-                                glVertex3f(src->layoutType->locations[connections[targNum][i].src].x, src->layoutType->locations[connections[targNum][i].src].y, src->layoutType->locations[connections[targNum][i].src].z);
-                                glVertex3f(dstX, dstY, dstZ);
-                            }
-                            if (!src->isVisualised && dst->isVisualised) {
-                                glVertex3f(src->loc3.x, src->loc3.y, src->loc3.z);
-                                glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z);
-                            }
-                            glEnd();
-                        }
+                           // draw in
+
+                           // Decide the control points
+                           GLfloat ctrlpoints[aux_strength+2][3];
+                           for (int strenghtIndex = 1; strenghtIndex <= aux_strength; strenghtIndex++) {
+                               ctrlpoints[strenghtIndex][0] = center[0];
+                               ctrlpoints[strenghtIndex][1] = center[1];
+                               ctrlpoints[strenghtIndex][2] = center[2];
+                           }
+
+                           if (src->isVisualised && dst->isVisualised) {
+                               ctrlpoints[0][0] = src->layoutType->locations[connections[targNum][i].src].x+srcX;
+                               ctrlpoints[0][1] = src->layoutType->locations[connections[targNum][i].src].y+srcY;
+                               ctrlpoints[0][2] = src->layoutType->locations[connections[targNum][i].src].z+srcZ;
+                               ctrlpoints[aux_strength+1][0] = dst->layoutType->locations[connections[targNum][i].dst].x+dstX;
+                               ctrlpoints[aux_strength+1][1] = dst->layoutType->locations[connections[targNum][i].dst].y+dstY;
+                               ctrlpoints[aux_strength+1][2] = dst->layoutType->locations[connections[targNum][i].dst].z+dstZ;
+                           }
+                           if (src->isVisualised && !dst->isVisualised) {
+                               ctrlpoints[0][0] = src->layoutType->locations[connections[targNum][i].src].x;
+                               ctrlpoints[0][1] = src->layoutType->locations[connections[targNum][i].src].y;
+                               ctrlpoints[0][2] = src->layoutType->locations[connections[targNum][i].src].z;
+                               ctrlpoints[aux_strength+1][0] = dstX;
+                               ctrlpoints[aux_strength+1][1] = dstY;
+                               ctrlpoints[aux_strength+1][2] = dstZ;
+                           }
+                           if (!src->isVisualised && dst->isVisualised) {
+                               ctrlpoints[0][0] = src->loc3.x;
+                               ctrlpoints[0][1] = src->loc3.y;
+                               ctrlpoints[0][2] = src->loc3.z;
+                               ctrlpoints[aux_strength+1][0] = dst->layoutType->locations[connections[targNum][i].dst].x;
+                               ctrlpoints[aux_strength+1][1] = dst->layoutType->locations[connections[targNum][i].dst].y;
+                               ctrlpoints[aux_strength+1][2] = dst->layoutType->locations[connections[targNum][i].dst].z;
+                           }
 
 
+                           glMap1f(GL_MAP1_VERTEX_3, 0.0, 1.0, 3, aux_strength+2, &ctrlpoints[0][0]);
+                           glEnable(GL_MAP1_VERTEX_3);
 
+                           // Draw the line between the neurons
+                           glBegin(GL_LINE_STRIP);
+
+                           for (int k = 0; k <= 30; k++)
+                               glEvalCoord1f((GLfloat) k/30.0);
+
+                           glEnd();
+                       }
                     } else {
                         // ERR - CONNECTION INDEX OUT OF RANGE
                     }
@@ -841,6 +845,97 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
         painter.end();
+
+        // Make sure the clicked population exists and is visible
+        if (0 <= clickedPopulation &&  clickedPopulation <= data->populations.size())
+        {
+            if (data->populations[clickedPopulation]->isVisualised)
+            {
+                QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (data->populations[clickedPopulation]);
+                CHECK_CAST(currPop);
+
+                if (0 <= clickedNeuron && clickedNeuron <= currPop->layoutType->locations.size())
+                {
+                    QPainter painter(this);
+                    painter.setRenderHint(QPainter::Antialiasing);
+
+                    QPen pen = painter.pen();
+                    QPen oldPen = pen;
+                    pen.setColor(QColor(0,0,0,255));
+                    painter.setPen(pen);
+
+                    float zoomVal = zoomFactor;
+                    if (zoomVal < 0.3)
+                        zoomVal = 0.3;
+
+                    // draw text
+
+                    glPushMatrix();
+
+                    glTranslatef(currPop->layoutType->locations[clickedNeuron].x, currPop->layoutType->locations[clickedNeuron].y, currPop->layoutType->locations[clickedNeuron].z);
+
+                    // if currently selected
+                    if (currPop == selectedObject) {
+                        // move to pop location denoted by the spinboxes for x, y, z
+                        glTranslatef(loc3Offset.x, loc3Offset.y,loc3Offset.z);
+                    } else {
+                        glTranslatef(currPop->loc3.x, currPop->loc3.y,currPop->loc3.z);
+                    }
+
+                    // print up text:
+                    GLdouble modelviewMatrix[16];
+                    GLdouble projectionMatrix[16];
+                    GLint viewPort[4];
+                    GLdouble winX;
+                    GLdouble winY;
+                    GLdouble winZ;
+                    glGetIntegerv(GL_VIEWPORT, viewPort);
+                    glGetDoublev(GL_MODELVIEW_MATRIX, modelviewMatrix);
+                    glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
+                    gluProject(0, 0, 0, modelviewMatrix, projectionMatrix, viewPort, &winX, &winY, &winZ);
+
+                    winX /= RETINA_SUPPORT;
+                    winY /= RETINA_SUPPORT;
+
+                    if (orthoView) {
+                        winX += this->width()/4.0;
+                        winY -= this->height()/4.0;
+                    }
+
+
+                    QString neuronInfo = "";
+                    neuronInfo += "Population: " + currPop->getName();
+                    neuronInfo += "\n";
+                    neuronInfo += "Neuron: " + QString::number(float(clickedNeuron));
+                    QRect textRect;
+
+                    if (imageSaveMode) {}
+                        //painter.drawText(QRect(winX-(1.0-winZ)*220-20,imageSaveHeight-winY-(1.0-winZ)*220-10,40,20),QString::number(float(i)));
+                    else {
+                        if (orthoView)
+                            textRect = QRect(winX-(1.0-winZ)*220-10.0/zoomVal-10,this->height()-winY-(1.0-winZ)*220-10.0/zoomVal-10,80,30);
+                        else
+                            textRect = QRect(winX-(1.0-winZ)*300-10.0/zoomVal,this->height()-winY-(1.0-winZ)*300-10.0/zoomVal,80,30);
+
+                        painter.drawText(textRect, Qt::TextDontClip, neuronInfo);
+                        painter.setBrush(Qt::NoBrush);
+                        QFont myFont;
+                        QFontMetrics fm(myFont);
+                        QRect border = fm.boundingRect(textRect, Qt::TextDontClip, neuronInfo);
+                        //Add some padding to make sure you can read
+                        border.adjust (-5, -5, 5, 5);
+                        painter.drawRect(border);
+                    }
+                        //painter.drawText(QRect(winX-(1.0-winZ)*600,this->height()-winY-(1.0-winZ)*600,40,20),QString::number(float(i)));
+                        //painter.drawText(QRect((winX-(1.0-winZ)*220-20),this->height()-(winY-(1.0-winZ)*220+50),40,20),QString::number(float(i)));
+
+                    glPopMatrix();
+
+                    painter.setPen(oldPen);
+                    painter.end();
+                }
+            }
+        }
     }
 
     glPopMatrix();
@@ -1074,7 +1169,7 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
 
     // reset nrn index etc...
     selectedType = 1;
-    selectedIndex = 0;
+    selectedIndex = -1;
 
     // cancel current selection
     selectedObject.clear();
@@ -1218,6 +1313,10 @@ void glConnectionWidget::parsChangedPopulation(double) {
             }
         }
     }
+
+    createPopulationsDL();
+    createConnectionsDL();
+
     // redraw
     this->repaint();
 
@@ -1240,6 +1339,9 @@ void glConnectionWidget::parsChangedPopulation() {
             }
         }
     }
+
+    createPopulationsDL();
+    createConnectionsDL();
 
     // redraw
     this->repaint();
@@ -1300,6 +1402,8 @@ void glConnectionWidget::parsChangedProjections() {
 
     }
 
+    createPopulationsDL();
+    createConnectionsDL();
 
     // redraw:
     repaint();
@@ -1467,6 +1571,9 @@ void glConnectionWidget::refreshAll() {
 
     }
 
+    createPopulationsDL();
+    createConnectionsDL();
+
 }
 
 
@@ -1631,6 +1738,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                 }
                             }
 
+                            //An element was added to the list, the display list needs to be recreated
+                            createConnectionsDL();
+
                         }
 
                     } else {
@@ -1701,6 +1811,9 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                             }
                         }
 
+                        //An element was added to the list, the display list needs to be recreated
+                        createConnectionsDL();
+
                     }
                 } else {
                     // if in list then remove from list
@@ -1734,8 +1847,8 @@ void glConnectionWidget::connectionDataChanged(QModelIndex, QModelIndex) {
 
 void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection) {
 
-    this->selectedIndex = 0;
-    this->selectedType = 4;
+    this->selectedIndex = -1;
+    this->selectedType = 1;
 
     this->selection = ((QItemSelectionModel *) sender())->selectedIndexes();
     // force redraw
@@ -1743,7 +1856,8 @@ void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelecti
 
 }
 
-void glConnectionWidget::mousePressEvent(QMouseEvent *event){
+void glConnectionWidget::mousePressEvent(QMouseEvent *event)
+{
 
     setCursor(Qt::ClosedHandCursor);
     button = event->button();
@@ -1753,6 +1867,69 @@ void glConnectionWidget::mousePressEvent(QMouseEvent *event){
     origRot = event->globalPos();
     origRot.setX(origRot.x() - rot.x()*2);
     origRot.setY(origRot.y() - rot.y()*2);
+
+
+    // Alg that detectes clicked object ::::ALEX: NOT RETINA SAFE?
+    if (button == Qt::LeftButton)
+    {
+        glDisable(GL_LIGHTING);
+
+        glPushMatrix();
+        glLoadIdentity();
+        glTranslatef(0,0,-5.0);
+        for (int i = 0; i < data->populations.size(); i++) {
+            if (data->populations[i]->isVisualised) {
+                glPushMatrix();
+                // if currently selected
+                if (data->populations[i] == selectedObject) {
+                    // move to pop location denoted by the spinboxes for x, y, z
+                    glTranslatef(loc3Offset.x, loc3Offset.y,loc3Offset.z);
+                } else {
+                    glTranslatef(data->populations[i]->loc3.x, data->populations[i]->loc3.y,data->populations[i]->loc3.z);
+                }
+
+                glCallList(data->populations[i]->dlIndexCol);
+                glPopMatrix();
+            }
+        }
+        glPopMatrix();
+
+        // Color picking to detect selected neuron
+        unsigned char detectedColor[3];
+        GLint viewport[4];
+        // The the pixel from the GPU
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        glReadPixels(event->x()*RETINA_SUPPORT, this->height() - event->y()*RETINA_SUPPORT,1,1, GL_RGB, GL_UNSIGNED_BYTE, detectedColor);
+
+        // Make sure the population exists and is visible
+        if (detectedColor[0] <= data->populations.size()) {
+            if (data->populations[detectedColor[0]]->isVisualised)
+            {
+                int selectedNeuron = (detectedColor[2] << 8) + detectedColor[1];
+
+                QSharedPointer < population > currPop = data->populations[detectedColor[0]];
+
+                if (0 <= selectedNeuron && selectedNeuron <= currPop->layoutType->locations.size())
+                {
+                    clickedPopulation = detectedColor[0];
+                    clickedNeuron = selectedNeuron;
+                    this->repaint();
+                }
+                else
+                {
+                    clickedNeuron = -1;
+                }
+            }
+            else
+            {
+                clickedPopulation = -1;
+            }
+        }
+        else
+        {
+            clickedPopulation = -1;
+        }
+    }
 
 }
 
@@ -1806,6 +1983,344 @@ void glConnectionWidget::selectedNrnChanged(int index) {
     repaint();
 
 }
+
+/*!
+ * \brief glConnectionWidget::createPopulationsDL
+ * Murilo's work - create display lists for the Populations
+ */
+void glConnectionWidget::createPopulationsDL()
+{
+    if (data)
+    {
+        // fetch quality setting
+        QSettings settings;
+        int quality = settings.value("glOptions/detail", 5).toInt();
+
+        // draw with a level of detail dependant on the number on neurons we must draw
+        // sum neurons across all pops we'll draw
+        int totalNeurons = 0;
+        for (int locNum = 0; locNum < data->populations.size(); ++locNum) {
+            totalNeurons += data->populations[locNum]->numNeurons;
+        }
+        int LoD = round(250.0f/float(totalNeurons)*pow(2,float(quality)));
+
+        // draw with a level of detail dependant on the number on neurons we must draw
+        // put some bounds on
+        if (LoD < 4) LoD = 4; if (LoD > 32) LoD = 32;
+        if (imageSaveMode)
+            LoD = 64;
+
+        popColours.resize(data->populations.size());
+        for(int locNum = 0; locNum < data->populations.size(); locNum++) {
+            QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (data->populations[locNum]);
+            CHECK_CAST(currPop);
+
+            // add some neurons!
+
+            // generate data:
+            if (currPop->layoutType->locations.size() == 0) {
+                QString errs;
+                currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
+                // display all errors
+                if (!errs.isEmpty()) {
+                    //this->data->statusBarUpdate(errs,2000);
+                }
+            }
+
+            if (currPop->dlIndex > 0) glDeleteLists(currPop->dlIndex,1);
+            if (currPop->dlIndexCol > 0) glDeleteLists(currPop->dlIndexCol,1);
+
+            // Start the dl to display info
+            // create the index with the display lists
+            currPop->dlIndex = glGenLists(1);
+
+            // start the display list
+            glNewList(currPop->dlIndex, GL_COMPILE);
+
+            for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+
+                glPushMatrix();
+
+                glTranslatef(currPop->layoutType->locations[i].x, currPop->layoutType->locations[i].y, currPop->layoutType->locations[i].z);
+
+                // check we haven't broken stuff
+                if (popColours[locNum].size() > currPop->layoutType->locations.size()) {
+
+                    popColours[locNum].clear();
+                    popLogs[locNum] = NULL;
+                }
+
+                if (popColours[locNum].size() > 0) {
+                    this->drawNeuron(0.5, LoD, LoD, popColours[locNum][i]);
+                } else
+                    this->drawNeuron(0.5, LoD, LoD, QColor(100 + 0.5*currPop->colour.red(),100 + 0.5*currPop->colour.green(),100 + 0.5*currPop->colour.blue(),255));
+
+                glPopMatrix();
+            }
+
+            glEndList();
+
+            //Start the dl to do collision
+            // create the index with the display lists
+            currPop->dlIndexCol = glGenLists(1);
+
+            // start the display list
+            glNewList(currPop->dlIndexCol, GL_COMPILE);
+
+            for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+
+                glPushMatrix();
+
+                glTranslatef(currPop->layoutType->locations[i].x, currPop->layoutType->locations[i].y, currPop->layoutType->locations[i].z);
+
+                // check we haven't broken stuff
+                if (popColours[locNum].size() > currPop->layoutType->locations.size()) {
+
+                    popColours[locNum].clear();
+                    popLogs[locNum] = NULL;
+                }
+
+                //ID code from
+                //http://www.opengl-tutorial.org/miscellaneous/clicking-on-objects/picking-with-an-opengl-hack/#Giving_an_ID_to_every_object
+
+                // Creating the IDs as colors.
+                this->drawNeuron(0.5, LoD, LoD, QColor(locNum, i & 0x000000FF, (i & 0x0000FF00) >> 8));
+
+                glPopMatrix();
+            }
+
+            glEndList();
+        }
+    }
+}
+
+/*!
+ * \brief glConnectionWidget::createConnectionsDL
+ * Murilo's work - create display lists for the Projections
+ */
+void glConnectionWidget::createConnectionsDL()
+{
+    //qDebug() << "Start creating the display lists for connections";
+
+    // work out scaling for line widths:
+    float lineScaleFactor;
+    if (imageSaveMode) {
+        float maxLen;
+        maxLen = imageSaveHeight > imageSaveWidth ? imageSaveHeight : imageSaveWidth;
+        lineScaleFactor = (1.0/1000.0*maxLen);
+    } else
+       lineScaleFactor = 1.0;
+
+
+    for (int targNum = 0; targNum < this->selectedConns.size(); ++targNum) {
+
+        // draw the connections:
+        glDisable(GL_LIGHTING);
+        glEnable(GL_DEPTH_TEST);
+
+        QSharedPointer <population> src;
+        QSharedPointer <population> dst;
+        connection * conn;
+
+        if (this->selectedConns[targNum]->type == synapseObject) {
+            QSharedPointer <synapse> currTarg = qSharedPointerDynamicCast <synapse> (this->selectedConns[targNum]);
+            CHECK_CAST(currTarg);
+            conn = currTarg->connectionType;
+            src = currTarg->proj->source;
+            dst = currTarg->proj->destination;
+        } else {
+            QSharedPointer <genericInput> currIn = qSharedPointerDynamicCast <genericInput> (this->selectedConns[targNum]);
+            CHECK_CAST(currIn);
+            conn = currIn->connectionType;
+            src = qSharedPointerDynamicCast <population> (currIn->source); // would not be here if this was not true
+            dst = qSharedPointerDynamicCast <population> (currIn->destination);
+            CHECK_CAST(src);
+            CHECK_CAST(dst);
+        }
+
+        float srcX;
+        float srcY;
+        float srcZ;
+
+        // big offsets for src
+        if (src == selectedObject) {
+            srcX = this->loc3Offset.x;
+            srcY = this->loc3Offset.y;
+            srcZ = this->loc3Offset.z;
+        } else {
+            srcX = src->loc3.x;
+            srcY = src->loc3.y;
+            srcZ = src->loc3.z;
+        }
+
+
+        float dstX;
+        float dstY;
+        float dstZ;
+
+        // big offsets for dst
+        if (dst == selectedObject) {
+            dstX = this->loc3Offset.x;
+            dstY = this->loc3Offset.y;
+            dstZ = this->loc3Offset.z;
+        } else {
+            dstX = dst->loc3.x;
+            dstY = dst->loc3.y;
+            dstZ = dst->loc3.z;
+        }
+
+        // check we have the current version of the connectivity
+        if (conn->type == CSV) {
+            csv_connection * csv_conn = (csv_connection *) conn;
+            if (csv_conn->generator) {
+                if (((pythonscript_connection *) csv_conn->generator)->changed()) {
+                    ((pythonscript_connection *) csv_conn->generator)->regenerateConnections();
+                    // fetch connections back here:
+                    connections[targNum].clear();
+                    csv_conn->getAllData(connections[targNum]);
+                }
+            }
+        }
+
+        if (conn->type == CSV || conn->type == Kernel || conn->type == Python) {
+
+            if (!src->isVisualised && !dst->isVisualised) {
+                glEnable(GL_DEPTH_TEST);
+                glEnable(GL_LIGHTING);
+                continue;
+            }
+
+            connGenerationMutex->lock();
+
+            int aux_strength = 0;
+            //If aux_strength is zero, center is not used.
+            GLfloat * center;
+            bool colourScheme = false;
+
+            // create the index with the display lists
+            // start the display list
+            if (this->selectedConns[targNum]->type == synapseObject) {
+                QSharedPointer <synapse> currObj = qSharedPointerDynamicCast <synapse> (this->selectedConns[targNum]);
+                CHECK_CAST(currObj);
+
+                glDeleteLists(currObj->dlIndex,1);
+                currObj->dlIndex = glGenLists(1);
+                glNewList(currObj->dlIndex, GL_COMPILE);
+
+                aux_strength = currObj->strength;
+                center = currObj->center;
+                colourScheme = currObj->colorScheme;
+
+            } else {
+                QSharedPointer <genericInput> currObj = qSharedPointerDynamicCast <genericInput> (this->selectedConns[targNum]);
+                CHECK_CAST(currObj);
+
+                glDeleteLists(currObj->dlIndex,1);
+                currObj->dlIndex = glGenLists(1);
+                glNewList(currObj->dlIndex, GL_COMPILE);
+
+                aux_strength = currObj->strength;
+                center = currObj->center;
+                colourScheme = currObj->colorScheme;
+            }
+
+            float colourStep;
+            float minColourValue = 0;
+            float maxColourValue = 0;
+
+
+            if (colourScheme) {
+                if (connections[targNum].size() > 0) {
+                    minColourValue = connections[targNum][0].metric;
+                    maxColourValue = connections[targNum][0].metric;
+
+                    for (int i = 1; i < connections[targNum].size(); ++i) {
+                        if (minColourValue > connections[targNum][i].metric)
+                            minColourValue = connections[targNum][i].metric;
+                        if (maxColourValue < connections[targNum][i].metric)
+                            maxColourValue = connections[targNum][i].metric;
+                    }
+                }
+            }
+
+            colourStep = 1/(maxColourValue-minColourValue);
+
+            for (int i = 0; i < connections[targNum].size(); ++i) {
+
+                if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
+                    glLineWidth(1.0 * lineScaleFactor);
+                    if (colourScheme > 0)
+                        glColor4f(0.0, (connections[targNum][i].metric) * colourStep, (connections[targNum][i].metric) * colourStep, 1);
+                    else
+                        glColor4f(0.0, 0.0, 0.0, 0.1);
+
+                    // draw in
+
+                    // Decide the control points
+                    GLfloat ctrlpoints[aux_strength+2][3];
+                    for (int strenghtIndex = 1; strenghtIndex <= aux_strength; strenghtIndex++) {
+                        ctrlpoints[strenghtIndex][0] = center[0];
+                        ctrlpoints[strenghtIndex][1] = center[1];
+                        ctrlpoints[strenghtIndex][2] = center[2];
+                    }
+
+                    if (src->isVisualised && dst->isVisualised) {
+                        ctrlpoints[0][0] = src->layoutType->locations[connections[targNum][i].src].x+srcX;
+                        ctrlpoints[0][1] = src->layoutType->locations[connections[targNum][i].src].y+srcY;
+                        ctrlpoints[0][2] = src->layoutType->locations[connections[targNum][i].src].z+srcZ;
+                        ctrlpoints[aux_strength+1][0] = dst->layoutType->locations[connections[targNum][i].dst].x+dstX;
+                        ctrlpoints[aux_strength+1][1] = dst->layoutType->locations[connections[targNum][i].dst].y+dstY;
+                        ctrlpoints[aux_strength+1][2] = dst->layoutType->locations[connections[targNum][i].dst].z+dstZ;
+                    }
+                    if (src->isVisualised && !dst->isVisualised) {
+                        ctrlpoints[0][0] = src->layoutType->locations[connections[targNum][i].src].x;
+                        ctrlpoints[0][1] = src->layoutType->locations[connections[targNum][i].src].y;
+                        ctrlpoints[0][2] = src->layoutType->locations[connections[targNum][i].src].z;
+                        ctrlpoints[aux_strength+1][0] = dstX;
+                        ctrlpoints[aux_strength+1][1] = dstY;
+                        ctrlpoints[aux_strength+1][2] = dstZ;
+                    }
+                    if (!src->isVisualised && dst->isVisualised) {
+                        ctrlpoints[0][0] = src->loc3.x;
+                        ctrlpoints[0][1] = src->loc3.y;
+                        ctrlpoints[0][2] = src->loc3.z;
+                        ctrlpoints[aux_strength+1][0] = dst->layoutType->locations[connections[targNum][i].dst].x;
+                        ctrlpoints[aux_strength+1][1] = dst->layoutType->locations[connections[targNum][i].dst].y;
+                        ctrlpoints[aux_strength+1][2] = dst->layoutType->locations[connections[targNum][i].dst].z;
+                    }
+
+
+                    glMap1f(GL_MAP1_VERTEX_3, 0.0, 1.0, 3, aux_strength+2, &ctrlpoints[0][0]);
+
+
+                    // Draw the line between the neurons
+                    glBegin(GL_LINE_STRIP);
+
+
+                    for (int j = 0; j <= 30; j++)
+                        glEvalCoord1f((GLfloat) j/30.0);
+
+                    glEnd();
+
+                } else {
+                    // ERR - CONNECTION INDEX OUT OF RANGE
+                }
+
+
+            }
+
+            glEndList();
+            connGenerationMutex->unlock();
+
+
+        }
+    }
+
+    //qDebug() << "Finish creating the display lists for connections";
+}
+
+
+
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
 QImage glConnectionWidget:: renderQImage(int w, int h)
