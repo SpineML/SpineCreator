@@ -1634,6 +1634,9 @@ void viewELExptPanelHandler::delChangedProp()
 void viewELExptPanelHandler::run()
 {
 
+    // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
+    QString out_dir_name = QDir::home().absolutePath() + QDir::separator() + "outtemp";
+
     QSettings settings;
 
     QToolButton * runButton = qobject_cast < QToolButton * > (sender());
@@ -1783,8 +1786,8 @@ void viewELExptPanelHandler::run()
     // now start a timer to check on the simulation progress
     connect(&simTimeChecker, SIGNAL(timeout()), this, SLOT(checkForSimTime()));
     this->simTimeMax = currentExperiment->setup.duration;
-    this->simTimeFileName = QDir::toNativeSeparators(wk_dir_string + "/model/time.txt");
-    this->simCancelFileName = QDir::toNativeSeparators(wk_dir_string + "/model/stop.txt");
+    this->simTimeFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "time.txt");
+    this->simCancelFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "stop.txt");
     simTimeChecker.start(17);
                 qDebug() << "HERE";
 
