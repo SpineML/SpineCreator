@@ -64,7 +64,7 @@ synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool do
     this->center[1] = 0;
     this->center[2] = 0;
 
-    this->colorScheme - 0;
+    this->colorScheme = 0;
 
 }
 
@@ -104,7 +104,7 @@ synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAdd
     this->center[1] = 0;
     this->center[2] = 0;
 
-    this->colorScheme - 0;
+    this->colorScheme = 0;
 
 }
 

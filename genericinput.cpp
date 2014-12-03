@@ -45,7 +45,7 @@ genericInput::genericInput()
     this->center[1] = 0;
     this->center[2] = 0;
 
-    this->colorScheme - 0;
+    this->colorScheme = 0;
 }
 
 genericInput::genericInput(QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, bool projInput) {
@@ -88,7 +88,7 @@ genericInput::genericInput(QSharedPointer <NineMLComponentData> src, QSharedPoin
     this->center[1] = 0;
     this->center[2] = 0;
 
-    this->colorScheme - 0;
+    this->colorScheme = 0;
 }
 
 void genericInput::connect(QSharedPointer<genericInput> in) {

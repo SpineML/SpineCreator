@@ -84,13 +84,11 @@ population::population(QSharedPointer <population> data, QSharedPointer<populati
     loc3.x = data->loc3.x;
     loc3.y = data->loc3.y;
     loc3.z = data->loc3.z;
-<<<<<<< HEAD
     this->dlIndex = -1;
     this->dlIndexCol = -1;
-    this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType));
-=======
+
     this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->neuronType));
->>>>>>> copy_constructors
+
     // fix owner
     this->neuronType->owner = thisSharedPointer;
 
