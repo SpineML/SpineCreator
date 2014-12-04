@@ -1271,6 +1271,8 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
         QDomElement c = meta.createElement( "synapseConnection" );
         c.setAttribute( "name", synapses[i]->weightUpdateType->getXMLName() );
 
+        c.setAttribute("visualised", synapses[i]->isVisualised);
+
         // add the metadata description (if there is one)
         synapses[i]->connectionType->write_metadata_xml(meta, c);
 
@@ -1589,12 +1591,16 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                     // extract the name from the tag
                     QString synapseName = metaData.toElement().attribute("name", "");
 
+                    bool isVisualised = (metaData.toElement().attribute("visualised", "").toInt() == 1);
+
                     // if we are not an empty node
                     if (!metaData.firstChildElement().isNull()) {
 
                         for (int i = 0; i < this->synapses.size(); ++i) {
                              // check if we have the current node
                             if (synapseName == this->synapses[i]->weightUpdateType->getXMLName()) {
+                                // set visualised status
+                                this->synapses[i]->isVisualised = isVisualised;
                                 // A synapse was found!
                                 // add connection generator if we are a csv
                                 if (this->synapses[i]->connectionType->type == CSV) {
@@ -1620,7 +1626,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     }
 
 
-        this->print();
+        //this->print();
 
 }
 

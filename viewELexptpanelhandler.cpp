@@ -1659,6 +1659,9 @@ void viewELExptPanelHandler::run()
         QCommonStyle style;
         runButton->setIcon(style.standardIcon(QStyle::SP_MediaStop));
         connect(runButton, SIGNAL(clicked()), this, SLOT(cancelRun()));
+        this->isBatch = false;
+    } else {
+        this->isBatch = true;
     }
 
     simulatorStdOutText = "";
@@ -2020,7 +2023,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 
     if (status == QProcess::NormalExit) {
         // check if we are running in batch mode (i.e. run button is not set)
-        if (this->runExpt->runButton) {
+        if (!this->isBatch) {
             QMessageBoxResizable msgBox;
             msgBox.setWindowTitle("Simulator Complete");
             msgBox.setIcon(QMessageBox::Information);

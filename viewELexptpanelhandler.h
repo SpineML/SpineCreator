@@ -87,6 +87,7 @@ private:
     QString simCancelFileName;
     float simTimeMax;
     experiment * runExpt;
+    bool isBatch;
 
     void cleanUpPostRun(QString, QString);
 

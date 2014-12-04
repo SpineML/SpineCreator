@@ -253,8 +253,6 @@ void glConnectionWidget::updateLogData() {
         // data not usable
         if (logValues.size() == 0)
             continue;
-        if ((int) logValues.size() > selectedPops[i]->numNeurons)
-            continue;
 
         // resize container
         QColor col(0,0,0,255);
@@ -292,15 +290,13 @@ void glConnectionWidget::updateLogData() {
         // data not usable
         if (logValues.size() == 0)
             continue;
-        if ((int) logValues.size() > selectedPops[i]->numNeurons)
-            continue;
 
         if (connLogs[i]->dataClass == EVENTDATA) {
             this->connLogVals[i] = logValues;
         } else {
             // normalise the values
             for (int j = 0; j < logValues.size(); ++j) {
-                connLogVals[i].push_back(((logValues[j]-popLogs[i]->getMin()))/(popLogs[i]->getMax()-popLogs[i]->getMin()));
+                connLogVals[i].push_back(((logValues[j]-connLogs[i]->getMin()))/(connLogs[i]->getMax()-connLogs[i]->getMin()));
             }
         }
     }
@@ -641,6 +637,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             center = currObj->center;
         }
 
+        float lineTransFactor = 0.3;
+
         if (conn->type == CSV || conn->type == Kernel || conn->type == Python) {
 
             if (!src->isVisualised && !dst->isVisualised) {
@@ -659,7 +657,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
                         glLineWidth(1.0*lineScaleFactor);
 
-                        glColor4f(0.0, 0.0, 0.0, 0.1);
+                        glColor4f(0.0, 0.0, 0.0, 0.3*lineTransFactor);
 
                         // find if selected
                         bool isSelected = false;
@@ -668,20 +666,20 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                             if (i == (int) selection[j].row())
                             {
                                 glLineWidth(2.0*lineScaleFactor);
-                                glColor4f(1.0, 0.0, 0.0, 1.0);
+                                glColor4f(1.0, 0.0, 0.0, 1.0*lineTransFactor);
                                 isSelected = true;
                                 break;
                             }
                             if (connections[targNum][i].src == connections[targNum][selection[j].row()].src && selection[j].column() == 0)
                             {
                                 glLineWidth(1.5*lineScaleFactor);
-                                glColor4f(0.0, 1.0, 0.0, 0.8);
+                                glColor4f(0.0, 1.0, 0.0, 0.8*lineTransFactor);
                                 isSelected = true;
                             }
                             if (connections[targNum][i].dst == connections[targNum][selection[j].row()].dst && selection[j].column() == 1)
                             {
                                 glLineWidth(1.5*lineScaleFactor);
-                                glColor4f(0.0, 1.0, 0.0, 0.8);
+                                glColor4f(0.0, 1.0, 0.0, 0.8*lineTransFactor);
                                 isSelected = true;
                             }
                         }
@@ -691,8 +689,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                             if (connLogs[targNum]->dataClass == ANALOGDATA && connLogVals[targNum].size() > 0) {
                                 // colour and size the connections based on input
                                 double val = connLogVals[targNum][connections[targNum][i].src];
-                                glLineWidth(4.0*val);
-                                glColor4f(val, val, val, 1.0);
+                                glLineWidth(1.0+0.5*val);
+                                glColor4f(val, val, val, 1.0*lineTransFactor);
                                 isSelected = true;
                             } else if (connLogs[targNum]->dataClass == EVENTDATA)  {
                                 // mark up each event
@@ -795,8 +793,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                     for (int i = 0; i < src->layoutType->locations.size(); ++i) {
 
-                        glLineWidth(1.5*lineScaleFactor);
-                        glColor4f(0.0, 0.0, 1.0, 0.8);
+                        glLineWidth(1.0*lineScaleFactor);
+                        glColor4f(0.3, 0.3, 0.3, 0.8*lineTransFactor);
 
                          // draw in (old code - straight lines only...)
                         /*glBegin(GL_LINES);
@@ -809,8 +807,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                             if (connLogs[targNum]->dataClass == ANALOGDATA && connLogVals[targNum].size() > 0) {
                                 // colour and size the connections based on input
                                 double val = connLogVals[targNum][i];
-                                glLineWidth(4.0*val);
-                                glColor4f(val, val, val, 1.0);
+                                glLineWidth(1.0+0.5*val);
+                                glColor4f(val, val, val, 1.0*lineTransFactor);
                             } else if (connLogs[targNum]->dataClass == EVENTDATA)  {
                                 // mark up each event
                                 for (int e = 0; e < connLogVals[targNum].size(); ++e) {
@@ -905,8 +903,39 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                 for (int i = 0; i < src->layoutType->locations.size(); ++i) {
                     for (int j = 0; j <  dst->layoutType->locations.size(); ++j) {
 
-                        glLineWidth(1.5*lineScaleFactor);
-                        glColor4f(0.0, 0.0, 1.0, 0.2);
+                        glLineWidth(1.0*lineScaleFactor);
+                        glColor4f(0.3, 0.3, 0.3, 0.2);
+
+                        // also check if we have logData
+                        if (connLogs[targNum]) {
+                            if (connLogs[targNum]->dataClass == ANALOGDATA && connLogVals[targNum].size() > 0) {
+                                // colour and size the connections based on input
+                                double val = connLogVals[targNum][i];
+                                glLineWidth(1.0+0.5*val);
+                                glColor4f(val, val, val, 1.0*lineTransFactor);
+                            } else if (connLogs[targNum]->dataClass == EVENTDATA)  {
+                                // mark up each event
+                                for (int e = 0; e < connLogVals[targNum].size(); ++e) {
+                                    if ((int)connLogVals[targNum][e] == i) {
+                                        glLineWidth(1.5*lineScaleFactor);
+                                        glColor4f(1.0, 0.0, 0.0, 1.0);
+                                        if (i >= connDecay[targNum].size()) this->connDecay[targNum].resize(i+1);
+                                        this->connDecay[targNum][i] = 1;
+                                    }
+                                }
+                            }
+                        }
+
+                        // do event decay
+                        if (i < connDecay[targNum].size() && connDecay[targNum][i] > 0) {
+                            ++connDecay[targNum][i];
+                            if (connDecay[targNum][i] > 10) {
+                                connDecay[targNum][i]= 0;
+                            }
+                            glLineWidth(connDecay[targNum][i]*lineScaleFactor);
+                            glColor4f(1.0, 1.0, 1.0, 1.0/(connDecay[targNum][i]));
+                        }
+
                         // draw in
                         glBegin(GL_LINES);
                         glVertex3f(src->layoutType->locations[i].x+srcX, src->layoutType->locations[i].y+srcY, src->layoutType->locations[i].z+srcZ);
@@ -1267,7 +1296,7 @@ void glConnectionWidget::setupView() {
 
     // move view
     if (!orthoView)
-        gluPerspective(60.0,((GLfloat)width)/((GLfloat)height), 1.0, 100000.0);
+        gluPerspective(45.0,((GLfloat)width)/((GLfloat)height), 1.0, 100000.0);
     else {
         float scale = zoomFactor*10.0;
         float aspect = ((GLfloat)height)/((GLfloat)width);
