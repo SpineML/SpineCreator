@@ -55,7 +55,7 @@ struct cPoint {
 class synapse : public systemObject
 {
 public:
-    synapse() {isVisualised=false;}
+    synapse() {this->type = synapseObject; isVisualised=false;}
     synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs = false);
     synapse(QSharedPointer <projection> proj, rootData * data, bool dontAddInputs = false);
     ~synapse();
@@ -67,7 +67,7 @@ public:
     QString getName();
     virtual void delAll(rootData *);
 
-    int dlIndex;
+    uint dlIndex;
 
     GLfloat center[3];
     int strength;

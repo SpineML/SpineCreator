@@ -45,6 +45,8 @@ genericInput::genericInput()
     this->center[1] = 0;
     this->center[2] = 0;
 
+    this->dlIndex = 0;
+
     this->colorScheme = 0;
 }
 
@@ -82,6 +84,8 @@ genericInput::genericInput(QSharedPointer <NineMLComponentData> src, QSharedPoin
     //dst->matchPorts();
 
     isVisualised = false;
+
+    this->dlIndex = 0;
 
     this->strength = 0;
     this->center[0] = 0;

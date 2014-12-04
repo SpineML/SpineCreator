@@ -89,7 +89,8 @@ public:
     void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
 
     QColor colour;
-    int dlIndex;
+    uint dlIndex;
+    uint dlIndexVCol;
     int dlIndexCol;
 
 //private:

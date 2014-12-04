@@ -79,14 +79,25 @@ double logData::getMin() {
     return min;
 }
 
+/*!
+ * \brief logData::getRow
+ * \param rowNum
+ * \return
+ *
+ * Fetch a row of data. If analog data this is
+ * a row index from the file, if event data then
+ * this is time/dt. Return value is a list of
+ * analog values or a list of indices with events
+ * at the desired time.
+ */
 QVector < double > logData::getRow(int rowNum) {
 
 
     QVector < double > rowData;
 
     // is not analog return empty
-    if (this->dataClass != ANALOGDATA)
-        return rowData;
+    //if (this->dataClass != ANALOGDATA)
+    //    return rowData;
 
     // get data
     switch (dataFormat) {
@@ -193,6 +204,45 @@ QVector < double > logData::getRow(int rowNum) {
     }
     case CSVFormat:
     case SSVFormat:
+    {
+        // read line by line
+        QTextStream data(&logFile);
+        data.device()->seek(0);
+
+        float desiredTimeMin = this->timeStep*rowNum-1.0-this->timeStep/2.0;
+        float desiredTimeMax = this->timeStep*rowNum+this->timeStep/2.0;
+
+        // read a line
+        while (!data.atEnd()) {
+
+            // get line
+            QString line = data.readLine();
+
+            // divide up
+            QStringList cols;
+            if (dataFormat == CSVFormat) {
+                line.remove(" ");
+                cols = line.split(",");
+            }
+            else if (dataFormat == SSVFormat) {
+                line = line.simplified();
+                cols = line.split(" ");
+            }
+
+            // parse
+            if (cols.size() != (int) columns.size()) {
+                qDebug() << "Col size incorrect on import";
+                rowData.clear();
+                return rowData;
+            }
+
+            // for each entry with the desired timerange, add the index to the list
+            if (cols[0].toDouble() > desiredTimeMin && cols[0].toDouble() < desiredTimeMax) {
+                rowData.push_back(cols[1].toInt());
+            }
+
+        }
+     }
     default:
         // do nothing in these cases.
         break;

@@ -68,7 +68,7 @@ public:
 
     bool isVisualised;
 
-    int dlIndex;
+    uint dlIndex;
 
     GLfloat center[3];
     int strength;

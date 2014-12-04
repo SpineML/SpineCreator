@@ -28,6 +28,8 @@
 #include "globalHeader.h"
 #include "logdata.h"
 
+
+
 class RNG
 {
 public:
@@ -87,8 +89,9 @@ public:
 
 private:
     void drawNeuron(GLfloat, int, int, QColor);
+    void vboNeuron(GLfloat r, int rings, int segments, QColor col, QVector <float> &verts, QVector <float> &cols);
     void setupView();
-    void createPopulationsDL();
+    void createPopulationsDL(bool onlyColour = false);
     void createConnectionsDL();
     QString currentObjectName;
     QAbstractTableModel * model;
@@ -116,6 +119,9 @@ private:
     int imageSaveHeight;
     QVector < QVector < QColor > > popColours;
     QVector < logData * > popLogs;
+    QVector < logData * > connLogs;
+    QVector < QVector < double > > connLogVals;
+    QVector < QVector < int > > connDecay;
     int currentLogTime;
     int newLogTime;
     QTimer timer;
@@ -124,6 +130,7 @@ private:
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
     QImage renderQImage(int w, int h);
 #endif
+    int count;
 
 signals:
     void currElement(int type, int index);

@@ -1814,10 +1814,10 @@ void viewELExptPanelHandler::run()
     simulator->setProcessEnvironment(env);
 
 
-    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
-
     // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
     QString out_dir_name = QDir::home().absolutePath() + QDir::separator() + "outtemp";
+
+    simulator->setProperty("logpath", out_dir_name + QDir::separator() + "log");
 
     QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
                                        // to the model being executed,

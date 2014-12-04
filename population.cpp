@@ -55,7 +55,8 @@ population::population(float x, float y, float size, float aspect_ratio, QString
     loc3.x = 0;
     loc3.y = 0;
     loc3.z = 0;
-    this->dlIndex = -1;
+    this->dlIndex = 0;
+    this->dlIndexVCol = 0;
     this->dlIndexCol = -1;
 
     isSpikeSource = false;
@@ -84,7 +85,8 @@ population::population(QSharedPointer <population> data, QSharedPointer<populati
     loc3.x = data->loc3.x;
     loc3.y = data->loc3.y;
     loc3.z = data->loc3.z;
-    this->dlIndex = -1;
+    this->dlIndex = 0;
+    this->dlIndexVCol = 0;
     this->dlIndexCol = -1;
 
     this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->neuronType));
@@ -1116,9 +1118,9 @@ QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, 
     newPop->colour = this->colour;
     newPop->type = populationObject;
     newPop->isVisualised = this->isVisualised;
-    loc3.x = this->loc3.x;
-    loc3.y = this->loc3.y;
-    loc3.z = this->loc3.z;
+    newPop->loc3.x = this->loc3.x;
+    newPop->loc3.y = this->loc3.y;
+    newPop->loc3.z = this->loc3.z;
 
     // neuron body...
     newPop->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType, true/*copy inputs / outputs*/));

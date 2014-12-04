@@ -59,6 +59,8 @@ synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool do
 
     this->isVisualised = false;
 
+    this->dlIndex = 0;
+
     this->strength = 0;
     this->center[0] = 0;
     this->center[1] = 0;
@@ -98,6 +100,8 @@ synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAdd
     this->type = synapseObject;
 
     this->isVisualised = false;
+
+    this->dlIndex = 0;
 
     this->strength = 0;
     this->center[0] = 0;
