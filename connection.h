@@ -257,13 +257,13 @@ public:
     QString lastGeneratedScriptText;
     QString scriptName;
     QStringList parNames;
-    QVector <float> parValues;
-    QVector <float> lastGeneratedParValues;
+    QVector <double> parValues;
+    QVector <double> lastGeneratedParValues;
     QVector < QPoint > parPos;
 
     QString weightProp;
     QString lastGeneratedWeightProp;
-    QVector <float> weights;
+    QVector <double> weights;
 
     QString pythonErrors;
 

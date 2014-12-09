@@ -1260,6 +1260,28 @@ QVBoxLayout * exptOutput::drawOutput(rootData * data, viewELExptPanelHandler *ha
             connect(indicesString, SIGNAL(editingFinished()), handler, SLOT(setOutputIndices()));
             indices->addWidget(indicesString);
             frameLay->addLayout(indices);
+
+            // times...
+            QHBoxLayout * times = new QHBoxLayout();
+            times->addWidget(new QLabel("Start time (ms):"));
+            QDoubleSpinBox * start_t = new QDoubleSpinBox;
+            start_t->setMaximum(10000000);
+            start_t->setMinimum(0);
+            start_t->setValue(this->startTime);
+            start_t->setProperty("ptr", qVariantFromValue((void *) this));
+            start_t->setToolTip("Time for the logging to commence (ms)");
+            connect(start_t, SIGNAL(valueChanged(double)), handler, SLOT(setOutputStartT(double)));
+            times->addWidget(start_t);
+            times->addWidget(new QLabel("End time (ms):"));
+            QDoubleSpinBox * end_t = new QDoubleSpinBox;
+            end_t->setMaximum(10000000);
+            end_t->setMinimum(0);
+            end_t->setValue(this->endTime);
+            end_t->setProperty("ptr", qVariantFromValue((void *) this));
+            end_t->setToolTip("Time for the logging to finish (ms)");
+            connect(end_t, SIGNAL(valueChanged(double)), handler, SLOT(setOutputEndT(double)));
+            times->addWidget(end_t);
+            frameLay->addLayout(times);
         }
 
         // accept all
@@ -2315,8 +2337,8 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
     writer->writeAttribute("name", this->name);
     writer->writeAttribute("target", this->source->getXMLName());
     writer->writeAttribute("port", this->portName);
-    writer->writeAttribute("start_time", "0"); // add later
-    writer->writeAttribute("end_time", "100000000"); // add later
+    writer->writeAttribute("start_time", QString::number(this->startTime)); // add later
+    writer->writeAttribute("end_time", QString::number(this->endTime)); // add later
 
 
     if (indices != "all") {
@@ -3103,6 +3125,13 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
         }
     }
 
+    if (reader->attributes().hasAttribute("start_time")) {
+        this->startTime = reader->attributes().value("start_time").toString().toDouble();
+    }
+
+    if (reader->attributes().hasAttribute("end_time")) {
+        this->endTime = reader->attributes().value("end_time").toString().toDouble();
+    }
 
     if (reader->attributes().hasAttribute("tcp_port")) {
 

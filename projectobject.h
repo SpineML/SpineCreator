@@ -19,8 +19,6 @@ public:
     bool open_project(QString);
     bool save_project(QString, rootData *);
 
-    bool export_for_simulator(QString, rootData *);
-
     bool import_network(QString);
 
     void import_component(QString);
@@ -109,9 +107,9 @@ private:
 
 
 signals:
-    
+
 public slots:
-    
+
 };
 
 #endif // PROJECTOBJECT_H
