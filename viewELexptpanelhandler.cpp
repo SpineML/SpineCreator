@@ -1817,7 +1817,7 @@ void viewELExptPanelHandler::run()
         QStringList al;
         al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
-           << "-o" << "/Users/alex/outtemp"//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
+           << "-o" << wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
 
         // There's no REBUILD env var set, even though it's in my settings.
