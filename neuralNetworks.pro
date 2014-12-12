@@ -170,9 +170,10 @@ linux-g++-64{
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
-    QMAKE_CXXFLAGS += -O0 -g
-    LIBS += -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -lpython
-    INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
+    QMAKE_MAC_SDK = macosx10.9
+    QMAKE_CXXFLAGS += -O3
+    LIBS += -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -L/System/Library/Frameworks/Python.framework/2.7/lib -lpython2.7
+    INCLUDEPATH += /System/Library/Frameworks/Python.framework/2.7/Current/include/python2.7
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
     DEPENDPATH +=  /opt/local/lib/graphviz
 }

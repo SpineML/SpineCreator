@@ -225,6 +225,10 @@ void glConnectionWidget::updateLogDataTime(int index) {
 
     newLogTime = index;
 
+
+    // HACK:
+    this->rot.setY(this->rot.y()-0.01);
+
 }
 
 /*!
@@ -806,7 +810,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         if (connLogs[targNum]) {
                             if (connLogs[targNum]->dataClass == ANALOGDATA && connLogVals[targNum].size() > 0) {
                                 // colour and size the connections based on input
-                                double val = connLogVals[targNum][i];
+                                double val = connLogVals[targNum][i]; //assert error here
                                 glLineWidth(1.0+0.5*val);
                                 glColor4f(val, val, val, 1.0*lineTransFactor);
                             } else if (connLogs[targNum]->dataClass == EVENTDATA)  {
