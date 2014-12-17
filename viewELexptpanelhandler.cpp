@@ -1776,7 +1776,7 @@ void viewELExptPanelHandler::run()
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #else
-    this->tdir.setCurrent(QDir::home().absolutePath());
+    this->tdir.setPath(QDir::home().absolutePath());
     this-tdir.mkdir("sctmp");
     this->tdir.cd("sctmp");
 #endif
