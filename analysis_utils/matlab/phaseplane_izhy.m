@@ -231,15 +231,15 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     % vector field around equilibrium
 
     % quiver plot params
-    qpscale = 20; % An overall scale factor for the quiver plot
-    qpinc = 0.5 % increment
+    qpscale = quiverParams('qvscale'); % An overall scale factor for the quiver plot
+    qpinc = quiverParams('qvinc'); % increment
     deltaV = qpinc;
     No_dvs_neg = qpscale; % Number of grid points hyperpolarisd wrt eqm point
     No_dvs_pos = No_dvs_neg;
     deltan = qpinc;
     No_dn_neg = qpscale;
     No_dn_pos = No_dn_neg;
-    quiver_plot_scale = qpscale ./ 5;
+    quiver_plot_scale = qpscale ./ quiverParams('qvdivisor');
     % end quiver plot params
 
     if exitflag < 0
