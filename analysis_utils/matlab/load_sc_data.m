@@ -1,4 +1,4 @@
-function [ t, data, count ] = load_sc_data (file_path)
+function [ data, count, t ] = load_sc_data (file_path, n_neurons)
 % load_sc_data Code to load up data which has been output from SpineCreator.
 % Returns the time axis in milliseconds in the variable t.
 
@@ -19,29 +19,34 @@ function [ t, data, count ] = load_sc_data (file_path)
     xml_file = [base_path 'rep.xml'];
     bin_file = [base_path '.bin'];
 
-    % Find the number of neurons in the binary log file from
-    % the xml file.
-    infoDoc = xmlread (xml_file);
-    % Assume Analog Log here. Probably wrong for event log.
-    logFileType = char(infoDoc.getElementsByTagName ...
-                       ('LogFileType').item(0).getFirstChild ...
-                       .getData);
-    if logFileType ~= 'binary'
-        display (['File described by ', xml_path, ' is not marked ' ...
-                  'as being in binary format.']);
-        return;
-    end
+    if (isempty(n_neurons))
+        % Find the number of neurons in the binary log file from
+        % the xml file.
+        infoDoc = xmlread (xml_file);
+        % Assume Analog Log here. Probably wrong for event log.
+        logFileType = char(infoDoc.getElementsByTagName ...
+                           ('LogFileType').item(0).getFirstChild ...
+                           .getData);
+        if logFileType ~= 'binary'
+            display (['File described by ', xml_path, ' is not marked ' ...
+                      'as being in binary format.']);
+            return;
+        end
 
-    % Log end is in steps of size dt. Unused at present even though
-    % this is in the UI? Also may need logStartTime in future to
-    % generate t.
-    logEndTime = str2num(char(infoDoc.getElementsByTagName ...
-                              ('LogEndTime').item(0).getFirstChild.getData));
-    num_neurons = str2num(char(infoDoc.getElementsByTagName ...
-                               ('LogAll').item(0).getAttribute('size')));
-    % Timestep is specified in milliseconds
-    dt = str2num(char(infoDoc.getElementsByTagName ...
-                      ('TimeStep').item(0).getAttribute('dt')));
+        % Log end is in steps of size dt. Unused at present even though
+        % this is in the UI? Also may need logStartTime in future to
+        % generate t.
+        logEndTime = str2num(char(infoDoc.getElementsByTagName ...
+                                  ('LogEndTime').item(0).getFirstChild.getData));
+        num_neurons = str2num(char(infoDoc.getElementsByTagName ...
+                                   ('LogAll').item(0).getAttribute('size')));
+        % Timestep is specified in milliseconds
+        dt = str2num(char(infoDoc.getElementsByTagName ...
+                          ('TimeStep').item(0).getAttribute('dt')));
+    else
+        num_neurons = n_neurons;
+        dt = 0;
+    end
 
     % First, open the file:
     [ fid, fopen_msg ] = fopen (bin_file, 'r', 'native');
