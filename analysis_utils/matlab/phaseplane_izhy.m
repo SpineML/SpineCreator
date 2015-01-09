@@ -85,12 +85,13 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     t = t';
     
     % Duration of simulation in milliseconds
-    duration = t(end)
+    duration = t(end);
     
     % A time series for I (much bigger than required)
     I = zeros (1, v_count);
     
     % Read the Currents from the experiment file.
+    disp([spineml_results_path '/model/' experimentXml]);
     exptDoc = xmlread([spineml_results_path '/model/' experimentXml]);
     % I may be time varying:
     %
@@ -108,15 +109,16 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     constI = NaN;
     constInputs = exptDoc.getElementsByTagName ('ConstantInput');
     for ci_iter = 0:constInputs.getLength-1
-        constInput = constInputs.item (n_iter);
+        constInput = constInputs.item (ci_iter);
         port = char(constInput.getAttribute ('port'));
-        targ = char(constInput.getAttribute ('target'));
+        targ = constInput.getAttribute ('target');
         if port == stateVarNames('I')
             if targ == populationName
-            % Match
-            constI = str2num(char(constInput.getAttribute ...
-                                  ('value')))
-            I = I + constI;
+                constI = str2num(char(constInput.getAttribute ...
+                                      ('value')));
+                I = I + constI;
+                %fprintf ('Got a ConstantInput current for %s of %d\n', ...
+                %         populationName, I);
             end
         end
     end
@@ -130,7 +132,7 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
         for tvi_iter = 0:tvInputs.getLength-1
             tvInput = tvInputs.item (tvi_iter);
             port = char(tvInput.getAttribute ('port'));
-            targ = char(tvInput.getAttribute ('target'));
+            targ = tvInput.getAttribute ('target');
             if port == stateVarNames('I')
                 if targ == populationName
                     % Match. Get points now.                    
@@ -150,6 +152,7 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
 
         % Add final value to timePointValues to use interp1 to
         % generate I series data.
+        size(timePointValues)
         timePointValues = [timePointValues; [t(end), timePointValues(end,2)]];
         
         I = interp1 (timePointValues(:,1), timePointValues(:,2), t, ...
@@ -163,6 +166,12 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     
     end
 
+    if isnan(constI) && isempty(multiI)
+        display (['Failed to find the injection current for the ' ...
+                  'simulation, exiting']);
+        return;
+    end
+    
     % First plot y(:,1), the membrane voltage and I against sample
     figure(1)
     subplot(2,1,1);
