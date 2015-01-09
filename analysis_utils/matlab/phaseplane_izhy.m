@@ -8,7 +8,7 @@
 
 function phaseplane_izhy (spineml_results_path, experimentXml, ...
                           populationName, paramNames, stateVarNames, ...
-                          quiverParams)
+                          quiverParams, startFigNum)
 
     % Hard-coded parameters.
     % Initial value for locating an equilibrium
@@ -29,7 +29,7 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
         nm = neuron.getAttribute ('name');
         if nm == populationName
             % This is our population. Can get component xml name here.
-            izhy_cmpt = neuron.getAttribute ('url');
+            izhy_cmpt = char(neuron.getAttribute ('url'));
             % Get all paramNames.
             % get value of paramNames('a') % etc
             props = neuron.getElementsByTagName ('Property');
@@ -111,9 +111,9 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     for ci_iter = 0:constInputs.getLength-1
         constInput = constInputs.item (ci_iter);
         port = char(constInput.getAttribute ('port'));
-        targ = constInput.getAttribute ('target');
-        if port == stateVarNames('I')
-            if targ == populationName
+        targ = char(constInput.getAttribute ('target'));
+        if strcmp (port, stateVarNames('I'))
+            if strcmp (targ, populationName)
                 constI = str2num(char(constInput.getAttribute ...
                                       ('value')));
                 I = I + constI;
@@ -132,9 +132,9 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
         for tvi_iter = 0:tvInputs.getLength-1
             tvInput = tvInputs.item (tvi_iter);
             port = char(tvInput.getAttribute ('port'));
-            targ = tvInput.getAttribute ('target');
-            if port == stateVarNames('I')
-                if targ == populationName
+            targ = char(tvInput.getAttribute ('target'));
+            if strcmp (port, stateVarNames('I'))
+                if strcmp (targ, populationName)
                     % Match. Get points now.                    
                     tpValues = tvInput.getElementsByTagName ...
                         ('TimePointValue');
@@ -152,17 +152,18 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
 
         % Add final value to timePointValues to use interp1 to
         % generate I series data.
-        size(timePointValues)
-        timePointValues = [timePointValues; [t(end), timePointValues(end,2)]];
-        
-        I = interp1 (timePointValues(:,1), timePointValues(:,2), t, ...
-                     'previous');
-
-        % Set the "constant I" used to plot nullclines to the max
-        % value of I for now. Would ideally plot multiple nullclines.
-        constI = max(timePointValues(:,2));
-        
-        multiI = timePointValues(:,2);
+        if isempty(timePointValues)
+            disp('timePointValues is empty');
+        else
+            timePointValues = [timePointValues; [t(end), timePointValues(end,2)]];
+            I = interp1 (timePointValues(:,1), timePointValues(:,2), t, ...
+                         'previous');
+            % Set the "constant I" used to plot nullclines to the max
+            % value of I for now. Would ideally plot multiple nullclines.
+            constI = max(timePointValues(:,2));
+            
+            multiI = timePointValues(:,2);
+        end
     
     end
 
@@ -173,11 +174,17 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     end
     
     % First plot y(:,1), the membrane voltage and I against sample
-    figure(1)
+    vi_fig = figure(startFigNum);
+    clf;
+    tstr = sprintf ('Time series. %s/%s', izhy_cmpt, populationName);
     subplot(2,1,1);
     plot(t, y(:,1), 'r')
+    title (tstr);
+    ylabel('~mV');
     subplot(2,1,2);
     plot(t, I)
+    ylabel('~pA');
+    xlabel('ms');
 
     % find max and min for bifurcation diagram
     maxV = max(y(:,1));
@@ -186,7 +193,9 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     fprintf(1, 'minimum Vm %.6fmV \n\n', minV);
 
     %  nullclines
-    figure(2)
+    nullcline_fig = figure(startFigNum+1);
+    clf;
+    tstr = sprintf ('Nullclines. %s/%s', izhy_cmpt, populationName);
     Vn = linspace (lowerV, upperV, 1000);
 
     if (isempty(multiI))
@@ -194,10 +203,15 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
         plot(Vn, wv, 'b')
         hold on
     else
+        firstnullcline = 1;
         for i = multiI'
-            i
             wv = k .* (Vn - vr) .* (Vn - vt) + i;
-            plot(Vn, wv, 'b')
+            if firstnullcline == 1
+                plot(Vn, wv, 'b--')
+                firstnullcline = 0
+            else
+                plot(Vn, wv, 'b')
+            end
             hold on
         end
     end
@@ -207,7 +221,10 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
 
     % phase trajectory
     plot(y(:,1), y(:,2),  'g')
-    axis([lowerV upperV -100 200]);
+    %axis([lowerV upperV -100 200]);
+    title (tstr);
+    ylabel('u');
+    xlabel('v');
 
     hold off
 
@@ -221,8 +238,8 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     [vz, fval, exitflag] = fzero(@model_Iz_zeros, initV, opts, constI, a, b, k, vr, vt, Cap);
     if exitflag > 0
         nz = b .* (vz - vr);
-        fprintf(1, 'equilibrium potential %.6f \n', vz); 
-        fprintf(1, 'equilibrium n gate %.6f \n', nz); 
+        fprintf(1, 'equilibrium potential (vz) %.6f \n', vz); 
+        fprintf(1, 'equilibrium n gate (nz) %.6f \n', nz); 
     else
         fprintf(1, 'There were no equilibria\n\n');
     end
@@ -267,17 +284,23 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     dv = (1 ./ Cap) .* (k .* (Vg - vr) .* (Vg - vt) - ng + constI);
     dn = a .* (b .* (Vg - vr) - ng);
 
-    figure(5)
+    quiver_fig = figure(startFigNum+2);
+    clf;
     do_power = 1;
     [stem_x, stem_y, arrow1_x, arrow1_y, arrow2_x, arrow2_y, vlens] = KG_quiver(Vg, ng, dv, dn, quiver_plot_scale, do_power);
     hold on
     v = axis;
-    plot(vz, nz, 'or')
-    plot(y(:,1), y(:,2), 'r')
+    plot(vz, nz, 'og')
+    plot(y(:,1), y(:,2), 'g')
     axis(v);
     hold off
     max_len = max(vlens);
     fprintf('maximum vector length in vector field is %.5g\n', max_len);
+    tstr = sprintf ('Quiver. %s/%s', izhy_cmpt, ...
+                    populationName);
+    title (tstr);
+    ylabel('u');
+    xlabel('v');
 
     % find eigenvalues for give eqm
 
@@ -299,7 +322,7 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
                     fprintf(1, 'unstable node\n');
                 else %  negative
                     fprintf(1, 'stable node\n');
-                    figure(2)
+                    figure(nullcline_fig)
                     hold on
                     [yy, j] = min(abs([e1 e2]));
                     %plot([vz vz + eigvec(1,j)], [nz nz + eigvec(2,j)], 'k')
@@ -322,9 +345,7 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
 
 
     % find firing rate
-
     spike_thresh = 0;
-
     V = y(:,1);
     V_binary = V > spike_thresh;
     mask = [-1 1];
@@ -333,5 +354,10 @@ function phaseplane_izhy (spineml_results_path, experimentXml, ...
     fprintf(1, 'Number of spikes %.1f\n', No_spikes);
     rate = 1000 .* No_spikes ./ duration;
     fprintf(1, 'Spike rate %.5f spikes/sec\n', rate);
+
+    % lastly, stick the equilibrium point onto the nullcline fig
+    figure (nullcline_fig);
+    hold on
+    plot(vz, nz, 'og');
 
 end
