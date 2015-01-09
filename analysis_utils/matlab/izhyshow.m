@@ -22,11 +22,15 @@ statevarMapping = containers.Map (codeIzhyStateVars, myIzhyStateVars);
 % more of the trajectory.
 quivParamNames = {'qvscale', 'qvinc', 'qvdivisor'};
 % ** Change this line to suit your output **
-quivParamVals = [ 40, 0.5, 5 ];
+quivParamVals = [ 20, 0.5, 5 ];
 quiverParams = containers.Map (quivParamNames, quivParamVals);
 
 % Calls phaseplane_izhy with the specified location, expt, population
 % name and param mapping
 %** Change this line to suit your model location, experiment, population etc. **
-phaseplane_izhy ('/home/seb/src/SpineML_2_BRAHMS/temp', 'experiment0.xml', 'Population', ...
-                 paramMapping, statevarMapping, quiverParams);
+phaseplane_izhy ('/home/seb/src/SpineML_2_BRAHMS/temp', 'experiment1.xml', 'Humphries', ...
+                 paramMapping, statevarMapping, quiverParams, 1);
+
+% masters, for comparison
+%phaseplane_izhy ('/home/seb/src/SpineML_2_BRAHMS/temp', 'experiment0.xml', 'MastersExample', ...
+%                 paramMapping, statevarMapping, quiverParams, 4);
