@@ -1,6 +1,31 @@
-function [ data, count, t ] = load_sc_data (file_path, n_neurons)
+function [ data, count, t ] = load_sc_data (varargin)
 % load_sc_data Code to load up data which has been output from SpineCreator.
 % Returns the time axis in milliseconds in the variable t.
+
+% For Octave, and XML support (using load_sc_data with one argument),
+% you need these jar files from e.g.
+% https://www.apache.org/dist/xerces/j/Xerces-J-bin.2.11.0.tar.gz
+%
+% you need use javaaddpath to include these files
+% javaaddpath('/home/you/Downloads/xerces-2_11_0/xercesImpl.jar');
+% javaaddpath('/home/you/Downloads/xerces-2_11_0/xml-apis.jar');
+
+% varargin can be filled with arguments file_path then optionally
+% num_neurons (which avoids use of xml reading code).
+
+    isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
+
+    if nargin == 1
+        % No n_neurons, so only extract file_path
+        file_path = varargin{1};
+        num_neurons = [];
+    elseif nargin == 2
+        file_path = varargin{1};
+        num_neurons = varargin{2};
+    else
+        display ('Error: Wrong number of arguments');
+        return;
+    end
 
     % If file path ends with .bin, or .xml then find the root name.
     bin_end = file_path (end-3:end);
@@ -19,10 +44,35 @@ function [ data, count, t ] = load_sc_data (file_path, n_neurons)
     xml_file = [base_path 'rep.xml'];
     bin_file = [base_path '.bin'];
 
-    if (isempty(n_neurons))
+    % Timestep size. Initialise to 0.
+    dt = 0;
+
+    if (isempty(num_neurons))
         % Find the number of neurons in the binary log file from
         % the xml file.
-        infoDoc = xmlread (xml_file);
+        if isOctave
+            % User! You're using octave and you have asked for XML reading of the
+            % SpineML log metadata, so need to javaaddpath.
+            gotXerces = 0; % User! Change this to 1 when you're done!
+            if gotXerces == 0
+                display (['Calling this function with 1 arguments means ' ...
+                          'it needs to read XML. For XML support  you need ' ...
+                          'to get Xerces and modify the javaaddpath() ' ...
+                          'lines in the code. Please see the ' ...
+                          'load_sc_data.m code.']);
+                return;
+            end
+            % User! Modify these javaaddpath lines to match the Xerces you downloaded!
+            javaaddpath ('/usr/local/share/xerces-2_11_0/xercesImpl.jar');
+            javaaddpath ('/usr/local/share/xerces-2_11_0/xml-apis.jar');
+
+            % these 3 lines are equivalent to infoDoc = xmlread (xml_file)
+            parser = javaObject ('org.apache.xerces.parsers.DOMParser');
+            parser.parse (xml_file);
+            infoDoc = parser.getDocument;
+        else
+            infoDoc = xmlread (xml_file);
+        end
         % Assume Analog Log here. Probably wrong for event log.
         logFileType = char(infoDoc.getElementsByTagName ...
                            ('LogFileType').item(0).getFirstChild ...
@@ -43,10 +93,8 @@ function [ data, count, t ] = load_sc_data (file_path, n_neurons)
         % Timestep is specified in milliseconds
         dt = str2num(char(infoDoc.getElementsByTagName ...
                           ('TimeStep').item(0).getAttribute('dt')));
-    else
-        num_neurons = n_neurons;
-        dt = 0;
-    end
+
+    end % else num_neurons already set.
 
     % First, open the file:
     [ fid, fopen_msg ] = fopen (bin_file, 'r', 'native');
