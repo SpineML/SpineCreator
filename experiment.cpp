@@ -40,6 +40,11 @@ experiment::experiment()
     selected = false;
     editing = true;
     subEdit = false;
+    running = false;
+
+    this->progressBar = NULL;
+
+    this->runButton = NULL;
 
 }
 
@@ -199,21 +204,43 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
         QObject::connect(del, SIGNAL(clicked()), panel, SLOT(delExperiment()));
 
         // run button...
-        QCommonStyle style;
-        QToolButton * run = new QToolButton();
+        if (!this->runButton) {
+            this->runButton = new QToolButton;
+            QCommonStyle style;
+            if (this->running == false) {
+                this->runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+                QObject::connect(this->runButton, SIGNAL(clicked()), panel, SLOT(run()));
+            } else {
+                runButton->setIcon(style.standardIcon(QStyle::SP_MediaStop));
+                connect(runButton, SIGNAL(clicked()), panel, SLOT(cancelRun()));
+            }
+
+            QObject::connect(this->runButton, SIGNAL(destroyed()), this, SLOT(runDestroyed()));
+        }
+        QToolButton * run = this->runButton;
         // if any subcomponents of the experiment asre being edited we should disable this
         if (this->subEdit) {
             run->setText("Run (disabled while editing)");
             run->setEnabled(false);
         } else {
             run->setText("Run experiment");
+            run->setEnabled(true);
         }
+        run->setProperty("noDelete", true);
         run->setStyleSheet("QToolButton { color: black; border: 0px; background-color :transparent;}");
         run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         run->setToolTip("Run the experiment in the chosen simulator");
-        run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
         layout->addWidget(run,3,0,1,1);
-        QObject::connect(run, SIGNAL(clicked()), panel, SLOT(run()));
+
+        if (this->progressBar == NULL) {
+           this->progressBar = new QLabel;
+           this->progressBar->setMaximumHeight(10);
+           this->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 255), ") \
+                                      + QString("stop:") + QString::number(0.0) + QString(" rgba(150, 255, 150, 255), stop:")  + QString::number(0.0+0.0) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
+           this->progressBar->setProperty("noDelete", true);
+        }
+
+        layout->addWidget(this->progressBar,4,0,1,4);
 
     }
     else
@@ -251,6 +278,14 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
     }
 
     return box;
+
+}
+
+void experiment::runDestroyed()
+{
+
+    this->runButton = NULL;
+    this->progressBar = NULL;
 
 }
 

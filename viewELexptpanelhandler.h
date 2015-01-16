@@ -56,7 +56,6 @@ private:
     QVBoxLayout * exptOutputs;
     QVBoxLayout * exptChanges;
 
-    QToolButton * runButton;
     QString simulatorStdOutText;
     QString simulatorStdErrText;
 
@@ -83,10 +82,19 @@ private:
 
     GLWidget * gl;
 
+    QTimer simTimeChecker;
+    QString simTimeFileName;
+    QString simCancelFileName;
+    float simTimeMax;
+    experiment * runExpt;
+
+    void cleanUpPostRun(QString, QString);
+
 
 signals:
     void enableRun(bool);
     void simulationDone();
+    void deleteWidgets();
 
 public slots:
     void addExperiment();
@@ -147,9 +155,11 @@ public slots:
     void redraw(double);
 
     void run();
+    void cancelRun();
     void simulatorFinished(int, QProcess::ExitStatus);
     void simulatorStandardOutput();
     void simulatorStandardError();
+    void checkForSimTime();
 
     /*!
      * \brief Called when the mouse moves on the model view

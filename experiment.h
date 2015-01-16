@@ -248,10 +248,17 @@ public:
     void select(QVector < experiment * > *);
     void deselect();
     bool editing;
+    bool running;
+
     bool subEdit;
+    QLabel * progressBar;
+    QToolButton * runButton;
 
 private:
     exptBox * currBoxPtr;
+
+public slots:
+    void runDestroyed();
 
 };
 

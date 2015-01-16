@@ -40,7 +40,16 @@
     </size>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <property name="margin">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
      <number>0</number>
     </property>
     <property name="spacing">
@@ -92,7 +101,16 @@
        <number>0</number>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <property name="margin">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
         <number>0</number>
        </property>
        <property name="spacing">
@@ -126,7 +144,7 @@
           <bool>false</bool>
          </property>
          <property name="styleSheet">
-          <string notr="true">background: rgb(255,255,255)</string>
+          <string notr="true">background: rgba(255, 255, 255, 255)</string>
          </property>
         </widget>
        </item>
@@ -185,6 +203,9 @@
           </property>
           <property name="statusTip">
            <string>Add a neural population at the cursor</string>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
           </property>
           <property name="text">
            <string/>
@@ -396,8 +417,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>433</width>
-            <height>576</height>
+            <width>432</width>
+            <height>577</height>
            </rect>
           </property>
          </widget>

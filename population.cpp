@@ -739,7 +739,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     QString text = displayed_name + "\n" + QString::number(this->numNeurons) + "\n" + displayed_comp_name;
     QFont oldFont = painter->font();
     QFont font = painter->font();
-    font.setPointSizeF(GLscale/15.0);
+    font.setPointSizeF(GLscale/20.0);
     painter->setFont(font);
     painter->drawText(rectangleInner, Qt::AlignRight, text);
     painter->setFont(oldFont);

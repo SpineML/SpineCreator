@@ -36,6 +36,7 @@
 #include "undocommands.h"
 #include "batchexperimentwindow.h"
 #include "qmessageboxresizable.h"
+#include <QTimer>
 
 #define NEW_EXPERIMENT_VIEW11
 
@@ -127,15 +128,17 @@ void viewELExptPanelHandler::recursiveDeleteLoop(QLayout * parentLayout)
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget()) {
-            item->widget()->disconnect((QObject *)0);
-            item->widget()->hide();
-            forDeleting.push_back(item->widget());
+            if (item->widget()->property("noDelete")!=true) {
+                item->widget()->disconnect((QObject *)0);
+                item->widget()->hide();
+                connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
+            }
         }
         if (item->layout())
             recursiveDeleteLoop(item->layout());
         delete item;
     }
-    parentLayout->deleteLater();
+    connect(this, SIGNAL(deleteWidgets()),parentLayout, SLOT(deleteLater()));
 }
 
 void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
@@ -143,9 +146,11 @@ void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(2))) {
         if (item->widget()) {
-            item->widget()->disconnect((QObject *)0);
-            item->widget()->hide();
-            forDeleting.push_back(item->widget());
+            if (item->widget()->property("noDelete")!=true) {
+                item->widget()->disconnect((QObject *)0);
+                item->widget()->hide();
+                connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
+            }
         }
         if (item->layout())
             recursiveDeleteLoop(item->layout());
@@ -159,9 +164,11 @@ void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
         if (item->widget()) {
-            item->widget()->disconnect((QObject *)0);
-            item->widget()->hide();
-            forDeleting.push_back(item->widget());
+            if (item->widget()->property("noDelete")!=true) {
+                item->widget()->disconnect((QObject *)0);
+                item->widget()->hide();
+                connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
+            }
         }
         if (item->layout())
             recursiveDeleteLoop(item->layout());
@@ -293,6 +300,8 @@ void viewELExptPanelHandler::redrawExpt()
         //forDeleting[0]->deleteLater();
         //forDeleting.erase(forDeleting.begin());
     //}
+
+    emit this->deleteWidgets();
 
     recursiveDeleteExpt(exptSetup);
     recursiveDeleteExpt(exptInputs);
@@ -533,6 +542,7 @@ void viewELExptPanelHandler::redrawPanel()
     QVBoxLayout * panel = ((QVBoxLayout *) viewEL->panel->layout());
 
     // clear panel except toolbar
+    emit this->deleteWidgets();
     recursiveDelete(panel);
 
     // add strech to avoid layout spacing out items
@@ -592,6 +602,11 @@ void viewELExptPanelHandler::addExperiment()
 void viewELExptPanelHandler::delExperiment()
 {
     int index = sender()->property("index").toUInt();
+
+    // check we aren't running - don't delete if we are
+    if (data->experiments[index] == this->runExpt) {
+        return;
+    }
 
     data->experiments.erase(data->experiments.begin() + index);
 
@@ -1631,16 +1646,18 @@ void viewELExptPanelHandler::delChangedProp()
 void viewELExptPanelHandler::run()
 {
 
+    // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
+    QString out_dir_name = QDir::home().absolutePath() + QDir::separator() + "outtemp";
+
     QSettings settings;
 
-    //runButton = (QPushButton *) (sender());
-    runButton = qobject_cast < QToolButton * > (sender());
+    QToolButton * runButton = qobject_cast < QToolButton * > (sender());
     if (runButton) {
-        runButton->setEnabled(false);
+        runButton->disconnect(this);
+        runButton->setText("Run experiment");
         QCommonStyle style;
         runButton->setIcon(style.standardIcon(QStyle::SP_MediaStop));
-    } else {
-        runButton = NULL;
+        connect(runButton, SIGNAL(clicked()), this, SLOT(cancelRun()));
     }
 
     simulatorStdOutText = "";
@@ -1660,9 +1677,12 @@ void viewELExptPanelHandler::run()
     }
 
     if (currentExperiment == NULL) {
-        runButton->setEnabled(true);
+        this->cleanUpPostRun("", "");
         return;
     }
+
+    this->runExpt = currentExperiment;
+    this->runExpt->running = true;
 
     QString simName = currentExperiment->setup.simType;
 
@@ -1673,12 +1693,7 @@ void viewELExptPanelHandler::run()
     QFile the_script(path);
     if (!the_script.exists()) {
         // Error - convert_script file doesn't exist
-        QMessageBoxResizable msgBox;
-        msgBox.setWindowTitle("Simulator Error");
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("The simulator '" + path + "' does not exist.");
-        msgBox.exec();
-        runButton->setEnabled(true);
+        this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' does not exist.");
         return;
     } else {
         // Path exists, check it's a file and is executable
@@ -1687,12 +1702,7 @@ void viewELExptPanelHandler::run()
             // Probably Ok - we have execute permission of some kind.
         } else {
             // Error - no execute permission on script
-            QMessageBoxResizable msgBox;
-            msgBox.setWindowTitle("Simulator Error");
-            msgBox.setIcon(QMessageBox::Critical);
-            msgBox.setText("The simulator '" + path + "' is not executable.");
-            msgBox.exec();
-            runButton->setEnabled(true);
+            this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' is not executable.");
             return;
         }
     }
@@ -1794,12 +1804,7 @@ void viewELExptPanelHandler::run()
     QProcess * simulator = new QProcess;
     if (!simulator) {
         // Really bad error - memory allocation error. The following will probably fail:
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Memory Allocation Error");
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("The simulator failed to start - you're out of RAM.");
-        msgBox.exec();
-        runButton->setEnabled(true);
+        this->cleanUpPostRun("Memory Allocation Error", "The simulator failed to start - you're out of RAM.");
         return;
     }
 
@@ -1831,15 +1836,11 @@ void viewELExptPanelHandler::run()
         simulator->start(path, al);
     }
 
+
     // Wait a couple of seconds for the process to start
     if (!simulator->waitForStarted(100)) {
         // Error - simulator failed to start
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("Simulator Error");
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("The simulator '" + path + "' failed to start.");
-        msgBox.exec();
-        runButton->setEnabled(true);
+        this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
         //delete simulator; // Alex: this appears to be dangerous - we can have the wait for started fail, without the simulator crashing
                             // - in which case deleting the simulator causes a crash later on... for this reason I have left it as a memory leak
         return;
@@ -1848,15 +1849,121 @@ void viewELExptPanelHandler::run()
     connect(simulator, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(simulatorFinished(int, QProcess::ExitStatus)));
     connect(simulator, SIGNAL(readyReadStandardOutput()), this, SLOT(simulatorStandardOutput()));
     connect(simulator, SIGNAL(readyReadStandardError()), this, SLOT(simulatorStandardError()));
+
+    // now start a timer to check on the simulation progress
+    connect(&simTimeChecker, SIGNAL(timeout()), this, SLOT(checkForSimTime()));
+    this->simTimeMax = currentExperiment->setup.duration;
+    this->simTimeFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "time.txt");
+    this->simCancelFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "stop.txt");
+    simTimeChecker.start(17);
+
+}
+
+/*!
+ * \brief viewELExptPanelHandler::cleanUpPostRun
+ * \param msg
+ * \param msgDetail
+ * If a run ends due to being aborted (user or code) or successfully we have to do some clean up - this
+ * was duplicated code so it is now merged into this function. Can pass an optional error message and
+ * message detail.
+ */
+void viewELExptPanelHandler::cleanUpPostRun(QString msg, QString msgDetail) {
+    if (!msg.isEmpty()) {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(msg);
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(msgDetail);
+        msgBox.exec();
+    }
+    if (this->runExpt) {
+        if (this->runExpt->runButton) {
+            this->runExpt->runButton->disconnect(this);
+            this->runExpt->runButton->setText("Run experiment");
+            QCommonStyle style;
+            this->runExpt->runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+            connect(this->runExpt->runButton, SIGNAL(clicked()), this, SLOT(run()));
+        }
+        this->runExpt->running = false;
+        this->runExpt = NULL;
+    }
+}
+
+/*!
+ * \brief viewELExptPanelHandler::cancelRun
+ * This function writes a file that can then be picked up by compatible simulators.
+ * The presence of the file causes the simulator to stop running and save logs.
+ */
+void viewELExptPanelHandler::cancelRun() {
+
+    if (!runExpt) return;
+
+    QFile simCancelFile(simCancelFileName);
+
+    simCancelFile.open(QFile::WriteOnly);
+
+}
+
+/*!
+ * \brief viewELExptPanelHandler::checkForSimTime
+ * This function is used to pick up the infromation left by a simulator, and
+ * use it to provide progress feedback to the user. This is done via access to a
+ * file called 'time.txt' which is currently located in the simulation model folder.
+ *
+ */
+void viewELExptPanelHandler::checkForSimTime() {
+
+    if (!runExpt) return;
+
+    QFile simTimeFile(simTimeFileName);
+
+    simTimeFile.open(QFile::ReadOnly);
+
+    if (simTimeFile.isOpen()) {
+        float simTimeCurr = 0;
+        QTextStream tStream(&simTimeFile);
+        QString line = tStream.readLine();
+        if (line.contains("*")) {
+            if (runExpt->runButton) {
+                runExpt->runButton->setText(line);
+            }
+        } else {
+            simTimeCurr = line.toFloat();
+            // update the UI progress bar
+            if (runExpt->runButton) {
+                runExpt->runButton->setText("Running: " + QString::number(simTimeCurr) + "ms");
+                float proportion = simTimeCurr / (this->simTimeMax*1000);
+                runExpt->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 255), ") \
+                                       + QString("stop:") + QString::number(proportion) + QString(" rgba(150, 255, 150, 255), stop:")  + QString::number(proportion+0.01) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
+
+            }
+        }
+    }
+
 }
 
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 {
-    // update run button
-    if (runButton) {
-        runButton->setEnabled(true);
-        QCommonStyle style;
-        runButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
+
+    // stop updating the bar
+    simTimeChecker.disconnect();
+    simTimeChecker.stop();
+    QFile::remove(simCancelFileName);
+
+    experiment * currentExperiment = NULL;
+
+    // find currentExperiment
+    for (int i = 0; i < data->experiments.size(); ++i) {
+        if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
+    }
+
+    if (currentExperiment == NULL) {
+        this->cleanUpPostRun("", "");
+        return;
+    }
+    float proportion = 0;
+    if (currentExperiment->progressBar) {
+        currentExperiment->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 0), ") \
+                               + QString("stop:") + QString::number(proportion) + QString(" rgba(150, 255, 150, 0), stop:")  + QString::number(proportion+0.01) + QString(" rgba(150, 255, 150, 0), stop:1 rgba(255, 255, 255, 0))}"));
     }
 
     // check for errors we can present
@@ -1872,7 +1979,8 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDetailedText(simulatorStdOutText);
             msgBox.addButton(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
+            msgBox.exec();           
+            this->cleanUpPostRun("", "");
             return;
         }
     }
@@ -1899,13 +2007,14 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.setText(simulatorStdErrText);
         msgBox.addButton(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();
+        msgBox.exec();        
+        this->cleanUpPostRun("", "");
         return;
     }
 
     if (status == QProcess::NormalExit) {
         // check if we are running in batch mode (i.e. run button is not set)
-        if (runButton) {
+        if (this->runExpt->runButton) {
             QMessageBoxResizable msgBox;
             msgBox.setWindowTitle("Simulator Complete");
             msgBox.setIcon(QMessageBox::Information);
@@ -1915,10 +2024,13 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
         }
-        // signal others
+        // signal others        
+        this->cleanUpPostRun("", "");
         emit simulationDone();
         return;
     }
+
+    this->cleanUpPostRun("", "");
 
 }
 

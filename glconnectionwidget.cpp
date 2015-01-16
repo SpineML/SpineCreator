@@ -469,18 +469,21 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     glColor4f(0.0, 0.0, 0.0, 0.1);
 
                     // draw in
-                    glBegin(GL_LINES);
+                    glBegin(GL_TRIANGLES);
                     if (src->isVisualised && dst->isVisualised) {
                         glVertex3f(src->layoutType->locations[connections[targNum][i].src].x+srcX, src->layoutType->locations[connections[targNum][i].src].y+srcY, src->layoutType->locations[connections[targNum][i].src].z+srcZ);
                         glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ);
+                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ+0.05);
                     }
                     if (src->isVisualised && !dst->isVisualised) {
                         glVertex3f(src->layoutType->locations[connections[targNum][i].src].x, src->layoutType->locations[connections[targNum][i].src].y, src->layoutType->locations[connections[targNum][i].src].z);
                         glVertex3f(dstX, dstY, dstZ);
+                        glVertex3f(dstX, dstY, dstZ+0.01);
                     }
                     if (!src->isVisualised && dst->isVisualised) {
                         glVertex3f(src->loc3.x, src->loc3.y, src->loc3.z);
                         glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z);
+                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z+0.01);
                     }
                     glEnd();
 
