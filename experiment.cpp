@@ -215,6 +215,7 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
                 connect(runButton, SIGNAL(clicked()), panel, SLOT(cancelRun()));
             }
 
+
             QObject::connect(this->runButton, SIGNAL(destroyed()), this, SLOT(runDestroyed()));
         }
         QToolButton * run = this->runButton;

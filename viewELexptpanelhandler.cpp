@@ -168,12 +168,16 @@ void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
                 item->widget()->disconnect((QObject *)0);
                 item->widget()->hide();
                 connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
+                qDebug() << "Mee: " << item->widget();
+            } else {
+                qDebug() << "Moo: " << item->widget();
             }
         }
         if (item->layout())
             recursiveDeleteLoop(item->layout());
         delete item;
     }
+
 }
 
 void viewELExptPanelHandler::redraw()
@@ -1646,9 +1650,6 @@ void viewELExptPanelHandler::delChangedProp()
 void viewELExptPanelHandler::run()
 {
 
-    // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
-    QString out_dir_name = QDir::home().absolutePath() + QDir::separator() + "outtemp";
-
     QSettings settings;
 
     QToolButton * runButton = qobject_cast < QToolButton * > (sender());
@@ -1813,6 +1814,9 @@ void viewELExptPanelHandler::run()
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
 
+    // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
+    QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp";
+
     QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
                                        // to the model being executed,
                                        // either in the original location
@@ -1822,7 +1826,7 @@ void viewELExptPanelHandler::run()
         QStringList al;
         al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
-           << "-o" << wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
+           << "-o" << out_dir_name//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
 
         // There's no REBUILD env var set, even though it's in my settings.
