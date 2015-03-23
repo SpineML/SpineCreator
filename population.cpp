@@ -446,6 +446,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new csv_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
             }
             type = e2.elementsByTagName("KernelConnection");
             if (type.count() == 1) {
@@ -453,8 +455,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new kernel_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
-                ((kernel_connection *) newInput->connectionType)->src = qSharedPointerDynamicCast <population> (newInput->source);
-                ((kernel_connection *) newInput->connectionType)->dst = qSharedPointerDynamicCast <population> (newInput->destination);
+                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
             }
 
 

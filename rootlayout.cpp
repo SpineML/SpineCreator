@@ -839,6 +839,9 @@ void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data)
     emit showProjection();
     emit setProjectionName("<u><b>" + proj->getName() + "</b></u>");
 
+    // Copy current projection into rootdata so it's accessible in csv_connection::drawLayout
+    data->currentlySelectedProjection = proj;
+
     // make sure we are not off the end due to deletes
     while (proj->currTarg >= 0 && proj->currTarg > proj->synapses.size()-1) {
         proj->currTarg--;
@@ -1879,4 +1882,3 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
     }
 
 }
-

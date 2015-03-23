@@ -418,6 +418,12 @@ QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * 
         QTableView *tableView = new QTableView();
 
         csv_connectionModel *connMod = new csv_connectionModel();
+
+        // rootLayout::projSelected has communicated this information
+        // so we can stick it into this connection.
+        this->src = data->currentlySelectedProjection->source;
+        this->dst = data->currentlySelectedProjection->destination;
+
         connMod->setConnection(this);
         tableView->setModel(connMod);
 
@@ -1230,7 +1236,7 @@ void csv_connection::sanitizeReplace (QString& str,
                                       const QString& allowed,
                                       const char replaceChar)
 {
-    unsigned int i=0;
+    int i=0;
     while (i<str.size()) {
         if (allowed.indexOf(str[i], 0) == -1) {
             // str[i] is forbidden
@@ -1249,10 +1255,13 @@ void csv_connection::setData(const QModelIndex & index, float value)
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
+    if (this->filename.isEmpty()) {
+        this->generateFilename();
+    }
     f.setFileName(lib_dir.absoluteFilePath(this->filename));
     if (!f.open( QIODevice::ReadWrite)) {
         QMessageBox msgBox;
-        msgBox.setText("csv_connection::setData(const QModelIndex&, float): Could not open file for Explicit Connection");
+        msgBox.setText("csv_connection::setData(const QModelIndex&, float): Could not open file " + this->filename + " for Explicit Connection");
         msgBox.exec();
         return;
     }

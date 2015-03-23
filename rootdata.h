@@ -118,6 +118,7 @@ public:
     versionControl* version;
     MainWindow* main;
     QActionGroup* projectActions;
+    QSharedPointer <projection> currentlySelectedProjection;
     //@}
 
 signals:
