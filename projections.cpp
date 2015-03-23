@@ -1311,6 +1311,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new csv_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSrcName (srcName);
+                newSynapse->connectionType->setDstName (destName);
             }
             else if (n.toElement().tagName() == "KernelConnection") {
                 // fixme: fix this
@@ -1498,6 +1500,9 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                                     ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
                                     // prevent regeneration
                                     ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                                    // Set source/dest population names in the connection (used when saving)
+                                    conn->setSrcName (this->source->name);
+                                    conn->setDstName (this->destination->name);
                                 }
                             }
                         }

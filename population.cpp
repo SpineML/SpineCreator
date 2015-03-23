@@ -916,10 +916,8 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
                 // add each Synapse
                 xmlOut.writeStartElement("LL:Synapse");
 
-                if (projection->synapses[j]->connectionType->type == Kernel) {
-                    ((kernel_connection *) projection->synapses[j]->connectionType)->src = projection->source;
-                    ((kernel_connection *) projection->synapses[j]->connectionType)->dst = projection->destination;
-                }
+                projection->synapses[j]->connectionType->src = projection->source;
+                projection->synapses[j]->connectionType->dst = projection->destination;
                 projection->synapses[j]->connectionType->write_node_xml(xmlOut);
 
                 xmlOut.writeStartElement("LL:WeightUpdate");
