@@ -32,7 +32,6 @@
 
 connection::connection()
 {
-    qDebug() << "connection::connection() called";
     type = none;
     delay = new ParameterData("ms");
     delay->name = "delay";
@@ -360,7 +359,6 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e)
 
 csv_connection::csv_connection()
 {
-    qDebug() << "csv_connection::csv_connection() called";
     type = CSV;
     numRows = 0;
     // no connectivity generator in constructor
@@ -522,7 +520,6 @@ QString csv_connection::getFileName()
 
 void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 {
-    qDebug() << "csv_connection::write_node_xml called. this->filename for reading: " << this->filename;
     QFile f;
     QDir lib_dir = this->getLibDir();
     f.setFileName(lib_dir.absoluteFilePath(this->filename));
@@ -713,8 +710,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
 
         // set number of connections
         this->setNumRows(BinaryFileList.at(0).toElement().attribute("num_connections").toUInt());
-        DBG() << "Conn text = " << BinaryFileList.at(0).toElement().attribute("num_connections");
-        DBG() << "Conn value = " << BinaryFileList.at(0).toElement().attribute("num_connections").toUInt();
 
         // do we have explicit delays
         bool explicit_delay = BinaryFileList.at(0).toElement().attribute("explicit_delay_flag").toInt();
@@ -746,7 +741,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
 
             // We *don't* change the filename if it has already been
             // set in the model, so copy fileName to this->filename.
-            qDebug() << "csv_connection::import_parameters_from_xml: Avoid changing filename from " << fileName;
             this->filename = fileName;
 
             QDir lib_dir = this->getLibDir();
@@ -1652,7 +1646,6 @@ pythonscript_connection::pythonscript_connection(QSharedPointer <population> src
     this->hasDelay = false;
     this->src = src;
     this->dst = dst;
-    qDebug() << "pythonscript_connection::pythonscript_connection: Setting connection_target";
     this->connection_target = conn_targ;
 }
 

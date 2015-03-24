@@ -1593,7 +1593,6 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
         saveDir.cdUp();
 
         QString uniqueName;
-        qDebug() << "property bin file filename " << this->filename << " before setting new name.";
         if (this->filename.isEmpty()) {
 
             //generate a unique filename to save the par or sv under
@@ -1608,13 +1607,10 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
             int index = 0;
             while(!unique) {
                 uniqueName = baseName + QString::number(float(index)) + ".bin";
-                qDebug() << "testing if uniqueName " << uniqueName << " exists in the dir";
                 unique = true;
                 for (int i = 0; i < (int)files.count(); ++i) {
-                    //qDebug() << "...against files[" << i << "]: " << files[i];
                     // see if the new name is unique
                     if (uniqueName == files[i]) {
-                        qDebug() << "...it DOES";
                         unique = false;
                         ++index;
                         break; // out of for
@@ -1624,7 +1620,6 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
         } else {
             uniqueName = this->filename;
         }
-        qDebug() << "new name for property file: " << uniqueName;
 
         // construct the save file name based upon whether we are
         // saving the project or outputting for simulation

@@ -1055,18 +1055,16 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
 
 void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir)
 {
+    // Make a list of all the explicitDataBinaryFiles in the model.
     QFile modelXmlFile(projectDir.absoluteFilePath(fileName));
     if (!modelXmlFile.open(QIODevice::ReadOnly)) {
         addError("Error reading Network file");
         return;
     }
-
     QXmlStreamReader modelXml;
     modelXml.setDevice(&(modelXmlFile));
-
     QStringList ebd_files;
     while(modelXml.readNext() != QXmlStreamReader::EndDocument) {
-        qDebug() << "model.xml element: " << modelXml.name();
         if (modelXml.tokenType() == QXmlStreamReader::StartElement
             && modelXml.name() == "BinaryFile") {
             // Examine file_name attribute
@@ -1078,7 +1076,6 @@ void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir
             }
         }
     }
-    qDebug() << "ebd files: " << ebd_files;
 
     // Now we have the list of all explicitDataBinaryFile files which
     // exist in the model, we can see if there are any stale ones in
