@@ -150,13 +150,14 @@ bool projectObject::save_project(QString fileName, rootData * data)
     // check for version control
     this->version.setupVersion();
 
-    // No longer remove binary files on save - we'll overwrite those
-    // files which need overwriting, and we'll use the files present
-    // in the directory to help choose new names for new
+    // No longer remove explicitDataBinaryFiles on save - we'll
+    // overwrite those files which need overwriting, and we'll use the
+    // files present in the directory to help choose new names for new
     // property/explicitDataBinaryFiles.
-#if 0
-    // remove old binary files
-    project_dir.setNameFilters(QStringList() << "*.bin");
+    //
+    // However, we DO remove old connection binary files (but not
+    // explicitData binary files).
+    project_dir.setNameFilters(QStringList() << "conn*.bin");
     QStringList files = project_dir.entryList(QDir::Files);
     for (int i = 0; i < files.size(); ++i) {
         // delete
@@ -166,7 +167,6 @@ bool projectObject::save_project(QString fileName, rootData * data)
             this->version.removeFromVersion(files[i]);
         }
     }
-#endif
 
     // sync project
     copy_back_data(data);
@@ -1044,6 +1044,57 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
     // add to version control
     if (this->version.isModelUnderVersion()) {
         this->version.addToVersion(fileModel.fileName());
+    }
+
+    fileModel.close();
+
+    // Clean up stale explicit data binary files, by searching through
+    // xmlOut and comparing with the files in the model dir.
+    this->cleanUpStaleExplicitData(fileName, projectDir);
+}
+
+void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir)
+{
+    QFile modelXmlFile(projectDir.absoluteFilePath(fileName));
+    if (!modelXmlFile.open(QIODevice::ReadOnly)) {
+        addError("Error reading Network file");
+        return;
+    }
+
+    QXmlStreamReader modelXml;
+    modelXml.setDevice(&(modelXmlFile));
+
+    QStringList ebd_files;
+    while(modelXml.readNext() != QXmlStreamReader::EndDocument) {
+        qDebug() << "model.xml element: " << modelXml.name();
+        if (modelXml.tokenType() == QXmlStreamReader::StartElement
+            && modelXml.name() == "BinaryFile") {
+            // Examine file_name attribute
+            if (modelXml.attributes().hasAttribute("file_name")) {
+                QString afile = modelXml.attributes().value("file_name").toString();
+                if (afile.contains ("explicitDataBinaryFile")) {
+                    ebd_files.push_back (afile);
+                }
+            }
+        }
+    }
+    qDebug() << "ebd files: " << ebd_files;
+
+    // Now we have the list of all explicitDataBinaryFile files which
+    // exist in the model, we can see if there are any stale ones in
+    // the file store.
+    QStringList filters;
+    filters << "explicitDataBinaryFile*";
+    projectDir.setNameFilters(filters);
+    QStringList files = projectDir.entryList();
+    for (int i = 0; i < (int)files.count(); ++i) {
+        // Is files[i] a member of ebd_files? If NOT then files[i]
+        // should be unlinked.
+        if (!ebd_files.contains(files[i])) {
+            //unlink(files[i])
+            qDebug() << "Unlinking stale explicitDataBinaryFile: " << files[i];
+            QFile::remove(projectDir.absoluteFilePath(files[i]));
+        }
     }
 }
 

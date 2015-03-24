@@ -102,6 +102,13 @@ private:
     // other helper
     QString getUniquePopName(QString);
 
+    /*!
+     * Looks in modelXml and finds all the explicitDataBinaryFile
+     * file_names. It then checks these are all present and removes
+     * any stale ones from the model file directory.
+     */
+    void cleanUpStaleExplicitData(QString& fileName, QDir& projectDir);
+
     QDomDocument doc;
     QDomDocument meta;
 
