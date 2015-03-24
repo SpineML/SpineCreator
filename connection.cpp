@@ -2221,6 +2221,26 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
         // when they save, their library version of the connection
         // function will make its way into the model.
         bool preferLibraryVersionOfScript = false;
+        QMessageBox libModel;
+        libModel.setWindowTitle("Versions of " + this->scriptName + " script differ");
+        libModel.setText("This model contains a version of the python connection script "
+                         + this->scriptName + " which is different from the version in "
+                         + "your script library (Edit->Settings->Python Scripts). Please "
+                         + "choose whether to prefer the library version (importing the "
+                         + "model's version as " + this->scriptName
+                         + "_model_<date>) or the model version (making a backup of the "
+                         + "current library version as " + this->scriptName + "_lib_<date>).");
+        QPushButton* libraryButton = libModel.addButton("Prefer Library", QMessageBox::AcceptRole);
+        QPushButton* modelButton = libModel.addButton("Prefer Model", QMessageBox::AcceptRole);
+        libModel.exec();
+        if (libModel.clickedButton() == libraryButton) {
+            preferLibraryVersionOfScript = true;
+        } else if (libModel.clickedButton() == modelButton) {
+            preferLibraryVersionOfScript = false;
+        } else {
+            DBG() << "Box closed/cancelled; preferring model version of script.";
+            // Leave preferLibraryVersionOfScript = false;
+        }
 
         if (preferLibraryVersionOfScript) {
 
