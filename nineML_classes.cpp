@@ -635,7 +635,10 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
         }
     }
 
+    // Do we have any parameter or state variable properties to write out?
     if (this->ParameterList.size()+this->StateVariableList.size() > 0) {
+
+        // Output parameter properties
         for (int i = 0; i < this->ParameterList.size(); ++i) {
             xmlOut.writeStartElement("Property");
 
@@ -673,17 +676,13 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
               if (this->ParameterList[i]->currType == ExplicitList) {
                   // Write out the explicit list either to XML or to binary by calling a built in function
                   this->ParameterList[i]->writeExplicitListNodeData(xmlOut);
-                  /*xmlOut.writeStartElement("ValueList");
-                  for (int ind = 0; ind < this->ParameterList[i]->value.size(); ++ind) {
-                      xmlOut.writeEmptyElement("Value");
-                      xmlOut.writeAttribute("index", QString::number(float(this->ParameterList[i]->indices[ind])));
-                      xmlOut.writeAttribute("value", QString::number(float(this->ParameterList[i]->value[ind])));
-                  }
-                  xmlOut.writeEndElement(); // valueList*/
               }
 
               xmlOut.writeEndElement(); // property
-        }
+
+        } // done with parameter properties
+
+        // Output state variable properties
         for (int i = 0; i < this->StateVariableList.size(); ++i) {
             xmlOut.writeStartElement("Property");
 
@@ -719,20 +718,13 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
               }
               if (this->StateVariableList[i]->currType == ExplicitList) {
                   this->StateVariableList[i]->writeExplicitListNodeData(xmlOut);
-                  /*
-                  xmlOut.writeStartElement("ValueList");
-                  for (int ind = 0; ind < this->StateVariableList[i]->value.size(); ++ind) {
-                      xmlOut.writeEmptyElement("Value");
-                      xmlOut.writeAttribute("index", QString::number(float(this->StateVariableList[i]->indices[ind])));
-                      xmlOut.writeAttribute("value", QString::number(float(this->StateVariableList[i]->value[ind])));
-                  }
-                 xmlOut.writeEndElement(); // valueList
-                 */
               }
 
               xmlOut.writeEndElement(); // property
-        }
-    }
+
+        } // Done with state variable properties
+
+    } // else there are no properties
 
     // if it is not a layout, add the inputs
     if (this->type == NineMLComponentType) {
@@ -1552,6 +1544,7 @@ ParameterData::ParameterData(Parameter *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = Undefined;
+    this->filename = "";
 }
 
 ParameterData::ParameterData(ParameterData *data)
@@ -1561,6 +1554,7 @@ ParameterData::ParameterData(ParameterData *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = data->currType;
+    this->filename = "";
 }
 
 void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
@@ -1598,28 +1592,39 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
         // the file, cdUp to get rid of this:
         saveDir.cdUp();
 
-        //generate a unique filename to save the par or sv under
-        QStringList filters;
-        filters << "explicitDataBinaryFile*";
-        saveDir.setNameFilters(filters);
-
-        QStringList files = saveDir.entryList();
-
-        QString baseName = "explicitDataBinaryFile";
         QString uniqueName;
-        bool unique = false;
-        int index = 0;
-        while(!unique) {
-            unique = true;
-            uniqueName = baseName + QString::number(float(index)) + ".bin";
-            for (int i = 0; i < (int)files.count(); ++i) {
-                // see if the new name is unique
-                if (uniqueName == files[i]) {
-                    unique = false;
-                    ++index;
+        qDebug() << "property bin file filename " << this->filename << " before setting new name.";
+        if (this->filename.isEmpty()) {
+
+            //generate a unique filename to save the par or sv under
+            QStringList filters;
+            filters << "explicitDataBinaryFile*";
+            saveDir.setNameFilters(filters);
+
+            QStringList files = saveDir.entryList();
+
+            QString baseName = "explicitDataBinaryFile";
+            bool unique = false;
+            int index = 0;
+            while(!unique) {
+                uniqueName = baseName + QString::number(float(index)) + ".bin";
+                qDebug() << "testing if uniqueName " << uniqueName << " exists in the dir";
+                unique = true;
+                for (int i = 0; i < (int)files.count(); ++i) {
+                    //qDebug() << "...against files[" << i << "]: " << files[i];
+                    // see if the new name is unique
+                    if (uniqueName == files[i]) {
+                        qDebug() << "...it DOES";
+                        unique = false;
+                        ++index;
+                        break; // out of for
+                    }
                 }
             }
+        } else {
+            uniqueName = this->filename;
         }
+        qDebug() << "new name for property file: " << uniqueName;
 
         // construct the save file name based upon whether we are
         // saving the project or outputting for simulation
@@ -1633,7 +1638,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
         // write out binary data
         QFile export_file(saveFileName);
 
-        if (!export_file.open( QIODevice::WriteOnly)) {
+        if (!export_file.open( QIODevice::WriteOnly | QIODevice::Truncate)) {
             QMessageBox msgBox;
             msgBox.setText("Error creating binary file '" + saveFileName
                            + "' - is there sufficient disk space?");
@@ -1681,9 +1686,9 @@ void ParameterData::readExplicitListNodeData(QDomNode &n) {
         QDir filePath(filePathString);
 
         // get file name and path
-        QString fileName = binaryValInst.at(0).toElement().attribute("file_name");
+        this->filename = binaryValInst.at(0).toElement().attribute("file_name");
 
-        QFile fileIn(filePath.absoluteFilePath(fileName));
+        QFile fileIn(filePath.absoluteFilePath(this->filename));
 
         // check that the data file exists!
         if (!fileIn.open(QIODevice::ReadOnly)) {
@@ -1691,8 +1696,8 @@ void ParameterData::readExplicitListNodeData(QDomNode &n) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + this->filename);
             settings.endArray();
             return;
         }

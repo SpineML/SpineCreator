@@ -198,6 +198,11 @@ public:
     ParameterType currType;
     int seed;
 
+    /*!
+     * The file_name, if the data are saved as explicit binary data.
+     */
+    QString filename;
+
     ParameterData(Parameter *data);
     ParameterData(ParameterData *data);
     ParameterData(QString dimString){dims = new dim(dimString);}

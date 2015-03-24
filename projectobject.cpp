@@ -150,6 +150,11 @@ bool projectObject::save_project(QString fileName, rootData * data)
     // check for version control
     this->version.setupVersion();
 
+    // No longer remove binary files on save - we'll overwrite those
+    // files which need overwriting, and we'll use the files present
+    // in the directory to help choose new names for new
+    // property/explicitDataBinaryFiles.
+#if 0
     // remove old binary files
     project_dir.setNameFilters(QStringList() << "*.bin");
     QStringList files = project_dir.entryList(QDir::Files);
@@ -161,6 +166,7 @@ bool projectObject::save_project(QString fileName, rootData * data)
             this->version.removeFromVersion(files[i]);
         }
     }
+#endif
 
     // sync project
     copy_back_data(data);
