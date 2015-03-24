@@ -2179,44 +2179,124 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
         node = node.nextSibling();
     }
 
-    // now try to match the script to a script in the library - if you can't then add the script
+    // Now try to match the script from the model with a script in the
+    // library. If there's no match, then add the script to the
+    // library. Deal with the case where the model script named "x"
+    // differs from the library script named "x".
+
     QSettings settings;
     // enter group of scripts
     settings.beginGroup("pythonscripts");
     // fetch a list of scripts
     QStringList scripts = settings.childKeys();
-    // first try to match by name and text
-    // if this does not evaluate we have a match and can leave it at that
-    if (settings.value(this->scriptName,"not found") != this->scriptText) {
-        // no match found!
-        // test the existing scripts for a match
-        bool matchFound = false;
-        for (int i = 0; i < scripts.size(); ++i) {
-            if (settings.value(scripts[i],"not found") == this->scriptText) {
-                this->scriptName = scripts[i];
-                matchFound = true;
-            }
+
+    // Here, we're comparing the script stored in the library with
+    // name scriptName with scriptText (which has just been copied
+    // in from the model).
+    if (settings.value(this->scriptName,"not found") == this->scriptText) {
+        // User's library DOES contain a script whose name and content
+        // matches the one in the model.
+        DBG() << "Your library has an identical copy of the model script " << this->scriptName;
+
+    } else if (settings.value(this->scriptName,"not found") == "not found") {
+
+        DBG() << "No library script named " << this->scriptName
+              << " was found; loading it into your library.";
+
+        // In this case, load the model script into the library with the same name.
+        if (this->scriptName == "") {
+            this->scriptName = "loaded connection";
         }
-        // script just isn't in the library...
-        if (!matchFound) {
-            QString extra = "";
-            int i = 1;
-            if (this->scriptName == "") {
-                this->scriptName = "loaded connection";
-                extra = " 1";
-                i = 2;
+        // add the script to the library
+        settings.setValue(this->scriptName, this->scriptText);
+
+    } else {
+
+        DBG() << "library version of script " << this->scriptName << " differs from model version.";
+
+        // In this case, ask the user what to do. User may either load
+        // the model version into their library and rename their
+        // existing function OR keep their existing version and save
+        // the one from the model into the library for reference, but
+        // when they save, their library version of the connection
+        // function will make its way into the model.
+        bool preferLibraryVersionOfScript = false;
+
+        if (preferLibraryVersionOfScript) {
+
+            DBG() << "User prefers library version of the script " << this->scriptName;
+
+            // Now test to see if there is an identical script already
+            // in the library with another (or the same) name.
+            bool identicalFound = false;
+            QString identicalName = "";
+            for (int i = 0; i < scripts.size(); ++i) {
+                if (settings.value(scripts[i],"not found") == this->scriptText) {
+                    identicalFound = true;
+                    identicalName = scripts[i];
+                }
             }
 
-            // make sure the name is unique
-            while (scripts.contains(this->scriptName+extra)) {
-                extra = QString(" ") + QString::number(i);
+            if (identicalFound == true) {
+                // Library already contains this script.
+                DBG() << "A version of the script " << this->scriptName
+                      << " from the model was found in the library where it is named "
+                      << identicalName;
+            } else {
+                // ...otherwise, add the script. However, if there's a
+                // non-identical version of the script in the library with
+                // the new name, change the new name with a suffix.
+                QString newScriptName(this->scriptName + "_model_" + QDateTime::currentDateTime().toString("yyyyMMdd"));
+                int i = 1;
+                while (scripts.contains(newScriptName)) {
+                    newScriptName = this->scriptName + "_model_"
+                        + QDateTime::currentDateTime().toString("yyyyMMdd")
+                        + "_" + QString::number(i++);
+                }
+                settings.setValue(newScriptName, this->scriptText);
             }
-            // add the script to the library
-            settings.setValue(this->scriptName+extra, this->scriptText);
-            // save the modified scriptname
-            this->scriptName = this->scriptName+extra;
+
+        } else { // preferModelVersionOfScript
+
+            DBG() << "User prefers the model version of the script " << this->scriptName;
+
+            QString newScriptName(this->scriptName + "_lib_" + QDateTime::currentDateTime().toString("yyyyMMdd"));
+            // If the existing version of scriptName is stored in the
+            // library as a copy with another name, signal this to the
+            // user and do nothing before copying the model version
+            // into the library.
+            bool copyFound = false;
+            QString copyName = "";
+            for (int i = 0; i < scripts.size(); ++i) {
+                if (scripts[i] != this->scriptName
+                    && ( settings.value(scripts[i], "not found")
+                         == settings.value(this->scriptName,
+                                           "# An error occurred in connection.cpp: "
+                                           "pythonscript_connection::read_metadata_xml"))) {
+                    copyFound = true;
+                    copyName = scripts[i];
+                }
+            }
+
+            if (copyFound == true) {
+                DBG() << "An existing copy of the library version of "
+                      << this->scriptName << " is present with the name " << copyName;
+            } else {
+                // No existing copy, make a new copy.
+                DBG() << "Copying existing library version of "
+                      << this->scriptName << " to " << newScriptName;
+                settings.setValue(newScriptName,
+                                  settings.value(this->scriptName,
+                                                 "# An error occurred in connection.cpp: "
+                                                 "pythonscript_connection::read_metadata_xml"));
+            }
+
+            // Finally, copy the model version of the script into the
+            // library with the name scriptName
+            settings.setValue(this->scriptName, this->scriptText);
         }
     }
+
     // exit the scripts group
     settings.endGroup();
 }
