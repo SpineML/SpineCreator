@@ -5,6 +5,10 @@
 #include "globalHeader.h"
 #include "versioncontrol.h"
 
+// Limit the precision of floating point numbers in metaData.xml to
+// avoid the metaData.xml file changing arbitrarily.
+#define METADATA_FLOAT_PRECISION 6
+
 class projectObject : public QObject
 {
     Q_OBJECT

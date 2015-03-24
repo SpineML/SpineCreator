@@ -27,6 +27,8 @@
 #include "connection.h"
 #include "experiment.h"
 #include "projectobject.h"
+#include <sstream>
+#include <iomanip>
 
 synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs) {
 
@@ -1128,8 +1130,12 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     // start position
     QDomElement start = meta.createElement( "start" );
     col.appendChild(start);
-    start.setAttribute("x", this->start.x());
-    start.setAttribute("y", this->start.y());
+    stringstream xs;
+    xs << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.x();
+    start.setAttribute("x", xs.str().c_str());
+    stringstream ys;
+    ys << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.y();
+    start.setAttribute("y", ys.str().c_str());
 
     // bezierCurves
     QDomElement curves = meta.createElement( "curves" );
@@ -1139,18 +1145,30 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
 
         QDomElement curve = meta.createElement( "curve" );
         QDomElement C1 = meta.createElement( "C1" );
-        C1.setAttribute("xpos", this->curves[i].C1.x());
-        C1.setAttribute("ypos", this->curves[i].C1.y());
+        stringstream xc1;
+        xc1 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C1.x();
+        C1.setAttribute("xpos", xc1.str().c_str());
+        stringstream yc1;
+        yc1 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C1.y();
+        C1.setAttribute("ypos", yc1.str().c_str());
         curve.appendChild(C1);
 
         QDomElement C2 = meta.createElement( "C2" );
-        C2.setAttribute("xpos", this->curves[i].C2.x());
-        C2.setAttribute("ypos", this->curves[i].C2.y());
+        stringstream xc2;
+        xc2 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C2.x();
+        C2.setAttribute("xpos", xc2.str().c_str());
+        stringstream yc2;
+        yc2 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C2.y();
+        C2.setAttribute("ypos", yc2.str().c_str());
         curve.appendChild(C2);
 
         QDomElement end = meta.createElement( "end" );
-        end.setAttribute("xpos", this->curves[i].end.x());
-        end.setAttribute("ypos", this->curves[i].end.y());
+        stringstream xe;
+        xe << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].end.x();
+        end.setAttribute("xpos", xe.str().c_str());
+        stringstream ye;
+        ye << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].end.y();
+        end.setAttribute("ypos", ye.str().c_str());
         curve.appendChild(end);
 
         curves.appendChild(curve);
@@ -1840,5 +1858,3 @@ void projection::print() {
     }
     cerr << "\n";
 }
-
-
