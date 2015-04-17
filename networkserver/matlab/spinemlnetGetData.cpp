@@ -116,9 +116,12 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 INFO ("Matched connection!");
                 gotmatch = true;
 
-                if (connIter->second->getEstablished() == false) {
+                // Test if the connection is neither established nor
+                // finished, in which case it's a matched connection
+                // which is not yet ready to return data.
+                if (connIter->second->getEstablished() == false
+                    && connIter->second->getFinished() == false) {
                     // We got a matched connection, but it's not ready yet, so break out.
-                    INFO ("Matched connection not ready");
                     notready = true;
                     break;
                 }
