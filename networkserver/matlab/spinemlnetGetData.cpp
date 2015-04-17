@@ -16,7 +16,7 @@
 #ifdef COMPILE_OCTFILE
 # include <octave/oct.h>
 #else
-# ifndef char16_t
+# ifdef __APPLE__
 // To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
 # endif
@@ -98,7 +98,9 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 #ifdef COMPILE_OCTFILE
     NDArray lhs;
+# ifdef ANNOUNCE_VERSION
     INFO ("octfile-version of getdata for target connection '" << targetConnection << "'....");
+# endif
 #endif
 
     if (!tf) {
@@ -116,6 +118,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
                 if (connIter->second->getEstablished() == false) {
                     // We got a matched connection, but it's not ready yet, so break out.
+                    INFO ("Matched connection not ready");
                     notready = true;
                     break;
                 }
