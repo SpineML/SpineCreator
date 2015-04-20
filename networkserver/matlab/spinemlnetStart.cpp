@@ -237,6 +237,11 @@ void* connectionThread (void*)
                 break;
             }
         }
+
+        // Sleep to allow the octave environment some CPU time to do
+        // anything it needs to do (such as gaining a lock on the data
+        // in spinemlnetAddData)
+        usleep (100);
     }
 
     return NULL;
