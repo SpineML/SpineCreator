@@ -113,7 +113,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         while (connIter != connections->end()) {
             if (connIter->second->getClientConnectionName() == targetConnection) {
 
-                INFO ("Matched connection!");
+                DBG2 ("Matched connection!");
                 gotmatch = true;
 
                 // Test if the connection is neither established nor
@@ -128,11 +128,11 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
                 // Find out how much data there is in the matched connection.
                 connectionDataSize = connIter->second->getDataSize();
-                INFO ("connectionDataSize: " << connectionDataSize);
+                DBG2 ("connectionDataSize: " << connectionDataSize);
                 // We'll make a clientDataSize by connectionDataSize/clientDataSize matrix.
                 unsigned int matrixRows = connIter->second->getClientDataSize();
                 unsigned int matrixCols = connectionDataSize/matrixRows;
-                INFO ("rows: " << matrixRows << " cols: " << matrixCols);
+                DBG2 ("rows: " << matrixRows << " cols: " << matrixCols);
                 // Now need to copy this data into our output.
                 unsigned int i = 0;
 #ifdef COMPILE_OCTFILE
@@ -187,7 +187,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 errormsg = "Connection contained no data.";
             }
         }
-        INFO ("spinemlnetGetData: Failed to get data: " << errormsg);
+        DBG2 ("spinemlnetGetData: Failed to get data: " << errormsg);
 
 #ifdef COMPILE_OCTFILE
         // Insert 2 zeros so we return a matrix containing nothing:

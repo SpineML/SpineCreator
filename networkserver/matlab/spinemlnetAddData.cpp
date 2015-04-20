@@ -136,7 +136,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         inputData = m.data();
 
         // Need to interleave the data as we have >1 row and therefore >1 time series.
-        INFO ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
+        DBG2 ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
         inputDataLength = nrows * ncols;
 
     } else { // At least one dimension is 0.
@@ -153,7 +153,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         // Validate input data:
         if (ncols > 0 && nrows > 0) { // We have a matrix
             // Need to interleave the data as we have >1 row and therefore >1 time series.
-            INFO ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
+            DBG2 ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
             inputDataLength = nrows * ncols;
 
         } else { // At least one dimension is 0.
