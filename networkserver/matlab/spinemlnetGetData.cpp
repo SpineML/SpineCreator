@@ -150,7 +150,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     row_idx = 0;
                 }
 #else
-                const mwSize res[2] = { matrixRows, matrixCols };
+                const mwSize res[2] = { (int)matrixRows, (int)matrixCols };
                 plhs[0] = mxCreateNumericArray (2, res, mxDOUBLE_CLASS, mxREAL);
                 // set up a pointer to the output array
                 double* outPtr = (double*) mxGetData (plhs[0]); // plhs[0] is an mxArray.

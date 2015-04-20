@@ -256,7 +256,8 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // set up a pointer to the output array
     unsigned short *outPtr = (unsigned short*) mxGetData (plhs[0]);
     // copy new data into the output structure
-    unsigned short rtn[2] = { (unsigned short)*threadFinished, connectionDataSize };
+    unsigned short rtn[2] = { (unsigned short)*threadFinished,
+                              (unsigned short)(connectionDataSize&0xffff) };
     memcpy (outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn.
 
     // plhs[1] takes the error message.
