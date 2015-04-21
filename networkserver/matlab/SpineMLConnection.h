@@ -73,7 +73,7 @@ enum dataTypes {
 
 // How many times to fail to read a byte before calling the session a
 // failure:
-#define NO_DATA_MAX_COUNT     100
+#define NO_DATA_MAX_COUNT     10000
 
 // See spinemlnetStart.cpp, which instantiates dataCache at global scope.
 #ifdef DATACACHE_MAP_DEFINED
