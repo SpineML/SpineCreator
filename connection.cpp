@@ -1223,6 +1223,11 @@ void csv_connection::generateFilename(void)
     this->sanitizeReplace (this->srcName, allowed, replaceChar);
     this->sanitizeReplace (this->dstName, allowed, replaceChar);
 
+    // FIXME: Add a synapse number in here. Possible issues around
+    // multiple synapses and connecting and reconnecting with these
+    // synapses. Possibly write out new names on every project save,
+    // forcing all connection names to follow the new naming format
+    // described here.
     this->filename = baseName + this->srcName + "_to_" + this->dstName + ".bin";
 }
 
