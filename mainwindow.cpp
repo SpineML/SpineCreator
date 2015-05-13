@@ -1560,11 +1560,18 @@ void MainWindow::close_project()
             else
                 data.projects[0]->select_project(&data);
 
-            // now delete it:
+            // now delete the project. First delete the thing pointed
+            // to by the pointer in the QVector<projectObject*>
+            // data.projects:
             delete data.projects[i];
+            // then remove the pointer itself from data.projects:
             data.projects.erase(data.projects.begin()+i);
         }
     }
+
+    // Update the project menu as we may have removed a project from
+    // within the list:
+    this->setProjectMenu();
 
     if (data.projects.size() > 1)
         ui->action_Close_project->setEnabled(true);
