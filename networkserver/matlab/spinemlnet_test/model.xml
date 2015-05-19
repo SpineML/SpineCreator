@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<LL:SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLNetworkLayer" xmlns:LL="http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer SpineMLLowLevelNetworkLayer.xsd http://www.shef.ac.uk/SpineMLNetworkLayer SpineMLNetworkLayer.xsd" name="1_LIF_lab1_stage1">
+<LL:SpineML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.shef.ac.uk/SpineMLNetworkLayer" xmlns:LL="http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer" xsi:schemaLocation="http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer SpineMLLowLevelNetworkLayer.xsd http://www.shef.ac.uk/SpineMLNetworkLayer SpineMLNetworkLayer.xsd" name="spinemlnet_test">
     <LL:Population>
         <LL:Neuron name="Population" size="2" url="LIFtest.xml">
             <Property name="tau_m" dimension="ms">
