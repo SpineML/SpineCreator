@@ -1,12 +1,13 @@
 SpineMLNet
 ----------
 
-This is a communication server which can be launched from your matlab 
-script and used to send data to and receive data from a SpineML model 
-(which is probably running on Brahms).
+This is a communication server which can be launched from your matlab
+(or octave) script. It can send data to and receive data from a
+SpineML model (which is probably running on Brahms).
 
-It's a set of Matlab mex functions which implement the network server to 
-which the SpineML model connects as a network client.
+It's a set of Matlab mex functions (also compilable as octfiles) which
+implement the network server to which the SpineML model connects as a
+network client.
 
 The functions are:
 
