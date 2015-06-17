@@ -721,7 +721,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                 QFormLayout * formLay = new QFormLayout;
                 QDoubleSpinBox * spin = new QDoubleSpinBox;
                 spin->setMaximum(10000.0);
-                spin->setMinimum(0.0);
+                spin->setMinimum(-10000.0);
                 spin->setDecimals(6);
                 if (!this->params.empty()) {
                     spin->setValue(this->params[0]);
