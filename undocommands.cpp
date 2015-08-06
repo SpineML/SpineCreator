@@ -472,6 +472,7 @@ addSynapse::addSynapse(rootData * data, QSharedPointer <projection> proj, QUndoC
     this->data = data;
     this->setText("add synapse to " + this->proj->getName());
     syn = QSharedPointer<synapse>(new synapse(proj, data, true));
+    syn->connectionType->setSynapseIndex(proj->synapses.size());
     proj->synapses.push_back(syn);
     // spawn children for projInputs
     new addInput(data, proj->source->neuronType, this->syn->weightUpdateType, this);
@@ -746,20 +747,25 @@ void changeConnection::redo()
         switch(index) {
         case AlltoAll:
             ptrIn->connectionType = new alltoAll_connection;
+            ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case OnetoOne:
             ptrIn->connectionType = new onetoOne_connection;
+            ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case FixedProb:
             ptrIn->connectionType = new fixedProb_connection;
+            ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case CSV:
             ptrIn->connectionType = new csv_connection;
+            ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case Kernel:
             ptrIn->connectionType = new kernel_connection;
             ((kernel_connection *)ptrIn->connectionType)->src = qSharedPointerDynamicCast <population> (ptrIn->source);
             ((kernel_connection *)ptrIn->connectionType)->dst = qSharedPointerDynamicCast <population> (ptrIn->destination);
+            ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case Python:
             //((QSharedPointer<genericInput>) ptr)->connectionType = new csv_connection;
@@ -796,20 +802,25 @@ void changeConnection::redo()
         switch(index) {
         case AlltoAll:
             ptrSyn->connectionType = new alltoAll_connection;
+            ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case OnetoOne:
             ptrSyn->connectionType = new onetoOne_connection;
+            ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case FixedProb:
             ptrSyn->connectionType = new fixedProb_connection;
+            ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case CSV:
             ptrSyn->connectionType = new csv_connection;
+            ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case Kernel:
             ptrSyn->connectionType = new kernel_connection;
             ((kernel_connection *)ptrSyn->connectionType)->src = (QSharedPointer <population>) ptrSyn->proj->source;
             ((kernel_connection *)ptrSyn->connectionType)->dst = (QSharedPointer <population>) ptrSyn->proj->destination;
+            ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case Python:
             ptrSyn->connectionType = new csv_connection;

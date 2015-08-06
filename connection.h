@@ -81,6 +81,18 @@ public:
      */
     void setDstName (QString& d);
 
+    /*!
+     * Obtain the index number of the synapse in which this connection
+     * exists.
+     */
+    int getSynapseIndex();
+
+    /*!
+     * Set the index number of the synapse in which this connection
+     * exists.
+     */
+    void setSynapseIndex(int synidx);
+
 private:
     QString filename;
 
@@ -98,6 +110,14 @@ protected:
      * QSharedPointer<population> dst.
      */
     QString dstName;
+
+    /*!
+     * The synapse index for this connection (a projection between two
+     * populations can have many synapses, which count from
+     * 0). Initialised in constructors to a negative number, which
+     * must be changed later to a valid number 0 or above.
+     */
+    int synapseIndex;
 };
 
 class alltoAll_connection : public connection

@@ -142,6 +142,17 @@ QString synapse::getName() {
 
 }
 
+int synapse::getSynapseIndex()
+{
+    int index = -1;
+    for (int i = 0; i < this->proj->synapses.size(); ++i) {
+        if (this->proj->synapses[i].data() == this) {
+            index = i;
+        }
+    }
+    return index;
+}
+
 projection::projection()
 {
     this->type = projectionObject;
@@ -1183,6 +1194,7 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
         c.setAttribute( "name", synapses[i]->weightUpdateType->getXMLName() );
 
         // add the metadata description (if there is one)
+        synapses[i]->connectionType->setSynapseIndex(i);
         synapses[i]->connectionType->write_metadata_xml(meta, c);
 
         col.appendChild(c);
@@ -1314,16 +1326,19 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new alltoAll_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "OneToOneConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new onetoOne_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "FixedProbabilityConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new fixedProb_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "ConnectionList") {
                 delete newSynapse->connectionType;
@@ -1331,6 +1346,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 newSynapse->connectionType->import_parameters_from_xml(n);
                 newSynapse->connectionType->setSrcName (srcName);
                 newSynapse->connectionType->setDstName (destName);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "KernelConnection") {
                 // fixme: fix this
@@ -1339,6 +1355,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 newSynapse->connectionType->import_parameters_from_xml(n);
                 ((kernel_connection *) newSynapse->connectionType)->src = (QSharedPointer <population>) this->source;
                 ((kernel_connection *) newSynapse->connectionType)->dst = (QSharedPointer <population>) this->destination;
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "PythonScriptConnection") {
 
@@ -1521,6 +1538,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                                     // Set source/dest population names in the connection (used when saving)
                                     conn->setSrcName (this->source->name);
                                     conn->setDstName (this->destination->name);
+                                    conn->setSynapseIndex (i);
                                 }
                             }
                         }
@@ -1663,17 +1681,16 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         delete newInput->connectionType;
                         newInput->connectionType = new csv_connection;
                         QDomNode cNode = type.item(0);
+                        // csv connection needs a synapse index set up.
+                        newInput->connectionType->setSynapseIndex(t);
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
 
-
-                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0)
-                    {this->synapses[t]->postsynapseType->inputs.push_back(newInput);
+                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0) {
+                        this->synapses[t]->postsynapseType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->postsynapseType;
-                        newInput->src->outputs.push_back(newInput);}
-                    else {}
-                        // ERRR
-
+                        newInput->src->outputs.push_back(newInput);
+                    } // else error
                 }
 
                 // read in the postsynapse Input

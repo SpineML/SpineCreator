@@ -38,6 +38,7 @@ connection::connection()
     delay->currType = Undefined;
     this->srcName = "";
     this->dstName = "";
+    this->synapseIndex = -1;
 }
 
 connection::~connection()
@@ -58,6 +59,16 @@ void connection::setSrcName (QString& s)
 void connection::setDstName (QString& d)
 {
     this->dstName = d;
+}
+
+void connection::setSynapseIndex (int synidx)
+{
+    this->synapseIndex = synidx;
+}
+
+int connection::getSynapseIndex (void)
+{
+    return this->synapseIndex;
 }
 
 void connection::writeDelay(QXmlStreamWriter &xmlOut)
@@ -114,6 +125,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut)
 alltoAll_connection::alltoAll_connection()
 {
     type = AlltoAll;
+    this->synapseIndex = -2;
 }
 
 alltoAll_connection::~alltoAll_connection()
@@ -366,6 +378,7 @@ csv_connection::csv_connection()
 
     this->srcName = "";
     this->dstName = "";
+    this->synapseIndex = -3;
 
     this->values.push_back("src");
     this->values.push_back("dst");
@@ -1223,12 +1236,7 @@ void csv_connection::generateFilename(void)
     this->sanitizeReplace (this->srcName, allowed, replaceChar);
     this->sanitizeReplace (this->dstName, allowed, replaceChar);
 
-    // FIXME: Add a synapse number in here. Possible issues around
-    // multiple synapses and connecting and reconnecting with these
-    // synapses. Possibly write out new names on every project save,
-    // forcing all connection names to follow the new naming format
-    // described here.
-    this->filename = baseName + this->srcName + "_to_" + this->dstName + ".bin";
+    this->filename = baseName + this->srcName + "_to_" + this->dstName + "_syn" + QString::number(this->synapseIndex) + ".bin";
 }
 
 void csv_connection::sanitizeReplace (QString& str,
