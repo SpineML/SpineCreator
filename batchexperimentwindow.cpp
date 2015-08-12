@@ -228,6 +228,8 @@ void BatchExperimentWindow::simulationDone() {
 
     int num_logged_vals = 0;
 
+    QString headers;
+
     // find the log:
     if (this->all_logs == false) {
         for (int i = 0; i < logs->logs.size(); ++i) {
@@ -258,6 +260,24 @@ void BatchExperimentWindow::simulationDone() {
         }
     } else {
            qDebug() << "All logs...";
+           if (currIndex == 0) {
+               // write headings
+               for (int i = 0; i < logs->logs.size(); ++i) {
+                   logData * log = logs->logs[i];
+                   // extract the required data and store
+                   for (int j = 0; j < this->currExpt->outs.size(); ++j) {
+                       // for each logged value in the experiment
+                       if (this->currExpt->outs[j]->portIsAnalog) {
+                           QString possibleLogName = this->currExpt->outs[j]->source->getXMLName() + "_" + this->currExpt->outs[j]->portName + "_log.bin";
+                           possibleLogName.replace(" ", "_");
+                           if (log->logName == possibleLogName) {
+                               headers.append(possibleLogName);
+                               headers.append("\t");
+                           }
+                       }
+                   }
+               }
+           }
            for (int i = 0; i < logs->logs.size(); ++i) {
                qDebug() << "Log " << i;
                logData * log = logs->logs[i];
@@ -305,6 +325,11 @@ void BatchExperimentWindow::simulationDone() {
                 finalResults.append(QString::number(this->results[i]) + "\n");
             }
         } else {
+            if (currIndex == 0) {
+                // headers
+                finalResults.append(headers);
+                finalResults.append("\n");
+            }
             int count = 1;
             qDebug() << num_logged_vals;
             for (int i = 0; i < this->results.size(); ++i) {

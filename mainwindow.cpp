@@ -328,7 +328,7 @@ MainWindow(QWidget *parent) :
 
     createActions();
 
-    timer->start(16);
+    timer->start(33);
 
     // force nice startup
     // Construct the menus
@@ -1451,6 +1451,7 @@ void MainWindow::import_project(const QString& filePath)
 
 void MainWindow::export_project(const QString& filePath)
 {
+     qDebug() << "save with filepath";
     if (filePath.isEmpty()) {
         return;
     }
@@ -1510,6 +1511,7 @@ void MainWindow::export_project(const QString& filePath)
 
 void MainWindow::export_project()
 {
+    qDebug() << "save with no filepath";
     QString path = data.currProject->filePath;
     QString fileName = path;
     if (path.size() == 0) {
@@ -2844,6 +2846,7 @@ void MainWindow::updateTitle()
 
 void MainWindow::updateNetworkButtons(rootData * data)
 {
+    qDebug() << "called";
     if (data->selList.size() == 0) {
         ui->butA->setDisabled(false);
         ui->butB->setDisabled(true);

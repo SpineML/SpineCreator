@@ -774,6 +774,14 @@ void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<syste
     this->source = objectMap[this->source.data()];
     this->destination = objectMap[this->destination.data()];
 
+    // handle trailing connections
+    if (this->source == NULL) {
+        this->source = oldSource;
+    }
+    if (this->destination == NULL) {
+        this->destination = oldDestination;
+    }
+
     qDebug() << "Before src = " << this->src->getXMLName();
     qDebug() << "Before dst = " << this->dst->getXMLName();
 

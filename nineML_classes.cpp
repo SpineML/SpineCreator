@@ -312,6 +312,7 @@ void NineMLComponent::load(QDomDocument *doc)
         if( e.tagName() == "ComponentClass" )
         {
             this->name = e.attribute("name","");
+            this->islearning = !(e.attribute("islearning","").isEmpty());
 
             if (this->name =="") {
                 QSettings settings;
@@ -502,6 +503,11 @@ void NineMLComponent::write(QDomDocument *doc)
     QDomElement CClass = doc->createElement( "ComponentClass" );
     CClass.setAttribute("name", this->name);
     CClass.setAttribute("type", this->type);
+    qDebug() << "NAME = " << this->name  << " " << this->islearning;
+    if (this->islearning) {
+        qDebug() << "WOOOOOO)))";
+        CClass.setAttribute("islearning", true);
+    }
     root.appendChild(CClass);
 
     QDomElement dynamics = doc->createElement( "Dynamics" );
@@ -1318,6 +1324,7 @@ void ImpulseOut::writeOut(QDomDocument * doc, QDomElement &parent)
 
 void AnalogPort::readIn(QDomElement e) {
     this->name = e.attribute("name","");
+    this->isPost = !(e.attribute("post","").isEmpty());
     if (this->name == "") {
       QSettings settings;
       int num_errs = settings.beginReadArray("errors");
@@ -1374,6 +1381,9 @@ void AnalogPort::writeOut(QDomDocument * doc, QDomElement &parent)
             AnalogPort.setAttribute("reduce_op", "+");
         }
         AnalogPort.setAttribute("dimension", this->dims->toString());
+        if (this->isPost) {
+            AnalogPort.setAttribute("post",true);
+        }
 
     }
     parent.appendChild(AnalogPort);
@@ -1382,6 +1392,7 @@ void AnalogPort::writeOut(QDomDocument * doc, QDomElement &parent)
 
 void EventPort::readIn(QDomElement e) {
     this->name = e.attribute("name","");
+    this->isPost = !(e.attribute("post","").isEmpty());
     if (this->name == "") {
       QSettings settings;
       int num_errs = settings.beginReadArray("errors");
@@ -1417,6 +1428,9 @@ void EventPort::writeOut(QDomDocument * doc, QDomElement &parent)
     if (this->mode==EventRecvPort) {
         EventPort = doc->createElement( "EventReceivePort" );
         EventPort.setAttribute("name", this->getName());
+        if (this->isPost) {
+            EventPort.setAttribute("post",true);
+        }
     }
 
     parent.appendChild(EventPort);
@@ -1425,6 +1439,7 @@ void EventPort::writeOut(QDomDocument * doc, QDomElement &parent)
 
 void ImpulsePort::readIn(QDomElement e) {
     this->name = e.attribute("name","");
+    this->isPost = !(e.attribute("post","").isEmpty());
     if (this->name == "") {
       QSettings settings;
       int num_errs = settings.beginReadArray("errors");
@@ -1465,6 +1480,9 @@ void ImpulsePort::writeOut(QDomDocument * doc, QDomElement &parent)
         ImpulsePort = doc->createElement( "ImpulseReceivePort" );
         ImpulsePort.setAttribute("name", this->getName());
         ImpulsePort.setAttribute("dimension", this->dims->toString());
+        if (this->isPost) {
+            ImpulsePort.setAttribute("post",true);
+        }
     }
 
     parent.appendChild(ImpulsePort);
@@ -1749,6 +1767,7 @@ AnalogPort::AnalogPort(AnalogPort *data): Port(data)
     mode = data->mode;
     op = data->op;
     variable = NULL;
+    isPost = data->isPost;
 }
 
 bool AnalogPort::isAnalog() {return true;}
@@ -1801,6 +1820,7 @@ int AnalogPort::validateAnalogPort(NineMLComponent * component, QStringList * )
 EventPort::EventPort(EventPort *data): Port(data)
 {
     mode = data->mode;
+    isPost = data->isPost;
 }
 
 bool EventPort::isAnalog() {return false;}
@@ -1810,6 +1830,7 @@ ImpulsePort::ImpulsePort(ImpulsePort *data): Port(data)
 {
     mode = data->mode;
     parameter = NULL;
+    isPost = data->isPost;
 }
 
 bool ImpulsePort::isAnalog() {return false;}
@@ -2139,12 +2160,14 @@ NineMLComponent::NineMLComponent()
     editedVersion.clear();
     path = "temp";
     type = "neuron_body";
+    islearning =  false;
 }
 
 NineMLComponent::NineMLComponent(QSharedPointer<NineMLComponent>data)
 {
     name = data->name;
     this->type = data->type;
+    this->islearning = data->islearning;
     this->path = data->path;
     this->filePath = data->filePath;
     this->initial_regime_name = data->initial_regime_name;
@@ -2286,6 +2309,7 @@ NineMLComponent& NineMLComponent::operator=(const NineMLComponent& data)
     name = data.name;
     type = data.type;
     path = data.path;
+    islearning = data.islearning;
     filePath = data.filePath;
     RegimeList = QVector <Regime*>(data.RegimeList.size());
     StateVariableList = QVector <StateVariable*>(data.StateVariableList.size());
@@ -2420,6 +2444,7 @@ void NineMLComponent::updateFrom(QSharedPointer<NineMLComponent>  data)
     name = data->name;
     type = data->type;
     path = data->path;
+    islearning = data->islearning;
     filePath = data->filePath;
     initial_regime_name = data->initial_regime_name;
 

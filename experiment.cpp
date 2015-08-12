@@ -3548,6 +3548,16 @@ void TVGraph::paintEvent(QPaintEvent *) {
             cols.push_back(QColor(125,0,0,255));
             cols.push_back(QColor(0,125,0,255));
             cols.push_back(QColor(0,0,125,255));
+            cols.push_back(QColor(255,0,0,255));
+            cols.push_back(QColor(0,255,0,255));
+            cols.push_back(QColor(0,0,255,255));
+            cols.push_back(QColor(255,255,0,255));
+            cols.push_back(QColor(255,0,255,255));
+            cols.push_back(QColor(0,255,255,255));
+            cols.push_back(QColor(125,125,125,255));
+            cols.push_back(QColor(125,0,0,255));
+            cols.push_back(QColor(0,125,0,255));
+            cols.push_back(QColor(0,0,125,255));
 
             float maxTime = 0;
             float maxVal = 0;

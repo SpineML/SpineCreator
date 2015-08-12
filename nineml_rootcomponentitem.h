@@ -88,6 +88,7 @@ public slots:
     void requestLayoutUpdate();
     void setComponentClassName(QString name);
     void setComponentClassType(QString type);
+    void setLearningState(bool b);
     void setInitialRegime(QString regime);
     void setPath(QString component_path);
     void validateAndStore();

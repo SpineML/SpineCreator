@@ -86,6 +86,7 @@ public:
     QPixmap renderImage(int, int);
     void addLogs(QVector<logData *> *logs);
     void refreshAll();
+    bool amVisible;
 
 private:
     void drawNeuron(GLfloat, int, int, QColor);

@@ -551,30 +551,40 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
             // draw start and end markers
 
-            QPolygonF arrow_head;
-            QPainterPath endPoint;
-            //calculate arrow head polygon
-            QPointF end_point = path.pointAtPercent(1.0);
-            QPointF temp_end_point = path.pointAtPercent(0.995);
-            QLineF line = QLineF(end_point, temp_end_point).unitVector();
-            QLineF line2 = QLineF(line.p2(), line.p1());
-            line2.setLength(line2.length()+0.05*GLscale/2.0);
-            end_point = line2.p2();
-            if (this->type == projectionObject) {
-                line.setLength(0.2*GLscale/2.0);
-            } else {
-                line.setLength(0.1*GLscale/2.0);
+            if (this->projDrawStyle == standardDrawStyleExcitatory) {
+                QPolygonF arrow_head;
+                QPainterPath endPoint;
+                //calculate arrow head polygon
+                QPointF end_point = path.pointAtPercent(1.0);
+                QPointF temp_end_point = path.pointAtPercent(0.995);
+                QLineF line = QLineF(end_point, temp_end_point).unitVector();
+                QLineF line2 = QLineF(line.p2(), line.p1());
+                line2.setLength(line2.length()+0.05*GLscale/2.0);
+                end_point = line2.p2();
+                if (this->type == projectionObject) {
+                    line.setLength(0.2*GLscale/2.0);
+                } else {
+                    line.setLength(0.1*GLscale/2.0);
+                }
+                QPointF t = line.p2() - line.p1();
+                QLineF normal = line.normalVector();
+                normal.setLength(normal.length()*0.8);
+                QPointF a1 = normal.p2() + t;
+                normal.setLength(-normal.length());
+                QPointF a2 = normal.p2() + t;
+                arrow_head.clear();
+                arrow_head << end_point << a1 << a2 << end_point;
+                endPoint.addPolygon(arrow_head);
+                painter->fillPath(endPoint, colour);
             }
-            QPointF t = line.p2() - line.p1();
-            QLineF normal = line.normalVector();
-            normal.setLength(normal.length()*0.8);
-            QPointF a1 = normal.p2() + t;
-            normal.setLength(-normal.length());
-            QPointF a2 = normal.p2() + t;
-            arrow_head.clear();
-            arrow_head << end_point << a1 << a2 << end_point;
-            endPoint.addPolygon(arrow_head);
-            painter->fillPath(endPoint, colour);
+            else {
+                QPainterPath endPoint;
+                //calculate arrow head polygon
+                QPointF end_point = path.pointAtPercent(1.0);
+                endPoint.addEllipse(end_point,0.025*2.0*GLscale,0.025*2.0*GLscale);
+                painter->drawPath(endPoint);
+                painter->fillPath(endPoint, QColor(0,0,255,255));
+            }
 
             // only draw number of synapses for Projections
             if (this->type == projectionObject) {
@@ -1980,8 +1990,15 @@ void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <syste
 {
 
     // remap src and dst:
-    this->source = qSharedPointerDynamicCast <population> (objectMap[this->source.data()]);
-    this->destination = qSharedPointerDynamicCast <population> (objectMap[this->destination.data()]);
+    // remember - we may have a trailing connection to an existing pop... so if we get a bad lookup we can keep the old source or dest
+    QSharedPointer <population> temp = qSharedPointerDynamicCast <population> (objectMap[this->source.data()]);
+    if (temp) {
+        this->source = temp;
+    }
+    temp = qSharedPointerDynamicCast <population> (objectMap[this->destination.data()]);
+    if (temp) {
+        this->destination = temp;
+    }
 
     if (!this->source || !this->destination) {
         qDebug() << "Error casting objectMap lookup to population in projection::remapSharedPointers";

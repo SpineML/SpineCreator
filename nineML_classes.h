@@ -245,25 +245,27 @@ public:
     ReduceOperation op;
     StateVariable *variable;
     AnalogPort(AnalogPort *data);
-    AnalogPort() : Port() {variable=NULL; op = ReduceOperationAddition;}
+    AnalogPort() : Port() {variable=NULL; op = ReduceOperationAddition; isPost = false;}
     virtual ~AnalogPort(){}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     bool isAnalog();
     virtual NineMLObjectType Type(){return NINEML_ANALOG_PORT;}
     int validateAnalogPort(NineMLComponent *component, QStringList *);
+    bool isPost;
 };
 
 class EventPort: public Port {
 public:
     EventPortMode mode;
     EventPort(EventPort *data);
-    EventPort() : Port() {mode=EventSendPort;}
+    EventPort() : Port() {mode=EventSendPort; isPost = false;}
     virtual ~EventPort(){}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     bool isAnalog();
     virtual NineMLObjectType Type(){return NINEML_EVENT_PORT;}
+    bool isPost;
 };
 
 class ImpulsePort: public Port {
@@ -271,13 +273,14 @@ public:
     ImpulsePortMode mode;
     Parameter *parameter;
     ImpulsePort(ImpulsePort *data);
-    ImpulsePort() : Port() {parameter=NULL; mode=ImpulseSendPort;}
+    ImpulsePort() : Port() {parameter=NULL; mode=ImpulseSendPort; isPost = false;}
     virtual ~ImpulsePort(){}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     bool isAnalog();
     virtual NineMLObjectType Type(){return NINEML_IMPULSE_PORT;}
     int validateImpulsePort(NineMLComponent *component, QStringList *);
+    bool isPost;
 };
 
 class MathInLine: public NineMLObject {
@@ -496,6 +499,9 @@ public:
 
     //temp name
     QString initial_regime_name;
+
+    // to allow us to define if a WU learns
+    bool islearning;
 
     QString name;
     QString type;

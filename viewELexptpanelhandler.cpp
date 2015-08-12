@@ -37,6 +37,7 @@
 #include "batchexperimentwindow.h"
 #include "qmessageboxresizable.h"
 #include <QTimer>
+#include <QSettings>
 
 #define NEW_EXPERIMENT_VIEW11
 
@@ -282,6 +283,12 @@ void viewELExptPanelHandler::redrawSimulatorParams(experiment * currentExperimen
     QPushButton * batch = new QPushButton("Setup");
     connect(batch, SIGNAL(clicked()), this, SLOT(batch_clicked()));
     formSim->addRow("Batch:",batch);
+
+    // add output dir
+    QLineEdit * odir = new QLineEdit();
+    odir->setText(settings.value("outdirpath", "").toString());
+    connect(odir, SIGNAL(textChanged(QString)), this, SLOT(odir_added(QString)));
+    formSim->addRow("Output to:",odir);
 }
 
 void viewELExptPanelHandler::redrawExpt()
@@ -922,6 +929,7 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
 
 void viewELExptPanelHandler::reorderParams (QVector <float>& params)
 {
+    return;
     QVector <float> tempVec;
     while (params.size() > 1) {
         int min = 100000000;
@@ -1831,6 +1839,14 @@ void viewELExptPanelHandler::run()
     // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
     QString out_dir_name = QDir::home().absolutePath() + QDir::separator() + "outtemp";
 
+    QString outdir = settings.value("outdirpath", "").toString();
+
+    if (outdir.isEmpty()) {
+        out_dir_name += QDir::separator() + QString("temp");
+    } else {
+        out_dir_name += QDir::separator() + outdir;
+    }
+
     simulator->setProperty("logpath", out_dir_name + QDir::separator() + "log");
 
     QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
@@ -2184,4 +2200,9 @@ void viewELExptPanelHandler::batch_clicked() {
     bwin->setAttribute(Qt::WA_DeleteOnClose);
     bwin->show();
 
+}
+
+void viewELExptPanelHandler::odir_added(QString newdir) {
+    QSettings settings;
+    settings.setValue("outdirpath", newdir);
 }

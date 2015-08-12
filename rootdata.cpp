@@ -318,6 +318,8 @@ void rootData::reDrawAll()
 
 void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
 {
+    //qDebug() << "ReDraw at " << QTime::currentTime().toString("m:s:z");
+
     if (style == standardDrawStyle) {
         for (int i = 0; i < selList.size(); ++i) {
             if (selList[i]->type == populationObject) {
@@ -1235,6 +1237,7 @@ void rootData::updatePortMap(QString var)
     QStringList ports = var.split("->");
     // for safety
     if (ports.size()>1) {
+        if (ports.at(0) == "?") return;
         ptr->srcPort = ports.at(0);
         ptr->dstPort = ports.at(1);
     }

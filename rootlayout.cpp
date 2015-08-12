@@ -392,7 +392,7 @@ void rootLayout::initInputHeader(rootData * data) {
     // connect for show
     connect(this, SIGNAL(showInput()), inputPortSelection, SLOT(show()));
     // connect for function
-    connect(inputPortSelection, SIGNAL(currentIndexChanged(QString)), data, SLOT(updatePortMap(QString)));
+    connect(inputPortSelection, SIGNAL(activated(QString)), data, SLOT(updatePortMap(QString)));
 
     inputLay->addWidget(inputPortSelection);
 
@@ -940,6 +940,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     inputPortSelection->setProperty("ptr", qVariantFromValue((void *) in.data()));
     inputPortSelection->disconnect(data);
     inputPortSelection->clear();
+    inputPortSelection->addItem("?->?");
     for (int p = 0; p < portPairs.size(); ++p) {
         inputPortSelection->addItem(portPairs.at(p));
         if (currPortPair == portPairs.at(p)) {
@@ -956,7 +957,8 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
         inputPortSelection->setDisabled(false);
     }
 
-    connect(inputPortSelection, SIGNAL(currentIndexChanged(QString)), data, SLOT(updatePortMap(QString)));
+    //connect(inputPortSelection, SIGNAL(currentIndexChanged(QString)), data, SLOT(updatePortMap(QString)));
+    connect(inputPortSelection, SIGNAL(activated(QString)), data, SLOT(updatePortMap(QString)));
 
     // configure connectivity dropdown
     inputConnectionComboBox->disconnect(data);
@@ -1434,6 +1436,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
 
                     QString currPortPair = currInput->srcPort + "->" + currInput->dstPort;
 
+                    portMatches->addItem("?->?");
                     for (int p = 0; p < portPairs.size(); ++p) {
                         portMatches->addItem(portPairs.at(p));
                         if (currPortPair == portPairs.at(p)) {
@@ -1441,6 +1444,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                         }
                     }
                     if (portPairs.size() == 0) {
+                        portMatches->clear();
                         portMatches->setDisabled(true);
                         // also add stuff to indicate the issue
                         if (currInput->dst->component->name != "none") {

@@ -43,7 +43,7 @@ GLWidget::GLWidget(QWidget *parent):QWidget(parent)
 
 {
     // variable for making sure we don't redraw the openGL when we don't need to
-    changed = 100;
+    changed = 30;
 
     currSelType = 0;
     currSelInd = 0;
@@ -71,7 +71,7 @@ GLWidget::~GLWidget()
 
 void GLWidget::redrawGLview()
 {
-    changed = 45;
+    changed = 2;
 }
 
 
@@ -84,6 +84,7 @@ void GLWidget::animate()
     // only redraw the openGL when we need to
     if (changed) {
         --changed;
+        //qDebug() << "Repaint at " << QTime::currentTime().toString("m:s:z");
         repaint();
     }
 }
@@ -91,6 +92,7 @@ void GLWidget::animate()
 void GLWidget::mousePressEvent(QMouseEvent* event)
 {
     this->button = event->button();
+    this->itemMoving = false;
 
     // convert the incoming x and y into the openGL coordinates
     float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewX;
@@ -121,7 +123,7 @@ void GLWidget::mousePressEvent(QMouseEvent* event)
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-    changed = 100;
+    changed = 2;
     this->button = Qt::NoButton;
     setCursor(Qt::ArrowCursor);
     // convert the incoming x and y into the openGL coordinates
@@ -158,7 +160,7 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
 
 void GLWidget::wheelEvent(QWheelEvent* event)
 {
-    changed = 100;
+    changed = 10;
     float val = float(event->delta()) / 320.0;
 
     val = pow(2.0f,val);
@@ -184,7 +186,9 @@ void GLWidget::wheelEvent(QWheelEvent* event)
 
 void GLWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    changed = 100;
+    changed = 30;
+
+    qDebug() << "Mousemove at " << QTime::currentTime().toString("m:s:z");
 
     // convert mouse event into openGL coordinates
     float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewX;
@@ -206,11 +210,12 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event)
     }
     //repaint();
     event->setAccepted(true);
+    qDebug() << "Mousemove END at " << QTime::currentTime().toString("m:s:z");
 }
 
 void GLWidget::keyPressEvent(QKeyEvent * event)
 {
-    changed = 100;
+    changed = 2;
 
     if (event->type() == QEvent::KeyPress) {
         if (event->key() == Qt::Key_Control) {
@@ -227,7 +232,7 @@ void GLWidget::keyPressEvent(QKeyEvent * event)
 
 void GLWidget::keyReleaseEvent(QKeyEvent * event)
 {
-    changed = 100;
+    changed = 2;
 
     if (event->type() == QEvent::KeyRelease) {
         if (event->key() == Qt::Key_Control) {
@@ -370,7 +375,7 @@ void GLWidget::finishConnect()
     this->connectMode = false;
     this->setMouseTracking(false);
 
-    changed = 100;
+    changed = 2;
 }
 
 void GLWidget::saveImage()

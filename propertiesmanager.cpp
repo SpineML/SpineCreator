@@ -192,6 +192,14 @@ void PropertiesManager::createEmptySelectionProperties()
     connect(initial_regime, SIGNAL(currentIndexChanged(QString)), root, SLOT(setInitialRegime(QString)));
     addRow(tr("&Initial Regime:"),initial_regime);
 
+    // for WU add 'islearning' toggle
+    if (typeVal == 1) {
+        QCheckBox * islearn = new QCheckBox();
+        islearn->setChecked(root->al->islearning);
+        connect(islearn, SIGNAL(toggled(bool)), root, SLOT(setLearningState(bool)));
+        addRow(tr("&Learning:"),islearn);
+    }
+
     // add path combobox - NO LONGER USED
     /*QComboBox * path = new QComboBox;
     path->addItem("model");
@@ -753,6 +761,13 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
         }
         connect(reduce, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setPortReduceOp(QString)));
         addRow(tr("&Reduce Operation:"), reduce);
+        if (root->al->islearning) {
+            // add checkbox for postsynaptic input
+            QCheckBox * ispost = new QCheckBox();
+            ispost->setChecked(ap->port->isPost);
+            connect(ispost, SIGNAL(toggled(bool)), ap, SLOT(setIsPostState(bool)));
+            addRow(tr("&Is postsynaptic:"), ispost);
+        }
     }
 
     if ((m == AnalogRecvPort)||(m == AnalogReducePort)){

@@ -201,6 +201,12 @@ public slots:
      * Launch the batch window for running more complex experiments
      */
     void batch_clicked();
+
+    /*!
+     * \brief odir_added
+     * Append a tag to the output dir
+     */
+    void odir_added(QString);
 };
 
 #endif // VIEWVISEXPTPANELHANDLER_H

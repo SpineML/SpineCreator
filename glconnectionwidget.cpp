@@ -71,6 +71,8 @@ glConnectionWidget::glConnectionWidget(rootData * data, QWidget *parent) : QGLWi
     orthoView = false;
 
     repaintAllowed = true;
+
+    this->amVisible = false;
 }
 
 void glConnectionWidget::initializeGL()
@@ -274,7 +276,9 @@ void glConnectionWidget::updateLogData() {
                 val2 = val2 > 255 ? val2 - 256 : 0;
                 int val1 = val < 255 ? val : 255;
 
-                popColours[i][j] = QColor(val1,val2, val3, 255);
+                if (j < popColours[i].size()) {
+                    popColours[i][j] = QColor(val1,val2, val3, 255);
+                }
             }
         }
     }
@@ -322,7 +326,7 @@ void glConnectionWidget::resizeGL(int, int)
 {
 
     // setup the view
-    this->repaint();
+    if (this->isVisible()) this->repaint();
 
 
 }
@@ -333,6 +337,10 @@ void glConnectionWidget::resizeGL(int, int)
  * and then redraw the GL view.
  */
 void glConnectionWidget::redraw() {
+
+    // only do this if we are visible!
+    if (!this->isVisible()) return;
+
     // refetch layout of current selection
     if (selectedObject != NULL) {
         if (selectedObject->type == populationObject) {
@@ -358,6 +366,9 @@ void glConnectionWidget::redraw() {
  */
 void glConnectionWidget::redraw(int)
 {
+
+    // only do this if we are visible!
+    if (!this->isVisible()) return;
 
     // we haven't updated the underlying data yet - but we want to show spinbox changes
     // get spinbox ptrs:
@@ -389,6 +400,10 @@ void glConnectionWidget::redraw(int)
  */
 void glConnectionWidget::updateConnections()
 {
+
+    // only do this if we are visible!
+    if (!this->isVisible()) return;
+
     createConnectionsDL();
 
     this->repaint();
@@ -436,6 +451,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
         qglClearColor(qtCol);
     } else {
         QColor qtCol = QColor::fromRgbF(0.1, 0.1, 0.1, 0.0);
+        qtCol = QColor::fromRgbF(1.0,1.0,1.0,0.0);
         qglClearColor(qtCol);
     }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -454,7 +470,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
     glEnable(GL_COLOR_MATERIAL);
 
     glEnable(GL_LIGHT0);
-    GLfloat pos0[4] = {-1,-1, 10,0};
+    GLfloat pos0[4] = {-1,-1, -10,0};
     glLightfv(GL_LIGHT0, GL_POSITION, pos0);
 
     /*glEnable(GL_LIGHT1);
@@ -489,6 +505,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
     totalNeurons += selectedPops[locNum]->layoutType->locations.size();
     }
     int LoD = round(250.0f/float(totalNeurons)*pow(2,float(quality)));
+    if (LoD > 12) LoD = 12;
 
     glPushMatrix();
     glTranslatef(0,0,-5.0);
@@ -791,7 +808,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
         if (conn->type == OnetoOne) {
 
-            if (src->numNeurons == dst->numNeurons) {
+            if (src->numNeurons == dst->numNeurons && (src->layoutType->locations.size() == dst->layoutType->locations.size())) {
 
                 if (src->layoutType->locations.size() > 0 && dst->layoutType->locations.size() > 0) {
 
@@ -849,6 +866,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         ctrlpoints[0][0] = src->layoutType->locations[i].x+srcX;
                         ctrlpoints[0][1] = src->layoutType->locations[i].y+srcY;
                         ctrlpoints[0][2] = src->layoutType->locations[i].z+srcZ;
+
                         ctrlpoints[aux_strength+1][0] = dst->layoutType->locations[i].x+dstX;
                         ctrlpoints[aux_strength+1][1] = dst->layoutType->locations[i].y+dstY;
                         ctrlpoints[aux_strength+1][2] = dst->layoutType->locations[i].z+dstZ;
@@ -1160,7 +1178,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                 QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (data->populations[clickedPopulation]);
                 CHECK_CAST(currPop);
 
-                if (0 <= clickedNeuron && clickedNeuron <= currPop->layoutType->locations.size())
+                if (0 <= clickedNeuron && clickedNeuron < currPop->layoutType->locations.size())
                 {
                     QPainter painter(this);
                     painter.setRenderHint(QPainter::Antialiasing);
@@ -1215,6 +1233,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     neuronInfo += "Neuron: " + QString::number(float(clickedNeuron));
                     QRect textRect;
 
+
                     if (imageSaveMode) {}
                         //painter.drawText(QRect(winX-(1.0-winZ)*220-20,imageSaveHeight-winY-(1.0-winZ)*220-10,40,20),QString::number(float(i)));
                     else {
@@ -1232,8 +1251,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         border.adjust (-5, -5, 5, 5);
                         painter.drawRect(border);
                     }
-                        //painter.drawText(QRect(winX-(1.0-winZ)*600,this->height()-winY-(1.0-winZ)*600,40,20),QString::number(float(i)));
-                        //painter.drawText(QRect((winX-(1.0-winZ)*220-20),this->height()-(winY-(1.0-winZ)*220+50),40,20),QString::number(float(i)));
+                    //painter.drawText(QRect(winX-(1.0-winZ)*600,this->height()-winY-(1.0-winZ)*600,40,20),QString::number(float(i)));
+                    //painter.drawText(QRect((winX-(1.0-winZ)*220-20),this->height()-(winY-(1.0-winZ)*220+50),40,20),QString::number(float(i)));
+
 
                     glPopMatrix();
 
@@ -2316,6 +2336,8 @@ void glConnectionWidget::selectedNrnChanged(int index) {
  */
 void glConnectionWidget::createPopulationsDL(bool onlyColour)
 {
+    if (!this->isVisible()) return;
+
     if (data)
     {
         // fetch quality setting
@@ -2429,6 +2451,7 @@ void glConnectionWidget::createPopulationsDL(bool onlyColour)
 void glConnectionWidget::createConnectionsDL()
 {
     //qDebug() << "Start creating the display lists for connections";
+    if (!this->isVisible()) return;
 
     // work out scaling for line widths:
     float lineScaleFactor;

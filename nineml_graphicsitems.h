@@ -390,6 +390,7 @@ public slots:
     void setPortReduceOp(QString p);
     void setDimsPrefix(QString p);
     void setDimsUnit(QString u);
+    void setIsPostState(bool b);
 
 protected:
     virtual void handleSelection();
