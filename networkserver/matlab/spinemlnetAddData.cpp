@@ -20,7 +20,7 @@
 #ifdef COMPILE_OCTFILE
 # include <octave/oct.h>
 #else
-# ifndef char16_t
+# ifdef __APPLE__
 // To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
 # endif
@@ -136,7 +136,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         inputData = m.data();
 
         // Need to interleave the data as we have >1 row and therefore >1 time series.
-        INFO ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
+        DBG2 ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
         inputDataLength = nrows * ncols;
 
     } else { // At least one dimension is 0.
@@ -153,7 +153,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         // Validate input data:
         if (ncols > 0 && nrows > 0) { // We have a matrix
             // Need to interleave the data as we have >1 row and therefore >1 time series.
-            INFO ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
+            DBG2 ("Data for '" << targetConnection << "' contains " << nrows << " time series...");
             inputDataLength = nrows * ncols;
 
         } else { // At least one dimension is 0.
@@ -256,7 +256,8 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     // set up a pointer to the output array
     unsigned short *outPtr = (unsigned short*) mxGetData (plhs[0]);
     // copy new data into the output structure
-    unsigned short rtn[2] = { (unsigned short)*threadFinished, connectionDataSize };
+    unsigned short rtn[2] = { (unsigned short)*threadFinished,
+                              (unsigned short)(connectionDataSize&0xffff) };
     memcpy (outPtr, (const void*)rtn, 4); // 2 bytes per short * 2 elements in rtn.
 
     // plhs[1] takes the error message.

@@ -5,7 +5,7 @@
 #ifdef COMPILE_OCTFILE
 # include <octave/oct.h>
 #else
-# ifndef char16_t
+# ifdef __APPLE__
 // To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
 # endif
@@ -237,6 +237,11 @@ void* connectionThread (void*)
                 break;
             }
         }
+
+        // Sleep to allow the octave environment some CPU time to do
+        // anything it needs to do (such as gaining a lock on the data
+        // in spinemlnetAddData)
+        usleep (100);
     }
 
     return NULL;
@@ -282,6 +287,10 @@ int pollForConnection (int& listening_socket, struct pollfd& p)
                                                         // with its business.
 
         INFO ("start-pollForConnection: Accepted a connection.");
+
+        // Reset this flag (it may have been set to true when all
+        // previous connections finished).
+        connectionsFinished = false;
 
     } // else no new connections available on the listening socket
 
@@ -390,7 +399,7 @@ void* theThread (void* nothing)
     initialised = true;
 
     // loop until we get the termination signal
-    while (!stopRequested && !connectionsFinished) {
+    while (!stopRequested /* && !connectionsFinished*/) {
 
         // First job in the loop is to see if we have any more
         // connections coming in from the client.
@@ -404,8 +413,9 @@ void* theThread (void* nothing)
         cleanupFailedConnections();
 
         // Thirdly, check to see if all connections have
-        // finished. This will set connectionsFinished and break us
-        // out of this loop.
+        // finished. This will set connectionsFinished to inform
+        // matlab environment that all connections are done
+        // with. Matlab env can then request stop (or user can ctrl-c)
         checkForAllFinished();
 
         usleep (10000);

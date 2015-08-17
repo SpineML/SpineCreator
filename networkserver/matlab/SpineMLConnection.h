@@ -73,9 +73,9 @@ enum dataTypes {
 
 // How many times to fail to read a byte before calling the session a
 // failure:
-#define NO_DATA_MAX_COUNT     100
+#define NO_DATA_MAX_COUNT     10000
 
-// See spinemlnetStart.cpp, which instatates dataCache at global scope.
+// See spinemlnetStart.cpp, which instantiates dataCache at global scope.
 #ifdef DATACACHE_MAP_DEFINED
 // We have a "real" data cache object, externally defined, probably in
 // the mex cpp file.
@@ -121,6 +121,7 @@ public:
         , clientDataSize (1)
         , data ((deque<double>*)0)
         , doublebuf ((double*)0)
+        , totalWritten (0)
         {
             pthread_mutex_init (&this->dataMutex, NULL);
         };
@@ -343,6 +344,12 @@ private:
      * client.
      */
     double* doublebuf;
+
+    /*!
+     * Total bytes of data written to the client (doesn't include any
+     * protocol bytes, such as acknowledgements, etc)
+     */
+    unsigned int totalWritten;
 };
 
 /*!
@@ -597,6 +604,7 @@ SpineMLConnection::doHandshake (void)
 
         } else if (handshakeStage == CS_HS_DONE) {
             INFO ("SpineMLConnection::doHandshake: Handshake finished.");
+            this->totalWritten = 0;
 
         } else {
             INFO ("SpineMLConnection::doHandshake: Error: Invalid handshake stage.");
@@ -683,8 +691,11 @@ SpineMLConnection::doReadFromClient (void)
 int
 SpineMLConnection::doWriteToClient (void)
 {
+    DBG2 ("SpineMLConnection::doWriteToClient called");
+
     // Expect an acknowledgement from the client if we sent data:
     if (this->unacknowledgedDataSent == true) {
+        DBG2 ("About to read acknowledgement from client...");
         int b = read (this->connectingSocket, (void*)this->smallbuf, 1);
         if (b == 1) {
             // Good; we got data.
@@ -727,7 +738,7 @@ SpineMLConnection::doWriteToClient (void)
                 return -1;
             }
         }
-    } // else we're not waiting for a RESP_RECVD response from the server.
+    } // else we're not waiting for a RESP_RECVD response from the client.
 
     // We're going to update some data in memory
     this->lockDataMutex();
@@ -755,7 +766,9 @@ SpineMLConnection::doWriteToClient (void)
             return -1;
         } // else carry on
 
-        DBG2 ("SpineMLConnection::doWriteToClient: wrote " << bytesWritten << " bytes.");
+        this->totalWritten += bytesWritten;
+
+        DBG2 ("SpineMLConnection::doWriteToClient: wrote " << this->totalWritten << " bytes so far (first is " << this->doublebuf[0] << ").");
 
         // Set that we now need an acknowledgement from the client:
         this->unacknowledgedDataSent = true;
@@ -767,10 +780,14 @@ SpineMLConnection::doWriteToClient (void)
         if (this->noData >= NO_DATA_MAX_COUNT) {
             INFO ("SpineMLConnection::doWriteToClient: "
                   << "No data left to write to connection '"
-                  << this->clientConnectionName << "', assume finished.");
+                  << this->clientConnectionName << "', assume finished. Wrote "
+                  << this->totalWritten << " bytes total.");
             this->unlockDataMutex();
             return 1;
         }
+        DBG2 ("No data to write (have " << this->data->size()
+              << " < clientDataSize=" << this->clientDataSize << "). noData = " << this->noData
+              << " is still less than NO_DATA_MAX_COUNT so increment noData.");
         this->noData++;
     }
     this->unlockDataMutex();
@@ -846,7 +863,8 @@ void
 SpineMLConnection::addNum (double& d)
 {
     // Don't allow addition of data if not established.
-    if (!this->established || this->failed) {
+    if ((!this->established && !this->finished) || this->failed) {
+        INFO ("addNum(): connection not yet established or connection failed");
         return;
     }
     this->lockDataMutex();
@@ -857,7 +875,8 @@ SpineMLConnection::addNum (double& d)
 void
 SpineMLConnection::addData (const double* d, size_t dataSize)
 {
-    if (!this->established || this->failed) {
+    if ((!this->established && !this->finished) || this->failed) {
+        INFO ("addData(): connection not yet established or connection failed");
         return;
     }
     this->lockDataMutex();

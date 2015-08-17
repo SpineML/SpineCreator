@@ -25,6 +25,8 @@
 #include "population.h"
 #include "experiment.h"
 #include "projectobject.h"
+#include <sstream>
+#include <iomanip>
 
 population::population(float x, float y, float size, float aspect_ratio, QString name)
 {
@@ -446,6 +448,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new csv_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
             }
             type = e2.elementsByTagName("KernelConnection");
             if (type.count() == 1) {
@@ -453,8 +457,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new kernel_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
-                ((kernel_connection *) newInput->connectionType)->src = qSharedPointerDynamicCast <population> (newInput->source);
-                ((kernel_connection *) newInput->connectionType)->dst = qSharedPointerDynamicCast <population> (newInput->destination);
+                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
             }
 
 
@@ -916,10 +920,8 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
                 // add each Synapse
                 xmlOut.writeStartElement("LL:Synapse");
 
-                if (projection->synapses[j]->connectionType->type == Kernel) {
-                    ((kernel_connection *) projection->synapses[j]->connectionType)->src = projection->source;
-                    ((kernel_connection *) projection->synapses[j]->connectionType)->dst = projection->destination;
-                }
+                projection->synapses[j]->connectionType->src = projection->source;
+                projection->synapses[j]->connectionType->dst = projection->destination;
                 projection->synapses[j]->connectionType->write_node_xml(xmlOut);
 
                 xmlOut.writeStartElement("LL:WeightUpdate");
@@ -944,7 +946,6 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
 }
 
 
-
 void population::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
 
     // write a new element for this population:
@@ -956,12 +957,18 @@ void population::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     // x position
     QDomElement xPos = meta.createElement( "xPos" );
     pop.appendChild(xPos);
-    xPos.setAttribute("value", this->x);
+    // To avoid metaData.xml changing arbitrarily, impose a
+    // granularity limit on float x.
+    stringstream xx;
+    xx << std::setprecision(METADATA_FLOAT_PRECISION) << this->x;
+    xPos.setAttribute("value", xx.str().c_str());
 
     // y position
     QDomElement yPos = meta.createElement( "yPos" );
     pop.appendChild(yPos);
-    yPos.setAttribute("value", this->y);
+    stringstream yy;
+    yy << std::setprecision(METADATA_FLOAT_PRECISION) << this->y;
+    yPos.setAttribute("value", yy.str().c_str());
 
     // this->animspeed;
     QDomElement animSpeed = meta.createElement( "animSpeed" );
@@ -1028,7 +1035,7 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
 
     for (int i = 0; i < (int) cList.count(); ++i) {
-        QDomElement e2 = cList.item(i).toElement();      
+        QDomElement e2 = cList.item(i).toElement();
         this->projections.push_back(QSharedPointer<projection>(new projection()));
         this->projections.back()->readFromXML(e2, doc, meta, data, this->projections.back());
     }
@@ -1106,6 +1113,3 @@ void population::print() {
 
     cerr << "\n\n\n";
 }
-
-
-

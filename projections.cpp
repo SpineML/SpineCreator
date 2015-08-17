@@ -27,6 +27,8 @@
 #include "connection.h"
 #include "experiment.h"
 #include "projectobject.h"
+#include <sstream>
+#include <iomanip>
 
 synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs) {
 
@@ -138,6 +140,17 @@ QString synapse::getName() {
 
     return this->proj->getName() + ": Synapse " + QString::number(index);
 
+}
+
+int synapse::getSynapseIndex()
+{
+    int index = -1;
+    for (int i = 0; i < this->proj->synapses.size(); ++i) {
+        if (this->proj->synapses[i].data() == this) {
+            index = i;
+        }
+    }
+    return index;
 }
 
 projection::projection()
@@ -1128,8 +1141,12 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     // start position
     QDomElement start = meta.createElement( "start" );
     col.appendChild(start);
-    start.setAttribute("x", this->start.x());
-    start.setAttribute("y", this->start.y());
+    stringstream xs;
+    xs << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.x();
+    start.setAttribute("x", xs.str().c_str());
+    stringstream ys;
+    ys << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.y();
+    start.setAttribute("y", ys.str().c_str());
 
     // bezierCurves
     QDomElement curves = meta.createElement( "curves" );
@@ -1139,18 +1156,30 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
 
         QDomElement curve = meta.createElement( "curve" );
         QDomElement C1 = meta.createElement( "C1" );
-        C1.setAttribute("xpos", this->curves[i].C1.x());
-        C1.setAttribute("ypos", this->curves[i].C1.y());
+        stringstream xc1;
+        xc1 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C1.x();
+        C1.setAttribute("xpos", xc1.str().c_str());
+        stringstream yc1;
+        yc1 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C1.y();
+        C1.setAttribute("ypos", yc1.str().c_str());
         curve.appendChild(C1);
 
         QDomElement C2 = meta.createElement( "C2" );
-        C2.setAttribute("xpos", this->curves[i].C2.x());
-        C2.setAttribute("ypos", this->curves[i].C2.y());
+        stringstream xc2;
+        xc2 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C2.x();
+        C2.setAttribute("xpos", xc2.str().c_str());
+        stringstream yc2;
+        yc2 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C2.y();
+        C2.setAttribute("ypos", yc2.str().c_str());
         curve.appendChild(C2);
 
         QDomElement end = meta.createElement( "end" );
-        end.setAttribute("xpos", this->curves[i].end.x());
-        end.setAttribute("ypos", this->curves[i].end.y());
+        stringstream xe;
+        xe << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].end.x();
+        end.setAttribute("xpos", xe.str().c_str());
+        stringstream ye;
+        ye << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].end.y();
+        end.setAttribute("ypos", ye.str().c_str());
         curve.appendChild(end);
 
         curves.appendChild(curve);
@@ -1165,6 +1194,7 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
         c.setAttribute( "name", synapses[i]->weightUpdateType->getXMLName() );
 
         // add the metadata description (if there is one)
+        synapses[i]->connectionType->setSynapseIndex(i);
         synapses[i]->connectionType->write_metadata_xml(meta, c);
 
         col.appendChild(c);
@@ -1296,21 +1326,27 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new alltoAll_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "OneToOneConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new onetoOne_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "FixedProbabilityConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new fixedProb_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "ConnectionList") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new csv_connection;
                 newSynapse->connectionType->import_parameters_from_xml(n);
+                newSynapse->connectionType->setSrcName (srcName);
+                newSynapse->connectionType->setDstName (destName);
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "KernelConnection") {
                 // fixme: fix this
@@ -1319,6 +1355,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 newSynapse->connectionType->import_parameters_from_xml(n);
                 ((kernel_connection *) newSynapse->connectionType)->src = (QSharedPointer <population>) this->source;
                 ((kernel_connection *) newSynapse->connectionType)->dst = (QSharedPointer <population>) this->destination;
+                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "PythonScriptConnection") {
 
@@ -1498,6 +1535,10 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                                     ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
                                     // prevent regeneration
                                     ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                                    // Set source/dest population names in the connection (used when saving)
+                                    conn->setSrcName (this->source->name);
+                                    conn->setDstName (this->destination->name);
+                                    conn->setSynapseIndex (i);
                                 }
                             }
                         }
@@ -1640,17 +1681,16 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         delete newInput->connectionType;
                         newInput->connectionType = new csv_connection;
                         QDomNode cNode = type.item(0);
+                        // csv connection needs a synapse index set up.
+                        newInput->connectionType->setSynapseIndex(t);
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
 
-
-                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0)
-                    {this->synapses[t]->postsynapseType->inputs.push_back(newInput);
+                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0) {
+                        this->synapses[t]->postsynapseType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->postsynapseType;
-                        newInput->src->outputs.push_back(newInput);}
-                    else {}
-                        // ERRR
-
+                        newInput->src->outputs.push_back(newInput);
+                    } // else error
                 }
 
                 // read in the postsynapse Input
@@ -1835,5 +1875,3 @@ void projection::print() {
     }
     cerr << "\n";
 }
-
-

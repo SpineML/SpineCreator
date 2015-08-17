@@ -56,7 +56,8 @@ struct cPoint {
     cPointType type;
 };
 
-
+// A synapse's parent is a projection, a pointer to the parent is held
+// in proj.
 class synapse : public systemObject
 {
 public:
@@ -70,9 +71,11 @@ public:
     bool isVisualised;
     QSharedPointer <projection> proj;
     QString getName();
+    int getSynapseIndex();
     virtual void delAll(rootData *);
 };
 
+// A projection contains synapses.
 class projection : public systemObject
 {
 public:

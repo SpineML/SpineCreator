@@ -16,7 +16,7 @@
 #ifdef COMPILE_OCTFILE
 # include <octave/oct.h>
 #else
-# ifndef char16_t
+# ifdef __APPLE__
 // To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
 # endif
@@ -98,7 +98,9 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 #ifdef COMPILE_OCTFILE
     NDArray lhs;
+# ifdef ANNOUNCE_VERSION
     INFO ("octfile-version of getdata for target connection '" << targetConnection << "'....");
+# endif
 #endif
 
     if (!tf) {
@@ -111,10 +113,14 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         while (connIter != connections->end()) {
             if (connIter->second->getClientConnectionName() == targetConnection) {
 
-                INFO ("Matched connection!");
+                DBG2 ("Matched connection!");
                 gotmatch = true;
 
-                if (connIter->second->getEstablished() == false) {
+                // Test if the connection is neither established nor
+                // finished, in which case it's a matched connection
+                // which is not yet ready to return data.
+                if (connIter->second->getEstablished() == false
+                    && connIter->second->getFinished() == false) {
                     // We got a matched connection, but it's not ready yet, so break out.
                     notready = true;
                     break;
@@ -122,11 +128,11 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
                 // Find out how much data there is in the matched connection.
                 connectionDataSize = connIter->second->getDataSize();
-                INFO ("connectionDataSize: " << connectionDataSize);
+                DBG2 ("connectionDataSize: " << connectionDataSize);
                 // We'll make a clientDataSize by connectionDataSize/clientDataSize matrix.
                 unsigned int matrixRows = connIter->second->getClientDataSize();
                 unsigned int matrixCols = connectionDataSize/matrixRows;
-                INFO ("rows: " << matrixRows << " cols: " << matrixCols);
+                DBG2 ("rows: " << matrixRows << " cols: " << matrixCols);
                 // Now need to copy this data into our output.
                 unsigned int i = 0;
 #ifdef COMPILE_OCTFILE
@@ -144,7 +150,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                     row_idx = 0;
                 }
 #else
-                const mwSize res[2] = { matrixRows, matrixCols };
+                const mwSize res[2] = { (int)matrixRows, (int)matrixCols };
                 plhs[0] = mxCreateNumericArray (2, res, mxDOUBLE_CLASS, mxREAL);
                 // set up a pointer to the output array
                 double* outPtr = (double*) mxGetData (plhs[0]); // plhs[0] is an mxArray.
@@ -181,7 +187,7 @@ mexFunction (int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                 errormsg = "Connection contained no data.";
             }
         }
-        INFO ("spinemlnetGetData: Failed to get data: " << errormsg);
+        DBG2 ("spinemlnetGetData: Failed to get data: " << errormsg);
 
 #ifdef COMPILE_OCTFILE
         // Insert 2 zeros so we return a matrix containing nothing:

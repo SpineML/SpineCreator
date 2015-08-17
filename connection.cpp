@@ -36,6 +36,9 @@ connection::connection()
     delay = new ParameterData("ms");
     delay->name = "delay";
     delay->currType = Undefined;
+    this->srcName = "";
+    this->dstName = "";
+    this->synapseIndex = -1;
 }
 
 connection::~connection()
@@ -46,6 +49,26 @@ connection::~connection()
 int connection::getIndex()
 {
     return (int) this->type;
+}
+
+void connection::setSrcName (QString& s)
+{
+    this->srcName = s;
+}
+
+void connection::setDstName (QString& d)
+{
+    this->dstName = d;
+}
+
+void connection::setSynapseIndex (int synidx)
+{
+    this->synapseIndex = synidx;
+}
+
+int connection::getSynapseIndex (void)
+{
+    return this->synapseIndex;
 }
 
 void connection::writeDelay(QXmlStreamWriter &xmlOut)
@@ -102,6 +125,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut)
 alltoAll_connection::alltoAll_connection()
 {
     type = AlltoAll;
+    this->synapseIndex = -2;
 }
 
 alltoAll_connection::~alltoAll_connection()
@@ -349,17 +373,20 @@ csv_connection::csv_connection()
 {
     type = CSV;
     numRows = 0;
-    setUniqueName();
     // no connectivity generator in constructor
     generator = NULL;
+
+    this->srcName = "";
+    this->dstName = "";
+    this->synapseIndex = -3;
 
     this->values.push_back("src");
     this->values.push_back("dst");
     this->values.push_back("delay");
+}
 
-    // create the file:
-
-    // start investigating the library
+QDir csv_connection::getLibDir (void)
+{
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
 #else
@@ -370,18 +397,8 @@ csv_connection::csv_connection()
             qDebug() << "error creating library";
         }
     }
-
-    qDebug() << lib_dir;
-
-    this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
-
-    // open the storage file
-    if( !this->file.open( QIODevice::ReadWrite ) ) {
-        QMessageBox msgBox;
-        msgBox.setText("Could not open output file for conversion");
-        msgBox.exec();
-        return;
-    }
+    //qDebug() << lib_dir;
+    return lib_dir;
 }
 
 csv_connection::~csv_connection()
@@ -390,11 +407,6 @@ csv_connection::~csv_connection()
     if (this->generator) {
         delete this->generator;
         this->generator = NULL;
-    }
-
-    // remove memory usage
-    if (this->file.isOpen()) {
-        this->file.close();
     }
 }
 
@@ -417,6 +429,12 @@ QLayout * csv_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * 
         QTableView *tableView = new QTableView();
 
         csv_connectionModel *connMod = new csv_connectionModel();
+
+        // rootLayout::projSelected has communicated this information
+        // so we can stick it into this connection.
+        this->src = data->currentlySelectedProjection->source;
+        this->dst = data->currentlySelectedProjection->destination;
+
         connMod->setConnection(this);
         tableView->setModel(connMod);
 
@@ -478,7 +496,6 @@ csv_connection::csv_connection(QString fileName)
 {
     type = CSV;
     numRows = 0;
-    setUniqueName();
     // no connectivity generator in constructor
     generator = NULL;
 
@@ -490,32 +507,17 @@ csv_connection::csv_connection(QString fileName)
 
     // set the filepath
     // start investigating the library
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-    QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
-#else
-    QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-#endif
-    if (!lib_dir.exists()) {
-        if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-            qDebug() << "error creating library";
-        }
-    }
+    QDir lib_dir = this->getLibDir();
 
-    this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
-
-    // open the storage file
-    if (!this->file.open(QIODevice::ReadWrite)) {
-        QMessageBox msgBox;
-        msgBox.setText("Could not open output file for conversion");
-        msgBox.exec();
-        return;
-    }
+    this->filename = fileName;
+    qDebug() << "csv_connection::csv_connection(QString): Set this->filename to " << this->filename;
 
     QStringList list;
     list = fileName.split("/", QString::SkipEmptyParts);
     list = list.back().split("\\", QString::SkipEmptyParts);
 
     this->name = list.back();
+    qDebug() << "csv_connection::csv_connection(QString): import_csv(" << fileName << ")";
     this->import_csv(fileName);
 }
 
@@ -531,8 +533,17 @@ QString csv_connection::getFileName()
 
 void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 {
-    file.seek(0);
-    QDataStream access(&file);
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (!f.open( QIODevice::ReadOnly)) {
+        QMessageBox msgBox;
+        msgBox.setText("Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
+        msgBox.exec();
+        return;
+    }
+    f.seek(0);
+    QDataStream access(&f);
 
     // ok, check if we have a generator, and if it is up-to-date
     if (this->generator) {
@@ -573,7 +584,17 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
         // remove filename
         project_dir.cdUp();
 
-        saveFullFileName = QDir::toNativeSeparators(project_dir.absoluteFilePath(this->filename + ".bin"));
+        if (this->filename.isEmpty()) {
+            this->generateFilename();
+        }
+        if (this->filename.isEmpty()) {
+            QMessageBox msgBox;
+            msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
+                           + "' (filename could not be generated from src/dest population names)");
+            msgBox.exec();
+            return;
+        }
+        saveFullFileName = QDir::toNativeSeparators(project_dir.absoluteFilePath(this->filename));
 
         // extract the filename without the path...
         QString saveFileName;
@@ -603,11 +624,11 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
                 return;
             }
 
-            QDataStream access(&export_file);
+            QDataStream access2(&export_file);
             for (int i = 0; i < conns.size(); ++i) {
-                access.writeRawData((char*) &conns[i].src, sizeof(int));
-                access.writeRawData((char*) &conns[i].dst, sizeof(int));
-                access.writeRawData((char*) &conns[i].metric, sizeof(float));
+                access2.writeRawData((char*) &conns[i].src, sizeof(int));
+                access2.writeRawData((char*) &conns[i].dst, sizeof(int));
+                access2.writeRawData((char*) &conns[i].metric, sizeof(float));
             }
         }
         if (getNumCols()==2) {
@@ -625,15 +646,15 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
                 return;
             }
 
-            QDataStream access(&export_file);
+            QDataStream access3(&export_file);
             for (int i = 0; i < conns.size(); ++i) {
-                access.writeRawData((char*) &conns[i].src, sizeof(int));
-                access.writeRawData((char*) &conns[i].dst, sizeof(int));
+                access3.writeRawData((char*) &conns[i].src, sizeof(int));
+                access3.writeRawData((char*) &conns[i].dst, sizeof(int));
             }
         }
 
 
-    } else {
+    } else { // non-binary; write only into XML
 
         // loop through connections writing them out in XML format.
         for (int i=0; i < this->getNumRows(); ++i) {
@@ -702,8 +723,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
 
         // set number of connections
         this->setNumRows(BinaryFileList.at(0).toElement().attribute("num_connections").toUInt());
-        DBG() << "Conn text = " << BinaryFileList.at(0).toElement().attribute("num_connections");
-        DBG() << "Conn value = " << BinaryFileList.at(0).toElement().attribute("num_connections").toUInt();
 
         // do we have explicit delays
         bool explicit_delay = BinaryFileList.at(0).toElement().attribute("explicit_delay_flag").toInt();
@@ -719,9 +738,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
 
         if (isPacked == "true") {
 
-            // first remove existing file
-            this->file.remove();
-
             // get a handle to the saved file
             QSettings settings;
             QString filePathString = settings.value("files/currentFileName", "error").toString();
@@ -736,16 +752,11 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
             // get file name and path
             QString fileName = BinaryFileList.at(0).toElement().attribute("file_name");
 
-            #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-            QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
-            #else
-            QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-            #endif
-            if (!lib_dir.exists()) {
-                if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-                    qDebug() << "error creating library";
-                }
-            }
+            // We *don't* change the filename if it has already been
+            // set in the model, so copy fileName to this->filename.
+            this->filename = fileName;
+
+            QDir lib_dir = this->getLibDir();
 
             // copy the file across to the temporary file
             QFile savedData(filePath.absoluteFilePath(fileName));
@@ -762,92 +773,40 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
                 return;
             }
 
-            // restart the file
-            this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
+            // Open the binary data file
+            QFile f;
+            f.setFileName(lib_dir.absoluteFilePath(this->filename));
 
             // open the storage file
-            if( !this->file.open( QIODevice::ReadWrite ) ) {
+            if( !f.open( QIODevice::ReadWrite | QIODevice::Truncate) ) {
                 QMessageBox msgBox;
-                msgBox.setText("Could not open temporary file for Explicit Connection");
+                msgBox.setText("Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
                 msgBox.exec();
                 return;
             }
 
             // now we need to read from the savedData file and put this into a QDataStream...
-            this->import_packed_binary(savedData);
+            this->import_packed_binary(savedData, f);
+            f.close();
 
+        } else {
+            qDebug() << "Old, non-packed data format is no longer supported";
         }
-        // this is the old way of loading binary data - it is obselete as new projects should not store data this way,
-        // however it is left in for compatibility with old projects - these will be converted to the new method once
-        // they are re-saved
-        else {
-
-            // copy across file and set file name
-            // first remove existing file
-            this->file.remove();
-
-            // get a handle to the saved file
-            QSettings settings;
-            QString filePathString = settings.value("files/currentFileName", "error").toString();
-
-            if (filePathString == "error") {
-                qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
-                return;
-            }
-
-            QDir filePath(filePathString);
-
-            // get file name and path
-            QString fileName = BinaryFileList.at(0).toElement().attribute("file_name");
-
-            #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-            QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
-            #else
-            QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-            #endif
-            if (!lib_dir.exists()) {
-                if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-                    qDebug() << "error creating library";
-                }
-            }
-
-            // copy the file across to the temporary file
-            QFile savedData(filePath.absoluteFilePath(fileName));
-
-            // check that the data file exists!
-            if (!savedData.open(QIODevice::ReadOnly)) {
-                QSettings settings;
-                int num_errs = settings.beginReadArray("errors");
-                settings.endArray();
-                settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
-                settings.endArray();
-                return;
-            }
-            savedData.close();
-
-            savedData.copy(lib_dir.absoluteFilePath(this->filename));
-
-            // restart the file
-            this->file.setFileName(lib_dir.absoluteFilePath(this->filename));
-
-            // open the storage file
-            if( !this->file.open( QIODevice::ReadWrite ) ) {
-                QMessageBox msgBox;
-                msgBox.setText("Could not open temporary file for Explicit Connection");
-                msgBox.exec();
-                return;
-            }
-        }
-
     }
 
     if (BinaryFileList.count() != 1) {
 
         // load connections from xml
-        file.seek(0);
-        QDataStream access(&file);
+        QFile f;
+        QDir lib_dir = this->getLibDir();
+        f.setFileName(lib_dir.absoluteFilePath(this->filename));
+        if (!f.open( QIODevice::ReadWrite | QIODevice::Truncate)) {
+            QMessageBox msgBox;
+            msgBox.setText("Could not open temporary '" + f.fileName() + "' file for Explicit Connection");
+            msgBox.exec();
+            return;
+        }
+        QDataStream access(&f);
 
         QDomNodeList connInstList = e.toElement().elementsByTagName("Connection");
 
@@ -870,6 +829,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
                     this->values.removeLast();
             }
         }
+
+        f.close();
     }
 
     //// LOAD DELAY
@@ -907,12 +868,7 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
             this->delay->value[2] = propVal.item(0).toElement().attribute("variance").toFloat();
             this->delay->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
         }
-
     }
-
-
-    // flush out the output...
-    file.flush();
 }
 
 void csv_connection::fetch_headings()
@@ -921,12 +877,22 @@ void csv_connection::fetch_headings()
 
 void csv_connection::import_csv(QString fileName)
 {
+    qDebug() << "csv_connection::import_csv(" << fileName << ") called.";
+
     this->numRows = 0;
 
     this->changes.clear();
 
-    //wipe file;
-    file.resize(0);
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (!f.open( QIODevice::ReadWrite | QIODevice::Truncate)) {
+        QMessageBox msgBox;
+        msgBox.setText("csv_connection::import_csv(QString): Could not open temporary file '"
+                       + f.fileName() + "' for Explicit Connection");
+        msgBox.exec();
+        return;
+    }
 
     // open the input csv file for reading
     QFile fileIn(fileName);
@@ -938,17 +904,10 @@ void csv_connection::import_csv(QString fileName)
         return;
     }
 
-    // if no filename already
-    if (this->filename.size() < 1) {
-        setUniqueName();
-    }
-
     // use textstream so we can read lines into a QString
     QTextStream stream(&fileIn);
 
-    file.seek(0);
-
-    QDataStream access(&file);
+    QDataStream access(&f);
 
     // test for consistency:
     int numFields = -1;
@@ -1019,20 +978,21 @@ void csv_connection::import_csv(QString fileName)
     }
 
     // flush out the output...
-    this->file.flush();
+    f.flush();
+    f.close();
 }
 
 
-void csv_connection::import_packed_binary(QFile &fileIn)
+void csv_connection::import_packed_binary(QFile& fileIn, QFile& fileOut)
 {
     this->changes.clear();
 
     //wipe file;
-    file.resize(0);
+    fileOut.resize(0);
 
-    file.seek(0);
+    fileOut.seek(0);
 
-    QDataStream access(&file);
+    QDataStream access(&fileOut);
 
     int count = 0;
 
@@ -1067,7 +1027,7 @@ void csv_connection::import_packed_binary(QFile &fileIn)
     }
 
     // flush out the output...
-    this->file.flush();
+    fileOut.flush();
 }
 
 int csv_connection::getNumRows()
@@ -1105,10 +1065,17 @@ void csv_connection::getAllData(QVector < conn > &conns)
 {
     //qDebug() << "ALL CONN DATA FETCHED";
 
-    // rewind file
-    file.seek(0);
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (!f.open( QIODevice::ReadOnly)) {
+        QMessageBox msgBox;
+        msgBox.setText("Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
+        msgBox.exec();
+        return;
+    }
 
-    QDataStream access(&file);
+    QDataStream access(&f);
 
     conns.resize(this->getNumRows());
     int counter = 0;
@@ -1135,31 +1102,45 @@ void csv_connection::getAllData(QVector < conn > &conns)
         conns[counter] = (newConn);
         ++counter;
     }
+
+    f.close();
 }
 
 float csv_connection::getData(int rowV, int col)
 {
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (!f.open( QIODevice::ReadOnly)) {
+        QMessageBox msgBox;
+        msgBox.setText("csv_connection::getData(int, int): Could not open file for Explicit Connection");
+        msgBox.exec();
+        return -0.1f;
+    }
+
     int colVal = getNumCols();
     if (colVal > 2) ++colVal;
     // we multiply by cols +1 as QT seems to do some padding on the stream
     int seekTo = rowV*(colVal)+col;
 
-    if (seekTo*4 > file.size()) {
+    if (seekTo*4 > f.size()) {
         return -1;
     }
 
-    file.seek(seekTo*4); // seek to location in bytes
+    f.seek(seekTo*4); // seek to location in bytes
 
     // get a datastream to serialise the data
-    QDataStream access(&file);
+    QDataStream access(&f);
     if (col < 2) {
         qint32 data;
         access >> data;
+        f.close();
         return float(data);
     }
     else {
         float data;
         access >> data;
+        f.close();
         return data;
     }
 
@@ -1168,95 +1149,107 @@ float csv_connection::getData(int rowV, int col)
 
 float csv_connection::getData(QModelIndex &index)
 {
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (!f.open( QIODevice::ReadOnly)) {
+        QMessageBox msgBox;
+        msgBox.setText("csv_connection::getData(QModelIndex&): Could not open file for Explicit Connection");
+        msgBox.exec();
+        return -0.1f;
+    }
+
     int colVal = getNumCols();
     if (colVal > 2) ++colVal;
     // we multiply by cols +1 as QT seems to do some padding on the stream
     int seekTo = index.row()*(colVal)+index.column();
 
-    if (seekTo*4 > file.size()) {
+    if (seekTo*4 > f.size()) {
         return -1;
     }
 
-    file.seek(seekTo*4); // seek to location in bytes
+    f.seek(seekTo*4); // seek to location in bytes
 
     // get a datastream to serialise the data
-    QDataStream access(&file);
+    QDataStream access(&f);
     if (index.column() < 2) {
         qint32 data;
         access >> data;
+        f.close();
         return float(data);
     }
     else {
         float data;
         access >> data;
+        f.close();
         return data;
     }
 
     return -0.1f;
 }
 
-void csv_connection::setUniqueName(QString *path)
+/*!
+ * Character sets useful when calling sanitize function.
+ *
+ * These are ordered so that the most common chars appear earliest.
+ */
+//@{
+#define CHARS_NUMERIC            "0123456789"
+#define CHARS_ALPHA              "etaoinshrdlcumwfgypbvkjxqzETAOINSHRDLCUMWFGYPBVKJXQZ"
+#define CHARS_ALPHALOWER         "etaoinshrdlcumwfgypbvkjxqz"
+#define CHARS_ALPHAUPPER         "ETAOINSHRDLCUMWFGYPBVKJXQZ"
+#define CHARS_NUMERIC_ALPHA      "etaoinshrdlcumwfgypbvkjxqz0123456789ETAOINSHRDLCUMWFGYPBVKJXQZ"
+#define CHARS_NUMERIC_ALPHALOWER "etaoinshrdlcumwfgypbvkjxqz0123456789"
+#define CHARS_NUMERIC_ALPHAUPPER "0123456789ETAOINSHRDLCUMWFGYPBVKJXQZ"
+//@}
+
+void csv_connection::generateFilename(void)
 {
-    // generate a unique filename to save the weights under
+    QString baseName = "conn_";
+    this->filename = "";
 
-    // are we writing to the Library or to a save dir?
-    QDir lib_dir;
-    if (path == NULL) {
-        // start investigating the library
-    #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-        lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
-    #else
-        lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
-    #endif
-        if (!lib_dir.exists()) {
-            if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-                qDebug() << "error creating library";
-            }
+    // Test this->src and this->dst first
+    if (!this->src.isNull()) {
+        this->srcName = this->src->name;
+    }
+
+    if (!this->dst.isNull()) {
+        this->dstName = this->dst->name;
+    }
+
+    if (this->srcName.isEmpty()) {
+        // leave filename empty and return
+        qDebug() << "csv_connection::srcName is empty!";
+        return;
+    }
+
+    if (this->dstName.isEmpty()) {
+        qDebug() << "csv_connection::dstName is empty!";
+        return;
+    }
+
+    // Now make sure srcName and dstName are filename friendly -
+    // replace all spaces, tabs and other gnarly characters with an
+    // underscore.
+    char replaceChar = '_';
+    QString allowed (CHARS_NUMERIC_ALPHA".");
+    this->sanitizeReplace (this->srcName, allowed, replaceChar);
+    this->sanitizeReplace (this->dstName, allowed, replaceChar);
+
+    this->filename = baseName + this->srcName + "_to_" + this->dstName + "_syn" + QString::number(this->synapseIndex) + ".bin";
+}
+
+void csv_connection::sanitizeReplace (QString& str,
+                                      const QString& allowed,
+                                      const char replaceChar)
+{
+    int i=0;
+    while (i<str.size()) {
+        if (allowed.indexOf(str[i], 0) == -1) {
+            // str[i] is forbidden
+            str[i] = replaceChar;
         }
-    }
-    else
-    {
-        lib_dir = QDir(*path);
-        qDebug() << lib_dir;
-    }
-
-    // Get a list of the existing files in the directory. The
-    // behaviour here was previously to avoid over-writing any
-    // connectionN.bin files. I believe it's preferable to over-write
-    // connection files, which makes it easier to track a model in
-    // git. To do this, we need to clear out the connection binaries
-    // before calling this function the first time.
-    QStringList filters;
-    filters << "conn*";
-    lib_dir.setNameFilters(filters);
-    QStringList files = lib_dir.entryList();
-
-    QString baseName = "connection";
-    QString uniqueName;
-    bool unique = false;
-    int index = 0;
-    while(!unique) {
-        unique = true;
-        uniqueName = baseName + QString::number(float(index));
-        if (path != NULL) {
-            uniqueName += ".bin";
-        }
-        for (int i = 0; i < (int)files.count(); ++i) {
-            // see if the new name is unique
-            if (uniqueName == files[i]) {
-                unique = false;
-                ++index;
-            }
-        }
-    }
-
-    if (path == NULL) {
-        this->filename = uniqueName;
-    }
-    else
-    {
-        *path = *path + QDir::toNativeSeparators("/") + uniqueName;
-        qDebug() << *path;
+        i++;
     }
 }
 
@@ -1267,10 +1260,23 @@ QString csv_connection::getHeader(int section)
 
 void csv_connection::setData(const QModelIndex & index, float value)
 {
-    // get a datastream to serialise the data
-    file.seek(file.size());
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    if (this->filename.isEmpty()) {
+        this->generateFilename();
+    }
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (!f.open( QIODevice::ReadWrite)) {
+        QMessageBox msgBox;
+        msgBox.setText("csv_connection::setData(const QModelIndex&, float): Could not open file " + this->filename + " for Explicit Connection");
+        msgBox.exec();
+        return;
+    }
 
-    QDataStream access(&file);
+    // get a datastream to serialise the data
+    f.seek(f.size());
+
+    QDataStream access(&f);
 
     if (index.row() > this->getNumRows()) {
         // resize
@@ -1284,22 +1290,37 @@ void csv_connection::setData(const QModelIndex & index, float value)
     if (colVal > 2) ++colVal;
     int seekTo = index.row()*(colVal)+index.column();
 
-    file.seek(seekTo*4); // seek to location in bytes
+    f.seek(seekTo*4); // seek to location in bytes
 
     if (index.column() < 2) {
         access << (qint32) value;
     } else {
         access << (float) value;
     }
-    file.flush();
+    f.flush();
+    f.close();
 }
 
 void csv_connection::setData(int row, int col, float value)
 {
-    // get a datastream to serialise the data
-    file.seek(file.size());
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    if (this->filename.isEmpty()) {
+        this->generateFilename();
+    }
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (!f.open( QIODevice::ReadWrite)) {
+        QMessageBox msgBox;
+        msgBox.setText("csv_connection::setData(int, int, float): Could not open file "
+                       + this->filename + " for Explicit Connection");
+        msgBox.exec();
+        return;
+    }
 
-    QDataStream access(&file);
+    // get a datastream to serialise the data
+    f.seek(f.size());
+
+    QDataStream access(&f);
 
     if (row > this->getNumRows()) {
         // resize
@@ -1313,25 +1334,26 @@ void csv_connection::setData(int row, int col, float value)
     if (colVal > 2) ++colVal;
     int seekTo = row*(colVal)+col;
 
-    file.seek(seekTo*4); // seek to location in bytes
+    f.seek(seekTo*4); // seek to location in bytes
 
     if (col < 2) {
         access << (qint32) value;
     } else {
         access << (float) value;
     }
-    file.flush();
+    f.flush();
+    f.close();
 }
 
 void csv_connection::clearData()
 {
-    file.remove();
-    // open the storage file
-    if( !this->file.open( QIODevice::ReadWrite ) ) {
-        QMessageBox msgBox;
-        msgBox.setText("Could not open output file for conversion");
-        msgBox.exec();
-        return;
+    QFile f;
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    if (f.open(QIODevice::ReadWrite)) {
+        f.remove();
+        f.close();
+        qDebug() << "csv_connection::clearData(): removed " << this->filename;
     }
 }
 
@@ -2170,44 +2192,144 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
         node = node.nextSibling();
     }
 
-    // now try to match the script to a script in the library - if you can't then add the script
+    // Now try to match the script from the model with a script in the
+    // library. If there's no match, then add the script to the
+    // library. Deal with the case where the model script named "x"
+    // differs from the library script named "x".
+
     QSettings settings;
     // enter group of scripts
     settings.beginGroup("pythonscripts");
     // fetch a list of scripts
     QStringList scripts = settings.childKeys();
-    // first try to match by name and text
-    // if this does not evaluate we have a match and can leave it at that
-    if (settings.value(this->scriptName,"not found") != this->scriptText) {
-        // no match found!
-        // test the existing scripts for a match
-        bool matchFound = false;
-        for (int i = 0; i < scripts.size(); ++i) {
-            if (settings.value(scripts[i],"not found") == this->scriptText) {
-                this->scriptName = scripts[i];
-                matchFound = true;
-            }
+
+    // Here, we're comparing the script stored in the library with
+    // name scriptName with scriptText (which has just been copied
+    // in from the model).
+    if (settings.value(this->scriptName,"not found") == this->scriptText) {
+        // User's library DOES contain a script whose name and content
+        // matches the one in the model.
+        DBG() << "Your library has an identical copy of the model script " << this->scriptName;
+
+    } else if (settings.value(this->scriptName,"not found") == "not found") {
+
+        DBG() << "No library script named " << this->scriptName
+              << " was found; loading it into your library.";
+
+        // In this case, load the model script into the library with the same name.
+        if (this->scriptName == "") {
+            this->scriptName = "loaded connection";
         }
-        // script just isn't in the library...
-        if (!matchFound) {
-            QString extra = "";
-            int i = 1;
-            if (this->scriptName == "") {
-                this->scriptName = "loaded connection";
-                extra = " 1";
-                i = 2;
+        // add the script to the library
+        settings.setValue(this->scriptName, this->scriptText);
+
+    } else {
+
+        DBG() << "library version of script " << this->scriptName << " differs from model version.";
+
+        // In this case, ask the user what to do. User may either load
+        // the model version into their library and rename their
+        // existing function OR keep their existing version and save
+        // the one from the model into the library for reference, but
+        // when they save, their library version of the connection
+        // function will make its way into the model.
+        bool preferLibraryVersionOfScript = false;
+        QMessageBox libModel;
+        libModel.setWindowTitle("Versions of " + this->scriptName + " script differ");
+        libModel.setText("This model contains a version of the python connection script "
+                         + this->scriptName + " which is different from the version in "
+                         + "your script library (Edit->Settings->Python Scripts). Please "
+                         + "choose whether to prefer the library version (importing the "
+                         + "model's version as " + this->scriptName
+                         + "_model_<date>) or the model version (making a backup of the "
+                         + "current library version as " + this->scriptName + "_lib_<date>).");
+        QPushButton* libraryButton = libModel.addButton("Prefer Library", QMessageBox::AcceptRole);
+        QPushButton* modelButton = libModel.addButton("Prefer Model", QMessageBox::AcceptRole);
+        libModel.exec();
+        if (libModel.clickedButton() == libraryButton) {
+            preferLibraryVersionOfScript = true;
+        } else if (libModel.clickedButton() == modelButton) {
+            preferLibraryVersionOfScript = false;
+        } else {
+            DBG() << "Box closed/cancelled; preferring model version of script.";
+            // Leave preferLibraryVersionOfScript = false;
+        }
+
+        if (preferLibraryVersionOfScript) {
+
+            DBG() << "User prefers library version of the script " << this->scriptName;
+
+            // Now test to see if there is an identical script already
+            // in the library with another (or the same) name.
+            bool identicalFound = false;
+            QString identicalName = "";
+            for (int i = 0; i < scripts.size(); ++i) {
+                if (settings.value(scripts[i],"not found") == this->scriptText) {
+                    identicalFound = true;
+                    identicalName = scripts[i];
+                }
             }
 
-            // make sure the name is unique
-            while (scripts.contains(this->scriptName+extra)) {
-                extra = QString(" ") + QString::number(i);
+            if (identicalFound == true) {
+                // Library already contains this script.
+                DBG() << "A version of the script " << this->scriptName
+                      << " from the model was found in the library where it is named "
+                      << identicalName;
+            } else {
+                // ...otherwise, add the script. However, if there's a
+                // non-identical version of the script in the library with
+                // the new name, change the new name with a suffix.
+                QString newScriptName(this->scriptName + "_model_" + QDateTime::currentDateTime().toString("yyyyMMdd"));
+                int i = 1;
+                while (scripts.contains(newScriptName)) {
+                    newScriptName = this->scriptName + "_model_"
+                        + QDateTime::currentDateTime().toString("yyyyMMdd")
+                        + "_" + QString::number(i++);
+                }
+                settings.setValue(newScriptName, this->scriptText);
             }
-            // add the script to the library
-            settings.setValue(this->scriptName+extra, this->scriptText);
-            // save the modified scriptname
-            this->scriptName = this->scriptName+extra;
+
+        } else { // preferModelVersionOfScript
+
+            DBG() << "User prefers the model version of the script " << this->scriptName;
+
+            QString newScriptName(this->scriptName + "_lib_" + QDateTime::currentDateTime().toString("yyyyMMdd"));
+            // If the existing version of scriptName is stored in the
+            // library as a copy with another name, signal this to the
+            // user and do nothing before copying the model version
+            // into the library.
+            bool copyFound = false;
+            QString copyName = "";
+            for (int i = 0; i < scripts.size(); ++i) {
+                if (scripts[i] != this->scriptName
+                    && ( settings.value(scripts[i], "not found")
+                         == settings.value(this->scriptName,
+                                           "# An error occurred in connection.cpp: "
+                                           "pythonscript_connection::read_metadata_xml"))) {
+                    copyFound = true;
+                    copyName = scripts[i];
+                }
+            }
+
+            if (copyFound == true) {
+                DBG() << "An existing copy of the library version of "
+                      << this->scriptName << " is present with the name " << copyName;
+            } else {
+                // No existing copy, make a new copy.
+                DBG() << "Copying existing library version of "
+                      << this->scriptName << " to " << newScriptName;
+                settings.setValue(newScriptName,
+                                  settings.value(this->scriptName,
+                                                 "# An error occurred in connection.cpp: "
+                                                 "pythonscript_connection::read_metadata_xml"));
+            }
+
+            // Finally, copy the model version of the script into the
+            // library with the name scriptName
+            settings.setValue(this->scriptName, this->scriptText);
         }
     }
+
     // exit the scripts group
     settings.endGroup();
 }
@@ -2546,6 +2668,10 @@ void pythonscript_connection::generate_connections()
 
     // transfer the unpacked output to the local storage location for connections
     if (this->connection_target != NULL) {
+
+        qDebug() << "pythonscript_connection::generate_connections: setting src/dst popn names in connection_target";
+        this->connection_target->setSrcName (this->src->name);
+        this->connection_target->setDstName (this->dst->name);
 
         // remove existing connections
         this->connection_target->clearData();

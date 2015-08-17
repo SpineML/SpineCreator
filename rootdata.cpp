@@ -1310,6 +1310,7 @@ void rootData::updateComponentType(int index)
             }
             if (type == "conn") {
                 if (index >= 0) {
+                    targSel->connectionType->setSynapseIndex(targSel->getSynapseIndex());
                     if (targSel->connectionType->getIndex() != index) {
                         currProject->undoStack->push(new changeConnection(this, ptr, index));
                     }

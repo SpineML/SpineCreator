@@ -7,7 +7,7 @@
 % In this order: 'a', 'b', 'c', 'd', 'Cap', 'Vreset', 'Vthresh', 'k', 'Vpeak'
 codeIzhyParams = {'a', 'b', 'c', 'd', 'Cap', 'vr', 'vt', 'k', 'Vpeak'};
 % ** Change this line to suit your model **
-myIzhyParams   = {'a', 'b', 'c', 'd', 'C',   'Vr',     'Vt',      'k', 'Vpeak'};
+myIzhyParams   = {'a', 'b', 'c', 'd', 'C',   'Vr', 'Vt', 'k', 'Vpeak'};
 paramMapping = containers.Map (codeIzhyParams, myIzhyParams);
 
 % List your state variable names, including the injected current
@@ -28,7 +28,7 @@ quiverParams = containers.Map (quivParamNames, quivParamVals);
 % Calls phaseplane_izhy with the specified location, expt, population
 % name and param mapping
 %** Change this line to suit your model location, experiment, population etc. **
-phaseplane_izhy ('/home/seb/src/SpineML_2_BRAHMS/temp', 'experiment1.xml', 'Humphries', ...
+phaseplane_izhy ('/home/seb/src/SpineML_2_BRAHMS/temp', 'experiment0.xml', 'Population', ...
                  paramMapping, statevarMapping, quiverParams, 1);
 
 % masters, for comparison

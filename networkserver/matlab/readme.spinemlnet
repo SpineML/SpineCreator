@@ -1,12 +1,13 @@
 SpineMLNet
 ----------
 
-This is a communication server which can be launched from your matlab 
-script and used to send data to and receive data from a SpineML model 
-(which is probably running on Brahms).
+This is a communication server which can be launched from your matlab
+(or octave) script. It can send data to and receive data from a
+SpineML model (which is probably running on Brahms).
 
-It's a set of Matlab mex functions which implement the network server to 
-which the SpineML model connects as a network client.
+It's a set of Matlab mex functions (also compilable as octfiles) which
+implement the network server to which the SpineML model connects as a
+network client.
 
 The functions are:
 
@@ -25,5 +26,16 @@ spinemlnetStop() - Stop the spinemlnet server.
 
 Consule spinemlnet_run.m and spinemlnet_test.m to see how to use these
 mex functions.
+
+You can run the example:
+
+1) Build the mex/oct files, using either ./mexbuild or ./octbuild
+
+2) Run matlab or octave and start the server:
+
+   spinemlnet_test
+
+3) Open the SpineCreator project spinemlnet_test and run the experiment
+   "Simple1"
 
 Seb James, June 2014.

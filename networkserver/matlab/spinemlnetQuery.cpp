@@ -10,7 +10,7 @@
 #ifdef COMPILE_OCTFILE
 # include <octave/oct.h>
 #else
-# ifndef char16_t
+# ifdef __APPLE__
 // To enable compilation on Mac OS X 10.8.
 typedef unsigned short char16_t;
 # endif

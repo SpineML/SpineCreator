@@ -61,10 +61,63 @@ public:
 
     ParameterData * delay;
 
+    /*!
+     * The source population for this connection.
+     */
+    QSharedPointer <population> src;
+
+    /*!
+     * The destination population for this connection.
+     */
+    QSharedPointer <population> dst;
+
+    /*!
+     * Setter for srcName.
+     */
+    void setSrcName (QString& s);
+
+    /*!
+     * Setter for dstName.
+     */
+    void setDstName (QString& d);
+
+    /*!
+     * Obtain the index number of the synapse in which this connection
+     * exists.
+     */
+    int getSynapseIndex();
+
+    /*!
+     * Set the index number of the synapse in which this connection
+     * exists.
+     */
+    void setSynapseIndex(int synidx);
+
 private:
     QString filename;
-    QFile file;
 
+protected:
+    /*!
+     * The name of the source population for this connection. This may
+     * be used where it is inconvenient to set the
+     * QSharedPointer<population> src.
+     */
+    QString srcName;
+
+    /*!
+     * The name of the dest population for this connection. This may
+     * be used where it is inconvenient to set the
+     * QSharedPointer<population> dst.
+     */
+    QString dstName;
+
+    /*!
+     * The synapse index for this connection (a projection between two
+     * populations can have many synapses, which count from
+     * 0). Initialised in constructors to a negative number, which
+     * must be changed later to a valid number 0 or above.
+     */
+    int synapseIndex;
 };
 
 class alltoAll_connection : public connection
@@ -139,12 +192,13 @@ public:
     void import_csv(QString filename);
     /*!
      * \brief import_packed_binary
-     * \param fileIn
+     * \param fileIn The source file from which to import
+     * \param fileOut The connection's storage file
      * Import data into the connection from a file written in the packed binary format. This
      * format consists of close packed binary data with the structure (int S)(int D)(opt float L)
      * where S is the source index, D is the dest index, and optionally L is the delay.
      */
-    void import_packed_binary(QFile &fileIn);
+    void import_packed_binary(QFile &fileIn, QFile& fileOut);
     QVector <float> fetchData(int index);
     void getAllData(QVector < conn > &conns);
     float getData(int, int);
@@ -172,12 +226,31 @@ public:
 
 private:
     QString filename;
-    QFile file;
     QXmlStreamWriter xmlOut;
     QXmlStreamReader xmlIn;
     int numRows;
     QVector < change > changes;
-    void setUniqueName(QString *path = NULL);
+
+    /*!
+     * Generate a filename based on the source and destination
+     * population names, throwing an exception if either of these is
+     * not set.
+     */
+    void generateFilename(void);
+
+    /*!
+     * Get the directory used for storage of the connection binary
+     * files - i.e. the model directory.
+     */
+    QDir getLibDir (void);
+
+    /*!
+     * Replace chars in str which are not in the string allowed with
+     * replaceChar.
+     */
+    void sanitizeReplace (QString& str,
+                          const QString& allowed,
+                          const char replaceChar);
 };
 
 
@@ -197,8 +270,6 @@ public:
     float rotation;
     QString errorLog;
 
-    QSharedPointer <population> src;
-    QSharedPointer <population> dst;
     QVector < conn > *conns;
     QMutex * mutex;
     bool isList();
