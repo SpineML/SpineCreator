@@ -535,6 +535,9 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
+    if (this->filename.isEmpty()) {
+        this->generateFilename();
+    }
     f.setFileName(lib_dir.absoluteFilePath(this->filename));
     if (!f.open( QIODevice::ReadOnly)) {
         QMessageBox msgBox;
@@ -726,10 +729,11 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
 
         // do we have explicit delays
         bool explicit_delay = BinaryFileList.at(0).toElement().attribute("explicit_delay_flag").toInt();
-        if (explicit_delay)
+        if (explicit_delay) {
             this->setNumCols(3);
-        else
+        } else {
             this->setNumCols(2);
+        }
 
         // check what the file type is, since we changed from using QStreamData written binary to
         // packed binary we need to check for the packed_binary flag
@@ -795,6 +799,11 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
     }
 
     if (BinaryFileList.count() != 1) {
+
+        // No BinaryFileList, so the ConnectionList must be stated in the XML
+        if (this->filename.isEmpty()) {
+            this->generateFilename();
+        }
 
         // load connections from xml
         QFile f;
@@ -1349,6 +1358,9 @@ void csv_connection::clearData()
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
+    if (this->filename.isEmpty()) {
+        this->generateFilename();
+    }
     f.setFileName(lib_dir.absoluteFilePath(this->filename));
     if (f.open(QIODevice::ReadWrite)) {
         f.remove();

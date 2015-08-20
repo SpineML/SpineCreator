@@ -1325,28 +1325,28 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             if (n.toElement().tagName() == "AllToAllConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new alltoAll_connection;
-                newSynapse->connectionType->import_parameters_from_xml(n);
                 newSynapse->connectionType->setSynapseIndex (i);
+                newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "OneToOneConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new onetoOne_connection;
-                newSynapse->connectionType->import_parameters_from_xml(n);
                 newSynapse->connectionType->setSynapseIndex (i);
+                newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "FixedProbabilityConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new fixedProb_connection;
-                newSynapse->connectionType->import_parameters_from_xml(n);
                 newSynapse->connectionType->setSynapseIndex (i);
+                newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "ConnectionList") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new csv_connection;
-                newSynapse->connectionType->import_parameters_from_xml(n);
                 newSynapse->connectionType->setSrcName (srcName);
                 newSynapse->connectionType->setDstName (destName);
                 newSynapse->connectionType->setSynapseIndex (i);
+                newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "KernelConnection") {
                 // fixme: fix this

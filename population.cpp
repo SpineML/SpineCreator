@@ -447,9 +447,9 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 delete newInput->connectionType;
                 newInput->connectionType = new csv_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
                 newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
                 newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
+                newInput->connectionType->import_parameters_from_xml(cNode);
             }
             type = e2.elementsByTagName("KernelConnection");
             if (type.count() == 1) {
@@ -465,11 +465,10 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             if (newInput->src != (QSharedPointer <NineMLComponentData>)0) {
                 newInput->dst = this->neuronType;
                 this->neuronType->inputs.push_back(newInput);
-                newInput->src->outputs.push_back(newInput);}
-
-            else {}
-                // ERRR
-
+                newInput->src->outputs.push_back(newInput);
+            } else {
+                // Error
+            }
         }
     }
 
