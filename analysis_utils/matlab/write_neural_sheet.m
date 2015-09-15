@@ -5,7 +5,7 @@ function write_neural_sheet (neuralsheet, file_path)
     nfs = size(neuralsheet);
     d = zeros (nfs(1), nfs(2));
     numneurons = nfs(1).*nfs(2);
-    
+
     d(:,:) = 1;
     d = d .* neuralsheet;
 
@@ -17,9 +17,11 @@ function write_neural_sheet (neuralsheet, file_path)
         return
     end
 
-    for i = 1:numneurons
-        %fwrite (fid, i, 'int32');
-        fwrite (fid, d(i), 'double');    
+    for i = 0:numneurons-1
+        % index:
+        fwrite (fid, i, 'int32');
+        % weight value:
+        fwrite (fid, d(i+1), 'double');
     end
 
     fclose (fid);
