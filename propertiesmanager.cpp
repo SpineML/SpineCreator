@@ -112,7 +112,7 @@ QComboBox *PropertiesManager::getUnitCombo(Unit selected)
     dims_unit->addItem("Ohm");
     dims_unit->addItem("g gram");
     dims_unit->addItem("m metre");
-    dims_unit->addItem("S seimen");
+    dims_unit->addItem("S siemen");
     dims_unit->addItem("A ampere");
     dims_unit->addItem("cd candela");
     dims_unit->addItem("mol");
@@ -884,12 +884,3 @@ void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
     }
 
 }
-
-
-
-
-
-
-
-
-
