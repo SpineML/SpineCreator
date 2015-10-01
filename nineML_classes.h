@@ -89,12 +89,12 @@ typedef enum{
     UNIT_Ohm,
     UNIT_g,
     UNIT_m,
-    UNIT_s,
+    UNIT_S,
     UNIT_A,
     UNIT_cd,
     UNIT_mol,
     UNIT_degC,
-    UNIT_S,
+    UNIT_s,
     UNIT_F,
     UNIT_Hz
 } Unit;
