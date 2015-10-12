@@ -14,6 +14,7 @@ function data = load_neural_sheet (file_path)
 
     data = [];
     while ~feof(fid)
+        [ idx1, cnt ] = fread (fid, [1], 'int32');
         [ data1, cnt ] = fread (fid, [1], 'double=>double');
         data = [data data1];
     end

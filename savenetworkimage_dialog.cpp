@@ -219,6 +219,17 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
         outPix.fill();// white
     }
 
+    if (list.empty()) {
+        // User hasn't made a selection, so open a dialog to hint that
+        // a selection is required for an image. (tested here so that
+        // we can return a null QPixmap)
+        QMessageBox::warning(this, QString("No populations selected"),
+                             QString("The image will be blank as no populations have been selected. "
+                                     "Please select at least one population for the image."));
+
+        return outPix;
+    }
+
     QPainter *painter = new QPainter(&outPix);
 
     painter->setRenderHint(QPainter::HighQualityAntialiasing, true);
