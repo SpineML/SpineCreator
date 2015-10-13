@@ -407,6 +407,12 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
         QColor colour;
 
+        if (this->type == projectionObject) {
+            colour = QColor(0,0,255,255);
+        } else {
+            colour = QColor(0,255,0,255);
+        }
+
         QPen oldPen = painter->pen();
 
         QPointF start;
@@ -416,11 +422,6 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
         case microcircuitDrawStyle:
         case spikeSourceDrawStyle:
         {
-            if (this->type == projectionObject)
-                colour = QColor(0,0,255,255);
-            else
-                colour = QColor(0,255,0,255);
-
             if (source != NULL) {
                 QLineF temp = QLineF(QPointF(source->x, source->y), this->curves.front().C1);
                 temp.setLength(0.501);
@@ -449,10 +450,15 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
 
             for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+                if (this->curves.size()-1 == i) {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(end));
+                } else {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(this->curves[i].end));
+                }
             }
 
             // draw start and end markers
@@ -503,7 +509,6 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
                 pen.setDashPattern(dash);
                 painter->setPen(pen);
-
             }
 
             // DRAW
@@ -513,15 +518,11 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             break;
         }
         case layersDrawStyle:
-
+        {
             return;
+        }
         case standardDrawStyleExcitatory:
         {
-            if (this->type == projectionObject)
-                colour = QColor(0,0,255,255);
-            else
-                colour = QColor(0,255,0,255);
-
             start = this->start;
             end = this->curves.back().end;
 
@@ -533,6 +534,7 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             // account for hidpi in line width
             QPen linePen = painter->pen();
             linePen.setWidthF(linePen.widthF()*dpi_ratio);
+//            linePen.setColor(colour);
             painter->setPen(linePen);
 
             QPainterPath path;
@@ -542,10 +544,15 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
             // draw curves
             for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+                if (this->curves.size()-1 == i) {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(end));
+                } else {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(this->curves[i].end));
+                }
             }
 
             QPolygonF arrow_head;
@@ -595,15 +602,15 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
                 pen.setDashPattern(dash);
                 painter->setPen(pen);
-
             }
 
             // DRAW
             painter->drawPath(path);
             painter->setPen(oldPen);
+
             return;
         }
-        case standardDrawStyle:
+        case standardDrawStyle: // Used to draw inhibitory projections.
         {
             start = this->start;
             end = this->curves.back().end;
@@ -617,15 +624,19 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             // account for hidpi in line width
             QPen linePen = painter->pen();
             linePen.setWidthF(linePen.widthF()*dpi_ratio);
+            // Setting colour is good when drawing to png, but buggers up when projection is selected in UI.
+            linePen.setColor(colour);
             painter->setPen(linePen);
 
             if (this->type == projectionObject) {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),
+                                    0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,0,255,255));
             }
             else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.015*dpi_ratio*GLscale,0.015*dpi_ratio*GLscale);
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),
+                                    0.015*dpi_ratio*GLscale,0.015*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,210,0,255));
             }
@@ -637,10 +648,15 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
             // draw curves
             for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+                if (this->curves.size()-1 == i) {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(end));
+                } else {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(this->curves[i].end));
+                }
             }
 
             // only draw number of synapses for Projections
@@ -665,7 +681,6 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
                 pen.setDashPattern(dash);
                 painter->setPen(pen);
-
             }
 
             // DRAW

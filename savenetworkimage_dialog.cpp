@@ -242,13 +242,11 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
     font.setStyleHint(QFont::TypeWriter);
     painter->setFont(font);
 
-
-
     // Just render selection:
     for (int i = 0; i < list.size(); ++i) {
-
-            list[i]->draw(painter, 200.0*scale, -bounds.center().x(), -bounds.center().y(), bounds.width()*100*scale, bounds.height()*100*scale, data->popImage, this->style);
-
+            list[i]->draw(painter, 200.0*scale,
+                          -bounds.center().x(), -bounds.center().y(), bounds.width()*100*scale,
+                          bounds.height()*100*scale, data->popImage, this->style);
     }
 
     //QImage outIm = outPix->toImage();
@@ -298,9 +296,11 @@ void saveNetworkImageDialog::changeHeight(double value) {
 void saveNetworkImageDialog::changeDrawStyle(int index) {
     switch (index) {
     case 0:
+        // "SpineCreator" in the menu
         this->style = standardDrawStyle;
         break;
     case 1:
+        // "Circle and arrow" in the menu
         this->style = microcircuitDrawStyle;
         break;
     }
