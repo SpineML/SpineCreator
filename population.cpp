@@ -352,6 +352,15 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             this->isVisualised = e2.attribute("value", "").toFloat();
         }
 
+        if( e2.tagName() == "displayed_params" ) {
+            // Tokenize the params, find if the one we are is in
+            // there, and then mark the relevant params as being for
+            // display? Or just store the list in this population?
+            QString displayedParams = e2.attribute("value", "");
+            DBG() << displayedParams;
+            // Parse this and then set this->layoutType members accordingly
+        }
+
         n = n.nextSibling();
     }
 
@@ -901,7 +910,6 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
     xmlOut.writeStartElement("Layout");
 
     this->layoutType->write_node_xml(xmlOut);
-
     xmlOut.writeEndElement(); // layout
 
     // PROJECTIONS ///////////
@@ -1033,6 +1041,17 @@ void population::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     pop.appendChild(isvis);
     isvis.setAttribute("value", this->isVisualised);
 
+    // Lastly, write out the parameters which should be visualised.
+    QDomElement dispParams = meta.createElement( "displayed_params" );
+    pop.appendChild(dispParams);
+    // for each this->layoutType->ParameterList, select out if it is marked as "show".
+    QString s("");
+    for (int i = 0; i < this->layoutType->ParameterList.size(); ++i) {
+        if (this->layoutType->ParameterList[i]->showInNetwork == true) {
+            s += this->layoutType->ParameterList[i]->name + ",";
+        }
+    }
+    dispParams.setAttribute("value", s);
 }
 
 void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, QDomDocument * meta, projectObject * data) {

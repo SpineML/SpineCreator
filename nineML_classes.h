@@ -197,7 +197,11 @@ public:
     QVector < int > indices;
     ParameterType currType;
     int seed;
-
+    /*!
+     * If true, then show this parameter and its value in the network
+     * diagram. Maps to information stored in the Population metadata.
+     */
+    bool showInNetwork;
     /*!
      * The file_name, if the data are saved as explicit binary data.
      */

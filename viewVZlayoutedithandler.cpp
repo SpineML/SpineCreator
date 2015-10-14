@@ -1206,19 +1206,29 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
 
 
-                    if (j == 0)
+                    if (j == 0 || j == 1) {
                         parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
-                    if (j == 1)
-                        parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
+                    }
 
                     varLayout->addRow(name, parSpin);
-                    connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1, QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
-                    connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1, QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
+                    connect(this,
+                            SIGNAL(deleteProperties()),
+                            varLayout->itemAt(varLayout->rowCount()-1,
+                                              QFormLayout::LabelRole)->widget(),
+                            SLOT(deleteLater()));
+                    connect(this,
+                            SIGNAL(deleteProperties()),
+                            varLayout->itemAt(varLayout->rowCount()-1,
+                                              QFormLayout::FieldRole)->widget(),
+                            SLOT(deleteLater()));
 
                     parSpin->setProperty("action", "changeVal");
                     parSpin->setProperty("valToChange", 0);
                     connect(parSpin, SIGNAL(editingFinished()), this->data, SLOT (updatePar()));
-                    connect(parSpin, SIGNAL(editingFinished()), this->viewVZ->OpenGLWidget, SLOT (parsChangedPopulation()));
+                    connect(parSpin,
+                            SIGNAL(editingFinished()),
+                            this->viewVZ->OpenGLWidget,
+                            SLOT (parsChangedPopulation()));
                     parSpin->setProperty("type","layout" + parType);
                     varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type","layout" + parType);
 

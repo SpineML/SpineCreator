@@ -1544,6 +1544,7 @@ ParameterData::ParameterData(Parameter *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = Undefined;
+    this->showInNetwork = true;
     this->filename = "";
 }
 
@@ -1554,6 +1555,7 @@ ParameterData::ParameterData(ParameterData *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = data->currType;
+    this->showInNetwork = true;
     this->filename = "";
 }
 
