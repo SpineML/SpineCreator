@@ -35,16 +35,23 @@ class saveNetworkImageDialog;
 class saveNetworkImageDialog : public QDialog
 {
     Q_OBJECT
-    
+
 public:
     explicit saveNetworkImageDialog(rootData *data, QString fileName, QWidget *parent = 0);
     explicit saveNetworkImageDialog(glConnectionWidget *glConnWidget, QString fileName, QWidget *parent = 0);
     ~saveNetworkImageDialog();
-    
+
 private:
     Ui::saveNetworkImageDialog *ui;
     rootData * data;
     glConnectionWidget * glConnWidget;
+    /*!
+     * A sorting algorithm for a list of system objects. This orders
+     * the members so that projections are drawn upon populations and
+     * generic inputs are drawn upon everything. Used in drawPixMap().
+     */
+    static bool drawOrderLessThan (const QSharedPointer<systemObject>& o1,
+                                   const QSharedPointer<systemObject>& o2);
     QPixmap drawPixMap();
     QPixmap drawPixMapVis();
     float scale;

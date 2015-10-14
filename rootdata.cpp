@@ -329,6 +329,7 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                 float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
 
                 if (pop->isSpikeSource) {
+                    // Shadow the spike source.
                     for (int i = 5; i > 1; --i) {
                         QPen pen(QColor(0,0,0,50/i));
                         pen.setWidthF(float(i*2));
@@ -337,14 +338,15 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                     }
 
                 } else {
-
+                    // This draws a shadow around the rectangle by
+                    // drawing concentric rectangles of slightly
+                    // differing size and alpha.
                     for (int i = 5; i > 1; --i) {
                         QPen pen(QColor(0,0,0,50/i));
                         pen.setWidthF(float(i*2));
                         painter->setPen(pen);
                         QRectF rectangle(left, top, right-left, bottom-top);
                         painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
-                        //painter->drawRect(rectangle);
                     }
                 }
             }

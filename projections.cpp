@@ -395,23 +395,33 @@ drawStyle projection::style() {
 
 void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style) {
 
+    // GLscale = 200 * scale from the UI
+    float scale = GLscale/200.0;
+    // Enforce a lower limit to scale, to ensure we don't try to draw
+    // lines too small for the UI to draw them.
+    if (scale < 0.4) {
+        scale = 0.4;
+    }
+
     // setup for drawing curves
     this->setupTrans(GLscale, viewX, viewY, width, height);
 
-    // switch if we have standardDrawStyle
-    if (style == standardDrawStyle) {
+    bool saveNetworkImage = false;
+
+    // switch if we have standardDrawStyle or saveNetworkImageDrawStyle
+    if (style == saveNetworkImageDrawStyle) {
+        // This draw is for a "Save Image" request, rather than an on-screen draw.
+        saveNetworkImage = true;
+        style = this->projDrawStyle;
+    } else if (style == standardDrawStyle) {
+        // standardDrawStyle for inhibitory,
+        // standardDrawStyleExcitatory for excitatory projections.
         style = this->projDrawStyle;
     }
 
     if (this->curves.size() > 0) {
 
-        QColor colour;
-
-        if (this->type == projectionObject) {
-            colour = QColor(0,0,255,255);
-        } else {
-            colour = QColor(0,255,0,255);
-        }
+        QColor colour = QColor(0,0,255,255);
 
         QPen oldPen = painter->pen();
 
@@ -426,9 +436,9 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
                 QLineF temp = QLineF(QPointF(source->x, source->y), this->curves.front().C1);
                 temp.setLength(0.501);
                 start = temp.p2();
-            }
-            else
+            } else {
                 start = this->start;
+            }
 
             if (destination != NULL) {
                 QLineF temp = QLineF(QPointF(destination->x, destination->y), this->curves.back().C2);
@@ -440,7 +450,7 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
             // set pen width
             QPen pen2 = painter->pen();
-            pen2.setWidthF((pen2.widthF()+1.0)*GLscale/100.0);
+            pen2.setWidthF((pen2.widthF()+1.0)*2*scale);
             pen2.setColor(colour);
             painter->setPen(pen2);
 
@@ -488,8 +498,8 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             endPoint.addPolygon(arrow_head);
             painter->fillPath(endPoint, colour);
 
-            // only draw number of synapses for Projections
-            if (this->type == projectionObject) {
+            // Show number of synapses with dashes
+            {
                 QPen pen = painter->pen();
                 QVector<qreal> dash;
                 dash.push_back(4);
@@ -521,24 +531,37 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
         {
             return;
         }
+        case standardDrawStyle: // Used to draw inhibitory projections.
         case standardDrawStyleExcitatory:
+        default:
         {
             start = this->start;
             end = this->curves.back().end;
 
-            // draw end marker
-
             QSettings settings;
             float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+            if (saveNetworkImage) {
+                // Ensure image output isn't affected by dpi_ratio:
+                dpi_ratio = 1;
+            }
 
             // account for hidpi in line width
             QPen linePen = painter->pen();
-            linePen.setWidthF(linePen.widthF()*dpi_ratio);
-//            linePen.setColor(colour);
+            linePen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
+            // We have to setColor when saving a network image because
+            // the projection doesn't already have a colour. We can't
+            // do this for on-screen drawing, because setting the
+            // colour messes up the shadowing effect used to mark out
+            // a selected projection.
+            if (saveNetworkImage) {
+                // Wider lines for image output
+                linePen.setWidthF(linePen.widthF()*2);
+                // Ensure colour is set (but only when saving image)
+                linePen.setColor(colour);
+            }
             painter->setPen(linePen);
 
             QPainterPath path;
-
             // start curve drawing
             path.moveTo(this->transformPoint(start));
 
@@ -554,31 +577,6 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
                                  this->transformPoint(this->curves[i].end));
                 }
             }
-
-            QPolygonF arrow_head;
-            QPainterPath endPoint;
-            //calculate arrow head polygon
-            QPointF end_point = path.pointAtPercent(1.0);
-            QPointF temp_end_point = path.pointAtPercent(0.995);
-            QLineF line = QLineF(end_point, temp_end_point).unitVector();
-            QLineF line2 = QLineF(line.p2(), line.p1());
-            line2.setLength(line2.length()+0.05*GLscale/2.0);
-            end_point = line2.p2();
-            if (this->type == projectionObject) {
-                line.setLength(0.2*GLscale/2.0);
-            } else {
-                line.setLength(0.1*GLscale/2.0);
-            }
-            QPointF t = line.p2() - line.p1();
-            QLineF normal = line.normalVector();
-            normal.setLength(normal.length()*0.8);
-            QPointF a1 = normal.p2() + t;
-            normal.setLength(-normal.length());
-            QPointF a2 = normal.p2() + t;
-            arrow_head.clear();
-            arrow_head << end_point << a1 << a2 << end_point;
-            endPoint.addPolygon(arrow_head);
-            painter->fillPath(endPoint, colour);
 
             // only draw number of synapses for Projections
             if (this->type == projectionObject) {
@@ -604,95 +602,45 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
                 painter->setPen(pen);
             }
 
-            // DRAW
+            // Draw the line before the end marker.
             painter->drawPath(path);
-            painter->setPen(oldPen);
 
-            return;
-        }
-        case standardDrawStyle: // Used to draw inhibitory projections.
-        {
-            start = this->start;
-            end = this->curves.back().end;
-
-            // draw end marker
             QPainterPath endPoint;
-
-            QSettings settings;
-            float dpi_ratio = settings.value("dpi", 1.0).toFloat();
-
-            // account for hidpi in line width
-            QPen linePen = painter->pen();
-            linePen.setWidthF(linePen.widthF()*dpi_ratio);
-            // Setting colour is good when drawing to png, but buggers up when projection is selected in UI.
-            linePen.setColor(colour);
-            painter->setPen(linePen);
-
-            if (this->type == projectionObject) {
+            if (style == standardDrawStyle) {
+                // Inhibitory connections get a little circle.
                 endPoint.addEllipse(this->transformPoint(this->curves.back().end),
                                     0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, QColor(0,0,255,255));
-            }
-            else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),
-                                    0.015*dpi_ratio*GLscale,0.015*dpi_ratio*GLscale);
-                painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,210,0,255));
-            }
 
-            QPainterPath path;
-
-            // start curve drawing
-            path.moveTo(this->transformPoint(start));
-
-            // draw curves
-            for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i) {
-                    path.cubicTo(this->transformPoint(this->curves[i].C1),
-                                 this->transformPoint(this->curves[i].C2),
-                                 this->transformPoint(end));
-                } else {
-                    path.cubicTo(this->transformPoint(this->curves[i].C1),
-                                 this->transformPoint(this->curves[i].C2),
-                                 this->transformPoint(this->curves[i].end));
-                }
+            } else if (style == standardDrawStyleExcitatory) {
+                QPolygonF arrow_head;
+                //calculate arrow head polygon
+                QPointF end_point = path.pointAtPercent(1.0);
+                QPointF temp_end_point = path.pointAtPercent(0.995);
+                QLineF line = QLineF(end_point, temp_end_point).unitVector();
+                QLineF line2 = QLineF(line.p2(), line.p1());
+                line2.setLength(line2.length()+0.05*GLscale/2.0);
+                end_point = line2.p2();
+                line.setLength(0.1*GLscale);
+                QPointF t = line.p2() - line.p1();
+                QLineF normal = line.normalVector();
+                normal.setLength(normal.length()*0.8);
+                QPointF a1 = normal.p2() + t;
+                normal.setLength(-normal.length());
+                QPointF a2 = normal.p2() + t;
+                arrow_head.clear();
+                arrow_head << end_point << a1 << a2 << end_point;
+                endPoint.addPolygon(arrow_head);
+                painter->fillPath(endPoint, colour);
             }
 
-            // only draw number of synapses for Projections
-            if (this->type == projectionObject) {
-                QPen pen = painter->pen();
-                QVector<qreal> dash;
-                dash.push_back(4);
-                for (int syn = 1; syn < this->synapses.size(); ++syn) {
-                    dash.push_back(2.0);
-                    dash.push_back(1.0);
-                }
-                if (synapses.size() > 1) {
-                    dash.push_back(2.0);
-                    dash.push_back(1.0);
-                    dash.push_back(2.0);
-                    pen.setWidthF((pen.widthF()+1.0) * 1.5);
-                } else {
-                    dash.push_back(0.0);
-                }
-                dash.push_back(100000.0);
-                dash.push_back(0.0);
-
-                pen.setDashPattern(dash);
-                painter->setPen(pen);
-            }
-
-            // DRAW
-            painter->drawPath(path);
             painter->setPen(oldPen);
 
             break;
         }
-        }
-
+        } // switch
     }
-
 }
 
 void projection::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage ignored, drawStyle style) {

@@ -42,7 +42,7 @@ saveNetworkImageDialog::saveNetworkImageDialog(rootData * data, QString fileName
     this->fileName = fileName;
 
     // setup combobox
-    this->style = standardDrawStyle;
+    this->style = saveNetworkImageDrawStyle;
     ui->comboBox->addItem("SpineCreator");
     ui->comboBox->addItem("Circle and Arrow");
     ui->comboBox->setCurrentIndex(0);
@@ -139,8 +139,8 @@ saveNetworkImageDialog::~saveNetworkImageDialog()
     delete ui;
 }
 
-void saveNetworkImageDialog::reDrawPreview() {
-
+void saveNetworkImageDialog::reDrawPreview()
+{
     QPixmap pix;
     if (height > 0)
         pix = drawPixMapVis();
@@ -153,14 +153,22 @@ void saveNetworkImageDialog::reDrawPreview() {
     pix = pix.scaled(ui->preview->size(),Qt::KeepAspectRatio,Qt::SmoothTransformation);
 
     ui->preview->setPixmap(pix);
-
 }
 
-QPixmap saveNetworkImageDialog::drawPixMap() {
+bool saveNetworkImageDialog::drawOrderLessThan (const QSharedPointer<systemObject>& o1,
+                                                const QSharedPointer<systemObject>& o2)
+{
+    return (o1->type < o2->type ? true : false);
+}
 
+QPixmap saveNetworkImageDialog::drawPixMap()
+{
     // what to draw
     QVector <QSharedPointer<systemObject> > list;
     list = data->selList;
+    // Order the list now to ensure the correct drawing output?
+    // Populations then projections then genericinputs.
+    qSort(list.begin(), list.end(), saveNetworkImageDialog::drawOrderLessThan);
 
     QRectF bounds = QRectF(100000,100000,-200000,-200000);
 
@@ -203,9 +211,7 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
                 if (bz->C2.x() > bounds.right())
                     bounds.setRight(bz->C2.x());
             }
-
         }
-
     }
 
     bounds.setTopLeft(bounds.topLeft() - QPointF(border,border));
@@ -249,55 +255,50 @@ QPixmap saveNetworkImageDialog::drawPixMap() {
                           bounds.height()*100*scale, data->popImage, this->style);
     }
 
-    //QImage outIm = outPix->toImage();
-    //outIm.save("/home/alex/test_image.png","png");
-
     painter->end();
-
     delete painter;
+
     return outPix;
 }
 
-QPixmap saveNetworkImageDialog::drawPixMapVis() {
-
+QPixmap saveNetworkImageDialog::drawPixMapVis()
+{
     return glConnWidget->renderImage(width, height);
-
-    /*image.save("/home/alex/test.png", "png");
-
-    QPixmap pix;
-    pix.fromImage(image);
-
-    return pix;*/
-
 }
 
-void saveNetworkImageDialog::changeScale(double value) {
+void saveNetworkImageDialog::changeScale(double value)
+{
     scale = value;
     reDrawPreview();
 }
 
-void saveNetworkImageDialog::changeBorder(double value) {
+void saveNetworkImageDialog::changeBorder(double value)
+{
     border = value;
     reDrawPreview();
 }
 
-void saveNetworkImageDialog::changeWidth(double value) {
+void saveNetworkImageDialog::changeWidth(double value)
+{
     width = round(value);
     ((QDoubleSpinBox *) sender())->setValue(round(value));
     reDrawPreview();
 }
 
-void saveNetworkImageDialog::changeHeight(double value) {
+void saveNetworkImageDialog::changeHeight(double value)
+{
     height = round(value);
     ((QDoubleSpinBox *) sender())->setValue(round(value));
     reDrawPreview();
 }
 
-void saveNetworkImageDialog::changeDrawStyle(int index) {
+void saveNetworkImageDialog::changeDrawStyle(int index)
+{
     switch (index) {
     case 0:
         // "SpineCreator" in the menu
-        this->style = standardDrawStyle;
+        //this->style = standardDrawStyle;
+        this->style = saveNetworkImageDrawStyle;
         break;
     case 1:
         // "Circle and arrow" in the menu
@@ -307,8 +308,8 @@ void saveNetworkImageDialog::changeDrawStyle(int index) {
     reDrawPreview();
 }
 
-void saveNetworkImageDialog::save() {
-
+void saveNetworkImageDialog::save()
+{
     this->fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), qgetenv("HOME"), tr("Png (*.png)"));
 
     if (this->fileName.isEmpty()) {
@@ -316,12 +317,12 @@ void saveNetworkImageDialog::save() {
     }
 
     QPixmap pix;
-    if (height > 0)
+    if (height > 0) {
         pix = drawPixMapVis();
-    else
+    } else {
         pix = drawPixMap();
+    }
 
     QImage outIm = pix.toImage();
     outIm.save(fileName,"png");
-
 }

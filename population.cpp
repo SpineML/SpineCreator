@@ -629,7 +629,9 @@ QPointF population::transformPoint(QPointF point) {
 }
 
 
-void population::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style) {
+void population::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style)
+{
+    float scale = GLscale/200.0;
 
     this->setupTrans(GLscale, viewX, viewY, width, height);
 
@@ -643,7 +645,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         // draw circle
         QPen oldPen = painter->pen();
         QPen pen = painter->pen();
-        pen.setWidthF((pen.widthF()+1.0)*GLscale/100.0);
+        pen.setWidthF((pen.widthF()+1.0)*2*scale);
         painter->setPen(pen);
         painter->drawEllipse(transformPoint(QPointF(this->x, this->y)),0.5*GLscale/2.0,0.5*GLscale/2.0);
         painter->setPen(oldPen);
@@ -663,12 +665,11 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         return;
     }
     case layersDrawStyle:
+    {
         return;
-    case standardDrawStyle:
-    case standardDrawStyleExcitatory:
-        // do nothing
-        break;
+    }
     case spikeSourceDrawStyle:
+    {
         // draw circle
         QPen oldPen = painter->pen();
         QPen pen = painter->pen();
@@ -700,6 +701,13 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         return;
         break;
     }
+    case standardDrawStyle:
+    case standardDrawStyleExcitatory:
+    case saveNetworkImageDrawStyle:
+    default:
+        // do nothing here, break out into the code below.
+        break;
+    }
 
     // transform the co-ordinates manually (using the qt transformation leads to blurry fonts!)
     float left = ((this->left+viewX)*GLscale+float(width))/2;
@@ -709,18 +717,18 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
     QRectF rectangle(left, top, right-left, bottom-top);
 
-    QRectF rectangleInner(left+2, top+2, right-left-8, bottom-top-4);
+    QRectF rectangleInner(left+2*scale, top+2*scale, right-left-8*scale, bottom-top-4*scale);
 
     QColor col(this->colour);
     col.setAlpha(100);
     QPainterPath path;
     path.addRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
 
-    //painter->fillRect(rectangle, col);
     painter->fillPath(path, col);
 
     painter->drawImage(rectangle, image);
 
+    // Draw a dark grey border around the population
     painter->setPen(QColor(200,200,200,255));
     painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
     painter->setPen(QColor(0,0,0,255));
@@ -746,7 +754,6 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     painter->setFont(font);
     painter->drawText(rectangleInner, Qt::AlignRight, text);
     painter->setFont(oldFont);
-
 }
 
 void population::drawSynapses(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style) {

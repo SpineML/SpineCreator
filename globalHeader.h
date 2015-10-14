@@ -25,12 +25,10 @@
 #ifndef GLOBALHEADER_H
 #define GLOBALHEADER_H
 
-// prototype all classes;
-
 // define a macro to test dynamic casts return non-NULL
 #define CHECK_CAST(A) if (A==NULL) {qDebug() << "Bad cast in " << __FILE__ << ", " << __LINE__; exit(0);}
 
-
+// prototype all classes;
 class viewELLayoutEditHandler;
 class viewVZLayoutEditHandler;
 class connection;
@@ -61,8 +59,6 @@ class pythonscript_connection;
 class versionControl;
 class projectObject;
 
-// include headers:
-
 // C++ Library
 #include <vector>
 #include <iostream>
@@ -85,9 +81,7 @@ class projectObject;
 #include "qtimer.h"
 #include <QFileDialog>
 #include <QtGui>
-//#include "viewELexptpanelhandler.h"
 #include <QHostInfo>
-
 
 #ifdef _MSC_VER
 #include <limits>
@@ -123,7 +117,6 @@ public:
     QString toString();
     QString toFileString();
     void fromFileString(QString);
-
 };
 
 struct loc {
@@ -139,7 +132,6 @@ struct conn {
 };
 
 enum connectionType {
-
     AlltoAll,
     OnetoOne,
     FixedProb,
@@ -148,11 +140,9 @@ enum connectionType {
     Python,
     CSA,
     none
-
 };
 
-
-typedef enum{
+typedef enum {
     FixedValue,
     Statistical,
     ExplicitList,
@@ -160,13 +150,12 @@ typedef enum{
 } ParameterType;
 
 enum drawStyle {
-
     standardDrawStyle,
     microcircuitDrawStyle,
     layersDrawStyle,
     spikeSourceDrawStyle,
-    standardDrawStyleExcitatory
-
+    standardDrawStyleExcitatory,
+    saveNetworkImageDrawStyle
 };
 
 struct trans {
@@ -183,8 +172,5 @@ inline double round( double d )
 {
     return floor( d + 0.5 );
 }
-
-
-
 
 #endif // GLOBALHEADER_H
