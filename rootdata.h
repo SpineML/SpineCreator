@@ -156,6 +156,11 @@ public slots:
     void updatePar();
     void updatePar(int);
     void updateLayoutPar();
+    /*!
+     * A slot to be called when a checkbox changes saying that a
+     * parameter should be shown in the diagram.
+     */
+    void updateShowInDiagram(int checked);
     void setSize();
     void setLoc3();
     void addPopulation();

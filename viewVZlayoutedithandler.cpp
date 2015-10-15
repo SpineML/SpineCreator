@@ -1133,8 +1133,9 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
 
 void viewVZLayoutEditHandler::drawDeletables() {
 
-    if (this->viewVZ->currObject == NULL)
+    if (this->viewVZ->currObject == NULL) {
         return;
+    }
 
     // get a handle to the layout for drawing
    QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
@@ -1169,14 +1170,15 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
             if ((j == 0 && listSize > 1) || (j == 1 && listSize > 3) || (j == 2 && listSize > 0)) {
 
+                // The title for the parameter or state variable box
                 QLabel * label = new QLabel(boxTitle);
                 panelLayout->insertWidget(panelLayout->count() - 2, label);
                 connect(this, SIGNAL(deleteProperties()), label, SLOT(deleteLater()));
 
+                // A form layout to contain the parameters/state variables
                 QFormLayout * varLayout = new QFormLayout();
                 panelLayout->insertLayout(panelLayout->count() - 2, varLayout);
                 connect(this, SIGNAL(deleteProperties()), varLayout, SLOT(deleteLater()));
-
 
                 for (int l = 0; l < listSize; ++l) {
                     ParameterData * currPar;
@@ -1204,8 +1206,6 @@ void viewVZLayoutEditHandler::drawDeletables() {
                     parSpin->setFocusPolicy(Qt::StrongFocus);
                     parSpin->installEventFilter(new FilterOutUndoRedoEvents);
 
-
-
                     if (j == 0 || j == 1) {
                         parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
                     }
@@ -1231,7 +1231,6 @@ void viewVZLayoutEditHandler::drawDeletables() {
                             SLOT (parsChangedPopulation()));
                     parSpin->setProperty("type","layout" + parType);
                     varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type","layout" + parType);
-
                 }
             }
         }

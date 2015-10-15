@@ -1251,7 +1251,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
             if (!connectionBool) {
                 if (j == 0) {
                     parType = "Par";
-                    boxTitle = "<i>Parameters</i>";
+                    boxTitle = "<i>Parameters</i>\t<i>Show in diagram</i>";
                     listSize = type9ml->ParameterList.size();
                 }
                 if (j == 1) {
@@ -1637,6 +1637,12 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         connect(this, SIGNAL(deleteProperties()), parSpin, SLOT(deleteLater()));
         parSpin->installEventFilter(new FilterOutUndoRedoEvents);
         parSpin->setFocusPolicy(Qt::StrongFocus);
+
+        // Add the "show" checkbox
+        QCheckBox* cb = new QCheckBox;
+        cb->setToolTip ("Show " + currPar->name + " on the diagram?");
+        connect(cb, SIGNAL(stateChanged(int)), data, SLOT(updateShowInDiagram(int)));
+        buttons->addWidget (cb);
 
         buttons->addWidget(parSpin);
 

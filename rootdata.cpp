@@ -1546,6 +1546,12 @@ void rootData::updateLayoutPar()
     }
 }
 
+void rootData::updateShowInDiagram(int checked)
+{
+    DBG() << "called. checked: " << checked;
+    // Get currently checked box, update the metadata.
+}
+
 void rootData::setSize()
 {
     // get the currently selected population
