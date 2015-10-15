@@ -201,7 +201,7 @@ public:
      * If true, then show this parameter and its value in the network
      * diagram. Maps to information stored in the Population metadata.
      */
-    bool showInNetwork;
+    bool showInDiagram;
     /*!
      * The file_name, if the data are saved as explicit binary data.
      */
@@ -539,6 +539,14 @@ public:
     QVector <StateVariableData*> StateVariableList;
     QVector <ParameterData*> ParameterList;
     void write_node_xml(QXmlStreamWriter &);
+    /*!
+     * Obtain, as a CSV list, the parameters and state variables which
+     * have the showInDiagram property. That means going through
+     * this->ParameterList and selecting the names of each
+     * ParameterData object which has ParameterData::showInDiagram ==
+     * true.
+     */
+    QString get_shown_parameters(void);
     NineMLData(){}
     virtual ~NineMLData(){}
 };

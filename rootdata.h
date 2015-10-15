@@ -62,8 +62,6 @@ public:
      */
     //@{
     explicit rootData(QObject *parent = 0);
-    void get_model_xml(QXmlStreamWriter &);
-    void get_model_meta_xml(QDomDocument &meta);
     QColor getColor(QColor);
     int getIndex();
     bool selectionMoved;
@@ -76,7 +74,6 @@ public:
     NineMLRootObject* import_component_xml_single(QString fileName);
     bool isComponentInUse(QSharedPointer<NineMLComponent> oldComp);
     bool removeComponent(QSharedPointer<NineMLComponent> oldComp);
-    //bool isValidPointer(systemObject *ptr);
     QSharedPointer<systemObject> isValidPointer(systemObject *ptr);
     QSharedPointer<NineMLComponentData> isValidPointer(NineMLComponentData *ptr);
     QSharedPointer<NineMLComponent> isValidPointer(NineMLComponent *ptr);
@@ -256,8 +253,6 @@ private:
     void deleteFromSelList (const QVector <QSharedPointer<systemObject> >& objectList);
 
     QString getUniquePopName(QString newName);
-    // NB: This is unused. Refactor out.
-    bool selChange;
     QPointF dragListStart;
     QRectF dragSelection;
     QDomDocument doc;

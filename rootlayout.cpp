@@ -1639,10 +1639,15 @@ void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPa
         parSpin->setFocusPolicy(Qt::StrongFocus);
 
         // Add the "show" checkbox
-        QCheckBox* cb = new QCheckBox;
-        cb->setToolTip ("Show " + currPar->name + " on the diagram?");
-        connect(cb, SIGNAL(stateChanged(int)), data, SLOT(updateShowInDiagram(int)));
-        buttons->addWidget (cb);
+        if (currPar->name != "Population size") {
+            QCheckBox* cb = new QCheckBox;
+            cb->setToolTip ("Show " + currPar->name + " on the diagram?");
+            cb->setProperty("pname", currPar->name);
+            cb->setProperty("action", "changeShowInDiagram");
+            cb->setProperty("ptr", qVariantFromValue((void *) currPar));
+            connect(cb, SIGNAL(stateChanged(int)), data, SLOT(updatePar()));
+            buttons->addWidget (cb);
+        }
 
         buttons->addWidget(parSpin);
 

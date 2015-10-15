@@ -1045,12 +1045,22 @@ void population::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     QDomElement dispParams = meta.createElement( "displayed_params" );
     pop.appendChild(dispParams);
     // for each this->layoutType->ParameterList, select out if it is marked as "show".
+#if 0
+    // This approach doesn't work; this->layoutType->ParameterList is empty...
     QString s("");
+    DBG() << "Saving parameter list showInDiagram to meta";
+    DBG() << "parameter list is "
+          << (this->layoutType->ParameterList.empty()?"":"not ")
+          << "empty, its size is " << this->layoutType->ParameterList.size();
     for (int i = 0; i < this->layoutType->ParameterList.size(); ++i) {
-        if (this->layoutType->ParameterList[i]->showInNetwork == true) {
+        if (this->layoutType->ParameterList[i]->showInDiagram == true) {
+            DBG() << "Adding " << this->layoutType->ParameterList[i]->name << " to s";
             s += this->layoutType->ParameterList[i]->name + ",";
         }
     }
+#endif
+    // I need something like this->layoutType->write_node_xml(xmlOut);
+    QString s = this->layoutType->get_shown_parameters();
     dispParams.setAttribute("value", s);
 }
 

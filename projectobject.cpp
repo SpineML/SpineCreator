@@ -196,10 +196,10 @@ bool projectObject::save_project(QString fileName, rootData * data)
     }
 
     // write network
-    saveNetwork(this->networkFile, project_dir);
+    this->saveNetwork(this->networkFile, project_dir);
 
     // saveMetaData
-    saveMetaData(this->metaFile, project_dir);
+    this->saveMetaData(this->metaFile, project_dir);
 
     // write experiments
     for (int i = 0; i < this->experimentList.size(); ++i) {
@@ -1033,9 +1033,15 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
     xmlOut.writeAttribute("xsi:schemaLocation", "http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer SpineMLLowLevelNetworkLayer.xsd http://www.shef.ac.uk/SpineMLNetworkLayer SpineMLNetworkLayer.xsd");
     xmlOut.writeAttribute("name", name);
 
+    DBG() << "Before Use: Population layout addresses:";
+    for (int pop = 0; pop < this->network.size(); ++pop) {
+        DBG() << hex << (unsigned long long int)&this->network[pop]->layoutType;
+    }
     // create a node for each population with the variables set
     for (int pop = 0; pop < this->network.size(); ++pop) {
         //// WE NEED TO HAVE A PROPER MODEL NAME!
+        DBG() << "Calling write_population_xml. population parameter list size is "
+              << this->network[pop]->layoutType->ParameterList.size();
         this->network[pop]->write_population_xml(xmlOut);
     }
 
@@ -1051,6 +1057,11 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
     // Clean up stale explicit data binary files, by searching through
     // xmlOut and comparing with the files in the model dir.
     this->cleanUpStaleExplicitData(fileName, projectDir);
+
+    DBG() << "At End. Population layout addresses:";
+    for (int pop = 0; pop < this->network.size(); ++pop) {
+        DBG() << hex << (unsigned long long int)&this->network[pop]->layoutType;
+    }
 }
 
 void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir)
@@ -1097,6 +1108,11 @@ void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir
 
 void projectObject::saveMetaData(QString fileName, QDir projectDir)
 {
+    DBG() << "At Start. Population layout addresses:";
+    for (int pop = 0; pop < this->network.size(); ++pop) {
+        DBG() << hex << (unsigned long long int)&this->network[pop]->layoutType;
+    }
+
     QFile fileMeta(projectDir.absoluteFilePath(fileName));
     if (!fileMeta.open(QIODevice::WriteOnly)) {
         addError("Error creating MetaData file - is there sufficient disk space?");
@@ -1109,8 +1125,14 @@ void projectObject::saveMetaData(QString fileName, QDir projectDir)
     QDomElement root = this->meta.createElement("modelMetaData");
     this->meta.appendChild(root);
 
+    DBG() << "Before use. Population layout addresses:";
+    for (int pop = 0; pop < this->network.size(); ++pop) {
+        DBG() << hex << (unsigned long long int)&this->network[pop]->layoutType;
+    }
     // iterate through the populations and get the xml
     for (int i = 0; i < this->network.size(); ++i) {
+        DBG() << "Calling write_model_meta_xml. population parameter list size is "
+              << this->network[i]->layoutType->ParameterList.size();
         this->network[i]->write_model_meta_xml(this->meta, root);
     }
 
@@ -1120,6 +1142,11 @@ void projectObject::saveMetaData(QString fileName, QDir projectDir)
     // add to version control
     if (this->version.isModelUnderVersion()) {
         this->version.addToVersion(fileMeta.fileName());
+    }
+
+    DBG() << "At End. Population layout addresses:";
+    for (int pop = 0; pop < this->network.size(); ++pop) {
+        DBG() << hex << (unsigned long long int)&this->network[pop]->layoutType;
     }
 }
 

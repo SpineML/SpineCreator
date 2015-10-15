@@ -2069,7 +2069,9 @@ void viewVZLayoutEditHandler::discardEditedLayout() {
 
 }
 
-void viewVZLayoutEditHandler::saveEditedLayout() {
+void viewVZLayoutEditHandler::saveEditedLayout()
+{
+    DBG() << "Called";
 
     // dialog for new name:
     bool ok;

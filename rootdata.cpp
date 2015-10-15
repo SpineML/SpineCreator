@@ -67,8 +67,6 @@ rootData::rootData(QObject *parent) :
     this->catalogLayout[0]->name = "none";
     this->selectionMoved = false;
 
-    this->selChange = false;
-
     if (!popImage.load( ":/icons/objects/icons/nrn.png" )) std::cerr << "warn" << endl;
 
     // update version and name
@@ -304,10 +302,8 @@ void rootData::callRedrawGLview()
 
 void rootData::saveImage(QString fileName)
 {
-    //if (!fileName.isEmpty()) {
-        saveNetworkImageDialog svImDiag(this, fileName);
-        svImDiag.exec();
-    //}
+    saveNetworkImageDialog svImDiag(this, fileName);
+    svImDiag.exec();
 }
 
 void rootData::reDrawAll()
@@ -1378,6 +1374,25 @@ void rootData::updatePar()
         }
     }
 
+    if (action == "changeShowInDiagram") {
+
+        // User changed the checkbox to say whether or not the
+        // parameter should show up in the diagram.
+
+        QCheckBox *cb = static_cast<QCheckBox*>(sender());
+
+        // update the ParameterData/Parameter in question.
+        ParameterData * par = (ParameterData*)(sender()->property("ptr").value<void *>());
+        CHECK_CAST(dynamic_cast<ParameterData *>(par));
+
+        bool chkd = (cb->isChecked() ? true : false);
+        if (par->showInDiagram != chkd) {
+            par->showInDiagram = chkd;
+            DBG() << "Don't forget the checkbox undo!!!";
+//            currProject->undoStack->push(new updateParUndo(this, par, chkd));
+        }
+    }
+
     if (action == "changeConnProb") {
         // Update the parameter value
         fixedProb_connection * conn = (fixedProb_connection *) sender()->property("ptr").value<void *>();
@@ -1443,6 +1458,7 @@ void rootData::updatePar()
     }
 }
 
+// Used in just one place! see rootlayout.cpp.
 void rootData::updatePar(int value)
 {
     // Update the parameter value
@@ -1549,7 +1565,7 @@ void rootData::updateLayoutPar()
 void rootData::updateShowInDiagram(int checked)
 {
     DBG() << "called. checked: " << checked;
-    // Get currently checked box, update the metadata.
+    // Get currently checked box
 }
 
 void rootData::setSize()

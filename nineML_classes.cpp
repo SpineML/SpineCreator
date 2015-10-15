@@ -538,8 +538,24 @@ void NineMLComponent::write(QDomDocument *doc)
 
 }
 
+QString NineMLData::get_shown_parameters(void)
+{
+    DBG() << "Called. NineMLData object address is " << hex << (unsigned long long int)this;
+    DBG() << "parameter list size is " << this->ParameterList.size();
+    QString s("");
+    for (int i = 0; i < this->ParameterList.size(); ++i) {
+        if (this->ParameterList[i]->showInDiagram == true) {
+            DBG() << "Adding " << this->ParameterList[i]->name << " to s";
+            s += this->ParameterList[i]->name + ",";
+        }
+    }
+    return s;
+}
+
 void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
 
+    DBG() << "Called. NineMLData object address is " << hex << (unsigned long long int)this;
+    DBG() << "parameter list size is " << this->ParameterList.size();
     // definition
     QString simpleName;
     if (this->type == NineMLLayoutType) {
@@ -552,7 +568,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     simpleName.replace( " ", "_" );
     xmlOut.writeAttribute("url", simpleName + ".xml");
 
-    // wriet the seed and minumum distance for the Layout
+    // write the seed and minumum distance for the Layout
     if (this->type == NineMLLayoutType) {
         NineMLLayoutData * lay = static_cast<NineMLLayoutData *> (this);
         xmlOut.writeAttribute("seed", QString::number(lay->seed));
@@ -640,6 +656,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
 
         // Output parameter properties
         for (int i = 0; i < this->ParameterList.size(); ++i) {
+            //DBG() << "Writing a parameter property: " << this->ParameterList[i]->name;
             xmlOut.writeStartElement("Property");
 
             xmlOut.writeAttribute("name",this->ParameterList[i]->name);
@@ -685,6 +702,8 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
         // Output state variable properties
         for (int i = 0; i < this->StateVariableList.size(); ++i) {
             xmlOut.writeStartElement("Property");
+
+            //DBG() << "Writing a state variable property: " << this->ParameterList[i]->name;
 
             xmlOut.writeAttribute("name",this->StateVariableList[i]->name);
             xmlOut.writeAttribute("dimension", this->StateVariableList[i]->dims->toString());
@@ -1544,7 +1563,7 @@ ParameterData::ParameterData(Parameter *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = Undefined;
-    this->showInNetwork = true;
+    this->showInDiagram = true;
     this->filename = "";
 }
 
@@ -1555,7 +1574,7 @@ ParameterData::ParameterData(ParameterData *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = data->currType;
-    this->showInNetwork = true;
+    this->showInDiagram = true;
     this->filename = "";
 }
 
