@@ -635,12 +635,102 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
                 painter->fillPath(endPoint, colour);
             }
 
+            // Now draw the synapse labels
+            for (int i = 0; i < this->synapses.size(); ++i) {
+                QString ctype("Syn");
+                ctype += QString::number(i) + QString(": ") + this->synapses[i]->connectionType->getTypeStr();
+                // Start from the endPoint and draw some text a
+                // short distance away.
+
+                // To wrap text, use drawText with a rectangle:
+                //QRectF labelRectangle(left+2*scale, top+2*scale, right-left-8*scale, bottom-top-4*scale);
+
+                QFont oldFont = painter->font();
+                QFont font = painter->font();
+                font.setPointSizeF(GLscale/20.0);
+                painter->setFont(font);
+
+                // We'll just select a point. Pass both painter (for
+                // the font and to draw with if debugging) and the
+                // text (to calculate its size). Note - passing *unscaled* font to this.
+                QPointF labelPos = this->transformPoint(this->getLabelPos (painter, font, i, ctype, scale));
+
+                painter->drawText(labelPos, ctype);
+
+                painter->setFont(oldFont);
+            }
+
             painter->setPen(oldPen);
 
             break;
         }
         } // switch
     }
+}
+
+QPointF
+projection::getLabelPos (QPainter *painter, QFont& f, int syn, const QString& text, const float scale)
+{
+    QPointF curveMiddle(0,0);
+    for (int i = 0; i < this->curves.size(); ++i) {
+        // Get the vector average of the bezier curve control points
+        // and vector sum them:
+        curveMiddle += (this->curves[i].C1 + this->curves[i].C2)/2.0;
+    }
+    // Finish up the vector average of the control point means for
+    // each curve section:
+    curveMiddle /= this->curves.size();
+
+    QPointF projEnd = this->curves.back().end;
+    QPointF centre = (projEnd + this->start)/2.0;
+
+    //DBG() << "start: " << this->start << ", end: " << projEnd;
+    //DBG() << "centre: " << centre << ", curveMiddle: " << curveMiddle;
+
+    // Info about the text size. These sizes scale as the image is zoomed in and out.
+    QFontMetrics qf(f);
+    float factor = 0.01;
+    float stringwidth = (float)qf.width (text)*factor/scale;
+    float xheight = (float)qf.xHeight()*factor/scale;
+    float maxWidth = (float)qf.maxWidth()*factor/scale;
+    //DBG() << "scale:" << scale << " maxwidth:" << maxWidth << " stringwidth:" << stringwidth << " xheight:" << xheight;
+
+    QPointF labelPos = curveMiddle;
+
+    // Return info: Vertical and Left or Right OR Horizontal and Up or down.
+    QPointF diff = projEnd - this->start;
+    float diffVert = fabs(diff.y());
+    float diffHorz = fabs(diff.x());
+    if (diffVert*3 < diffHorz) {
+        // Say it's horizontal. Figure out up/downness. Does that
+        // matter? Need some offset so the label doesn't sit on the
+        // line, and up/downness for direction of that offset (which
+        // is size give by the current font).
+        if (curveMiddle.y() < centre.y()) {
+            // DBG() << "Down curvy";
+            labelPos.setY(curveMiddle.y() - xheight - (syn*1.8*xheight));
+        } else {
+            // DBG() << "Up curvy";
+            labelPos.setY(curveMiddle.y() + xheight + (syn*1.8*xheight));
+        }
+
+        // Always shift text left if it's a horizontal projection:
+        labelPos.setX(curveMiddle.x() - stringwidth/2.0);
+
+    } else {
+        // Must be effectively vertical then. So need to determine left/rightness.
+        if (curveMiddle.x() < centre.x()) {
+            // DBG() << "Left curvy";
+            labelPos.setX(curveMiddle.x() - stringwidth);
+        } else {
+            // DBG() << "Right curvy";
+            // Add a bit to the label pos, just a few chars.
+            labelPos.setX(curveMiddle.x() + maxWidth);
+        }
+        labelPos.setY(curveMiddle.y() + (syn*xheight*1.8));
+    }
+
+    return labelPos;
 }
 
 void projection::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage ignored, drawStyle style) {
