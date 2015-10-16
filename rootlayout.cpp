@@ -973,7 +973,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
         QStringList scripts = settings.childKeys();
         inputConnectionComboBox->addItems(scripts);
         settings.endGroup();
-
     }
     inputConnectionComboBox->setCurrentIndex(in->connectionType->getIndex());
     connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
@@ -1052,8 +1051,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     }
 
     this->insertLayout(this->count()-2,varLayout);
-
-
 }
 
 
