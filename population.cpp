@@ -1040,6 +1040,7 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
     ///// ADD Synapses:
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
 
+    DBG() << "Reading projections from XML";
     for (int i = 0; i < (int) cList.count(); ++i) {
         QDomElement e2 = cList.item(i).toElement();
         this->projections.push_back(QSharedPointer<projection>(new projection()));

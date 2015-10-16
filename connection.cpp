@@ -1693,11 +1693,11 @@ bool kernel_connection::isList()
 
 pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
 {
-    type = Python;
+    this->type = Python;
     this->isAList = false;
-    selfConnections = false;
-    rotation = 0;
-    hasChanged = true;
+    this->selfConnections = false;
+    this->rotation = 0;
+    this->hasChanged = true;
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;

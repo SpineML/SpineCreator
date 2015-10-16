@@ -61,6 +61,8 @@ synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool do
     this->type = synapseObject;
 
     this->isVisualised = false;
+
+    this->connectionTypeStr = "";
 }
 
 synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAddInputs)
@@ -91,6 +93,8 @@ synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAdd
     this->type = synapseObject;
 
     this->isVisualised = false;
+
+    this->connectionTypeStr = "";
 }
 
 synapse::~synapse()
@@ -111,6 +115,7 @@ void synapse::delAll(rootData *)
 
     this->postsynapseType.clear();
     this->weightUpdateType.clear();
+    this->connectionTypeStr = "";
     delete this->connectionType;
 }
 
@@ -583,16 +588,14 @@ void projection::draw(QPainter *painter, float GLscale,
             // Now draw the synapse labels
             for (int i = 0; i < this->synapses.size(); ++i) {
                 QString ctype("Syn");
-                ctype += QString::number(i) + QString(": ")
-                    + this->synapses[i]->connectionType->getTypeStr();
+                ctype += QString::number(i) + QString(": ");
+                if (this->synapses[i]->connectionTypeStr.isEmpty()) {
+                    ctype += this->synapses[i]->connectionType->getTypeStr();
+                } else {
+                    ctype += this->synapses[i]->connectionTypeStr;
+                }
 
-                // Start from the endPoint and draw some text a
-                // short distance away.
-
-                // To wrap text, use drawText with a rectangle:
-                // QRectF labelRectangle(left+2*scale, top+2*scale,
-                //                       right-left-8*scale, bottom-top-4*scale);
-
+                // Set a suitable font for the projection labels
                 QFont oldFont = painter->font();
                 QFont font = painter->font();
                 font.setPointSizeF(GLscale/20.0);
@@ -1265,7 +1268,6 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
 void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta,
                              projectObject * data, QSharedPointer<projection> thisSharedPointer)
 {
-
     this->type = projectionObject;
 
     this->selectedControlPoint.ind = -1;
@@ -1568,9 +1570,15 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                         for (int i = 0; i < this->synapses.size(); ++i) {
                              // check if we have the current node
                             if (synapseName == this->synapses[i]->weightUpdateType->getXMLName()) {
-                                // A synapse was found!
                                 // add connection generator if we are a csv
                                 if (this->synapses[i]->connectionType->type == CSV) {
+
+                                    // A synapse was found! Record the Script generator if necessary
+                                    QDomNode script = metaData.namedItem("Script");
+                                    if (!script.isNull()) {
+                                        this->synapses[i]->connectionTypeStr = script.toElement().attribute("name","");
+                                    }
+
                                     csv_connection * conn = (csv_connection *) this->synapses[i]->connectionType;
                                     // add generator
                                     conn->generator = new pythonscript_connection(this->source, this->destination, conn);

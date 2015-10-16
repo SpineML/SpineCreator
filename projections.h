@@ -68,6 +68,14 @@ public:
     QSharedPointer <NineMLComponentData>postsynapseType;
     QSharedPointer <NineMLComponentData>weightUpdateType;
     connection *connectionType;
+    /*!
+     * A label for the connection type. Filled with the connection
+     * generator, as read from the metadata.xml (For example, the
+     * connectivity may be defined by a pythonscript_connection, even
+     * though this->connectionType is a csv_connection after
+     * generation).
+     */
+    QString connectionTypeStr;
     bool isVisualised;
     QSharedPointer <projection> proj;
     QString getName();
