@@ -1472,19 +1472,38 @@ void rootData::updatePar(int value)
 
 void rootData::updateDrawStyle() {
 
-    drawStyle style = (drawStyle) sender()->property("style").toUInt();
+    QString action = sender()->property("action").toString();
 
-    if (this->selList.size() == 1) {
-        // have we only got a proj selected (this should always be the case)
-        if (this->selList[0]->type == projectionObject) {
-            // cast to a proj
-            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
-            // test if the cast succeeded
-            if (!proj.isNull()) {
-                currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
+    if (action == "togglelabel") {
+        if (this->selList.size() == 1) {
+            // have we only got a proj selected (this should always be the case)
+            if (this->selList[0]->type == projectionObject) {
+                // cast to a proj
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+                // test if the cast succeeded
+                if (!proj.isNull()) {
+                    QCheckBox* sndr = (QCheckBox*)sender();
+                    currProject->undoStack->push(new updateProjShowLabel(proj, sndr->isChecked(), proj->showLabel));
+                }
+            }
+        }
+
+    } else {
+        drawStyle style = (drawStyle) sender()->property("style").toUInt();
+
+        if (this->selList.size() == 1) {
+            // have we only got a proj selected (this should always be the case)
+            if (this->selList[0]->type == projectionObject) {
+                // cast to a proj
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+                // test if the cast succeeded
+                if (!proj.isNull()) {
+                    currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
+                }
             }
         }
     }
+
     emit updatePanel(this);
 }
 

@@ -407,6 +407,20 @@ private:
     drawStyle newStyle;
 };
 
+class updateProjShowLabel : public QUndoCommand
+{
+public:
+    updateProjShowLabel(QSharedPointer <projection> ptr, bool newShowLabel, bool oldShowLabel, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    QSharedPointer <projection> ptr;
+    bool oldShowLabel;
+    bool newShowLabel;
+};
+
 class updateModelTitle : public QUndoCommand
 {
 public:

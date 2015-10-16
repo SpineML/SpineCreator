@@ -1161,6 +1161,30 @@ void updateProjDrawStyle::redo()
 }
 
 
+// ######## CHANGE PROJECTION SHOW LABEL #################
+
+updateProjShowLabel::updateProjShowLabel(QSharedPointer <projection> ptr, bool newShowLabel, bool oldShowLabel, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->ptr = ptr;
+    this->oldShowLabel = oldShowLabel;
+    this->newShowLabel = newShowLabel;
+    this->setText("Change projection label visibility");
+}
+
+void updateProjShowLabel::undo()
+{
+    // set name
+    ptr->showLabel = oldShowLabel;
+}
+
+void updateProjShowLabel::redo()
+{
+    // set name
+    ptr->showLabel = newShowLabel;
+}
+
+
 // ######## CHANGE MODEL TITLE #################
 
 updateModelTitle::updateModelTitle(rootData * data, QString newName, projectObject * project, QUndoCommand *parent) :

@@ -89,6 +89,8 @@ private:
     // Projection style radio buttons
     QRadioButton * exc;
     QRadioButton * inh;
+    // checkbutton for "show label" for projection
+    QCheckBox * showLabel;
 
     QLabel * inputSrcName; // we need to set the tooltip, which we cannot do through slots
 

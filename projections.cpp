@@ -169,6 +169,7 @@ projection::projection()
     this->selectedControlPoint.type = C1;
 
     this->projDrawStyle = standardDrawStyleExcitatory;
+    this->showLabel = false;
 }
 
 projection::~projection()
@@ -588,75 +589,8 @@ void projection::draw(QPainter *painter, float GLscale,
                 painter->fillPath(endPoint, colour);
             }
 
-            // Are all synapse connection types the same? If so we
-            // don't need to list them all.
-            QString currentCtype("");
-            bool manyConnTypes = false;
-            for (int i = 0; i < this->synapses.size(); ++i) {
-                QString ctype("");
-                if (this->synapses[i]->connectionTypeStr.isEmpty()) {
-                    ctype = this->synapses[i]->connectionType->getTypeStr();
-                } else {
-                    ctype = this->synapses[i]->connectionTypeStr;
-                }
-                if (!currentCtype.isEmpty() && ctype != currentCtype) {
-                    // At least two connection types within this one projection
-                    manyConnTypes = true;
-                    break;
-                } else {
-                    currentCtype = ctype;
-                }
-            }
-
-            // Now draw the synapse labels
-            for (int i = 0; i < this->synapses.size(); ++i) {
-                QString ctype("");
-                if (manyConnTypes) {
-                    ctype += "Syn" + QString::number(i) + QString(": ");
-                } else {
-                    // If we already did the first connection, break; all synapses have same connectivity.
-                    if (i > 0) { break; }
-                    if (this->synapses.size() == 1) {
-                        // Add nothing to label
-                    } else {
-                        ctype += QString::number(this->synapses.size()) + " synapses: ";
-                    }
-                }
-
-                if (this->synapses[i]->connectionTypeStr.isEmpty()) {
-                    ctype += this->synapses[i]->connectionType->getTypeStr();
-                } else {
-                    ctype += this->synapses[i]->connectionTypeStr;
-                }
-
-                // Set a suitable font for the projection labels
-                QFont oldFont = painter->font();
-                QFont font = painter->font();
-                font.setPointSizeF(GLscale/20.0);
-                painter->setFont(font);
-
-                // Call getLabelPos for the position of the label and
-                // its "pointer line". Note I'm passing the *unscaled*
-                // font to this.
-                QPointF startLinePos(0,0);
-                QPointF labelPos = this->transformPoint(this->getLabelPos (font, i, ctype, scale, startLinePos));
-                startLinePos = this->transformPoint(startLinePos);
-                // Find a point for the end of the pointer line:
-                QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.8));
-
-                // Text first in same colour as projection line
-                painter->drawText(labelPos, ctype);
-
-                if (i == 0) { // only one pointer line per projection
-                    painter->setPen(pointerLinePen);
-                    QPainterPath pointerLine;
-                    pointerLine.moveTo(startLinePos);
-                    pointerLine.lineTo(endLinePos);
-                    painter->drawPath(pointerLine);
-                }
-
-                painter->setFont(oldFont);
-                painter->setPen(linePen);
+            if (this->showLabel) {
+                this->drawLabel(painter, linePen, pointerLinePen, GLscale, scale);
             }
 
             painter->setPen(oldPen);
@@ -664,6 +598,82 @@ void projection::draw(QPainter *painter, float GLscale,
             break;
         }
         } // switch
+    }
+}
+
+void
+projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen,
+                       const float GLscale, const float scale)
+{
+    // Are all synapse connection types the same? If so we
+    // don't need to list them all.
+    QString currentCtype("");
+    bool manyConnTypes = false;
+    for (int i = 0; i < this->synapses.size(); ++i) {
+        QString ctype("");
+        if (this->synapses[i]->connectionTypeStr.isEmpty()) {
+            ctype = this->synapses[i]->connectionType->getTypeStr();
+        } else {
+            ctype = this->synapses[i]->connectionTypeStr;
+        }
+        if (!currentCtype.isEmpty() && ctype != currentCtype) {
+            // At least two connection types within this one projection
+            manyConnTypes = true;
+            break;
+        } else {
+            currentCtype = ctype;
+        }
+    }
+
+    // Now draw the synapse labels
+    for (int i = 0; i < this->synapses.size(); ++i) {
+        QString ctype("");
+        if (manyConnTypes) {
+            ctype += "Syn" + QString::number(i) + QString(": ");
+        } else {
+            // If we already did the first connection, break; all synapses have same connectivity.
+            if (i > 0) { break; }
+            if (this->synapses.size() == 1) {
+                // Add nothing to label
+            } else {
+                ctype += QString::number(this->synapses.size()) + " synapses: ";
+            }
+        }
+
+        if (this->synapses[i]->connectionTypeStr.isEmpty()) {
+            ctype += this->synapses[i]->connectionType->getTypeStr();
+        } else {
+            ctype += this->synapses[i]->connectionTypeStr;
+        }
+
+        // Set a suitable font for the projection labels
+        QFont oldFont = painter->font();
+        QFont font = painter->font();
+        font.setPointSizeF(GLscale/20.0);
+        painter->setFont(font);
+
+        // Call getLabelPos for the position of the label and
+        // its "pointer line". Note I'm passing the *unscaled*
+        // font to this.
+        QPointF startLinePos(0,0);
+        QPointF labelPos = this->transformPoint(this->getLabelPos (font, i, ctype, scale, startLinePos));
+        startLinePos = this->transformPoint(startLinePos);
+        // Find a point for the end of the pointer line:
+        QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.8));
+
+        // Text first in same colour as projection line
+        painter->drawText(labelPos, ctype);
+
+        if (i == 0) { // only one pointer line per projection
+            painter->setPen(pointerLinePen);
+            QPainterPath pointerLine;
+            pointerLine.moveTo(startLinePos);
+            pointerLine.lineTo(endLinePos);
+            painter->drawPath(pointerLine);
+        }
+
+        painter->setFont(oldFont);
+        painter->setPen(linePen);
     }
 }
 
@@ -1221,6 +1231,7 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
     col.setAttribute("source", this->source->name);
     col.setAttribute("destination", this->destination->name);
     col.setAttribute("style", QString::number(this->projDrawStyle));
+    col.setAttribute("showlabel", QString::number(this->showLabel));
 
     // start position
     QDomElement start = meta.createElement( "start" );
@@ -1555,6 +1566,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         if (metaNode.toElement().attribute("source", "") == this->source->name && metaNode.toElement().attribute("destination", "") == this->destination->name) {
 
             this->projDrawStyle = (drawStyle) metaNode.toElement().attribute("style", QString::number(standardDrawStyleExcitatory)).toUInt();
+            this->showLabel = (bool) metaNode.toElement().attribute("showlabel", 0).toUInt();
 
             QDomNode metaData = metaNode.toElement().firstChild();
             while (!metaData.isNull()) {

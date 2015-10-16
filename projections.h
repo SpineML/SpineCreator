@@ -141,10 +141,20 @@ public:
 
     QVector < QSharedPointer<genericInput> > disconnectedInputs;
 
+    // If true, show projection label.
+    bool showLabel;
+
 protected:
     cPoint selectedControlPoint;
 
 private:
+
+    /*!
+     * Draw the projection label.
+     */
+    void drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen,
+                    const float GLscale, const float scale);
+
     /*!
      * Using this->curves, find a suitable label position for the
      * projection label. Place the label on the outside edge of the

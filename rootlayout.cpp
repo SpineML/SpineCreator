@@ -256,18 +256,21 @@ void rootLayout::initProjectionHeader(rootData * data) {
 
     QGroupBox * styleGroup = new QGroupBox("Draw style");
     this->addWidget(styleGroup);
-    QHBoxLayout * drawStyleLayout = new QHBoxLayout();
+    QGridLayout * drawStyleLayout = new QGridLayout();
     styleGroup->setLayout(drawStyleLayout);
 
-    exc = new QRadioButton("Excitatory");
-    exc->setChecked(true);
-    exc->setProperty("style",standardDrawStyleExcitatory);
-    drawStyleLayout->addWidget(exc);
-    inh = new QRadioButton("Inhibitory");
-    drawStyleLayout->addWidget(inh);
-    inh->setProperty("style",standardDrawStyle);
+    this->exc = new QRadioButton("Excitatory");
+    this->exc->setChecked(true);
+    this->exc->setProperty("style",standardDrawStyleExcitatory);
+    drawStyleLayout->addWidget(this->exc, 0, 0);
+    this->inh = new QRadioButton("Inhibitory");
+    drawStyleLayout->addWidget(this->inh, 0, 1);
+    this->inh->setProperty("style",standardDrawStyle);
+    //drawStyleLayout->addStretch();
 
-    drawStyleLayout->addStretch();
+    this->showLabel = new QCheckBox ("Show projection label");
+    this->showLabel->setProperty("action","togglelabel");
+    drawStyleLayout->addWidget(showLabel, 1, 0);
 
     // connect for hide
     connect(this, SIGNAL(hideHeader()), styleGroup, SLOT(hide()));
@@ -277,6 +280,8 @@ void rootLayout::initProjectionHeader(rootData * data) {
     // connect radios
     connect(exc, SIGNAL(pressed()), data, SLOT(updateDrawStyle()));
     connect(inh, SIGNAL(pressed()), data, SLOT(updateDrawStyle()));
+
+    connect(this->showLabel, SIGNAL(stateChanged(int)), data, SLOT(updateDrawStyle()));
 
     // SYNAPSES /////////
 
@@ -856,6 +861,13 @@ void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data)
         inh->setChecked(true);
     } else {
         exc->setChecked(true);
+    }
+
+    // Check the show label checkbox
+    if (proj->showLabel) {
+        this->showLabel->setCheckState(Qt::Checked);
+    } else {
+        this->showLabel->setCheckState(Qt::Unchecked);
     }
 
     // Synapse
