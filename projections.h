@@ -150,9 +150,15 @@ protected:
 private:
 
     /*!
+     * Return true if there is more than one synapse and the synapses
+     * do not all share the same connectivity pattern.
+     */
+    bool multipleConnTypes(void);
+
+    /*!
      * Draw the projection label.
      */
-    void drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen,
+    void drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, QPen& labelPen,
                     const float GLscale, const float scale);
 
     /*!

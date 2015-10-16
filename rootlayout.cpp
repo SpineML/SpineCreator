@@ -879,8 +879,9 @@ void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data)
     // if no data hide paste
     emit allowPaste(data->clipboardCData != NULL);
 
-    if (tabs->count() < 3)
+    if (tabs->count() < 3) {
         tabs->addTab(tab3, "Connectivity");
+    }
 
     tabs->setTabText(0, "Weight Update");
     tabs->setTabText(1, "PostSynapse");

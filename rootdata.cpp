@@ -382,7 +382,7 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                 for (int i = 5; i > 1; --i) {
                     QPen pen(QColor(0,0,0,30/i));
                     pen.setWidthF(float(i*2));
-                    painter->setPen(pen);
+                    painter->setPen(pen); // HERE!!
                     col->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
                     // only draw handles if we aren't using multiple selection
                     if (selList.size() == 1) {

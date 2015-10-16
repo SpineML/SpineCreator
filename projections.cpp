@@ -371,9 +371,68 @@ void projection::draw(QPainter *painter, float GLscale,
 
     if (this->curves.size() > 0) {
 
+        // Colour definitions for this projection
         QColor colour = QColor(0,0,255,255);
+        if (this->multipleConnTypes()) {
+            colour = QColor(0,100,235,255);
+        } else {
+            // Set colour based on first synapse connection type.
+            colour = QColor(0,0,255,255);
+            QString ctype("");
+            if (!this->synapses.isEmpty() && !this->synapses[0]->connectionTypeStr.isEmpty()) {
+                ctype += this->synapses[0]->connectionType->getTypeStr();
+                // Make colour vary based on string length? md5sum?
+                int r = (ctype.size())*8;
+                colour = QColor(r,0,255,255);
 
+            } else if (!this->synapses.isEmpty()) {
+                // No connectionTypeStr, so use type
+                switch (this->synapses[0]->connectionType->type) {
+                case AlltoAll:
+                    colour = QColor(0,26,158,255);
+                    break;
+                case OnetoOne:
+                    colour = QColor(71,24,222,255);
+                    break;
+                case FixedProb:
+                    colour = QColor(54,0,255,255);
+                    break;
+                case CSV:
+                    colour = QColor(255,0,0,255);
+                    break;
+                case Kernel:
+                    colour = QColor(0,255,0,255);
+                    break;
+                case Python:
+                case CSA:
+                default:
+                    colour = QColor(0,0,0,255);
+                    break;
+                }
+
+            } else {
+                // No Synapses?
+            }
+        }
+
+        // In some cases, the colour for the projection is passed
+        // in. In most cases we want to choose the colour here. This
+        // is a bit hacky, but when we get passed in blue, we reckon
+        // that we can override the colour scheme, but otherwise, we
+        // have to set the linePen colour to the passed in pen colour.
         QPen oldPen = painter->pen();
+        if (oldPen.color().red() == 0
+            && oldPen.color().green() == 0
+            && oldPen.color().blue() == 255
+            && oldPen.color().alpha() == 255) {
+            // We can override colours
+        } else {
+            // We've been passed in a specified colour, set linePen to this colour
+            colour = oldPen.color();
+        }
+
+        QColor ptrColour = QColor(200,200,200,255);
+        QColor labelColour = colour;// QColor(0,0,0,255);
 
         QPointF start;
         QPointF end;
@@ -500,19 +559,15 @@ void projection::draw(QPainter *painter, float GLscale,
             linePen.setCapStyle(Qt::SquareCap); // Would like Qt::RoundCap, but not in the dashes.
             linePen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
             // Another pen for the pointer line
-            QPen pointerLinePen(QColor(220,220,220,255), 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            QPen pointerLinePen(ptrColour, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
             pointerLinePen.setWidthF(scale*dpi_ratio);
-            // We have to setColor when saving a network image because
-            // the projection doesn't already have a colour. We can't
-            // do this for on-screen drawing, because setting the
-            // colour messes up the shadowing effect used to mark out
-            // a selected projection.
+            QPen labelPen(labelColour, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            labelPen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
             if (saveNetworkImage) {
                 // Wider lines for image output
                 linePen.setWidthF(linePen.widthF()*2);
-                // Ensure colour is set (but only when saving image)
-                linePen.setColor(colour);
             }
+            linePen.setColor(colour);
             painter->setPen(linePen);
 
             QPainterPath path;
@@ -565,7 +620,7 @@ void projection::draw(QPainter *painter, float GLscale,
                 endPoint.addEllipse(this->transformPoint(this->curves.back().end),
                                     0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,0,255,255));
+                painter->fillPath(endPoint, colour);
 
             } else if (style == standardDrawStyleExcitatory) {
                 QPolygonF arrow_head;
@@ -590,7 +645,7 @@ void projection::draw(QPainter *painter, float GLscale,
             }
 
             if (this->showLabel) {
-                this->drawLabel(painter, linePen, pointerLinePen, GLscale, scale);
+                this->drawLabel(painter, linePen, pointerLinePen, labelPen, GLscale, scale);
             }
 
             painter->setPen(oldPen);
@@ -601,14 +656,17 @@ void projection::draw(QPainter *painter, float GLscale,
     }
 }
 
-void
-projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen,
-                       const float GLscale, const float scale)
+bool
+projection::multipleConnTypes(void)
 {
-    // Are all synapse connection types the same? If so we
-    // don't need to list them all.
     QString currentCtype("");
     bool manyConnTypes = false;
+
+    // Quick return if there's only one synapse:
+    if (this->synapses.size() == 1) {
+        return manyConnTypes;
+    }
+
     for (int i = 0; i < this->synapses.size(); ++i) {
         QString ctype("");
         if (this->synapses[i]->connectionTypeStr.isEmpty()) {
@@ -624,6 +682,17 @@ projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen,
             currentCtype = ctype;
         }
     }
+
+    return manyConnTypes;
+}
+
+void
+projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, QPen& labelPen,
+                       const float GLscale, const float scale)
+{
+    // Are all synapse connection types the same? If so we
+    // don't need to list them all.
+    bool manyConnTypes = this->multipleConnTypes();
 
     // Now draw the synapse labels
     for (int i = 0; i < this->synapses.size(); ++i) {
@@ -662,6 +731,7 @@ projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen,
         QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.8));
 
         // Text first in same colour as projection line
+        painter->setPen(labelPen);
         painter->drawText(labelPos, ctype);
 
         if (i == 0) { // only one pointer line per projection
