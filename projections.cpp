@@ -498,6 +498,9 @@ void projection::draw(QPainter *painter, float GLscale,
             QPen linePen = painter->pen();
             linePen.setCapStyle(Qt::SquareCap); // Would like Qt::RoundCap, but not in the dashes.
             linePen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
+            // Another pen for the pointer line
+            QPen pointerLinePen(QColor(220,220,220,255), 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            pointerLinePen.setWidthF(scale*dpi_ratio);
             // We have to setColor when saving a network image because
             // the projection doesn't already have a colour. We can't
             // do this for on-screen drawing, because setting the
@@ -585,10 +588,41 @@ void projection::draw(QPainter *painter, float GLscale,
                 painter->fillPath(endPoint, colour);
             }
 
+            // Are all synapse connection types the same? If so we
+            // don't need to list them all.
+            QString currentCtype("");
+            bool manyConnTypes = false;
+            for (int i = 0; i < this->synapses.size(); ++i) {
+                QString ctype("");
+                if (this->synapses[i]->connectionTypeStr.isEmpty()) {
+                    ctype = this->synapses[i]->connectionType->getTypeStr();
+                } else {
+                    ctype = this->synapses[i]->connectionTypeStr;
+                }
+                if (!currentCtype.isEmpty() && ctype != currentCtype) {
+                    // At least two connection types within this one projection
+                    manyConnTypes = true;
+                    break;
+                } else {
+                    currentCtype = ctype;
+                }
+            }
+
             // Now draw the synapse labels
             for (int i = 0; i < this->synapses.size(); ++i) {
-                QString ctype("Syn");
-                ctype += QString::number(i) + QString(": ");
+                QString ctype("");
+                if (manyConnTypes) {
+                    ctype += "Syn" + QString::number(i) + QString(": ");
+                } else {
+                    // If we already did the first connection, break; all synapses have same connectivity.
+                    if (i > 0) { break; }
+                    if (this->synapses.size() == 1) {
+                        // Add nothing to label
+                    } else {
+                        ctype += QString::number(this->synapses.size()) + " synapses: ";
+                    }
+                }
+
                 if (this->synapses[i]->connectionTypeStr.isEmpty()) {
                     ctype += this->synapses[i]->connectionType->getTypeStr();
                 } else {
@@ -614,11 +648,7 @@ void projection::draw(QPainter *painter, float GLscale,
                 painter->drawText(labelPos, ctype);
 
                 if (i == 0) { // only one pointer line per projection
-                    // Set the line width
-                    QPen pointerLinePen(QColor(220,220,220,255), 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-                    pointerLinePen.setWidthF(scale*dpi_ratio);
                     painter->setPen(pointerLinePen);
-                    // Draw the pointer line in grey
                     QPainterPath pointerLine;
                     pointerLine.moveTo(startLinePos);
                     pointerLine.lineTo(endLinePos);
