@@ -421,10 +421,11 @@ void projection::draw(QPainter *painter, float GLscale,
         // that we can override the colour scheme, but otherwise, we
         // have to set the linePen colour to the passed in pen colour.
         QPen oldPen = painter->pen();
-        if (oldPen.color().red() == 0
-            && oldPen.color().green() == 0
-            && oldPen.color().blue() == 255
-            && oldPen.color().alpha() == 255) {
+        if (saveNetworkImage == true
+            || (oldPen.color().red() == 0
+                && oldPen.color().green() == 0
+                && oldPen.color().blue() == 255
+                && oldPen.color().alpha() == 255)) {
             // We can override colours
         } else {
             // We've been passed in a specified colour, set linePen to this colour
