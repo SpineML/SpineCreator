@@ -141,9 +141,19 @@ private:
      * Using this->curves, find a suitable label position for the
      * projection label. Place the label on the outside edge of the
      * curve. syn is the synapse number and influences the label
-     * position. The scale is also used.
+     * position. The scale is also used.  Startline pos is the
+     * position at which a "pointer line" from the label text to the
+     * object of the label should begin.
      */
-    QPointF getLabelPos (QPainter* painter, QFont& f, int syn, const QString& tstr, const float scale);
+    QPointF getLabelPos (QFont& f, int syn, const QString& tstr, const float scale,
+                         QPointF& startLinePos);
+
+    /*!
+     * Get a location on a cubic bezier curve. t is the position on
+     * the curve and must be in range 0 to 1. curveIndex is the index
+     * into this->curves.
+     */
+    QPointF getBezierPos (int curveIndex, float t);
 
     int srcPos;
     int dstPos;

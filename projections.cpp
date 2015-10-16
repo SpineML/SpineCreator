@@ -547,6 +547,7 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
             // account for hidpi in line width
             QPen linePen = painter->pen();
+            linePen.setCapStyle(Qt::SquareCap); // Would like Qt::RoundCap, but not in the dashes.
             linePen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
             // We have to setColor when saving a network image because
             // the projection doesn't already have a colour. We can't
@@ -638,26 +639,46 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             // Now draw the synapse labels
             for (int i = 0; i < this->synapses.size(); ++i) {
                 QString ctype("Syn");
-                ctype += QString::number(i) + QString(": ") + this->synapses[i]->connectionType->getTypeStr();
+                ctype += QString::number(i) + QString(": ")
+                    + this->synapses[i]->connectionType->getTypeStr();
                 // Start from the endPoint and draw some text a
                 // short distance away.
 
                 // To wrap text, use drawText with a rectangle:
-                //QRectF labelRectangle(left+2*scale, top+2*scale, right-left-8*scale, bottom-top-4*scale);
+                // QRectF labelRectangle(left+2*scale, top+2*scale,
+                //                       right-left-8*scale, bottom-top-4*scale);
 
                 QFont oldFont = painter->font();
                 QFont font = painter->font();
                 font.setPointSizeF(GLscale/20.0);
                 painter->setFont(font);
 
-                // We'll just select a point. Pass both painter (for
-                // the font and to draw with if debugging) and the
-                // text (to calculate its size). Note - passing *unscaled* font to this.
-                QPointF labelPos = this->transformPoint(this->getLabelPos (painter, font, i, ctype, scale));
+                // Call getLabelPos for the position of the label and
+                // its "pointer line". Note I'm passing the *unscaled*
+                // font to this.
+                QPointF startLinePos(0,0);
+                QPointF labelPos = this->transformPoint(this->getLabelPos (font, i, ctype, scale, startLinePos));
+                startLinePos = this->transformPoint(startLinePos);
+                // Find a point for the end of the pointer line:
+                QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.8));
 
+                // Text first in same colour as projection line
                 painter->drawText(labelPos, ctype);
 
+                if (i == 0) { // only one pointer line per projection
+                    // Set the line width
+                    QPen pointerLinePen(QColor(220,220,220,255), 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+                    pointerLinePen.setWidthF(scale*dpi_ratio);
+                    painter->setPen(pointerLinePen);
+                    // Draw the pointer line in grey
+                    QPainterPath pointerLine;
+                    pointerLine.moveTo(startLinePos);
+                    pointerLine.lineTo(endLinePos);
+                    painter->drawPath(pointerLine);
+                }
+
                 painter->setFont(oldFont);
+                painter->setPen(linePen);
             }
 
             painter->setPen(oldPen);
@@ -669,7 +690,29 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 }
 
 QPointF
-projection::getLabelPos (QPainter *painter, QFont& f, int syn, const QString& text, const float scale)
+projection::getBezierPos (int curveIndex, float t)
+{
+    QPointF startPoint = this->start;
+    if (curveIndex > 0) {
+        startPoint = this->curves[curveIndex-1].end;
+    }
+
+    if (t < 0.0 || t > 1.0) {
+        DBG() << "Warning, Bezier curve defined between 0 and 1";
+    }
+
+    // Cubic Bezier formula
+    QPointF B = powf(1.0-t,3)*startPoint
+        + 3*powf(1.0-t,2)*t*this->curves[curveIndex].C1
+        + 3*(1.0-t)*powf(t,2)*this->curves[curveIndex].C2
+        + powf(t,3)*this->curves[curveIndex].end;
+
+    return B;
+}
+
+QPointF
+projection::getLabelPos (QFont& f, int syn, const QString& text, const float scale,
+                         QPointF& startLinePos)
 {
     QPointF curveMiddle(0,0);
     for (int i = 0; i < this->curves.size(); ++i) {
@@ -687,15 +730,22 @@ projection::getLabelPos (QPainter *painter, QFont& f, int syn, const QString& te
     //DBG() << "start: " << this->start << ", end: " << projEnd;
     //DBG() << "centre: " << centre << ", curveMiddle: " << curveMiddle;
 
-    // Info about the text size. These sizes scale as the image is zoomed in and out.
+    // Info about the size of the text in the label
     QFontMetrics qf(f);
     float factor = 0.01;
     float stringwidth = (float)qf.width (text)*factor/scale;
     float xheight = (float)qf.xHeight()*factor/scale;
     float maxWidth = (float)qf.maxWidth()*factor/scale;
-    //DBG() << "scale:" << scale << " maxwidth:" << maxWidth << " stringwidth:" << stringwidth << " xheight:" << xheight;
 
     QPointF labelPos = curveMiddle;
+
+    // Find out if the line goes up or down on the diagram - this will
+    // affect the startLinePos.
+    bool uptrending = false;
+    if (start.y() < projEnd.y()) {
+        uptrending = true;
+    }
+    // May need left trending and right trending also?
 
     // Return info: Vertical and Left or Right OR Horizontal and Up or down.
     QPointF diff = projEnd - this->start;
@@ -709,25 +759,35 @@ projection::getLabelPos (QPainter *painter, QFont& f, int syn, const QString& te
         if (curveMiddle.y() < centre.y()) {
             // DBG() << "Down curvy";
             labelPos.setY(curveMiddle.y() - xheight - (syn*1.8*xheight));
+            startLinePos.setY(labelPos.y() + xheight*1.6);
         } else {
             // DBG() << "Up curvy";
             labelPos.setY(curveMiddle.y() + xheight + (syn*1.8*xheight));
+            startLinePos.setY(labelPos.y() - xheight/4.0);
         }
 
         // Always shift text left if it's a horizontal projection:
         labelPos.setX(curveMiddle.x() - stringwidth/2.0);
+        startLinePos.setX(labelPos.x() + stringwidth/4.0);
 
     } else {
         // Must be effectively vertical then. So need to determine left/rightness.
         if (curveMiddle.x() < centre.x()) {
             // DBG() << "Left curvy";
             labelPos.setX(curveMiddle.x() - stringwidth);
+            startLinePos.setX(curveMiddle.x() - stringwidth/4.0);
         } else {
             // DBG() << "Right curvy";
             // Add a bit to the label pos, just a few chars.
             labelPos.setX(curveMiddle.x() + maxWidth);
+            startLinePos.setX(labelPos.x() - maxWidth/4.0);
         }
         labelPos.setY(curveMiddle.y() + (syn*xheight*1.8));
+        if (uptrending) {
+            startLinePos.setY(labelPos.y() + xheight*1.6 );
+        } else {
+            startLinePos.setY(labelPos.y() - xheight/4.0);
+        }
     }
 
     return labelPos;
