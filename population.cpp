@@ -735,8 +735,8 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
     QString displayed_name = this->name;
 
-    if (displayed_name.size() > 14) {
-        displayed_name.resize(11);
+    if (displayed_name.size() > 13) {
+        displayed_name.resize(10);
         displayed_name = displayed_name + "...";
     }
 
