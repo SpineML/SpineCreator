@@ -537,30 +537,8 @@ void projection::draw(QPainter *painter, float GLscale,
             }
 
             // draw start and end markers
-
-            QPolygonF arrow_head;
             QPainterPath endPoint;
-            //calculate arrow head polygon
-            QPointF end_point = path.pointAtPercent(1.0);
-            QPointF temp_end_point = path.pointAtPercent(0.995);
-            QLineF line = QLineF(end_point, temp_end_point).unitVector();
-            QLineF line2 = QLineF(line.p2(), line.p1());
-            line2.setLength(line2.length()+0.05*GLscale/2.0);
-            end_point = line2.p2();
-            if (this->type == projectionObject) {
-                line.setLength(0.2*GLscale/2.0);
-            } else {
-                line.setLength(0.1*GLscale/2.0);
-            }
-            QPointF t = line.p2() - line.p1();
-            QLineF normal = line.normalVector();
-            normal.setLength(normal.length()*0.8);
-            QPointF a1 = normal.p2() + t;
-            normal.setLength(-normal.length());
-            QPointF a2 = normal.p2() + t;
-            arrow_head.clear();
-            arrow_head << end_point << a1 << a2 << end_point;
-            endPoint.addPolygon(arrow_head);
+            endPoint.addPolygon(this->makeArrowHead(path, GLscale));
             painter->fillPath(endPoint, colour);
 
             // Show number of synapses with dashes
@@ -612,7 +590,7 @@ void projection::draw(QPainter *painter, float GLscale,
 
             // account for hidpi in line width
             QPen linePen = painter->pen();
-            linePen.setCapStyle(Qt::SquareCap); // Would like Qt::RoundCap, but not in the dashes.
+            linePen.setCapStyle(Qt::FlatCap); // Would like Qt::RoundCap, but not in the dashes.
 
             // This sets the "base width" for the lines. We'll then
             // modify that base width based on the connection type.
@@ -653,15 +631,15 @@ void projection::draw(QPainter *painter, float GLscale,
             if (this->type == projectionObject) {
                 QPen pen = painter->pen();
                 QVector<qreal> dash;
-                dash.push_back(4);
+                dash.push_back(5);
                 for (int syn = 1; syn < this->synapses.size(); ++syn) {
-                    dash.push_back(2.0);
                     dash.push_back(1.0);
+                    dash.push_back(1.5);
                 }
                 if (synapses.size() > 1) {
-                    dash.push_back(2.0);
                     dash.push_back(1.0);
-                    dash.push_back(2.0);
+                    dash.push_back(1.5);
+                    dash.push_back(1.0);
                     pen.setWidthF(pen.widthF() * WIDTHFACTOR_MULTIPLESYNAPSES);
                 } else {
                     dash.push_back(0.0);
@@ -685,24 +663,7 @@ void projection::draw(QPainter *painter, float GLscale,
                 painter->fillPath(endPoint, colour);
 
             } else if (style == standardDrawStyleExcitatory) {
-                QPolygonF arrow_head;
-                //calculate arrow head polygon
-                QPointF end_point = path.pointAtPercent(1.0);
-                QPointF temp_end_point = path.pointAtPercent(0.995);
-                QLineF line = QLineF(end_point, temp_end_point).unitVector();
-                QLineF line2 = QLineF(line.p2(), line.p1());
-                line2.setLength(line2.length()+0.05*GLscale/2.0);
-                end_point = line2.p2();
-                line.setLength(0.1*GLscale);
-                QPointF t = line.p2() - line.p1();
-                QLineF normal = line.normalVector();
-                normal.setLength(normal.length()*0.8);
-                QPointF a1 = normal.p2() + t;
-                normal.setLength(-normal.length());
-                QPointF a2 = normal.p2() + t;
-                arrow_head.clear();
-                arrow_head << end_point << a1 << a2 << end_point;
-                endPoint.addPolygon(arrow_head);
+                endPoint.addPolygon(this->makeArrowHead(path, GLscale));
                 painter->fillPath(endPoint, colour);
             }
 
@@ -716,6 +677,29 @@ void projection::draw(QPainter *painter, float GLscale,
         }
         } // switch
     }
+}
+
+QPolygonF
+projection::makeArrowHead (QPainterPath& path, const float GLscale)
+{
+    QPolygonF arrow_head;
+    //calculate arrow head polygon
+    QPointF end_point = path.pointAtPercent(1.0);
+    QPointF temp_end_point = path.pointAtPercent(0.995);
+    QLineF line = QLineF(end_point, temp_end_point).unitVector();
+    QLineF line2 = QLineF(line.p2(), line.p1());
+    line2.setLength(line2.length()+0.05*GLscale/2.0);
+    end_point = line2.p2();
+    line.setLength(0.1*GLscale);
+    QPointF t = line.p2() - line.p1();
+    QLineF normal = line.normalVector();
+    normal.setLength(normal.length()*0.8);
+    QPointF a1 = normal.p2() + t;
+    normal.setLength(-normal.length());
+    QPointF a2 = normal.p2() + t;
+    arrow_head.clear();
+    arrow_head << end_point << a1 << a2 << end_point;
+    return arrow_head;
 }
 
 bool

@@ -162,6 +162,11 @@ private:
                     const float GLscale, const float scale);
 
     /*!
+     * produce an arrow head.
+     */
+    QPolygonF makeArrowHead (QPainterPath& path, const float GLscale);
+
+    /*!
      * Using this->curves, find a suitable label position for the
      * projection label. Place the label on the outside edge of the
      * curve. syn is the synapse number and influences the label
