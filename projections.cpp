@@ -756,7 +756,7 @@ projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, Q
         QPointF labelPos = this->transformPoint(this->getLabelPos (font, i, ctype, scale, startLinePos));
         startLinePos = this->transformPoint(startLinePos);
         // Find a point for the end of the pointer line:
-        QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.8));
+        QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.95));
 
         // Text first in same colour as projection line
         painter->setPen(labelPen);
@@ -833,6 +833,11 @@ projection::getLabelPos (QFont& f, int syn, const QString& text, const float sca
     }
     // May need left trending and right trending also?
 
+    // Site the label near the end of the last curve in the
+    // projection, rather than the "curveMiddle". Find a reference
+    // point on the last curve to do this:
+    QPointF labelRef = this->getBezierPos (this->curves.size()-1, 0.85);
+
     // Return info: Vertical and Left or Right OR Horizontal and Up or down.
     QPointF diff = projEnd - this->start;
     float diffVert = fabs(diff.y());
@@ -844,11 +849,11 @@ projection::getLabelPos (QFont& f, int syn, const QString& text, const float sca
         // is size give by the current font).
         if (curveMiddle.y() < centre.y()) {
             // DBG() << "Down curvy";
-            labelPos.setY(curveMiddle.y() - xheight - (syn*1.8*xheight));
+            labelPos.setY(curveMiddle.y() - 2*xheight - (syn*1.8*xheight));
             startLinePos.setY(labelPos.y() + xheight*1.6);
         } else {
             // DBG() << "Up curvy";
-            labelPos.setY(curveMiddle.y() + xheight + (syn*1.8*xheight));
+            labelPos.setY(curveMiddle.y() + 2*xheight + (syn*1.8*xheight));
             startLinePos.setY(labelPos.y() - xheight/4.0);
         }
 
@@ -860,15 +865,15 @@ projection::getLabelPos (QFont& f, int syn, const QString& text, const float sca
         // Must be effectively vertical then. So need to determine left/rightness.
         if (curveMiddle.x() < centre.x()) {
             // DBG() << "Left curvy";
-            labelPos.setX(curveMiddle.x() - stringwidth);
-            startLinePos.setX(curveMiddle.x() - stringwidth/4.0);
+            labelPos.setX(labelRef.x() - stringwidth - maxWidth*2);
+            startLinePos.setX(labelRef.x() - stringwidth/4.0);
         } else {
             // DBG() << "Right curvy";
             // Add a bit to the label pos, just a few chars.
-            labelPos.setX(curveMiddle.x() + maxWidth);
+            labelPos.setX(labelRef.x() + maxWidth*2);
             startLinePos.setX(labelPos.x() - maxWidth/4.0);
         }
-        labelPos.setY(curveMiddle.y() + (syn*xheight*1.8));
+        labelPos.setY(labelRef.y() + (syn*xheight*1.8));
         if (uptrending) {
             startLinePos.setY(labelPos.y() + xheight*1.6 );
         } else {
