@@ -342,6 +342,31 @@ drawStyle projection::style()
     return this->projDrawStyle;
 }
 
+/*!
+ * Colour definitions used in projection::draw. These were chosen
+ * using Hue/Saturation/Lightness/Alpha with Saturation 255, Alpha
+ * 255, lightness 106 and the Hue varied.
+ */
+//@{
+#define QCOL_BASICBLUE QColor(0x00,0x00,0xff,0xff)
+
+#define QCOL_MAGENTA1 QColor(0xd3,0x00,0xbf,0xff)
+#define QCOL_PURPLE1 QColor(0xa6,0x00,0xd3,0xff)
+#define QCOL_PURPLE2 QColor(0x49,0x00,0xd3,0xff)
+#define QCOL_BLUE1 QColor(0x00,0x09,0xd3,0xff)
+#define QCOL_BLUE2 QColor(0x00,0x81,0xd3,0xff)
+#define QCOL_CYAN1 QColor(0x00,0xc8,0xd3,0xff)
+#define QCOL_GREEN1 QColor(0x00,0xd3,0x50,0xff)
+#define QCOL_GREEN2 QColor(0x07,0xd3,0x00,0xff)
+#define QCOL_GREEN3 QColor(0x7a,0xd3,0x00,0xff)
+#define QCOL_ORANGE1 QColor(0xd3,0x83,0x00,0xff)
+#define QCOL_RED1 QColor(0xd3,0x26,0x00,0xff)
+#define QCOL_RED2 QColor(0xd3,0x00,0x00,0xff)
+
+#define QCOL_GREY1 QColor(0xc8,0xc8,0xc8,0xff)
+#define QCOL_GREY2 QColor(0x3e,0x3e,0x3e,0xff)
+#define QCOL_BLACK QColor(0xff,0xff,0xff,0xff)
+//@}
 void projection::draw(QPainter *painter, float GLscale,
                       float viewX, float viewY, int width, int height, QImage, drawStyle style)
 {
@@ -372,41 +397,47 @@ void projection::draw(QPainter *painter, float GLscale,
     if (this->curves.size() > 0) {
 
         // Colour definitions for this projection
-        QColor colour = QColor(0,0,255,255);
+        QColor colour = QCOL_BASICBLUE;
         if (this->multipleConnTypes()) {
-            colour = QColor(0,100,235,255);
+            colour = QCOL_PURPLE1;
         } else {
             // Set colour based on first synapse connection type.
-            colour = QColor(0,0,255,255);
+            colour = QCOL_BASICBLUE;
             QString ctype("");
             if (!this->synapses.isEmpty() && !this->synapses[0]->connectionTypeStr.isEmpty()) {
-                ctype += this->synapses[0]->connectionType->getTypeStr();
-                // Make colour vary based on string length? md5sum?
-                int r = (ctype.size())*8;
-                colour = QColor(r,0,255,255);
+
+                // Make colour vary based on md5sum of the text in ctype:
+                ctype += this->synapses[0]->connectionTypeStr;
+
+                QString result(QCryptographicHash::hash(ctype.toStdString().c_str(),
+                                                        QCryptographicHash::Md5).toHex());
+                QByteArray r2(result.toStdString().c_str(),2);
+                bool ok = false;
+                // Vary the hue in the colour
+                colour.setHsl(r2.toInt(&ok, 16),0xff,0x40);
 
             } else if (!this->synapses.isEmpty()) {
                 // No connectionTypeStr, so use type
                 switch (this->synapses[0]->connectionType->type) {
                 case AlltoAll:
-                    colour = QColor(0,26,158,255);
+                    colour = QCOL_BLUE1;
                     break;
                 case OnetoOne:
-                    colour = QColor(71,24,222,255);
+                    colour = QCOL_RED1;
                     break;
                 case FixedProb:
-                    colour = QColor(54,0,255,255);
+                    colour = QCOL_GREEN1;
                     break;
                 case CSV:
-                    colour = QColor(255,0,0,255);
+                    colour = QCOL_GREEN3;
                     break;
                 case Kernel:
-                    colour = QColor(0,255,0,255);
+                    colour = QCOL_ORANGE1;
                     break;
                 case Python:
                 case CSA:
                 default:
-                    colour = QColor(0,0,0,255);
+                    colour = QCOL_BLACK;
                     break;
                 }
 
@@ -421,19 +452,15 @@ void projection::draw(QPainter *painter, float GLscale,
         // that we can override the colour scheme, but otherwise, we
         // have to set the linePen colour to the passed in pen colour.
         QPen oldPen = painter->pen();
-        if (saveNetworkImage == true
-            || (oldPen.color().red() == 0
-                && oldPen.color().green() == 0
-                && oldPen.color().blue() == 255
-                && oldPen.color().alpha() == 255)) {
+        if (saveNetworkImage == true || oldPen.color() == QCOL_BASICBLUE) {
             // We can override colours
         } else {
             // We've been passed in a specified colour, set linePen to this colour
             colour = oldPen.color();
         }
 
-        QColor ptrColour = QColor(200,200,200,255);
-        QColor labelColour = colour;// QColor(0,0,0,255);
+        QColor ptrColour = QCOL_GREY1;
+        QColor labelColour = colour;
 
         QPointF start;
         QPointF end;
