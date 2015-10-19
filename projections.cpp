@@ -764,7 +764,7 @@ projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, Q
         // Set a suitable font for the projection labels
         QFont oldFont = painter->font();
         QFont font = painter->font();
-        font.setPointSizeF(GLscale/20.0);
+        font.setPointSizeF(1.6*GLscale/20.0);
         painter->setFont(font);
 
         // Call getLabelPos for the position of the label and

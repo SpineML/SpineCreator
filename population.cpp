@@ -747,12 +747,19 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         displayed_comp_name = displayed_comp_name + "...";
     }
 
-    QString text = displayed_name + "\n" + QString::number(this->numNeurons) + "\n" + displayed_comp_name;
     QFont oldFont = painter->font();
     QFont font = painter->font();
-    font.setPointSizeF(GLscale/20.0);
+
+    QString text = displayed_name + "\n" + QString::number(this->numNeurons);// + "\n" + displayed_comp_name;
+    font.setPointSizeF(1.5*GLscale/20.0);
     painter->setFont(font);
-    painter->drawText(rectangleInner, Qt::AlignRight, text);
+    painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignTop, text);
+
+    font.setPointSizeF(1.3*GLscale/20.0);
+    painter->setFont(font);
+    painter->setPen(QColor(60,60,60,255));
+    painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignBottom, displayed_comp_name);
+
     painter->setFont(oldFont);
 }
 

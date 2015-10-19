@@ -165,7 +165,9 @@ QRectF saveNetworkImageDialog::calculateBoundingBox (QVector <QSharedPointer<sys
 {
     QRectF bounds = QRectF(100000,100000,-200000,-200000);
 
-    // work out bounding box
+    // work out bounding box. Set the bounds from each population,
+    // gradually widening the bounding box to incorporate each
+    // population.
     for (int p = 0; p < list.size(); ++p) {
 
         if (list[p]->type == populationObject) {
@@ -180,7 +182,9 @@ QRectF saveNetworkImageDialog::calculateBoundingBox (QVector <QSharedPointer<sys
                 bounds.setRight(pop->rightBound(pop->targx));
         }
 
-
+        // If the population has projections, increase the bounding
+        // box to incorporate the projections also. This will not
+        // take into account projection labels.
         if (list[p]->type == projectionObject) {
 
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (list[p]);
@@ -296,11 +300,10 @@ void saveNetworkImageDialog::drawSVG (QSvgGenerator& svg)
         return;
     }
 
-    // Ought to be able to set the viewBox from the bounding box
-    // somehow, to get nice rendering in SVG viewers, without cropping
-    // the very bottom of the SVG.
-    // DBG() << "Bounds: " << bounds;
-    // svg.setViewBox (bounds);
+    // The correct resolution is 100 dpi. This related to the size of
+    // a population, which appears to be 1 inch high and at scale==1
+    // is 100 pixels high.
+    svg.setResolution (100);
 
     QPainter *painter = new QPainter(&svg);
     this->setupPainter (painter);

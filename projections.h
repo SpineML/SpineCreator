@@ -156,7 +156,8 @@ private:
     bool multipleConnTypes(void);
 
     /*!
-     * Draw the projection label.
+     * Draw the projection label. Arguments are all variables from
+     * projections::draw.
      */
     void drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, QPen& labelPen,
                     const float GLscale, const float scale);
