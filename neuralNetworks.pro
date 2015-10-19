@@ -7,7 +7,7 @@
 VPATH += ../shared
 INCLUDEPATH += ../shared
 
-QT       += core gui opengl xml network
+QT       += core gui opengl xml network svg
 
 greaterThan(QT_MAJOR_VERSION, 4) {
 QT       += printsupport

@@ -348,25 +348,42 @@ drawStyle projection::style()
  * 255, lightness 106 and the Hue varied.
  */
 //@{
-#define QCOL_BASICBLUE QColor(0x00,0x00,0xff,0xff)
+#define QCOL_BASICBLUE  QColor(0x00,0x00,0xff,0xff)
 
-#define QCOL_MAGENTA1 QColor(0xd3,0x00,0xbf,0xff)
-#define QCOL_PURPLE1 QColor(0xa6,0x00,0xd3,0xff)
-#define QCOL_PURPLE2 QColor(0x49,0x00,0xd3,0xff)
-#define QCOL_BLUE1 QColor(0x00,0x09,0xd3,0xff)
-#define QCOL_BLUE2 QColor(0x00,0x81,0xd3,0xff)
-#define QCOL_CYAN1 QColor(0x00,0xc8,0xd3,0xff)
-#define QCOL_GREEN1 QColor(0x00,0xd3,0x50,0xff)
-#define QCOL_GREEN2 QColor(0x07,0xd3,0x00,0xff)
-#define QCOL_GREEN3 QColor(0x7a,0xd3,0x00,0xff)
-#define QCOL_ORANGE1 QColor(0xd3,0x83,0x00,0xff)
-#define QCOL_RED1 QColor(0xd3,0x26,0x00,0xff)
-#define QCOL_RED2 QColor(0xd3,0x00,0x00,0xff)
+#define QCOL_MAGENTA1   QColor(0xd3,0x00,0xbf,0xff)
+#define QCOL_PURPLE1    QColor(0xa6,0x00,0xd3,0xff)
+#define QCOL_PURPLE2    QColor(0x49,0x00,0xd3,0xff)
+#define QCOL_BLUE1      QColor(0x00,0x09,0xd3,0xff)
+#define QCOL_BLUE2      QColor(0x00,0x81,0xd3,0xff)
+#define QCOL_CYAN1      QColor(0x00,0xc8,0xd3,0xff)
+#define QCOL_GREEN1     QColor(0x00,0xd3,0x50,0xff)
+#define QCOL_GREEN2     QColor(0x07,0xd3,0x00,0xff)
+#define QCOL_GREEN3     QColor(0x7a,0xd3,0x00,0xff)
+#define QCOL_ORANGE1    QColor(0xd3,0x83,0x00,0xff)
+#define QCOL_RED1       QColor(0xd3,0x26,0x00,0xff)
+#define QCOL_RED2       QColor(0xd3,0x00,0x00,0xff)
 
-#define QCOL_GREY1 QColor(0xc8,0xc8,0xc8,0xff)
-#define QCOL_GREY2 QColor(0x3e,0x3e,0x3e,0xff)
-#define QCOL_BLACK QColor(0xff,0xff,0xff,0xff)
+#define QCOL_GREY1      QColor(0xc8,0xc8,0xc8,0xff)
+#define QCOL_GREY2      QColor(0x3e,0x3e,0x3e,0xff)
+#define QCOL_BLACK      QColor(0xff,0xff,0xff,0xff)
 //@}
+
+/*!
+ * Width Factors for the projection lines.
+ */
+//@{
+#define WIDTHFACTOR_MULTIPLESYNAPSES 1.5
+#define WIDTHFACTOR_MULTIPLE         1.5
+#define WIDTHFACTOR_PYTHONCONN       1.5
+#define WIDTHFACTOR_ALLTOALL         1.8
+#define WIDTHFACTOR_ONETOONE         1.0
+#define WIDTHFACTOR_FIXEDPROB        1.5
+#define WIDTHFACTOR_CSV              1.5
+#define WIDTHFACTOR_KERNEL           1.5
+#define WIDTHFACTOR_OTHER            1.0
+
+//@}
+
 void projection::draw(QPainter *painter, float GLscale,
                       float viewX, float viewY, int width, int height, QImage, drawStyle style)
 {
@@ -396,10 +413,13 @@ void projection::draw(QPainter *painter, float GLscale,
 
     if (this->curves.size() > 0) {
 
-        // Colour definitions for this projection
+        // Colour definitions and line width factor for this
+        // projection, dependent upon the connection type.
         QColor colour = QCOL_BASICBLUE;
+        float connTypeWidthFactor = 1.0;
         if (this->multipleConnTypes()) {
             colour = QCOL_PURPLE1;
+            connTypeWidthFactor = WIDTHFACTOR_MULTIPLE;
         } else {
             // Set colour based on first synapse connection type.
             colour = QCOL_BASICBLUE;
@@ -416,28 +436,36 @@ void projection::draw(QPainter *painter, float GLscale,
                 // Vary the hue in the colour
                 colour.setHsl(r2.toInt(&ok, 16),0xff,0x40);
 
+                connTypeWidthFactor = WIDTHFACTOR_PYTHONCONN;
+
             } else if (!this->synapses.isEmpty()) {
                 // No connectionTypeStr, so use type
                 switch (this->synapses[0]->connectionType->type) {
                 case AlltoAll:
                     colour = QCOL_BLUE1;
+                    connTypeWidthFactor = WIDTHFACTOR_ALLTOALL;
                     break;
                 case OnetoOne:
                     colour = QCOL_RED1;
+                    connTypeWidthFactor = WIDTHFACTOR_ONETOONE;
                     break;
                 case FixedProb:
                     colour = QCOL_GREEN1;
+                    connTypeWidthFactor = WIDTHFACTOR_FIXEDPROB;
                     break;
                 case CSV:
                     colour = QCOL_GREEN3;
+                    connTypeWidthFactor = WIDTHFACTOR_CSV;
                     break;
                 case Kernel:
                     colour = QCOL_ORANGE1;
+                    connTypeWidthFactor = WIDTHFACTOR_KERNEL;
                     break;
                 case Python:
                 case CSA:
                 default:
                     colour = QCOL_BLACK;
+                    connTypeWidthFactor = WIDTHFACTOR_OTHER;
                     break;
                 }
 
@@ -585,12 +613,18 @@ void projection::draw(QPainter *painter, float GLscale,
             // account for hidpi in line width
             QPen linePen = painter->pen();
             linePen.setCapStyle(Qt::SquareCap); // Would like Qt::RoundCap, but not in the dashes.
-            linePen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
+
+            // This sets the "base width" for the lines. We'll then
+            // modify that base width based on the connection type.
+            linePen.setWidthF(2*connTypeWidthFactor*scale*linePen.widthF()*dpi_ratio);
+
             // Another pen for the pointer line
             QPen pointerLinePen(ptrColour, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
             pointerLinePen.setWidthF(scale*dpi_ratio);
             QPen labelPen(labelColour, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
-            labelPen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
+            //labelPen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
+            labelPen.setWidthF(linePen.widthF());
+
             if (saveNetworkImage) {
                 // Wider lines for image output
                 linePen.setWidthF(linePen.widthF()*2);
@@ -628,7 +662,7 @@ void projection::draw(QPainter *painter, float GLscale,
                     dash.push_back(2.0);
                     dash.push_back(1.0);
                     dash.push_back(2.0);
-                    pen.setWidthF((pen.widthF()+1.0) * 1.5);
+                    pen.setWidthF(pen.widthF() * WIDTHFACTOR_MULTIPLESYNAPSES);
                 } else {
                     dash.push_back(0.0);
                 }
@@ -644,7 +678,7 @@ void projection::draw(QPainter *painter, float GLscale,
 
             QPainterPath endPoint;
             if (style == standardDrawStyle) {
-                // Inhibitory connections get a little circle.
+                // Connections marked by user as "inhibitory" get a little circle.
                 endPoint.addEllipse(this->transformPoint(this->curves.back().end),
                                     0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
                 painter->drawPath(endPoint);

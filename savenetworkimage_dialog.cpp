@@ -49,13 +49,13 @@ saveNetworkImageDialog::saveNetworkImageDialog(rootData * data, QString fileName
     connect(ui->comboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(changeDrawStyle(int)));
 
     // setup sizes
-    ui->scale_spin->setValue(1.0);
-    ui->scale_spin->setMaximum(7.0);
+    ui->scale_spin->setValue(3.0);
+    ui->scale_spin->setMaximum(8.0);
     ui->scale_spin->setMinimum(0.1);
-    scale = 1.0;
+    scale = 3.0;
     connect(ui->scale_spin,SIGNAL(valueChanged(double)), this, SLOT(changeScale(double)));
-    ui->border_spin->setValue(1.0);
-    border = 1.0;
+    ui->border_spin->setValue(0.3);
+    border = 0.3;
     ui->scale_spin->setMaximum(5.0);
     connect(ui->border_spin,SIGNAL(valueChanged(double)), this, SLOT(changeBorder(double)));
 
@@ -161,15 +161,8 @@ bool saveNetworkImageDialog::drawOrderLessThan (const QSharedPointer<systemObjec
     return (o1->type < o2->type ? true : false);
 }
 
-QPixmap saveNetworkImageDialog::drawPixMap()
+QRectF saveNetworkImageDialog::calculateBoundingBox (QVector <QSharedPointer<systemObject> >& list)
 {
-    // what to draw
-    QVector <QSharedPointer<systemObject> > list;
-    list = data->selList;
-    // Order the list now to ensure the correct drawing output?
-    // Populations then projections then genericinputs.
-    qSort(list.begin(), list.end(), saveNetworkImageDialog::drawOrderLessThan);
-
     QRectF bounds = QRectF(100000,100000,-200000,-200000);
 
     // work out bounding box
@@ -217,6 +210,26 @@ QPixmap saveNetworkImageDialog::drawPixMap()
     bounds.setTopLeft(bounds.topLeft() - QPointF(border,border));
     bounds.setBottomRight(bounds.bottomRight() + QPointF(border,border));
 
+    return bounds;
+}
+
+void saveNetworkImageDialog::setupPainter (QPainter* painter)
+{
+    painter->setRenderHint(QPainter::HighQualityAntialiasing, true);
+    painter->setRenderHint(QPainter::Antialiasing,true);
+    painter->setRenderHint(QPainter::TextAntialiasing,true);
+    painter->setRenderHint(QPainter::SmoothPixmapTransform,true);
+
+    // setup the painter
+    QFont font("Monospace", 5.0f);
+    font.setStyleHint(QFont::TypeWriter);
+    painter->setFont(font);
+}
+
+QPixmap saveNetworkImageDialog::drawPixMap()
+{
+    QVector <QSharedPointer<systemObject> > list = this->getDrawableList();
+    QRectF bounds = this->calculateBoundingBox (list);
     QPixmap outPix(bounds.width()*100*scale, bounds.height()*100*scale);
 
     if (ui->checkBox->isChecked()) {
@@ -237,28 +250,63 @@ QPixmap saveNetworkImageDialog::drawPixMap()
     }
 
     QPainter *painter = new QPainter(&outPix);
+    this->setupPainter (painter);
+    this->renderDrawables (painter, list, bounds);
+    painter->end();
+    delete painter;
 
-    painter->setRenderHint(QPainter::HighQualityAntialiasing, true);
-    painter->setRenderHint(QPainter::Antialiasing,true);
-    painter->setRenderHint( QPainter::TextAntialiasing,true);
-    painter->setRenderHint(QPainter::SmoothPixmapTransform,true);
+    return outPix;
+}
 
-    // setup the painter
-    QFont font("Monospace", 5.0f);
-    font.setStyleHint(QFont::TypeWriter);
-    painter->setFont(font);
+QVector <QSharedPointer<systemObject> >
+saveNetworkImageDialog::getDrawableList (void)
+{
+    QVector <QSharedPointer<systemObject> > list = data->selList;
+    // Order the list now to ensure the correct drawing output?
+    // Populations then projections then genericinputs.
+    qSort(list.begin(), list.end(), saveNetworkImageDialog::drawOrderLessThan);
+    return list;
+}
 
-    // Just render selection:
+void saveNetworkImageDialog::renderDrawables (QPainter* painter,
+                                              QVector <QSharedPointer<systemObject> >& list,
+                                              const QRectF& bounds)
+{
+    // Just render selection list:
     for (int i = 0; i < list.size(); ++i) {
             list[i]->draw(painter, 200.0*scale,
                           -bounds.center().x(), -bounds.center().y(), bounds.width()*100*scale,
                           bounds.height()*100*scale, data->popImage, this->style);
     }
+}
 
+void saveNetworkImageDialog::drawSVG (QSvgGenerator& svg)
+{
+    QVector <QSharedPointer<systemObject> > list = this->getDrawableList();
+    QRectF bounds = this->calculateBoundingBox (list);
+
+    if (list.empty()) {
+        // User hasn't made a selection, so open a dialog to hint that
+        // a selection is required for an image. (tested here so that
+        // we can return a null QPixmap)
+        QMessageBox::warning(this, QString("No populations selected"),
+                             QString("The image will be blank as no populations have been selected. "
+                                     "Please select at least one population for the image."));
+
+        return;
+    }
+
+    // Ought to be able to set the viewBox from the bounding box
+    // somehow, to get nice rendering in SVG viewers, without cropping
+    // the very bottom of the SVG.
+    // DBG() << "Bounds: " << bounds;
+    // svg.setViewBox (bounds);
+
+    QPainter *painter = new QPainter(&svg);
+    this->setupPainter (painter);
+    this->renderDrawables (painter, list, bounds);
     painter->end();
     delete painter;
-
-    return outPix;
 }
 
 QPixmap saveNetworkImageDialog::drawPixMapVis()
@@ -297,7 +345,6 @@ void saveNetworkImageDialog::changeDrawStyle(int index)
     switch (index) {
     case 0:
         // "SpineCreator" in the menu
-        //this->style = standardDrawStyle;
         this->style = saveNetworkImageDrawStyle;
         break;
     case 1:
@@ -310,19 +357,30 @@ void saveNetworkImageDialog::changeDrawStyle(int index)
 
 void saveNetworkImageDialog::save()
 {
-    this->fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), qgetenv("HOME"), tr("Png (*.png)"));
+    this->fileName = QFileDialog::getSaveFileName(this, tr("Export As Image"), qgetenv("HOME"), tr("SVG (*.svg);;PNG (*.png)"));
 
     if (this->fileName.isEmpty()) {
         return;
     }
 
-    QPixmap pix;
-    if (height > 0) {
-        pix = drawPixMapVis();
-    } else {
-        pix = drawPixMap();
-    }
+    if (fileName.endsWith("png", Qt::CaseInsensitive)) {
+        // PNG Save
+        QPixmap pix;
+        if (height > 0) {
+            pix = drawPixMapVis();
+        } else {
+            pix = drawPixMap();
+        }
 
-    QImage outIm = pix.toImage();
-    outIm.save(fileName,"png");
+        QImage outIm = pix.toImage();
+        outIm.save(fileName,"png");
+
+    } else {
+        // SVG Save by default
+        QSvgGenerator svg;
+        svg.setFileName (this->fileName);
+        svg.setTitle("SpineCreator Image");
+        svg.setDescription ("Image exported from SpineCreator");
+        this->drawSVG (svg);
+    }
 }
