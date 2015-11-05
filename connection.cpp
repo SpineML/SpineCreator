@@ -51,6 +51,38 @@ int connection::getIndex()
     return (int) this->type;
 }
 
+QString connection::getTypeStr(void)
+{
+    QString ctype("");
+    switch (this->type) {
+    case AlltoAll:
+        ctype = "all to all";
+        break;
+    case OnetoOne:
+        ctype = "one to one";
+        break;
+    case FixedProb:
+        ctype = "fixed probability"; // add params?
+        break;
+    case CSV:
+        ctype = "explicit list";
+        break;
+    case Kernel:
+        ctype = "kernel";
+        break;
+    case Python:
+        ctype = "python script"; // Get script name. Should be handled by python conn type
+        break;
+    case CSA:
+        ctype = "CSA (deprecated)";
+        break;
+    default:
+        ctype = "Unknown";
+        break;
+    }
+    return ctype;
+}
+
 void connection::setSrcName (QString& s)
 {
     this->srcName = s;
@@ -1661,11 +1693,11 @@ bool kernel_connection::isList()
 
 pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
 {
-    type = Python;
+    this->type = Python;
     this->isAList = false;
-    selfConnections = false;
-    rotation = 0;
-    hasChanged = true;
+    this->selfConnections = false;
+    this->rotation = 0;
+    this->hasChanged = true;
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;
@@ -1693,6 +1725,12 @@ int pythonscript_connection::getIndex()
 
     // use Python as the base index and increment by the script number
     return (int) this->type + index;
+}
+
+QString pythonscript_connection::getTypeStr(void)
+{
+    // Could add "with weights" and "with delays".
+    return this->scriptName;
 }
 
 QLayout * pythonscript_connection::drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay)

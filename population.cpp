@@ -629,7 +629,9 @@ QPointF population::transformPoint(QPointF point) {
 }
 
 
-void population::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style) {
+void population::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style)
+{
+    float scale = GLscale/200.0;
 
     this->setupTrans(GLscale, viewX, viewY, width, height);
 
@@ -643,7 +645,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         // draw circle
         QPen oldPen = painter->pen();
         QPen pen = painter->pen();
-        pen.setWidthF((pen.widthF()+1.0)*GLscale/100.0);
+        pen.setWidthF((pen.widthF()+1.0)*2*scale);
         painter->setPen(pen);
         painter->drawEllipse(transformPoint(QPointF(this->x, this->y)),0.5*GLscale/2.0,0.5*GLscale/2.0);
         painter->setPen(oldPen);
@@ -663,12 +665,11 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         return;
     }
     case layersDrawStyle:
+    {
         return;
-    case standardDrawStyle:
-    case standardDrawStyleExcitatory:
-        // do nothing
-        break;
+    }
     case spikeSourceDrawStyle:
+    {
         // draw circle
         QPen oldPen = painter->pen();
         QPen pen = painter->pen();
@@ -700,6 +701,13 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         return;
         break;
     }
+    case standardDrawStyle:
+    case standardDrawStyleExcitatory:
+    case saveNetworkImageDrawStyle:
+    default:
+        // do nothing here, break out into the code below.
+        break;
+    }
 
     // transform the co-ordinates manually (using the qt transformation leads to blurry fonts!)
     float left = ((this->left+viewX)*GLscale+float(width))/2;
@@ -709,26 +717,26 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
     QRectF rectangle(left, top, right-left, bottom-top);
 
-    QRectF rectangleInner(left+2, top+2, right-left-8, bottom-top-4);
+    QRectF rectangleInner(left+2*scale, top+2*scale, right-left-8*scale, bottom-top-4*scale);
 
     QColor col(this->colour);
     col.setAlpha(100);
     QPainterPath path;
     path.addRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
 
-    //painter->fillRect(rectangle, col);
     painter->fillPath(path, col);
 
     painter->drawImage(rectangle, image);
 
+    // Draw a dark grey border around the population
     painter->setPen(QColor(200,200,200,255));
     painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
     painter->setPen(QColor(0,0,0,255));
 
     QString displayed_name = this->name;
 
-    if (displayed_name.size() > 14) {
-        displayed_name.resize(11);
+    if (displayed_name.size() > 13) {
+        displayed_name.resize(10);
         displayed_name = displayed_name + "...";
     }
 
@@ -739,14 +747,20 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         displayed_comp_name = displayed_comp_name + "...";
     }
 
-    QString text = displayed_name + "\n" + QString::number(this->numNeurons) + "\n" + displayed_comp_name;
     QFont oldFont = painter->font();
     QFont font = painter->font();
-    font.setPointSizeF(GLscale/20.0);
-    painter->setFont(font);
-    painter->drawText(rectangleInner, Qt::AlignRight, text);
-    painter->setFont(oldFont);
 
+    QString text = displayed_name + "\n" + QString::number(this->numNeurons);// + "\n" + displayed_comp_name;
+    font.setPointSizeF(1.5*GLscale/20.0);
+    painter->setFont(font);
+    painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignTop, text);
+
+    font.setPointSizeF(1.3*GLscale/20.0);
+    painter->setFont(font);
+    painter->setPen(QColor(60,60,60,255));
+    painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignBottom, displayed_comp_name);
+
+    painter->setFont(oldFont);
 }
 
 void population::drawSynapses(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style) {
@@ -1033,6 +1047,7 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
     ///// ADD Synapses:
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
 
+    DBG() << "Reading projections from XML";
     for (int i = 0; i < (int) cList.count(); ++i) {
         QDomElement e2 = cList.item(i).toElement();
         this->projections.push_back(QSharedPointer<projection>(new projection()));

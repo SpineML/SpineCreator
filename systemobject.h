@@ -27,6 +27,12 @@
 
 #include "globalHeader.h"
 
+/*!
+ * Order matters here. Order these from "should be lowest in the
+ * diagram" to "should be drawn on top of everything in a
+ * diagram". See saveNetworkImageDialog::drawOrderLessThan for the
+ * reason why this is.
+ */
 enum systemObjectType {
 
     populationObject,

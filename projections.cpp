@@ -30,8 +30,8 @@
 #include <sstream>
 #include <iomanip>
 
-synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs) {
-
+synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs)
+{
    this->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogPS[0]));
    this->postsynapseType->owner = proj;
    this->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogWU[0]));
@@ -48,8 +48,9 @@ synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool do
         this->postsynapseType->addInput(this->weightUpdateType, true);
 
         // PSP -> destination
-        if (proj->destination != NULL)
+        if (proj->destination != NULL) {
             proj->destination->neuronType->addInput(this->postsynapseType, true);
+        }
     }
 
     //attach to the projection (shared pointers mean this must be done elsewhere)
@@ -61,10 +62,11 @@ synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool do
 
     this->isVisualised = false;
 
+    this->connectionTypeStr = "";
 }
 
-synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAddInputs) {
-
+synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAddInputs)
+{
    this->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogPS[0]));
    this->postsynapseType->owner = proj;
    this->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogWU[0]));
@@ -81,12 +83,10 @@ synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAdd
         this->postsynapseType->addInput(this->weightUpdateType, true);
 
         // PSP -> destination
-        if (proj->destination != NULL)
+        if (proj->destination != NULL) {
             proj->destination->neuronType->addInput(this->postsynapseType, true);
+        }
     }
-
-    //attach to the projection (shared pointers mean this must be done elsewhere)
-    //proj->synapses.push_back(QSharedPointer<synapse>(this));
 
     this->proj = proj;
 
@@ -94,44 +94,40 @@ synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAdd
 
     this->isVisualised = false;
 
+    this->connectionTypeStr = "";
 }
 
-
-synapse::~synapse() {
-
-    // remove components (they will clean up their inputs themselves) NOW QSharedPointers - so no need
-    //delete this->postsynapseType;
-    //delete this->weightUpdateType;
+synapse::~synapse()
+{
+    // Note: postsynapseType and weightUpdateType are QSharedPointers
+    // do don't need to be deleted.
     this->postsynapseType.clear();
     this->weightUpdateType.clear();
     delete this->connectionType;
-
 }
 
 
-void synapse::delAll(rootData *) {
-
+void synapse::delAll(rootData *)
+{
     // remove components (they will clean up their inputs themselves)
     this->postsynapseType->removeReferences();
     this->weightUpdateType->removeReferences();
 
-    //delete this->postsynapseType;
-    //delete this->weightUpdateType;
     this->postsynapseType.clear();
     this->weightUpdateType.clear();
+    this->connectionTypeStr = "";
     delete this->connectionType;
-
-    //delete this;
-
 }
 
-QString synapse::getName() {
-
+QString synapse::getName()
+{
     // get index:
     int index = -1;
-    for (int i = 0; i < this->proj->synapses.size(); ++i)
-        if (this->proj->synapses[i].data() == this)
+    for (int i = 0; i < this->proj->synapses.size(); ++i) {
+        if (this->proj->synapses[i].data() == this) {
             index = i;
+        }
+    }
 
     if (index == -1) {
         qDebug() << "Can't find synapse! In synapse::getName()";
@@ -139,7 +135,6 @@ QString synapse::getName() {
     }
 
     return this->proj->getName() + ": Synapse " + QString::number(index);
-
 }
 
 int synapse::getSynapseIndex()
@@ -174,17 +169,15 @@ projection::projection()
     this->selectedControlPoint.type = C1;
 
     this->projDrawStyle = standardDrawStyleExcitatory;
-
+    this->showLabel = false;
 }
 
 projection::~projection()
 {
-
 }
 
-
-void projection::connect(QSharedPointer<projection> in) {
-
+void projection::connect(QSharedPointer<projection> in)
+{
     // connect might be called multiple times due to the nature of Undo
     for (int i = 0; i < destination->reverseProjections.size(); ++i) {
         if (destination->reverseProjections[i].data() == in.data()) {
@@ -201,18 +194,10 @@ void projection::connect(QSharedPointer<projection> in) {
 
     destination->reverseProjections.push_back(in);
     source->projections.push_back(in);
-
-    // connect inputs
-    /*for (int i = 0; i < this->disconnectedInputs.size(); ++i) {
-        this->disconnectedInputs[i]->connect();
-    }
-
-    disconnectedInputs.clear();*/
-
 }
 
-void projection::disconnect() {
-
+void projection::disconnect()
+{
     if (destination != NULL) {
         // remove projection
         for (int i = 0; i < destination->reverseProjections.size(); ++i) {
@@ -230,59 +215,26 @@ void projection::disconnect() {
             }
         }
     }
-
-    // remove inputs & outputs
-    /*for (int i = 0; i < synapses.size(); ++i) {
-        QSharedPointer <synapse> syn = synapses[i];
-        // remove inputs
-        for (int j = 0; j < syn->weightUpdateType->inputs.size(); ++j) {
-            disconnectedInputs.push_back(syn->weightUpdateType->inputs[j]);
-            syn->weightUpdateType->inputs[j]->disconnect();
-        }
-        for (int j = 0; j < syn->postsynapseType->inputs.size(); ++j) {
-            disconnectedInputs.push_back(syn->postsynapseType->inputs[j]);
-            syn->postsynapseType->inputs[j]->disconnect();
-        }
-
-        // remove outputs
-        for (int j = 0; j < syn->weightUpdateType->outputs.size(); ++j) {
-            disconnectedInputs.push_back(syn->weightUpdateType->outputs[j]);
-            syn->weightUpdateType->outputs[j]->disconnect();
-        }
-        for (int j = 0; j < syn->postsynapseType->outputs.size(); ++j) {
-            disconnectedInputs.push_back(syn->postsynapseType->outputs[j]);
-            syn->postsynapseType->outputs[j]->disconnect();
-        }
-    }*/
 }
 
-void projection::remove(rootData * data) {
-
+void projection::remove(rootData * data)
+{
     // remove from experiment
     for (int j = 0; j < data->experiments.size(); ++j) {
-        //data->experiments[j]->purgeBadPointer(this);
+        // data->experiments[j]->purgeBadPointer(this);
     }
-
-    //delete this;
-
 }
 
-void projection::delAll(rootData *) {
-
+void projection::delAll(rootData *)
+{
     // remove other references so we don't get deleted twice!
     this->disconnect();
-
-    //delete this;
-
 }
 
-void projection::delAll(projectObject *) {
-
+void projection::delAll(projectObject *)
+{
     // remove other references so we don't get deleted twice!
     this->disconnect();
-
-    //delete this;
-
 }
 
 QPointF projection::currentLocation()
@@ -312,8 +264,8 @@ QPointF projection::selectedControlPointLocation()
     return rtn;
 }
 
-void projection::move(float x, float y) {
-
+void projection::move(float x, float y)
+{
     if (curves.size() > 1) {
 
         // move mid points:
@@ -321,21 +273,17 @@ void projection::move(float x, float y) {
         this->curves[0].end = (this->curves[0].end - this->start) + QPointF(x,y) + locationOffset;
 
         for (int i = 1; i < this->curves.size() -1; ++i) {
-
             this->curves[i].C1 = (this->curves[i].C1 - this->start) + QPointF(x,y) + locationOffset;
             this->curves[i].C2 = (this->curves[i].C2 - this->start) + QPointF(x,y) + locationOffset;
             this->curves[i].end = (this->curves[i].end - this->start) + QPointF(x,y) + locationOffset;
-
         }
 
-    this->curves.back().C1 = (this->curves.back().C1 - this->start) + QPointF(x,y) + locationOffset;
+        this->curves.back().C1 = (this->curves.back().C1 - this->start) + QPointF(x,y) + locationOffset;
     }
-
-
 }
 
-void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, QSharedPointer<projection>thisSharedPointer) {
-
+void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, QSharedPointer<projection>thisSharedPointer)
+{
     QSharedPointer <population> movingPop;
 
     if (movingObj->type == populationObject) {
@@ -363,6 +311,7 @@ void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, Q
         this->start = this->start + delta;
         this->curves.front().C1 = this->curves.front().C1 + delta;
     }
+
     // if destination is set:
     if (!(this->destination.isNull())) {
         // destination is moving
@@ -380,34 +329,166 @@ void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, Q
                 }
             }
         }
-
     }
-
 }
 
-void projection::setStyle(drawStyle style) {
+void projection::setStyle(drawStyle style)
+{
     this->projDrawStyle = style;
 }
 
-drawStyle projection::style() {
+drawStyle projection::style()
+{
     return this->projDrawStyle;
 }
 
-void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style) {
+/*!
+ * Colour definitions used in projection::draw. These were chosen
+ * using Hue/Saturation/Lightness/Alpha with Saturation 255, Alpha
+ * 255, lightness 106 and the Hue varied.
+ */
+//@{
+#define QCOL_BASICBLUE  QColor(0x00,0x00,0xff,0xff)
+
+#define QCOL_MAGENTA1   QColor(0xd3,0x00,0xbf,0xff)
+#define QCOL_PURPLE1    QColor(0xa6,0x00,0xd3,0xff)
+#define QCOL_PURPLE2    QColor(0x49,0x00,0xd3,0xff)
+#define QCOL_BLUE1      QColor(0x00,0x09,0xd3,0xff)
+#define QCOL_BLUE2      QColor(0x00,0x81,0xd3,0xff)
+#define QCOL_CYAN1      QColor(0x00,0xc8,0xd3,0xff)
+#define QCOL_GREEN1     QColor(0x00,0xd3,0x50,0xff)
+#define QCOL_GREEN2     QColor(0x07,0xd3,0x00,0xff)
+#define QCOL_GREEN3     QColor(0x7a,0xd3,0x00,0xff)
+#define QCOL_ORANGE1    QColor(0xd3,0x83,0x00,0xff)
+#define QCOL_RED1       QColor(0xd3,0x26,0x00,0xff)
+#define QCOL_RED2       QColor(0xd3,0x00,0x00,0xff)
+
+#define QCOL_GREY1      QColor(0xc8,0xc8,0xc8,0xff)
+#define QCOL_GREY2      QColor(0x3e,0x3e,0x3e,0xff)
+#define QCOL_BLACK      QColor(0xff,0xff,0xff,0xff)
+//@}
+
+/*!
+ * Width Factors for the projection lines.
+ */
+//@{
+#define WIDTHFACTOR_MULTIPLESYNAPSES 1.5
+#define WIDTHFACTOR_MULTIPLE         1.5
+#define WIDTHFACTOR_PYTHONCONN       1.5
+#define WIDTHFACTOR_ALLTOALL         1.8
+#define WIDTHFACTOR_ONETOONE         1.0
+#define WIDTHFACTOR_FIXEDPROB        1.5
+#define WIDTHFACTOR_CSV              1.5
+#define WIDTHFACTOR_KERNEL           1.5
+#define WIDTHFACTOR_OTHER            1.0
+
+//@}
+
+void projection::draw(QPainter *painter, float GLscale,
+                      float viewX, float viewY, int width, int height, QImage, drawStyle style)
+{
+    // GLscale = 200 * scale from the UI
+    float scale = GLscale/200.0;
+    // Enforce a lower limit to scale, to ensure we don't try to draw
+    // lines too small for the UI to draw them.
+    if (scale < 0.4) {
+        scale = 0.4;
+    }
 
     // setup for drawing curves
     this->setupTrans(GLscale, viewX, viewY, width, height);
 
-    // switch if we have standardDrawStyle
-    if (style == standardDrawStyle) {
+    bool saveNetworkImage = false;
+
+    // switch if we have standardDrawStyle or saveNetworkImageDrawStyle
+    if (style == saveNetworkImageDrawStyle) {
+        // This draw is for a "Save Image" request, rather than an on-screen draw.
+        saveNetworkImage = true;
+        style = this->projDrawStyle;
+    } else if (style == standardDrawStyle) {
+        // standardDrawStyle for inhibitory,
+        // standardDrawStyleExcitatory for excitatory projections.
         style = this->projDrawStyle;
     }
 
     if (this->curves.size() > 0) {
 
-        QColor colour;
+        // Colour definitions and line width factor for this
+        // projection, dependent upon the connection type.
+        QColor colour = QCOL_BASICBLUE;
+        float connTypeWidthFactor = 1.0;
+        if (this->multipleConnTypes()) {
+            colour = QCOL_PURPLE1;
+            connTypeWidthFactor = WIDTHFACTOR_MULTIPLE;
+        } else {
+            // Set colour based on first synapse connection type.
+            colour = QCOL_BASICBLUE;
+            QString ctype("");
+            if (!this->synapses.isEmpty() && !this->synapses[0]->connectionTypeStr.isEmpty()) {
 
+                // Make colour vary based on md5sum of the text in ctype:
+                ctype += this->synapses[0]->connectionTypeStr;
+
+                QString result(QCryptographicHash::hash(ctype.toStdString().c_str(),
+                                                        QCryptographicHash::Md5).toHex());
+                QByteArray r2(result.toStdString().c_str(),2);
+                bool ok = false;
+                // Vary the hue in the colour
+                colour.setHsl(r2.toInt(&ok, 16),0xff,0x40);
+
+                connTypeWidthFactor = WIDTHFACTOR_PYTHONCONN;
+
+            } else if (!this->synapses.isEmpty()) {
+                // No connectionTypeStr, so use type
+                switch (this->synapses[0]->connectionType->type) {
+                case AlltoAll:
+                    colour = QCOL_BLUE1;
+                    connTypeWidthFactor = WIDTHFACTOR_ALLTOALL;
+                    break;
+                case OnetoOne:
+                    colour = QCOL_RED1;
+                    connTypeWidthFactor = WIDTHFACTOR_ONETOONE;
+                    break;
+                case FixedProb:
+                    colour = QCOL_GREEN1;
+                    connTypeWidthFactor = WIDTHFACTOR_FIXEDPROB;
+                    break;
+                case CSV:
+                    colour = QCOL_GREEN3;
+                    connTypeWidthFactor = WIDTHFACTOR_CSV;
+                    break;
+                case Kernel:
+                    colour = QCOL_ORANGE1;
+                    connTypeWidthFactor = WIDTHFACTOR_KERNEL;
+                    break;
+                case Python:
+                case CSA:
+                default:
+                    colour = QCOL_BLACK;
+                    connTypeWidthFactor = WIDTHFACTOR_OTHER;
+                    break;
+                }
+
+            } else {
+                // No Synapses?
+            }
+        }
+
+        // In some cases, the colour for the projection is passed
+        // in. In most cases we want to choose the colour here. This
+        // is a bit hacky, but when we get passed in blue, we reckon
+        // that we can override the colour scheme, but otherwise, we
+        // have to set the linePen colour to the passed in pen colour.
         QPen oldPen = painter->pen();
+        if (saveNetworkImage == true || oldPen.color() == QCOL_BASICBLUE) {
+            // We can override colours
+        } else {
+            // We've been passed in a specified colour, set linePen to this colour
+            colour = oldPen.color();
+        }
+
+        QColor ptrColour = QCOL_GREY1;
+        QColor labelColour = colour;
 
         QPointF start;
         QPointF end;
@@ -416,18 +497,13 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
         case microcircuitDrawStyle:
         case spikeSourceDrawStyle:
         {
-            if (this->type == projectionObject)
-                colour = QColor(0,0,255,255);
-            else
-                colour = QColor(0,255,0,255);
-
             if (source != NULL) {
                 QLineF temp = QLineF(QPointF(source->x, source->y), this->curves.front().C1);
                 temp.setLength(0.501);
                 start = temp.p2();
-            }
-            else
+            } else {
                 start = this->start;
+            }
 
             if (destination != NULL) {
                 QLineF temp = QLineF(QPointF(destination->x, destination->y), this->curves.back().C2);
@@ -439,7 +515,7 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
             // set pen width
             QPen pen2 = painter->pen();
-            pen2.setWidthF((pen2.widthF()+1.0)*GLscale/100.0);
+            pen2.setWidthF((pen2.widthF()+1.0)*2*scale);
             pen2.setColor(colour);
             painter->setPen(pen2);
 
@@ -449,41 +525,24 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
 
             for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+                if (this->curves.size()-1 == i) {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(end));
+                } else {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(this->curves[i].end));
+                }
             }
 
             // draw start and end markers
-
-            QPolygonF arrow_head;
             QPainterPath endPoint;
-            //calculate arrow head polygon
-            QPointF end_point = path.pointAtPercent(1.0);
-            QPointF temp_end_point = path.pointAtPercent(0.995);
-            QLineF line = QLineF(end_point, temp_end_point).unitVector();
-            QLineF line2 = QLineF(line.p2(), line.p1());
-            line2.setLength(line2.length()+0.05*GLscale/2.0);
-            end_point = line2.p2();
-            if (this->type == projectionObject) {
-                line.setLength(0.2*GLscale/2.0);
-            } else {
-                line.setLength(0.1*GLscale/2.0);
-            }
-            QPointF t = line.p2() - line.p1();
-            QLineF normal = line.normalVector();
-            normal.setLength(normal.length()*0.8);
-            QPointF a1 = normal.p2() + t;
-            normal.setLength(-normal.length());
-            QPointF a2 = normal.p2() + t;
-            arrow_head.clear();
-            arrow_head << end_point << a1 << a2 << end_point;
-            endPoint.addPolygon(arrow_head);
+            endPoint.addPolygon(this->makeArrowHead(path, GLscale));
             painter->fillPath(endPoint, colour);
 
-            // only draw number of synapses for Projections
-            if (this->type == projectionObject) {
+            // Show number of synapses with dashes
+            {
                 QPen pen = painter->pen();
                 QVector<qreal> dash;
                 dash.push_back(4);
@@ -503,7 +562,6 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
                 pen.setDashPattern(dash);
                 painter->setPen(pen);
-
             }
 
             // DRAW
@@ -513,150 +571,76 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
             break;
         }
         case layersDrawStyle:
-
-            return;
-        case standardDrawStyleExcitatory:
         {
-            if (this->type == projectionObject)
-                colour = QColor(0,0,255,255);
-            else
-                colour = QColor(0,255,0,255);
-
-            start = this->start;
-            end = this->curves.back().end;
-
-            // draw end marker
-
-            QSettings settings;
-            float dpi_ratio = settings.value("dpi", 1.0).toFloat();
-
-            // account for hidpi in line width
-            QPen linePen = painter->pen();
-            linePen.setWidthF(linePen.widthF()*dpi_ratio);
-            painter->setPen(linePen);
-
-            QPainterPath path;
-
-            // start curve drawing
-            path.moveTo(this->transformPoint(start));
-
-            // draw curves
-            for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
-            }
-
-            QPolygonF arrow_head;
-            QPainterPath endPoint;
-            //calculate arrow head polygon
-            QPointF end_point = path.pointAtPercent(1.0);
-            QPointF temp_end_point = path.pointAtPercent(0.995);
-            QLineF line = QLineF(end_point, temp_end_point).unitVector();
-            QLineF line2 = QLineF(line.p2(), line.p1());
-            line2.setLength(line2.length()+0.05*GLscale/2.0);
-            end_point = line2.p2();
-            if (this->type == projectionObject) {
-                line.setLength(0.2*GLscale/2.0);
-            } else {
-                line.setLength(0.1*GLscale/2.0);
-            }
-            QPointF t = line.p2() - line.p1();
-            QLineF normal = line.normalVector();
-            normal.setLength(normal.length()*0.8);
-            QPointF a1 = normal.p2() + t;
-            normal.setLength(-normal.length());
-            QPointF a2 = normal.p2() + t;
-            arrow_head.clear();
-            arrow_head << end_point << a1 << a2 << end_point;
-            endPoint.addPolygon(arrow_head);
-            painter->fillPath(endPoint, colour);
-
-            // only draw number of synapses for Projections
-            if (this->type == projectionObject) {
-                QPen pen = painter->pen();
-                QVector<qreal> dash;
-                dash.push_back(4);
-                for (int syn = 1; syn < this->synapses.size(); ++syn) {
-                    dash.push_back(2.0);
-                    dash.push_back(1.0);
-                }
-                if (synapses.size() > 1) {
-                    dash.push_back(2.0);
-                    dash.push_back(1.0);
-                    dash.push_back(2.0);
-                    pen.setWidthF((pen.widthF()+1.0) * 1.5);
-                } else {
-                    dash.push_back(0.0);
-                }
-                dash.push_back(100000.0);
-                dash.push_back(0.0);
-
-                pen.setDashPattern(dash);
-                painter->setPen(pen);
-
-            }
-
-            // DRAW
-            painter->drawPath(path);
-            painter->setPen(oldPen);
             return;
         }
-        case standardDrawStyle:
+        case standardDrawStyle: // Used to draw inhibitory projections.
+        case standardDrawStyleExcitatory:
+        default:
         {
             start = this->start;
             end = this->curves.back().end;
 
-            // draw end marker
-            QPainterPath endPoint;
-
             QSettings settings;
             float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+            if (saveNetworkImage) {
+                // Ensure image output isn't affected by dpi_ratio:
+                dpi_ratio = 1;
+            }
 
             // account for hidpi in line width
             QPen linePen = painter->pen();
-            linePen.setWidthF(linePen.widthF()*dpi_ratio);
+            linePen.setCapStyle(Qt::FlatCap); // Would like Qt::RoundCap, but not in the dashes.
+
+            // This sets the "base width" for the lines. We'll then
+            // modify that base width based on the connection type.
+            linePen.setWidthF(2*connTypeWidthFactor*scale*linePen.widthF()*dpi_ratio);
+
+            // Another pen for the pointer line
+            QPen pointerLinePen(ptrColour, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            pointerLinePen.setWidthF(scale*dpi_ratio);
+            QPen labelPen(labelColour, 1, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
+            //labelPen.setWidthF(2*scale*linePen.widthF()*dpi_ratio);
+            labelPen.setWidthF(linePen.widthF());
+
+            if (saveNetworkImage) {
+                // Wider lines for image output
+                linePen.setWidthF(linePen.widthF()*2);
+            }
+            linePen.setColor(colour);
             painter->setPen(linePen);
 
-            if (this->type == projectionObject) {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
-                painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,0,255,255));
-            }
-            else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.015*dpi_ratio*GLscale,0.015*dpi_ratio*GLscale);
-                painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,210,0,255));
-            }
-
             QPainterPath path;
-
             // start curve drawing
             path.moveTo(this->transformPoint(start));
 
             // draw curves
             for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+                if (this->curves.size()-1 == i) {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(end));
+                } else {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(this->curves[i].end));
+                }
             }
 
             // only draw number of synapses for Projections
             if (this->type == projectionObject) {
                 QPen pen = painter->pen();
                 QVector<qreal> dash;
-                dash.push_back(4);
+                dash.push_back(5);
                 for (int syn = 1; syn < this->synapses.size(); ++syn) {
-                    dash.push_back(2.0);
                     dash.push_back(1.0);
+                    dash.push_back(1.5);
                 }
                 if (synapses.size() > 1) {
-                    dash.push_back(2.0);
                     dash.push_back(1.0);
-                    dash.push_back(2.0);
-                    pen.setWidthF((pen.widthF()+1.0) * 1.5);
+                    dash.push_back(1.5);
+                    dash.push_back(1.0);
+                    pen.setWidthF(pen.widthF() * WIDTHFACTOR_MULTIPLESYNAPSES);
                 } else {
                     dash.push_back(0.0);
                 }
@@ -665,23 +649,262 @@ void projection::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
                 pen.setDashPattern(dash);
                 painter->setPen(pen);
-
             }
 
-            // DRAW
+            // Draw the line before the end marker.
             painter->drawPath(path);
+
+            QPainterPath endPoint;
+            if (style == standardDrawStyle) {
+                // Connections marked by user as "inhibitory" get a little circle.
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),
+                                    0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
+                painter->drawPath(endPoint);
+                painter->fillPath(endPoint, colour);
+
+            } else if (style == standardDrawStyleExcitatory) {
+                endPoint.addPolygon(this->makeArrowHead(path, GLscale));
+                painter->fillPath(endPoint, colour);
+            }
+
+            if (this->showLabel) {
+                this->drawLabel(painter, linePen, pointerLinePen, labelPen, GLscale, scale);
+            }
+
             painter->setPen(oldPen);
 
             break;
         }
-        }
-
+        } // switch
     }
-
 }
 
-void projection::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage ignored, drawStyle style) {
+QPolygonF
+projection::makeArrowHead (QPainterPath& path, const float GLscale)
+{
+    QPolygonF arrow_head;
+    //calculate arrow head polygon
+    QPointF end_point = path.pointAtPercent(1.0);
+    QPointF temp_end_point = path.pointAtPercent(0.995);
+    QLineF line = QLineF(end_point, temp_end_point).unitVector();
+    QLineF line2 = QLineF(line.p2(), line.p1());
+    line2.setLength(line2.length()+0.05*GLscale/2.0);
+    end_point = line2.p2();
+    line.setLength(0.1*GLscale);
+    QPointF t = line.p2() - line.p1();
+    QLineF normal = line.normalVector();
+    normal.setLength(normal.length()*0.8);
+    QPointF a1 = normal.p2() + t;
+    normal.setLength(-normal.length());
+    QPointF a2 = normal.p2() + t;
+    arrow_head.clear();
+    arrow_head << end_point << a1 << a2 << end_point;
+    return arrow_head;
+}
 
+bool
+projection::multipleConnTypes(void)
+{
+    QString currentCtype("");
+    bool manyConnTypes = false;
+
+    // Quick return if there's only one synapse:
+    if (this->synapses.size() == 1) {
+        return manyConnTypes;
+    }
+
+    for (int i = 0; i < this->synapses.size(); ++i) {
+        QString ctype("");
+        if (this->synapses[i]->connectionTypeStr.isEmpty()) {
+            ctype = this->synapses[i]->connectionType->getTypeStr();
+        } else {
+            ctype = this->synapses[i]->connectionTypeStr;
+        }
+        if (!currentCtype.isEmpty() && ctype != currentCtype) {
+            // At least two connection types within this one projection
+            manyConnTypes = true;
+            break;
+        } else {
+            currentCtype = ctype;
+        }
+    }
+
+    return manyConnTypes;
+}
+
+void
+projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, QPen& labelPen,
+                       const float GLscale, const float scale)
+{
+    // Are all synapse connection types the same? If so we
+    // don't need to list them all.
+    bool manyConnTypes = this->multipleConnTypes();
+
+    // Now draw the synapse labels
+    for (int i = 0; i < this->synapses.size(); ++i) {
+        QString ctype("");
+        if (manyConnTypes) {
+            ctype += "Syn" + QString::number(i) + QString(": ");
+        } else {
+            // If we already did the first connection, break; all synapses have same connectivity.
+            if (i > 0) { break; }
+            if (this->synapses.size() == 1) {
+                // Add nothing to label
+            } else {
+                ctype += QString::number(this->synapses.size()) + " synapses: ";
+            }
+        }
+
+        if (this->synapses[i]->connectionTypeStr.isEmpty()) {
+            ctype += this->synapses[i]->connectionType->getTypeStr();
+        } else {
+            ctype += this->synapses[i]->connectionTypeStr;
+        }
+
+        // Set a suitable font for the projection labels
+        QFont oldFont = painter->font();
+        QFont font = painter->font();
+        font.setPointSizeF(1.6*GLscale/20.0);
+        painter->setFont(font);
+
+        // Call getLabelPos for the position of the label and
+        // its "pointer line". Note I'm passing the *unscaled*
+        // font to this.
+        QPointF startLinePos(0,0);
+        QPointF labelPos = this->transformPoint(this->getLabelPos (font, i, ctype, scale, startLinePos));
+        startLinePos = this->transformPoint(startLinePos);
+        // Find a point for the end of the pointer line:
+        QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.95));
+
+        // Text first in same colour as projection line
+        painter->setPen(labelPen);
+        painter->drawText(labelPos, ctype);
+
+        if (i == 0) { // only one pointer line per projection
+            painter->setPen(pointerLinePen);
+            QPainterPath pointerLine;
+            pointerLine.moveTo(startLinePos);
+            pointerLine.lineTo(endLinePos);
+            painter->drawPath(pointerLine);
+        }
+
+        painter->setFont(oldFont);
+        painter->setPen(linePen);
+    }
+}
+
+QPointF
+projection::getBezierPos (int curveIndex, float t)
+{
+    QPointF startPoint = this->start;
+    if (curveIndex > 0) {
+        startPoint = this->curves[curveIndex-1].end;
+    }
+
+    if (t < 0.0 || t > 1.0) {
+        DBG() << "Warning, Bezier curve defined between 0 and 1";
+    }
+
+    // Cubic Bezier formula
+    QPointF B = powf(1.0-t,3)*startPoint
+        + 3*powf(1.0-t,2)*t*this->curves[curveIndex].C1
+        + 3*(1.0-t)*powf(t,2)*this->curves[curveIndex].C2
+        + powf(t,3)*this->curves[curveIndex].end;
+
+    return B;
+}
+
+QPointF
+projection::getLabelPos (QFont& f, int syn, const QString& text, const float scale,
+                         QPointF& startLinePos)
+{
+    QPointF curveMiddle(0,0);
+    for (int i = 0; i < this->curves.size(); ++i) {
+        // Get the vector average of the bezier curve control points
+        // and vector sum them:
+        curveMiddle += (this->curves[i].C1 + this->curves[i].C2)/2.0;
+    }
+    // Finish up the vector average of the control point means for
+    // each curve section:
+    curveMiddle /= this->curves.size();
+
+    QPointF projEnd = this->curves.back().end;
+    QPointF centre = (projEnd + this->start)/2.0;
+
+    //DBG() << "start: " << this->start << ", end: " << projEnd;
+    //DBG() << "centre: " << centre << ", curveMiddle: " << curveMiddle;
+
+    // Info about the size of the text in the label
+    QFontMetrics qf(f);
+    float factor = 0.01;
+    float stringwidth = (float)qf.width (text)*factor/scale;
+    float xheight = (float)qf.xHeight()*factor/scale;
+    float maxWidth = (float)qf.maxWidth()*factor/scale;
+
+    QPointF labelPos = curveMiddle;
+
+    // Find out if the line goes up or down on the diagram - this will
+    // affect the startLinePos.
+    bool uptrending = false;
+    if (start.y() < projEnd.y()) {
+        uptrending = true;
+    }
+    // May need left trending and right trending also?
+
+    // Site the label near the end of the last curve in the
+    // projection, rather than the "curveMiddle". Find a reference
+    // point on the last curve to do this:
+    QPointF labelRef = this->getBezierPos (this->curves.size()-1, 0.85);
+
+    // Return info: Vertical and Left or Right OR Horizontal and Up or down.
+    QPointF diff = projEnd - this->start;
+    float diffVert = fabs(diff.y());
+    float diffHorz = fabs(diff.x());
+    if (diffVert*3 < diffHorz) {
+        // Say it's horizontal. Figure out up/downness. Does that
+        // matter? Need some offset so the label doesn't sit on the
+        // line, and up/downness for direction of that offset (which
+        // is size give by the current font).
+        if (curveMiddle.y() < centre.y()) {
+            // DBG() << "Down curvy";
+            labelPos.setY(curveMiddle.y() - 2*xheight - (syn*1.8*xheight));
+            startLinePos.setY(labelPos.y() + xheight*1.6);
+        } else {
+            // DBG() << "Up curvy";
+            labelPos.setY(curveMiddle.y() + 2*xheight + (syn*1.8*xheight));
+            startLinePos.setY(labelPos.y() - xheight/4.0);
+        }
+
+        // Always shift text left if it's a horizontal projection:
+        labelPos.setX(curveMiddle.x() - stringwidth/2.0);
+        startLinePos.setX(labelPos.x() + stringwidth/4.0);
+
+    } else {
+        // Must be effectively vertical then. So need to determine left/rightness.
+        if (curveMiddle.x() < centre.x()) {
+            // DBG() << "Left curvy";
+            labelPos.setX(labelRef.x() - stringwidth - maxWidth*2);
+            startLinePos.setX(labelRef.x() - stringwidth/4.0);
+        } else {
+            // DBG() << "Right curvy";
+            // Add a bit to the label pos, just a few chars.
+            labelPos.setX(labelRef.x() + maxWidth*2);
+            startLinePos.setX(labelPos.x() - maxWidth/4.0);
+        }
+        labelPos.setY(labelRef.y() + (syn*xheight*1.8));
+        if (uptrending) {
+            startLinePos.setY(labelPos.y() + xheight*1.6 );
+        } else {
+            startLinePos.setY(labelPos.y() - xheight/4.0);
+        }
+    }
+
+    return labelPos;
+}
+
+void projection::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY,
+                            int width, int height, QImage ignored, drawStyle style)
+{
     if (this->destination != (QSharedPointer <population>)0) {
         for (int i = 0; i < this->synapses.size(); ++i) {
             for (int j = 0; j < this->synapses[i]->weightUpdateType->inputs.size(); ++j) {
@@ -692,28 +915,27 @@ void projection::drawInputs(QPainter *painter, float GLscale, float viewX, float
             }
         }
     }
-
 }
 
-void projection::setupTrans(float GLscale, float viewX, float viewY, int width, int height) {
-
+void projection::setupTrans(float GLscale, float viewX, float viewY, int width, int height)
+{
     this->tempTrans.GLscale = GLscale;
     this->tempTrans.viewX = viewX;
     this->tempTrans.viewY = viewY;
     this->tempTrans.width = float(width);
     this->tempTrans.height = float(height);
-
 }
 
-QPointF projection::transformPoint(QPointF point) {
-
+QPointF projection::transformPoint(QPointF point)
+{
     point.setX(((point.x()+this->tempTrans.viewX)*this->tempTrans.GLscale+this->tempTrans.width)/2);
     point.setY(((-point.y()+this->tempTrans.viewY)*this->tempTrans.GLscale+this->tempTrans.height)/2);
     return point;
 }
 
-void projection::drawHandles(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height) {
-
+void projection::drawHandles(QPainter *painter, float GLscale,
+                             float viewX, float viewY, int width, int height)
+{
     if (curves.size()>0) {
         this->setupTrans(GLscale, viewX, viewY, width, height);
 
@@ -774,14 +996,12 @@ void projection::drawHandles(QPainter *painter, float GLscale, float viewX, floa
             }
             painter->drawPath(sel);
             painter->fillPath(sel,QColor(0,255,0,255));
-
         }
     }
-
 }
 
-QPainterPath projection::makeIntersectionLine(int first, int last) {
-
+QPainterPath projection::makeIntersectionLine(int first, int last)
+{
     // draw the path to a QPainterPath
     QPainterPath colPath;
     if (first == 0) {
@@ -820,11 +1040,10 @@ QPainterPath projection::makeIntersectionLine(int first, int last) {
     }
 
     return colPath;
-
 }
 
-bool projection::is_clicked(float xGL, float yGL, float GLscale) {
-
+bool projection::is_clicked(float xGL, float yGL, float GLscale)
+{
     // do an intersection using a QPainterPath to see if we meet:
     QPainterPath colPath = this->makeIntersectionLine(0, this->curves.size());
 
@@ -834,11 +1053,10 @@ bool projection::is_clicked(float xGL, float yGL, float GLscale) {
     }
 
     return false;
-
 }
 
-bool projection::selectControlPoint(float xGL, float yGL, float GLscale) {
-
+bool projection::selectControlPoint(float xGL, float yGL, float GLscale)
+{
     QPointF cursor(xGL, yGL);
 
     QSettings settings;
@@ -884,7 +1102,8 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale) {
     return false;
 }
 
-bool projection::deleteControlPoint(float xGL, float yGL, float GLscale) {
+bool projection::deleteControlPoint(float xGL, float yGL, float GLscale)
+{
     // check if we are over a control point
     if (this->selectControlPoint(xGL, yGL, GLscale)) {
 
@@ -901,16 +1120,14 @@ bool projection::deleteControlPoint(float xGL, float yGL, float GLscale) {
             // deleted!
             return true;
         }
-
     }
 
     // nothing deleted!
     return false;
-
 }
 
-void projection::moveSelectedControlPoint(float xGL, float yGL) {
-
+void projection::moveSelectedControlPoint(float xGL, float yGL)
+{
     // convert to QPointF
     QPointF cursor(xGL, yGL);
 
@@ -1006,11 +1223,10 @@ void projection::moveSelectedControlPoint(float xGL, float yGL) {
 
         }
     }
-
 }
 
-void projection::insertControlPoint(float xGL, float yGL, float GLscale) {
-
+void projection::insertControlPoint(float xGL, float yGL, float GLscale)
+{
     // convert to QPointF
     QPointF cursor(xGL, yGL);
 
@@ -1038,14 +1254,11 @@ void projection::insertControlPoint(float xGL, float yGL, float GLscale) {
             this->curves.insert(this->curves.begin()+i, newCurve);
             return;
         }
-
     }
-
-
 }
 
-QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL) {
-
+QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL)
+{
     float newX;
     float newY;
 
@@ -1079,10 +1292,11 @@ QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, floa
     }
 
     return QPointF(newX, newY);
-
 }
 
-void projection::setAutoHandles(QSharedPointer <population> pop1, QSharedPointer <population> pop2, QPointF end) {
+void projection::setAutoHandles(QSharedPointer <population> pop1,
+                                QSharedPointer <population> pop2, QPointF end)
+{
 
     // line for drawing handles
     QPainterPath startToEnd;
@@ -1122,21 +1336,23 @@ void projection::setAutoHandles(QSharedPointer <population> pop1, QSharedPointer
     }
 }
 
-QString projection::getName() {
-    if (source != NULL && destination != NULL)
+QString projection::getName()
+{
+    if (source != NULL && destination != NULL) {
         return this->source->getName() + " to " + this->destination->getName();
-    else
-        return "Disconnected projection";
+    }
+    return "Disconnected projection";
 }
 
-void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
-
+void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
+{
     // write a new element for this projection:
     QDomElement col = meta.createElement( "projection" );
     root.appendChild(col);
     col.setAttribute("source", this->source->name);
     col.setAttribute("destination", this->destination->name);
     col.setAttribute("style", QString::number(this->projDrawStyle));
+    col.setAttribute("showlabel", QString::number(this->showLabel));
 
     // start position
     QDomElement start = meta.createElement( "start" );
@@ -1183,7 +1399,6 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
         curve.appendChild(end);
 
         curves.appendChild(curve);
-
     }
 
     // write out connection metadata
@@ -1198,29 +1413,23 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
         synapses[i]->connectionType->write_metadata_xml(meta, c);
 
         col.appendChild(c);
-
     }
 
     // write inputs out
     for (int i = 0; i < synapses.size(); ++i) {
 
         for (int j = 0; j < synapses[i]->weightUpdateType->inputs.size(); ++j) {
-
             synapses[i]->weightUpdateType->inputs[j]->write_model_meta_xml(meta, root);
-
         }
         for (int j = 0; j < synapses[i]->postsynapseType->inputs.size(); ++j) {
-
             synapses[i]->postsynapseType->inputs[j]->write_model_meta_xml(meta, root);
-
         }
-
     }
-
 }
 
-void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta, projectObject * data, QSharedPointer<projection> thisSharedPointer) {
-
+void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta,
+                             projectObject * data, QSharedPointer<projection> thisSharedPointer)
+{
     this->type = projectionObject;
 
     this->selectedControlPoint.ind = -1;
@@ -1245,8 +1454,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: missing Projection attribute 'dst_population'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: missing Projection attribute 'dst_population'");
             settings.endArray();
         }
     }
@@ -1268,8 +1477,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "Error: Projection references missing source '" + srcName + "'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "Error: Projection references missing source '" + srcName + "'");
         settings.endArray();
         return;
     }
@@ -1286,8 +1495,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "Error: Projection references missing destination '" + destName + "'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "Error: Projection references missing destination '" + destName + "'");
         settings.endArray();
         return;
     }
@@ -1306,15 +1515,16 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "XML error: Projection contains no Synapse tags");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: Projection contains no Synapse tags");
         settings.endArray();
         return;
     }
 
     for (int i = 0; i < (int) colList.count(); ++i) {
         // create a new Synapse on the projection
-        QSharedPointer <synapse> newSynapse = QSharedPointer<synapse>(new synapse(thisSharedPointer, data, true)); // add bool to avoid adding the projInputs - we need to do that later
+        // add bool to avoid adding the projInputs - we need to do that later:
+        QSharedPointer <synapse> newSynapse = QSharedPointer<synapse>(new synapse(thisSharedPointer, data, true));
         QString pspName;
         QString synName;
         QDomNode n = colList.item(i).toElement().firstChild();
@@ -1371,8 +1581,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText",  "XML error: Missing PostSynapse 'url' attribute");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText",  "XML error: Missing PostSynapse 'url' attribute");
                     settings.endArray();
                     return;
                 }
@@ -1402,13 +1612,12 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                     int num_errs = settings.beginReadArray("warnings");
                     settings.endArray();
                     settings.beginWriteArray("warnings");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("warnText",  "Network references missing Component '" + pspName + "'");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("warnText",  "Network references missing Component '" + pspName + "'");
                     settings.endArray();
                 }
 
-            }
-            else if (n.toElement().tagName() == "LL:WeightUpdate") {
+            } else if (n.toElement().tagName() == "LL:WeightUpdate") {
 
                 // get postsynapse component name
                 synName = n.toElement().attribute("url");
@@ -1418,15 +1627,16 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText",  "XML error: Missing WeightUpdate 'url' attribute");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText",  "XML error: Missing WeightUpdate 'url' attribute");
                     settings.endArray();
                     return;
                 }
                 QStringList tempName = synName.split('.');
                 // first section will hold the name
-                if (tempName.size() > 0)
+                if (tempName.size() > 0) {
                     synName = tempName[0];
+                }
                 synName.replace("_", " ");
 
                 newSynapse->weightUpdateType.clear();
@@ -1449,8 +1659,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                     int num_errs = settings.beginReadArray("warnings");
                     settings.endArray();
                     settings.beginWriteArray("warnings");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("warnText",  "Network references missing Component '" + synName + "'");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("warnText",  "Network references missing Component '" + synName + "'");
                     settings.endArray();
                 }
 
@@ -1459,15 +1669,14 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
                 settings.endArray();
             }
-        n = n.nextSibling();
+            n = n.nextSibling();
         }
         // add the synapse
         this->synapses.push_back(newSynapse);
-
     }
 
     // now load the metadata for the projection:
@@ -1478,6 +1687,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         if (metaNode.toElement().attribute("source", "") == this->source->name && metaNode.toElement().attribute("destination", "") == this->destination->name) {
 
             this->projDrawStyle = (drawStyle) metaNode.toElement().attribute("style", QString::number(standardDrawStyleExcitatory)).toUInt();
+            this->showLabel = (bool) metaNode.toElement().attribute("showlabel", 0).toUInt();
 
             QDomNode metaData = metaNode.toElement().firstChild();
             while (!metaData.isNull()) {
@@ -1504,13 +1714,11 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                             if (vals.toElement().tagName() == "end") {
                                 newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
                             }
-
                             vals = vals.nextSibling();
                         }
                         // add the filled out curve to the list
                         this->curves.push_back(newCurve);
                     }
-
                 }
 
                 // find tags for connection generators
@@ -1525,9 +1733,15 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                         for (int i = 0; i < this->synapses.size(); ++i) {
                              // check if we have the current node
                             if (synapseName == this->synapses[i]->weightUpdateType->getXMLName()) {
-                                // A synapse was found!
                                 // add connection generator if we are a csv
                                 if (this->synapses[i]->connectionType->type == CSV) {
+
+                                    // A synapse was found! Record the Script generator if necessary
+                                    QDomNode script = metaData.namedItem("Script");
+                                    if (!script.isNull()) {
+                                        this->synapses[i]->connectionTypeStr = script.toElement().attribute("name","");
+                                    }
+
                                     csv_connection * conn = (csv_connection *) this->synapses[i]->connectionType;
                                     // add generator
                                     conn->generator = new pythonscript_connection(this->source, this->destination, conn);
@@ -1544,22 +1758,17 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                         }
                     }
                 }
-
                 metaData = metaData.nextSibling();
             }
-
         }
-
         metaNode = metaNode.nextSibling();
     }
 
-
-        this->print();
-
+    this->print();
 }
 
-void projection::add_curves() {
-
+void projection::add_curves()
+{
     // add sensible curves
     // add curves for drawing:
     bezierCurve newCurve;
@@ -1593,12 +1802,11 @@ void projection::add_curves() {
         this->curves.back().C2 = QPointF(this->destination->currentLocation().x(), this->destination->currentLocation().y()+1.4);
 
     }
-
 }
 
-
-void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data, QSharedPointer<projection> thisSharedPointer) {
-
+void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data,
+                                      QSharedPointer<projection> thisSharedPointer)
+{
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
@@ -1844,26 +2052,18 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     for (int i = 0; i < synapses.size(); ++i) {
 
         for (int j = 0; j < synapses[i]->weightUpdateType->inputs.size(); ++j) {
-
             synapses[i]->weightUpdateType->inputs[j]->read_meta_data(meta);
             synapses[i]->weightUpdateType->inputs[j]->dst->matchPorts();
-
         }
         for (int j = 0; j < synapses[i]->postsynapseType->inputs.size(); ++j) {
-
             synapses[i]->postsynapseType->inputs[j]->read_meta_data(meta);
             synapses[i]->postsynapseType->inputs[j]->dst->matchPorts();
-
         }
-
     }
-
 }
 
-
-
-void projection::print() {
-
+void projection::print()
+{
     std::cerr << "\n";
     cerr << "   " << this->getName().toStdString() << " ####\n";
     std::cerr << "   " <<  float(this->currTarg) << "\n";
@@ -1871,7 +2071,9 @@ void projection::print() {
     std::cerr << "   " <<  this->source->name.toStdString() << "\n";
     std::cerr << "   " <<  "Synapses:\n";
     for (int i=0; i < (int) this->synapses.size(); ++i) {
-        std::cerr << "       " <<  this->synapses[i]->postsynapseType->component->name.toStdString() << " " << this->synapses[i]->weightUpdateType->component->name.toStdString()<< " " << "\n";
+        std::cerr << "       " << this->synapses[i]->postsynapseType->component->name.toStdString()
+                  << " " << this->synapses[i]->weightUpdateType->component->name.toStdString()
+                  << " " << "\n";
     }
     cerr << "\n";
 }

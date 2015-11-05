@@ -27,6 +27,7 @@
 
 #include <QDialog>
 #include "globalHeader.h"
+#include <QSvgGenerator>
 
 namespace Ui {
 class saveNetworkImageDialog;
@@ -35,16 +36,50 @@ class saveNetworkImageDialog;
 class saveNetworkImageDialog : public QDialog
 {
     Q_OBJECT
-    
+
 public:
     explicit saveNetworkImageDialog(rootData *data, QString fileName, QWidget *parent = 0);
     explicit saveNetworkImageDialog(glConnectionWidget *glConnWidget, QString fileName, QWidget *parent = 0);
     ~saveNetworkImageDialog();
-    
+
 private:
     Ui::saveNetworkImageDialog *ui;
     rootData * data;
     glConnectionWidget * glConnWidget;
+    /*!
+     * A sorting algorithm for a list of system objects. This orders
+     * the members so that projections are drawn upon populations and
+     * generic inputs are drawn upon everything. Used in drawPixMap().
+     */
+    static bool drawOrderLessThan (const QSharedPointer<systemObject>& o1,
+                                   const QSharedPointer<systemObject>& o2);
+    /*!
+     * Set up the painter for drawing the network image. This code is
+     * common both to PNG and SVG rendering.
+     */
+    void setupPainter (QPainter* painter);
+
+    /*!
+     * Calculate the bounding box for the image. Common for both SVG
+     * and PNG rendering.
+     */
+    QRectF calculateBoundingBox (QVector <QSharedPointer<systemObject> >& list);
+
+    /*!
+     * Get the list of drawable objects, and sort it. Common to both
+     * SVG and PNG rendering.
+     */
+    QVector <QSharedPointer<systemObject> > getDrawableList (void);
+
+    /*!
+     * Go through the list of drawables and render each one by calling
+     * the draw method for each member of the list.
+     */
+    void renderDrawables (QPainter* painter,
+                          QVector <QSharedPointer<systemObject> >& list,
+                          const QRectF& bounds);
+
+    void drawSVG(QSvgGenerator& svg);
     QPixmap drawPixMap();
     QPixmap drawPixMapVis();
     float scale;

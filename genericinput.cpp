@@ -159,14 +159,21 @@ void genericInput::delAll(rootData *) {
 
 }
 
-void genericInput::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style) {
+void genericInput::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style)
+{
+    float scale = GLscale/200.0;
+    // Enforce a lower limit to scale:
+    if (scale < 0.4) {
+        scale = 0.4;
+    }
 
     // setup for drawing curves
     this->setupTrans(GLscale, viewX, viewY, width, height);
 
     if (this->curves.size() > 0) {
 
-        QColor colour;
+        // The generic input colour:
+        QColor colour = QColor(0,255,0,255);
 
         QPen oldPen = painter->pen();
 
@@ -177,8 +184,6 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
         case spikeSourceDrawStyle:
         case microcircuitDrawStyle:
         {
-            colour = QColor(0,255,0,255);
-
             if (source != NULL) {
                 if (source->type == projectionObject) {
                     QSharedPointer <projection> s = qSharedPointerDynamicCast <projection> (source);
@@ -277,6 +282,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             return;
         case standardDrawStyle:
         case standardDrawStyleExcitatory:
+        case saveNetworkImageDrawStyle:
         {
             start = this->start;
             end = this->curves.back().end;
@@ -286,22 +292,20 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             QSettings settings;
             float dpi_ratio = settings.value("dpi", 1.0).toFloat();
+            if (style == saveNetworkImageDrawStyle) {
+                // Ensure image output isn't affected by dpi_ratio:
+                dpi_ratio = 1;
+            }
 
             // account for hidpi in line width
             QPen linePen = painter->pen();
-            linePen.setWidthF(linePen.widthF()/dpi_ratio);
+            linePen.setWidthF(scale*linePen.widthF()*dpi_ratio);
+            if (style == saveNetworkImageDrawStyle) {
+                // Wider lines and ensure colour is set for image output:
+                linePen.setWidthF(linePen.widthF()*2);
+                linePen.setColor(colour);
+            }
             painter->setPen(linePen);
-
-            if (this->type == projectionObject) {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),4,4);
-                painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,0,255,255));
-            }
-            else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),0.02*dpi_ratio*GLscale,0.02*dpi_ratio*GLscale);
-                painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,210,0,255));
-            }
 
             QPainterPath path;
 
@@ -310,10 +314,15 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             // draw curves
             for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
-                    path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+                if (this->curves.size()-1 == i) {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(end));
+                } else {
+                    path.cubicTo(this->transformPoint(this->curves[i].C1),
+                                 this->transformPoint(this->curves[i].C2),
+                                 this->transformPoint(this->curves[i].end));
+                }
             }
 
             // only draw number of synapses for Projections
@@ -338,19 +347,29 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
                 pen.setDashPattern(dash);
                 painter->setPen(pen);
-
             }
 
-            // DRAW
+            // Draw the line before the end marker
             painter->drawPath(path);
+
+            // Now draw the end marker
+            if (this->type == projectionObject) {
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),4,4);
+                painter->drawPath(endPoint);
+                painter->fillPath(endPoint, QColor(0,0,255,255));
+            } else {
+                endPoint.addEllipse(this->transformPoint(this->curves.back().end),
+                                    0.02*dpi_ratio*GLscale,0.02*dpi_ratio*GLscale);
+                painter->drawPath(endPoint);
+                painter->fillPath(endPoint, QColor(0,210,0,255));
+            }
+
             painter->setPen(oldPen);
 
             break;
         }
-        }
-
+        } // switch
     }
-
 }
 
 void genericInput::addCurves() {

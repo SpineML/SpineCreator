@@ -68,6 +68,14 @@ public:
     QSharedPointer <NineMLComponentData>postsynapseType;
     QSharedPointer <NineMLComponentData>weightUpdateType;
     connection *connectionType;
+    /*!
+     * A label for the connection type. Filled with the connection
+     * generator, as read from the metadata.xml (For example, the
+     * connectivity may be defined by a pythonscript_connection, even
+     * though this->connectionType is a csv_connection after
+     * generation).
+     */
+    QString connectionTypeStr;
     bool isVisualised;
     QSharedPointer <projection> proj;
     QString getName();
@@ -133,10 +141,50 @@ public:
 
     QVector < QSharedPointer<genericInput> > disconnectedInputs;
 
+    // If true, show projection label.
+    bool showLabel;
+
 protected:
     cPoint selectedControlPoint;
 
 private:
+
+    /*!
+     * Return true if there is more than one synapse and the synapses
+     * do not all share the same connectivity pattern.
+     */
+    bool multipleConnTypes(void);
+
+    /*!
+     * Draw the projection label. Arguments are all variables from
+     * projections::draw.
+     */
+    void drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, QPen& labelPen,
+                    const float GLscale, const float scale);
+
+    /*!
+     * produce an arrow head.
+     */
+    QPolygonF makeArrowHead (QPainterPath& path, const float GLscale);
+
+    /*!
+     * Using this->curves, find a suitable label position for the
+     * projection label. Place the label on the outside edge of the
+     * curve. syn is the synapse number and influences the label
+     * position. The scale is also used.  Startline pos is the
+     * position at which a "pointer line" from the label text to the
+     * object of the label should begin.
+     */
+    QPointF getLabelPos (QFont& f, int syn, const QString& tstr, const float scale,
+                         QPointF& startLinePos);
+
+    /*!
+     * Get a location on a cubic bezier curve. t is the position on
+     * the curve and must be in range 0 to 1. curveIndex is the index
+     * into this->curves.
+     */
+    QPointF getBezierPos (int curveIndex, float t);
+
     int srcPos;
     int dstPos;
     drawStyle projDrawStyle;

@@ -59,6 +59,8 @@ public:
 
     virtual int getIndex();
 
+    virtual QString getTypeStr(void);
+
     ParameterData * delay;
 
     /*!
@@ -310,6 +312,7 @@ public:
     void write_metadata_xml(QDomDocument &, QDomNode &);
     void read_metadata_xml(QDomNode &);
     int getIndex();
+    QString getTypeStr(void);
 
     float rotation;
     QString errorLog;

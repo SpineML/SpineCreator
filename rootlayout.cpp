@@ -256,18 +256,21 @@ void rootLayout::initProjectionHeader(rootData * data) {
 
     QGroupBox * styleGroup = new QGroupBox("Draw style");
     this->addWidget(styleGroup);
-    QHBoxLayout * drawStyleLayout = new QHBoxLayout();
+    QGridLayout * drawStyleLayout = new QGridLayout();
     styleGroup->setLayout(drawStyleLayout);
 
-    exc = new QRadioButton("Excitatory");
-    exc->setChecked(true);
-    exc->setProperty("style",standardDrawStyleExcitatory);
-    drawStyleLayout->addWidget(exc);
-    inh = new QRadioButton("Inhibitory");
-    drawStyleLayout->addWidget(inh);
-    inh->setProperty("style",standardDrawStyle);
+    this->exc = new QRadioButton("Excitatory");
+    this->exc->setChecked(true);
+    this->exc->setProperty("style",standardDrawStyleExcitatory);
+    drawStyleLayout->addWidget(this->exc, 0, 0);
+    this->inh = new QRadioButton("Inhibitory");
+    drawStyleLayout->addWidget(this->inh, 0, 1);
+    this->inh->setProperty("style",standardDrawStyle);
+    //drawStyleLayout->addStretch();
 
-    drawStyleLayout->addStretch();
+    this->showLabel = new QCheckBox ("Show projection label");
+    this->showLabel->setProperty("action","togglelabel");
+    drawStyleLayout->addWidget(showLabel, 1, 0);
 
     // connect for hide
     connect(this, SIGNAL(hideHeader()), styleGroup, SLOT(hide()));
@@ -277,6 +280,8 @@ void rootLayout::initProjectionHeader(rootData * data) {
     // connect radios
     connect(exc, SIGNAL(pressed()), data, SLOT(updateDrawStyle()));
     connect(inh, SIGNAL(pressed()), data, SLOT(updateDrawStyle()));
+
+    connect(this->showLabel, SIGNAL(stateChanged(int)), data, SLOT(updateDrawStyle()));
 
     // SYNAPSES /////////
 
@@ -858,6 +863,13 @@ void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data)
         exc->setChecked(true);
     }
 
+    // Check the show label checkbox
+    if (proj->showLabel) {
+        this->showLabel->setCheckState(Qt::Checked);
+    } else {
+        this->showLabel->setCheckState(Qt::Unchecked);
+    }
+
     // Synapse
     emit setProjectionSynapseName("Synapse " + QString::number(proj->currTarg));
     if (proj->synapses.size() > 1) {
@@ -867,8 +879,9 @@ void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data)
     // if no data hide paste
     emit allowPaste(data->clipboardCData != NULL);
 
-    if (tabs->count() < 3)
+    if (tabs->count() < 3) {
         tabs->addTab(tab3, "Connectivity");
+    }
 
     tabs->setTabText(0, "Weight Update");
     tabs->setTabText(1, "PostSynapse");
@@ -973,7 +986,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
         QStringList scripts = settings.childKeys();
         inputConnectionComboBox->addItems(scripts);
         settings.endGroup();
-
     }
     inputConnectionComboBox->setCurrentIndex(in->connectionType->getIndex());
     connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
@@ -1052,8 +1064,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     }
 
     this->insertLayout(this->count()-2,varLayout);
-
-
 }
 
 

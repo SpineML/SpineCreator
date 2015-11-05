@@ -329,6 +329,7 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                 float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
 
                 if (pop->isSpikeSource) {
+                    // Shadow the spike source.
                     for (int i = 5; i > 1; --i) {
                         QPen pen(QColor(0,0,0,50/i));
                         pen.setWidthF(float(i*2));
@@ -337,14 +338,15 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                     }
 
                 } else {
-
+                    // This draws a shadow around the rectangle by
+                    // drawing concentric rectangles of slightly
+                    // differing size and alpha.
                     for (int i = 5; i > 1; --i) {
                         QPen pen(QColor(0,0,0,50/i));
                         pen.setWidthF(float(i*2));
                         painter->setPen(pen);
                         QRectF rectangle(left, top, right-left, bottom-top);
                         painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
-                        //painter->drawRect(rectangle);
                     }
                 }
             }
@@ -380,7 +382,7 @@ void rootData::reDrawAll(QPainter *painter, float GLscale, float viewX, float vi
                 for (int i = 5; i > 1; --i) {
                     QPen pen(QColor(0,0,0,30/i));
                     pen.setWidthF(float(i*2));
-                    painter->setPen(pen);
+                    painter->setPen(pen); // HERE!!
                     col->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
                     // only draw handles if we aren't using multiple selection
                     if (selList.size() == 1) {
@@ -1470,19 +1472,38 @@ void rootData::updatePar(int value)
 
 void rootData::updateDrawStyle() {
 
-    drawStyle style = (drawStyle) sender()->property("style").toUInt();
+    QString action = sender()->property("action").toString();
 
-    if (this->selList.size() == 1) {
-        // have we only got a proj selected (this should always be the case)
-        if (this->selList[0]->type == projectionObject) {
-            // cast to a proj
-            QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
-            // test if the cast succeeded
-            if (!proj.isNull()) {
-                currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
+    if (action == "togglelabel") {
+        if (this->selList.size() == 1) {
+            // have we only got a proj selected (this should always be the case)
+            if (this->selList[0]->type == projectionObject) {
+                // cast to a proj
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+                // test if the cast succeeded
+                if (!proj.isNull()) {
+                    QCheckBox* sndr = (QCheckBox*)sender();
+                    currProject->undoStack->push(new updateProjShowLabel(proj, sndr->isChecked(), proj->showLabel));
+                }
+            }
+        }
+
+    } else {
+        drawStyle style = (drawStyle) sender()->property("style").toUInt();
+
+        if (this->selList.size() == 1) {
+            // have we only got a proj selected (this should always be the case)
+            if (this->selList[0]->type == projectionObject) {
+                // cast to a proj
+                QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
+                // test if the cast succeeded
+                if (!proj.isNull()) {
+                    currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
+                }
             }
         }
     }
+
     emit updatePanel(this);
 }
 
