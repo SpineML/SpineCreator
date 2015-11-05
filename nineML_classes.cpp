@@ -1536,6 +1536,7 @@ Parameter::Parameter(Parameter *data)
 {
     name = data->name;
     dims = new dim(data->dims->toString());
+    this->filename = data->filename;
 }
 
 
@@ -1544,7 +1545,7 @@ ParameterData::ParameterData(Parameter *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = Undefined;
-    this->filename = "";
+    this->filename = data->filename;
 }
 
 ParameterData::ParameterData(ParameterData *data)
@@ -1554,7 +1555,7 @@ ParameterData::ParameterData(ParameterData *data)
     name = data->name;
     dims = new dim(data->dims->toString());
     currType = data->currType;
-    this->filename = "";
+    this->filename = data->filename;
 }
 
 void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)

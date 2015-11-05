@@ -185,6 +185,11 @@ public:
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual NineMLObjectType Type(){return NINEML_PARAMETER;}
+
+    /*!
+     * The file_name, if the data are saved as explicit binary data.
+     */
+    QString filename;
 signals:
     void nameChanged();
 };
