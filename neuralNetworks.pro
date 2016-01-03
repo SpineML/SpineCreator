@@ -180,7 +180,10 @@ macx{
 OTHER_FILES += \
     neuralNetworks.pro.user
 
+documentation.path = /usr/share/man/man1
+documentation.files = spinecreator.1
+
 target.path = /usr/bin
-INSTALLS += target
+INSTALLS += target documentation
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
