@@ -178,12 +178,15 @@ macx{
 }
 
 OTHER_FILES += \
-    neuralNetworks.pro.user
+neuralNetworks.pro.user
 
 documentation.path = /usr/share/man/man1
 documentation.files = spinecreator.1
 
+icons.path = /usr/share/pixmaps
+icons.files = ssBig.png
+
 target.path = /usr/bin
-INSTALLS += target documentation
+INSTALLS += target documentation icons
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
