@@ -184,7 +184,7 @@ documentation.path = /usr/share/man/man1
 documentation.files = spinecreator.1
 
 icons.path = /usr/share/pixmaps
-icons.files = ssBig.png
+icons.files = spinecreator.png
 
 target.path = /usr/bin
 INSTALLS += target documentation icons
