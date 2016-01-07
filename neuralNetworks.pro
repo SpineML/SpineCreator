@@ -186,7 +186,10 @@ documentation.files = spinecreator.1
 icons.path = /usr/share/pixmaps
 icons.files = spinecreator.png
 
+desktop.path = /usr/share/applications
+desktop.files = spinecreator.desktop
+
 target.path = /usr/bin
-INSTALLS += target documentation icons
+INSTALLS += target documentation icons desktop
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
