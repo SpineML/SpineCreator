@@ -184,7 +184,7 @@ documentation.path = /usr/share/man/man1
 documentation.files = spinecreator.1
 
 icons.path = /usr/share/pixmaps
-icons.files = spinecreator.png
+icons.files = spinecreator.png spinecreator.xpm
 
 desktop.path = /usr/share/applications
 desktop.files = spinecreator.desktop
