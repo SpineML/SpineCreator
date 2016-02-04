@@ -186,6 +186,8 @@ MainWindow(QWidget *parent) :
 
         QDir brahmspath = qApp->applicationDirPath();
         brahmspath.cd("SystemML");
+        QDir S2Bpath = qApp->applicationDirPath();
+        S2Bpath.cd("SpineML_2_BRAHMS");
 
         // Initial code to try and find SpineML_2_BRAHMS - looks in
         // the HOME and one level of sub-directories, should be
@@ -208,9 +210,12 @@ MainWindow(QWidget *parent) :
             correct_dir.push_back("SpineML_2_BRAHMS");
         }
 
+        settings.setValue("simulators/BRAHMS/path", S2Bpath.absolutePath() + "/convert_script_s2b");
+
         settings.setValue("simulators/BRAHMS/envVar/SYSTEMML_INSTALL_PATH", brahmspath.absolutePath());
         settings.setValue("simulators/BRAHMS/envVar/PATH", QDir::toNativeSeparators(qgetenv("PATH") + ":" + brahmspath.absolutePath() + QDir::toNativeSeparators("/SystemML/BRAHMS/bin/")));
-        settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", simdir.absolutePath() + "/SpineML_2_BRAHMS/temp/Namespace/");
+        settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", S2Bpath.absolutePath() + "/temp/Namespace/");
+        settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS_out"));
 #endif
         settings.setValue("simulators/BRAHMS/envVar/REBUILD", "false");
     }
