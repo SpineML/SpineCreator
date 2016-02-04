@@ -28,40 +28,6 @@
 #include "connection.h"
 #include "glconnectionwidget.h"
 
-generate_dialog::generate_dialog(kernel_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, QVector < conn > &conns, QMutex * mutex, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::generate_dialog)
-{
-    ui->setupUi(this);
-
-    this->setWindowTitle("Generate connections using a Kernel");
-
-    // generating connectivity
-
-    this->currConn = currConn;
-    currConn->src = src;
-    currConn->dst = dst;
-    currConn->conns = &conns;
-    currConn->mutex = mutex;
-
-    workerThread = new QThread(this);
-
-    connect(workerThread, SIGNAL(started()), currConn, SLOT(generate_connections()));
-    //connect(workerThread, SIGNAL(finished()), this, SLOT(moveFromThread()));
-    connect(currConn, SIGNAL(connectionsDone()), this, SLOT(moveFromThread()));
-
-    connect(currConn, SIGNAL(progress(int)), ui->progressBar, SLOT(setValue(int)));
-    if (parent != NULL) {
-        glConnectionWidget * p = dynamic_cast<glConnectionWidget *> (parent);
-        CHECK_CAST(p)
-        connect(currConn, SIGNAL(progress(int)), p, SLOT(redraw()));
-    }
-
-    currConn->moveToThread(workerThread);
-
-    workerThread->start();
-
-}
 
 generate_dialog::generate_dialog(pythonscript_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, QVector < conn > &conns, QMutex * mutex, QWidget *parent) :
     QDialog(parent),
@@ -135,15 +101,7 @@ void generate_dialog::moveFromThread() {
     //currConn->moveToThread(QApplication::instance()->thread());
     workerThread->exit();
     // see if errors:
-    if (currConn->type == Kernel) {
-        kernel_connection * currConnK = dynamic_cast <kernel_connection *> (currConn);
-        CHECK_CAST(currConnK)
-        if (!currConnK->errorLog.isEmpty())
-            ui->errors->setText(currConnK->errorLog);
-        else
-            this->accept();
-    }
-    else if (currConn->type == Python) {
+    if (currConn->type == Python) {
         pythonscript_connection * currConnPy = dynamic_cast <pythonscript_connection *> (currConn);
         CHECK_CAST(currConnPy)
         if (!currConnPy->errorLog.isEmpty()) {

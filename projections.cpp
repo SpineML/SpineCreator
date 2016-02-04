@@ -457,10 +457,6 @@ void projection::draw(QPainter *painter, float GLscale,
                     colour = QCOL_GREEN3;
                     connTypeWidthFactor = WIDTHFACTOR_CSV;
                     break;
-                case Kernel:
-                    colour = QCOL_ORANGE1;
-                    connTypeWidthFactor = WIDTHFACTOR_KERNEL;
-                    break;
                 case Python:
                 case CSA:
                 default:
@@ -1557,15 +1553,6 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 newSynapse->connectionType->setDstName (destName);
                 newSynapse->connectionType->setSynapseIndex (i);
                 newSynapse->connectionType->import_parameters_from_xml(n);
-            }
-            else if (n.toElement().tagName() == "KernelConnection") {
-                // fixme: fix this
-                delete newSynapse->connectionType;
-                newSynapse->connectionType = new kernel_connection;
-                newSynapse->connectionType->import_parameters_from_xml(n);
-                ((kernel_connection *) newSynapse->connectionType)->src = (QSharedPointer <population>) this->source;
-                ((kernel_connection *) newSynapse->connectionType)->dst = (QSharedPointer <population>) this->destination;
-                newSynapse->connectionType->setSynapseIndex (i);
             }
             else if (n.toElement().tagName() == "PythonScriptConnection") {
 

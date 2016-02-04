@@ -255,51 +255,6 @@ private:
                           const char replaceChar);
 };
 
-
-class kernel_connection : public connection
-{
-        Q_OBJECT
-public:
-    kernel_connection();
-    ~kernel_connection();
-
-    void write_node_xml(QXmlStreamWriter &xmlOut);
-    void import_parameters_from_xml(QDomNode &);
-
-    float kernel[11][11];
-    int kernel_size;
-    float kernel_scale;
-    float rotation;
-    QString errorLog;
-
-    QVector < conn > *conns;
-    QMutex * mutex;
-    bool isList();
-    bool selfConnections;
-    bool changed();
-    void setUnchanged(bool);
-    QVector <conn> connections;
-    QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
-
-private:
-    csv_connection * explicitList;
-    bool isAList;
-    bool hasChanged;
-    int srcSize;
-    int dstSize;
-
-public slots:
-    void generate_connections();
-    void setKernelSize(int);
-    void setKernelScale(float);
-    void setKernel(int,int,float);
-
-signals:
-    void progress(int);
-    void connectionsDone();
-
-};
-
 class pythonscript_connection : public connection
 {
         Q_OBJECT

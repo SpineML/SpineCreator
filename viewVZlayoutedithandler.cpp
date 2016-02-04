@@ -590,7 +590,6 @@ void viewVZLayoutEditHandler::updateConnectionList() {
     connectionComboBox->addItem("One to One");
     connectionComboBox->addItem("Fixed Probability");
     connectionComboBox->addItem("Explicit List");
-    connectionComboBox->addItem("Kernel");
     //connectionComboBox->addItem("Python Script");
     // add python scripts
     QSettings settings;
@@ -1290,96 +1289,6 @@ void viewVZLayoutEditHandler::drawDeletables() {
             // draw up probability changer
             QLayout * lay = currConn->drawLayout(this->data, this, NULL);
             panelLayout->insertLayout(panelLayout->count() - 2, lay,2);
-
-        }
-
-        if (currConn->type == Kernel) {
-
-            // draw up kernel size and scale
-            QHBoxLayout * hlay = new QHBoxLayout;
-            connect(this, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
-
-            // SIZE CONFIGURATION
-            kernelComboBox->setProperty("ptr", qVariantFromValue((void *) currConn));
-            int index = (((kernel_connection *) currConn)->kernel_size - 3)/2;
-            kernelComboBox->setCurrentIndex(index);
-            kernelComboBox->show();
-
-            // SCALE
-            QDoubleSpinBox *scaleWidget = new QDoubleSpinBox;
-            scaleWidget->setProperty("conn", "true");
-            scaleWidget->setToolTip("select kernel scale");
-            scaleWidget->setMinimum(0.1);
-            scaleWidget->setMaximum(100.0);
-            scaleWidget->setValue(((kernel_connection *) currConn)->kernel_scale);
-            scaleWidget->setProperty("ptr", qVariantFromValue((void *) currConn));
-            scaleWidget->setProperty("action","changeConnKerScale");
-            scaleWidget->setFocusPolicy(Qt::StrongFocus);
-            scaleWidget->installEventFilter(new FilterOutUndoRedoEvents);
-            connect(scaleWidget, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
-            //
-
-            hlay->addWidget(new QLabel("Kernel size: "));
-            connect(this, SIGNAL(deleteProperties()), hlay->itemAt(hlay->count()-1)->widget(), SLOT(deleteLater()));
-            hlay->addWidget(kernelComboBox);
-            hlay->addWidget(new QLabel("Kernel scale: "));
-            connect(this, SIGNAL(deleteProperties()), hlay->itemAt(hlay->count()-1)->widget(), SLOT(deleteLater()));
-            hlay->addWidget(scaleWidget);
-            connect(this, SIGNAL(deleteProperties()), scaleWidget, SLOT(deleteLater()));
-
-            panelLayout->insertLayout(panelLayout->count() - 2, hlay,2);
-
-            QGridLayout *glay = new QGridLayout;
-            connect(this, SIGNAL(deleteProperties()), glay, SLOT(deleteLater()));
-            glay->setContentsMargins(0,0,0,0);
-            glay->setSpacing(0);
-            QLabel * kernBoxLabel = new QLabel("Kernel: ");
-            glay->addWidget(kernBoxLabel,0,0,1,1);
-            connect(this, SIGNAL(deleteProperties()), kernBoxLabel, SLOT(deleteLater()));
-            QDoubleSpinBox * kernel;
-            // add kernel
-            for (int i = 0; i < ((kernel_connection *) currConn)->kernel_size; ++i) {
-                for (int j = 0; j < ((kernel_connection *) currConn)->kernel_size; ++j) {
-                    kernel = new QDoubleSpinBox;
-                    kernel->setMinimum(0);
-                    kernel->setMaximum(1.0);
-                    kernel->setProperty("i",i);
-                    kernel->setProperty("j",j);
-                    kernel->setFocusPolicy(Qt::StrongFocus);
-                    kernel->installEventFilter(new FilterOutUndoRedoEvents);
-                    kernel->setProperty("ptr", qVariantFromValue((void *) currConn));
-                    kernel->setProperty("action","changeConnKernel");
-                    kernel->setValue(((kernel_connection *) currConn)->kernel[i][j]);
-                    connect(kernel, SIGNAL(valueChanged(double)), data, SLOT (updatePar()));
-                    connect(this, SIGNAL(deleteProperties()), kernel, SLOT(deleteLater()));
-                    glay->addWidget(kernel,i,j+1,1,1);
-                }
-            }
-
-            panelLayout->insertLayout(panelLayout->count() - 2, glay,2);
-
-            QCheckBox * convert = new QCheckBox("Output as explicit list");
-            connect(this, SIGNAL(deleteProperties()), convert, SLOT(deleteLater()));
-            convert->setChecked(((kernel_connection *)currConn)->isList());
-            if (this->viewVZ->currObject->type == synapseObject) {
-                QSharedPointer <synapse> currSyn = qSharedPointerDynamicCast<synapse> (this->viewVZ->currObject);
-                convert->setProperty("ptrSrc", qVariantFromValue((void *) currSyn->proj->source.data()));
-                convert->setProperty("ptrDst", qVariantFromValue((void *) currSyn->proj->destination.data()));
-            } else {
-                QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (this->viewVZ->currObject);
-                convert->setProperty("ptrSrc", qVariantFromValue((void *) currIn->source.data()));
-                convert->setProperty("ptrDst", qVariantFromValue((void *) currIn->destination.data()));
-            }
-            connect(convert, SIGNAL(toggled(bool)), currConn, SLOT (convertToList(bool)));
-
-            panelLayout->insertWidget(panelLayout->count() - 2, convert,2);
-
-            QPushButton * generate = new QPushButton("Generate");
-            connect(this, SIGNAL(deleteProperties()), generate, SLOT(deleteLater()));
-            generate->setProperty("ptr", qVariantFromValue((void *) currConn));
-            connect(generate, SIGNAL(clicked()), viewVZ->OpenGLWidget, SLOT (parsChangedProjection()));
-
-            panelLayout->insertWidget(panelLayout->count() - 2, generate,2);
 
         }
 

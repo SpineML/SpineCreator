@@ -1389,38 +1389,6 @@ void rootData::updatePar()
         }
     }
 
-    if (action == "changeConnKerSize") {
-        // Update the parameter value
-        kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
-        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
-        int kernel_size = ((QComboBox *) sender())->currentIndex() * 2 + 3;
-        // only add undo if value has changed
-        conn->setKernelSize(kernel_size);
-        emit updatePanelView2("");
-    }
-
-    if (action == "changeConnKerScale") {
-        // Update the parameter value
-        kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
-        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
-        float kernel_scale = ((QDoubleSpinBox *) sender())->value();
-        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
-        // only add undo if value has changed
-        conn->setKernelScale(kernel_scale);
-    }
-
-    if (action == "changeConnKernel") {
-        // Update the parameter value
-        kernel_connection * conn = (kernel_connection *) sender()->property("ptr").value<void *>();
-        CHECK_CAST(dynamic_cast<kernel_connection *>(conn))
-        float kernel_value = ((QDoubleSpinBox *) sender())->value();
-        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
-        int i = sender()->property("i").toInt();
-        int j = sender()->property("j").toInt();
-        // only add undo if value has changed
-        conn->setKernel(i,j,kernel_value);
-    }
-
     if (action == "changePythonScriptPar") {
         // Update the parameter value
         pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();

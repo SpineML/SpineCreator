@@ -136,7 +136,6 @@ enum connectionType {
     OnetoOne,
     FixedProb,
     CSV,
-    Kernel,
     Python,
     CSA,
     none

@@ -451,15 +451,6 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
                 newInput->connectionType->import_parameters_from_xml(cNode);
             }
-            type = e2.elementsByTagName("KernelConnection");
-            if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new kernel_connection;
-                QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
-                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
-            }
 
 
             if (newInput->src != (QSharedPointer <NineMLComponentData>)0) {

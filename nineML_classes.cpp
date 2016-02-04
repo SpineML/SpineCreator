@@ -758,10 +758,6 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
                   xmlOut.writeAttribute("src", ptr->inputs[i]->src->getXMLName());
                   xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
                   xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
-                  if (ptr->inputs[i]->connectionType->type == Kernel) {
-                      ((kernel_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
-                      ((kernel_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
-                  }
                   if (ptr->inputs[i]->connectionType->type == Python) {
                       ((pythonscript_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
                       ((pythonscript_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);

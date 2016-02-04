@@ -761,12 +761,6 @@ void changeConnection::redo()
             ptrIn->connectionType = new csv_connection;
             ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
-        case Kernel:
-            ptrIn->connectionType = new kernel_connection;
-            ((kernel_connection *)ptrIn->connectionType)->src = qSharedPointerDynamicCast <population> (ptrIn->source);
-            ((kernel_connection *)ptrIn->connectionType)->dst = qSharedPointerDynamicCast <population> (ptrIn->destination);
-            ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            break;
         case Python:
             break;
         case CSA:
@@ -810,12 +804,6 @@ void changeConnection::redo()
             break;
         case CSV:
             ptrSyn->connectionType = new csv_connection;
-            ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            break;
-        case Kernel:
-            ptrSyn->connectionType = new kernel_connection;
-            ((kernel_connection *)ptrSyn->connectionType)->src = (QSharedPointer <population>) ptrSyn->proj->source;
-            ((kernel_connection *)ptrSyn->connectionType)->dst = (QSharedPointer <population>) ptrSyn->proj->destination;
             ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             break;
         case Python:

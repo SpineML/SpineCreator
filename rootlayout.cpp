@@ -911,7 +911,6 @@ void rootLayout::projSelected(QSharedPointer <projection> &proj, rootData* data)
     }
     connectionComboBox->addItem("Fixed Probability");
     connectionComboBox->addItem("Explicit List");
-    connectionComboBox->addItem("Kernel");
     QSettings settings;
     // add python scripts
     settings.beginGroup("pythonscripts");
@@ -979,7 +978,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     inputConnectionComboBox->addItem("Fixed Probability");
     inputConnectionComboBox->addItem("Explicit List");
     if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
-        inputConnectionComboBox->addItem("Kernel");
         // add python scripts
         QSettings settings;
         settings.beginGroup("pythonscripts");
@@ -1023,7 +1021,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
             break;*/
         case CSA:
             break;
-        case Kernel:
         case Python:
             varLayout->addRow("", new QLabel("Configure in visualiser"));
             // add to delete props
@@ -1041,7 +1038,6 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
         case OnetoOne:
         case FixedProb:
         case CSA:
-        case Kernel:
             // add delay box:
             drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
             break;
@@ -1379,7 +1375,6 @@ void rootLayout::drawParamsLayout(rootData * data) {
                         break;*/
                     case CSA:
                         break;
-                    case Kernel:
                     case Python:
                         varLayout->addRow("", new QLabel("Configure in visualiser"));
                         //connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));

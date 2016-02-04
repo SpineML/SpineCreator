@@ -452,7 +452,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
         }
 
-        if (conn->type == CSV || conn->type == Kernel || conn->type == Python) {
+        if (conn->type == CSV || conn->type == Python) {
 
             if (!src->isVisualised && !dst->isVisualised) {
                 glEnable(GL_DEPTH_TEST);
@@ -1262,25 +1262,7 @@ void glConnectionWidget::parsChangedProjections() {
             conn = currIn->connectionType;
         }
 
-
-        // regrab data for kernel based
-        if (conn->type == Kernel) {
-
-            // refresh the connections
-            if (((kernel_connection *) conn)->changed()) {
-                connections[i].clear();
-                // launch version increment dialog box:
-                generate_dialog generate(((kernel_connection *) conn), ((kernel_connection *) conn)->src, ((kernel_connection *) conn)->dst, connections[i], connGenerationMutex, this);
-                bool retVal = generate.exec();
-                if (!retVal) {
-                    return;
-                }
-                ((kernel_connection *) conn)->connections = connections[i];
-                ((kernel_connection *) conn)->setUnchanged(true);
-            }
-        }
-
-        // regrab data for kernel based
+        // regrab data for python based
         if (conn->type == Python) {
 
             // refresh the connections
@@ -1337,34 +1319,7 @@ void glConnectionWidget::parsChangedProjection() {
 
         }
 
-        // regrab data for kernel based
-        if (conn->type == Kernel) {
 
-            // update the projection:
-
-
-            // find selected object
-            for (int i = 0; i < this->selectedConns.size(); ++i) {
-
-                if (selectedObject == selectedConns[i]) {
-
-                    // refresh the connections
-                    if (((kernel_connection *) conn)->changed()) {
-                        connections[i].clear();
-                        // launch version increment dialog box:
-                        generate_dialog generate(((kernel_connection *) conn), src, dst, connections[i], connGenerationMutex, this);
-                        bool retVal = generate.exec();
-                        if (!retVal) {
-                            return;
-                        }
-                        ((kernel_connection *) conn)->connections = connections[i];
-                        ((kernel_connection *) conn)->setUnchanged(true);
-                    }
-                }
-
-            }
-
-        }
         // regrab data for python script based
         if (conn->type == Python) {
 
@@ -1597,22 +1552,6 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                             if (currIn->connectionType->type == CSV) {
                                 // load in the connections
                                 ((csv_connection *) currIn->connectionType)->getAllData(connections.back());
-                            } else if (currIn->connectionType->type == Kernel) {
-                                if (((kernel_connection *) currIn->connectionType)->connections.size() > 0 && !((kernel_connection *) currIn->connectionType)->changed()) {
-                                    connections.back() = ((kernel_connection *) currIn->connectionType)->connections;
-                                } else {
-                                    // generate
-                                    // launch version increment dialog box:
-                                    QSharedPointer <population> popSrc = qSharedPointerDynamicCast <population> (currIn->source);
-                                    QSharedPointer <population> popDst = qSharedPointerDynamicCast <population> (currIn->destination);
-                                    generate_dialog generate(((kernel_connection *) currIn->connectionType), popSrc, popDst, connections.back(), connGenerationMutex, this);
-                                    bool retVal = generate.exec();
-                                    if (!retVal) {
-                                        continue;
-                                    }
-                                    ((kernel_connection *) currIn->connectionType)->connections = connections.back();
-                                    ((kernel_connection *) currIn->connectionType)->setUnchanged(true);
-                                }
                             } else if (currIn->connectionType->type == Python) {
                                 if (((pythonscript_connection *) currIn->connectionType)->connections.size() > 0 && !((pythonscript_connection *) currIn->connectionType)->changed()) {
                                     connections.back() = ((pythonscript_connection *) currIn->connectionType)->connections;
@@ -1671,20 +1610,6 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                         if (currTarg->connectionType->type == CSV) {
                             // load in the connections
                             ((csv_connection *) currTarg->connectionType)->getAllData(connections.back());
-                        } else if (currTarg->connectionType->type == Kernel) {
-                            if (((kernel_connection *) currTarg->connectionType)->connections.size() > 0 && !((kernel_connection *) currTarg->connectionType)->changed()) {
-                                connections.back() = ((kernel_connection *) currTarg->connectionType)->connections;
-                            } else {
-                                // generate
-                                // launch version increment dialog box:
-                                generate_dialog generate(((kernel_connection *) currTarg->connectionType), currTarg->proj->source, currTarg->proj->destination, connections.back(), connGenerationMutex, this);
-                                bool retVal = generate.exec();
-                                if (!retVal) {
-                                    return;
-                                }
-                                ((kernel_connection *) currTarg->connectionType)->connections = connections.back();
-                                ((kernel_connection *) currTarg->connectionType)->setUnchanged(true);
-                            }
                         } else if (currTarg->connectionType->type == Python) {
                             if (((pythonscript_connection *) currTarg->connectionType)->connections.size() > 0 && !((pythonscript_connection *) currTarg->connectionType)->changed()) {
                                 connections.back() = ((pythonscript_connection *) currTarg->connectionType)->connections;
