@@ -148,6 +148,95 @@ int synapse::getSynapseIndex()
     return index;
 }
 
+QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap)
+{
+
+    // create a new, identical, synapse
+
+    QSharedPointer <synapse> newSyn = QSharedPointer <synapse>(new synapse());
+
+    newSyn->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->weightUpdateType, true/*copy inputs / outputs*/));
+    newSyn->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->postsynapseType, true/*copy inputs / outputs*/));
+    newSyn->connectionType = this->connectionType->newFromExisting();
+    newSyn->isVisualised = this->isVisualised;
+
+    objectMap.insert(this, newSyn);
+
+    // now we must create copies of all the projInput GenericInputs:
+    // we only do inputs for weightupdates, but inputs AND outputs for
+    // postsynapses. This is because the input to the postsynapse
+    // is the same as the output from the weightupdate,
+    // and they'll be remapped when we sort out the pointers in the
+    // second copy step...
+    for (int i = 0; i < this->weightUpdateType->inputs.size(); ++i) {
+        if (this->weightUpdateType->inputs[i]->projInput) {
+            // create a new copy
+            QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (this->weightUpdateType->inputs[i]->newFromExisting(objectMap));
+            // add it to the pointer map!
+            objectMap.insert(this->weightUpdateType->inputs[i].data(),in);
+        }
+    }
+    for (int i = 0; i < this->postsynapseType->inputs.size(); ++i) {
+        if (this->postsynapseType->inputs[i]->projInput) {
+            // create a new copy
+            QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (this->postsynapseType->inputs[i]->newFromExisting(objectMap));
+            // add it to the pointer map!
+            objectMap.insert(this->postsynapseType->inputs[i].data(),in);
+        }
+    }
+    for (int i = 0; i < this->postsynapseType->outputs.size(); ++i) {
+        if (this->postsynapseType->outputs[i]->projInput) {
+            // create a new copy
+            QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (this->postsynapseType->outputs[i]->newFromExisting(objectMap));
+            // add it to the pointer map!
+            objectMap.insert(this->postsynapseType->outputs[i].data(),in);
+        }
+    }
+
+    return qSharedPointerCast <systemObject> (newSyn);
+
+}
+
+void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
+{
+    this->weightUpdateType->remapPointers(objectMap);
+    this->postsynapseType->remapPointers(objectMap);
+
+    // we must also manually call remap on the projInputs:
+    for (int i = 0; i < this->weightUpdateType->inputs.size(); ++i) {
+        if (this->weightUpdateType->inputs[i]->projInput) {
+            this->weightUpdateType->inputs[i]->remapSharedPointers(objectMap);
+        }
+    }
+    for (int i = 0; i < this->postsynapseType->inputs.size(); ++i) {
+        if (this->postsynapseType->inputs[i]->projInput) {
+            this->postsynapseType->inputs[i]->remapSharedPointers(objectMap);
+        }
+    }
+    for (int i = 0; i < this->postsynapseType->outputs.size(); ++i) {
+        if (this->postsynapseType->outputs[i]->projInput) {
+            this->postsynapseType->outputs[i]->remapSharedPointers(objectMap);
+        }
+    }
+
+    // connection, if it has a generator
+    if (this->connectionType->type == CSV) {
+        csv_connection * c = dynamic_cast < csv_connection * > (this->connectionType);
+        if (c && c->generator != NULL) {
+            pythonscript_connection * g = dynamic_cast < pythonscript_connection * > (c->generator);
+            if (g) {
+                g->src = qSharedPointerDynamicCast <population> (objectMap[g->src.data()]);
+                g->dst = qSharedPointerDynamicCast <population> (objectMap[g->dst.data()]);
+                if (!g->src || !g->dst) {
+                    qDebug() << "Error casting objectMap lookup to population in synapse::remapSharedPointers";
+                    exit(-1);
+                }
+            }
+        }
+    }
+
+}
+
 projection::projection()
 {
     this->type = projectionObject;
@@ -2049,8 +2138,73 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     }
 }
 
-void projection::print()
+
+QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > &objectMap)
 {
+
+    // create a new, identical, projection
+
+    QSharedPointer <projection> newProj = QSharedPointer <projection>(new projection());
+
+    newProj->type = projectionObject;
+
+    newProj->destination = this->destination;
+    newProj->source = this->source;
+
+    newProj->currTarg =  this->currTarg;
+    newProj->start = this->start;
+    newProj->curves = this->curves;
+
+    newProj->tempTrans.GLscale = this->tempTrans.GLscale;
+    newProj->tempTrans.height = this->tempTrans.height;
+    newProj->tempTrans.width = this->tempTrans.width;
+    newProj->tempTrans.viewX = this->tempTrans.viewX;
+    newProj->tempTrans.viewY = this->tempTrans.viewY;
+
+    newProj->selectedControlPoint.ind = -1;
+    newProj->selectedControlPoint.start = false;
+    newProj->selectedControlPoint.type = C1;
+
+    newProj->projDrawStyle = this->projDrawStyle;
+
+    newProj->srcPos = this->srcPos;
+    newProj->dstPos = this->dstPos;
+
+    // now do the synapses
+    for (int i = 0; i < this->synapses.size(); ++i) {
+        newProj->synapses.push_back(qSharedPointerCast <synapse> (this->synapses[i]->newFromExisting(objectMap)));
+        newProj->synapses.back()->proj = newProj;
+    }
+
+    objectMap.insert(this, newProj);
+
+    return qSharedPointerCast <systemObject> (newProj);
+
+}
+
+void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
+{
+
+    // remap src and dst:
+    this->source = qSharedPointerDynamicCast <population> (objectMap[this->source.data()]);
+    this->destination = qSharedPointerDynamicCast <population> (objectMap[this->destination.data()]);
+
+    if (!this->source || !this->destination) {
+        qDebug() << "Error casting objectMap lookup to population in projection::remapSharedPointers";
+        exit(-1);
+    }
+
+    // now do the synapses
+    for (int i = 0; i < this->synapses.size(); ++i) {
+        this->synapses[i]->remapSharedPointers(objectMap);
+    }
+
+
+}
+
+
+void projection::print() {
+
     std::cerr << "\n";
     cerr << "   " << this->getName().toStdString() << " ####\n";
     std::cerr << "   " <<  float(this->currTarg) << "\n";

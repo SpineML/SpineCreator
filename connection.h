@@ -57,6 +57,7 @@ public:
     virtual void writeDelay(QXmlStreamWriter &xmlOut);
     virtual QLayout * drawLayout(rootData * , viewVZLayoutEditHandler * , rootLayout * ) {return new QHBoxLayout();}
 
+    virtual connection * newFromExisting() {return new connection;}
     virtual int getIndex();
 
     virtual QString getTypeStr(void);
@@ -132,6 +133,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
+    connection * newFromExisting() {alltoAll_connection * c = new alltoAll_connection; c->delay = new ParameterData(this->delay); return c;}
 
 private:
 };
@@ -146,6 +148,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
+    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterData(this->delay); return c;}
 
 private:
 };
@@ -161,6 +164,14 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
+    connection * newFromExisting() {
+        fixedProb_connection * c = new fixedProb_connection;
+        c->p = this->p;
+        c->seed = this->seed;
+        c->delay = new ParameterData(this->delay);
+        return c;
+    }
+
 
     // the probability of a connection
     float p;
@@ -225,6 +236,7 @@ public:
     connection * generator;
     QLayout * drawLayout(rootData *, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
     int getIndex();
+    connection * newFromExisting();
 
 private:
     QString filename;
@@ -239,6 +251,7 @@ private:
      * not set.
      */
     void generateFilename(void);
+
 
     /*!
      * Get the directory used for storage of the connection binary
@@ -260,6 +273,17 @@ class pythonscript_connection : public connection
         Q_OBJECT
 public:
     pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *conn_targ);
+    pythonscript_connection() {
+        type = Python;
+        this->isAList = false;
+        selfConnections = false;
+        rotation = 0;
+        hasChanged = true;
+        this->scriptValidates = false;
+        this->hasWeight = false;
+        this->hasDelay = false;
+    }
+
     ~pythonscript_connection();
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
@@ -306,6 +330,8 @@ public:
 
     // the explicit connection list to copy the generated weights to
     csv_connection * connection_target;
+
+    connection * newFromExisting();
 
 private:
 

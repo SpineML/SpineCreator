@@ -54,6 +54,20 @@ public:
     virtual bool is_clicked(float, float, float) {return true;}
     virtual void remove(rootData *) {/*delete this;*/}
     virtual void delAll(rootData *) {/*delete this;*/}
+    /*!
+     * \brief newFromExisting
+     * Copy *this* and return as a new QSharedPointer
+     * \return
+     */
+    virtual QSharedPointer<systemObject> newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > &) {return QSharedPointer<systemObject>(new systemObject);}
+
+    /*!
+     * \brief remapSharedPointers
+     * Takes a map from old shared pointers to new ones - used
+     * to update references when copy / pasting systemObjects
+     */
+    virtual void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >) {return;}
+
 
     /*!
      * Set location offset for the object relative to the points x and

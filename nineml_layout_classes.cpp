@@ -138,6 +138,31 @@ NineMLLayoutData::NineMLLayoutData(QSharedPointer<NineMLLayout>data)
     this->component = data;
 }
 
+// copy constructor required for the base class
+NineMLLayoutData::NineMLLayoutData(QSharedPointer<NineMLLayoutData>data)
+{
+
+    seed = data->seed;
+    minimumDistance = data->minimumDistance;
+    type = NineMLLayoutType;
+    StateVariableList.resize(data->StateVariableList.size());
+    ParameterList.resize(data->ParameterList.size());
+
+    // copy data...
+    for (int i=0; i<data->StateVariableList.size(); i++)
+    {
+        StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
+    }
+    for (int i=0; i<data->ParameterList.size(); i++)
+    {
+        ParameterList[i] = new ParameterData(data->ParameterList[i]);
+    }
+
+    // copy component reference...
+    this->component = data->component;
+}
+
+
 QString NineMLLayout::getXMLName() {
     return this->name + ".xml";
 }

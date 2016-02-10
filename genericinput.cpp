@@ -721,3 +721,93 @@ void genericInput::read_meta_data(QDomDocument * meta) {
 
 
 }
+
+QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap)
+{
+    // create a new, identical, genericInput
+
+    QSharedPointer <genericInput> newIn = QSharedPointer <genericInput>(new genericInput());
+
+    newIn->curves = this->curves;
+    newIn->start = this->start;
+    newIn->isVisualised = this->isVisualised;
+
+    newIn->connectionType = this->connectionType->newFromExisting();
+    newIn->source = this->source;
+    newIn->destination = this->destination;
+    newIn->projInput = this->projInput;
+
+    newIn->srcPort = this->srcPort;
+    newIn->dstPort = this->dstPort;
+
+    newIn->src = this->src;
+    newIn->dst = this->dst;
+
+    objectMap.insert(this, newIn);
+
+    return qSharedPointerCast <systemObject> (newIn);
+
+}
+
+void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemObject> > objectMap)
+{
+
+    // connection, if it has a generator
+    if (this->connectionType->type == CSV) {
+        csv_connection * c = dynamic_cast < csv_connection * > (this->connectionType);
+        if (c && c->generator != NULL) {
+            pythonscript_connection * g = dynamic_cast < pythonscript_connection * > (c->generator);
+            if (g) {
+                g->src = qSharedPointerDynamicCast <population> (objectMap[g->src.data()]);
+                g->dst = qSharedPointerDynamicCast <population> (objectMap[g->dst.data()]);
+                if (!g->src || !g->dst) {
+                    qDebug() << "Error casting objectMap lookup to population in genericInput::remapSharedPointers";
+                    exit(-1);
+                }
+            }
+        }
+    }
+
+    // also we must do our own src, dst, source, and destination
+    QSharedPointer < systemObject > oldSource = this->source;
+    QSharedPointer < systemObject > oldDestination = this->destination;
+
+    this->source = objectMap[this->source.data()];
+    this->destination = objectMap[this->destination.data()];
+
+    qDebug() << "Before src = " << this->src->getXMLName();
+    qDebug() << "Before dst = " << this->dst->getXMLName();
+
+    // now remap src and dst by finding out what they were, and using the new version
+    if (oldSource->type == populationObject) {
+        qDebug() << "source = " << oldSource.data() << " -> " << this->source.data();
+        this->src = (qSharedPointerDynamicCast < population > (this->source))->neuronType;
+    } else if (oldSource->type == projectionObject) {
+        QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldSource);
+        for (int i = 0; i < p->synapses.size(); ++i) {
+            if (this->src == p->synapses[i]->weightUpdateType) {
+                this->src = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->weightUpdateType;
+            }
+            if (this->src == p->synapses[i]->postsynapseType) {
+                this->src = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->postsynapseType;
+            }
+        }
+    }
+    if (oldDestination->type == populationObject) {
+        this->dst = (qSharedPointerDynamicCast < population > (this->destination))->neuronType;
+    } else if (oldDestination->type == projectionObject) {
+        QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldDestination);
+        for (int i = 0; i < p->synapses.size(); ++i) {
+            qDebug() << this->dst->getXMLName() << " " << p->synapses[i]->postsynapseType->getXMLName() << ": " << (this->dst == p->synapses[i]->postsynapseType);
+            if (this->dst == p->synapses[i]->weightUpdateType) {
+                this->dst = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->weightUpdateType;
+            }
+            if (this->dst == p->synapses[i]->postsynapseType) {
+                this->dst = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->postsynapseType;
+            }
+        }
+    }
+    qDebug() << "After src = " << this->src->getXMLName();
+    qDebug() << "After dst = " << this->dst->getXMLName();
+
+}
