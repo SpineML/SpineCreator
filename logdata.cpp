@@ -522,7 +522,7 @@ bool logData::plotRaster(QCustomPlot * plot, QList < QVariant > indices, int upd
     // title
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
-        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, logFile.fileName()));
+        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, logName));
     }
 
     // redraw
@@ -983,8 +983,8 @@ bool logData::setupFromXML() {
     // resize data carriers
     colData.resize(columns.size());
 
-    // log name
-    logName = logFileName;
+    // log name: NB: The use of '/' is Unix/Mac specific here. Use QDir instead.
+    logName = logFileName.right(logFileName.lastIndexOf('/'));
 
     // all successful!
     delete reader;
