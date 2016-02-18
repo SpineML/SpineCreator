@@ -32,27 +32,26 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "editsimulators.h"
-#include "nineml_rootcomponentitem.h"
-#include "propertiesmanager.h"
-#include "nineml_alscene.h"
-#include "exportimage.h"
-#include "dotwriter.h"
-#include "systemmodel.h"
-#include "versionchange_dialog.h"
-#include "savenetworkimage_dialog.h"
-#include "experiment.h"
+#include "SC_settings.h"
+#include "SC_component_rootcomponentitem.h"
+#include "SC_component_propertiesmanager.h"
+#include "SC_component_scene.h"
+#include "SC_export_component_image.h"
+#include "SC_dotwriter.h"
+#include "SC_systemmodel.h"
+#include "SC_export_network_image.h"
+#include "EL_experiment.h"
 #include <QCryptographicHash>
-#include "undocommands.h"
-#include "versioncontrol.h"
+#include "SC_undocommands.h"
+#include "SC_versioncontrol.h"
 #include "qcustomplot.h"
-#include "projectobject.h"
+#include "SC_projectobject.h"
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QStandardPaths>
 #endif
 
 #include "qdebug.h"
-#include "aboutdialog.h"
+#include "SC_aboutdialog.h"
 
 
 MainWindow::
@@ -284,7 +283,7 @@ MainWindow(QWidget *parent) :
     this->ui->tab1->setStyleSheet("border: 0px; color:white; background:rgba(255,255,255,40%)");
 
     // add viewNL properties panel
-    rootLayout * layoutRoot = new rootLayout(&data, ui->parsPanel);
+    nl_rootlayout * layoutRoot = new nl_rootlayout(&data, ui->parsPanel);
     this->viewNL.layout = layoutRoot;
 
     // join up the components of the program
@@ -326,9 +325,9 @@ MainWindow(QWidget *parent) :
     // this creates a Qt timer event
     connect( timer, SIGNAL(timeout()), ui->viewport, SLOT(animate()) );
 
-    QObject::connect(&(data), SIGNAL(updatePanel(rootData*)), layoutRoot, SLOT(updatePanel(rootData*)));
-    QObject::connect(&(data), SIGNAL(updatePanel(rootData*)), this, SLOT(updateNetworkButtons(rootData*)));
-    QObject::connect(this, SIGNAL(updatePanel(rootData*)), layoutRoot, SLOT(updatePanel(rootData*)));
+    QObject::connect(&(data), SIGNAL(updatePanel(nl_rootdata*)), layoutRoot, SLOT(updatePanel(nl_rootdata*)));
+    QObject::connect(&(data), SIGNAL(updatePanel(nl_rootdata*)), this, SLOT(updateNetworkButtons(nl_rootdata*)));
+    QObject::connect(this, SIGNAL(updatePanel(nl_rootdata*)), layoutRoot, SLOT(updatePanel(nl_rootdata*)));
 
     QObject::connect(layoutRoot, SIGNAL(setCaption(QString)), &(data), SLOT(setModelTitle(QString)));
     QObject::connect(&(data), SIGNAL(statusBarUpdate(QString, int)), ui->statusBar, SLOT(showMessage(QString, int)));
@@ -2246,7 +2245,7 @@ void MainWindow::setCaption(QString caption)
 
 void MainWindow::launchSimulatorEditor()
 {
-    editSimulators * dialog  = new editSimulators(this);
+    settings_window * dialog  = new settings_window(this);
     dialog->show();
 
     // we may have changed the python scripts, so we should redraw NL and VZ
@@ -2860,7 +2859,7 @@ void MainWindow::updateTitle()
     }
 }
 
-void MainWindow::updateNetworkButtons(rootData * data)
+void MainWindow::updateNetworkButtons(nl_rootdata * data)
 {
     if (data->selList.size() == 0) {
         ui->butA->setDisabled(false);

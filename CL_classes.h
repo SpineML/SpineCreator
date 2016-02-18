@@ -26,7 +26,7 @@
 #define NINEML_STRUCTS_H
 
 #include "globalHeader.h"
-#include "systemobject.h"
+#include "NL_systemobject.h"
 
 // This is the number of connections there has to be for the system to
 // start writing these connections into a binary file. If there are

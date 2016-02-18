@@ -3,6 +3,12 @@
 
 #include <QObject>
 
+/*!
+ * \brief The FilterOutUndoRedoEvents class makes sure that undo / redo commands
+ * are not sent to the individual QLineEdits etc but are sent to the global SC
+ * undo / redo framework
+ */
+
 class FilterOutUndoRedoEvents : public QObject
 {
     Q_OBJECT

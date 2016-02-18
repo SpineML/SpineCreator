@@ -18,119 +18,113 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
         mainwindow.cpp \
-    glwidget.cpp \
-    population.cpp \
-    rootdata.cpp \
-    rootlayout.cpp \
-    projections.cpp \
-    connection.cpp \
-    connectionmodel.cpp \
-    glconnectionwidget.cpp \
-    nineml_layout_classes.cpp \
-    cinterpreter.cpp \
-    systemobject.cpp \
-    layoutaliaseditdialog.cpp \
-    layouteditpreviewdialog.cpp \
-    vectormodel.cpp \
-    valuelistdialog.cpp \
-    genericinput.cpp \
-    connectionlistdialog.cpp \
-    experiment.cpp \
-    editsimulators.cpp \
-    propertiesmanager.cpp \
-    nineml_graphicsitems.cpp \
-    nineml_alscene.cpp \
-    gvitems.cpp \
-    grouptextitems.cpp \
-    exportimage.cpp \
-    dotwriter.cpp \
-    regimegraphicsitem.cpp \
-    systemmodel.cpp \
-    undocommands.cpp \
-    nineml_rootcomponentitem.cpp \
-    nineml_alview.cpp \
-    versionchange_dialog.cpp \
-    savenetworkimage_dialog.cpp \
-    generate_dialog.cpp \
-    versioncontrol.cpp \
-    commitdialog.cpp \
-    viewVZlayoutedithandler.cpp \
-    viewGVpropertieslayout.cpp \
-    viewELexptpanelhandler.cpp \
     qcustomplot.cpp \
-    logdata.cpp \
-    aboutdialog.cpp \
-    projectobject.cpp \
     filteroutundoredoevents.cpp \
-    batchexperimentwindow.cpp \
-    vectorlistmodel.cpp \
-    CL_classes.cpp
+    CL_classes.cpp \
+    NL_population.cpp \
+    SC_projectobject.cpp \
+    SC_aboutdialog.cpp \
+    SC_commitdialog.cpp \
+    NL_connection.cpp \
+    NL_projection_and_synapse.cpp \
+    SC_settings.cpp \
+    EL_experiment.cpp \
+    SC_systemmodel.cpp \
+    NL_systemobject.cpp \
+    SC_undocommands.cpp \
+    SC_valuelistdialog.cpp \
+    SC_vectorlistmodel.cpp \
+    SC_vectormodel.cpp \
+    SC_versioncontrol.cpp \
+    SC_network_layer_rootdata.cpp \
+    SC_network_layer_rootlayout.cpp \
+    CL_regimegraphicsitem.cpp \
+    SC_connectionlistdialog.cpp \
+    SC_connectionmodel.cpp \
+    SC_dotwriter.cpp \
+    SC_export_component_image.cpp \
+    SC_export_network_image.cpp \
+    NL_genericinput.cpp \
+    SC_python_connection_generate_dialog.cpp \
+    SC_logged_data.cpp \
+    SC_component_scene.cpp \
+    SC_component_view.cpp \
+    SC_component_propertiesmanager.cpp \
+    SC_component_graphicsitems.cpp \
+    CL_layout_classes.cpp \
+    SC_layout_aliaseditdialog.cpp \
+    SC_layout_editpreviewdialog.cpp \
+    SC_component_grouptextitems.cpp \
+    SC_component_gvitems.cpp \
+    SC_component_rootcomponentitem.cpp \
+    SC_viewELexptpanelhandler.cpp \
+    SC_viewGVpropertieslayout.cpp \
+    SC_viewVZlayoutedithandler.cpp \
+    SC_layout_cinterpreter.cpp \
+    SC_network_2d_visualiser_panel.cpp \
+    SC_network_3d_visualiser_panel.cpp
 
 HEADERS  += mainwindow.h \
-    glwidget.h \
-    population.h \
-    rootdata.h \
-    projections.h \
-    connection.h \
-    connectionmodel.h \
-    glconnectionwidget.h \
     globalHeader.h \
-    nineml_layout_classes.h \
-    cinterpreter.h \
-    systemobject.h \
-    layoutaliaseditdialog.h \
-    layouteditpreviewdialog.h \
-    projections.h \
-    vectormodel.h \
-    valuelistdialog.h \
-    genericinput.h \
-    connectionlistdialog.h \
-    experiment.h \
-    editsimulators.h \
-    propertiesmanager.h \
-    nineml_graphicsitems.h \
-    nineml_alscene.h \
-    gvitems.h \
-    grouptextitems.h \
-    exportimage.h \
-    dotwriter.h \
-    regimegraphicsitem.h \
-    systemmodel.h \
-    undocommands.h \
-    nineml_rootcomponentitem.h \
-    nineml_alview.h \
-    versionchange_dialog.h \
-    savenetworkimage_dialog.h \
-    generate_dialog.h \
-    versioncontrol.h \
-    commitdialog.h \
-    viewVZlayoutedithandler.h \
-    viewGVpropertieslayout.h \
-    viewELexptpanelhandler.h \
     qcustomplot.h \
-    logdata.h \
-    aboutdialog.h \
-    projectobject.h \
-    rootlayout.h \
     filteroutundoredoevents.h \
-    batchexperimentwindow.h \
-    vectorlistmodel.h \
     qmessageboxresizable.h \
-    CL_classes.h
+    CL_classes.h \
+    NL_population.h \
+    SC_projectobject.h \
+    SC_aboutdialog.h \
+    SC_commitdialog.h \
+    NL_connection.h \
+    NL_projection_and_synapse.h \
+    SC_settings.h \
+    EL_experiment.h \
+    SC_systemmodel.h \
+    NL_systemobject.h \
+    SC_undocommands.h \
+    SC_valuelistdialog.h \
+    SC_vectorlistmodel.h \
+    SC_vectormodel.h \
+    SC_versioncontrol.h \
+    SC_network_layer_rootdata.h \
+    SC_network_layer_rootlayout.h \
+    CL_regimegraphicsitem.h \
+    SC_connectionlistdialog.h \
+    SC_connectionmodel.h \
+    SC_dotwriter.h \
+    SC_export_component_image.h \
+    SC_export_network_image.h \
+    NL_genericinput.h \
+    SC_python_connection_generate_dialog.h \
+    SC_logged_data.h \
+    SC_component_scene.h \
+    SC_component_view.h \
+    SC_component_propertiesmanager.h \
+    SC_component_graphicsitems.h \
+    CL_layout_classes.h \
+    SC_layout_aliaseditdialog.h \
+    SC_layout_editpreviewdialog.h \
+    SC_component_gvitems.h \
+    SC_component_grouptextitems.h \
+    SC_component_rootcomponentitem.h \
+    SC_viewELexptpanelhandler.h \
+    SC_viewGVpropertieslayout.h \
+    SC_viewVZlayoutedithandler.h \
+    SC_layout_cinterpreter.h \
+    SC_network_2d_visualiser_panel.h \
+    SC_network_3d_visualiser_panel.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \
     valuelistdialog.ui \
     brahms_dialog.ui \
     connectionlistdialog.ui \
-    editsimulators.ui \
     exportimage.ui \
     versionchange_dialog.ui \
     savenetworkimage_dialog.ui \
     generate_dialog.ui \
     commitdialog.ui \
     aboutdialog.ui \
-    batchexperimentwindow.ui
+    settings_window.ui
 
 RESOURCES += \
     icons.qrc
@@ -168,8 +162,9 @@ linux-g++-64{
     DEPENDPATH += /usr/lib/graphviz
 }
 macx{
+    QMAKE_MAC_SDK = macosx10.10
     QMAKE_CXXFLAGS += -O0 -g
-    LIBS += -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -lpython
+    LIBS += -L/opt/local/lib/graphviz/ -lpython2.7
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
     DEPENDPATH +=  /opt/local/lib/graphviz

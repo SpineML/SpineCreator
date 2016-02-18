@@ -24,10 +24,10 @@
 
 
 #include "CL_classes.h"
-#include "projections.h"
-#include "nineml_layout_classes.h"
-#include "genericinput.h"
-#include "population.h"
+#include "NL_projection_and_synapse.h"
+#include "CL_layout_classes.h"
+#include "NL_genericinput.h"
+#include "NL_population.h"
 
 QString dim::toString() {
     // do stuff
