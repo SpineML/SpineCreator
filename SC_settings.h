@@ -29,7 +29,7 @@
 #include "globalHeader.h"
 
 namespace Ui {
-class settings_window;
+    class settings_window;
 }
 
 class PythonSyntaxHighlighter;
@@ -41,11 +41,11 @@ class PythonSyntaxHighlighter;
 class settings_window : public QDialog
 {
     Q_OBJECT
-    
+
 public:
     explicit settings_window(QWidget *parent = 0);
     ~settings_window();
-    
+
 private:
     Ui::settings_window *ui;
 
@@ -93,74 +93,74 @@ public slots:
 };
 
 class SyntaxHighlighter : public QSyntaxHighlighter
-   {
-       Q_OBJECT
+{
+    Q_OBJECT
 
-   public:
-       SyntaxHighlighter(QPlainTextEdit * parent);
+public:
+    SyntaxHighlighter(QPlainTextEdit * parent);
 
-   protected:
-       void highlightBlock(const QString &text);
+protected:
+    void highlightBlock(const QString &text);
 
-       struct HighlightingRule
-       {
-           QRegExp pattern;
-           QTextCharFormat format;
-       };
-
-       QVector<HighlightingRule> highlightingRules;
-
-       QTextCharFormat commentFormat;
-       QTextCharFormat quotationFormat;
-       QTextCharFormat functionFormat;
-       QTextCharFormat numericFormat;
-   };
-
-   class PythonSyntaxHighlighter : public SyntaxHighlighter
-   {
-       Q_OBJECT
-
-   public:
-       PythonSyntaxHighlighter(QPlainTextEdit *parent);
-
-       static QStringList keywordsList(){return d_keywords;}
-
-   protected:
-       void highlightBlock(const QString &text);
-
-   private:
-       QVector<HighlightingRule> pythonHighlightingRules;
-
-       QTextCharFormat keywordFormat;
-       QTextCharFormat classFormat;
-
-       static const QStringList d_keywords;
-   };
-
-    struct ParenthesisInfo
+    struct HighlightingRule
     {
-        char character;
-        int position;
+        QRegExp pattern;
+        QTextCharFormat format;
     };
 
-    class TextBlockData : public QTextBlockUserData
+    QVector<HighlightingRule> highlightingRules;
+
+    QTextCharFormat commentFormat;
+    QTextCharFormat quotationFormat;
+    QTextCharFormat functionFormat;
+    QTextCharFormat numericFormat;
+};
+
+class PythonSyntaxHighlighter : public SyntaxHighlighter
+{
+    Q_OBJECT
+
+public:
+    PythonSyntaxHighlighter(QPlainTextEdit *parent);
+
+    static QStringList keywordsList(){return d_keywords;}
+
+protected:
+    void highlightBlock(const QString &text);
+
+private:
+    QVector<HighlightingRule> pythonHighlightingRules;
+
+    QTextCharFormat keywordFormat;
+    QTextCharFormat classFormat;
+
+    static const QStringList d_keywords;
+};
+
+struct ParenthesisInfo
+{
+    char character;
+    int position;
+};
+
+class TextBlockData : public QTextBlockUserData
+{
+public:
+    TextBlockData(){}
+
+    QVector<ParenthesisInfo *> parentheses(){return m_parentheses;}
+    void insert(ParenthesisInfo *info)
     {
-    public:
-        TextBlockData(){}
-
-        QVector<ParenthesisInfo *> parentheses(){return m_parentheses;}
-        void insert(ParenthesisInfo *info)
-        {
-            int i = 0;
-            while (i < m_parentheses.size() &&
-                info->position > m_parentheses.at(i)->position)
-                ++i;
-
-            m_parentheses.insert(i, info);
+        int i = 0;
+        while (i < m_parentheses.size() &&
+               info->position > m_parentheses.at(i)->position) {
+            ++i;
         }
+        m_parentheses.insert(i, info);
+    }
 
-    private:
-        QVector<ParenthesisInfo *> m_parentheses;
-    };
+private:
+    QVector<ParenthesisInfo *> m_parentheses;
+};
 
 #endif // EDITSIMULATORS_H

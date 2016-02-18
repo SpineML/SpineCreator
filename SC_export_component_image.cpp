@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 #include "SC_export_component_image.h"
-#include "ui_exportimage.h"
+#include "ui_export_component_image.h"
 
 ExportImageDialog::ExportImageDialog(int width, int height, QWidget *parent) :
     QDialog(parent),

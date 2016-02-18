@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 #include "SC_export_network_image.h"
-#include "ui_savenetworkimage_dialog.h"
+#include "ui_export_network_image.h"
 #include "SC_network_layer_rootdata.h"
 #include "SC_network_3d_visualiser_panel.h"
 

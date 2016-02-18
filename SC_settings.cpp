@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 #include "SC_settings.h"
-#include "ui_editsimulators.h"
+#include "ui_settings_window.h"
 #include "QSettings"
 
 settings_window::settings_window(QWidget *parent) :
@@ -716,4 +716,3 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
 
     setCurrentBlockUserData(data);
 }
-

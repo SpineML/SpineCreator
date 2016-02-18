@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>editSimulators</class>
- <widget class="QDialog" name="editSimulators">
+ <class>settings_window</class>
+ <widget class="QDialog" name="settings_window">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -133,7 +133,7 @@
       <item>
        <widget class="QCheckBox" name="dev_mode_check">
         <property name="text">
-         <string>Enable beta features (may cause crashes, 
+         <string>Enable beta features (may cause crashes,
 restart required)</string>
         </property>
        </widget>

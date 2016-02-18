@@ -7,17 +7,17 @@
 VPATH += ../shared
 INCLUDEPATH += ../shared
 
-QT       += core gui opengl xml network svg
+QT += core gui opengl xml network svg
 
 greaterThan(QT_MAJOR_VERSION, 4) {
-QT       += printsupport
+    QT += printsupport
 }
 
 TARGET = spinecreator
 TEMPLATE = app
 
 SOURCES += main.cpp \
-        mainwindow.cpp \
+    mainwindow.cpp \
     qcustomplot.cpp \
     filteroutundoredoevents.cpp \
     CL_classes.cpp \
@@ -64,7 +64,7 @@ SOURCES += main.cpp \
     SC_network_2d_visualiser_panel.cpp \
     SC_network_3d_visualiser_panel.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS += mainwindow.h \
     globalHeader.h \
     qcustomplot.h \
     filteroutundoredoevents.h \
@@ -113,7 +113,7 @@ HEADERS  += mainwindow.h \
     SC_network_2d_visualiser_panel.h \
     SC_network_3d_visualiser_panel.h
 
-FORMS    += mainwindow.ui \
+FORMS += mainwindow.ui \
     valuelistdialog.ui \
     connectionlistdialog.ui \
     generate_dialog.ui \
@@ -123,12 +123,9 @@ FORMS    += mainwindow.ui \
     export_component_image.ui \
     export_network_image.ui
 
-RESOURCES += \
-    icons.qrc
+RESOURCES += icons.qrc
 
-
-
-win32:release{
+win32:release {
     DEFINES += _MATH_DEFINES_DEFINED
     LIBS += "-LC:\SDKs\Graphviz232\lib\release\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
     INCLUDEPATH += "C:\SDKs\Graphviz232\include"
@@ -137,7 +134,7 @@ win32:release{
     DEPENDPATH += "C:\Python27\libs"
     DEPENDPATH += "C:\Python27"
 }
-win32:debug{
+win32:debug {
     DEFINES += _MATH_DEFINES_DEFINED
     LIBS += "-LC:\SDKs\Graphviz232\lib\debug\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
     INCLUDEPATH += "C:\SDKs\Graphviz232\include"
@@ -146,19 +143,19 @@ win32:debug{
     DEPENDPATH += "C:\Python27\libs"
     DEPENDPATH += "C:\Python27"
 }
-linux-g++{
+linux-g++ {
     LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
     INCLUDEPATH += /usr/include/python2.7
     INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
     DEPENDPATH += /usr/lib/graphviz
 }
-linux-g++-64{
+linux-g++-64 {
     LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
     INCLUDEPATH += /usr/include/python2.7
     INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
     DEPENDPATH += /usr/lib/graphviz
 }
-macx{
+macx {
     QMAKE_MAC_SDK = macosx10.10
     QMAKE_CXXFLAGS += -O0 -g
     LIBS +=  -L/opt/local/lib/graphviz/ -lpython2.7 #-L/opt/local/lib/
@@ -166,8 +163,7 @@ macx{
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
     DEPENDPATH +=  /opt/local/lib/graphviz
 }
-
-linux{
+linux {
     QMAKE_CXXFLAGS += -Wall
 
     # Installation stuff for Linux. Important for debian builds
@@ -195,8 +191,7 @@ CONFIG(use_libgraph_not_libcgraph) {
     LIBS += -lgvc -lcgraph
 }
 
-OTHER_FILES += \
-spinecreator.pro.user
+OTHER_FILES += spinecreator.pro.user
 
 target.path = /usr/bin
 INSTALLS += target
