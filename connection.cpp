@@ -923,6 +923,9 @@ void csv_connection::import_csv(QString fileName)
 
     QFile f;
     QDir lib_dir = this->getLibDir();
+    if (this->filename.isEmpty()) {
+        this->generateFilename();
+    }
     f.setFileName(lib_dir.absoluteFilePath(this->filename));
     if (!f.open( QIODevice::ReadWrite | QIODevice::Truncate)) {
         QMessageBox msgBox;
