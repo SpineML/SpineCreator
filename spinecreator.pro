@@ -185,7 +185,7 @@ CONFIG(use_libgraph_not_libcgraph) {
 }
 
 OTHER_FILES += \
-neuralNetworks.pro.user
+spinecreator.pro.user
 
 documentation.path = /usr/share/man/man1
 documentation.files = spinecreator.1
