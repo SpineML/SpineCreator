@@ -1230,7 +1230,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
         case nullObject:
             break;
         }
-        connection * conn;
+        connection* conn = (connection*)0;
         if (i == 2) { // connection
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (data->selList[0]);
             conn = proj->synapses[proj->currTarg]->connectionType;

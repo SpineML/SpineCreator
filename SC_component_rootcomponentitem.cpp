@@ -205,7 +205,7 @@ void RootComponentItem::setComponentClassName(QString name)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(al));
     // find which catalog we are saving to
-    QVector < QSharedPointer<Component> > * curr_lib;
+    QVector<QSharedPointer<Component> >* curr_lib = (QVector<QSharedPointer<Component> >*)0;
     if (al->type == "neuron_body")
         curr_lib = &main->data.catalogNrn;
     if (al->type == "weight_update")
@@ -267,8 +267,8 @@ void RootComponentItem::setComponentClassType(QString type)
     QString oldType = al->type;
     al->type = type;
 
-    QVector <QSharedPointer<Component> > * old_lib;
-    QVector <QSharedPointer<Component> > * new_lib;
+    QVector <QSharedPointer<Component> > * old_lib = (QVector <QSharedPointer<Component> > *)0;
+    QVector <QSharedPointer<Component> > * new_lib = (QVector <QSharedPointer<Component> > *)0;
 
     // pointer to source catalog
     if (oldType == "neuron_body")

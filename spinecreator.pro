@@ -171,6 +171,8 @@ macx{
 }
 
 linux{
+    QMAKE_CXXFLAGS += -Wall
+
     # Installation stuff for Linux. Important for debian builds
     documentation.path = /usr/share/man/man1
     documentation.files = spinecreator.1

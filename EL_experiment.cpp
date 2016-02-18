@@ -789,7 +789,7 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 table->setProperty("ptr", qVariantFromValue((void *) this));
                 table->setItemDelegate(new NTableDelegate(table));
                 gridlay->addWidget(table,0,0,4,1);
-                int componentSize;
+                int componentSize = 0;
                 if (this->target->owner->type == populationObject) {
                     QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
                     CHECK_CAST(pop)
@@ -905,7 +905,7 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 spin->setProperty("ptr", qVariantFromValue((void *) this));
                 spin->setMinimum(0);
                 spin->setToolTip ("Index of the neuron within the population");
-                int componentSize;
+                int componentSize = 0;
                 if (this->target->owner->type == populationObject) {
                     QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
                     CHECK_CAST(pop)
@@ -2889,7 +2889,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
         // get array size
         params.clear();
 
-        int array_size;
+        int array_size = 0;
         if (reader->attributes().hasAttribute("array_size"))
             array_size = reader->attributes().value("array_size").toString().toInt();
         else

@@ -1679,7 +1679,7 @@ void MainWindow::import_csv()
 void MainWindow::duplicate_component()
 {
     // find which catalog we are saving to
-    QVector < QSharedPointer<Component> > * curr_lib;
+    QVector<QSharedPointer<Component> >* curr_lib = (QVector<QSharedPointer<Component> >*)0;
     if (viewCL.root->al->type == "neuron_body")
         curr_lib = &data.catalogNrn;
     if (viewCL.root->al->type == "weight_update")

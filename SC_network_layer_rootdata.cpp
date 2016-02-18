@@ -264,7 +264,7 @@ bool nl_rootdata::removeComponent(QSharedPointer<Component> oldComp)
         return true;
     }
 
-    QVector < QSharedPointer<Component> > * curr_lib;
+    QVector<QSharedPointer<Component> >* curr_lib = (QVector<QSharedPointer<Component> >*)0;
     if (oldComp->type == "neuron_body") {
         curr_lib = &this->catalogNrn;
     }

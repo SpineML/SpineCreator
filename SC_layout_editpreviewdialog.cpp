@@ -141,7 +141,7 @@ void layoutEditPreviewDialog::reDraw(QString) {
         }
     }
 
-    int numNeurons;
+    int numNeurons = 0;
     for (int j = 0; j < (int) contentLayoutRef->count(); ++j) {
         if (contentLayoutRef->itemAt(j)->widget()) {
             QString clsName = "QSpinBox";
