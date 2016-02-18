@@ -1100,7 +1100,7 @@
   <customwidget>
    <class>GLWidget</class>
    <extends>QWidget</extends>
-   <header>glwidget.h</header>
+   <header>SC_network_2d_visualiser_panel.h</header>
    <container>1</container>
    <slots>
     <signal>MouseMoveEvent(QMouseEvent)</signal>
