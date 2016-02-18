@@ -400,6 +400,10 @@ void rotateAxes(axisType axis, float angle, float x[3], float y[3], float z[3]) 
         case ZAXIS:
         u[0] = z[0]; u[1] = z[1]; u[2] = z[2];
             break;
+
+        default:
+            u[0] = 0; u[1] = 0; u[2] = 0;
+            break;
     }
 
     float in[3];

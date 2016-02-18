@@ -812,7 +812,7 @@ float interpretMaths(vector <valop> stack) {
         case OP:
             {
                 // fetch first operand from stack
-                float val1;
+                float val1 = 0;
                 if (tempStack.size()) {
                     if (tempStack.back().ptr != NULL) {
                         val1 = *tempStack.back().ptr;
@@ -833,7 +833,7 @@ float interpretMaths(vector <valop> stack) {
                         tempStack.pop_back();
                     }
                 }
-                float result;
+                float result = 0;
                 // apply operator (default val2 of 0 handles unary operators)
                 switch (int(stack[i].val)) {
                 case ADD:
