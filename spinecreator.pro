@@ -114,17 +114,14 @@ HEADERS  += mainwindow.h \
     SC_network_3d_visualiser_panel.h
 
 FORMS    += mainwindow.ui \
-    ninemlsortingdialog.ui \
     valuelistdialog.ui \
-    brahms_dialog.ui \
     connectionlistdialog.ui \
-    exportimage.ui \
-    versionchange_dialog.ui \
-    savenetworkimage_dialog.ui \
     generate_dialog.ui \
     commitdialog.ui \
     aboutdialog.ui \
-    settings_window.ui
+    settings_window.ui \
+    export_component_image.ui \
+    export_network_image.ui
 
 RESOURCES += \
     icons.qrc
@@ -164,7 +161,7 @@ linux-g++-64{
 macx{
     QMAKE_MAC_SDK = macosx10.10
     QMAKE_CXXFLAGS += -O0 -g
-    LIBS += -L/opt/local/lib/graphviz/ -lpython2.7
+    LIBS +=  -L/opt/local/lib/graphviz/ -lpython2.7 #-L/opt/local/lib/
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
     DEPENDPATH +=  /opt/local/lib/graphviz
