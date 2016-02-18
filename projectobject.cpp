@@ -1,5 +1,5 @@
 #include "projectobject.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "nineml_layout_classes.h"
 #include "rootdata.h"
 #include "mainwindow.h"

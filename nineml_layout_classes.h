@@ -26,7 +26,7 @@
 #define NINEML_LAYOUT_CLASSES_H
 
 // include existing classes
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "cinterpreter.h"
 
 enum transformType {

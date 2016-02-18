@@ -26,7 +26,7 @@
 #define NINEML_ROOTCOMPONENTITEM_H
 
 #include "gvitems.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "nineml_graphicsitems.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"

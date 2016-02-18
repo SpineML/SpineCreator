@@ -30,7 +30,7 @@
 struct viewNLstruct;
 struct viewVZstruct;
 
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "connectionmodel.h"
 #include "glconnectionwidget.h"
 #include "rootdata.h"

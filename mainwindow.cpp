@@ -65,8 +65,8 @@ MainWindow(QWidget *parent) :
     data.main = this;
     this->setWindowTitle("SpineCreator - Graphical SNN creation");
 
-    QCoreApplication::setOrganizationName("BLANK");
-    QCoreApplication::setOrganizationDomain("BLANK.ac.uk");
+    QCoreApplication::setOrganizationName("SpineML");
+    QCoreApplication::setOrganizationDomain("sheffield.ac.uk");
     QCoreApplication::setApplicationName("SpineCreator");
 
     // initialise GUI

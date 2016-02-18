@@ -26,7 +26,7 @@
 #include "projections.h"
 #include "rootdata.h"
 #include "genericinput.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "connection.h"
 #include "mainwindow.h"
 #include "nineml_rootcomponentitem.h"
