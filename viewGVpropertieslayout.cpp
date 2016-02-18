@@ -23,8 +23,8 @@
 ****************************************************************************/
 
 #include "viewGVpropertieslayout.h"
-#include <mainwindow.h>
-#include <qcustomplot.h>
+#include "mainwindow.h"
+#include "qcustomplot.h"
 #include "globalHeader.h"
 
 viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget *parent) :

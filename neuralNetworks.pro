@@ -135,6 +135,43 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     icons.qrc
 
+
+
+win32:release{
+    LIBS += "-LC:\SDKs\Graphviz232\lib\release\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
+    INCLUDEPATH += "C:\SDKs\Graphviz232\include"
+    INCLUDEPATH += "C:\Python27\include"
+    DEPENDPATH += "C:\SDKs\Graphviz232\lib\release\lib"
+    DEPENDPATH += "C:\Python27\libs"
+}
+win32:debug{
+    LIBS += "-LC:\SDKs\Graphviz232\lib\debug\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
+    INCLUDEPATH += "C:\SDKs\Graphviz232\include"
+    INCLUDEPATH += "C:\Python27\include"
+    DEPENDPATH += "C:\SDKs\Graphviz232\lib\debug\lib"
+    DEPENDPATH += "C:\Python27\libs"
+    DEPENDPATH += "C:\Python27"
+}
+linux-g++{
+    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
+    INCLUDEPATH += /usr/include/python2.7
+    INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
+    DEPENDPATH += /usr/lib/graphviz
+}
+linux-g++-64{
+    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
+    INCLUDEPATH += /usr/include/python2.7
+    INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
+    DEPENDPATH += /usr/lib/graphviz
+}
+macx{
+    QMAKE_CXXFLAGS += -O0 -g
+    LIBS += -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -lpython
+    INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
+    INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
+    DEPENDPATH +=  /opt/local/lib/graphviz
+}
+
 # Use of the cgraph API from graphviz version 2.32 and above is the default. Can configure
 # to build with the deprecated libgraph API, if required (for Debian 7 and older Linux
 # distros). To do this, add "CONFIG+=use_libgraph_not_libcgraph" to the "Additional
@@ -145,36 +182,6 @@ CONFIG(use_libgraph_not_libcgraph) {
     LIBS += -lgvc -lgraph
 } else {
     LIBS += -lgvc -lcgraph
-}
-
-win32:release{
-    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/release/lib" -lGLU32
-    INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
-    DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/release/lib"
-}
-win32:debug{
-    LIBS += "-Lc:/Program Files/Graphviz2.26.3/lib/debug/lib" -lGLU32
-    INCLUDEPATH += "c:/Program Files/Graphviz2.26.3/include"
-    DEPENDPATH += "c:/Program Files/Graphviz2.26.3/lib/debug/lib"
-}
-linux-g++{
-    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
-    INCLUDEPATH += /usr/include/python2.7
-    INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include /opt/graphviz/include/graphviz
-    DEPENDPATH += /usr/lib/graphviz
-}
-linux-g++-64{
-    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
-    INCLUDEPATH += /usr/include/python2.7
-    INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include /opt/graphviz/include/graphviz
-    DEPENDPATH += /usr/lib/graphviz
-}
-macx{
-    QMAKE_CXXFLAGS += -O0 -g
-    LIBS += -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -lpython
-    INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
-    INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
-    DEPENDPATH +=  /opt/local/lib/graphviz
 }
 
 OTHER_FILES += \

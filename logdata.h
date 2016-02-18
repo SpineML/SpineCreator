@@ -27,7 +27,7 @@
 
 #include <QObject>
 #include "qcustomplot.h"
-#include <globalHeader.h>
+#include "globalHeader.h"
 
 enum fileFormat {
     BINARY,
