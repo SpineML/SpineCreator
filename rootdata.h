@@ -49,7 +49,7 @@ struct cursorType {
 };
 
 struct loadedComponent {
-    QSharedPointer<NineMLComponent> component;
+    QSharedPointer<Component> component;
     QString url;
 };
 
@@ -72,14 +72,14 @@ public:
     void callRedrawGLview();
     void updateStatusBar(QString, int);
     void setTitle();
-    void replaceComponent(QSharedPointer<NineMLComponent>, QSharedPointer<NineMLComponent>);
-    NineMLRootObject* import_component_xml_single(QString fileName);
-    bool isComponentInUse(QSharedPointer<NineMLComponent> oldComp);
-    bool removeComponent(QSharedPointer<NineMLComponent> oldComp);
+    void replaceComponent(QSharedPointer<Component>, QSharedPointer<Component>);
+    ComponentRootObject* import_component_xml_single(QString fileName);
+    bool isComponentInUse(QSharedPointer<Component> oldComp);
+    bool removeComponent(QSharedPointer<Component> oldComp);
     //bool isValidPointer(systemObject *ptr);
     QSharedPointer<systemObject> isValidPointer(systemObject *ptr);
-    QSharedPointer<NineMLComponentData> isValidPointer(NineMLComponentData *ptr);
-    QSharedPointer<NineMLComponent> isValidPointer(NineMLComponent *ptr);
+    QSharedPointer<ComponentInstance> isValidPointer(ComponentInstance *ptr);
+    QSharedPointer<Component> isValidPointer(Component *ptr);
     void redrawViews();
 
     /*!
@@ -97,10 +97,10 @@ public:
     projectObject * currProject;
 
     QVector < QSharedPointer <population> > populations;
-    QVector < QSharedPointer<NineMLComponent> > catalogUnsorted;
-    QVector < QSharedPointer<NineMLComponent> > catalogNrn;
-    QVector < QSharedPointer<NineMLComponent> > catalogWU;
-    QVector < QSharedPointer<NineMLComponent> > catalogPS;
+    QVector < QSharedPointer<Component> > catalogUnsorted;
+    QVector < QSharedPointer<Component> > catalogNrn;
+    QVector < QSharedPointer<Component> > catalogWU;
+    QVector < QSharedPointer<Component> > catalogPS;
 
     QVector < QSharedPointer<NineMLLayout> > catalogLayout;
     QVector < QString > catalogConn;
@@ -114,7 +114,7 @@ public:
     cursorType cursor;
     int largestIndex;
     QImage popImage;
-    QSharedPointer<NineMLComponentData> clipboardCData;
+    QSharedPointer<ComponentInstance> clipboardCData;
     QVector <QSharedPointer<systemObject> > clipboardObjects;
     versionControl* version;
     MainWindow* main;

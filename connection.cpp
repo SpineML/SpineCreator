@@ -39,7 +39,7 @@
 connection::connection()
 {
     type = none;
-    delay = new ParameterData("ms");
+    delay = new ParameterInstance("ms");
     delay->name = "delay";
     delay->currType = Undefined;
     this->srcName = "";
@@ -295,7 +295,7 @@ void onetoOne_connection::import_parameters_from_xml(QDomNode &e)
 fixedProb_connection::fixedProb_connection()
 {
     type = FixedProb;
-    p = 0.01;
+    p = 0.01f;
     seed = 123;
 }
 
@@ -1423,7 +1423,7 @@ connection * csv_connection::newFromExisting()
     c->values = this->values;
 
     // use the same delay
-    c->delay = new ParameterData(this->delay);
+    c->delay = new ParameterInstance(this->delay);
 
     // now copy the data...
     for (int i = 0; i < this->getNumRows(); ++i) {
@@ -2135,7 +2135,7 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
     settings.endGroup();
 }
 
-ParameterData * pythonscript_connection::getPropPointer()
+ParameterInstance * pythonscript_connection::getPropPointer()
 {
     for (int i = 0; i < this->src->projections.size(); ++i) {
         QSharedPointer <projection> proj = this->src->projections[i];
@@ -2263,7 +2263,7 @@ QVector <float> listToVector(PyObject * list)
 {
     QVector <float> vect;
     if (PyList_Size(list) < 1) {
-        vect.push_back(-234.56);
+        vect.push_back(-234.56f);
         return vect;
     }
     vect.resize(PyList_Size(list));

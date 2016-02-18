@@ -45,7 +45,7 @@ public:
     population(QSharedPointer <population> data, QSharedPointer<population> thisSharedPointer);
     void readFromXML(QDomElement &e, QDomDocument * doc, QDomDocument *meta, projectObject *data, QSharedPointer<population> thisSharedPointer);
     ~population();
-    QSharedPointer <NineMLComponentData>neuronType;
+    QSharedPointer <ComponentInstance>neuronType;
     QSharedPointer<NineMLLayoutData>layoutType;
     bool within_bounds(float x, float y);
     bool is_clicked(float, float, float );

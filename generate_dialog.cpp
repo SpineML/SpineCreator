@@ -83,7 +83,7 @@ void generate_dialog::doPython() {
         ui->errors->setText(currConnPy->pythonErrors);
     } else {
         // move the weights across
-        ParameterData * par = currConnPy->getPropPointer();
+        ParameterInstance * par = currConnPy->getPropPointer();
         if (par && currConnPy->hasWeight) {
             par->currType = ExplicitList;
             par->value = currConnPy->weights;
@@ -120,7 +120,7 @@ void generate_dialog::moveFromThread() {
                         for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
                             if (syn->weightUpdateType->ParameterList[k]->name == currConnPy->weightProp) {
                                 // found the weight - now to alter it
-                                ParameterData * par = syn->weightUpdateType->ParameterList[k];
+                                ParameterInstance * par = syn->weightUpdateType->ParameterList[k];
                                 par->currType = ExplicitList;
                                 par->value = currConnPy->weights;
                             }

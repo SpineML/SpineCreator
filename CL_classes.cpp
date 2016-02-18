@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "projections.h"
 #include "nineml_layout_classes.h"
 #include "genericinput.h"
@@ -303,7 +303,7 @@ dim::dim(QString str) {
 }
 
 
-void NineMLComponent::load(QDomDocument *doc)
+void Component::load(QDomDocument *doc)
 {
     QDomNode n = doc->documentElement().firstChild();
     while( !n.isNull() )
@@ -437,7 +437,7 @@ void NineMLComponent::load(QDomDocument *doc)
 
 
 
-void NineMLComponent::write(QDomDocument *doc)
+void Component::write(QDomDocument *doc)
 {
     // validate this (must be validated if is in memory)
     QStringList validated = validateComponent();
@@ -538,7 +538,7 @@ void NineMLComponent::write(QDomDocument *doc)
 
 }
 
-void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
+void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
 
     // definition
     QString simpleName;
@@ -546,7 +546,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
         simpleName = (static_cast<NineMLLayoutData *> (this))->component->name.simplified();
     }
     if (this->type == NineMLComponentType) {
-        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
+        ComponentInstance * ptr = static_cast <ComponentInstance *> (this);
         simpleName = ptr->component->name.simplified();
     }
     simpleName.replace( " ", "_" );
@@ -560,7 +560,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     }
 
     if (this->type == NineMLComponentType) {
-        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
+        ComponentInstance * ptr = static_cast <ComponentInstance *> (this);
         for (int i = 0; i < ptr->inputs.size(); ++i) {
             if (ptr->inputs[i]->projInput == true) {
 
@@ -729,7 +729,7 @@ void NineMLData::write_node_xml(QXmlStreamWriter &xmlOut) {
     // if it is not a layout, add the inputs
     if (this->type == NineMLComponentType) {
 
-        NineMLComponentData * ptr = static_cast <NineMLComponentData *> (this);
+        ComponentInstance * ptr = static_cast <ComponentInstance *> (this);
         bool inputsTag = false;
 
         for (int i = 0; i < ptr->inputs.size(); ++i) {
@@ -1536,7 +1536,7 @@ Parameter::Parameter(Parameter *data)
 }
 
 
-ParameterData::ParameterData(Parameter *data)
+ParameterInstance::ParameterInstance(Parameter *data)
 {
     name = data->name;
     dims = new dim(data->dims->toString());
@@ -1544,7 +1544,7 @@ ParameterData::ParameterData(Parameter *data)
     this->filename = data->filename;
 }
 
-ParameterData::ParameterData(ParameterData *data)
+ParameterInstance::ParameterInstance(ParameterInstance *data)
 {
     value = data->value;
     indices = data->indices;
@@ -1554,7 +1554,7 @@ ParameterData::ParameterData(ParameterData *data)
     this->filename = data->filename;
 }
 
-void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
+void ParameterInstance::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
 {
     QSettings settings;
     // fetch the option for whether we write binary data for saving
@@ -1650,7 +1650,7 @@ void ParameterData::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
     }
 }
 
-void ParameterData::readExplicitListNodeData(QDomNode &n) {
+void ParameterInstance::readExplicitListNodeData(QDomNode &n) {
 
     // read in an XML list
     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
@@ -1750,7 +1750,7 @@ AnalogPort::AnalogPort(AnalogPort *data): Port(data)
 
 bool AnalogPort::isAnalog() {return true;}
 
-int AnalogPort::validateAnalogPort(NineMLComponent * component, QStringList * )
+int AnalogPort::validateAnalogPort(Component * component, QStringList * )
 {
     //if mode is send then validate
     int failures = 0;
@@ -1811,7 +1811,7 @@ ImpulsePort::ImpulsePort(ImpulsePort *data): Port(data)
 
 bool ImpulsePort::isAnalog() {return false;}
 
-int ImpulsePort::validateImpulsePort(NineMLComponent * component, QStringList * )
+int ImpulsePort::validateImpulsePort(Component * component, QStringList * )
 {
     //if mode is send then validate
     int failures = 0;
@@ -1898,13 +1898,13 @@ StateVariable::~StateVariable()
     //delete dims;
 }
 
-StateVariableData::StateVariableData(StateVariable *data) : ParameterData(data){
+StateVariableInstance::StateVariableInstance(StateVariable *data) : ParameterInstance(data){
     name = data->name;
     dims->fromString(data->dims->toString());
     currType = Undefined;
 }
 
-StateVariableData::StateVariableData(StateVariableData *data) : ParameterData(data)
+StateVariableInstance::StateVariableInstance(StateVariableInstance *data) : ParameterInstance(data)
 {
     value = data->value;
     indices = data->indices;
@@ -2130,7 +2130,7 @@ Regime::~Regime()
     }
 }
 
-NineMLComponent::NineMLComponent()
+Component::Component()
 {
     initial_regime = NULL;
     editedVersion.clear();
@@ -2138,7 +2138,7 @@ NineMLComponent::NineMLComponent()
     type = "neuron_body";
 }
 
-NineMLComponent::NineMLComponent(QSharedPointer<NineMLComponent>data)
+Component::Component(QSharedPointer<Component>data)
 {
     name = data->name;
     this->type = data->type;
@@ -2233,7 +2233,7 @@ NineMLComponent::NineMLComponent(QSharedPointer<NineMLComponent>data)
     editedVersion.clear();
 }
 
-NineMLComponent::~NineMLComponent()
+Component::~Component()
 {
     foreach (Regime *r, RegimeList)
     {
@@ -2278,7 +2278,7 @@ NineMLComponent::~NineMLComponent()
 }
 
 // assignment operator required for the base class
-NineMLComponent& NineMLComponent::operator=(const NineMLComponent& data)
+Component& Component::operator=(const Component& data)
 {
     name = data.name;
     type = data.type;
@@ -2370,7 +2370,7 @@ NineMLComponent& NineMLComponent::operator=(const NineMLComponent& data)
     return *this;
 }
 
-void NineMLComponent::updateFrom(QSharedPointer<NineMLComponent>  data)
+void Component::updateFrom(QSharedPointer<Component>  data)
 {
     // remove existing data
     foreach (Regime *r, RegimeList)
@@ -2472,37 +2472,37 @@ void NineMLComponent::updateFrom(QSharedPointer<NineMLComponent>  data)
 }
 
 // copy constructor required for the base class
-NineMLComponentData::NineMLComponentData(QSharedPointer<NineMLComponent>data)
+ComponentInstance::ComponentInstance(QSharedPointer<Component>data)
 {
 
     type = NineMLComponentType;
-    StateVariableList = QVector <StateVariableData*>(data->StateVariableList.size());
-    ParameterList = QVector <ParameterData*>(data->ParameterList.size());
+    StateVariableList = QVector <StateVariableInstance*>(data->StateVariableList.size());
+    ParameterList = QVector <ParameterInstance*>(data->ParameterList.size());
     for (int i=0; i<data->StateVariableList.size(); i++)
     {
-        StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
+        StateVariableList[i] = new StateVariableInstance(data->StateVariableList[i]);
     }
     for (int i=0; i<data->ParameterList.size(); i++)
     {
-        ParameterList[i] = new ParameterData(data->ParameterList[i]);
+        ParameterList[i] = new ParameterInstance(data->ParameterList[i]);
     }
     this->component = data;
 }
 
 // duplicate
-NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>data, bool copy_io)
+ComponentInstance::ComponentInstance(QSharedPointer <ComponentInstance>data, bool copy_io)
 {
 
     type = NineMLComponentType;
-    StateVariableList = QVector <StateVariableData*>(data->StateVariableList.size());
-    ParameterList = QVector <ParameterData*>(data->ParameterList.size());
+    StateVariableList = QVector <StateVariableInstance*>(data->StateVariableList.size());
+    ParameterList = QVector <ParameterInstance*>(data->ParameterList.size());
     for (int i=0; i<data->StateVariableList.size(); i++)
     {
-        StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
+        StateVariableList[i] = new StateVariableInstance(data->StateVariableList[i]);
     }
     for (int i=0; i<data->ParameterList.size(); i++)
     {
-        ParameterList[i] = new ParameterData(data->ParameterList[i]);
+        ParameterList[i] = new ParameterInstance(data->ParameterList[i]);
     }
 
     // we don't copy inputs / outputs , unless specified
@@ -2518,7 +2518,7 @@ NineMLComponentData::NineMLComponentData(QSharedPointer <NineMLComponentData>dat
     this->component = data->component;
 }
 
-void NineMLComponentData::remapPointers(QMap <systemObject *, QSharedPointer <systemObject> > pointerMap)
+void ComponentInstance::remapPointers(QMap <systemObject *, QSharedPointer <systemObject> > pointerMap)
 {
 
     // first for the owner
@@ -2559,7 +2559,7 @@ void NineMLComponentData::remapPointers(QMap <systemObject *, QSharedPointer <sy
 
 }
 
-void NineMLComponentData::copyFrom(QSharedPointer <NineMLComponentData>src, QSharedPointer<NineMLComponent>data, QSharedPointer<NineMLComponentData> thisSharedPointer)
+void ComponentInstance::copyFrom(QSharedPointer <ComponentInstance>src, QSharedPointer<Component>data, QSharedPointer<ComponentInstance> thisSharedPointer)
 {
 
     // copy owner
@@ -2592,15 +2592,15 @@ void NineMLComponentData::copyFrom(QSharedPointer <NineMLComponentData>src, QSha
     }
 
     type = NineMLComponentType;
-    StateVariableList = QVector <StateVariableData*>(data->StateVariableList.size());
-    ParameterList = QVector <ParameterData*>(data->ParameterList.size());
+    StateVariableList = QVector <StateVariableInstance*>(data->StateVariableList.size());
+    ParameterList = QVector <ParameterInstance*>(data->ParameterList.size());
     for (int i=0; i<data->StateVariableList.size(); i++)
     {
-        StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
+        StateVariableList[i] = new StateVariableInstance(data->StateVariableList[i]);
     }
     for (int i=0; i<data->ParameterList.size(); i++)
     {
-        ParameterList[i] = new ParameterData(data->ParameterList[i]);
+        ParameterList[i] = new ParameterInstance(data->ParameterList[i]);
     }
 
     this->component = data;
@@ -2686,7 +2686,7 @@ void MathInLine::validateMathSetup(QString& testequation, QStringList& FuncList)
     FuncList.push_back("dt");
 }
 
-int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
+int MathInLine::validateMathInLine(Component* component, QStringList * )
 {
     if (equation.size() == 0) {
         return 1;
@@ -2760,7 +2760,7 @@ int MathInLine::validateMathInLine(NineMLComponent* component, QStringList * )
     return 0;
 }
 
-int Trigger::validateTrigger(NineMLComponent * component, QStringList * errs)
+int Trigger::validateTrigger(Component * component, QStringList * errs)
 {
     // mathinline pointer may be null
     if (maths != (MathInLine *)0) {
@@ -2772,7 +2772,7 @@ int Trigger::validateTrigger(NineMLComponent * component, QStringList * errs)
     }
 }
 
-int Alias::validateAlias(NineMLComponent * component, QStringList * errs)
+int Alias::validateAlias(Component * component, QStringList * errs)
 {
     // mathinline pointer may be null
     if (maths != (MathInLine *)0) {
@@ -2783,7 +2783,7 @@ int Alias::validateAlias(NineMLComponent * component, QStringList * errs)
     }
 }
 
-int TimeDerivative::validateTimeDerivative(NineMLComponent * component, QStringList * errs)
+int TimeDerivative::validateTimeDerivative(Component * component, QStringList * errs)
 {
     int failures = 0;
     // mathinline pointer may be null
@@ -2813,7 +2813,7 @@ int TimeDerivative::validateTimeDerivative(NineMLComponent * component, QStringL
     return failures;
 }
 
-int StateAssignment::validateStateAssignment(NineMLComponent * component, QStringList * errs)
+int StateAssignment::validateStateAssignment(Component * component, QStringList * errs)
 {
     int failures = 0;
     // mathinline pointer may be null
@@ -2849,7 +2849,7 @@ int StateAssignment::validateStateAssignment(NineMLComponent * component, QStrin
     return failures;
 }
 
-int EventOut::validateEventOut(NineMLComponent * component, QStringList * )
+int EventOut::validateEventOut(Component * component, QStringList * )
 {
     int failures = 0;
     bool match = false;
@@ -2872,7 +2872,7 @@ int EventOut::validateEventOut(NineMLComponent * component, QStringList * )
 }
 
 
-int ImpulseOut::validateImpulseOut(NineMLComponent * component, QStringList * )
+int ImpulseOut::validateImpulseOut(Component * component, QStringList * )
 {
     int failures = 0;
     bool match = false;
@@ -2899,7 +2899,7 @@ int ImpulseOut::validateImpulseOut(NineMLComponent * component, QStringList * )
     return failures;
 }
 
-int OnCondition::validateOnCondition(NineMLComponent * component, QStringList * errs)
+int OnCondition::validateOnCondition(Component * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -2934,7 +2934,7 @@ int OnCondition::validateOnCondition(NineMLComponent * component, QStringList * 
     return failures;
 }
 
-int OnEvent::validateOnEvent(NineMLComponent * component, QStringList * errs)
+int OnEvent::validateOnEvent(Component * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -2987,7 +2987,7 @@ int OnEvent::validateOnEvent(NineMLComponent * component, QStringList * errs)
 }
 
 
-int OnImpulse::validateOnImpulse(NineMLComponent * component, QStringList * errs)
+int OnImpulse::validateOnImpulse(Component * component, QStringList * errs)
 {
     int failures = 0;
     bool match = false;
@@ -3038,7 +3038,7 @@ int OnImpulse::validateOnImpulse(NineMLComponent * component, QStringList * errs
     return failures;
 }
 
-int Regime::validateRegime(NineMLComponent * component, QStringList * errs)
+int Regime::validateRegime(Component * component, QStringList * errs)
 {
     int failures = 0;
     for(int i=0; i<TimeDerivativeList.size(); i++)
@@ -3060,7 +3060,7 @@ int Regime::validateRegime(NineMLComponent * component, QStringList * errs)
     return failures;
 }
 
-QStringList NineMLComponent::validateComponent()
+QStringList Component::validateComponent()
 {
     QStringList errs;
     bool initial_regime_match = false;
@@ -3100,7 +3100,7 @@ QStringList NineMLComponent::validateComponent()
     return errs;
 }
 
-void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
+void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 {
     type = NineMLComponentType;
     QDomNodeList nList = n.toElement().elementsByTagName("Property");
@@ -3211,7 +3211,7 @@ void NineMLComponentData::import_parameters_from_xml(QDomNode &n)
     }
 }
 
-QString NineMLComponent::getXMLName() {
+QString Component::getXMLName() {
 
     QString nameSanitised = name;
     nameSanitised.replace(" ", "_");
@@ -3219,7 +3219,7 @@ QString NineMLComponent::getXMLName() {
 
 }
 
-QString NineMLComponentData::getXMLName() {
+QString ComponentInstance::getXMLName() {
 
     // generate a unique name in order to link up ports in the XML
 
@@ -3253,7 +3253,7 @@ QString NineMLComponentData::getXMLName() {
 
 }
 
-void NineMLComponentData::removeReferences() {
+void ComponentInstance::removeReferences() {
 
     // remove the inputs (they'll take themselves off the vector)
     while (this->inputs.size()) {
@@ -3269,7 +3269,7 @@ void NineMLComponentData::removeReferences() {
 
 }
 
-void NineMLComponentData::addInput(QSharedPointer <NineMLComponentData>, bool) {
+void ComponentInstance::addInput(QSharedPointer <ComponentInstance>, bool) {
 
     qDebug() << "This shouldn't be called - NineMLComponentData::addInput(QSharedPointer <NineMLComponentData> src, bool isProj)";
 
@@ -3280,7 +3280,7 @@ void NineMLComponentData::addInput(QSharedPointer <NineMLComponentData>, bool) {
 
 }
 
-NineMLComponentData::~NineMLComponentData() {
+ComponentInstance::~ComponentInstance() {
 
     // not needed anymore
     //this->removeReferences();
@@ -3300,7 +3300,7 @@ NineMLComponentData::~NineMLComponentData() {
     //qDebug() << "Deleting NineMLComponentData";
 }
 
-void NineMLComponentData::matchPorts() {
+void ComponentInstance::matchPorts() {
 
     // attempt to match by type and dimensions
     for (int i = 0; i < this->inputs.size();  ++i) {
@@ -3359,7 +3359,7 @@ void NineMLComponentData::matchPorts() {
 
 }
 
-QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
+QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {
 
     // find pairs of ports that could match
     QStringList portPairs;
@@ -3386,7 +3386,7 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
 
                     // check the send port source dims against the recv port
 
-                    if (currSendPort->variable->Type() == NINEML_ALIAS || currSendPort->variable->dims->toString() == currRecvPort->dims->toString()) {
+                    if (currSendPort->variable->Type() == COMPONENT_ALIAS || currSendPort->variable->dims->toString() == currRecvPort->dims->toString()) {
                         // if they match then add to the list of possible pairings
                         QString portPair = currSendPort->name + "->" + currRecvPort->name;
                         portPairs.push_back(portPair);
@@ -3432,7 +3432,7 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
                 if (currRecvPort->mode == ImpulseRecvPort) {
 
                     // check the send port source dims against the recv port
-                    if (currSendPort->parameter->Type() == NINEML_ALIAS || currSendPort->parameter->dims->toString() == currRecvPort->dims->toString()) {
+                    if (currSendPort->parameter->Type() == COMPONENT_ALIAS || currSendPort->parameter->dims->toString() == currRecvPort->dims->toString()) {
                         // if they match then add to the list of possible pairings
                         QString portPair = currSendPort->name + "->" + currRecvPort->name;
                         portPairs.push_back(portPair);
@@ -3444,10 +3444,10 @@ QStringList NineMLComponentData::getPortMatches(int index, bool isOutput) {
     return portPairs;
 }
 
-void NineMLComponentData::migrateComponent(QSharedPointer<NineMLComponent> newComponent) {
+void ComponentInstance::migrateComponent(QSharedPointer<Component> newComponent) {
 
-    QVector < ParameterData * > oldParList;
-    QVector < StateVariableData * > oldSVList;
+    QVector < ParameterInstance * > oldParList;
+    QVector < StateVariableInstance * > oldSVList;
 
     // copy old list
     oldParList = this->ParameterList;
@@ -3460,14 +3460,14 @@ void NineMLComponentData::migrateComponent(QSharedPointer<NineMLComponent> newCo
         bool inNew = false;
         for (int j = 0; j < oldParList.size(); ++j) {
             if (newComponent->ParameterList[i]->name == oldParList[j]->name) {
-                this->ParameterList.push_back(new ParameterData(oldParList[j]));
+                this->ParameterList.push_back(new ParameterInstance(oldParList[j]));
                 // but may change dims!
                 this->ParameterList.back()->dims->fromString(newComponent->ParameterList[i]->dims->toString());
                 inNew = true;
             }
         }
         if (!inNew) {
-            ParameterList.push_back(new ParameterData(newComponent->ParameterList[i]));
+            ParameterList.push_back(new ParameterInstance(newComponent->ParameterList[i]));
         }
     }
 
@@ -3482,14 +3482,14 @@ void NineMLComponentData::migrateComponent(QSharedPointer<NineMLComponent> newCo
         bool inNew = false;
         for (int j = 0; j < oldSVList.size(); ++j) {
             if (newComponent->StateVariableList[i]->name == oldSVList[j]->name) {
-                this->StateVariableList.push_back(new StateVariableData(oldSVList[j]));
+                this->StateVariableList.push_back(new StateVariableInstance(oldSVList[j]));
                 // but may change dims!
                 this->StateVariableList.back()->dims->fromString(newComponent->StateVariableList[i]->dims->toString());
                 inNew = true;
             }
         }
         if (!inNew) {
-            StateVariableList.push_back(new StateVariableData(newComponent->StateVariableList[i]));
+            StateVariableList.push_back(new StateVariableInstance(newComponent->StateVariableList[i]));
         }
     }
 
@@ -3497,7 +3497,7 @@ void NineMLComponentData::migrateComponent(QSharedPointer<NineMLComponent> newCo
 
 }
 
-void NineMLComponentData::copyParsFrom(QSharedPointer <NineMLComponentData> data) {
+void ComponentInstance::copyParsFrom(QSharedPointer <ComponentInstance> data) {
 
     if (this->component->name == "none")
         return;
@@ -3508,7 +3508,7 @@ void NineMLComponentData::copyParsFrom(QSharedPointer <NineMLComponentData> data
             if (data->ParameterList[i]->name == this->ParameterList[j]->name) {
                 dim * oldDims = new dim(this->ParameterList[j]->dims->toString());
                 delete this->ParameterList[j];
-                this->ParameterList[j] = new ParameterData(data->ParameterList[i]);
+                this->ParameterList[j] = new ParameterInstance(data->ParameterList[i]);
                 // but may change dims!
                 this->ParameterList[j]->dims->fromString(oldDims->toString());
             }
@@ -3521,7 +3521,7 @@ void NineMLComponentData::copyParsFrom(QSharedPointer <NineMLComponentData> data
             if (data->StateVariableList[i]->name == this->StateVariableList[j]->name) {
                 dim * oldDims = new dim(this->StateVariableList[j]->dims->toString());
                 delete this->StateVariableList[j];
-                this->StateVariableList[j] = new StateVariableData(data->StateVariableList[i]);
+                this->StateVariableList[j] = new StateVariableInstance(data->StateVariableList[i]);
                 // but may change dims!
                 this->StateVariableList[j]->dims->fromString(oldDims->toString());
             }

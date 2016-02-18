@@ -30,7 +30,7 @@
 #include "layoutaliaseditdialog.h"
 #include "layouteditpreviewdialog.h"
 #include "mainwindow.h"
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "experiment.h"
 #include "projectobject.h"
 #include "undocommands.h"
@@ -825,7 +825,7 @@ void viewELExptPanelHandler::setInputComponent()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
+    QSharedPointer <ComponentInstance> src = (QSharedPointer <ComponentInstance>)0;
 
     // find source:
     for (int i = 0; i < data->populations.size(); ++i) {
@@ -846,7 +846,7 @@ void viewELExptPanelHandler::setInputComponent()
 
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
 
-    if (src != (QSharedPointer <NineMLComponentData>)0) {
+    if (src != (QSharedPointer <ComponentInstance>)0) {
         // if no change...
         if (in->target == src)
             return;
@@ -1250,7 +1250,7 @@ void viewELExptPanelHandler::setOutputComponent()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
+    QSharedPointer <ComponentInstance> src = (QSharedPointer <ComponentInstance>)0;
 
     // find source:
     for (int i = 0; i < data->populations.size(); ++i) {
@@ -1271,7 +1271,7 @@ void viewELExptPanelHandler::setOutputComponent()
 
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
 
-    if (src != (QSharedPointer <NineMLComponentData>)0) {
+    if (src != (QSharedPointer <ComponentInstance>)0) {
         // if no change
         if (out->source == src) {
             return;
@@ -1511,7 +1511,7 @@ void viewELExptPanelHandler::setChangeParComponent()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
-    QSharedPointer <NineMLComponentData> src = (QSharedPointer <NineMLComponentData>)0;
+    QSharedPointer <ComponentInstance> src = (QSharedPointer <ComponentInstance>)0;
 
     // find source:
     for (int i = 0; i < data->populations.size(); ++i) {
@@ -1532,12 +1532,12 @@ void viewELExptPanelHandler::setChangeParComponent()
 
     exptChangeProp * changeProp = (exptChangeProp *) sender()->property("ptr").value<void *>();
 
-    if (src != (QSharedPointer <NineMLComponentData>)0) {
+    if (src != (QSharedPointer <ComponentInstance>)0) {
         changeProp->component = src;
         if (src->ParameterList.size() > 0) {
-            changeProp->par = new ParameterData(src->ParameterList.front());
+            changeProp->par = new ParameterInstance(src->ParameterList.front());
         } else if (src->StateVariableList.size() > 0) {
-            changeProp->par = new StateVariableData(src->StateVariableList.front());
+            changeProp->par = new StateVariableInstance(src->StateVariableList.front());
         } else {
             // no pars or statevars, return
             return;
@@ -1580,13 +1580,13 @@ void viewELExptPanelHandler::setChangeProp(QString name)
     for (int i = 0; i < changeProp->component->ParameterList.size(); ++i) {
         if (name == changeProp->component->ParameterList[i]->name) {
             delete changeProp->par;
-            changeProp->par = new ParameterData(changeProp->component->ParameterList[i]);
+            changeProp->par = new ParameterInstance(changeProp->component->ParameterList[i]);
         }
     }
     for (int i = 0; i < changeProp->component->StateVariableList.size(); ++i) {
         if (name == changeProp->component->StateVariableList[i]->name) {
             delete changeProp->par;
-            changeProp->par = new StateVariableData(changeProp->component->StateVariableList[i]);
+            changeProp->par = new StateVariableInstance(changeProp->component->StateVariableList[i]);
         }
     }
     redrawExpt();

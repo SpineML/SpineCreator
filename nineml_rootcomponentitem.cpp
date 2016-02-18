@@ -40,7 +40,7 @@ RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QFile 
 
     init();
 
-    al = QSharedPointer<NineMLComponent>(new NineMLComponent());
+    al = QSharedPointer<Component>(new Component());
     //load file if one is provided (otherwise create blank doc)
     if (file != NULL)
     {
@@ -59,14 +59,14 @@ RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QFile 
     scene->initialiseScene(al);
 }
 
-RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QSharedPointer<NineMLComponent>component)
+RootComponentItem::RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QSharedPointer<Component>component)
 {
     this->ui =ui;
     this->main = main;
 
     init();
 
-    al = QSharedPointer<NineMLComponent>(new NineMLComponent(component));
+    al = QSharedPointer<Component>(new Component(component));
     alPtr.clear();
 
     //initialise the scene
@@ -203,9 +203,9 @@ void RootComponentItem::requestLayoutUpdate()
 
 void RootComponentItem::setComponentClassName(QString name)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(al));
     // find which catalog we are saving to
-    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
+    QVector < QSharedPointer<Component> > * curr_lib;
     if (al->type == "neuron_body")
         curr_lib = &main->data.catalogNrn;
     if (al->type == "weight_update")
@@ -263,12 +263,12 @@ void RootComponentItem::setComponentClassName(QString name)
 
 void RootComponentItem::setComponentClassType(QString type)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(al));
     QString oldType = al->type;
     al->type = type;
 
-    QVector <QSharedPointer<NineMLComponent> > * old_lib;
-    QVector <QSharedPointer<NineMLComponent> > * new_lib;
+    QVector <QSharedPointer<Component> > * old_lib;
+    QVector <QSharedPointer<Component> > * new_lib;
 
     // pointer to source catalog
     if (oldType == "neuron_body")
@@ -299,7 +299,7 @@ void RootComponentItem::setComponentClassType(QString type)
 
 void RootComponentItem::setInitialRegime(QString regime)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(al));
     for (int i=0; i< al->RegimeList.size(); i++){
         if (al->RegimeList[i]->name == regime){
             al->initial_regime = al->RegimeList[i];
@@ -319,7 +319,7 @@ void RootComponentItem::setInitialRegime(QString regime)
 
 void RootComponentItem::setPath(QString component_path)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(al));
     al->path = component_path;
     if (qobject_cast < QComboBox *> (sender()))
         alPtr->undoStack.push(new changeComponent(this, oldComponent, "Set Component path"));

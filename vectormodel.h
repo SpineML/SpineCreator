@@ -26,7 +26,7 @@
 #define VECTORMODEL_H
 
 #include "globalHeader.h"
-#include "nineml_classes.h"
+#include "CL_classes.h"
 
 class vectorModel : public QAbstractTableModel
 {
@@ -36,7 +36,7 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const ;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    void setPointer(ParameterData * currPar);
+    void setPointer(ParameterInstance * currPar);
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     bool setData(const QModelIndex & index, const QVariant & value, int role);
     bool insertConnRows(int row);
@@ -44,7 +44,7 @@ public:
     void emitDataChanged();
 
 private:
-    ParameterData * currPar;
+    ParameterInstance * currPar;
 
 signals:
     void editCompleted(const QString &);

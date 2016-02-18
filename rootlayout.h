@@ -52,7 +52,7 @@ private:
 
     // draw the params
     void drawParamsLayout(rootData * data);
-    void drawSingleParam(QFormLayout * varLayout, ParameterData * currPar, rootData * data, bool connectionBool, QString type, QSharedPointer<NineMLData>  type9ml, connection * conn);
+    void drawSingleParam(QFormLayout * varLayout, ParameterInstance * currPar, rootData * data, bool connectionBool, QString type, QSharedPointer<ComponentRootInstance>  type9ml, connection * conn);
 
     // are these needed anymore?
     void recursiveDeleteLater(QLayout * parentLayout);

@@ -21,7 +21,7 @@ BatchExperimentWindow::BatchExperimentWindow(experiment * currExpt, viewELExptPa
     this->model = new vectorListModel;
 
     // make up a list of the current changed pars
-    QVector < ParameterData * > dsts;
+    QVector < ParameterInstance * > dsts;
     for (int i = 0; i < this->currExpt->changes.size(); ++i) {
         // only add FixedValue pars
         if (this->currExpt->changes[i]->par->currType == FixedValue) {

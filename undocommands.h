@@ -216,7 +216,7 @@ private:
 class addInput : public QUndoCommand
 {
 public:
-    addInput(rootData * data, QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, QUndoCommand *parent = 0);
+    addInput(rootData * data, QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, QUndoCommand *parent = 0);
     ~addInput() {}
     void undo();
     void redo();
@@ -225,8 +225,8 @@ private:
     // these references are needed for the redo and undo
     rootData * data;
     QSharedPointer<genericInput> input;
-    QSharedPointer <NineMLComponentData> src;
-    QSharedPointer <NineMLComponentData> dst;
+    QSharedPointer <ComponentInstance> src;
+    QSharedPointer <ComponentInstance> dst;
     bool isDeleted;
 };
 
@@ -300,14 +300,14 @@ private:
 class updateParUndo : public QUndoCommand
 {
 public:
-    updateParUndo(rootData * data, ParameterData * ptr, int index, float value, QUndoCommand *parent = 0);
+    updateParUndo(rootData * data, ParameterInstance * ptr, int index, float value, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    ParameterData * ptr;
+    ParameterInstance * ptr;
     float oldValue;
     float value;
     int index;
@@ -366,14 +366,14 @@ private:
 class updateParType : public QUndoCommand
 {
 public:
-    updateParType(rootData * data, ParameterData * ptr, QString newType, QUndoCommand *parent = 0);
+    updateParType(rootData * data, ParameterInstance * ptr, QString newType, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    ParameterData * ptr;
+    ParameterInstance * ptr;
     ParameterType oldType;
     ParameterType newType;
     QVector <double> oldValues;
@@ -439,7 +439,7 @@ private:
 class updateComponentTypeUndo : public QUndoCommand
 {
 public:
-    updateComponentTypeUndo(rootData * data, QSharedPointer <NineMLComponentData> componentData, QSharedPointer<NineMLComponent> newComponent, QUndoCommand *parent = 0);
+    updateComponentTypeUndo(rootData * data, QSharedPointer <ComponentInstance> componentData, QSharedPointer<Component> newComponent, QUndoCommand *parent = 0);
     ~updateComponentTypeUndo();
     void undo();
     void redo();
@@ -447,13 +447,13 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    QVector < ParameterData * > oldParDatas;
-    QVector < StateVariableData * > oldSVDatas;
-    QVector < ParameterData * > newParDatas;
-    QVector < StateVariableData * > newSVDatas;
-    QSharedPointer<NineMLComponent> oldComponent;
-    QSharedPointer<NineMLComponent> newComponent;
-    QSharedPointer <NineMLComponentData> componentData;
+    QVector < ParameterInstance * > oldParDatas;
+    QVector < StateVariableInstance * > oldSVDatas;
+    QVector < ParameterInstance * > newParDatas;
+    QVector < StateVariableInstance * > newSVDatas;
+    QSharedPointer<Component> oldComponent;
+    QSharedPointer<Component> newComponent;
+    QSharedPointer <ComponentInstance> componentData;
     QVector <QString> srcPortsInputs;
     QVector <QString> dstPortsInputs;
     QVector <QString> srcPortsOutputs;
@@ -494,7 +494,7 @@ private:
 class pastePars: public QUndoCommand
 {
 public:
-    pastePars(rootData * data, QSharedPointer <NineMLComponentData> source, QSharedPointer <NineMLComponentData> dest, QUndoCommand *parent = 0);
+    pastePars(rootData * data, QSharedPointer <ComponentInstance> source, QSharedPointer <ComponentInstance> dest, QUndoCommand *parent = 0);
     ~pastePars() {}
     void undo();
     void redo();
@@ -502,9 +502,9 @@ public:
 private:
     // these references are needed for the redo and undo
     rootData * data;
-    QSharedPointer <NineMLComponentData> oldData;
-    QSharedPointer <NineMLComponentData> source;
-    QSharedPointer <NineMLComponentData> dest;
+    QSharedPointer <ComponentInstance> oldData;
+    QSharedPointer <ComponentInstance> source;
+    QSharedPointer <ComponentInstance> dest;
 };
 
 ///// components
@@ -514,7 +514,7 @@ struct viewCLstruct;
 class changeComponent: public QUndoCommand
 {
 public:
-    changeComponent(RootComponentItem *root, QSharedPointer<NineMLComponent> oldComponent, QString message, QUndoCommand *parent = 0);
+    changeComponent(RootComponentItem *root, QSharedPointer<Component> oldComponent, QString message, QUndoCommand *parent = 0);
     ~changeComponent() {}
     void undo();
     void redo();
@@ -522,15 +522,15 @@ public:
 private:
     // these references are needed for the redo and undo
     viewCLstruct * viewCL;
-    QSharedPointer<NineMLComponent> changedComponent;
-    QSharedPointer<NineMLComponent> unChangedComponent;
+    QSharedPointer<Component> changedComponent;
+    QSharedPointer<Component> unChangedComponent;
     bool first_redo;
 };
 
 class changeComponentType: public QUndoCommand
 {
 public:
-    changeComponentType(RootComponentItem *root, QVector <QSharedPointer<NineMLComponent> > * old_lib, QVector <QSharedPointer<NineMLComponent> > * new_lib, QSharedPointer<NineMLComponent> component, QString message, QUndoCommand *parent = 0);
+    changeComponentType(RootComponentItem *root, QVector <QSharedPointer<Component> > * old_lib, QVector <QSharedPointer<Component> > * new_lib, QSharedPointer<Component> component, QString message, QUndoCommand *parent = 0);
     ~changeComponentType() {}
     void undo();
     void redo();
@@ -538,9 +538,9 @@ public:
 private:
     // these references are needed for the redo and undo
     viewCLstruct * viewCL;
-    QVector <QSharedPointer<NineMLComponent> > * old_lib;
-    QVector <QSharedPointer<NineMLComponent> > * new_lib;
-    QSharedPointer<NineMLComponent> component;
+    QVector <QSharedPointer<Component> > * old_lib;
+    QVector <QSharedPointer<Component> > * new_lib;
+    QSharedPointer<Component> component;
     bool first_redo;
 };
 

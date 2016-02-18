@@ -26,7 +26,7 @@
 #define EXPERIMENT_H
 
 #include "globalHeader.h"
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "viewELexptpanelhandler.h"
 
 class exptBox : public QFrame
@@ -138,7 +138,7 @@ public:
     exptInType inType;
     QVector <float> params;
     externalObject externalInput;
-    QSharedPointer <NineMLComponentData> target;
+    QSharedPointer <ComponentInstance> target;
     QString portName;
     bool portIsAnalog;
     bool edit;
@@ -162,7 +162,7 @@ public:
 
     //exptOutput outType;
     //QVector < float > params;
-    QSharedPointer <NineMLComponentData> source;
+    QSharedPointer <ComponentInstance> source;
     QString portName;
     bool portIsAnalog;
     bool edit;
@@ -205,8 +205,8 @@ public:
 
     exptChangeProp() {edit = true; set=false; par = NULL; name = "New changed property";}
 
-    ParameterData * par;
-    QSharedPointer <NineMLComponentData> component;
+    ParameterInstance * par;
+    QSharedPointer <ComponentInstance> component;
     bool edit;
     bool set;
     QString name;
@@ -240,9 +240,9 @@ public:
     void writeXML(QXmlStreamWriter *, projectObject *data);
     void readXML(QXmlStreamReader * , projectObject *);
 
-    void purgeBadPointer(QSharedPointer <NineMLComponentData>ptr);
-    void purgeBadPointer(QSharedPointer<NineMLComponent>ptr, QSharedPointer<NineMLComponent>newPtr);
-    void updateChanges(QSharedPointer <NineMLComponentData> ptr);
+    void purgeBadPointer(QSharedPointer <ComponentInstance>ptr);
+    void purgeBadPointer(QSharedPointer<Component>ptr, QSharedPointer<Component>newPtr);
+    void updateChanges(QSharedPointer <ComponentInstance> ptr);
 
     bool selected;
     void select(QVector < experiment * > *);

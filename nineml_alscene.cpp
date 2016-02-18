@@ -61,7 +61,7 @@ NineMLALScene::~NineMLALScene()
 }
 
 #define NINEMLALSCENE_SIZE 5000
-void NineMLALScene::initialiseScene(QSharedPointer<NineMLComponent>al)
+void NineMLALScene::initialiseScene(QSharedPointer<Component>al)
 {
     pl_item = new ParameterListGraphicsItem(root);
     addItem(pl_item);
@@ -1138,7 +1138,7 @@ void NineMLALScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
                         {
                             RegimeGraphicsItem *rg = (RegimeGraphicsItem*)g;
 
-                            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+                            QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
 
                             //create a transition
                             if (mode == ModeInsertOnCondition)

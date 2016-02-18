@@ -32,7 +32,7 @@ class genericInput : public projection // inherit systemObject through projectio
 {
 public:
     genericInput();
-    genericInput(QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, bool projInput = false);
+    genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput = false);
     ~genericInput();
 
     virtual QString getName();
@@ -56,8 +56,8 @@ public:
     QSharedPointer<systemObject> destination;
     QSharedPointer<systemObject> source;
 
-    QSharedPointer <NineMLComponentData> src;
-    QSharedPointer <NineMLComponentData> dst;
+    QSharedPointer <ComponentInstance> src;
+    QSharedPointer <ComponentInstance> dst;
     QString srcPort;
     QString dstPort;
     bool projInput;

@@ -1036,7 +1036,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     }
 
     // delay
-    QSharedPointer<NineMLData> null;
+    QSharedPointer<ComponentRootInstance> null;
     switch (in->connectionType->type) {
         case AlltoAll:
         case OnetoOne:
@@ -1121,7 +1121,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
             break;
     }
 
-    QSharedPointer <NineMLData>  type9ml;
+    QSharedPointer <ComponentRootInstance>  type9ml;
     QString type = "layoutParam";
 
     for (int i = 0; i < numBoxes; ++i) {
@@ -1140,11 +1140,11 @@ void rootLayout::drawParamsLayout(rootData * data) {
         switch (data->selList[0]->type) {
         case populationObject:
             if (i == 0) {
-                type9ml = qSharedPointerDynamicCast < NineMLData > (qSharedPointerDynamicCast <population> (data->selList[0])->neuronType);
+                type9ml = qSharedPointerDynamicCast < ComponentRootInstance > (qSharedPointerDynamicCast <population> (data->selList[0])->neuronType);
                 QSharedPointer <systemObject> ptr = data->isValidPointer(data->selList[0].data());
                 type = "nrn";
                 // check if current component validates
-                (qSharedPointerCast <NineMLComponentData> (type9ml))->component->validateComponent();
+                (qSharedPointerCast <ComponentInstance> (type9ml))->component->validateComponent();
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
@@ -1165,7 +1165,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
             }
             if (i == 1) {
                 QSharedPointer<population> pop = qSharedPointerDynamicCast<population> (data->selList[0]);
-                type9ml = qSharedPointerDynamicCast < NineMLData > (pop->layoutType);
+                type9ml = qSharedPointerDynamicCast < ComponentRootInstance > (pop->layoutType);
                 type = "layout";
             }
             break;
@@ -1175,7 +1175,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 type9ml = proj->synapses[proj->currTarg]->weightUpdateType;
                 type = "syn";
                 // check if current component validates
-                (qSharedPointerCast <NineMLComponentData> (type9ml))->component->validateComponent();
+                (qSharedPointerCast <ComponentInstance> (type9ml))->component->validateComponent();
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
@@ -1199,7 +1199,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 type9ml = proj->synapses[proj->currTarg]->postsynapseType;
                 type = "psp";
                 // check if current component validates
-                (qSharedPointerCast <NineMLComponentData> (type9ml))->component->validateComponent();
+                (qSharedPointerCast <ComponentInstance> (type9ml))->component->validateComponent();
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
@@ -1237,7 +1237,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
         } else if (type9ml->type == NineMLComponentType) {
 
             // hide / show copy / paste
-            if ((qSharedPointerCast <NineMLComponentData> (type9ml))->component->name != "none") {
+            if ((qSharedPointerCast <ComponentInstance> (type9ml))->component->name != "none") {
                 // set what the source is
                 if (i == 0)
                     emit showTab0CopyPaste();
@@ -1296,7 +1296,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
                 for (int l = 0; l < listSize; ++l) {
 
                     // pointer to current parameter
-                    ParameterData * currPar;
+                    ParameterInstance * currPar;
 
                     if (!connectionBool) {
                         if (j == 0) {
@@ -1398,7 +1398,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
 
         if (type9ml->type == NineMLComponentType) {
 
-            QSharedPointer <NineMLComponentData> componentData = qSharedPointerDynamicCast <NineMLComponentData> (type9ml);
+            QSharedPointer <ComponentInstance> componentData = qSharedPointerDynamicCast <ComponentInstance> (type9ml);
 
             if (componentData->component->name != "none") {
 
@@ -1529,7 +1529,7 @@ void rootLayout::drawParamsLayout(rootData * data) {
 
 }
 
-void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterData * currPar, rootData * data, bool connectionBool, QString type, QSharedPointer<NineMLData>  type9ml, connection * conn) {
+void rootLayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance * currPar, rootData * data, bool connectionBool, QString type, QSharedPointer<ComponentRootInstance>  type9ml, connection * conn) {
 
 
     QString name;

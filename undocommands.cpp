@@ -26,7 +26,7 @@
 #include "projections.h"
 #include "rootdata.h"
 #include "genericinput.h"
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "connection.h"
 #include "mainwindow.h"
 #include "nineml_rootcomponentitem.h"
@@ -622,7 +622,7 @@ void delSynapse::redo()
 
 // ######## ADD GENERIC INPUT #################
 
-addInput::addInput(rootData * data, QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, QUndoCommand *parent) :
+addInput::addInput(rootData * data, QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->data = data;
@@ -916,7 +916,7 @@ void setLoc3Undo::redo()
 
 // ######## UPDATE PAR #################
 
-updateParUndo::updateParUndo(rootData * data, ParameterData * ptr, int index, float value, QUndoCommand *parent) :
+updateParUndo::updateParUndo(rootData * data, ParameterInstance * ptr, int index, float value, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->value = value;
@@ -1051,7 +1051,7 @@ void undoUpdatePythonConnectionScriptProp::redo()
 
 // ######## CHANGE PAR TYPE #################
 
-updateParType::updateParType(rootData * data, ParameterData * ptr, QString newType, QUndoCommand *parent) :
+updateParType::updateParType(rootData * data, ParameterInstance * ptr, QString newType, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     if (newType == "FixedValue") {
@@ -1204,7 +1204,7 @@ void updateModelTitle::redo()
 
 // ######## CHANGE POP/PROJ COMPONENT #################
 
-updateComponentTypeUndo::updateComponentTypeUndo(rootData * data, QSharedPointer <NineMLComponentData> componentData, QSharedPointer<NineMLComponent> newComponent, QUndoCommand *parent) :
+updateComponentTypeUndo::updateComponentTypeUndo(rootData * data, QSharedPointer <ComponentInstance> componentData, QSharedPointer<Component> newComponent, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->data = data;
@@ -1364,14 +1364,14 @@ void updateLayoutSeed::redo()
 
 // ######## PASTE PARS #################
 
-pastePars::pastePars(rootData * data, QSharedPointer <NineMLComponentData> source, QSharedPointer <NineMLComponentData> dest, QUndoCommand *parent) :
+pastePars::pastePars(rootData * data, QSharedPointer <ComponentInstance> source, QSharedPointer <ComponentInstance> dest, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->data = data;
-    this->source = QSharedPointer<NineMLComponentData> (new NineMLComponentData(source));
+    this->source = QSharedPointer<ComponentInstance> (new ComponentInstance(source));
     this->dest = dest;
     // copy old stuff to here
-    this->oldData = QSharedPointer<NineMLComponentData> (new NineMLComponentData(dest));
+    this->oldData = QSharedPointer<ComponentInstance> (new ComponentInstance(dest));
     this->setText("paste properties");
 }
 
@@ -1389,20 +1389,20 @@ void pastePars::redo()
 
 // ######## COMPONENT #################
 
-changeComponent::changeComponent(RootComponentItem * root, QSharedPointer<NineMLComponent> oldComponent, QString message, QUndoCommand *parent) :
+changeComponent::changeComponent(RootComponentItem * root, QSharedPointer<Component> oldComponent, QString message, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->viewCL = &root->main->viewCL;
     this->setText(message);
     this->unChangedComponent = oldComponent;
-    this->changedComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(this->viewCL->root->al));
+    this->changedComponent = QSharedPointer<Component> (new Component(this->viewCL->root->al));
     first_redo = true;
 }
 
 void changeComponent::undo()
 {
     // load the old version, copying across the pointer to the source component
-    QSharedPointer<NineMLComponent> alPtr = this->viewCL->root->alPtr;
+    QSharedPointer<Component> alPtr = this->viewCL->root->alPtr;
     this->viewCL->mainWindow->initialiseModel(this->unChangedComponent);
     this->viewCL->root->alPtr = alPtr;
     viewCL->fileList->disconnect();
@@ -1416,7 +1416,7 @@ void changeComponent::redo()
 {
     if (!first_redo) {
         // load the new version, copying across the pointer to the source component
-        QSharedPointer<NineMLComponent> alPtr = this->viewCL->root->alPtr;
+        QSharedPointer<Component> alPtr = this->viewCL->root->alPtr;
         this->viewCL->mainWindow->initialiseModel(this->changedComponent);
         this->viewCL->root->alPtr = alPtr;
     }
@@ -1430,7 +1430,7 @@ void changeComponent::redo()
 
 }
 
-changeComponentType::changeComponentType(RootComponentItem * root, QVector <QSharedPointer<NineMLComponent> > * old_lib, QVector <QSharedPointer<NineMLComponent> > * new_lib, QSharedPointer<NineMLComponent> component, QString message, QUndoCommand *parent) :
+changeComponentType::changeComponentType(RootComponentItem * root, QVector <QSharedPointer<Component> > * old_lib, QVector <QSharedPointer<Component> > * new_lib, QSharedPointer<Component> component, QString message, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
     this->viewCL = &root->main->viewCL;

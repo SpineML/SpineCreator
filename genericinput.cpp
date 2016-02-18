@@ -41,7 +41,7 @@ genericInput::genericInput()
     destination.clear();
 }
 
-genericInput::genericInput(QSharedPointer <NineMLComponentData> src, QSharedPointer <NineMLComponentData> dst, bool projInput) {
+genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput) {
 
     this->type = inputObject;
 
@@ -163,8 +163,8 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 {
     float scale = GLscale/200.0;
     // Enforce a lower limit to scale:
-    if (scale < 0.4) {
-        scale = 0.4;
+    if (scale < 0.4f) {
+        scale = 0.4f;
     }
 
     // setup for drawing curves

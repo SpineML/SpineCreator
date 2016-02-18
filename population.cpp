@@ -35,9 +35,9 @@ population::population(float x, float y, float size, float aspect_ratio, QString
     this->targx = x;
     this->targy = y;
 #ifdef Q_OS_MAC
-    this->animspeed = 0.2;//0.1;
+    this->animspeed = 0.2f;//0.1;
 #else
-    this->animspeed = 0.2;//0.1;
+    this->animspeed = 0.2f;//0.1;
 #endif
     this->size = size;
     this->aspect_ratio = aspect_ratio;
@@ -84,7 +84,7 @@ population::population(QSharedPointer <population> data, QSharedPointer<populati
     loc3.x = data->loc3.x;
     loc3.y = data->loc3.y;
     loc3.z = data->loc3.z;
-    this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->neuronType));
+    this->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance(data->neuronType));
     // fix owner
     this->neuronType->owner = thisSharedPointer;
 
@@ -100,9 +100,9 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     this->targx = 0;
     this->targy = 0;
 #ifdef Q_OS_MAC
-    this->animspeed = 0.2;//0.1;
+    this->animspeed = 0.2f;//0.1;
 #else
-    this->animspeed = 0.2;//0.1;
+    this->animspeed = 0.2f;//0.1;
 #endif
     this->size = 1.0f;
     this->aspect_ratio = 3.0/4.0;
@@ -199,7 +199,7 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
                 for (int i = 0; i < data->catalogNB.size(); ++i) {
                     if (neuronTypeName == data->catalogNB[i]->name) {
-                        this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData((QSharedPointer<NineMLComponent>) data->catalogNB[i]));
+                        this->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance((QSharedPointer<Component>) data->catalogNB[i]));
                         this->neuronType->owner = thisSharedPointer;
                         this->neuronType->import_parameters_from_xml(n);
                     }
@@ -209,7 +209,7 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
             // if still missing then we have a problem
             if (this->neuronType == NULL) {
-                this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogNB[0]));
+                this->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance(data->catalogNB[0]));
                 this->neuronType->owner = thisSharedPointer;
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
@@ -453,7 +453,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
 
 
-            if (newInput->src != (QSharedPointer <NineMLComponentData>)0) {
+            if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
                 newInput->dst = this->neuronType;
                 this->neuronType->inputs.push_back(newInput);
                 newInput->src->outputs.push_back(newInput);
@@ -1089,13 +1089,13 @@ void population::makeSpikeSource(QSharedPointer<population> thisSharedPointer) {
     this->isSpikeSource = true;
 
     // make component
-    QSharedPointer<NineMLComponent> ss = QSharedPointer<NineMLComponent>(new NineMLComponent());
+    QSharedPointer<Component> ss = QSharedPointer<Component>(new Component());
     ss->name = "SpikeSource";
     ss->EventPortList.push_back(new EventPort);
     ss->EventPortList.back()->name = "spike";
     ss->EventPortList.back()->mode = EventSendPort;
     this->neuronTypeName = "SpikeSource";
-    this->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(ss));
+    this->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance(ss));
     this->neuronType->owner = thisSharedPointer;
 }
 
@@ -1127,7 +1127,7 @@ QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, 
     loc3.z = this->loc3.z;
 
     // neuron body...
-    newPop->neuronType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->neuronType, true/*copy inputs / outputs*/));
+    newPop->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance(this->neuronType, true/*copy inputs / outputs*/));
     // fix owner
     //newPop->neuronType->owner = newPop;
 

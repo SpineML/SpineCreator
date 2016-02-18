@@ -271,7 +271,7 @@ void RegimeGraphicsItem::handleSelection()
 
 void RegimeGraphicsItem::setRegimeName(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     regime->name = n;
 
     // rename the gv node which is a parent class of
@@ -365,7 +365,7 @@ MathInLine * TimeDerivativeTextItem::getMaths()
 
 void TimeDerivativeTextItem::setVariable(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     time_derivative->variable_name = p;
     if (time_derivative->variable != NULL)
     {
@@ -389,7 +389,7 @@ void TimeDerivativeTextItem::setVariable(QString p)
 
 void TimeDerivativeTextItem::setMaths(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
@@ -505,7 +505,7 @@ MathInLine * OnConditionGraphicsItem::getTriggerMaths()
 
 void OnConditionGraphicsItem::setTriggerMaths(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
@@ -673,7 +673,7 @@ MathInLine * StateAssignmentTextItem::getMaths()
 
 void StateAssignmentTextItem::setVariable(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     assignment->name = p;
     if (assignment->variable != NULL)
         disconnect(assignment->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -696,7 +696,7 @@ void StateAssignmentTextItem::setVariable(QString p)
 
 void StateAssignmentTextItem::setMaths(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
@@ -773,7 +773,7 @@ EventPort * EventOutTextItem::getEventPort()
 
 void EventOutTextItem::setEventPort(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     event_out->port_name = m;
     if (event_out->port != NULL)
         disconnect(event_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -832,7 +832,7 @@ ImpulsePort * ImpulseOutTextItem::getImpulsePort()
 
 void ImpulseOutTextItem::setImpulsePort(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     impulse_out->port_name = m;
     if (impulse_out->port != NULL){
         disconnect(impulse_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -986,7 +986,7 @@ QString ParameterTextItem::getName()
 
 void ParameterTextItem::setName(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     parameter->setName(n);
     updateContent();
     if (qobject_cast < QLineEdit *> (sender()))
@@ -997,7 +997,7 @@ void ParameterTextItem::setName(QString n)
 
 void ParameterTextItem::setDimsPrefix(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     QStringList list = p.split(" ");
     if (list.size() == 0) {
         return;
@@ -1012,7 +1012,7 @@ void ParameterTextItem::setDimsPrefix(QString p)
 
 void ParameterTextItem::setDimsUnit(QString u)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     QStringList list = u.split(" ");
     if (list.size() == 0) {
         return;
@@ -1064,7 +1064,7 @@ QString StateVariableTextItem::getName()
 
 void StateVariableTextItem::setName(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     state_variable->setName(n);
     updateContent();
     root->notifyDataChange();
@@ -1076,7 +1076,7 @@ void StateVariableTextItem::setName(QString n)
 
 void StateVariableTextItem::setDimsPrefix(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     QStringList list = p.split(" ");
     if (list.size() == 0) {
         return;
@@ -1091,7 +1091,7 @@ void StateVariableTextItem::setDimsPrefix(QString p)
 
 void StateVariableTextItem::setDimsUnit(QString u)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     QStringList list = u.split(" ");
     if (list.size() == 0) {
         return;
@@ -1143,7 +1143,7 @@ QString AliasTextItem::getName()
 
 void AliasTextItem::setName(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     alias->setName(n);
     updateContent();
     root->notifyDataChange();
@@ -1160,7 +1160,7 @@ MathInLine * AliasTextItem::getMaths()
 
 void AliasTextItem::setMaths(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     // if the sender is a QLineEdit
     QLineEdit * source = qobject_cast < QLineEdit *> (sender());
 
@@ -1360,7 +1360,7 @@ QString AnalogPortTextItem::getName()
 
 void AnalogPortTextItem::setName(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     port->setName(n);
     updateContent();
     root->notifyDataChange();
@@ -1390,7 +1390,7 @@ StateVariable * AnalogPortTextItem::getVariable()
 
 void AnalogPortTextItem::setVariable(QString v)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     port->name = v;
     //could be either an analog port
     if (port->variable != NULL)
@@ -1422,7 +1422,7 @@ void AnalogPortTextItem::setVariable(QString v)
 
 void AnalogPortTextItem::setPortMode(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     if (p.compare("Send") == 0){
         if (port->variable != NULL)
             disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -1466,7 +1466,7 @@ void AnalogPortTextItem::setPortMode(QString p)
 
 void AnalogPortTextItem::setPortReduceOp(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     if (p.compare("None") == 0)
         port->op = ReduceOperationNone;
     else if (p.compare("Addition") == 0)
@@ -1481,7 +1481,7 @@ void AnalogPortTextItem::setPortReduceOp(QString p)
 
 void AnalogPortTextItem::setDimsPrefix(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)){
         QStringList list = p.split(" ");
         if (list.size() == 0) {
@@ -1498,7 +1498,7 @@ void AnalogPortTextItem::setDimsPrefix(QString p)
 
 void AnalogPortTextItem::setDimsUnit(QString u)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)){
         QStringList list = u.split(" ");
         if (list.size() == 0) {
@@ -1563,7 +1563,7 @@ EventPortMode EventPortTextItem::getPortMode()
 
 void EventPortTextItem::setName(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     port->setName(n);
     updateContent();
     root->notifyDataChange();
@@ -1575,7 +1575,7 @@ void EventPortTextItem::setName(QString n)
 
 void EventPortTextItem::setPortMode(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     if (p.compare("Send") == 0)
         port->mode = EventSendPort;
     else if (p.compare("Receive") == 0)
@@ -1645,7 +1645,7 @@ QString ImpulsePortTextItem::getName()
 
 void ImpulsePortTextItem::setName(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     port->setName(n);
     port->parameter = NULL;
     updateContent();
@@ -1669,7 +1669,7 @@ ImpulsePortMode ImpulsePortTextItem::getPortMode()
 
 void ImpulsePortTextItem::setParameter(QString n)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     //could be either an analog port
     if (port->parameter != NULL)
         disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -1709,7 +1709,7 @@ void ImpulsePortTextItem::setParameter(QString n)
 
 void ImpulsePortTextItem::setPortMode(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     if (p.compare("Send") == 0){
         if (port->parameter != NULL)
             disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -1736,7 +1736,7 @@ void ImpulsePortTextItem::setPortMode(QString p)
 
 void ImpulsePortTextItem::setDimsPrefix(QString p)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     QStringList list = p.split(" ");
     if (list.size() == 0) {
         return;
@@ -1751,7 +1751,7 @@ void ImpulsePortTextItem::setDimsPrefix(QString p)
 
 void ImpulsePortTextItem::setDimsUnit(QString u)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     QStringList list = u.split(" ");
     if (list.size() == 0) {
         return;
@@ -1819,7 +1819,7 @@ EventPort * OnEventGraphicsItem::getEventPort()
 
 void OnEventGraphicsItem::setEventPort(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     on_event->src_port_name = m;
     trigger_item->setEventPort(m);
     root->notifyDataChange();
@@ -1993,7 +1993,7 @@ ImpulsePort * OnImpulseGraphicsItem::getImpulsePort()
 
 void OnImpulseGraphicsItem::setImpulsePort(QString m)
 {
-    QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     on_impulse->src_port_name = m;
     trigger_item->setImpulsePort(m);
     root->notifyDataChange();

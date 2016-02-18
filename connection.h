@@ -28,7 +28,7 @@
 #include "globalHeader.h"
 
 #include "rootdata.h"
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "population.h"
 
 #define NO_DELAY -1 // used to determine if Python Scripts have delay data
@@ -62,7 +62,7 @@ public:
 
     virtual QString getTypeStr(void);
 
-    ParameterData * delay;
+    ParameterInstance * delay;
 
     /*!
      * The source population for this connection.
@@ -133,7 +133,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
-    connection * newFromExisting() {alltoAll_connection * c = new alltoAll_connection; c->delay = new ParameterData(this->delay); return c;}
+    connection * newFromExisting() {alltoAll_connection * c = new alltoAll_connection; c->delay = new ParameterInstance(this->delay); return c;}
 
 private:
 };
@@ -148,7 +148,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
-    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterData(this->delay); return c;}
+    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterInstance(this->delay); return c;}
 
 private:
 };
@@ -168,7 +168,7 @@ public:
         fixedProb_connection * c = new fixedProb_connection;
         c->p = this->p;
         c->seed = this->seed;
-        c->delay = new ParameterData(this->delay);
+        c->delay = new ParameterInstance(this->delay);
         return c;
     }
 
@@ -324,7 +324,7 @@ public:
     bool hasWeight;
     bool hasDelay;
 
-    ParameterData *getPropPointer();
+    ParameterInstance *getPropPointer();
     QStringList getPropList();
     QLayout * drawLayout(rootData * data, viewVZLayoutEditHandler * viewVZhandler, rootLayout * rootLay);
 

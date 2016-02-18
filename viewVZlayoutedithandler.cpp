@@ -1178,12 +1178,12 @@ void viewVZLayoutEditHandler::drawDeletables() {
 
 
                 for (int l = 0; l < listSize; ++l) {
-                    ParameterData * currPar;
+                    ParameterInstance * currPar;
                     if (j == 0) {
                         name = currLayout->ParameterList[l]->name;
                         if (name == "numNeurons" && currLayout->type == NineMLLayoutType) continue;
                         value = currLayout->ParameterList[l]->value[0];
-                        currPar = (ParameterData *) currLayout->ParameterList[l];
+                        currPar = (ParameterInstance *) currLayout->ParameterList[l];
                     }
                     if (j == 1) {
                         name = currLayout->StateVariableList[l]->name;
@@ -1191,7 +1191,7 @@ void viewVZLayoutEditHandler::drawDeletables() {
                         if (name == "x" && currLayout->type == NineMLLayoutType) continue;
                         if (name == "y" && currLayout->type == NineMLLayoutType) continue;
                         if (name == "z" && currLayout->type == NineMLLayoutType) continue;
-                        currPar = (ParameterData *) currLayout->StateVariableList[l];
+                        currPar = (ParameterInstance *) currLayout->StateVariableList[l];
                     }
 
                     QDoubleSpinBox *parSpin = new QDoubleSpinBox;

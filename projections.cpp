@@ -32,9 +32,9 @@
 
 synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs)
 {
-   this->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogPS[0]));
+   this->postsynapseType = QSharedPointer<ComponentInstance>(new ComponentInstance(data->catalogPS[0]));
    this->postsynapseType->owner = proj;
-   this->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogWU[0]));
+   this->weightUpdateType = QSharedPointer<ComponentInstance>(new ComponentInstance(data->catalogWU[0]));
    this->weightUpdateType->owner = proj;
    this->connectionType = new alltoAll_connection;
 
@@ -67,9 +67,9 @@ synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool do
 
 synapse::synapse(QSharedPointer <projection> proj, rootData * data, bool dontAddInputs)
 {
-   this->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogPS[0]));
+   this->postsynapseType = QSharedPointer<ComponentInstance>(new ComponentInstance(data->catalogPS[0]));
    this->postsynapseType->owner = proj;
-   this->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(data->catalogWU[0]));
+   this->weightUpdateType = QSharedPointer<ComponentInstance>(new ComponentInstance(data->catalogWU[0]));
    this->weightUpdateType->owner = proj;
    this->connectionType = new alltoAll_connection;
 
@@ -155,8 +155,8 @@ QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QS
 
     QSharedPointer <synapse> newSyn = QSharedPointer <synapse>(new synapse());
 
-    newSyn->weightUpdateType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->weightUpdateType, true/*copy inputs / outputs*/));
-    newSyn->postsynapseType = QSharedPointer<NineMLComponentData>(new NineMLComponentData(this->postsynapseType, true/*copy inputs / outputs*/));
+    newSyn->weightUpdateType = QSharedPointer<ComponentInstance>(new ComponentInstance(this->weightUpdateType, true/*copy inputs / outputs*/));
+    newSyn->postsynapseType = QSharedPointer<ComponentInstance>(new ComponentInstance(this->postsynapseType, true/*copy inputs / outputs*/));
     newSyn->connectionType = this->connectionType->newFromExisting();
     newSyn->isVisualised = this->isVisualised;
 
@@ -461,15 +461,15 @@ drawStyle projection::style()
  * Width Factors for the projection lines.
  */
 //@{
-#define WIDTHFACTOR_MULTIPLESYNAPSES 1.5
-#define WIDTHFACTOR_MULTIPLE         1.5
-#define WIDTHFACTOR_PYTHONCONN       1.5
-#define WIDTHFACTOR_ALLTOALL         1.8
-#define WIDTHFACTOR_ONETOONE         1.0
-#define WIDTHFACTOR_FIXEDPROB        1.5
-#define WIDTHFACTOR_CSV              1.5
-#define WIDTHFACTOR_KERNEL           1.5
-#define WIDTHFACTOR_OTHER            1.0
+#define WIDTHFACTOR_MULTIPLESYNAPSES 1.5f
+#define WIDTHFACTOR_MULTIPLE         1.5f
+#define WIDTHFACTOR_PYTHONCONN       1.5f
+#define WIDTHFACTOR_ALLTOALL         1.8f
+#define WIDTHFACTOR_ONETOONE         1.0f
+#define WIDTHFACTOR_FIXEDPROB        1.5f
+#define WIDTHFACTOR_CSV              1.5f
+#define WIDTHFACTOR_KERNEL           1.5f
+#define WIDTHFACTOR_OTHER            1.0f
 
 //@}
 
@@ -480,8 +480,8 @@ void projection::draw(QPainter *painter, float GLscale,
     float scale = GLscale/200.0;
     // Enforce a lower limit to scale, to ensure we don't try to draw
     // lines too small for the UI to draw them.
-    if (scale < 0.4) {
-        scale = 0.4;
+    if (scale < 0.4f) {
+        scale = 0.4f;
     }
 
     // setup for drawing curves
@@ -859,7 +859,7 @@ projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, Q
         QPointF labelPos = this->transformPoint(this->getLabelPos (font, i, ctype, scale, startLinePos));
         startLinePos = this->transformPoint(startLinePos);
         // Find a point for the end of the pointer line:
-        QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.95));
+        QPointF endLinePos = this->transformPoint(this->getBezierPos (this->curves.size()-1, 0.95f));
 
         // Text first in same colour as projection line
         painter->setPen(labelPen);
@@ -921,7 +921,7 @@ projection::getLabelPos (QFont& f, int syn, const QString& text, const float sca
 
     // Info about the size of the text in the label
     QFontMetrics qf(f);
-    float factor = 0.01;
+    float factor = 0.01f;
     float stringwidth = (float)qf.width (text)*factor/scale;
     float xheight = (float)qf.xHeight()*factor/scale;
     float maxWidth = (float)qf.maxWidth()*factor/scale;
@@ -939,7 +939,7 @@ projection::getLabelPos (QFont& f, int syn, const QString& text, const float sca
     // Site the label near the end of the last curve in the
     // projection, rather than the "curveMiddle". Find a reference
     // point on the last curve to do this:
-    QPointF labelRef = this->getBezierPos (this->curves.size()-1, 0.85);
+    QPointF labelRef = this->getBezierPos (this->curves.size()-1, 0.85f);
 
     // Return info: Vertical and Left or Right OR Horizontal and Up or down.
     QPointF diff = projEnd - this->start;
@@ -1673,7 +1673,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 // see if PS is loaded
                 for (int u = 0; u < data->catalogPS.size(); ++u) {
                     if (data->catalogPS[u]->name == pspName) {
-                        newSynapse->postsynapseType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogPS[u]));
+                        newSynapse->postsynapseType = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[u]));
                         newSynapse->postsynapseType->owner = thisSharedPointer;
                         newSynapse->postsynapseType->import_parameters_from_xml(n);
                         break;
@@ -1682,7 +1682,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
                 // if still missing then we have an issue
                 if (newSynapse->postsynapseType.isNull()) {
-                    newSynapse->postsynapseType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogPS[0]));
+                    newSynapse->postsynapseType = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[0]));
                     newSynapse->postsynapseType->owner = thisSharedPointer;
                     QSettings settings;
                     int num_errs = settings.beginReadArray("warnings");
@@ -1720,7 +1720,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 // see if WU loaded
                 for (int u = 0; u < data->catalogWU.size(); ++u) {
                     if (data->catalogWU[u]->name == synName) {
-                        newSynapse->weightUpdateType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogWU[u]));
+                        newSynapse->weightUpdateType = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogWU[u]));
                         newSynapse->weightUpdateType->owner = thisSharedPointer;
                         newSynapse->weightUpdateType->import_parameters_from_xml(n);
                         break;
@@ -1729,7 +1729,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
                 // if still missing then we have a load error
                 if (newSynapse->weightUpdateType.isNull()) {
-                    newSynapse->weightUpdateType = QSharedPointer<NineMLComponentData> (new NineMLComponentData(data->catalogWU[0]));
+                    newSynapse->weightUpdateType = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogWU[0]));
                     newSynapse->weightUpdateType->owner = thisSharedPointer;
                     QSettings settings;
                     int num_errs = settings.beginReadArray("warnings");
@@ -1906,8 +1906,8 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     e2 = nList.item(i).toElement();
 
                     QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
-                    newInput->src = (QSharedPointer <NineMLComponentData>)0;
-                    newInput->dst = (QSharedPointer <NineMLComponentData>)0;
+                    newInput->src = (QSharedPointer <ComponentInstance>)0;
+                    newInput->dst = (QSharedPointer <ComponentInstance>)0;
                     newInput->destination = thisSharedPointer;
                     newInput->projInput = false;
 
@@ -1970,7 +1970,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
 
-                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0) {
+                    if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
                         this->synapses[t]->postsynapseType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->postsynapseType;
                         newInput->src->outputs.push_back(newInput);
@@ -2034,7 +2034,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     e2 = nList.item(0).toElement();
 
                     QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
-                    newInput->src = (QSharedPointer <NineMLComponentData>)0;
+                    newInput->src = (QSharedPointer <ComponentInstance>)0;
                     newInput->destination = thisSharedPointer;
                     newInput->projInput = false;
 
@@ -2087,7 +2087,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
 
-                    if (newInput->src != (QSharedPointer <NineMLComponentData>)0)
+                    if (newInput->src != (QSharedPointer <ComponentInstance>)0)
                     {this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->weightUpdateType;
                         newInput->src->outputs.push_back(newInput);}

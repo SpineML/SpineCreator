@@ -51,16 +51,16 @@ rootData::rootData(QObject *parent) :
     this->cursor.x = 0;
     this->cursor.y = 0;
     this->largestIndex = 0;
-    this->catalogUnsorted.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
+    this->catalogUnsorted.push_back(QSharedPointer<Component>(new Component()));
     this->catalogUnsorted[0]->name = "none";
     this->catalogUnsorted[0]->type = "moo";
-    this->catalogNrn.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
+    this->catalogNrn.push_back(QSharedPointer<Component>(new Component()));
     this->catalogNrn[0]->name = "none";
     this->catalogNrn[0]->type = "neuron_body";
-    this->catalogWU.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
+    this->catalogWU.push_back(QSharedPointer<Component>(new Component()));
     this->catalogWU[0]->name = "none";
     this->catalogWU[0]->type = "weight_update";
-    this->catalogPS.push_back(QSharedPointer<NineMLComponent>(new NineMLComponent()));
+    this->catalogPS.push_back(QSharedPointer<Component>(new Component()));
     this->catalogPS[0]->name = "none";
     this->catalogPS[0]->type = "postsynapse";
     this->catalogLayout.push_back(QSharedPointer<NineMLLayout>(new NineMLLayout()));
@@ -133,7 +133,7 @@ void rootData::selectProject(QAction * action)
     main->updateTitle();
 }
 
-void rootData::replaceComponent(QSharedPointer<NineMLComponent> oldComp, QSharedPointer<NineMLComponent> newComp)
+void rootData::replaceComponent(QSharedPointer<Component> oldComp, QSharedPointer<Component> newComp)
 {
     for (int p = 0; p < this->populations.size(); ++p) {
 
@@ -216,7 +216,7 @@ void rootData::replaceComponent(QSharedPointer<NineMLComponent> oldComp, QShared
 }
 
 // centralised function for finding if a component is in the model
-bool rootData::isComponentInUse(QSharedPointer<NineMLComponent> oldComp)
+bool rootData::isComponentInUse(QSharedPointer<Component> oldComp)
 {
     for (int p = 0; p < populations.size(); ++p) {
 
@@ -254,7 +254,7 @@ bool rootData::isComponentInUse(QSharedPointer<NineMLComponent> oldComp)
 }
 
 // centralised function for finding if a component is in the model
-bool rootData::removeComponent(QSharedPointer<NineMLComponent> oldComp)
+bool rootData::removeComponent(QSharedPointer<Component> oldComp)
 {
     if (isComponentInUse(oldComp)) {
         return false;
@@ -264,7 +264,7 @@ bool rootData::removeComponent(QSharedPointer<NineMLComponent> oldComp)
         return true;
     }
 
-    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
+    QVector < QSharedPointer<Component> > * curr_lib;
     if (oldComp->type == "neuron_body") {
         curr_lib = &this->catalogNrn;
     }
@@ -957,10 +957,10 @@ void rootData::addPopulation()
         // go and get a decent number:
         popName = getUniquePopName(popName);
 
-        QSharedPointer <population> pop = QSharedPointer<population> (new population(cursor.x, cursor.y, 1.0f,  5.0/3.0f, popName));
+        QSharedPointer <population> pop = QSharedPointer<population> (new population(cursor.x, cursor.y, 1.0f,  5.0f/3.0f, popName));
         pop->tag = this->getIndex();
         pop->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(this->catalogLayout[0]));
-        pop->neuronType = QSharedPointer <NineMLComponentData> (new NineMLComponentData(this->catalogNrn[0]));
+        pop->neuronType = QSharedPointer <ComponentInstance> (new ComponentInstance(this->catalogNrn[0]));
         pop->neuronType->owner = pop;
 
         currProject->undoStack->push(new addPopulationCmd(this, pop));
@@ -977,7 +977,7 @@ void rootData::addSpikeSource()
         // go and get a decent number:
         popName = getUniquePopName(popName);
 
-        QSharedPointer <population> pop = QSharedPointer <population> (new population(cursor.x, cursor.y, 1.0f,  5.0/3.0f, popName));
+        QSharedPointer <population> pop = QSharedPointer <population> (new population(cursor.x, cursor.y, 1.0f,  5.0f/3.0f, popName));
         pop->tag = this->getIndex();
         pop->layoutType = QSharedPointer<NineMLLayoutData> (new NineMLLayoutData(this->catalogLayout[0]));
 
@@ -1352,24 +1352,24 @@ void rootData::updatePar()
 
     // update the type of parameter
     if (action == "updateType") {
-        ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
-        CHECK_CAST(dynamic_cast<ParameterData *>(par))
+        ParameterInstance * par = (ParameterInstance *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterInstance *>(par))
         QString newType = sender()->property("newType").toString();
         currProject->undoStack->push(new updateParType(this, par, newType));
     }
 
     // launch the list editor dialog
     if (action == "editList") {
-        ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
-        CHECK_CAST(dynamic_cast<ParameterData *>(par))
+        ParameterInstance * par = (ParameterInstance *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterInstance *>(par))
         valueListDialog * dialog  = new valueListDialog(par);
         dialog->show();
     }
 
     if (action == "changeVal") {
         // Update the parameter value
-        ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
-        CHECK_CAST(dynamic_cast<ParameterData *>(par))
+        ParameterInstance * par = (ParameterInstance *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ParameterInstance *>(par))
         int index = sender()->property("valToChange").toInt();
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
@@ -1414,8 +1414,8 @@ void rootData::updatePar()
 void rootData::updatePar(int value)
 {
     // Update the parameter value
-    ParameterData * par = (ParameterData *) sender()->property("ptr").value<void *>();
-    CHECK_CAST(dynamic_cast<ParameterData *>(par))
+    ParameterInstance * par = (ParameterInstance *) sender()->property("ptr").value<void *>();
+    CHECK_CAST(dynamic_cast<ParameterInstance *>(par))
     par->value[0] = value;
 
     switch (value) {
@@ -1997,7 +1997,7 @@ QSharedPointer<systemObject> rootData::isValidPointer(systemObject * ptr)
 }
 
 // allow safe usage of NineMLComponentData pointers
-QSharedPointer<NineMLComponentData> rootData::isValidPointer(NineMLComponentData * ptr)
+QSharedPointer<ComponentInstance> rootData::isValidPointer(ComponentInstance * ptr)
 {
     // find the reference
     for (int i = 0; i < this->populations.size(); ++i) {
@@ -2019,12 +2019,12 @@ QSharedPointer<NineMLComponentData> rootData::isValidPointer(NineMLComponentData
     }
 
     // not found
-    QSharedPointer<NineMLComponentData> null;
+    QSharedPointer<ComponentInstance> null;
     return null;
 }
 
 // allow safe usage of NineMLComponent pointers
-QSharedPointer<NineMLComponent> rootData::isValidPointer(NineMLComponent * ptr)
+QSharedPointer<Component> rootData::isValidPointer(Component * ptr)
 {
     qDebug() << ptr;
     qDebug() << "/////";
@@ -2055,7 +2055,7 @@ QSharedPointer<NineMLComponent> rootData::isValidPointer(NineMLComponent * ptr)
     }
 
     // not found
-    QSharedPointer<NineMLComponent> null;
+    QSharedPointer<Component> null;
     return null;
 }
 
@@ -2088,7 +2088,7 @@ void rootData::addgenericInput()
     // input text
     QString text = ((QLineEdit *) sender())->text();
     CHECK_CAST(dynamic_cast<QLineEdit *>(sender()))
-    QSharedPointer <NineMLComponentData> src;
+    QSharedPointer <ComponentInstance> src;
 
     // find source:
     for (int i = 0; i < this->populations.size(); ++i) {
@@ -2109,10 +2109,10 @@ void rootData::addgenericInput()
 
     if (!src.isNull()) {
 
-        NineMLComponentData * dst = (NineMLComponentData *) sender()->property("ptr").value<void *>();
+        ComponentInstance * dst = (ComponentInstance *) sender()->property("ptr").value<void *>();
 
         // check it is valid
-        QSharedPointer<NineMLComponentData> dstShr = isValidPointer(dst);
+        QSharedPointer<ComponentInstance> dstShr = isValidPointer(dst);
 
         if (dstShr.isNull()) {
             qDebug() << "Found a bad pointer in addGenericInput";
@@ -2203,7 +2203,7 @@ void rootData::copyParsToClipboard()
                     clipboardCData.clear();
                 }
                 QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (selList[0]);
-                clipboardCData = QSharedPointer<NineMLComponentData> (new NineMLComponentData(pop->neuronType));
+                clipboardCData = QSharedPointer<ComponentInstance> (new ComponentInstance(pop->neuronType));
             }
         }
 
@@ -2214,14 +2214,14 @@ void rootData::copyParsToClipboard()
                     clipboardCData.clear();
                 }
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
-                clipboardCData = QSharedPointer<NineMLComponentData> (new NineMLComponentData(proj->synapses[proj->currTarg]->weightUpdateType));
+                clipboardCData = QSharedPointer<ComponentInstance> (new ComponentInstance(proj->synapses[proj->currTarg]->weightUpdateType));
             }
             if (sender()->property("source").toString() == "tab2") {
                 if (clipboardCData.isNull()) {
                     clipboardCData.clear();
                 }
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
-                clipboardCData = QSharedPointer<NineMLComponentData> (new NineMLComponentData(proj->synapses[proj->currTarg]->postsynapseType));
+                clipboardCData = QSharedPointer<ComponentInstance> (new ComponentInstance(proj->synapses[proj->currTarg]->postsynapseType));
             }
         }
     }

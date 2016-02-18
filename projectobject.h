@@ -43,8 +43,8 @@ public:
     // general helpers
     bool isChanged(rootData *);
     bool isValidPointer(QSharedPointer<systemObject>);
-    bool isValidPointer(QSharedPointer <NineMLComponentData>);
-    bool isValidPointer(QSharedPointer<NineMLComponent>);
+    bool isValidPointer(QSharedPointer <ComponentInstance>);
+    bool isValidPointer(QSharedPointer<Component>);
     QAction * action(int);
     /*!
      * \brief getComponentDataFromName
@@ -52,7 +52,7 @@ public:
      * \return
      * Look up a ComponentData by its name - this is used to reconnect pointers after a project is loaded in
      */
-    QSharedPointer<NineMLComponentData> getComponentDataFromName(QString name);
+    QSharedPointer<ComponentInstance> getComponentDataFromName(QString name);
 
     // info
     QString name;
@@ -66,10 +66,10 @@ public:
 
     // storage for objects
     QVector < QSharedPointer <population> > network;
-    QVector < QSharedPointer<NineMLComponent> > catalogNB;
-    QVector < QSharedPointer<NineMLComponent> > catalogWU;
-    QVector < QSharedPointer<NineMLComponent> > catalogPS;
-    QVector < QSharedPointer<NineMLComponent> > catalogGC;
+    QVector < QSharedPointer<Component> > catalogNB;
+    QVector < QSharedPointer<Component> > catalogWU;
+    QVector < QSharedPointer<Component> > catalogPS;
+    QVector < QSharedPointer<Component> > catalogGC;
 
     QVector < QSharedPointer<NineMLLayout> > catalogLAY;
 
@@ -88,7 +88,7 @@ private:
     bool isComponent(QString);
     bool isLayout(QString);
     void loadComponent(QString, QDir);
-    void saveComponent(QString, QDir, QSharedPointer<NineMLComponent>);
+    void saveComponent(QString, QDir, QSharedPointer<Component>);
     void loadLayout(QString, QDir);
     void saveLayout(QString, QDir, QSharedPointer<NineMLLayout>);
     void loadNetwork(QString, QDir, bool isProject = true);

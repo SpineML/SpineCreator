@@ -26,7 +26,7 @@
 #define NINEML_LAYOUT_CLASSES_H
 
 // include existing classes
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "cinterpreter.h"
 
 enum transformType {
@@ -38,7 +38,7 @@ enum transformType {
 
 class RegimeSpace;
 
-class NineMLLayout: public NineMLRootObject
+class NineMLLayout: public ComponentRootObject
 {
 public:
 
@@ -115,7 +115,7 @@ public:
     void writeOut(QDomDocument *doc, QDomElement &parent);
 };
 
-class NineMLLayoutData : public NineMLData
+class NineMLLayoutData : public ComponentRootInstance
 {
 public:
     int seed;

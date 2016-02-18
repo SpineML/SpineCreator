@@ -1,5 +1,5 @@
 #include "projectobject.h"
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "nineml_layout_classes.h"
 #include "rootdata.h"
 #include "mainwindow.h"
@@ -21,16 +21,16 @@ projectObject::projectObject(QObject *parent) :
     this->metaFile = "metaData.xml";
 
     // create the catalog blank entries:
-    this->catalogGC.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
+    this->catalogGC.push_back(QSharedPointer<Component> (new Component()));
     this->catalogGC[0]->name = "none";
     this->catalogGC[0]->type = "moo";
-    this->catalogNB.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
+    this->catalogNB.push_back(QSharedPointer<Component> (new Component()));
     this->catalogNB[0]->name = "none";
     this->catalogNB[0]->type = "neuron_body";
-    this->catalogWU.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
+    this->catalogWU.push_back(QSharedPointer<Component> (new Component()));
     this->catalogWU[0]->name = "none";
     this->catalogWU[0]->type = "weight_update";
-    this->catalogPS.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
+    this->catalogPS.push_back(QSharedPointer<Component> (new Component()));
     this->catalogPS[0]->name = "none";
     this->catalogPS[0]->type = "postsynapse";
     this->catalogLAY.push_back(QSharedPointer<NineMLLayout> (new NineMLLayout()));
@@ -261,10 +261,10 @@ bool projectObject::import_network(QString fileName)
         // place populations
         for (int i = 0; i < this->network.size(); ++i) {
             QSharedPointer <population> p = this->network[i];
-            p->x = i*2.0; p->targx = i*2.0;
-            p->y = i*2.0; p->targy = i*2.0;
-            p->size = 1.0;
-            p->aspect_ratio = 5.0/3.0;
+            p->x = i*2.0f; p->targx = i*2.0f;
+            p->y = i*2.0f; p->targy = i*2.0f;
+            p->size = 1.0f;
+            p->aspect_ratio = 5.0f/3.0f;
             p->setupBounds();
         }
 
@@ -679,7 +679,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
         // HANDLE SPINEML COMPONENTS ////////////////
 
         // create a new AL class instance and populate it from the data
-        QSharedPointer<NineMLComponent>tempALobject = QSharedPointer<NineMLComponent> (new NineMLComponent());
+        QSharedPointer<Component>tempALobject = QSharedPointer<Component> (new Component());
 
         tempALobject->load(&this->doc);
 
@@ -697,7 +697,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
         }
 
         // get lib to add component to
-        QVector < QSharedPointer<NineMLComponent> > * curr_lib;
+        QVector < QSharedPointer<Component> > * curr_lib;
         if (tempALobject->type == "neuron_body") {
             curr_lib = &this->catalogNB;
         } else if (tempALobject->type == "weight_update") {
@@ -728,7 +728,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
     }
 }
 
-void projectObject::saveComponent(QString fileName, QDir project_dir, QSharedPointer<NineMLComponent> component)
+void projectObject::saveComponent(QString fileName, QDir project_dir, QSharedPointer<Component> component)
 {
     // if no extension then append a .xml
     if (!fileName.contains(".")) {
@@ -1467,7 +1467,7 @@ bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
 }
 
 // allow safe usage of NineMLComponentData pointers
-bool projectObject::isValidPointer(QSharedPointer <NineMLComponentData> ptr)
+bool projectObject::isValidPointer(QSharedPointer <ComponentInstance> ptr)
 {
     // find the reference
     for (int i = 0; i < this->network.size(); ++i) {
@@ -1496,7 +1496,7 @@ bool projectObject::isValidPointer(QSharedPointer <NineMLComponentData> ptr)
 }
 
 // allow safe usage of NineMLComponent pointers
-bool projectObject::isValidPointer(QSharedPointer<NineMLComponent> ptr)
+bool projectObject::isValidPointer(QSharedPointer<Component> ptr)
 {
     for (int i = 0; i < this->catalogNB.size(); ++i) {
         if (this->catalogNB[i] == ptr) {
@@ -1523,7 +1523,7 @@ bool projectObject::isValidPointer(QSharedPointer<NineMLComponent> ptr)
     return false;
 }
 
-QSharedPointer <NineMLComponentData> projectObject::getComponentDataFromName(QString name)
+QSharedPointer <ComponentInstance> projectObject::getComponentDataFromName(QString name)
 {
     // find the ComponentData requested
     for (int i = 0; i < this->network.size(); ++i) {
@@ -1550,7 +1550,7 @@ QSharedPointer <NineMLComponentData> projectObject::getComponentDataFromName(QSt
     }
 
     // not found
-    QSharedPointer <NineMLComponentData> null;
+    QSharedPointer <ComponentInstance> null;
     return null;
 }
 

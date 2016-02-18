@@ -123,14 +123,14 @@ NineMLLayoutData::NineMLLayoutData(QSharedPointer<NineMLLayout>data)
 
     for (int i=0; i<data->StateVariableList.size(); i++)
     {
-        StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
+        StateVariableList[i] = new StateVariableInstance(data->StateVariableList[i]);
         StateVariableList[i]->currType = FixedValue;
         StateVariableList[i]->value.resize(1);
         StateVariableList[i]->value.fill(0);
     }
     for (int i=0; i<data->ParameterList.size(); i++)
     {
-        ParameterList[i] = new ParameterData(data->ParameterList[i]);
+        ParameterList[i] = new ParameterInstance(data->ParameterList[i]);
         ParameterList[i]->currType = FixedValue;
         ParameterList[i]->value.resize(1);
         ParameterList[i]->value.fill(0);
@@ -151,11 +151,11 @@ NineMLLayoutData::NineMLLayoutData(QSharedPointer<NineMLLayoutData>data)
     // copy data...
     for (int i=0; i<data->StateVariableList.size(); i++)
     {
-        StateVariableList[i] = new StateVariableData(data->StateVariableList[i]);
+        StateVariableList[i] = new StateVariableInstance(data->StateVariableList[i]);
     }
     for (int i=0; i<data->ParameterList.size(); i++)
     {
-        ParameterList[i] = new ParameterData(data->ParameterList[i]);
+        ParameterList[i] = new ParameterInstance(data->ParameterList[i]);
     }
 
     // copy component reference...
@@ -474,8 +474,8 @@ void NineMLLayoutData::generateLayout(int numNeurons, QVector <loc> *locations, 
     }
 
     // provided:
-    varList.push_back(lookup("e", M_E));
-    varList.push_back(lookup("pi", M_PI));
+    varList.push_back(lookup("e", (float)M_E));
+    varList.push_back(lookup("pi",(float) M_PI));
 
 
     if (this->component->RegimeList.size() > 0) {

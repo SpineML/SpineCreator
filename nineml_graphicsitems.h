@@ -26,7 +26,7 @@
 #define NINEML_GRAPHICSITEMS_H
 
 #include <QtGui>
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "gvitems.h"
 
 class ArrowItem;

@@ -29,7 +29,7 @@
 experiment::experiment()
 {
     // defaults
-    setup.dt = 0.1;
+    setup.dt = 0.1f;
     setup.duration = 1;
     setup.solver = ForwardEuler;
     setup.simType = "BRAHMS";
@@ -309,7 +309,7 @@ void experiment::deselect() {
 
 }
 
-void experiment::purgeBadPointer(QSharedPointer <NineMLComponentData> ptr)
+void experiment::purgeBadPointer(QSharedPointer <ComponentInstance> ptr)
 {
     // inputs
     for (int i = 0; i < ins.size(); ++i) {
@@ -355,7 +355,7 @@ void experiment::purgeBadPointer(QSharedPointer <NineMLComponentData> ptr)
     }
 }
 
-void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPointer<NineMLComponent> newPtr) {
+void experiment::purgeBadPointer(QSharedPointer<Component> ptr, QSharedPointer<Component> newPtr) {
 
     // inputs
     for (int i = 0; i < ins.size(); ++i) {
@@ -444,7 +444,7 @@ void experiment::purgeBadPointer(QSharedPointer<NineMLComponent> ptr, QSharedPoi
     }
 }
 
-void experiment::updateChanges(QSharedPointer <NineMLComponentData> ptr) {
+void experiment::updateChanges(QSharedPointer <ComponentInstance> ptr) {
 
     // par changes
     for (int i = 0; i < changes.size(); ++i) {
@@ -1669,7 +1669,7 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
             frameLay->addLayout(parLay);
 
             // pointer to current parameter
-            ParameterData * currPar = this->par;
+            ParameterInstance * currPar = this->par;
 
             QString name = currPar->name;
             float value;
@@ -2014,7 +2014,7 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
 
         for (int i = 0; i < component->ParameterList.size(); ++i) {
             if (par->name == component->ParameterList[i]->name) {
-                ParameterData * origPar = component->ParameterList[i];
+                ParameterInstance * origPar = component->ParameterList[i];
                 switch (origPar->currType) {
                 case Undefined:
                     labelText += "<b>undefined value</b> to ";
@@ -2043,7 +2043,7 @@ QVBoxLayout * exptChangeProp::drawChangeProp(rootData * data, viewELExptPanelHan
         }
         for (int i = 0; i < component->StateVariableList.size(); ++i) {
             if (par->name == component->StateVariableList[i]->name) {
-                ParameterData * origPar = component->StateVariableList[i];
+                ParameterInstance * origPar = component->StateVariableList[i];
                 switch (origPar->currType) {
                 case Undefined:
                     labelText += "<b>undefined value</b> to ";
@@ -2458,7 +2458,7 @@ void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
 
 // ###################### READ IN XML:
 
-QSharedPointer <NineMLComponentData> getTargetFromData(QString TargetName, projectObject * data) {
+QSharedPointer <ComponentInstance> getTargetFromData(QString TargetName, projectObject * data) {
 
     // find Synapse in model
     for (int i = 0; i < data->network.size(); ++i) {
@@ -2479,12 +2479,12 @@ QSharedPointer <NineMLComponentData> getTargetFromData(QString TargetName, proje
             }
         }
     }
-    QSharedPointer<NineMLComponentData> null;
+    QSharedPointer<ComponentInstance> null;
 
     return null;
 }
 
-Port * findPortInComponent(QString portName, QSharedPointer <NineMLComponentData> target) {
+Port * findPortInComponent(QString portName, QSharedPointer <ComponentInstance> target) {
 
     // find port in Synapse:
     for (int i = 0; i < target->component->AnalogPortList.size(); ++i) {
@@ -2503,7 +2503,7 @@ Port * findPortInComponent(QString portName, QSharedPointer <NineMLComponentData
     return NULL;
 }
 
-Port * findOutputPortInComponent(QString portName, QSharedPointer <NineMLComponentData> Synapse) {
+Port * findOutputPortInComponent(QString portName, QSharedPointer <ComponentInstance> Synapse) {
 
     // find port in Synapse:
     for (int i = 0; i < Synapse->component->AnalogPortList.size(); ++i) {
@@ -2546,7 +2546,7 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
 
                                 if (reader->name() == "Configuration") {
 
-                                    QSharedPointer <NineMLComponentData> component;
+                                    QSharedPointer <ComponentInstance> component;
                                     QString SynapseName;
                                     if (reader->attributes().hasAttribute("target"))
                                         SynapseName = reader->attributes().value("target").toString();
@@ -2623,7 +2623,7 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
                                     if (reader->attributes().hasAttribute("dt"))
                                         this->setup.dt = reader->attributes().value("dt").toString().toFloat();
                                     else
-                                        this->setup.dt = 0.1;
+                                        this->setup.dt = 0.1f;
                                         // ERROR - no dt
                                     reader->skipCurrentElement();
                                 }
@@ -2632,7 +2632,7 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
                                     if (reader->attributes().hasAttribute("dt"))
                                         this->setup.dt = reader->attributes().value("dt").toString().toFloat();
                                     else
-                                        this->setup.dt = 0.1;
+                                        this->setup.dt = 0.1f;
                                         // ERROR - no dt
                                     if (reader->attributes().hasAttribute("order"))
                                         this->setup.solverOrder = reader->attributes().value("order").toString().toFloat();
@@ -2643,7 +2643,7 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
                                 } else {
                                     reader->skipCurrentElement();
                                     this->setup.solver = ForwardEuler;
-                                    this->setup.dt = 0.1;
+                                    this->setup.dt = 0.1f;
                                     // ERROR - unknown integration type
                                 }
 
@@ -3224,12 +3224,12 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
         // find associated par on component
         for (int i = 0; i < this->component->ParameterList.size(); ++i) {
             if (this->component->ParameterList[i]->name == tempName)
-                this->par = new ParameterData(this->component->ParameterList[i]);
+                this->par = new ParameterInstance(this->component->ParameterList[i]);
         }
         // find associated par on component
         for (int i = 0; i < this->component->StateVariableList.size(); ++i) {
             if (this->component->StateVariableList[i]->name == tempName)
-                this->par = new StateVariableData(this->component->StateVariableList[i]);
+                this->par = new StateVariableInstance(this->component->StateVariableList[i]);
         }
     }
     else
@@ -3553,7 +3553,7 @@ void TVGraph::paintEvent(QPaintEvent *) {
             for (int i = 0; i < vals.size(); i += 2) {
                 if (vals[i] > maxTime) maxTime = vals[i];
             }
-            maxTime *= 1.1;
+            maxTime *= 1.1f;
 
             for (int currentIndex = 0; currentIndex < 10; ++currentIndex) {
 

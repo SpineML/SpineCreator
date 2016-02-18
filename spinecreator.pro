@@ -22,7 +22,6 @@ SOURCES += main.cpp \
     population.cpp \
     rootdata.cpp \
     rootlayout.cpp \
-    nineml_classes.cpp \
     projections.cpp \
     connection.cpp \
     connectionmodel.cpp \
@@ -64,13 +63,13 @@ SOURCES += main.cpp \
     projectobject.cpp \
     filteroutundoredoevents.cpp \
     batchexperimentwindow.cpp \
-    vectorlistmodel.cpp
+    vectorlistmodel.cpp \
+    CL_classes.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
     population.h \
     rootdata.h \
-    nineml_classes.h \
     projections.h \
     connection.h \
     connectionmodel.h \
@@ -116,7 +115,8 @@ HEADERS  += mainwindow.h \
     filteroutundoredoevents.h \
     batchexperimentwindow.h \
     vectorlistmodel.h \
-    qmessageboxresizable.h
+    qmessageboxresizable.h \
+    CL_classes.h
 
 FORMS    += mainwindow.ui \
     ninemlsortingdialog.ui \
@@ -138,13 +138,16 @@ RESOURCES += \
 
 
 win32:release{
+    DEFINES += _MATH_DEFINES_DEFINED
     LIBS += "-LC:\SDKs\Graphviz232\lib\release\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
     INCLUDEPATH += "C:\SDKs\Graphviz232\include"
     INCLUDEPATH += "C:\Python27\include"
     DEPENDPATH += "C:\SDKs\Graphviz232\lib\release\lib"
     DEPENDPATH += "C:\Python27\libs"
+    DEPENDPATH += "C:\Python27"
 }
 win32:debug{
+    DEFINES += _MATH_DEFINES_DEFINED
     LIBS += "-LC:\SDKs\Graphviz232\lib\debug\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
     INCLUDEPATH += "C:\SDKs\Graphviz232\include"
     INCLUDEPATH += "C:\Python27\include"

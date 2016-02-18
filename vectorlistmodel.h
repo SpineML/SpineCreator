@@ -13,7 +13,7 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
     double data(int row, int col);
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    void setPointer(ParameterData * currPar);
+    void setPointer(ParameterInstance * currPar);
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     void setData(int row, int col, double data);
     bool setData(const QModelIndex & index, const QVariant & value, int role);
@@ -27,7 +27,7 @@ public:
     void setAllData(QVector < QVector < double > > inList) {
         list = inList;
     }
-    void setAllDst(QVector < ParameterData * > inDsts) {
+    void setAllDst(QVector < ParameterInstance * > inDsts) {
         destinations = inDsts;
     }
 
@@ -37,7 +37,7 @@ public:
 
 private:
     QVector < QVector < double > > list;
-    QVector < ParameterData * > destinations;
+    QVector < ParameterInstance * > destinations;
 
 signals:
 

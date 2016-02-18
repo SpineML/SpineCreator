@@ -27,7 +27,7 @@
 vectorModel::vectorModel(QObject *parent) :
     QAbstractTableModel(parent)
 {
-    this->currPar = (ParameterData *)0;
+    this->currPar = (ParameterInstance *)0;
 }
 
 int vectorModel::rowCount(const QModelIndex & /*parent = QModelIndex()*/) const
@@ -62,7 +62,7 @@ QVariant vectorModel::data(const QModelIndex &index, int role) const
     }
     return QVariant();
 }
-void vectorModel::setPointer(ParameterData * currPar)
+void vectorModel::setPointer(ParameterInstance * currPar)
 {
     this->currPar = currPar;
 }

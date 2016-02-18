@@ -466,7 +466,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                 if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
                     glLineWidth(1.0*lineScaleFactor);
 
-                    glColor4f(0.0, 0.0, 0.0, 0.1);
+                    glColor4f(0.0f, 0.0f, 0.0f, 0.1f);
 
                     // draw in
                     glBegin(GL_TRIANGLES);
@@ -503,7 +503,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
                         glLineWidth(1.0*lineScaleFactor);
 
-                        glColor4f(0.0, 0.0, 0.0, 0.1);
+                        glColor4f(0.0f, 0.0f, 0.0f, 0.1f);
 
                         // find if selected
                         bool isSelected = false;
@@ -511,21 +511,21 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         for (int j = 0; j < (int) selection.count(); ++j) {
                             if (i == (int) selection[j].row())
                             {
-                                glLineWidth(2.0*lineScaleFactor);
-                                glColor4f(1.0, 0.0, 0.0, 1.0);
+                                glLineWidth(2.0f*lineScaleFactor);
+                                glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
                                 isSelected = true;
                                 break;
                             }
                             if (connections[targNum][i].src == connections[targNum][selection[j].row()].src && selection[j].column() == 0)
                             {
-                                glLineWidth(1.5*lineScaleFactor);
-                                glColor4f(0.0, 1.0, 0.0, 0.8);
+                                glLineWidth(1.5f*lineScaleFactor);
+                                glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
                                 isSelected = true;
                             }
                             if (connections[targNum][i].dst == connections[targNum][selection[j].row()].dst && selection[j].column() == 1)
                             {
-                                glLineWidth(1.5*lineScaleFactor);
-                                glColor4f(0.0, 1.0, 0.0, 0.8);
+                                glLineWidth(1.5f*lineScaleFactor);
+                                glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
                                 isSelected = true;
                             }
                         }
@@ -533,8 +533,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         if (((int) connections[targNum][i].src == selectedIndex && selectedType == 1) \
                                 || ((int) connections[targNum][i].dst == selectedIndex && selectedType == 2))
                         {
-                            glLineWidth(1.5*lineScaleFactor);
-                            glColor4f(0.0, 1.0, 0.0, 1.0);
+                            glLineWidth(1.5f*lineScaleFactor);
+                            glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
                             isSelected = true;
                         }
 
@@ -578,7 +578,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     for (int i = 0; i < src->layoutType->locations.size(); ++i) {
 
                         glLineWidth(1.5*lineScaleFactor);
-                        glColor4f(0.0, 0.0, 1.0, 0.8);
+                        glColor4f(0.0f, 0.0f, 1.0f, 0.8f);
 
                          // draw in
                         glBegin(GL_LINES);
@@ -593,8 +593,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                     for (int i = 0; i < src->layoutType->locations.size(); ++i) {
 
-                        glLineWidth(1.5*lineScaleFactor);
-                        glColor4f(0.0, 0.0, 1.0, 0.8);
+                        glLineWidth(1.5f*lineScaleFactor);
+                        glColor4f(0.0f, 0.0f, 1.0f, 0.8f);
                         // draw in
                         glBegin(GL_LINES);
                         glVertex3f(src->layoutType->locations[i].x+srcX, src->layoutType->locations[i].y+srcY, src->layoutType->locations[i].z+srcZ);
@@ -608,8 +608,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                     for (int i = 0; i < dst->layoutType->locations.size(); ++i) {
 
-                        glLineWidth(1.5*lineScaleFactor);
-                        glColor4f(0.0, 0.0, 1.0, 0.8);
+                        glLineWidth(1.5f*lineScaleFactor);
+                        glColor4f(0.0f, 0.0f, 1.0f, 0.8f);
                         // draw in
                         glBegin(GL_LINES);
                         glVertex3f(srcX, srcY, srcZ);
@@ -628,8 +628,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                 for (int i = 0; i < src->layoutType->locations.size(); ++i) {
                     for (int j = 0; j <  dst->layoutType->locations.size(); ++j) {
 
-                        glLineWidth(1.5*lineScaleFactor);
-                        glColor4f(0.0, 0.0, 1.0, 0.2);
+                        glLineWidth(1.5f*lineScaleFactor);
+                        glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
                         // draw in
                         glBegin(GL_LINES);
                         glVertex3f(src->layoutType->locations[i].x+srcX, src->layoutType->locations[i].y+srcY, src->layoutType->locations[i].z+srcZ);
@@ -643,8 +643,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                 for (int i = 0; i < src->layoutType->locations.size(); ++i) {
 
-                    glLineWidth(1.5*lineScaleFactor);
-                    glColor4f(0.0, 0.0, 1.0, 0.2);
+                    glLineWidth(1.5f*lineScaleFactor);
+                    glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
                     // draw in
                     glBegin(GL_LINES);
                     glVertex3f(src->layoutType->locations[i].x+srcX, src->layoutType->locations[i].y+srcY, src->layoutType->locations[i].z+srcZ);
@@ -656,8 +656,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                  for (int j = 0; j <  dst->layoutType->locations.size(); ++j) {
 
-                    glLineWidth(1.5*lineScaleFactor);
-                    glColor4f(0.0, 0.0, 1.0, 0.2);
+                    glLineWidth(1.5f*lineScaleFactor);
+                    glColor4f(0.0f, 0.0f, 1.0f, 0.2f);
                     // draw in
                     glBegin(GL_LINES);
                     glVertex3f(srcX, srcY, srcZ);
@@ -682,8 +682,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             for (int i = 0; i < src->layoutType->locations.size(); ++i) {
                 for (int j = 0; j <  dst->layoutType->locations.size(); ++j) {
                     if (random.value() < this->prob) {
-                        glLineWidth(1.0*lineScaleFactor);
-                        glColor4f(0.0, 0.0, 0.0, 0.1);
+                        glLineWidth(1.0f*lineScaleFactor);
+                        glColor4f(0.0f, 0.0f, 0.0f, 0.1f);
 
                         if (((int) i == selectedIndex && selectedType == 1) \
                                 || ((int) j == selectedIndex && selectedType == 2))
@@ -744,8 +744,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             for (int i=0; i < redrawLocs.size(); i+=2) {
 
                 // redraw
-                glLineWidth(1.5*lineScaleFactor);
-                glColor4f(0.0, 0.0, 1.0, 0.8);
+                glLineWidth(1.5f*lineScaleFactor);
+                glColor4f(0.0f, 0.0f, 1.0f, 0.8f);
                 glBegin(GL_LINES);
                 glVertex3f(redrawLocs[i].x, redrawLocs[i].y,redrawLocs[i].z);
                 glVertex3f(redrawLocs[i+1].x, redrawLocs[i+1].y,redrawLocs[i+1].z);
@@ -782,8 +782,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
         painter.setPen(pen);
 
         float zoomVal = zoomFactor;
-        if (zoomVal < 0.3)
-            zoomVal = 0.3;
+        if (zoomVal < 0.3f)
+            zoomVal = 0.3f;
 
         // draw text
         for (int locNum = 0; locNum < selectedPops.size(); ++locNum) {

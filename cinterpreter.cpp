@@ -26,7 +26,7 @@
 //#include "G__ci.h"
 
 //QString QString::number(float);
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "globalHeader.h"
 int precedance(valop in) {
 
@@ -246,8 +246,8 @@ QString doError(int err) {
 float getVarVal(QString in, vector <lookup> varList) {
 
     vector < lookup > builtin;
-    builtin.push_back(lookup("e", M_E));
-    builtin.push_back(lookup("pi", M_PI));
+    builtin.push_back(lookup("e", (float)M_E));
+    builtin.push_back(lookup("pi", (float)M_PI));
 
     for (uint i = 0; i < builtin.size(); ++i) {
         if (in == builtin[i].name) {

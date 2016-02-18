@@ -54,8 +54,8 @@ saveNetworkImageDialog::saveNetworkImageDialog(rootData * data, QString fileName
     ui->scale_spin->setMinimum(0.1);
     scale = 3.0;
     connect(ui->scale_spin,SIGNAL(valueChanged(double)), this, SLOT(changeScale(double)));
-    ui->border_spin->setValue(0.3);
-    border = 0.3;
+    ui->border_spin->setValue(0.3f);
+    border = 0.3f;
     ui->scale_spin->setMaximum(5.0);
     connect(ui->border_spin,SIGNAL(valueChanged(double)), this, SLOT(changeBorder(double)));
 

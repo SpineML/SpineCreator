@@ -1111,10 +1111,10 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
 
     // extract the current item component:
     // select catalog
-    QVector < QSharedPointer<NineMLComponent> > currCatalog;
+    QVector < QSharedPointer<Component> > currCatalog;
     QString catalogString;
 
-    QSharedPointer<NineMLComponent> selectedComponent;
+    QSharedPointer<Component> selectedComponent;
 
     for (int catNum = 0; catNum < 3; ++catNum) {
 
@@ -1137,7 +1137,7 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
         for (int i = 0; i < currCatalog.size(); ++i) {
 
             // get reference for component
-            QSharedPointer<NineMLComponent> component = currCatalog[i];
+            QSharedPointer<Component> component = currCatalog[i];
 
             // create the text for this component
             QString title = catalogString;
@@ -1203,7 +1203,7 @@ void MainWindow::addComponentsToFileList()
     }
 
     // select catalog
-    QVector < QSharedPointer<NineMLComponent> > currCatalog;
+    QVector < QSharedPointer<Component> > currCatalog;
     QString catalogString;
     for (int catNum = 0; catNum < 3; ++catNum) {
 
@@ -1226,7 +1226,7 @@ void MainWindow::addComponentsToFileList()
         for (int i = 1; i < currCatalog.size(); ++i) {
 
             // get reference for component
-            QSharedPointer<NineMLComponent> component = currCatalog[i];
+            QSharedPointer<Component> component = currCatalog[i];
 
             // create the text for this component
             QString title = catalogString;
@@ -1680,7 +1680,7 @@ void MainWindow::import_csv()
 void MainWindow::duplicate_component()
 {
     // find which catalog we are saving to
-    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
+    QVector < QSharedPointer<Component> > * curr_lib;
     if (viewCL.root->al->type == "neuron_body")
         curr_lib = &data.catalogNrn;
     if (viewCL.root->al->type == "weight_update")
@@ -1707,7 +1707,7 @@ void MainWindow::duplicate_component()
     }
 
     // duplicate
-    curr_lib->push_back(QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al)));
+    curr_lib->push_back(QSharedPointer<Component> (new Component(viewCL.root->al)));
     curr_lib->back()->name += QString::number(float(val));
 
 
@@ -2259,7 +2259,7 @@ void MainWindow::launchSimulatorEditor()
 
 ////////////////////////////////////////////// AL editor slots
 
-void MainWindow::initialiseModel(QSharedPointer<NineMLComponent> component)
+void MainWindow::initialiseModel(QSharedPointer<Component> component)
 {
     //todo: cleanup any old scene and root stuff
     if (viewCL.root != NULL) {
@@ -2297,7 +2297,7 @@ void MainWindow::initialiseModel(QSharedPointer<NineMLComponent> component)
 void MainWindow::actionAddParamater_triggered()
 {
     if (viewCL.root != NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         Parameter *p = new Parameter();
         p->name = "New_Parameter_";
         int n = 1;
@@ -2326,7 +2326,7 @@ void MainWindow::actionAddRegime_triggered()
 {
     if (viewCL.root != NULL) {
         // store previous iteration for undo / redo
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         Regime *r = new Regime();
         r->name = "New_Regime_";
         int n = 1;
@@ -2388,7 +2388,7 @@ void MainWindow::actionSelectMode_triggered()
 void MainWindow::actionDeleteItems_triggered()
 {
     if (viewCL.frame->isVisible()) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         viewCL.root->scene->deleteSelectedItem();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Delete selected"));
     }
@@ -2407,7 +2407,7 @@ void MainWindow::actionAddTimeDerivative_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             if (g->type() == RegimeGraphicsItem::Type) {
-                QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+                QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
                 RegimeGraphicsItem *rgi = ((RegimeGraphicsItem*)g);
                 TimeDerivative * td = new TimeDerivative();
                 // shouldn't be validating a brand new td...
@@ -2428,7 +2428,7 @@ void MainWindow::actionAddTimeDerivative_triggered()
 void MainWindow::actionAddAnalogePort_triggered()
 {
     if (viewCL.root!= NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         AnalogPort *ap = new AnalogPort();
         ap->mode = AnalogSendPort;
@@ -2449,7 +2449,7 @@ void MainWindow::actionAddAnalogePort_triggered()
 void MainWindow::actionAddEventPort_triggered()
 {
     if (viewCL.root!= NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         EventPort *ep = new EventPort();
         viewCL.root->al->EventPortList.push_back(ep);
@@ -2463,7 +2463,7 @@ void MainWindow::actionAddEventPort_triggered()
 void MainWindow::actionAddImpulsePort_triggered()
 {
     if (viewCL.root!= NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         ImpulsePort *ip = new ImpulsePort();
         viewCL.root->al->ImpulsePortList.push_back(ip);
@@ -2476,7 +2476,7 @@ void MainWindow::actionAddImpulsePort_triggered()
 void MainWindow::actionAddStateVariable_triggered()
 {
     if (viewCL.root != NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         StateVariable * sv = new StateVariable();
         sv->name = "New_State_Var_";
         int n = 1;
@@ -2504,7 +2504,7 @@ void MainWindow::actionAddStateVariable_triggered()
 void MainWindow::actionAddAlias_triggered()
 {
     if (viewCL.root != NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         Alias * a = new Alias();
         a->name = "New_Alias_";
         int n = 1;
@@ -2535,7 +2535,7 @@ void MainWindow::actionAddStateAssignment_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             StateAssignment *sa = new StateAssignment();
-            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+            QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2567,7 +2567,7 @@ void MainWindow::actionAddEventOut_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             EventOut *eo = new EventOut();
-            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+            QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2598,7 +2598,7 @@ void MainWindow::actionAddImpulseOut_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             ImpulseOut *io = new ImpulseOut();
-            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+            QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2689,7 +2689,7 @@ void MainWindow::actionNew_triggered()
     }
 
     // add the new component
-    data.catalogNrn.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
+    data.catalogNrn.push_back(QSharedPointer<Component> (new Component()));
     data.catalogNrn.back()-> name = "New Component " + QString::number(float(val));
     initialiseModel(data.catalogNrn.back());
     viewCL.root->alPtr = data.catalogNrn.back();
@@ -2718,7 +2718,7 @@ void MainWindow::actionShowHidePorts_triggered(bool checked)
 void MainWindow::actionMove_Up_triggered()
 {
     if (viewCL.root) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         viewCL.root->scene->moveItemUp();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
         updateTitle(true);
@@ -2728,7 +2728,7 @@ void MainWindow::actionMove_Up_triggered()
 void MainWindow::actionMove_Down_triggered()
 {
     if (viewCL.root) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         viewCL.root->scene->moveItemDown();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
         updateTitle(true);

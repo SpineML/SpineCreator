@@ -27,7 +27,7 @@
 
 #include <QDialog>
 #include "globalHeader.h"
-#include "nineml_classes.h"
+#include "CL_classes.h"
 #include "vectormodel.h"
 
 namespace Ui {
@@ -39,7 +39,7 @@ class valueListDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit valueListDialog(ParameterData *par, QWidget *parent=0);
+    explicit valueListDialog(ParameterInstance *par, QWidget *parent=0);
     ~valueListDialog();
 
 private:
@@ -47,7 +47,7 @@ private:
     vectorModel * vModel;
     QVector <double> vals;
     QVector <int> inds;
-    ParameterData * par;
+    ParameterInstance * par;
     void import_csv(QString);
     void keyPressEvent(QKeyEvent *evt);
 
