@@ -30,7 +30,7 @@
 #include "layoutaliaseditdialog.h"
 #include "layouteditpreviewdialog.h"
 #include "mainwindow.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "experiment.h"
 #include "projectobject.h"
 #include "undocommands.h"

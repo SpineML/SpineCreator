@@ -23,7 +23,7 @@
 ****************************************************************************/
 
 
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "projections.h"
 #include "nineml_layout_classes.h"
 #include "genericinput.h"

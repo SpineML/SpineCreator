@@ -27,7 +27,7 @@
 
 #include <QDialog>
 #include "globalHeader.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "vectormodel.h"
 
 namespace Ui {

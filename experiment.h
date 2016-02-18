@@ -26,7 +26,7 @@
 #define EXPERIMENT_H
 
 #include "globalHeader.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "viewELexptpanelhandler.h"
 
 class exptBox : public QFrame

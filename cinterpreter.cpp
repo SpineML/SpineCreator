@@ -26,7 +26,7 @@
 //#include "G__ci.h"
 
 //QString QString::number(float);
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "globalHeader.h"
 int precedance(valop in) {
 

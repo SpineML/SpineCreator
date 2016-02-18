@@ -28,7 +28,7 @@
 #include "globalHeader.h"
 
 #include "rootdata.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 #include "population.h"
 
 #define NO_DELAY -1 // used to determine if Python Scripts have delay data

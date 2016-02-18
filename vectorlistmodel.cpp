@@ -1,5 +1,5 @@
 #include "vectorlistmodel.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 
 vectorListModel::vectorListModel(QObject *parent) :
     QAbstractTableModel(parent)

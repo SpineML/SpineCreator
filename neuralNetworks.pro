@@ -22,7 +22,7 @@ SOURCES += main.cpp \
     population.cpp \
     rootdata.cpp \
     rootlayout.cpp \
-    nineML_classes.cpp \
+    nineml_classes.cpp \
     projections.cpp \
     connection.cpp \
     connectionmodel.cpp \
@@ -70,7 +70,7 @@ HEADERS  += mainwindow.h \
     glwidget.h \
     population.h \
     rootdata.h \
-    nineML_classes.h \
+    nineml_classes.h \
     projections.h \
     connection.h \
     connectionmodel.h \

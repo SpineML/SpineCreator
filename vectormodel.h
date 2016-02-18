@@ -26,7 +26,7 @@
 #define VECTORMODEL_H
 
 #include "globalHeader.h"
-#include "nineML_classes.h"
+#include "nineml_classes.h"
 
 class vectorModel : public QAbstractTableModel
 {
