@@ -620,11 +620,6 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
         QComboBox * portBox = new QComboBox;
         portBox->setMaximumWidth(90);
         if (set) {
-            // if broken NOT NEEDED ANYMORE
-            /*if (!data->isValidPointer(this->target)) {
-                set = false;
-                return this->drawInput(data, handler);
-            }*/
             // if spike source
             if (this->target->owner->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (this->target->owner);
@@ -633,7 +628,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                     portBox->addItem("spike in");
                     portBox->setDisabled(true);
                     // point to dummy event port
-                    portName = "in";
+                    portName = "spike";
                     portIsAnalog = false;
                 }
             }
