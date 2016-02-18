@@ -172,6 +172,20 @@ macx{
     DEPENDPATH +=  /opt/local/lib/graphviz
 }
 
+linux{
+    # Installation stuff for Linux. Important for debian builds
+    documentation.path = /usr/share/man/man1
+    documentation.files = spinecreator.1
+
+    icons.path = /usr/share/pixmaps
+    icons.files = spinecreator.png spinecreator.xpm
+
+    desktop.path = /usr/share/applications
+    desktop.files = spinecreator.desktop
+
+    INSTALLS += documentation icons desktop
+}
+
 # Use of the cgraph API from graphviz version 2.32 and above is the default. Can configure
 # to build with the deprecated libgraph API, if required (for Debian 7 and older Linux
 # distros). To do this, add "CONFIG+=use_libgraph_not_libcgraph" to the "Additional
@@ -187,16 +201,7 @@ CONFIG(use_libgraph_not_libcgraph) {
 OTHER_FILES += \
 spinecreator.pro.user
 
-documentation.path = /usr/share/man/man1
-documentation.files = spinecreator.1
-
-icons.path = /usr/share/pixmaps
-icons.files = spinecreator.png spinecreator.xpm
-
-desktop.path = /usr/share/applications
-desktop.files = spinecreator.desktop
-
 target.path = /usr/bin
-INSTALLS += target documentation icons desktop
+INSTALLS += target
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
