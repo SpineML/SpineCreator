@@ -9,6 +9,13 @@
 // avoid the metaData.xml file changing arbitrarily.
 #define METADATA_FLOAT_PRECISION 6
 
+/*!
+ * \brief The projectObject class stores the data for a project that is not currently selected.
+ *
+ * When projects
+ * are selected the data for the deselected project is stored into the project object and the data from the
+ * selected project object is loaded into the network rootdata class. Data is also stored for save events.
+ */
 class projectObject : public QObject
 {
     Q_OBJECT

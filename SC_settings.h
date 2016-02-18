@@ -34,6 +34,10 @@ class settings_window;
 
 class PythonSyntaxHighlighter;
 
+/*!
+ * \brief The settings_window class allows simulators and GUI settings to be updated, and python
+ * connections to be defined
+ */
 class settings_window : public QDialog
 {
     Q_OBJECT

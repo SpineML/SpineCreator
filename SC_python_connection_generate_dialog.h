@@ -32,6 +32,10 @@ namespace Ui {
 class generate_dialog;
 }
 
+/*!
+ * \brief The generate_dialog class alerts the user that python cnnectivity is being generated
+ *
+ */
 class generate_dialog : public QDialog
 {
     Q_OBJECT

@@ -57,6 +57,9 @@ struct column {
     dataType type;
 };
 
+/*!
+ * \brief The logData class provides an interface to logged data from simulations stored on disk
+ */
 class logData : public QObject
 {
     Q_OBJECT
