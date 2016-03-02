@@ -1,20 +1,29 @@
+%% This function loads binary data which has been output from SpineCreator.
+%% It returns the time axis in milliseconds in the variable t.
+%%
+%% For Octave, and XML support (using load_sc_data with one argument),
+%% you need jar files from Xerces, which you can get from:
+%% https://www.apache.org/dist/xerces/j/Xerces-J-bin.2.11.0.tar.gz
+%%
+%% Use javaaddpath to include these two files from the Xerces tarball:
+%% javaaddpath('/home/you/Downloads/xerces-2_11_0/xercesImpl.jar');
+%% javaaddpath('/home/you/Downloads/xerces-2_11_0/xml-apis.jar');
+%%
+%% Further down in your copy of this code, change the javaaddpath calls
+%% and then change the gotXerces variable to 1.
+%%
+%% varargin can be filled with arguments file_path then optionally
+%% num_neurons (which avoids use of xml reading code).
+%%
+%% Usage:
+%%
+%% [ data, count, t ] = load_sc_data ('Population_out_log.xml')
+%%
+%%  or
+%%
+%% [ data, count, t ] = load_sc_data ('Population_out_log.bin', 100)
+%%
 function [ data, count, t ] = load_sc_data (varargin)
-% load_sc_data Code to load up data which has been output from SpineCreator.
-% Returns the time axis in milliseconds in the variable t.
-
-% For Octave, and XML support (using load_sc_data with one argument),
-% you need these jar files from e.g.
-% https://www.apache.org/dist/xerces/j/Xerces-J-bin.2.11.0.tar.gz
-%
-% you need use javaaddpath to include these files:
-% javaaddpath('/home/you/Downloads/xerces-2_11_0/xercesImpl.jar');
-% javaaddpath('/home/you/Downloads/xerces-2_11_0/xml-apis.jar');
-%
-% Further down in your copy of this code, change the javaaddpath calls
-% and then change the gotXerces variable to 1.
-    
-% varargin can be filled with arguments file_path then optionally
-% num_neurons (which avoids use of xml reading code).
 
     isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
 
@@ -58,7 +67,7 @@ function [ data, count, t ] = load_sc_data (varargin)
     % Obtained from logCol elements:
     logColHeadings = [];
     logColTypes = [];
-    
+
     if (isempty(num_neurons))
         % Find the number of neurons in the binary log file from
         % the xml file.
@@ -111,13 +120,13 @@ function [ data, count, t ] = load_sc_data (varargin)
 
         logType = char(infoDoc.getElementsByTagName ...
                        ('LogAll').item(0).getAttribute('type'));
-        
+
         %logHeading = char(infoDoc.getElementsByTagName ...
         %                  ('LogCol').item(0).getAttribute('heading'))
-        
+
         % Timestep is specified in milliseconds
         dt = str2num(char(infoDoc.getElementsByTagName ...
-                          ('TimeStep').item(0).getAttribute('dt')));    
+                          ('TimeStep').item(0).getAttribute('dt')));
 
     end % else num_neurons already set.
 
@@ -146,10 +155,10 @@ function [ data, count, t ] = load_sc_data (varargin)
         if rtn == -1
             display (['Warning: failed to close file ', file_path]);
         end
-        
+
     else % The log file is in csv format
-        
+
         display ('Warning, csv file type not yet supported.');
-    
+
     end
 end

@@ -1,6 +1,11 @@
+%%
+%% Code to load up explicitDataBinaryFiles as used by SpineCreator.
+%%
+%% Usage:
+%%
+%% [ data, idx, count ] = load_explicit_data (file_path)
+%%
 function [ data, idx, count ] = load_explicit_data (file_path)
-% load_explicit_data Code to load up explicitDataBinaryFiles as used
-% by SpineCreator.
 
     isOctave = exist('OCTAVE_VERSION', 'builtin') ~= 0;
 
