@@ -983,8 +983,12 @@ bool logData::setupFromXML() {
     // resize data carriers
     colData.resize(columns.size());
 
-    // log name: NB: The use of '/' is Unix/Mac specific here. Use QDir instead.
-    logName = logFileName.right(logFileName.lastIndexOf('/'));
+    int lastsep = logFileName.lastIndexOf(QDir::separator());
+    if (lastsep != -1) {
+        logName = logFileName.right(logFileName.length()-lastsep-1);
+    } else {
+        logName = logFileName;
+    }
 
     // all successful!
     delete reader;
