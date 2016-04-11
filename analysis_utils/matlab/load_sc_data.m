@@ -74,7 +74,7 @@ function [ data, count, t ] = load_sc_data (varargin)
         if isOctave
             % User! You're using octave and you have asked for XML reading of the
             % SpineML log metadata, so need to javaaddpath.
-            gotXerces = 1; % User! Change this to 1 when you're done!
+            gotXerces = 0; % User! Change this to 1 when you're done!
             if gotXerces == 0
                 display (['Calling this function with 1 arguments means ' ...
                           'it needs to read XML. For XML support  you need ' ...
