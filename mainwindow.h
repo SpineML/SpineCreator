@@ -27,18 +27,18 @@
 
 #include "globalHeader.h"
 
-#include "nineML_classes.h"
-#include "connectionmodel.h"
-#include "glconnectionwidget.h"
-#include "rootdata.h"
-#include "rootlayout.h"
-#include "layoutaliaseditdialog.h"
-#include "layouteditpreviewdialog.h"
-#include "viewELexptpanelhandler.h"
-#include "viewVZlayoutedithandler.h"
-#include "viewGVpropertieslayout.h"
-#include "nineml_alview.h"
-#include "versioncontrol.h"
+#include "CL_classes.h"
+#include "SC_connectionmodel.h"
+#include "SC_network_3d_visualiser_panel.h"
+#include "SC_network_layer_rootdata.h"
+#include "SC_network_layer_rootlayout.h"
+#include "SC_layout_aliaseditdialog.h"
+#include "SC_layout_editpreviewdialog.h"
+#include "SC_viewELexptpanelhandler.h"
+#include "SC_viewVZlayoutedithandler.h"
+#include "SC_viewGVpropertieslayout.h"
+#include "SC_component_view.h"
+#include "SC_versioncontrol.h"
 
 /*!
  * paths used to store the last used directory for file open/save
@@ -73,7 +73,7 @@ struct viewELstruct {
 };
 
 struct viewNLstruct {
-    rootLayout * layout;
+    nl_rootlayout * layout;
 };
 
 struct viewVZstruct {
@@ -115,7 +115,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
-    rootData data;
+    nl_rootdata data;
     QUndoGroup * undoStacks;
     viewGVstruct viewGV;
     viewELstruct viewEL;
@@ -183,8 +183,8 @@ public slots:
     void new_project();
     void saveImageAction();
     void launchSimulatorEditor();
-    void initialiseModel(QSharedPointer<NineMLComponent>);
-    void updateNetworkButtons(rootData *);
+    void initialiseModel(QSharedPointer<Component>);
+    void updateNetworkButtons(nl_rootdata *);
     void undoOrRedoPerformed(int);
 
     // AL editor slots
@@ -239,14 +239,14 @@ signals:
     void import_component_xml(QStringList fileNames);
     void import_layout_xml(QStringList fileNames);
     void import_model_xml(QString fileName);
-    void export_component_xml(QString fileName, QSharedPointer<NineMLComponent> component);
+    void export_component_xml(QString fileName, QSharedPointer<Component> component);
     void export_layout_xml(QString fileName, QSharedPointer<NineMLLayout> component);
     void export_model_xml(QString fileName);
     void import_csv_signal(QString fileName);
     void launchComponentSorter();
     void mathText(QString);
     void statusBarUpdate(QString, int);
-    void updatePanel(rootData *);
+    void updatePanel(nl_rootdata *);
     void saveImage();
 
 protected:

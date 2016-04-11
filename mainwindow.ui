@@ -808,6 +808,8 @@
     <addaction name="actionDelete_current_selection"/>
     <addaction name="actionEdit_Simulators"/>
     <addaction name="separator"/>
+    <addaction name="action_Copy_objects"/>
+    <addaction name="actionPaste_objects"/>
    </widget>
    <widget class="QMenu" name="menuNeuron">
     <property name="title">
@@ -1082,13 +1084,23 @@
     <string>Clear list</string>
    </property>
   </action>
+  <action name="action_Copy_objects">
+   <property name="text">
+    <string>&amp;Copy objects</string>
+   </property>
+  </action>
+  <action name="actionPaste_objects">
+   <property name="text">
+    <string>Paste objects</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="3" margin="0"/>
  <customwidgets>
   <customwidget>
    <class>GLWidget</class>
    <extends>QWidget</extends>
-   <header>glwidget.h</header>
+   <header>SC_network_2d_visualiser_panel.h</header>
    <container>1</container>
    <slots>
     <signal>MouseMoveEvent(QMouseEvent)</signal>

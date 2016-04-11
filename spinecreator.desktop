@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=0.9.5
+Name=SpineCreator
+Comment=A user interface for creating neural network simulations
+Exec=spinecreator
+Icon=/usr/share/pixmaps/spinecreator.png
+Terminal=false
+Type=Application
+Categories=Science;

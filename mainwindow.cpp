@@ -22,31 +22,36 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-#include <Python.h>
+#ifdef _DEBUG
+  #undef _DEBUG
+  #include <Python.h>
+  #define _DEBUG
+#else
+  #include <Python.h>
+#endif
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "editsimulators.h"
-#include "nineml_rootcomponentitem.h"
-#include "propertiesmanager.h"
-#include "nineml_alscene.h"
-#include "exportimage.h"
-#include "dotwriter.h"
-#include "systemmodel.h"
-#include "versionchange_dialog.h"
-#include "savenetworkimage_dialog.h"
-#include "experiment.h"
+#include "SC_settings.h"
+#include "SC_component_rootcomponentitem.h"
+#include "SC_component_propertiesmanager.h"
+#include "SC_component_scene.h"
+#include "SC_export_component_image.h"
+#include "SC_dotwriter.h"
+#include "SC_systemmodel.h"
+#include "SC_export_network_image.h"
+#include "EL_experiment.h"
 #include <QCryptographicHash>
-#include "undocommands.h"
-#include "versioncontrol.h"
+#include "SC_undocommands.h"
+#include "SC_versioncontrol.h"
 #include "qcustomplot.h"
-#include "projectobject.h"
+#include "SC_projectobject.h"
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QStandardPaths>
 #endif
 
 #include "qdebug.h"
-#include "aboutdialog.h"
+#include "SC_aboutdialog.h"
 
 
 MainWindow::
@@ -59,8 +64,8 @@ MainWindow(QWidget *parent) :
     data.main = this;
     this->setWindowTitle("SpineCreator - Graphical SNN creation");
 
-    QCoreApplication::setOrganizationName("BLANK");
-    QCoreApplication::setOrganizationDomain("BLANK.ac.uk");
+    QCoreApplication::setOrganizationName("SpineML");
+    QCoreApplication::setOrganizationDomain("sheffield.ac.uk");
     QCoreApplication::setApplicationName("SpineCreator");
 
     // initialise GUI
@@ -186,6 +191,8 @@ MainWindow(QWidget *parent) :
 
         QDir brahmspath = qApp->applicationDirPath();
         brahmspath.cd("SystemML");
+        QDir S2Bpath = qApp->applicationDirPath();
+        S2Bpath.cd("SpineML_2_BRAHMS");
 
         // Initial code to try and find SpineML_2_BRAHMS - looks in
         // the HOME and one level of sub-directories, should be
@@ -208,9 +215,12 @@ MainWindow(QWidget *parent) :
             correct_dir.push_back("SpineML_2_BRAHMS");
         }
 
+        settings.setValue("simulators/BRAHMS/path", S2Bpath.absolutePath() + "/convert_script_s2b");
+
         settings.setValue("simulators/BRAHMS/envVar/SYSTEMML_INSTALL_PATH", brahmspath.absolutePath());
         settings.setValue("simulators/BRAHMS/envVar/PATH", QDir::toNativeSeparators(qgetenv("PATH") + ":" + brahmspath.absolutePath() + QDir::toNativeSeparators("/SystemML/BRAHMS/bin/")));
-        settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", simdir.absolutePath() + "/SpineML_2_BRAHMS/temp/Namespace/");
+        settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", S2Bpath.absolutePath() + "/temp/Namespace/");
+        settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS_out"));
 #endif
         settings.setValue("simulators/BRAHMS/envVar/REBUILD", "false");
     }
@@ -273,7 +283,7 @@ MainWindow(QWidget *parent) :
     this->ui->tab1->setStyleSheet("border: 0px; color:white; background:rgba(255,255,255,40%)");
 
     // add viewNL properties panel
-    rootLayout * layoutRoot = new rootLayout(&data, ui->parsPanel);
+    nl_rootlayout * layoutRoot = new nl_rootlayout(&data, ui->parsPanel);
     this->viewNL.layout = layoutRoot;
 
     // join up the components of the program
@@ -315,9 +325,9 @@ MainWindow(QWidget *parent) :
     // this creates a Qt timer event
     connect( timer, SIGNAL(timeout()), ui->viewport, SLOT(animate()) );
 
-    QObject::connect(&(data), SIGNAL(updatePanel(rootData*)), layoutRoot, SLOT(updatePanel(rootData*)));
-    QObject::connect(&(data), SIGNAL(updatePanel(rootData*)), this, SLOT(updateNetworkButtons(rootData*)));
-    QObject::connect(this, SIGNAL(updatePanel(rootData*)), layoutRoot, SLOT(updatePanel(rootData*)));
+    QObject::connect(&(data), SIGNAL(updatePanel(nl_rootdata*)), layoutRoot, SLOT(updatePanel(nl_rootdata*)));
+    QObject::connect(&(data), SIGNAL(updatePanel(nl_rootdata*)), this, SLOT(updateNetworkButtons(nl_rootdata*)));
+    QObject::connect(this, SIGNAL(updatePanel(nl_rootdata*)), layoutRoot, SLOT(updatePanel(nl_rootdata*)));
 
     QObject::connect(layoutRoot, SIGNAL(setCaption(QString)), &(data), SLOT(setModelTitle(QString)));
     QObject::connect(&(data), SIGNAL(statusBarUpdate(QString, int)), ui->statusBar, SLOT(showMessage(QString, int)));
@@ -1100,10 +1110,10 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
 
     // extract the current item component:
     // select catalog
-    QVector < QSharedPointer<NineMLComponent> > currCatalog;
+    QVector < QSharedPointer<Component> > currCatalog;
     QString catalogString;
 
-    QSharedPointer<NineMLComponent> selectedComponent;
+    QSharedPointer<Component> selectedComponent;
 
     for (int catNum = 0; catNum < 3; ++catNum) {
 
@@ -1126,7 +1136,7 @@ void MainWindow::fileListItemChanged(QListWidgetItem * current, QListWidgetItem 
         for (int i = 0; i < currCatalog.size(); ++i) {
 
             // get reference for component
-            QSharedPointer<NineMLComponent> component = currCatalog[i];
+            QSharedPointer<Component> component = currCatalog[i];
 
             // create the text for this component
             QString title = catalogString;
@@ -1192,7 +1202,7 @@ void MainWindow::addComponentsToFileList()
     }
 
     // select catalog
-    QVector < QSharedPointer<NineMLComponent> > currCatalog;
+    QVector < QSharedPointer<Component> > currCatalog;
     QString catalogString;
     for (int catNum = 0; catNum < 3; ++catNum) {
 
@@ -1215,7 +1225,7 @@ void MainWindow::addComponentsToFileList()
         for (int i = 1; i < currCatalog.size(); ++i) {
 
             // get reference for component
-            QSharedPointer<NineMLComponent> component = currCatalog[i];
+            QSharedPointer<Component> component = currCatalog[i];
 
             // create the text for this component
             QString title = catalogString;
@@ -1307,6 +1317,10 @@ void MainWindow::createActions()
     connect(ui->actionRe_scan_for_VCS, SIGNAL(triggered()), this, SLOT(actionRescanVCS_triggered()));
 
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
+
+    connect(ui->action_Copy_objects, SIGNAL(triggered()), &data, SLOT(copySelectionToClipboard()));
+    connect(ui->actionPaste_objects, SIGNAL(triggered()), &data, SLOT(pasteSelectionFromClipboard()));
+
 }
 
 void MainWindow::new_project()
@@ -1665,7 +1679,7 @@ void MainWindow::import_csv()
 void MainWindow::duplicate_component()
 {
     // find which catalog we are saving to
-    QVector < QSharedPointer<NineMLComponent> > * curr_lib;
+    QVector<QSharedPointer<Component> >* curr_lib = (QVector<QSharedPointer<Component> >*)0;
     if (viewCL.root->al->type == "neuron_body")
         curr_lib = &data.catalogNrn;
     if (viewCL.root->al->type == "weight_update")
@@ -1692,7 +1706,7 @@ void MainWindow::duplicate_component()
     }
 
     // duplicate
-    curr_lib->push_back(QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al)));
+    curr_lib->push_back(QSharedPointer<Component> (new Component(viewCL.root->al)));
     curr_lib->back()->name += QString::number(float(val));
 
 
@@ -2231,7 +2245,7 @@ void MainWindow::setCaption(QString caption)
 
 void MainWindow::launchSimulatorEditor()
 {
-    editSimulators * dialog  = new editSimulators(this);
+    settings_window * dialog  = new settings_window(this);
     dialog->show();
 
     // we may have changed the python scripts, so we should redraw NL and VZ
@@ -2244,7 +2258,7 @@ void MainWindow::launchSimulatorEditor()
 
 ////////////////////////////////////////////// AL editor slots
 
-void MainWindow::initialiseModel(QSharedPointer<NineMLComponent> component)
+void MainWindow::initialiseModel(QSharedPointer<Component> component)
 {
     //todo: cleanup any old scene and root stuff
     if (viewCL.root != NULL) {
@@ -2282,7 +2296,7 @@ void MainWindow::initialiseModel(QSharedPointer<NineMLComponent> component)
 void MainWindow::actionAddParamater_triggered()
 {
     if (viewCL.root != NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         Parameter *p = new Parameter();
         p->name = "New_Parameter_";
         int n = 1;
@@ -2311,7 +2325,7 @@ void MainWindow::actionAddRegime_triggered()
 {
     if (viewCL.root != NULL) {
         // store previous iteration for undo / redo
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         Regime *r = new Regime();
         r->name = "New_Regime_";
         int n = 1;
@@ -2373,7 +2387,7 @@ void MainWindow::actionSelectMode_triggered()
 void MainWindow::actionDeleteItems_triggered()
 {
     if (viewCL.frame->isVisible()) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         viewCL.root->scene->deleteSelectedItem();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Delete selected"));
     }
@@ -2392,7 +2406,7 @@ void MainWindow::actionAddTimeDerivative_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             if (g->type() == RegimeGraphicsItem::Type) {
-                QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+                QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
                 RegimeGraphicsItem *rgi = ((RegimeGraphicsItem*)g);
                 TimeDerivative * td = new TimeDerivative();
                 // shouldn't be validating a brand new td...
@@ -2413,7 +2427,7 @@ void MainWindow::actionAddTimeDerivative_triggered()
 void MainWindow::actionAddAnalogePort_triggered()
 {
     if (viewCL.root!= NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         AnalogPort *ap = new AnalogPort();
         ap->mode = AnalogSendPort;
@@ -2434,7 +2448,7 @@ void MainWindow::actionAddAnalogePort_triggered()
 void MainWindow::actionAddEventPort_triggered()
 {
     if (viewCL.root!= NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         EventPort *ep = new EventPort();
         viewCL.root->al->EventPortList.push_back(ep);
@@ -2448,7 +2462,7 @@ void MainWindow::actionAddEventPort_triggered()
 void MainWindow::actionAddImpulsePort_triggered()
 {
     if (viewCL.root!= NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         PortListGraphicsItem *pli = viewCL.root->scene->portl_item;
         ImpulsePort *ip = new ImpulsePort();
         viewCL.root->al->ImpulsePortList.push_back(ip);
@@ -2461,7 +2475,7 @@ void MainWindow::actionAddImpulsePort_triggered()
 void MainWindow::actionAddStateVariable_triggered()
 {
     if (viewCL.root != NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         StateVariable * sv = new StateVariable();
         sv->name = "New_State_Var_";
         int n = 1;
@@ -2489,7 +2503,7 @@ void MainWindow::actionAddStateVariable_triggered()
 void MainWindow::actionAddAlias_triggered()
 {
     if (viewCL.root != NULL) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         Alias * a = new Alias();
         a->name = "New_Alias_";
         int n = 1;
@@ -2520,7 +2534,7 @@ void MainWindow::actionAddStateAssignment_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             StateAssignment *sa = new StateAssignment();
-            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+            QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2552,7 +2566,7 @@ void MainWindow::actionAddEventOut_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             EventOut *eo = new EventOut();
-            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+            QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2583,7 +2597,7 @@ void MainWindow::actionAddImpulseOut_triggered()
         if (selected.size() > 0) {
             QGraphicsItem *g = selected.first();
             ImpulseOut *io = new ImpulseOut();
-            QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+            QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
 
             if (g->type() == OnConditionGraphicsItem::Type) {
                 OnConditionGraphicsItem *oci = ((OnConditionGraphicsItem*)g);
@@ -2674,7 +2688,7 @@ void MainWindow::actionNew_triggered()
     }
 
     // add the new component
-    data.catalogNrn.push_back(QSharedPointer<NineMLComponent> (new NineMLComponent()));
+    data.catalogNrn.push_back(QSharedPointer<Component> (new Component()));
     data.catalogNrn.back()-> name = "New Component " + QString::number(float(val));
     initialiseModel(data.catalogNrn.back());
     viewCL.root->alPtr = data.catalogNrn.back();
@@ -2703,7 +2717,7 @@ void MainWindow::actionShowHidePorts_triggered(bool checked)
 void MainWindow::actionMove_Up_triggered()
 {
     if (viewCL.root) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         viewCL.root->scene->moveItemUp();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
         updateTitle(true);
@@ -2713,7 +2727,7 @@ void MainWindow::actionMove_Up_triggered()
 void MainWindow::actionMove_Down_triggered()
 {
     if (viewCL.root) {
-        QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent> (new NineMLComponent(viewCL.root->al));
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(viewCL.root->al));
         viewCL.root->scene->moveItemDown();
         viewCL.root->alPtr->undoStack.push(new changeComponent(this->viewCL.root, oldComponent, "Change order"));
         updateTitle(true);
@@ -2845,7 +2859,7 @@ void MainWindow::updateTitle()
     }
 }
 
-void MainWindow::updateNetworkButtons(rootData * data)
+void MainWindow::updateNetworkButtons(nl_rootdata * data)
 {
     if (data->selList.size() == 0) {
         ui->butA->setDisabled(false);

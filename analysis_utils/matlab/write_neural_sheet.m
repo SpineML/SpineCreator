@@ -1,5 +1,9 @@
-% Write neuralsheet out to file_path as doubles in a format
-% suitable for input to Brahms.
+%% Write neuralsheet out to file_path as doubles in a format
+%% suitable for input to Brahms.
+%%
+%% Usage:
+%%
+%%  write_neural_sheet (neuralsheet, file_path)
 function write_neural_sheet (neuralsheet, file_path)
 
     nfs = size(neuralsheet);
