@@ -114,8 +114,7 @@ function [ data, count, t ] = load_sc_data (varargin)
     t = [0 : dt : (dt*count)-dt];
 
     % Finally, close the file.
-    %rtn = fclose (fid);
-    rtn = 0;
+    rtn = fclose (fid);
     if rtn == -1
         display (['Warning: failed to close file ', file_path]);
     end
