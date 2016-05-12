@@ -237,6 +237,7 @@ public:
     QLayout * drawLayout(nl_rootdata *, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay);
     int getIndex();
     connection * newFromExisting();
+    void copyDataFromOld();
 
 private:
     QString filename;
@@ -244,6 +245,7 @@ private:
     QXmlStreamReader xmlIn;
     int numRows;
     QVector < change > changes;
+    csv_connection * copiedFrom;
 
     /*!
      * Generate a filename based on the source and destination

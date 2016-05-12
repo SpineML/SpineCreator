@@ -418,6 +418,8 @@ csv_connection::csv_connection()
     this->values.push_back("src");
     this->values.push_back("dst");
     this->values.push_back("delay");
+
+    copiedFrom = NULL;
 }
 
 QDir csv_connection::getLibDir (void)
@@ -1425,12 +1427,13 @@ connection * csv_connection::newFromExisting()
     // use the same delay
     c->delay = new ParameterInstance(this->delay);
 
-    // now copy the data...
-    for (int i = 0; i < this->getNumRows(); ++i) {
+    c->copiedFrom = this;
+    // now copy the data... (do this later)
+    /*for (int i = 0; i < this->getNumRows(); ++i) {
         for (int j = 0; j < this->getNumCols(); ++j) {
             c->setData(i,j,this->getData(i,j));
         }
-    }
+    }*/
 
     // now, do we have a generator?
     if (this->generator != NULL) {
@@ -1440,6 +1443,17 @@ connection * csv_connection::newFromExisting()
 
     return c;
 
+}
+
+void csv_connection::copyDataFromOld()
+{
+    if (this->copiedFrom) {
+        for (int i = 0; i < this->copiedFrom->getNumRows(); ++i) {
+            for (int j = 0; j < this->copiedFrom->getNumCols(); ++j) {
+                this->setData(i,j,this->copiedFrom->getData(i,j));
+            }
+        }
+    }
 }
 
 pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
