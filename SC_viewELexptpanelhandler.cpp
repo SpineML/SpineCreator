@@ -1810,6 +1810,7 @@ void viewELExptPanelHandler::run()
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
 
     // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
+    // FIXME: It would be great if this were project-specific, so that each project has its own temp dir.
     QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp";
 
     QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
