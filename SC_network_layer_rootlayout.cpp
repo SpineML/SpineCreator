@@ -1537,9 +1537,6 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
     double value = -1;
 
     name = currPar->name;
-    // FIXME: In here, add the name of the explicitDataBinaryFile, if
-    // that is where the param values are stored. Comment by Seb. At a
-    // later date, Seb can't figure out what he meant by it!
 
     if (name.size() > 13) {
         name.resize(10);
@@ -1887,7 +1884,11 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
         connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
         varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type",type + parType);
         // add the full parameter name to the tooltip
-        varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget()->setToolTip(currPar->name);
+        QString paramTooltip = currPar->name;
+        if (!currPar->filename.isEmpty()) {
+            paramTooltip += ", datafile: " + currPar->filename;
+        }
+        varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget()->setToolTip(paramTooltip);
         }
         break;
     }
