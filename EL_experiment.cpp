@@ -65,9 +65,123 @@ experiment::~experiment() {
 
 }
 
-experiment::experiment(experiment * /*exptToCopy*/)
+
+/*!
+ * \brief experiment::experiment
+ * \param exptToCopy
+ * Construct a new experiment from an old one - used
+ * to copy an existing experiment.
+ */
+experiment::experiment(experiment * exptToCopy)
 {
-    // add copy constructor here
+
+    this->setup.dt = exptToCopy->setup.dt;
+    this->setup.duration = exptToCopy->setup.duration;
+    this->setup.exptProcedure = exptToCopy->setup.exptProcedure;
+    this->setup.simType = exptToCopy->setup.simType;
+    this->setup.solver = exptToCopy->setup.solver;
+    this->setup.solverOrder = exptToCopy->setup.solverOrder;
+
+    this->ins.resize(exptToCopy->ins.size());
+    this->outs.resize(exptToCopy->outs.size());
+    this->changes.resize(exptToCopy->changes.size());
+    this->lesions.resize(exptToCopy->lesions.size());
+
+    for (int i = 0; i < exptToCopy->ins.size(); ++i) {
+        this->ins[i] = new exptInput(exptToCopy->ins[i]);
+    }
+    for (int i = 0; i < exptToCopy->outs.size(); ++i) {
+        this->outs[i] = new exptOutput(exptToCopy->outs[i]);
+    }
+    for (int i = 0; i < exptToCopy->changes.size(); ++i) {
+        this->changes[i] = new exptChangeProp(exptToCopy->changes[i]);
+    }
+    for (int i = 0; i < exptToCopy->lesions.size(); ++i) {
+        this->lesions[i] = new exptLesion(exptToCopy->lesions[i]);
+    }
+
+    // append something to the name to distinguish new from old
+    this->name = exptToCopy->name + " (copy)";
+    this->description = exptToCopy->description;
+
+    this->selected = false;
+    this->editing = false;
+    //this->saveWithDateStamp = exptToCopy->saveWithDateStamp;
+    this->runButton = NULL;
+    this->progressBar = NULL;
+}
+
+/*!
+ * \brief exptInput::exptInput
+ * Create a new copy of an existing Input.
+ */
+exptInput::exptInput(exptInput * inToCopy)
+{
+
+    this->rate = inToCopy->rate;
+    this->currentIndex = inToCopy->currentIndex;
+
+    this->inType = inToCopy->inType;
+    this->params = inToCopy->params;
+    this->externalInput = inToCopy->externalInput;
+
+    this->target = inToCopy->target;
+    this->portName = inToCopy->portName;
+    this->portIsAnalog = inToCopy->portIsAnalog;
+    this->edit = false;
+    this->set = true;
+    this->name = inToCopy->name;
+    this->rateDistribution = inToCopy->rateDistribution;
+    //this->eventport = EventPort(inToCopy->eventport);
+
+}
+
+/*!
+ * \brief exptOutput::exptOutput
+ * Create a new copy of an existing Output.
+ */
+exptOutput::exptOutput(exptOutput * outToCopy)
+{
+
+    this->source = outToCopy->source;
+    this->portName = outToCopy->portName;
+    this->portIsAnalog = outToCopy->portIsAnalog;
+    this->edit = false;
+    this->set = true;
+    this->isExternal = outToCopy->isExternal;
+    this->name = outToCopy->name;
+    this->externalOutput = outToCopy->externalOutput;
+    this->indices = outToCopy->indices;
+
+}
+
+/*!
+ * \brief exptLesion::exptLesion
+ * Create a copy of an existing Lesion
+ */
+exptLesion::exptLesion(exptLesion * lToCopy)
+{
+
+    this->proj = lToCopy->proj;
+    this->port = lToCopy->port;
+    this->edit = false;
+    this->set = true;
+
+}
+
+/*!
+ * \brief exptChangeProp::exptChangeProp
+ * Create a copy of an existing ChangeProp
+ */
+exptChangeProp::exptChangeProp(exptChangeProp * cpToCopy)
+{
+
+    this->par = cpToCopy->par;
+    this->component = cpToCopy->component;
+    this->edit = false;
+    this->set = true;
+    this->name = cpToCopy->name;
+
 }
 
 exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
@@ -219,7 +333,7 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
             QObject::connect(this->runButton, SIGNAL(destroyed()), this, SLOT(runDestroyed()));
         }
         QToolButton * run = this->runButton;
-        // if any subcomponents of the experiment asre being edited we should disable this
+        // if any subcomponents of the experiment are being edited we should disable this
         if (this->subEdit) {
             run->setText("Run (disabled while editing)");
             run->setEnabled(false);

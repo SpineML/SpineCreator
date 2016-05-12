@@ -110,6 +110,14 @@ struct externalObject {
     int size;
 };
 
+/*!
+ * \brief The exptInput class
+ * A class to represent the SpineML Experiment/ *Input tags.
+ * The class represents all Inputs, with the exptIntype
+ * variable switching between types. The params QVector
+ * holds the configuration data for the input, the
+ * structure of which varies between input types.
+ */
 class exptInput : QObject
 {
     Q_OBJECT
@@ -131,6 +139,7 @@ public:
         externalInput.host = "127.0.0.1";
         externalInput.timestep = 0.0;
     }
+    exptInput(exptInput *);
 
     bool rate;
     int currentIndex;
@@ -152,6 +161,12 @@ public:
     void readXML(QXmlStreamReader * , projectObject *);
 };
 
+/*!
+ * \brief The exptOutput class
+ * A class to represent the SpineML Experiment/LogOutput tags.
+ * The class represents all Outputs, with network outputs
+ * slected using the isExternal bool.
+ */
 class exptOutput : QObject {
     Q_OBJECT
 public:
@@ -160,6 +175,7 @@ public:
                            externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "127.0.0.1"; externalOutput.timestep = 0.0; \
                            startTime = 0; endTime = 100000000;}
 
+    exptOutput(exptOutput *);
     //exptOutput outType;
     //QVector < float > params;
     QSharedPointer <ComponentInstance> source;
@@ -186,6 +202,8 @@ public:
 
     exptLesion() {edit = true; set=false;}
 
+    exptLesion(exptLesion *);
+
     //exptOutput outType;
     //QVector < float > params;
     QSharedPointer <projection> proj;
@@ -204,6 +222,8 @@ class exptChangeProp : QObject {
 public:
 
     exptChangeProp() {edit = true; set=false; par = NULL; name = "New changed property";}
+
+    exptChangeProp(exptChangeProp *);
 
     ParameterInstance * par;
     QSharedPointer <ComponentInstance> component;

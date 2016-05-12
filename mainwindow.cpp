@@ -1315,6 +1315,7 @@ void MainWindow::createActions()
     connect(ui->actionRepository_status, SIGNAL(triggered()), this, SLOT(actionRepStatus_triggered()));
     connect(ui->actionRepository_log, SIGNAL(triggered()), this, SLOT(actionRepLog_triggered()));
     connect(ui->actionRe_scan_for_VCS, SIGNAL(triggered()), this, SLOT(actionRescanVCS_triggered()));
+    connect(ui->actionDuplicate_experiment, SIGNAL(triggered()), this, SLOT(actionDuplicate_experiment_triggered()));
 
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 
@@ -2763,6 +2764,23 @@ void MainWindow::actionRescanVCS_triggered()
 {
     data.currProject->version.detectVCSes();
     configureVCSMenu();
+}
+
+void MainWindow::actionDuplicate_experiment_triggered()
+{
+        // find the selected experiment
+    for (int i = 0; i < this->data.experiments.size(); ++i)
+    {
+        if (this->data.experiments[i]->selected) {
+            this->data.experiments.push_back(new experiment(this->data.experiments[i]));
+            // select new experiment
+            this->data.experiments.back()->select(&this->data.experiments);
+            if (this->viewELhandler) {
+                this->viewELhandler->redraw();
+            }
+            return;
+        }
+    }
 }
 
 void MainWindow::about()
