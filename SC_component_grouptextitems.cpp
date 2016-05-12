@@ -26,7 +26,6 @@
 #include <algorithm>
 
 #include "SC_component_grouptextitems.h"
-#include "CL_regimegraphicsitem.h"
 
 
 GroupedTextItem::GroupedTextItem(TextItemGroup *parent)

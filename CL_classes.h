@@ -270,11 +270,12 @@ public:
     Port(Port *data);
     QString getName();
     void setName(QString name);
-    Port(){dims = new dim("?");}
+    Port(){dims = new dim("?"); isPost = false;}
     virtual ~Port(){delete dims;}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual bool isAnalog();
+    bool isPost;
 signals:
     void nameChanged();
 };
@@ -288,13 +289,14 @@ public:
     ReduceOperation op;
     StateVariable *variable;
     AnalogPort(AnalogPort *data);
-    AnalogPort() : Port() {variable=NULL; op = ReduceOperationAddition;}
+    AnalogPort() : Port() {variable=NULL; op = ReduceOperationAddition; isPerConn = false;}
     virtual ~AnalogPort(){}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     bool isAnalog();
     virtual ComponentObjectType Type(){return COMPONENT_ANALOG_PORT;}
     int validateAnalogPort(Component *component, QStringList *);
+    bool isPerConn;
 };
 
 /*!
@@ -607,6 +609,7 @@ public:
 
     QString name;
     QString type;
+    bool islearning;
     Regime *initial_regime;
     QVector <Regime*> RegimeList;
     QVector <StateVariable*> StateVariableList;

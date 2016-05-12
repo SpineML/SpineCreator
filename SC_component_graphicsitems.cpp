@@ -1513,6 +1513,15 @@ void AnalogPortTextItem::setDimsUnit(QString u)
         oldComponent.clear();
 }
 
+void AnalogPortTextItem::setIsPostState(bool b)
+{
+    this->port->isPost = b;
+}
+
+void AnalogPortTextItem::setIsPerConnState(bool b)
+{
+    this->port->isPerConn = b;
+}
 
 /************************************************************/
 
@@ -1586,6 +1595,11 @@ void EventPortTextItem::setPortMode(QString p)
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set EventPort mode"));
     else
         oldComponent.clear();
+}
+
+void EventPortTextItem::setIsPostState(bool b)
+{
+    this->port->isPost = b;
 }
 
 /************************************************************/

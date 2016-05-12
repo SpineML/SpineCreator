@@ -38,7 +38,6 @@ SOURCES += main.cpp \
     SC_versioncontrol.cpp \
     SC_network_layer_rootdata.cpp \
     SC_network_layer_rootlayout.cpp \
-    CL_regimegraphicsitem.cpp \
     SC_connectionlistdialog.cpp \
     SC_connectionmodel.cpp \
     SC_dotwriter.cpp \
@@ -87,7 +86,6 @@ HEADERS += mainwindow.h \
     SC_versioncontrol.h \
     SC_network_layer_rootdata.h \
     SC_network_layer_rootlayout.h \
-    CL_regimegraphicsitem.h \
     SC_connectionlistdialog.h \
     SC_connectionmodel.h \
     SC_dotwriter.h \

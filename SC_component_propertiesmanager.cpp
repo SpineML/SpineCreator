@@ -192,6 +192,14 @@ void PropertiesManager::createEmptySelectionProperties()
     connect(initial_regime, SIGNAL(currentIndexChanged(QString)), root, SLOT(setInitialRegime(QString)));
     addRow(tr("&Initial Regime:"),initial_regime);
 
+    // for WU add 'islearning' toggle
+    if (typeVal == 1) {
+        QCheckBox * islearn = new QCheckBox();
+        islearn->setChecked(root->al->islearning);
+        connect(islearn, SIGNAL(toggled(bool)), root, SLOT(setLearningState(bool)));
+        addRow(tr("&Learning:"),islearn);
+    }
+
     // add path combobox - NO LONGER USED
     /*QComboBox * path = new QComboBox;
     path->addItem("model");
@@ -706,6 +714,13 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
             var->setCurrentIndex(-1);
         connect(var, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setVariable(QString)));
         addRow(tr("&Variable:"),var);
+        if (root->al->islearning) {
+            // add checkbox for postsynaptic input
+            QCheckBox * ispost = new QCheckBox();
+            ispost->setChecked(ap->port->isPost);
+            connect(ispost, SIGNAL(toggled(bool)), ap, SLOT(setIsPostState(bool)));
+            addRow(tr("&Is postsynaptic:"), ispost);
+        }
     }
     //otherwise
     else
@@ -753,6 +768,13 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
         }
         connect(reduce, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setPortReduceOp(QString)));
         addRow(tr("&Reduce Operation:"), reduce);
+        if (root->al->islearning) {
+            // add checkbox for perConn output
+            QCheckBox * isper = new QCheckBox();
+            isper->setChecked(ap->port->isPerConn);
+            connect(isper, SIGNAL(toggled(bool)), ap, SLOT(setIsPerConnState(bool)));
+            addRow(tr("&Is per connection:"), isper);
+        }
     }
 
     if ((m == AnalogRecvPort)||(m == AnalogReducePort)){
@@ -802,6 +824,14 @@ void PropertiesManager::createEventPortProperties(EventPortTextItem *ep)
     name->setValidator(validator);
     connect(name, SIGNAL(textEdited(QString)), ep, SLOT(setName(QString)));
     addRow(tr("&Name:"),name);
+
+    if (root->al->islearning) {
+        // add checkbox for postsynaptic input
+        QCheckBox * ispost = new QCheckBox();
+        ispost->setChecked(ep->port->isPost);
+        connect(ispost, SIGNAL(toggled(bool)), ep, SLOT(setIsPostState(bool)));
+        addRow(tr("&Is postsynaptic:"), ispost);
+    }
 }
 
 void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
