@@ -30,6 +30,8 @@
   #include <Python.h>
 #endif
 
+#include <QUuid>
+
 #include "NL_connection.h"
 #include "SC_layout_cinterpreter.h"
 #include "SC_python_connection_generate_dialog.h"
@@ -420,6 +422,9 @@ csv_connection::csv_connection()
     this->values.push_back("delay");
 
     copiedFrom = NULL;
+
+    // Generate the unique UUID style filename here in the constructor.
+    this->generateUUIDFilename();
 }
 
 QDir csv_connection::getLibDir (void)
@@ -434,7 +439,6 @@ QDir csv_connection::getLibDir (void)
             qDebug() << "error creating library";
         }
     }
-    //qDebug() << lib_dir;
     return lib_dir;
 }
 
@@ -529,7 +533,8 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
     }
 }
 
-csv_connection::csv_connection(QString fileName)
+#ifdef __DEPRECATED__
+csv_connection::csv_connection(QString csv_fileName)
 {
     type = CSV;
     numRows = 0;
@@ -546,21 +551,20 @@ csv_connection::csv_connection(QString fileName)
     // start investigating the library
     QDir lib_dir = this->getLibDir();
 
-    this->filename = fileName;
-    qDebug() << "csv_connection::csv_connection(QString): Set this->filename to " << this->filename;
-
+    // Obtain a name from the csv_fileName
     QStringList list;
-    list = fileName.split("/", QString::SkipEmptyParts);
+    list = csv_fileName.split("/", QString::SkipEmptyParts);
     list = list.back().split("\\", QString::SkipEmptyParts);
-
     this->name = list.back();
-    qDebug() << "csv_connection::csv_connection(QString): import_csv(" << fileName << ")";
-    this->import_csv(fileName);
+
+    qDebug() << "csv_connection::csv_connection(QString): import_csv(" << csv_fileName << ")";
+    this->import_csv(csv_fileName);
 }
+#endif
 
 void csv_connection::setFileName(QString name)
 {
-    filename = name;
+    this->filename = name;
 }
 
 QString csv_connection::getFileName()
@@ -568,17 +572,23 @@ QString csv_connection::getFileName()
     return filename;
 }
 
+QString csv_connection::getUUIDFileName()
+{
+    return uuidFilename;
+}
+
 void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 {
-    QFile f;
-    QDir lib_dir = this->getLibDir();
     if (this->filename.isEmpty()) {
         this->generateFilename();
     }
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+
+    QFile f;
+    QDir lib_dir = this->getLibDir(); // This is the temporary location for conn data files
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadOnly)) {
         QMessageBox msgBox;
-        msgBox.setText("Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
+        msgBox.setText("csv_connection::write_node_xml(QXmlStreamWriter &xmlOut): Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
         msgBox.exec();
         return;
     }
@@ -605,6 +615,7 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
         return;
     }
 
+    qDebug() << "filePathString: " << filePathString;
     QDir saveDir(filePathString);
 
     bool saveBinaryConnections = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
@@ -624,9 +635,6 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
         // remove filename
         project_dir.cdUp();
 
-        if (this->filename.isEmpty()) {
-            this->generateFilename();
-        }
         if (this->filename.isEmpty()) {
             QMessageBox msgBox;
             msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
@@ -793,12 +801,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
             // get file name and path
             QString fileName = BinaryFileList.at(0).toElement().attribute("file_name");
 
-            // We *don't* change the filename if it has already been
-            // set in the model, so copy fileName to this->filename.
-            this->filename = fileName;
-
-            QDir lib_dir = this->getLibDir();
-
             // copy the file across to the temporary file
             QFile savedData(filePath.absoluteFilePath(fileName));
 
@@ -808,20 +810,21 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "Error: Binary file referenced in network not found: " + fileName);
                 settings.endArray();
                 return;
             }
 
             // Open the binary data file
+            QDir lib_dir = this->getLibDir();
             QFile f;
-            f.setFileName(lib_dir.absoluteFilePath(this->filename));
+            f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
 
             // open the storage file
             if( !f.open( QIODevice::ReadWrite | QIODevice::Truncate) ) {
                 QMessageBox msgBox;
-                msgBox.setText("Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
+                msgBox.setText("csv_connection::import_parameters_from_xml(QDomNode &e): Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
                 msgBox.exec();
                 return;
             }
@@ -845,10 +848,10 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
         // load connections from xml
         QFile f;
         QDir lib_dir = this->getLibDir();
-        f.setFileName(lib_dir.absoluteFilePath(this->filename));
+        f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
         if (!f.open( QIODevice::ReadWrite | QIODevice::Truncate)) {
             QMessageBox msgBox;
-            msgBox.setText("Could not open temporary '" + f.fileName() + "' file for Explicit Connection");
+            msgBox.setText("csv_connection::import_parameters_from_xml(QDomNode &e) [2]: Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
             msgBox.exec();
             return;
         }
@@ -931,10 +934,7 @@ void csv_connection::import_csv(QString fileName)
 
     QFile f;
     QDir lib_dir = this->getLibDir();
-    if (this->filename.isEmpty()) {
-        this->generateFilename();
-    }
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadWrite | QIODevice::Truncate)) {
         QMessageBox msgBox;
         msgBox.setText("csv_connection::import_csv(QString): Could not open temporary file '"
@@ -1116,10 +1116,10 @@ void csv_connection::getAllData(QVector < conn > &conns)
 
     QFile f;
     QDir lib_dir = this->getLibDir();
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadOnly)) {
         QMessageBox msgBox;
-        msgBox.setText("Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
+        msgBox.setText("csv_connection::getAllData(QVector < conn > &conns): Could not open temporary file '" + f.fileName() + "' for Explicit Connection");
         msgBox.exec();
         return;
     }
@@ -1159,7 +1159,7 @@ float csv_connection::getData(int rowV, int col)
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadOnly)) {
         QMessageBox msgBox;
         msgBox.setText("csv_connection::getData(int, int): Could not open file for Explicit Connection");
@@ -1200,7 +1200,7 @@ float csv_connection::getData(QModelIndex &index)
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadOnly)) {
         QMessageBox msgBox;
         msgBox.setText("csv_connection::getData(QModelIndex&): Could not open file for Explicit Connection");
@@ -1251,6 +1251,17 @@ float csv_connection::getData(QModelIndex &index)
 #define CHARS_NUMERIC_ALPHALOWER "etaoinshrdlcumwfgypbvkjxqz0123456789"
 #define CHARS_NUMERIC_ALPHAUPPER "0123456789ETAOINSHRDLCUMWFGYPBVKJXQZ"
 //@}
+
+void csv_connection::generateUUIDFilename(void)
+{
+    QUuid fntag = QUuid::createUuid();
+    this->uuidFilename = "conn_";
+    this->uuidFilename += fntag.toString();
+    this->uuidFilename.replace(QString("{"), QString(""));
+    this->uuidFilename.replace(QString("}"), QString(""));
+    this->uuidFilename += ".bin";
+    //qDebug() << "Set uuidFilename to " << this->uuidFilename;
+}
 
 void csv_connection::generateFilename(void)
 {
@@ -1311,13 +1322,10 @@ void csv_connection::setData(const QModelIndex & index, float value)
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
-    if (this->filename.isEmpty()) {
-        this->generateFilename();
-    }
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadWrite)) {
         QMessageBox msgBox;
-        msgBox.setText("csv_connection::setData(const QModelIndex&, float): Could not open file " + this->filename + " for Explicit Connection");
+        msgBox.setText("csv_connection::setData(const QModelIndex&, float): Could not open temporary file " + this->uuidFilename + " for Explicit Connection");
         msgBox.exec();
         return;
     }
@@ -1354,14 +1362,11 @@ void csv_connection::setData(int row, int col, float value)
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
-    if (this->filename.isEmpty()) {
-        this->generateFilename();
-    }
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadWrite)) {
         QMessageBox msgBox;
-        msgBox.setText("csv_connection::setData(int, int, float): Could not open file "
-                       + this->filename + " for Explicit Connection");
+        msgBox.setText("csv_connection::setData(int, int, float): Could not open temporary file "
+                       + this->uuidFilename + " for Explicit Connection");
         msgBox.exec();
         return;
     }
@@ -1398,14 +1403,11 @@ void csv_connection::clearData()
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
-    if (this->filename.isEmpty()) {
-        this->generateFilename();
-    }
-    f.setFileName(lib_dir.absoluteFilePath(this->filename));
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (f.open(QIODevice::ReadWrite)) {
         f.remove();
         f.close();
-        qDebug() << "csv_connection::clearData(): removed " << this->filename;
+        qDebug() << "csv_connection::clearData(): removed temporary connection data file " << this->uuidFilename;
     }
 }
 
