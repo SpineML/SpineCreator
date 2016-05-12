@@ -1765,8 +1765,21 @@ void viewELExptPanelHandler::run()
 #ifdef CURRPROJECT_ISCHANGED_WAS_RELIABLE
     if (this->data->currProject->isChanged (this->data)) {
 #endif
+
+        #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        #else
+            this->tdir.setPath(QDir::home.absolutePath());
+            this-tdir.mkdir("sctmp");
+            this->tdir.cd("sctmp");
+        #endif
+
         // Check the temporary directory is valid for use:
-        if (!this->tdir.isValid()) {
+
+        #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+                if (!this->tdir.isValid()) {
+        #else
+                if (!this->tdir.isReadable()) {
+        #endif
             qDebug() << "Can't use temporary simulator directory!";
             runButton->setEnabled(true);
             return;

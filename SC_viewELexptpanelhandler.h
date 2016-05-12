@@ -26,7 +26,10 @@
 #define VIEWVISEXPTPANELHANDLER_H
 
 #include "globalHeader.h"
-#include <QTemporaryDir>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+  #include <QTemporaryDir>
+#endif
 
 struct viewELstruct;
 
@@ -49,7 +52,11 @@ private:
      * A temporary directory into which the model is copied if the
      * simulation is in an unsaved state.
      */
-    QTemporaryDir tdir;
+    #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+          QTemporaryDir tdir;
+    #else
+         QDir tdir;
+    #endif
 
     QVBoxLayout * exptSetup;
     QVBoxLayout * exptInputs;
