@@ -415,6 +415,7 @@ public slots:
     virtual void updateContent();
     void setName(QString n);
     void setPortMode(QString p);
+    void setIsPostState(bool b);
 
 protected:
     virtual void handleSelection();

@@ -1743,6 +1743,8 @@ void glConnectionWidget::parsChangedProjection() {
     /*if (!data->isValidPointer(selectedObject))
         return;*/ //NOT NEEDED ANYMORE
 
+    if (!selectedObject) return;
+
     // can only be the current selection
     if (selectedObject->type == synapseObject || selectedObject->type == inputObject) {
 

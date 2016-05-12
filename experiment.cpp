@@ -884,7 +884,7 @@ QVBoxLayout * exptInput::drawInput(rootData * data, viewELExptPanelHandler *hand
                     params.push_back(-1);
                     params.push_back(currentIndex);
                     params.push_back(0);
-                    params.push_back(1);
+                    params.push_back(0);
                     table->setRowCount(1);
                     QTableWidgetItem * item = new QTableWidgetItem;
                     item->setData(Qt::DisplayRole, params[params.size()-2]);

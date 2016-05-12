@@ -503,9 +503,7 @@ void NineMLComponent::write(QDomDocument *doc)
     QDomElement CClass = doc->createElement( "ComponentClass" );
     CClass.setAttribute("name", this->name);
     CClass.setAttribute("type", this->type);
-    qDebug() << "NAME = " << this->name  << " " << this->islearning;
     if (this->islearning) {
-        qDebug() << "WOOOOOO)))";
         CClass.setAttribute("islearning", true);
     }
     root.appendChild(CClass);
@@ -1365,6 +1363,9 @@ void AnalogPort::writeOut(QDomDocument * doc, QDomElement &parent)
     if (this->mode==AnalogSendPort) {
         AnalogPort = doc->createElement( "AnalogSendPort" );
         AnalogPort.setAttribute("name", this->getName());
+        if (this->isPost) {
+            AnalogPort.setAttribute("post",true);
+        }
     }
     if (this->mode==AnalogRecvPort) {
         AnalogPort = doc->createElement( "AnalogReceivePort" );

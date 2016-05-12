@@ -1830,7 +1830,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 QDomElement e2;
 
                 for (int i = 0; i < (int) nList.size(); ++i) {
-                    e2 = nList.item(0).toElement();
+                    e2 = nList.item(i).toElement();
 
                     QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
                     newInput->src = (QSharedPointer <NineMLComponentData>)0;
@@ -1839,6 +1839,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
                     // read in and locate src:
                     QString srcName = e2.attribute("src");
+                    qDebug() << "WU input SRC = " << srcName;
 
                     for (int i = 0; i < data->network.size(); ++i) {
                         if (data->network[i]->neuronType->getXMLName() == srcName) {

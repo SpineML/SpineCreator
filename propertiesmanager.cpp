@@ -714,6 +714,13 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
             var->setCurrentIndex(-1);
         connect(var, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setVariable(QString)));
         addRow(tr("&Variable:"),var);
+        if (root->al->islearning) {
+            // add checkbox for postsynaptic input
+            QCheckBox * ispost = new QCheckBox();
+            ispost->setChecked(ap->port->isPost);
+            connect(ispost, SIGNAL(toggled(bool)), ap, SLOT(setIsPostState(bool)));
+            addRow(tr("&Is postsynaptic:"), ispost);
+        }
     }
     //otherwise
     else
@@ -817,6 +824,14 @@ void PropertiesManager::createEventPortProperties(EventPortTextItem *ep)
     name->setValidator(validator);
     connect(name, SIGNAL(textEdited(QString)), ep, SLOT(setName(QString)));
     addRow(tr("&Name:"),name);
+
+    if (root->al->islearning) {
+        // add checkbox for postsynaptic input
+        QCheckBox * ispost = new QCheckBox();
+        ispost->setChecked(ep->port->isPost);
+        connect(ispost, SIGNAL(toggled(bool)), ep, SLOT(setIsPostState(bool)));
+        addRow(tr("&Is postsynaptic:"), ispost);
+    }
 }
 
 void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)

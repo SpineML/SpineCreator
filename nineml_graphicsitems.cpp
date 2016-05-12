@@ -1592,10 +1592,10 @@ void EventPortTextItem::setPortMode(QString p)
         oldComponent.clear();
 }
 
-/*void EventPortTextItem::setIsPostState(bool b)
+void EventPortTextItem::setIsPostState(bool b)
 {
     this->port->isPost = b;
-}*/
+}
 
 /************************************************************/
 

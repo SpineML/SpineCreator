@@ -968,7 +968,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
     inputConnectionComboBox->addItem("One to One");
     inputConnectionComboBox->addItem("Fixed Probability");
     inputConnectionComboBox->addItem("Explicit List");
-    if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
+    //if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
         inputConnectionComboBox->addItem("Kernel");
         // add python scripts
         QSettings settings;
@@ -977,7 +977,7 @@ void rootLayout::inSelected(QSharedPointer<genericInput> in, rootData* data) {
         inputConnectionComboBox->addItems(scripts);
         settings.endGroup();
 
-    }
+   // }
     inputConnectionComboBox->setCurrentIndex(in->connectionType->getIndex());
     connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
