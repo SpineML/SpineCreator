@@ -1537,6 +1537,9 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
     double value = -1;
 
     name = currPar->name;
+    // FIXME: In here, add the name of the explicitDataBinaryFile, if
+    // that is where the param values are stored. Comment by Seb. At a
+    // later date, Seb can't figure out what he meant by it!
 
     if (name.size() > 13) {
         name.resize(10);
