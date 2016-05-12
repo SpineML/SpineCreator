@@ -417,8 +417,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>432</width>
-            <height>577</height>
+            <width>433</width>
+            <height>573</height>
            </rect>
           </property>
          </widget>
@@ -766,7 +766,7 @@
      <x>0</x>
      <y>0</y>
      <width>1060</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -852,6 +852,7 @@
     </property>
     <addaction name="actionRun_experiment"/>
     <addaction name="actionDuplicate_experiment"/>
+    <addaction name="actionDelete_experiment"/>
    </widget>
    <widget class="QMenu" name="menuProject">
     <property name="title">
@@ -1098,6 +1099,11 @@
   <action name="actionDuplicate_experiment">
    <property name="text">
     <string>Duplicate experiment</string>
+   </property>
+  </action>
+  <action name="actionDelete_experiment">
+   <property name="text">
+    <string>Delete experiment</string>
    </property>
   </action>
  </widget>

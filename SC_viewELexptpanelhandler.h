@@ -43,6 +43,11 @@ public:
     nl_rootdata * data;
     //void redraw();
 
+    /*!
+     * Delete an experiment.
+     */
+    void delExperiment(int index);
+
 private:
     viewELstruct * viewEL;
     void redrawExpt();
@@ -96,7 +101,6 @@ private:
     experiment * runExpt;
 
     void cleanUpPostRun(QString, QString);
-
 
 signals:
     void enableRun(bool);

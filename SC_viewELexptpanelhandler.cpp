@@ -601,7 +601,11 @@ void viewELExptPanelHandler::addExperiment()
 void viewELExptPanelHandler::delExperiment()
 {
     int index = sender()->property("index").toUInt();
+    this->delExperiment (index);
+}
 
+void viewELExptPanelHandler::delExperiment(int index)
+{
     // check we aren't running - don't delete if we are
     if (data->experiments[index] == this->runExpt) {
         return;
@@ -1992,7 +1996,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDetailedText(simulatorStdOutText);
             msgBox.addButton(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();           
+            msgBox.exec();
             this->cleanUpPostRun("", "");
             return;
         }
@@ -2020,7 +2024,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.setText(simulatorStdErrText);
         msgBox.addButton(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();        
+        msgBox.exec();
         this->cleanUpPostRun("", "");
         return;
     }
@@ -2037,7 +2041,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
         }
-        // signal others        
+        // signal others
         this->cleanUpPostRun("", "");
         emit simulationDone();
         return;
@@ -2156,4 +2160,3 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
         this->redraw();
     }
 }
-

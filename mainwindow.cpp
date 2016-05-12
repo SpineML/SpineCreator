@@ -1316,6 +1316,7 @@ void MainWindow::createActions()
     connect(ui->actionRepository_log, SIGNAL(triggered()), this, SLOT(actionRepLog_triggered()));
     connect(ui->actionRe_scan_for_VCS, SIGNAL(triggered()), this, SLOT(actionRescanVCS_triggered()));
     connect(ui->actionDuplicate_experiment, SIGNAL(triggered()), this, SLOT(actionDuplicate_experiment_triggered()));
+    connect(ui->actionDelete_experiment, SIGNAL(triggered()), this, SLOT(actionDelete_experiment_triggered()));
 
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 
@@ -2768,7 +2769,7 @@ void MainWindow::actionRescanVCS_triggered()
 
 void MainWindow::actionDuplicate_experiment_triggered()
 {
-        // find the selected experiment
+    // find the selected experiment
     for (int i = 0; i < this->data.experiments.size(); ++i)
     {
         if (this->data.experiments[i]->selected) {
@@ -2777,6 +2778,20 @@ void MainWindow::actionDuplicate_experiment_triggered()
             this->data.experiments.back()->select(&this->data.experiments);
             if (this->viewELhandler) {
                 this->viewELhandler->redraw();
+            }
+            return;
+        }
+    }
+}
+
+void MainWindow::actionDelete_experiment_triggered()
+{
+    // find the selected experiment
+    for (int i = 0; i < this->data.experiments.size(); ++i)
+    {
+        if (this->data.experiments[i]->selected) {
+            if (this->viewELhandler) {
+                this->viewELhandler->delExperiment(i);
             }
             return;
         }

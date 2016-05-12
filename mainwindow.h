@@ -216,6 +216,7 @@ public slots:
     void actionAddOnEvent_triggered();
     void actionAddOnImpulse_triggered();
     void actionDuplicate_experiment_triggered();
+    void actionDelete_experiment_triggered();
     void about();
 
     // versioning
