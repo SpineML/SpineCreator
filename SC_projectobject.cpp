@@ -1371,7 +1371,8 @@ bool projectObject::printErrors(QString title)
 
     // display errors:
     if (!errors.isEmpty()) {
-        // display errors
+        // display errors (Seb has observed one hang here where the msgBox failed to show when there was a project error.
+        qDebug() << "Errors in SC_projectobject.cpp: " << errors;
         QMessageBox msgBox;
         msgBox.setText("<P><b>" + title + "</b></P>" + errors);
         msgBox.setIcon(QMessageBox::Critical);
