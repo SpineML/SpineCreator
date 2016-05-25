@@ -89,6 +89,8 @@ public:
     // state of the visualizer QTreeWidget
     QStringList treeWidgetState;
 
+    QString annotation;
+
 private:
 
     // load helpers

@@ -45,9 +45,9 @@ public:
 
     void animate(QSharedPointer<systemObject>movingObj, QPointF delta);
     void moveSelectedControlPoint(float xGL, float yGL);
-    void write_model_meta_xml(QDomDocument &meta, QDomElement &root) ;
+    void write_model_meta_xml(QXmlStreamWriter *xmlOut) ;
 
-    void read_meta_data(QDomDocument * meta);
+    void read_meta_data(QDomNode meta);
 
     void addCurves();
     void connect(QSharedPointer<genericInput> in);
@@ -71,6 +71,7 @@ public:
     QSharedPointer <systemObject> newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap);
 
     void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
+
 };
 
 #endif // GENERICINPUT_H

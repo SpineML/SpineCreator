@@ -311,6 +311,13 @@ void NineMLLayoutData::import_parameters_from_xml(QDomNode &nIn)
     this->seed = nIn.toElement().attribute("seed","123").toInt();
     this->minimumDistance = nIn.toElement().attribute("minimum_distance","0.0").toDouble();
 
+    // fetch annotations
+    QDomNodeList nListAnn = nIn.toElement().elementsByTagName("LL:Annotation");
+    if (nListAnn.size() == 1) {
+        QTextStream temp(&this->annotation);
+        nListAnn.at(0).save(temp,1);
+    }
+
     QDomNodeList nList = nIn.toElement().elementsByTagName("Property");
 
     for (int node = 0; node < nList.count(); ++node) {

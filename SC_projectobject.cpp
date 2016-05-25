@@ -930,6 +930,15 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     while (!n.isNull()) {
 
         QDomElement e = n.toElement();
+
+        // load any annotations
+        if (e.tagName() == "LL:Annotation") {
+            QTextStream temp(&this->annotation);
+            n.save(temp,1);
+            qDebug() << "found annotations in project";
+            qDebug() << this->annotation;
+        }
+
         if (e.tagName() == "LL:Population") {
             // add population from population xml:
             QSharedPointer <population> pop = QSharedPointer<population> (new population());
@@ -1033,6 +1042,24 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
     xmlOut.writeAttribute("xsi:schemaLocation", "http://www.shef.ac.uk/SpineMLLowLevelNetworkLayer SpineMLLowLevelNetworkLayer.xsd http://www.shef.ac.uk/SpineMLNetworkLayer SpineMLNetworkLayer.xsd");
     xmlOut.writeAttribute("name", name);
 
+    // write out the annotations
+    if (!this->annotation.isEmpty()) {
+        xmlOut.writeStartElement("LL:Annotation");
+        // annotations
+        this->annotation.replace("\n", "");
+        this->annotation.replace("<LL:Annotation>", "");
+        this->annotation.replace("</LL:Annotation>", "");
+        QXmlStreamReader reader(this->annotation);
+
+        while (!reader.atEnd()) {
+            if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
+                xmlOut.writeCurrentToken(reader);
+            }
+            reader.readNext();
+        }
+        xmlOut.writeEndElement();//LL:Annotation
+    }
+
     // create a node for each population with the variables set
     for (int pop = 0; pop < this->network.size(); ++pop) {
         //// WE NEED TO HAVE A PROPER MODEL NAME!
@@ -1097,6 +1124,10 @@ void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir
 
 void projectObject::saveMetaData(QString fileName, QDir projectDir)
 {
+
+    // now redundant
+    return;
+
     QFile fileMeta(projectDir.absoluteFilePath(fileName));
     if (!fileMeta.open(QIODevice::WriteOnly)) {
         addError("Error creating MetaData file - is there sufficient disk space?");

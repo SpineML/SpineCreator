@@ -120,6 +120,12 @@ public:
      * the object.
      */
     QPointF locationOffset;
+
+    /*!
+     * \brief annotation
+     * QString to hold the annotation data for this object
+     */
+    QString annotation;
 };
 
 #endif // SYSTEMOBJECT_H

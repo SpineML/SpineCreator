@@ -1504,10 +1504,10 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
     for (int i = 0; i < synapses.size(); ++i) {
 
         for (int j = 0; j < synapses[i]->weightUpdateType->inputs.size(); ++j) {
-            synapses[i]->weightUpdateType->inputs[j]->write_model_meta_xml(meta, root);
+            //synapses[i]->weightUpdateType->inputs[j]->write_model_meta_xml(meta, root);
         }
         for (int j = 0; j < synapses[i]->postsynapseType->inputs.size(); ++j) {
-            synapses[i]->postsynapseType->inputs[j]->write_model_meta_xml(meta, root);
+            //synapses[i]->postsynapseType->inputs[j]->write_model_meta_xml(meta, root);
         }
     }
 }
@@ -1840,7 +1840,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         metaNode = metaNode.nextSibling();
     }
 
-    this->print();
+    //this->print();
 }
 
 void projection::add_curves()
@@ -2128,11 +2128,11 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     for (int i = 0; i < synapses.size(); ++i) {
 
         for (int j = 0; j < synapses[i]->weightUpdateType->inputs.size(); ++j) {
-            synapses[i]->weightUpdateType->inputs[j]->read_meta_data(meta);
+            synapses[i]->weightUpdateType->inputs[j]->read_meta_data(meta->firstChild());
             synapses[i]->weightUpdateType->inputs[j]->dst->matchPorts();
         }
         for (int j = 0; j < synapses[i]->postsynapseType->inputs.size(); ++j) {
-            synapses[i]->postsynapseType->inputs[j]->read_meta_data(meta);
+            synapses[i]->postsynapseType->inputs[j]->read_meta_data(meta->firstChild());
             synapses[i]->postsynapseType->inputs[j]->dst->matchPorts();
         }
     }

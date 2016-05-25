@@ -120,6 +120,7 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     loc3.y = 0;
     loc3.z = 0;
 
+
     // //////////////////  fetch in the model data /////////////////////
 
     // make sure we don't get all crashy if layout not specified
@@ -130,9 +131,20 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
     QDomNode n = e.firstChild();
 
+    QDomNode metaData;
+
     while(!n.isNull()) {
 
-        if (n.toElement().tagName() == "LL:Neuron") {
+        if (n.toElement().tagName() == "LL:Annotation") {
+            QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
+            if (scAnns.length() == 1) {
+                metaData = scAnns.at(0).cloneNode();
+                n.removeChild(scAnns.at(0));
+            }
+            QTextStream temp(&this->annotation);
+            n.save(temp,1);
+        }
+        else if (n.toElement().tagName() == "LL:Neuron") {
 
             // get attributes
             this->name = n.toElement().attribute("name");
@@ -286,21 +298,28 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
     // //////////////////  fetch in the metadata ///////////////////////
 
-    QDomNode findN = meta->documentElement().firstChild();
-    QDomElement metaE;
 
-    // locate the matching metadata node
-    while( !findN.isNull() ) {
-        metaE = findN.toElement();
-        if (metaE.tagName() == "population") {
-            if (metaE.attribute("name","") == this->name) {
-                break;
+
+    if (meta != NULL) {
+        QDomNode findN = meta->documentElement().firstChild();
+        QDomElement metaE;
+
+        // locate the matching metadata node
+        while( !findN.isNull() ) {
+            metaE = findN.toElement();
+            if (metaE.tagName() == "population") {
+                if (metaE.attribute("name","") == this->name) {
+                    break;
+                }
             }
+            findN = findN.nextSibling();
         }
-        findN = findN.nextSibling();
-    }
 
-    n = metaE.firstChild();
+        n = metaE.firstChild();
+    }
+    if (!metaData.isNull()) {
+        n = metaData.firstChild();
+    }
     while( !n.isNull() )
     {
         QDomElement e2 = n.toElement();
@@ -393,22 +412,22 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             QString srcName = e2.attribute("src");
 
             for (int i = 0; i < data->network.size(); ++i) {
-                qDebug() << data->network[i]->neuronType->getXMLName();
+                //qDebug() << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
                     newInput->src = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
                 for (int j = 0; j < data->network[i]->projections.size(); ++j) {
-                    qDebug() << "   " << data->network[i]->projections[j]->getName();
+                    //qDebug() << "   " << data->network[i]->projections[j]->getName();
                     for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-                        qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->getName();
+                        //qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->getName();
                         if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
-                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                            //qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
                             newInput->source = data->network[i]->projections[j];
                         }
                         if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
-                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                            //qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
                             newInput->source = data->network[i]->projections[j];
                         }
@@ -460,12 +479,25 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             } else {
                 // Error
             }
+
+            // get annotations
+            QDomNodeList ann = e2.elementsByTagName("LL:Annotation");
+            if (ann.count() == 1) {
+                QDomNode metaData;
+                QDomNode n = ann.item(0);
+                QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
+                if (scAnns.length() == 1) {
+                    metaData = scAnns.at(0).cloneNode();
+                    n.removeChild(scAnns.at(0));
+                }
+                QTextStream temp(&this->neuronType->inputs.back()->annotation);
+                n.save(temp,1);
+                this->neuronType->inputs.back()->read_meta_data(metaData);
+            } else if (meta!=NULL) {
+                this->neuronType->inputs.back()->read_meta_data(meta->firstChild());
+            }
         }
     }
-
-    // read metadata
-    for (int i = 0; i < this->neuronType->inputs.size(); ++i)
-        this->neuronType->inputs[i]->read_meta_data(meta);
 
     this->neuronType->matchPorts();
 }
@@ -879,6 +911,83 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
     // population tag
     xmlOut.writeStartElement("LL:Population");
 
+    // Population annotations
+    xmlOut.writeStartElement("LL:Annotation");
+    
+    // old annotations
+    this->annotation.replace("\n", "");
+    this->annotation.replace("<LL:Annotation>", "");
+    this->annotation.replace("</LL:Annotation>", "");
+    QXmlStreamReader reader(this->annotation);
+    while (!reader.atEnd()) {
+        if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
+            xmlOut.writeCurrentToken(reader);
+        }
+        reader.readNext();
+    }
+
+    // new annotations
+    xmlOut.writeStartElement("SpineCreator");
+
+    // add tags for each bit of metadata
+
+    // x position
+    xmlOut.writeEmptyElement("xPos");
+    // To avoid metaData.xml changing arbitrarily, impose a
+    // granularity limit on float x.
+    stringstream xx;
+    xx << std::setprecision(METADATA_FLOAT_PRECISION) << this->x;
+    xmlOut.writeAttribute("value", xx.str().c_str());
+
+    // y position
+    xmlOut.writeEmptyElement("yPos");
+    // To avoid metaData.xml changing arbitrarily, impose a
+    // granularity limit on float y.
+    stringstream yy;
+    yy << std::setprecision(METADATA_FLOAT_PRECISION) << this->y;
+    xmlOut.writeAttribute("value", yy.str().c_str());
+
+    // this->animspeed;
+    xmlOut.writeEmptyElement("animSpeed");
+    xmlOut.writeAttribute("value", QString::number(this->animspeed));
+
+    // this->aspect_ratio;
+    xmlOut.writeEmptyElement("aspectRatio");
+    xmlOut.writeAttribute("value", QString::number(this->aspect_ratio));
+
+    // this->colour;
+    xmlOut.writeEmptyElement("colour");
+    xmlOut.writeAttribute("red", QString::number(this->colour.red()));
+    xmlOut.writeAttribute("green", QString::number(this->colour.green()));
+    xmlOut.writeAttribute("blue", QString::number(this->colour.blue()));
+
+    // this->size;
+    xmlOut.writeEmptyElement("size");
+    xmlOut.writeAttribute("value", QString::number(this->size));
+
+    // this->tag;
+    xmlOut.writeEmptyElement("tag");
+    xmlOut.writeAttribute("value", QString::number(this->tag));
+
+    // 3d x position
+    xmlOut.writeEmptyElement("x3D");
+    xmlOut.writeAttribute("value", QString::number(this->loc3.x));
+    // 3d y position
+    xmlOut.writeEmptyElement("y3D");
+    xmlOut.writeAttribute("value", QString::number(this->loc3.y));
+    // 3d z position
+    xmlOut.writeEmptyElement("z3D");
+    xmlOut.writeAttribute("value", QString::number(this->loc3.z));
+
+    // isViz?
+    xmlOut.writeEmptyElement("is_visualised");
+    xmlOut.writeAttribute("value", QString::number(this->isVisualised));
+
+    xmlOut.writeEndElement(); // SpineCreator
+
+    // end annotations
+    xmlOut.writeEndElement(); // annotation
+
     // NEURON /////////////////
 
     xmlOut.writeStartElement("LL:Neuron");
@@ -952,85 +1061,7 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
 
 void population::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
 
-    // write a new element for this population:
-    QDomElement pop = meta.createElement( "population" );
-    root.appendChild(pop);
-    pop.setAttribute("name", this->name);
-
-    // add tags for each bit of metadata
-    // x position
-    QDomElement xPos = meta.createElement( "xPos" );
-    pop.appendChild(xPos);
-    // To avoid metaData.xml changing arbitrarily, impose a
-    // granularity limit on float x.
-    stringstream xx;
-    xx << std::setprecision(METADATA_FLOAT_PRECISION) << this->x;
-    xPos.setAttribute("value", xx.str().c_str());
-
-    // y position
-    QDomElement yPos = meta.createElement( "yPos" );
-    pop.appendChild(yPos);
-    stringstream yy;
-    yy << std::setprecision(METADATA_FLOAT_PRECISION) << this->y;
-    yPos.setAttribute("value", yy.str().c_str());
-
-    // this->animspeed;
-    QDomElement animSpeed = meta.createElement( "animSpeed" );
-    pop.appendChild(animSpeed);
-    animSpeed.setAttribute("value", this->animspeed);
-
-    // this->aspect_ratio;
-    QDomElement aspect_ratio = meta.createElement( "aspectRatio" );
-    pop.appendChild(aspect_ratio);
-    aspect_ratio.setAttribute("value", this->aspect_ratio);
-
-    // this->colour;
-    QDomElement colour = meta.createElement( "colour" );
-    pop.appendChild(colour);
-    colour.setAttribute("red", this->colour.red());
-    colour.setAttribute("green", this->colour.green());
-    colour.setAttribute("blue", this->colour.blue());
-
-    // this->size;
-    QDomElement size = meta.createElement( "size" );
-    pop.appendChild(size);
-    size.setAttribute("value", this->size);
-
-    // this->tag;
-    QDomElement tag = meta.createElement( "tag" );
-    pop.appendChild(tag);
-    tag.setAttribute("value", this->tag);
-
-    // this->neuronType->inputs;
-    for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
-        this->neuronType->inputs[i]->write_model_meta_xml(meta, root);
-    }
-
-    // this->projections;
-    for (int i = 0; i < this->projections.size(); ++i) {
-        this->projections[i]->write_model_meta_xml(meta, root);
-    }
-
-    // 3d x position
-    QDomElement x3D = meta.createElement( "x3D" );
-    pop.appendChild(x3D);
-    x3D.setAttribute("value", this->loc3.x);
-
-    // 3d y position
-    QDomElement y3D = meta.createElement( "y3D" );
-    pop.appendChild(y3D);
-    y3D.setAttribute("value", this->loc3.y);
-
-    // 3d z position
-    QDomElement z3D = meta.createElement( "z3D" );
-    pop.appendChild(z3D);
-    z3D.setAttribute("value", this->loc3.z);
-
-    // isvis?
-    QDomElement isvis = meta.createElement( "is_visualised" );
-    pop.appendChild(isvis);
-    isvis.setAttribute("value", this->isVisualised);
-
+    return;
 }
 
 void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, QDomDocument * meta, projectObject * data) {
@@ -1038,7 +1069,7 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
     ///// ADD Synapses:
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
 
-    DBG() << "Reading projections from XML";
+    //DBG() << "Reading projections from XML";
     for (int i = 0; i < (int) cList.count(); ++i) {
         QDomElement e2 = cList.item(i).toElement();
         this->projections.push_back(QSharedPointer<projection>(new projection()));

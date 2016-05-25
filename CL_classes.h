@@ -649,6 +649,7 @@ public:
     void write_node_xml(QXmlStreamWriter &);
     ComponentRootInstance(){}
     virtual ~ComponentRootInstance(){}
+    QString annotation;
 };
 
 /*!
