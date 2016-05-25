@@ -48,6 +48,7 @@ public:
     void write_model_meta_xml(QXmlStreamWriter *xmlOut) ;
 
     void read_meta_data(QDomNode meta);
+    void read_meta_data(QDomDocument * meta);
 
     void addCurves();
     void connect(QSharedPointer<genericInput> in);

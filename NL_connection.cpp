@@ -469,8 +469,12 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
 
         // rootLayout::projSelected has communicated this information
         // so we can stick it into this connection.
-        this->src = data->currentlySelectedProjection->source;
-        this->dst = data->currentlySelectedProjection->destination;
+        if (data->currentlySelectedProjection != NULL) {
+            this->src = data->currentlySelectedProjection->source;
+            this->dst = data->currentlySelectedProjection->destination;
+        } else {
+            qDebug() << "Maybe a false assumption here: NL_connection.cpp, csv_connection::drawLayout";
+        }
 
         connMod->setConnection(this);
         tableView->setModel(connMod);
@@ -612,6 +616,30 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
     // write containing tag
     xmlOut.writeStartElement("ConnectionList");
 
+    // Annotations
+    if (this->generator || !this->annotation.isEmpty()) {
+        xmlOut.writeStartElement("LL:Annotation");
+        // old annotations
+        if (!this->annotation.isEmpty()) {
+            this->annotation.replace("\n", "");
+            this->annotation.replace("<LL:Annotation>", "");
+            this->annotation.replace("</LL:Annotation>", "");
+            QXmlStreamReader reader(this->annotation);
+            while (!reader.atEnd()) {
+                if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
+                    xmlOut.writeCurrentToken(reader);
+                }
+                reader.readNext();
+            }
+        }
+
+        if (this->generator) {
+            this->generator->write_metadata_xml(&xmlOut);
+        }
+        xmlOut.writeEndElement();//Annotation
+    }
+
+
     // if we have more than 30 rows and we want to write to binary then write binary file
     // (less than 30 rows is sufficiently compact that it should go in the XML)
     QString saveFullFileName;
@@ -734,9 +762,9 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 void csv_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e)
 {
     // pass this task on to the generator connection
-    if (this->generator != NULL) {
+    /*if (this->generator != NULL) {
         this->generator->write_metadata_xml(meta, e);
-    }
+    }*/
 }
 
 /*!
@@ -744,6 +772,7 @@ void csv_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e)
  * \param e
  *
  * Read the metaData for a connection generator - may be blank if there is not one
+ * SOON TO BE DEPRECATED
  */
 void csv_connection::read_metadata_xml(QDomNode &e)
 {
@@ -755,6 +784,27 @@ void csv_connection::read_metadata_xml(QDomNode &e)
 
 void csv_connection::import_parameters_from_xml(QDomNode &e)
 {
+
+    // check for annotations
+    QDomNodeList anns = e.toElement().elementsByTagName("LL:Annotation");
+
+    if (anns.size() == 1) {
+
+        // annotations found - do we have a generator?
+        QDomNode metaData;
+        QDomNodeList scAnns = anns.at(0).toElement().elementsByTagName("SpineCreator");
+        if (scAnns.length() == 1) {
+            metaData = scAnns.at(0).cloneNode();
+            anns.at(0).removeChild(scAnns.at(0));
+            // load generator
+            this->generator = new pythonscript_connection();
+            this->generator->read_metadata_xml(metaData);
+        }
+        QTextStream temp(&this->annotation);
+        anns.at(0).save(temp,1);
+
+    }
+
     QDomNodeList BinaryFileList = e.toElement().elementsByTagName("BinaryFile");
 
     if (BinaryFileList.count() == 1) {
@@ -1942,31 +1992,32 @@ void pythonscript_connection::write_node_xml(QXmlStreamWriter &)
     // this should never be called
 }
 
-void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e)
+void pythonscript_connection::write_metadata_xml(QXmlStreamWriter * xmlOut)
 {
     // write out the settings for this generator
 
+    xmlOut->writeStartElement("SpineCreator");
+
     // write out the script and parameters
-    QDomElement script = meta.createElement( "Script" );
-    e.appendChild(script);
+    xmlOut->writeEmptyElement("Script");
 
     // script text
-    script.setAttribute("text", this->scriptText);
-
-    script.setAttribute("name", this->scriptName);
+    xmlOut->writeAttribute("text", this->scriptText);
+    xmlOut->writeAttribute("name", this->scriptName);
 
     // parameter values for the script
     for (int i = 0; i < this->parNames.size(); ++i) {
-        script.setAttribute(this->parNames[i], QString::number(this->parValues[i]));
+        xmlOut->writeAttribute(this->parNames[i], QString::number(this->parValues[i]));
     }
 
     // write out configuration information
-    QDomElement config = meta.createElement( "Config" );
-    e.appendChild(config);
+    xmlOut->writeEmptyElement("Config");
 
     if (!this->weightProp.isEmpty()) {
-        config.setAttribute("weightProperty", this->weightProp);
+        xmlOut->writeAttribute("weightProperty", this->weightProp);
     }
+
+    xmlOut->writeEndElement(); // SpineCreator
 }
 
 void pythonscript_connection::read_metadata_xml(QDomNode &e)

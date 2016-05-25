@@ -483,18 +483,10 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             // get annotations
             QDomNodeList ann = e2.elementsByTagName("LL:Annotation");
             if (ann.count() == 1) {
-                QDomNode metaData;
                 QDomNode n = ann.item(0);
-                QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
-                if (scAnns.length() == 1) {
-                    metaData = scAnns.at(0).cloneNode();
-                    n.removeChild(scAnns.at(0));
-                }
-                QTextStream temp(&this->neuronType->inputs.back()->annotation);
-                n.save(temp,1);
-                this->neuronType->inputs.back()->read_meta_data(metaData);
+                this->neuronType->inputs.back()->read_meta_data(n);
             } else if (meta!=NULL) {
-                this->neuronType->inputs.back()->read_meta_data(meta->firstChild());
+                this->neuronType->inputs.back()->read_meta_data(meta);
             }
         }
     }
@@ -1027,6 +1019,9 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
             // write out projection synapses:
             xmlOut.writeStartElement("LL:Projection");
             xmlOut.writeAttribute("dst_population", dst->name);
+
+            // write annotations
+            projection->write_model_meta_xml(xmlOut);
 
             for (int j = 0; j < projection->synapses.size(); ++j) {
 

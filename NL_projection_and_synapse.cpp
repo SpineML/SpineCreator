@@ -1429,65 +1429,66 @@ QString projection::getName()
     return "Disconnected projection";
 }
 
-void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
+void projection::write_model_meta_xml(QXmlStreamWriter * xmlOut)
 {
-    // write a new element for this projection:
-    QDomElement col = meta.createElement( "projection" );
-    root.appendChild(col);
-    col.setAttribute("source", this->source->name);
-    col.setAttribute("destination", this->destination->name);
-    col.setAttribute("style", QString::number(this->projDrawStyle));
-    col.setAttribute("showlabel", QString::number(this->showLabel));
 
-    // start position
-    QDomElement start = meta.createElement( "start" );
-    col.appendChild(start);
-    stringstream xs;
-    xs << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.x();
-    start.setAttribute("x", xs.str().c_str());
-    stringstream ys;
-    ys << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.y();
-    start.setAttribute("y", ys.str().c_str());
+    xmlOut->writeStartElement("LL:Annotation");
 
-    // bezierCurves
-    QDomElement curves = meta.createElement( "curves" );
-    col.appendChild(curves);
-
-    for (int i = 0; i < this->curves.size(); ++i) {
-
-        QDomElement curve = meta.createElement( "curve" );
-        QDomElement C1 = meta.createElement( "C1" );
-        stringstream xc1;
-        xc1 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C1.x();
-        C1.setAttribute("xpos", xc1.str().c_str());
-        stringstream yc1;
-        yc1 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C1.y();
-        C1.setAttribute("ypos", yc1.str().c_str());
-        curve.appendChild(C1);
-
-        QDomElement C2 = meta.createElement( "C2" );
-        stringstream xc2;
-        xc2 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C2.x();
-        C2.setAttribute("xpos", xc2.str().c_str());
-        stringstream yc2;
-        yc2 << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].C2.y();
-        C2.setAttribute("ypos", yc2.str().c_str());
-        curve.appendChild(C2);
-
-        QDomElement end = meta.createElement( "end" );
-        stringstream xe;
-        xe << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].end.x();
-        end.setAttribute("xpos", xe.str().c_str());
-        stringstream ye;
-        ye << std::setprecision(METADATA_FLOAT_PRECISION) << this->curves[i].end.y();
-        end.setAttribute("ypos", ye.str().c_str());
-        curve.appendChild(end);
-
-        curves.appendChild(curve);
+    // old annotations
+    this->annotation.replace("\n", "");
+    this->annotation.replace("<LL:Annotation>", "");
+    this->annotation.replace("</LL:Annotation>", "");
+    QXmlStreamReader reader(this->annotation);
+    while (!reader.atEnd()) {
+        if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
+            xmlOut->writeCurrentToken(reader);
+        }
+        reader.readNext();
     }
 
+    xmlOut->writeStartElement("SpineCreator");
+
+    xmlOut->writeEmptyElement("DrawOptions");
+    xmlOut->writeAttribute("style", QString::number(this->projDrawStyle));
+    xmlOut->writeAttribute("showlabel", QString::number(this->showLabel));
+
+    // start position
+    xmlOut->writeEmptyElement("start");
+    stringstream xs;
+    xs << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.x();
+    xmlOut->writeAttribute("x", xs.str().c_str());
+    stringstream ys;
+    ys << std::setprecision(METADATA_FLOAT_PRECISION) << this->start.y();
+    xmlOut->writeAttribute("y", ys.str().c_str());
+
+    // bezierCurves
+    xmlOut->writeStartElement("curves");
+    for (int i = 0; i < this->curves.size(); ++i) {
+
+        xmlOut->writeStartElement("curve");
+
+        xmlOut->writeEmptyElement("C1");
+        xmlOut->writeAttribute("xpos", QString::number(this->curves[i].C1.x()));
+        xmlOut->writeAttribute("ypos", QString::number(this->curves[i].C1.y()));
+
+        xmlOut->writeEmptyElement("C2");
+        xmlOut->writeAttribute("xpos", QString::number(this->curves[i].C2.x()));
+        xmlOut->writeAttribute("ypos", QString::number(this->curves[i].C2.y()));
+
+        xmlOut->writeEmptyElement("end");
+        xmlOut->writeAttribute("xpos", QString::number(this->curves[i].end.x()));
+        xmlOut->writeAttribute("ypos", QString::number(this->curves[i].end.y()));
+
+        xmlOut->writeEndElement(); // curve
+
+    }
+    xmlOut->writeEndElement(); // curves
+
+    xmlOut->writeEndElement(); // SpineCreator
+    xmlOut->writeEndElement(); // Annotation
+
     // write out connection metadata
-    for (int i = 0; i < synapses.size(); ++i) {
+    /*for (int i = 0; i < synapses.size(); ++i) {
 
         // write container (name after the weight update)
         QDomElement c = meta.createElement( "synapseConnection" );
@@ -1498,18 +1499,8 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
         synapses[i]->connectionType->write_metadata_xml(meta, c);
 
         col.appendChild(c);
-    }
+    }*/
 
-    // write inputs out
-    for (int i = 0; i < synapses.size(); ++i) {
-
-        for (int j = 0; j < synapses[i]->weightUpdateType->inputs.size(); ++j) {
-            //synapses[i]->weightUpdateType->inputs[j]->write_model_meta_xml(meta, root);
-        }
-        for (int j = 0; j < synapses[i]->postsynapseType->inputs.size(); ++j) {
-            //synapses[i]->postsynapseType->inputs[j]->write_model_meta_xml(meta, root);
-        }
-    }
 }
 
 void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta,

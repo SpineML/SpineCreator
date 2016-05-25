@@ -780,7 +780,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                   xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
                   xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
                   //write annotations
-                  //ptr->inputs[i]->write_model_meta_xml(xmlOut);
+                  ptr->inputs[i]->write_model_meta_xml(&xmlOut);
                   if (ptr->inputs[i]->connectionType->type == Python) {
                       ((pythonscript_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
                       ((pythonscript_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
