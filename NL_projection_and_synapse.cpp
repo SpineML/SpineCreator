@@ -1582,6 +1582,72 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
     this->currTarg = 0;
 
+    // load annotations
+    QDomNode annInst = e.firstChild();
+    while (!(annInst.toElement().tagName() == "LL:Annotation") && !annInst.isNull()) {
+        annInst = annInst.nextSibling();
+    }
+
+    if (annInst.toElement().tagName() == "LL:Annotation") {
+        QDomNode metaNode;
+        QDomNode n = annInst;
+        QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
+        if (scAnns.length() == 1) {
+            metaNode = scAnns.at(0).cloneNode();
+            n.removeChild(scAnns.at(0));
+        }
+        QTextStream temp(&this->annotation);
+        n.save(temp,1);
+
+        // load metaData
+        if (!metaNode.isNull()) {
+
+
+            QDomNode metaData = metaNode.firstChild();
+            while (!metaData.isNull()) {
+
+                if (metaData.toElement().tagName() == "DrawOptions") {
+                    this->projDrawStyle = (drawStyle) metaData.toElement().attribute("style","4").toUInt();
+                    this->showLabel = (bool) metaData.toElement().attribute("showlabel","0").toInt();
+                }
+
+                if (metaData.toElement().tagName() == "start") {
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
+                }
+
+                // find the curves tag
+                if (metaData.toElement().tagName() == "curves") {
+
+                    // add each curve
+                    QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
+                    for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
+                        QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
+                        bezierCurve newCurve;
+                        while (!vals.isNull()) {
+                            if (vals.toElement().tagName() == "C1") {
+                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                            }
+                            if (vals.toElement().tagName() == "C2") {
+                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                            }
+                            if (vals.toElement().tagName() == "end") {
+                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                            }
+
+                            vals = vals.nextSibling();
+                        }
+                        // add the filled out curve to the list
+                        this->curves.push_back(newCurve);
+                    }
+
+                }
+
+                metaData = metaData.nextSibling();
+            }
+
+        }
+    }
+
     // load the synapses:
 
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
@@ -1883,6 +1949,22 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     }
 
     for (int t = 0; t < (int) colList.count(); ++t) {
+
+        // first we should patch up the pythonscripts now the whole system is loaded
+        if (this->synapses[t]->connectionType->type == CSV) {
+            csv_connection * conn = dynamic_cast<csv_connection *> (this->synapses[t]->connectionType);
+            CHECK_CAST(conn)
+            if (conn->generator) {
+                conn->generator->src = this->source;
+                conn->generator->dst = this->destination;
+                if (conn->generator->type == Python) {
+                    pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
+                    CHECK_CAST(pyConn)
+                    pyConn->setUnchanged(true);
+                }
+            }
+        }
+
         QDomNode n = colList.item(t).toElement().firstChild();
         while (!n.isNull()) {
 

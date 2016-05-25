@@ -481,11 +481,15 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
 
             // get annotations
-            QDomNodeList ann = e2.elementsByTagName("LL:Annotation");
-            if (ann.count() == 1) {
-                QDomNode n = ann.item(0);
+            QDomNode annInst = e2.firstChild();
+            while (!(annInst.toElement().tagName() == "LL:Annotation") && !(annInst.isNull())) {
+                annInst = annInst.nextSibling();
+            }
+
+            if (annInst.toElement().tagName() == "LL:Annotation") {
+                QDomNode n = annInst;
                 this->neuronType->inputs.back()->read_meta_data(n);
-            } else if (meta!=NULL) {
+            } else {
                 this->neuronType->inputs.back()->read_meta_data(meta);
             }
         }
@@ -1021,7 +1025,7 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
             xmlOut.writeAttribute("dst_population", dst->name);
 
             // write annotations
-            projection->write_model_meta_xml(xmlOut);
+            projection->write_model_meta_xml(&xmlOut);
 
             for (int j = 0; j < projection->synapses.size(); ++j) {
 

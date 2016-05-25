@@ -676,32 +676,23 @@ void genericInput::read_meta_data(QDomNode meta) {
 
         }
 
-        // find tags for connection generators
-        if (metaData.toElement().tagName() == "connection") {
-            // extract data for connection generator
-
-            // if we are not an empty node
-            if (!metaData.firstChildElement().isNull()) {
-
-                // add connection generator if we are a csv
-                if (this->connectionType->type == CSV) {
-                    csv_connection * conn = dynamic_cast<csv_connection *> (this->connectionType);
-                    CHECK_CAST(conn)
-                    QSharedPointer <population> popsrc = qSharedPointerDynamicCast <population>(this->source);
-                    CHECK_CAST(popsrc)
-                    QSharedPointer <population> popdst = qSharedPointerDynamicCast <population>(this->destination);
-                    CHECK_CAST(popdst)
-                    // add generator
-                    conn->generator = new pythonscript_connection(popsrc, popdst, conn);
+        // do we have a generator
+        if (this->connectionType->type == CSV) {
+            csv_connection * conn = dynamic_cast<csv_connection *> (this->connectionType);
+            CHECK_CAST(conn)
+            QSharedPointer <population> popsrc = qSharedPointerDynamicCast <population>(this->source);
+            CHECK_CAST(popsrc)
+            QSharedPointer <population> popdst = qSharedPointerDynamicCast <population>(this->destination);
+            CHECK_CAST(popdst)
+            if (conn->generator) {
+                conn->generator->src = popsrc;
+                conn->generator->dst = popdst;
+                if (conn->generator->type == Python) {
                     pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
                     CHECK_CAST(pyConn)
-                    // extract data for connection generator
-                    pyConn->read_metadata_xml(metaData);
-                    // prevent regeneration
                     pyConn->setUnchanged(true);
                 }
             }
-
         }
 
         metaData = metaData.nextSibling();

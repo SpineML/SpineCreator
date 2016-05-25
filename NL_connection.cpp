@@ -796,9 +796,14 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
         if (scAnns.length() == 1) {
             metaData = scAnns.at(0).cloneNode();
             anns.at(0).removeChild(scAnns.at(0));
-            // load generator
-            this->generator = new pythonscript_connection();
-            this->generator->read_metadata_xml(metaData);
+            // add generator
+            this->generator = new pythonscript_connection(this->src, this->dst, this);
+            pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (this->generator);
+            CHECK_CAST(pyConn)
+            // extract data for connection generator
+            pyConn->read_metadata_xml(metaData);
+            // prevent regeneration
+            //pyConn->setUnchanged(true);
         }
         QTextStream temp(&this->annotation);
         anns.at(0).save(temp,1);

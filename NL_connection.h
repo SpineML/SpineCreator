@@ -300,8 +300,8 @@ public:
     float rotation;
     QString errorLog;
 
-    QSharedPointer <population> src;
-    QSharedPointer <population> dst;
+    //QSharedPointer <population> src;
+    //QSharedPointer <population> dst;
     QVector < conn > *conns;
     QMutex * mutex;
     bool isList();
