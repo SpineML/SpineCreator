@@ -904,8 +904,9 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     if (!fileMeta.open(QIODevice::ReadOnly)) {
         // if is not a project we don't expect a metaData file
         if (isProject) {
-            addError("Could not open the MetaData file for reading");
-            return;
+            // it is no longer an error not to find a metadata file
+            //addError("Could not open the MetaData file for reading");
+            //return;
         } else {
             this->metaFile = "not found";
         }

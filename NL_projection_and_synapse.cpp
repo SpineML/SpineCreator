@@ -2048,6 +2048,19 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         newInput->dst = this->synapses[t]->postsynapseType;
                         newInput->src->outputs.push_back(newInput);
                     } // else error
+
+                    // get annotations
+                    QDomNode annInst = e2.firstChild();
+                    while (!(annInst.toElement().tagName() == "LL:Annotation") && !(annInst.isNull())) {
+                        annInst = annInst.nextSibling();
+                    }
+
+                    if (annInst.toElement().tagName() == "LL:Annotation") {
+                        QDomNode n = annInst;
+                        newInput->read_meta_data(n);
+                    } else {
+                        newInput->read_meta_data(meta);
+                    }
                 }
 
                 // read in the postsynapse Input
@@ -2167,6 +2180,18 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     else {}
                         // ERRR
 
+                    // get annotations
+                    QDomNode annInst = e2.firstChild();
+                    while (!(annInst.toElement().tagName() == "LL:Annotation") && !(annInst.isNull())) {
+                        annInst = annInst.nextSibling();
+                    }
+
+                    if (annInst.toElement().tagName() == "LL:Annotation") {
+                        QDomNode n = annInst;
+                        newInput->read_meta_data(n);
+                    } else {
+                        newInput->read_meta_data(meta);
+                    }
                 }
 
                 // read in the synapseInput
