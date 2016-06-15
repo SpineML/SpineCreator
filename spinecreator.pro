@@ -156,7 +156,7 @@ linux-g++-64 {
 macx {
     QMAKE_MAC_SDK = macosx10.10
     QMAKE_CXXFLAGS += -O0 -g
-    LIBS +=  -L/opt/local/lib/graphviz/ -lpython2.7 -L/opt/local/lib/
+    LIBS +=  -L/opt/local/lib/graphviz/ -lpython2.7 # -L/opt/local/lib/ # this causes libJPEG.dylib conflict and is not required.
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
     DEPENDPATH +=  /opt/local/lib/graphviz
