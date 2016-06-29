@@ -930,6 +930,8 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     emit setInputName("<u><b>" + in->getName() + "</b></u>");
     emit deleteProperties();
 
+    data->currentlySelectedProjection = in;
+
     QString XMLname = in->src->getXMLName() + " to " + in->dst->getXMLName();
     inputSrcName->setToolTip(XMLname);
     // shorten if too long (tooltip will have full name)
