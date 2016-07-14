@@ -112,7 +112,7 @@ void connection::writeDelay(QXmlStreamWriter &xmlOut)
 {
     xmlOut.writeStartElement("Delay");
 
-    xmlOut.writeAttribute("Dimension", this->delay->dims->toString());
+    xmlOut.writeAttribute("dimension", this->delay->dims->toString());
 
     if (this->delay->currType == FixedValue) {
         xmlOut.writeEmptyElement("FixedValue");
@@ -2362,13 +2362,13 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
         PyObject * errtype, * errval, * errtrace;
         PyErr_Fetch(&(errtype), &(errval), &(errtrace));
 
-        errs.append("ERROR ");
+        errs.append("ERROR in PyRun_String ");
 
         if (errtype) {
-            errs.append(PyString_AsString(errtype) + QString(". "));
+            errs.append(PyString_AsString(errtype) + QString("(errtype). "));
         }
         if (errval) {
-            errs.append(PyString_AsString(errval) + QString(". "));
+            errs.append(PyString_AsString(errval) + QString("(errval). "));
         }
         if (errtrace) {
             PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;
