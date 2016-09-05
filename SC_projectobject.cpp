@@ -728,7 +728,8 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
                 && (*curr_lib)[i]->path == tempALobject->path
                 && tempALobject->name != "none") {
                 // same name
-                addWarning("Two required files have the same Component Name - this project may be corrupted");
+                QString ees = "Two required files have the same Component Name (" + (tempALobject->path) + "/" + (tempALobject->name) +  "). This project may be corrupted";
+                addWarning(ees);
                 tempALobject.clear();
                 return;
             }
