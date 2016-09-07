@@ -132,6 +132,7 @@ exptInput::exptInput(exptInput * inToCopy)
     this->set = true;
     this->name = inToCopy->name;
     this->rateDistribution = inToCopy->rateDistribution;
+    this->rateSeed = inToCopy->rateSeed;
     //this->eventport = EventPort(inToCopy->eventport);
 
 }
@@ -820,7 +821,18 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 if (rateDistribution == Poisson)
                     dist->setCurrentIndex(1);
                 formLay->addRow("Rate distribution:", dist);
+
+                // A seed field
+                QSpinBox * seedspin = new QSpinBox;
+                seedspin->setRange(0,(int)LONG_MAX);
+                seedspin->setValue ((int)this->rateSeed);
+                seedspin->setToolTip("An integer used to seed the random number generator for the given distribution. If set to 0, then the time is used to randomly seed the RNG.");
+                seedspin->setProperty("ptr", qVariantFromValue((void *) this));
+                QObject ::connect(seedspin, SIGNAL(valueChanged(int)), handler, SLOT(setInputRateSeed(int)));
+                formLay->addRow("Seed:", seedspin);
+
                 frameLay->addLayout(formLay);
+
                 dist->setProperty("ptr", qVariantFromValue((void *) this));
                 QObject ::connect(dist, SIGNAL(currentIndexChanged(int)), handler, SLOT(setInputRateDistributionType(int)));
             }
@@ -2309,6 +2321,7 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
                 writer->writeAttribute("rate_based_input", "regular");
             else if (this->rateDistribution == Poisson)
                 writer->writeAttribute("rate_based_input", "poisson");
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
         break;
     case timevarying:
@@ -2321,6 +2334,7 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
                 writer->writeAttribute("rate_based_input", "regular");
             else if (this->rateDistribution == Poisson)
                 writer->writeAttribute("rate_based_input", "poisson");
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
         for (int i = 0; i < this->params.size(); i+=2) {
             writer->writeEmptyElement("TimePointValue");
@@ -2347,6 +2361,7 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
                 writer->writeAttribute("rate_based_input", "regular");
             else if (this->rateDistribution == Poisson)
                 writer->writeAttribute("rate_based_input", "poisson");
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
     }
         break;
@@ -2361,6 +2376,7 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
                 writer->writeAttribute("rate_based_input", "regular");
             else if (this->rateDistribution == Poisson)
                 writer->writeAttribute("rate_based_input", "poisson");
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
         int index = -1;
         QString arrayT = "";
@@ -2859,6 +2875,13 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             this->rateDistribution = Poisson;
     }
 
+    QString rateSeedString;
+    if (reader->attributes().hasAttribute("rate_seed")) {
+        rateSeedString = reader->attributes().value("rate_seed").toString().toInt();
+        this->rateSeed = rateSeedString.toInt();
+        qDebug() << "Read in rate seed which is now: " << this->rateSeed;
+    } // else rateSeed should be 123
+
     // get Synapse name
     QString TargetName;
     if (reader->attributes().hasAttribute("target"))
@@ -2869,8 +2892,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'target' attribute missing");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "XML error in Experiment Input - 'target' attribute missing");
         settings.endArray();
     }
 
@@ -3012,8 +3035,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'array_size' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "XML error in Experiment Input - 'array_size' attribute missing");
             settings.endArray();
         }
 
@@ -3026,8 +3049,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input -  missing array_value tag");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "XML error in Experiment Input -  missing array_value tag");
             settings.endArray();
         }
 
@@ -3043,8 +3066,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Input -  time and value arrays different sizes");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input -  time and value arrays different sizes");
             settings.endArray();
         }
 
@@ -3068,8 +3091,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'index' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "XML error in Experiment Input - 'index' attribute missing");
                     settings.endArray();
                 }
 
@@ -3083,8 +3106,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'array_time' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "XML error in Experiment Input - 'array_time' attribute missing");
                     settings.endArray();
                 }
 
@@ -3100,8 +3123,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'array_value' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "XML error in Experiment Input - 'array_value' attribute missing");
                     settings.endArray();
                 }
 
@@ -3135,8 +3158,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'tcp_port' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "XML error in Experiment Input - 'tcp_port' attribute missing");
             settings.endArray();
         }
 
@@ -3158,8 +3181,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'size' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "XML error in Experiment Input - 'size' attribute missing");
             settings.endArray();
         }
 
@@ -3171,8 +3194,8 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'command' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "XML error in Experiment Input - 'command' attribute missing");
             settings.endArray();
         }
 
@@ -3195,8 +3218,8 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Input -  missing name tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Input -  missing name tag");
         settings.endArray();
     }
 
@@ -3210,8 +3233,8 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Output -  missing target tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Output -  missing target tag");
         settings.endArray();
     }
 
@@ -3224,8 +3247,8 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Output -  references missing target: " + SynapseName);
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Output -  references missing target: " + SynapseName);
         settings.endArray();
     }
 
@@ -3239,8 +3262,8 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Output -  missing port tag");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Output -  missing port tag");
             settings.endArray();
         }
 
@@ -3254,8 +3277,8 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Output -  references missing port " + portName);
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Output -  references missing port " + portName);
             settings.endArray();
         }
         if (port != NULL) {
@@ -3302,8 +3325,8 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Output - 'size' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "XML error in Experiment Output - 'size' attribute missing");
             settings.endArray();
         }
 
@@ -3315,8 +3338,8 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Output - 'command' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "XML error in Experiment Output - 'command' attribute missing");
             settings.endArray();
         }
     }
@@ -3352,8 +3375,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Property Change - missing name tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Property Change - missing name tag");
         settings.endArray();
     }
 
@@ -3372,8 +3395,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
                 settings.endArray();
             }
             reader->readNextStartElement();
@@ -3389,8 +3412,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing minimum tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing minimum tag");
                 settings.endArray();
             }
             if (reader->attributes().hasAttribute("maximum"))
@@ -3401,8 +3424,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing maximum tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing maximum tag");
                 settings.endArray();
             }
             if (reader->attributes().hasAttribute("seed"))
@@ -3413,8 +3436,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
                 settings.endArray();
             }
             reader->readNextStartElement();
@@ -3430,8 +3453,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing mean tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing mean tag");
                 settings.endArray();
             }
             if (reader->attributes().hasAttribute("variance"))
@@ -3442,8 +3465,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing variance tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing variance tag");
                 settings.endArray();
             }
             if (reader->attributes().hasAttribute("seed"))
@@ -3454,8 +3477,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
                 settings.endArray();
             }
             reader->readNextStartElement();
@@ -3477,8 +3500,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                         int num_errs = settings.beginReadArray("errors");
                         settings.endArray();
                         settings.beginWriteArray("errors");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
                         settings.endArray();
                     }
                     if (reader->attributes().hasAttribute("index"))
@@ -3489,8 +3512,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                         int num_errs = settings.beginReadArray("errors");
                         settings.endArray();
                         settings.beginWriteArray("errors");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("errorText", "Error in Experiment Property Change - missing index tag");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("errorText", "Error in Experiment Property Change - missing index tag");
                         settings.endArray();
                     }
                 }
@@ -3503,8 +3526,8 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - type of change not recognised");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - type of change not recognised");
                 settings.endArray();
             }
         }
@@ -3530,8 +3553,8 @@ void exptLesion::readXML(QXmlStreamReader * reader, projectObject * data) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Lesion - missing src_population tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Lesion - missing src_population tag");
         settings.endArray();
     }
     if (reader->attributes().hasAttribute("dst_population"))
@@ -3542,8 +3565,8 @@ void exptLesion::readXML(QXmlStreamReader * reader, projectObject * data) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Lesion - missing dst_population tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Lesion - missing dst_population tag");
         settings.endArray();
     }
 
@@ -3562,8 +3585,8 @@ void exptLesion::readXML(QXmlStreamReader * reader, projectObject * data) {
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Lesion - references missing projection");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Lesion - references missing projection");
             settings.endArray();
         }
     }

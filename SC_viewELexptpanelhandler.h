@@ -122,6 +122,7 @@ public slots:
     void setInputPort(int);
     void setInputType(int);
     void setInputRateDistributionType(int);
+    void setInputRateSeed(int);
     void acceptInput();
     void editInput();
     void setInputTypeData(double);

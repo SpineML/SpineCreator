@@ -915,6 +915,13 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
     redrawExpt();
 }
 
+void viewELExptPanelHandler::setInputRateSeed(int theseed)
+{
+    exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
+    in->rateSeed = theseed;
+    redrawExpt();
+}
+
 void viewELExptPanelHandler::reorderParams (QVector <float>& params)
 {
     QVector <float> tempVec;
@@ -1992,7 +1999,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDetailedText(simulatorStdOutText);
             msgBox.addButton(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();           
+            msgBox.exec();
             this->cleanUpPostRun("", "");
             return;
         }
@@ -2020,7 +2027,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.setText(simulatorStdErrText);
         msgBox.addButton(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();        
+        msgBox.exec();
         this->cleanUpPostRun("", "");
         return;
     }
@@ -2037,7 +2044,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
         }
-        // signal others        
+        // signal others
         this->cleanUpPostRun("", "");
         emit simulationDone();
         return;
@@ -2156,4 +2163,3 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
         this->redraw();
     }
 }
-
