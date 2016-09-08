@@ -824,17 +824,18 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
 
                 // A seed field
                 QSpinBox * seedspin = new QSpinBox;
-                seedspin->setRange(0,(int)LONG_MAX);
+                seedspin->setMinimum(0);
+                seedspin->setMaximum(std::numeric_limits<int>::max());
                 seedspin->setValue ((int)this->rateSeed);
                 seedspin->setToolTip("An integer used to seed the random number generator for the given distribution. If set to 0, then the time is used to randomly seed the RNG.");
                 seedspin->setProperty("ptr", qVariantFromValue((void *) this));
-                QObject ::connect(seedspin, SIGNAL(valueChanged(int)), handler, SLOT(setInputRateSeed(int)));
                 formLay->addRow("Seed:", seedspin);
 
                 frameLay->addLayout(formLay);
 
                 dist->setProperty("ptr", qVariantFromValue((void *) this));
                 QObject ::connect(dist, SIGNAL(currentIndexChanged(int)), handler, SLOT(setInputRateDistributionType(int)));
+                QObject ::connect(seedspin, SIGNAL(valueChanged(int)), handler, SLOT(setInputRateSeed(int)));
             }
 
             // extra type bits
@@ -2875,12 +2876,9 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             this->rateDistribution = Poisson;
     }
 
-    QString rateSeedString;
     if (reader->attributes().hasAttribute("rate_seed")) {
-        rateSeedString = reader->attributes().value("rate_seed").toString().toInt();
-        this->rateSeed = rateSeedString.toInt();
-        qDebug() << "Read in rate seed which is now: " << this->rateSeed;
-    } // else rateSeed should be 123
+        this->rateSeed = reader->attributes().value("rate_seed").toString().toInt();
+    } // else rateSeed should be 123 as set in a constructor
 
     // get Synapse name
     QString TargetName;
