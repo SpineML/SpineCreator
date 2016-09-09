@@ -919,6 +919,16 @@ void viewELExptPanelHandler::setInputRateSeed(int theseed)
 {
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     in->rateSeed = theseed;
+    // Don't redraw the expt on this signal, as that would take focus
+    // from the widget whilst the user may be entering text. Instead,
+    // call redrawExpt on the editingFinished signal.
+}
+
+void viewELExptPanelHandler::editingFinishedRateSeed(void)
+{
+    // Editing finished, so now redraw the experiment. Need this
+    // wrapper function as it is a public slot, and redrawExpt is
+    // private.
     redrawExpt();
 }
 

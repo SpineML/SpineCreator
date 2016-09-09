@@ -836,6 +836,7 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 dist->setProperty("ptr", qVariantFromValue((void *) this));
                 QObject ::connect(dist, SIGNAL(currentIndexChanged(int)), handler, SLOT(setInputRateDistributionType(int)));
                 QObject ::connect(seedspin, SIGNAL(valueChanged(int)), handler, SLOT(setInputRateSeed(int)));
+                QObject ::connect(seedspin, SIGNAL(editingFinished()), handler, SLOT(editingFinishedRateSeed()));
             }
 
             // extra type bits
