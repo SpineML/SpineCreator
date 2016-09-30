@@ -915,6 +915,23 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
     redrawExpt();
 }
 
+void viewELExptPanelHandler::setInputRateSeed(int theseed)
+{
+    exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
+    in->rateSeed = theseed;
+    // Don't redraw the expt on this signal, as that would take focus
+    // from the widget whilst the user may be entering text. Instead,
+    // call redrawExpt on the editingFinished signal.
+}
+
+void viewELExptPanelHandler::editingFinishedRateSeed(void)
+{
+    // Editing finished, so now redraw the experiment. Need this
+    // wrapper function as it is a public slot, and redrawExpt is
+    // private.
+    redrawExpt();
+}
+
 void viewELExptPanelHandler::reorderParams (QVector <float>& params)
 {
     QVector <float> tempVec;
@@ -1992,7 +2009,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDetailedText(simulatorStdOutText);
             msgBox.addButton(QMessageBox::Ok);
             msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();           
+            msgBox.exec();
             this->cleanUpPostRun("", "");
             return;
         }
@@ -2020,7 +2037,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         msgBox.setText(simulatorStdErrText);
         msgBox.addButton(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        msgBox.exec();        
+        msgBox.exec();
         this->cleanUpPostRun("", "");
         return;
     }
@@ -2037,7 +2054,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
             msgBox.setDefaultButton(QMessageBox::Ok);
             msgBox.exec();
         }
-        // signal others        
+        // signal others
         this->cleanUpPostRun("", "");
         emit simulationDone();
         return;
@@ -2156,4 +2173,3 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
         this->redraw();
     }
 }
-

@@ -115,7 +115,9 @@ bool versionControl::isModelUnderMercurial() {
     mercurial->setWorkingDirectory(QDir::toNativeSeparators(path));
     mercurial->setProcessEnvironment(env);
 
+#ifdef NEED_VERSIONCONTROL_FINISHED
     connect(mercurial, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int, QProcess::ExitStatus)));
+#endif
     connect(mercurial, SIGNAL(readyReadStandardOutput()), this, SLOT(standardOutput()));
     connect(mercurial, SIGNAL(readyReadStandardError()), this, SLOT(standardError()));
 

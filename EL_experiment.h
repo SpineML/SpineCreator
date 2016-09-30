@@ -134,6 +134,7 @@ public:
         rate = false;currentIndex = 0;
         name = "New Input";
         rateDistribution = Poisson;                                     \
+        rateSeed = 123; // If set to 0, then getTime() should be used to seed the rateDistribution
         externalInput.size=1;
         externalInput.port = 50091;
         externalInput.host = "127.0.0.1";
@@ -154,6 +155,7 @@ public:
     bool set;
     QString name;
     rateDistributionTypes rateDistribution;
+    unsigned int rateSeed;
     EventPort eventport;
 
     QVBoxLayout * drawInput(nl_rootdata *data, viewELExptPanelHandler * handler);
