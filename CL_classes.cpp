@@ -765,6 +765,9 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                   if (ptr->inputs[i]->connectionType->type == Python) {
                       ((pythonscript_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
                       ((pythonscript_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
+                  } else if (ptr->inputs[i]->connectionType->type == CSV) {
+                      ((csv_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((csv_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
                   }
                   ptr->inputs[i]->connectionType->write_node_xml(xmlOut);
                   xmlOut.writeEndElement(); // input
