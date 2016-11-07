@@ -608,7 +608,7 @@ MainWindow::~MainWindow()
     }
 
     QStringList connFilter;
-    connFilter << "connection*"; // FIX IT - add .tmp
+    connFilter << "conn_*";
     lib_dir.setNameFilters(connFilter);
 
     QStringList connFiles = lib_dir.entryList();
