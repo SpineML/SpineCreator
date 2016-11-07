@@ -36,19 +36,21 @@ projectObject::projectObject(QObject *parent) :
     this->catalogLAY.push_back(QSharedPointer<NineMLLayout> (new NineMLLayout()));
     this->catalogLAY[0]->name = "none";
 
-    // At program start, clean out the content of the temporary
-    // library directory (this is where csv_connections may store
-    // binary connection lists; see NL_connection.h/cpp)
+#ifdef CLEANUP_AT_PROJECT_OPEN
+    // NO, not here, do this in mainwindow.cpp when the PROGRAM
+    //  starts, not when a project is opened. If it's cleaned up here,
+    //  then a second opened project will remove the files needed by
+    //  the first opened project.
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
 #else
     QDir lib_dir = QDir(QStandardPaths::writableLocation(QStandardPaths::DataLocation));
 #endif
-
     lib_dir.setFilter(QDir::Files);
     foreach(QString dirFile, lib_dir.entryList()) {
         lib_dir.remove(dirFile);
     }
+#endif
 }
 
 projectObject::~projectObject()
