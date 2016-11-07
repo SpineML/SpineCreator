@@ -1203,7 +1203,8 @@ float csv_connection::getData(QModelIndex &index)
     f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
     if (!f.open( QIODevice::ReadOnly)) {
         QMessageBox msgBox;
-        msgBox.setText("csv_connection::getData(QModelIndex&): Could not open file for Explicit Connection");
+        msgBox.setText("csv_connection::getData(QModelIndex&): Could not open file '"
+                       + this->uuidFilename + "' for Explicit Connection");
         msgBox.exec();
         return -0.1f;
     }
@@ -1260,7 +1261,7 @@ void csv_connection::generateUUIDFilename(void)
     this->uuidFilename.replace(QString("{"), QString(""));
     this->uuidFilename.replace(QString("}"), QString(""));
     this->uuidFilename += ".bin";
-    //qDebug() << "Set uuidFilename to " << this->uuidFilename;
+    //qDebug() << "csv_connection::generateUUIDFilename(): Set uuidFilename to " << this->uuidFilename;
 }
 
 void csv_connection::generateFilename(void)
