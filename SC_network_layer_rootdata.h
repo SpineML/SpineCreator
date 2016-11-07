@@ -62,8 +62,6 @@ public:
      */
     //@{
     explicit nl_rootdata(QObject *parent = 0);
-    void get_model_xml(QXmlStreamWriter &);
-    void get_model_meta_xml(QDomDocument &meta);
     QColor getColor(QColor);
     int getIndex();
     bool selectionMoved;
