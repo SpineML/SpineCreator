@@ -607,15 +607,11 @@ MainWindow::~MainWindow()
             qDebug() << "error creating library";
     }
 
-    QStringList connFilter;
-    connFilter << "conn_*";
-    lib_dir.setNameFilters(connFilter);
-
-    QStringList connFiles = lib_dir.entryList();
-
-    // remove temporary connection list files
-    for (int i = 0; i < (int) connFiles.size(); ++i)
-       QFile::remove(lib_dir.absoluteFilePath(connFiles[i]));
+    // remove any stale temporary connection list files once at program start.
+    lib_dir.setFilter(QDir::Files);
+    foreach(QString dirFile, lib_dir.entryList()) {
+        lib_dir.remove(dirFile);
+    }
 
     if (this->emsg != (QErrorMessage*)0) {
         delete this->emsg;
