@@ -980,7 +980,8 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     }
 
     //////////////// LOAD PROJECTIONS
-    DBG() << "Loading projections...";
+    DBGBRK()
+    DBG() << "LOADING PROJECTIONS...";
     n = this->doc.documentElement().firstChild();
     int counter = 0;
     while (!n.isNull()) {
@@ -1006,7 +1007,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     }
 
     ///////////////// LOAD INPUTS
-    DBG() << "Loading inputs...";
+    DBG() << "LOADING INPUTS...";
     counter = 0;
     n = this->doc.documentElement().firstChild();
     while (!n.isNull()) {

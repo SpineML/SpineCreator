@@ -95,6 +95,7 @@ class projectObject;
 
 // Debugging defines
 #define DBG() qDebug() << __FUNCTION__ << ": "
+#define DBGBRK() qDebug() << "---";
 
 using namespace std;
 
