@@ -29,6 +29,7 @@
 #include "SC_projectobject.h"
 #include <sstream>
 #include <iomanip>
+#include "globalHeader.h"
 
 synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs)
 {
@@ -130,7 +131,7 @@ QString synapse::getName()
     }
 
     if (index == -1) {
-        qDebug() << "Can't find synapse! In synapse::getName()";
+        DBG() << "Can't find synapse! In synapse::getName()";
         return "Err";
     }
 
@@ -228,7 +229,7 @@ void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemOb
                 g->src = qSharedPointerDynamicCast <population> (objectMap[g->src.data()]);
                 g->dst = qSharedPointerDynamicCast <population> (objectMap[g->dst.data()]);
                 if (!g->src || !g->dst) {
-                    qDebug() << "Error casting objectMap lookup to population in synapse::remapSharedPointers";
+                    DBG() << "Error casting objectMap lookup to population in synapse::remapSharedPointers";
                     exit(-1);
                 }
             }
@@ -244,7 +245,7 @@ projection::projection()
     this->destination.clear();
     this->source.clear();
 
-    currTarg = 0;
+    currTarg = 0; // Unused; remove.
     this->start = QPointF(0,0);
 
     this->tempTrans.GLscale = 100;
@@ -378,7 +379,7 @@ void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, Q
     if (movingObj->type == populationObject) {
         movingPop = qSharedPointerDynamicCast <population>(movingObj);
     } else {
-        qDebug() << "Incorrect object fed to projection animation";
+        DBG() << "Incorrect object fed to projection animation";
         return;
     }
 
@@ -391,7 +392,7 @@ void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, Q
 
     // crash avoidance
     if (this->curves.size() == 0) {
-        qDebug() << "Projection created with no curves or bad access";
+        DBG() << "Projection created with no curves or bad access";
         return;
     }
 
@@ -1365,8 +1366,8 @@ QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, floa
         line.lineTo(xGL, yGL);
         line.lineTo(xGL+0.01, yGL+0.01);
         QPainterPath overlap = line & box;
-        if (overlap.isEmpty())
-        {cerr << "oops! Collision not found";
+        if (overlap.isEmpty()) {
+            DBG() << "oops! Collision not found";
             newX = 0;
             newY = 0;
         } else {
@@ -1515,6 +1516,8 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
 void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta,
                              projectObject * data, QSharedPointer<projection> thisSharedPointer)
 {
+    DBG() << "projection::readFromXML called";
+
     this->type = projectionObject;
 
     this->selectedControlPoint.ind = -1;
@@ -1551,7 +1554,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     // link up src and dest
     bool linked = false;
     for (int i = 0; i < data->network.size(); ++i) {
-        //qDebug() << data->network[i]->name << srcName;
+        //DBG() << data->network[i]->name << srcName;
         if (data->network[i]->name == srcName) {
             this->source = data->network[i];
             linked = true;
@@ -1841,6 +1844,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     }
 
     this->print();
+    DBG() << "returning";
 }
 
 void projection::add_curves()
@@ -1883,15 +1887,35 @@ void projection::add_curves()
 void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data,
                                       QSharedPointer<projection> thisSharedPointer)
 {
+    DBG() << "Find synapses in element " << e.tagName() << " dst " << e.attribute("dst_population","");
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
     if (colList.count() != this->synapses.size()) {
         // oh dear, something has gone badly wrong
-        qDebug() << "Size mismatch " << colList.count() << " != " << this->synapses.size();
+        DBG() << "Size mismatch " << colList.count() << " != " << this->synapses.size() << " for element:" << e.tagName();
+        if (e.hasAttribute("name")) {
+            DBG() << e.attribute("name", "");
+        }
+        DBG() << "Element content: ";
+        DBG() << e.text();
+        DBG() << ".*.";
+        // Is there really not a generic "application failed" scheme
+        // to access taht would give a popup and return the
+        // application to the state it was in before starting the
+        // feature?
     }
+    DBG() << "There are " << colList.count() << " synapses.";
 
+    // t iterates through the LL:Synapses in colList
     for (int t = 0; t < (int) colList.count(); ++t) {
+
+        if (t < this->synapses.size()) {
+            DBG() << "All is well, t is < synapses.size()=" << this->synapses.size();
+        } else {
+            DBG() << "WHOOP WHOOP, t >= synapses.size()!";
+        }
+
         QDomNode n = colList.item(t).toElement().firstChild();
         while (!n.isNull()) {
 
@@ -2087,13 +2111,11 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
 
-                    if (newInput->src != (QSharedPointer <ComponentInstance>)0)
-                    {this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
+                    if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
+                        this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->weightUpdateType;
-                        newInput->src->outputs.push_back(newInput);}
-                    else {}
-                        // ERRR
-
+                        newInput->src->outputs.push_back(newInput);
+                    } else {} // ERRR
                 }
 
                 // read in the synapseInput
@@ -2105,7 +2127,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->srcPort = n.toElement().attribute("input_src_port");
                 newInput->dstPort = n.toElement().attribute("input_dst_port");
 
-                // read in dst
+                // read in dst. CRASH
                 newInput->dst = this->synapses[t]->weightUpdateType;
                 this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
 
@@ -2184,13 +2206,12 @@ QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *
 
 void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
 {
-
     // remap src and dst:
     this->source = qSharedPointerDynamicCast <population> (objectMap[this->source.data()]);
     this->destination = qSharedPointerDynamicCast <population> (objectMap[this->destination.data()]);
 
     if (!this->source || !this->destination) {
-        qDebug() << "Error casting objectMap lookup to population in projection::remapSharedPointers";
+        DBG() << "Error casting objectMap lookup to population in projection::remapSharedPointers";
         exit(-1);
     }
 
@@ -2198,23 +2219,20 @@ void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <syste
     for (int i = 0; i < this->synapses.size(); ++i) {
         this->synapses[i]->remapSharedPointers(objectMap);
     }
-
-
 }
 
-
-void projection::print() {
-
-    std::cerr << "\n";
-    cerr << "   " << this->getName().toStdString() << " ####\n";
-    std::cerr << "   " <<  float(this->currTarg) << "\n";
-    std::cerr << "   " <<  this->destination->name.toStdString() << "\n";
-    std::cerr << "   " <<  this->source->name.toStdString() << "\n";
-    std::cerr << "   " <<  "Synapses:\n";
+void projection::print()
+{
+    DBG() << "Projection printout:";
+    DBG() << "---------------------------------";
+    DBG() << "   " << this->getName() << " ####";
+    //DBG() << "   " <<  float(this->currTarg);
+    DBG() << "   Dest:" <<  this->destination->name;
+    DBG() << "   Src: " <<  this->source->name;
+    DBG() << "   Synapses:";
     for (int i=0; i < (int) this->synapses.size(); ++i) {
-        std::cerr << "       " << this->synapses[i]->postsynapseType->component->name.toStdString()
-                  << " " << this->synapses[i]->weightUpdateType->component->name.toStdString()
-                  << " " << "\n";
+        DBG() << "       " << this->synapses[i]->postsynapseType->component->name
+              << " " << this->synapses[i]->weightUpdateType->component->name;
     }
-    cerr << "\n";
+    DBG() << "---------------------------------";
 }

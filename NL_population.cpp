@@ -364,15 +364,16 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
 }
 
-void population::setupBounds() {
+void population::setupBounds()
+{
     this->left = this->x-this->size/(2.0)*this->aspect_ratio;
     this->right = this->x+this->size/(2.0)*this->aspect_ratio;
     this->top = this->y+this->size/2.0;
     this->bottom = this->y-this->size/2.0;
 }
 
-void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data) {
-
+void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data)
+{
     QDomNodeList nListNRN = e.elementsByTagName("LL:Neuron");
 
     if (nListNRN.size() == 1) {
@@ -393,22 +394,22 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             QString srcName = e2.attribute("src");
 
             for (int i = 0; i < data->network.size(); ++i) {
-                qDebug() << data->network[i]->neuronType->getXMLName();
+                DBG() << "neuronType: " << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
                     newInput->src = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
                 for (int j = 0; j < data->network[i]->projections.size(); ++j) {
-                    qDebug() << "   " << data->network[i]->projections[j]->getName();
+                    DBG() << "   Projection name: " << data->network[i]->projections[j]->getName();
                     for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-                        qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->getName();
+                        DBG() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
                         if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
-                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                            DBG() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
                             newInput->source = data->network[i]->projections[j];
                         }
                         if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
-                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                            DBG() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
                             newInput->source = data->network[i]->projections[j];
                         }
@@ -464,8 +465,9 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     }
 
     // read metadata
-    for (int i = 0; i < this->neuronType->inputs.size(); ++i)
+    for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
         this->neuronType->inputs[i]->read_meta_data(meta);
+    }
 
     this->neuronType->matchPorts();
 }
@@ -529,7 +531,7 @@ void population::delAll(projectObject * data) {
 
 population::~population()
 {
-    //qDebug() << "Population Deleted " << this->getName();
+    //DBG() << "Population Deleted " << this->getName();
     // remove componentData
 
     if (isSpikeSource) {
@@ -1037,14 +1039,14 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
 
     ///// ADD Synapses:
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
-
-    DBG() << "Reading projections from XML";
+    DBG() << "Reading " << cList.count() << " projections from XML";
     for (int i = 0; i < (int) cList.count(); ++i) {
         QDomElement e2 = cList.item(i).toElement();
+        DBG() << "Reading " << e2.tagName() << " dst_population: " << e2.attribute("dst_population", "no-dest-specified");
         this->projections.push_back(QSharedPointer<projection>(new projection()));
         this->projections.back()->readFromXML(e2, doc, meta, data, this->projections.back());
     }
-
+    DBG() << "returning";
 }
 
 void population::getNeuronLocations(QVector <loc> *locations,QColor * cols) {
@@ -1154,12 +1156,12 @@ void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemO
     // and update any projections:
     for (int i = 0; i < this->projections.size(); ++i) {
         // if the proj is in the pointermap...
-        qDebug() << pointerMap << this->projections[i].data();
+        DBG() << pointerMap << this->projections[i].data();
         if (pointerMap.contains(this->projections[i].data())) {
             // remap input
             this->projections[i] = qSharedPointerDynamicCast <projection> (pointerMap[this->projections[i].data()]);
             if (!this->projections[i]) {
-                qDebug() << "Error casting shared pointer to projection in population::remapSharedPointers";
+                DBG() << "Error casting shared pointer to projection in population::remapSharedPointers";
                 exit(-1);
             }
         } else {
@@ -1175,7 +1177,7 @@ void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemO
             // remap input
             this->reverseProjections[i] = qSharedPointerDynamicCast <projection> (pointerMap[this->reverseProjections[i].data()]);
             if (!this->reverseProjections[i]) {
-                qDebug() << "Error casting shared pointer to reverse projection in population::remapSharedPointers";
+                DBG() << "Error casting shared pointer to reverse projection in population::remapSharedPointers";
                 exit(-1);
             }
         } else {

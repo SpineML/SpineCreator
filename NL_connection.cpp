@@ -436,7 +436,7 @@ QDir csv_connection::getLibDir (void)
 #endif
     if (!lib_dir.exists()) {
         if (!lib_dir.mkpath(lib_dir.absolutePath())) {
-            qDebug() << "error creating library";
+            DBG() << "error creating library";
         }
     }
     return lib_dir;
@@ -557,7 +557,7 @@ csv_connection::csv_connection(QString csv_fileName)
     list = list.back().split("\\", QString::SkipEmptyParts);
     this->name = list.back();
 
-    qDebug() << "csv_connection::csv_connection(QString): import_csv(" << csv_fileName << ")";
+    DBG() << "csv_connection::csv_connection(QString): import_csv(" << csv_fileName << ")";
     this->import_csv(csv_fileName);
 }
 #endif
@@ -611,11 +611,11 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
     QString filePathString = settings.value("files/currentFileName", "error").toString();
 
     if (filePathString == "error") {
-        qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
+        DBG() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
         return;
     }
 
-    qDebug() << "filePathString: " << filePathString;
+    DBG() << "filePathString: " << filePathString;
     QDir saveDir(filePathString);
 
     bool saveBinaryConnections = settings.value("fileOptions/saveBinaryConnections", "error").toBool();
@@ -792,7 +792,7 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
             QString filePathString = settings.value("files/currentFileName", "error").toString();
 
             if (filePathString == "error") {
-                qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
+                DBG() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
                 return;
             }
 
@@ -834,7 +834,7 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
             f.close();
 
         } else {
-            qDebug() << "Old, non-packed data format is no longer supported";
+            DBG() << "Old, non-packed data format is no longer supported";
         }
     }
 
@@ -926,7 +926,7 @@ void csv_connection::fetch_headings()
 
 void csv_connection::import_csv(QString fileName)
 {
-    qDebug() << "csv_connection::import_csv(" << fileName << ") called.";
+    DBG() << "csv_connection::import_csv(" << fileName << ") called.";
 
     this->numRows = 0;
 
@@ -1002,7 +1002,7 @@ void csv_connection::import_csv(QString fileName)
         if (numFields == -1) {
             numFields = fields.size();
         } else if (numFields != fields.size()) {
-            qDebug() << "something is wrong!";
+            DBG() << "something is wrong!";
             --numRows;
             continue;
         }
@@ -1072,7 +1072,7 @@ void csv_connection::import_packed_binary(QFile& fileIn, QFile& fileOut)
     }
 
     if (count != this->getNumRows()) {
-        qDebug() << "Mismatch between the number of rows in the XML and in the binary file";
+        DBG() << "Mismatch between the number of rows in the XML and in the binary file";
     }
 
     // flush out the output...
@@ -1112,7 +1112,7 @@ void csv_connection::setNumCols(int num)
 
 void csv_connection::getAllData(QVector < conn > &conns)
 {
-    //qDebug() << "ALL CONN DATA FETCHED";
+    //DBG() << "ALL CONN DATA FETCHED";
 
     QFile f;
     QDir lib_dir = this->getLibDir();
@@ -1261,7 +1261,7 @@ void csv_connection::generateUUIDFilename(void)
     this->uuidFilename.replace(QString("{"), QString(""));
     this->uuidFilename.replace(QString("}"), QString(""));
     this->uuidFilename += ".bin";
-    //qDebug() << "csv_connection::generateUUIDFilename(): Set uuidFilename to " << this->uuidFilename;
+    //DBG() << "csv_connection::generateUUIDFilename(): Set uuidFilename to " << this->uuidFilename;
 }
 
 void csv_connection::generateFilename(void)
@@ -1280,12 +1280,12 @@ void csv_connection::generateFilename(void)
 
     if (this->srcName.isEmpty()) {
         // leave filename empty and return
-        qDebug() << "csv_connection::srcName is empty!";
+        DBG() << "csv_connection::srcName is empty!";
         return;
     }
 
     if (this->dstName.isEmpty()) {
-        qDebug() << "csv_connection::dstName is empty!";
+        DBG() << "csv_connection::dstName is empty!";
         return;
     }
 
@@ -1408,7 +1408,7 @@ void csv_connection::clearData()
     if (f.open(QIODevice::ReadWrite)) {
         f.remove();
         f.close();
-        qDebug() << "csv_connection::clearData(): removed temporary connection data file " << this->uuidFilename;
+        DBG() << "csv_connection::clearData(): removed temporary connection data file " << this->uuidFilename;
     }
 }
 
@@ -1488,7 +1488,7 @@ int pythonscript_connection::getIndex()
     // sanity
     int index = scripts.indexOf(this->scriptName);
     if (index == -1) {
-        qDebug() << "Error with script " << this->scriptName;
+        DBG() << "Error with script " << this->scriptName;
     }
 
     // use Python as the base index and increment by the script number
@@ -1974,6 +1974,8 @@ void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e
 
 void pythonscript_connection::read_metadata_xml(QDomNode &e)
 {
+    DBG() << "pythonscript_connection::read_metadata_xml called";
+
     // read in the settings for this generator
     QDomNode node = e.firstChild();
 
@@ -1995,7 +1997,7 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
 
             // load the parameters from the metadata
             for (int i = 0; i < this->parNames.size(); ++i) {
-                qDebug() << "ParName = " << this->parNames[i];
+                DBG() << "ParName = " << this->parNames[i];
                 this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
             }
 
@@ -2150,6 +2152,8 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
 
     // exit the scripts group
     settings.endGroup();
+
+    DBG() << "returning";
 }
 
 ParameterInstance * pythonscript_connection::getPropPointer()
@@ -2401,12 +2405,12 @@ void pythonscript_connection::generate_connections()
     QString errorLog;
     src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
-        qDebug() << "no src locs";
+        DBG() << "no src locs";
         return;
     }
     dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
-        qDebug() << "no dst locs";
+        DBG() << "no dst locs";
         return;
     }
 
@@ -2428,7 +2432,7 @@ void pythonscript_connection::generate_connections()
 
     // check the tuple is sound
     if (!argsPy) {
-        qDebug() << "Bad args tuple";
+        DBG() << "Bad args tuple";
         Py_XDECREF(argsPy);
         Py_XDECREF(srcPy);
         Py_XDECREF(dstPy);
@@ -2487,7 +2491,7 @@ void pythonscript_connection::generate_connections()
     // transfer the unpacked output to the local storage location for connections
     if (this->connection_target != NULL) {
 
-        qDebug() << "pythonscript_connection::generate_connections: setting src/dst popn names in connection_target";
+        DBG() << "pythonscript_connection::generate_connections: setting src/dst popn names in connection_target";
         this->connection_target->setSrcName (this->src->name);
         this->connection_target->setDstName (this->dst->name);
 

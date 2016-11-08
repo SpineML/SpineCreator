@@ -239,6 +239,8 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
 
 bool projectObject::import_network(QString fileName)
 {
+    qDebug() << "projectObject::import_network(" << fileName << ")";
+
     QDir project_dir(fileName);
 
     // remove filename
@@ -253,8 +255,9 @@ bool projectObject::import_network(QString fileName)
 
     // load all the components in the list
     for (int i = 0; i < files.size(); ++i) {
-        if (isComponent(project_dir.absoluteFilePath(files[i])))
+        if (isComponent(project_dir.absoluteFilePath(files[i]))) {
             loadComponent(files[i], project_dir);
+        }
     }
 
     // load all the layouts in the list
@@ -968,6 +971,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
             if (num_errs != 0) {
                 // no dice - give up!
+                DBG() << "There were errors reading the population. Giving up and returning.";
                 return;
             }
 
@@ -976,6 +980,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     }
 
     //////////////// LOAD PROJECTIONS
+    DBG() << "Loading projections...";
     n = this->doc.documentElement().firstChild();
     int counter = 0;
     while (!n.isNull()) {
@@ -984,7 +989,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         if (e.tagName() == "LL:Population" ) {
             // with all the populations added, add the projections and join them up:
             this->network[counter]->load_projections_from_xml(e, &this->doc, &this->meta, this);
-
+            DBG() << "After load_projections_from_xml, network[counter]->projections.count is " << this->network[counter]->projections.count();
             // check for errors:
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
@@ -1001,19 +1006,29 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     }
 
     ///////////////// LOAD INPUTS
+    DBG() << "Loading inputs...";
     counter = 0;
     n = this->doc.documentElement().firstChild();
     while (!n.isNull()) {
-
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
+            {
+                QDomNodeList neurons = e.elementsByTagName("LL:Neuron");
+                QDomElement en = neurons.item(0).toElement();
+                DBG() << "Population name " << en.attribute("name", "unknown");
+            }
             // add inputs
+            DBG() << "Adding inputs from LL:Population element with network->read_inputs_from_xml... " << e.text();
+            // network is a QVector of pointers to populations
             this->network[counter]->read_inputs_from_xml(e, &this->meta, this);
+            DBG() << "After read_inputs_from_xml, network[counter]->projections.count is " << this->network[counter]->projections.count();
 
+            DBG() << "Now read inputs for each projection in the population in network[counter]...";
             int projCount = 0;
             QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
             for (int i = 0; i < (int) n2.size(); ++i) {
                 QDomElement e = n2.item(i).toElement();
+                DBG() << "Calling projections->read_inputs_from_xml...";
                 this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this, this->network[counter]->projections[projCount]);
                 ++projCount;
             }
