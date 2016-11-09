@@ -3300,15 +3300,9 @@ void ComponentInstance::removeReferences() {
 
 }
 
-void ComponentInstance::addInput(QSharedPointer <ComponentInstance>, bool) {
-
+void ComponentInstance::addInput(QSharedPointer <ComponentInstance>, bool)
+{
     qDebug() << "This shouldn't be called - NineMLComponentData::addInput(QSharedPointer <NineMLComponentData> src, bool isProj)";
-
-    //QSharedPointer<genericInput> newInput = new genericInput(src, this, isProj);
-
-    // suppress warning
-    //newInput = NULL;
-
 }
 
 ComponentInstance::~ComponentInstance() {
