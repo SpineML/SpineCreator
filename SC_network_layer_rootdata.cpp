@@ -699,11 +699,11 @@ void nl_rootdata::populationMoved(const QVector <QSharedPointer<population> >& p
 
 void nl_rootdata::onNewSelections (float xGL, float yGL)
 {
-    qDebug() << __FUNCTION__ << " emitting updatePanel";
+    DBG() << " emitting updatePanel";
     emit updatePanel(this);
     for (int i = 0; i < this->selList.size(); ++i) {
         // register locations relative to cursor:
-        qDebug() << "Setting a location offset...";
+        DBG() << "Setting a location offset...";
         this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
     }
 }
@@ -739,7 +739,7 @@ void nl_rootdata::deleteFromSelList (const QVector <QSharedPointer<systemObject>
 // When the "left" mouse goes down, select what's underneath, if anything.
 void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown)
 {
-    qDebug() << __FUNCTION__ << " called, shift is " << (shiftDown ? "Down" : "Up");
+    DBG() << " called, shift is " << (shiftDown ? "Down" : "Up");
 
     // Record the position of the selection.
     this->lastLeftMouseDownPos.setX(xGL);
@@ -774,36 +774,36 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
     // 8. Something(s) were previously selected, user clicked on one of them -> User is moving selection.
 
     if (this->selList.empty()) { // Nothing previously selected.
-        qDebug() << "Nothing prev. selected...";
+        DBG() << "Nothing prev. selected...";
         if (newlySelectedList.empty()) {
             // Nothing selected now, do nothing but show the cursor.
-            qDebug() << "Nothing selected now, so show cursor.";
+            DBG() << "Nothing selected now, so show cursor.";
             cursor.x = xGL;
             cursor.y = yGL;
             emit updatePanel(this);
         } else {
             // Have new selection, selList is empty, swap the contents
             // of newlySelectedList into selList.
-            qDebug() << "New selection, swap new selection into selList.";
+            DBG() << "New selection, swap new selection into selList.";
             this->selList.swap (newlySelectedList);
             this->onNewSelections(xGL, yGL);
         }
 
     } else { // We have a previous selection.
-        qDebug() << "We have a previous selection...";
+        DBG() << "We have a previous selection...";
         if (newlySelectedList.empty()) {
             // Nothing selected now.
-            qDebug() << "Nothing is newly selected...";
+            DBG() << "Nothing is newly selected...";
             if (shiftDown) {
                 // User still has shift down; do nothing. Show cursor?
-                qDebug() << "User has shift down. Show cursor.";
+                DBG() << "User has shift down. Show cursor.";
                 cursor.x = xGL;
                 cursor.y = yGL;
                 // If we selected nothing, then just this:
                 emit updatePanel(this);
             } else {
                 // Clear selection and show cursor:
-                qDebug() << "User doesn't have shift down, so clear selection and show cursor.";
+                DBG() << "User doesn't have shift down, so clear selection and show cursor.";
                 this->cursor.x = xGL;
                 this->cursor.y = yGL;
                 this->selList.clear();
@@ -811,28 +811,28 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
             }
         } else {
             // Have new selection
-            qDebug() << "We have a new selection...";
+            DBG() << "We have a new selection...";
             if (shiftDown) {
                 // User still has shift down; append, leaving cursor unchanged
                 if (!this->selListContains (newlySelectedList)) {
-                    qDebug() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
+                    DBG() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
                     //this->selList.insert (this->selList.end(), newlySelectedList.begin(), newlySelectedList.end());
                     // since we have moved to QVectors this should have the same effect as the above - Alex 17 July 2014
                     this->selList += newlySelectedList;
                 } else {
                     // user has shift down,. but newlySelected is already in selList, so in this case REMOVE it!
-                    qDebug() << "user has shift down clicking on existing object, so delete";
+                    DBG() << "user has shift down clicking on existing object, so delete";
                     this->deleteFromSelList (newlySelectedList);
                 }
             } else {
                 // Shift not down, user wishes to switch selection OR move several selected items
-                qDebug() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
+                DBG() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
                 if (this->selListContains (newlySelectedList)) {
-                    qDebug() << "selList contains newly selected; user wishes to MOVE selected items.";
+                    DBG() << "selList contains newly selected; user wishes to MOVE selected items.";
                     // Nothing further to do here?
                 } else {
                     // Swap selection, leave cursor unchanged.
-                    qDebug() << "newly selected not in selList. user wishes to switch selection. Swap newly selected into selList";
+                    DBG() << "newly selected not in selList. user wishes to switch selection. Swap newly selected into selList";
                     this->selList.swap (newlySelectedList);
                 }
 #if 0
@@ -1159,7 +1159,7 @@ void nl_rootdata::abortProjection()
 void nl_rootdata::mouseMoveGL(float xGL, float yGL)
 {
     selectionMoved = true;
-    //qDebug() << "pos = " << xGL << " " << yGL;
+    //DBG() << "pos = " << xGL << " " << yGL;
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
@@ -1230,7 +1230,7 @@ void nl_rootdata::updatePortMap(QString var)
     genericInput * ptr = (genericInput *) sender()->property("ptr").value<void *>();
 
     if (!this->isValidPointer(ptr)) {
-        qDebug() << "Found a bad pointer in updatePortMap";
+        DBG() << "Found a bad pointer";
         exit(0);
     }
 
@@ -2026,29 +2026,29 @@ QSharedPointer<ComponentInstance> nl_rootdata::isValidPointer(ComponentInstance 
 // allow safe usage of NineMLComponent pointers
 QSharedPointer<Component> nl_rootdata::isValidPointer(Component * ptr)
 {
-    qDebug() << ptr;
-    qDebug() << "/////";
+    DBG() << ptr;
+    DBG() << "/////";
 
     for (int i = 0; i < this->catalogNrn.size(); ++i) {
-        qDebug() << catalogNrn[i].data();
+        DBG() << catalogNrn[i].data();
         if (catalogNrn[i] == ptr) {
             return catalogNrn[i];
         }
     }
     for (int i = 0; i < this->catalogPS.size(); ++i) {
-        qDebug() << catalogPS[i].data();
+        DBG() << catalogPS[i].data();
         if (catalogPS[i]  == ptr) {
             return catalogPS[i];
         }
     }
     for (int i = 0; i < this->catalogUnsorted.size(); ++i) {
-        qDebug() << catalogUnsorted[i].data();
+        DBG() << catalogUnsorted[i].data();
         if (catalogUnsorted[i]  == ptr) {
             return catalogUnsorted[i];
         }
     }
     for (int i = 0; i < this->catalogWU.size(); ++i) {
-        qDebug() << catalogWU[i].data();
+        DBG() << catalogWU[i].data();
         if (catalogWU[i] == ptr) {
             return catalogWU[i];
         }
@@ -2115,7 +2115,7 @@ void nl_rootdata::addgenericInput()
         QSharedPointer<ComponentInstance> dstShr = isValidPointer(dst);
 
         if (dstShr.isNull()) {
-            qDebug() << "Found a bad pointer in addGenericInput";
+            DBG() << "Found a bad pointer";
             exit(0);
         }
 
@@ -2145,7 +2145,7 @@ void nl_rootdata::delgenericInput()
     QSharedPointer <genericInput> ptrShr = qSharedPointerDynamicCast<genericInput> (this->isValidPointer(ptr));
 
     if (ptrShr.isNull()) {
-        qDebug() << "Found a bad pointer in delGenericInput";
+        DBG() << "Found a bad pointer";
         exit(0);
     }
 
@@ -2188,7 +2188,7 @@ void nl_rootdata::undoOrRedoPerformed(int)
     // update file list for components
     emit setWindowTitle();
     emit updatePanel(this);
-    qDebug() << "Here";
+    DBG() << "Here";
 }
 
 void nl_rootdata::copyParsToClipboard()
