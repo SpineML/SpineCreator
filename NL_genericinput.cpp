@@ -120,17 +120,6 @@ QString genericInput::getName()
     return "input";
 }
 
-#if 0
-void genericInput::remove(nl_rootdata * data)
-{
-    // remove from experiment
-    for (int j = 0; j < data->experiments.size(); ++j) {
-        //data->experiments[j]->purgeBadPointer(this);
-    }
-    //delete this;
-}
-#endif
-
 void genericInput::delAll(nl_rootdata *)
 {
     // remove references so we don't get deleted twice

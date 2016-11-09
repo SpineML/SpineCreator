@@ -237,11 +237,13 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
     return true;
 }
 
-bool projectObject::import_network(QString fileName)
+bool projectObject::import_network(QString fileName, cursorType cursorPos)
 {
     qDebug() << "projectObject::import_network(" << fileName << ")";
 
     QDir project_dir(fileName);
+
+    this->currentCursorPos = cursorPos;
 
     // remove filename
     project_dir.cdUp();
@@ -897,6 +899,11 @@ void projectObject::saveLayout(QString fileName, QDir project_dir, QSharedPointe
     this->doc.clear();
 }
 
+cursorType
+projectObject::getCursorPos (void)
+{
+    return this->currentCursorPos;
+}
 
 void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProject)
 {
@@ -924,11 +931,10 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     // get the model name
     this->name = root.toElement().attribute("name", "Untitled project");
 
-#if 0
     if (!isProject) {
         // Get cursor offset so it can be applied when loading metadata.
+        DBG() << "Cursor position is " << this->currentCursorPos.x << "," << this->currentCursorPos.y;
     }
-#endif
 
     // only load metadata for projects
     QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
@@ -970,8 +976,8 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     QDomNode n = this->doc.documentElement().firstChild();
     while (!n.isNull())  {
 
-            QDomElement e = n.toElement();
-            if (e.tagName() == "LL:Population") {
+        QDomElement e = n.toElement();
+        if (e.tagName() == "LL:Population") {
             {
                 QDomNodeList allneurons = e.elementsByTagName("LL:Neuron");
                 QDomElement firstneuron = allneurons.item(0).toElement();

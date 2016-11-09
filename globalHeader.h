@@ -132,6 +132,12 @@ struct conn {
     float metric;
 };
 
+// Used to store the cursor position in the network view
+struct cursorType {
+    GLfloat x;
+    GLfloat y;
+};
+
 enum connectionType {
     AlltoAll,
     OnetoOne,

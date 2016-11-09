@@ -43,10 +43,6 @@ struct selStruct {
     int colInd;
 };
 
-struct cursorType {
-    GLfloat x;
-    GLfloat y;
-};
 
 struct loadedComponent {
     QSharedPointer<Component> component;

@@ -30,7 +30,7 @@ public:
     bool open_project(QString);
     bool save_project(QString, nl_rootdata *);
 
-    bool import_network(QString);
+    bool import_network(QString, cursorType);
 
     void import_component(QString);
 
@@ -89,7 +89,11 @@ public:
     // state of the visualizer QTreeWidget
     QStringList treeWidgetState;
 
+    cursorType getCursorPos (void);
+
 private:
+
+    cursorType currentCursorPos;
 
     // load helpers
     bool isComponent(QString);

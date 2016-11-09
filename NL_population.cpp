@@ -90,7 +90,9 @@ population::population(QSharedPointer <population> data, QSharedPointer<populati
     isSpikeSource = false;
 }
 
-void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta, projectObject * data, QSharedPointer<population> thisSharedPointer)
+void
+population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
+                         projectObject * data, QSharedPointer<population> thisSharedPointer)
 {
     // defaults
     this->x = 0;
@@ -234,7 +236,7 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 settings.endArray();
                 settings.beginWriteArray("errors");
                 settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: missing Layout attribute 'url'");
+                settings.setValue("errorText", "XML error: missing Layout attribute 'url'");
                 settings.endArray();
             }
             this->layoutName.chop(4);
@@ -262,19 +264,18 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("warnings");
                 settings.endArray();
                 settings.beginWriteArray("warnings");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("warnText",  "Network references missing Layout '" + layoutName + "'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("warnText",  "Network references missing Layout '" + layoutName + "'");
                 settings.endArray();
             }
-
 
         } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
             settings.endArray();
         }
 
@@ -301,13 +302,13 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     {
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "xPos" ) {
-            this->x = e2.attribute("value", "").toFloat();
-            this->targx = x;
+            this->x = e2.attribute("value", "").toFloat() + data->getCursorPos().x;
+            this->targx = this->x;
         }
 
         if( e2.tagName() == "yPos" ) {
-            this->y = e2.attribute("value", "").toFloat();
-            this->targy = y;
+            this->y = e2.attribute("value", "").toFloat() + data->getCursorPos().y;
+            this->targy = this->y;
         }
 
         if( e2.tagName() == "animSpeed" ) {
@@ -475,7 +476,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     // read metadata. This should add the curves to the generic inputs.
     for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
         DBG() << "Reading metadata for input " << i;
-        this->neuronType->inputs[i]->read_meta_data(meta);
+        this->neuronType->inputs[i]->read_meta_data(meta, data->getCursorPos());
     }
 
     this->neuronType->matchPorts();
