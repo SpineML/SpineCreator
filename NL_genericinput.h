@@ -52,11 +52,17 @@ public:
     void connect(QSharedPointer<genericInput> in);
     void disconnect();
 
+    // NB: Very confusing, name clashes
+    // QSharedPointer<systemObject> destination(source) in the parent
+    // class (projection), which it overrides.
     QSharedPointer<systemObject> destination;
     QSharedPointer<systemObject> source;
 
-    QSharedPointer <ComponentInstance> src;
+    // FIXME: coder will ask "why destination and dst?". Refactor to
+    // be dstCmpt and srcCmpt.
     QSharedPointer <ComponentInstance> dst;
+    QSharedPointer <ComponentInstance> src;
+
     QString srcPort;
     QString dstPort;
     bool projInput;

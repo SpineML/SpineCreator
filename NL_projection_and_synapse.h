@@ -92,8 +92,9 @@ public:
     bool is_clicked(float, float,float);
     virtual void add_curves();
 
-    QSharedPointer <population> source;
     QSharedPointer <population> destination;
+    QSharedPointer <population> source;
+
     QVector <QSharedPointer <synapse> > synapses;
     int currTarg;
     QString getName();
