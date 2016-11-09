@@ -176,8 +176,9 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
-                if (num_errs > 0)
+                if (num_errs > 0) {
                     return;
+                }
             }
 
             ///////////// FIND AND LOAD NEURON
@@ -366,13 +367,14 @@ void population::setupBounds()
 
 void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data)
 {
-    DBG() << "population::read_inputs_from_xml called";
+    // e starts out as a LL:Population
+    DBG() << "population::read_inputs_from_xml called for element " << e.tagName();
     QDomNodeList nListNRN = e.elementsByTagName("LL:Neuron");
-
+    DBG() << "LL:Neuron list has size " << nListNRN.size();
     if (nListNRN.size() == 1) {
-        e = nListNRN.item(0).toElement();
-
-        QDomNodeList nList = e.elementsByTagName("LL:Input");
+        QDomElement e1 = nListNRN.item(0).toElement();
+        QDomNodeList nList = e1.elementsByTagName("LL:Input");
+        DBG() << "LL:Input list has size " << nList.size();
         for (int nrni = 0; nrni < (int) nList.size(); ++nrni) {
 
             QDomElement e2 = nList.item(nrni).toElement();
@@ -383,26 +385,26 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             newInput->destination = this->neuronType->owner;
             newInput->projInput = false;
 
-            // read in and locate src:
+            // read in src from XML and locate src in existing projectobject data:
             QString srcName = e2.attribute("src");
-
+            DBG() << "srcName: " << srcName;
             for (int i = 0; i < data->network.size(); ++i) {
-                //DBG() << "neuronType: " << data->network[i]->neuronType->getXMLName();
+                DBG() << "XML element type: " << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
                     newInput->src = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
                 for (int j = 0; j < data->network[i]->projections.size(); ++j) {
-                    //DBG() << "   Projection name: " << data->network[i]->projections[j]->getName();
+                    DBG() << "   Projection name: " << data->network[i]->projections[j]->getName();
                     for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-                        //DBG() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
+                        DBG() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
                         if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
-                            //DBG() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                            DBG() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
                             newInput->source = data->network[i]->projections[j];
                         }
                         if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
-                            //DBG() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                            DBG() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
                             newInput->source = data->network[i]->projections[j];
                         }
@@ -412,11 +414,14 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
             // read in port names
             newInput->srcPort = e2.attribute("src_port");
+            DBG() << "src_port: " << newInput->srcPort;
             newInput->dstPort = e2.attribute("dst_port");
+            DBG() << "dst_port: " << newInput->dstPort;
 
             // get connectivity
             QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
             if (type.count() == 1) {
+                DBG() << "AllToAllConnection";
                 delete newInput->connectionType;
                 newInput->connectionType = new alltoAll_connection;
                 QDomNode cNode = type.item(0);
@@ -424,6 +429,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
             type = e2.elementsByTagName("OneToOneConnection");
             if (type.count() == 1) {
+                DBG() << "OneToOneConnection";
                 delete newInput->connectionType;
                 newInput->connectionType = new onetoOne_connection;
                 QDomNode cNode = type.item(0);
@@ -431,6 +437,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
             type = e2.elementsByTagName("FixedProbabilityConnection");
             if (type.count() == 1) {
+                DBG() << "FixedProb";
                 delete newInput->connectionType;
                 newInput->connectionType = new fixedProb_connection;
                 QDomNode cNode = type.item(0);
@@ -438,6 +445,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
             type = e2.elementsByTagName("ConnectionList");
             if (type.count() == 1) {
+                DBG() << "ConnectionList";
                 delete newInput->connectionType;
                 newInput->connectionType = new csv_connection;
                 QDomNode cNode = type.item(0);
@@ -446,9 +454,9 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType->import_parameters_from_xml(cNode);
             }
 
-
             if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
                 newInput->dst = this->neuronType;
+                DBG() << "Pushing back the newInput!";
                 this->neuronType->inputs.push_back(newInput);
                 newInput->src->outputs.push_back(newInput);
             } else {
@@ -459,6 +467,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
     // read metadata
     for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
+        DBG() << "Reading metadata";
         this->neuronType->inputs[i]->read_meta_data(meta);
     }
 
@@ -466,21 +475,15 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     DBG() << "population::read_inputs_from_xml returning";
 }
 
-void population::remove(nl_rootdata * data)
-{
-}
-
 void population::delAll(nl_rootdata * data)
 {
     // remove the projections (they'll take themselves off the vector)
     while ( this->projections.size()) {
-        // delete
         this->projections[0]->delAll(data);
     }
 
     // remove the reverse projections (they'll take themselves off the vector)
     while (this->reverseProjections.size()) {
-        // delete
         this->reverseProjections[0]->delAll(data);
     }
 
@@ -491,13 +494,11 @@ void population::delAll(projectObject * data)
 {
     // remove the projections (they'll take themselves off the vector)
     while ( this->projections.size()) {
-        // delete
         this->projections[0]->delAll(data);
     }
 
     // remove the reverse projections (they'll take themselves off the vector)
     while (this->reverseProjections.size()) {
-        // delete
         this->reverseProjections[0]->delAll(data);
     }
 
@@ -1008,14 +1009,13 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
 {
     ///// ADD Synapses:
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
-    DBG() << "Reading " << cList.count() << " projections from XML";
     for (int i = 0; i < (int) cList.count(); ++i) {
         QDomElement e2 = cList.item(i).toElement();
         DBG() << "Reading " << e2.tagName() << " dst_population: " << e2.attribute("dst_population", "no-dest-specified");
         this->projections.push_back(QSharedPointer<projection>(new projection()));
         this->projections.back()->readFromXML(e2, doc, meta, data, this->projections.back());
     }
-    DBG() << "returning";
+    DBG() << "Read " << cList.count() << " projections from XML";
 }
 
 void population::getNeuronLocations(QVector <loc> *locations,QColor * cols)

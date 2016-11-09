@@ -273,29 +273,42 @@ bool projectObject::import_network(QString fileName)
         return false;
     }
 
+    // now should have all the populations and inputs loaded.
+
     // set up metaData if not loaded
     if (this->metaFile == "not found") {
         this->metaFile = "metaData.xml";
+    }
+    DBG() << "metaFile: " << this->metaFile;
 
-        // place populations
-        for (int i = 0; i < this->network.size(); ++i) {
-            QSharedPointer <population> p = this->network[i];
-            p->x = i*2.0f; p->targx = i*2.0f;
-            p->y = i*2.0f; p->targy = i*2.0f;
-            p->size = 1.0f;
-            p->aspect_ratio = 5.0f/3.0f;
-            p->setupBounds();
+    // place populations
+    DBG() << "placing " << this->network.size() << "populations";
+    for (int i = 0; i < this->network.size(); ++i) {
+        QSharedPointer <population> p = this->network[i];
+        p->x = i*2.0f; p->targx = i*2.0f;
+        p->y = i*2.0f; p->targy = i*2.0f;
+        p->size = 1.0f;
+        p->aspect_ratio = 5.0f/3.0f;
+        p->setupBounds();
+    }
+
+    // make projection curves (what about inputs?)
+    for (int i = 0; i < this->network.size(); ++i) {
+        QSharedPointer <population> p = this->network[i];
+        DBG() << "Placing " << p->projections.size() << " projections for this population";
+        for (int j = 0; j < p->projections.size(); ++j) {
+            QSharedPointer <projection> pr = p->projections[j];
+            pr->add_curves();
         }
-
-        // make projection curves
-        for (int i = 0; i < this->network.size(); ++i) {
-            QSharedPointer <population> p = this->network[i];
-            for (int j = 0; j < p->projections.size(); ++j) {
-                QSharedPointer <projection> pr = p->projections[j];
-                pr->add_curves();
-            }
+        DBG() << "Placing " << p->neuronType->inputs.size() << " inputs for this population";
+        // what are they?
+        for (int j = 0; j < p->neuronType->inputs.size(); ++j) {
+            QSharedPointer <projection> pr = p->neuronType->inputs[j];
+            // Does the projection have source and destination? If not there'll be a CRASH HERE. (NEXT UP).
+            pr->add_curves();
         }
     }
+
 
     // finally load the experiments
     for (int i = 0; i < files.size(); ++i) {
@@ -990,7 +1003,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         if (e.tagName() == "LL:Population" ) {
             // with all the populations added, add the projections and join them up:
             this->network[counter]->load_projections_from_xml(e, &this->doc, &this->meta, this);
-            DBG() << "After load_projections_from_xml, network[counter]->projections.count is " << this->network[counter]->projections.count();
+            DBG() << "After load_projections_from_xml, network["<<counter<<"]->projections.count is " << this->network[counter]->projections.count();
             // check for errors:
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
@@ -1020,13 +1033,15 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             }
             // add inputs
             DBG() << "Adding inputs from LL:Population element with network->read_inputs_from_xml... " << e.text();
-            // network is a QVector of pointers to populations
+            // network is a QVector of pointers to populations. Calls NL_population::read_inputs_from_xml
+            // Needs to read _inputs_ here:
             this->network[counter]->read_inputs_from_xml(e, &this->meta, this);
-            DBG() << "After read_inputs_from_xml, network[counter]->projections.count is " << this->network[counter]->projections.count();
+            DBG() << "After read_inputs_from_xml, network["<<counter<<"]->inputs.count is "
+                  << this->network[counter]->neuronType->inputs.count();
 
-            DBG() << "Now read inputs for each projection in the population in network[counter]...";
             int projCount = 0;
             QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
+            DBG() << "Now read inputs for each of " << n2.size() << " projections in the population in network["<<counter<<"]...";
             for (int i = 0; i < (int) n2.size(); ++i) {
                 QDomElement e = n2.item(i).toElement();
                 DBG() << "Calling projections->read_inputs_from_xml...";

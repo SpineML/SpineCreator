@@ -1849,38 +1849,32 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
 void projection::add_curves()
 {
-    // add sensible curves
-    // add curves for drawing:
     bezierCurve newCurve;
-    newCurve.end = destination->currentLocation();
-    this->start = source->currentLocation();
+    newCurve.end = this->destination->currentLocation();
+    this->start = this->source->currentLocation();
 
-    newCurve.C1 = 0.5*(destination->currentLocation()+source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
-    newCurve.C2 = 0.5*(destination->currentLocation()+source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
+    newCurve.C1 = 0.5*(this->destination->currentLocation()+this->source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
+    newCurve.C2 = 0.5*(this->destination->currentLocation()+this->source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
 
     this->curves.push_back(newCurve);
 
-    // source
-
-    // if we are from a population to a projection and the pop is the Synapse of the proj, handle differently for aesthetics
+    // source. if we are from a population to a projection and the pop
+    // is the Synapse of the proj, handle differently for aesthetics
     QPointF boxEdge = this->findBoxEdge(this->source, destination->currentLocation().x(), destination->currentLocation().y());
     this->start = boxEdge;
 
     // destination
-
-    boxEdge = this->findBoxEdge(this->destination, source->currentLocation().x(), source->currentLocation().y());
+    boxEdge = this->findBoxEdge(this->destination, this->source->currentLocation().x(), this->source->currentLocation().y());
     this->curves.back().end = boxEdge;
 
     // self connection aesthetics
     if (this->destination == this->source) {
-
         QPointF boxEdge = this->findBoxEdge(this->destination, this->destination->currentLocation().x(), 1000000.0);
         this->curves.back().end = boxEdge;
         boxEdge = this->findBoxEdge(this->source, 1000000.0, 1000000.0);
         this->start = boxEdge;
         this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0, this->destination->currentLocation().y()+1.0);
         this->curves.back().C2 = QPointF(this->destination->currentLocation().x(), this->destination->currentLocation().y()+1.4);
-
     }
 }
 

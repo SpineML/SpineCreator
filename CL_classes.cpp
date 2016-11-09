@@ -3331,8 +3331,8 @@ ComponentInstance::~ComponentInstance() {
     //qDebug() << "Deleting NineMLComponentData";
 }
 
-void ComponentInstance::matchPorts() {
-
+void ComponentInstance::matchPorts()
+{
     // attempt to match by type and dimensions
     for (int i = 0; i < this->inputs.size();  ++i) {
 
@@ -3346,14 +3346,13 @@ void ComponentInstance::matchPorts() {
                 if (inputs[i]->srcPort + "->" + inputs[i]->dstPort == portPairs[j])
                     isValid = true;
             }
-            if (isValid)
+            if (isValid) {
                 continue;
+            }
             inputs[i]->srcPort = "";
             inputs[i]->dstPort = "";
 
-        }
-
-        else {
+        } else {
 
             // now we have all the matches select the first one:
             if (portPairs.size() > 0) {
@@ -3361,6 +3360,7 @@ void ComponentInstance::matchPorts() {
                 QStringList ports = portPair.split("->");
                 // for safety
                 if (ports.size()>1) {
+                    DBG() << "Setting srcPort and dstPort";
                     inputs[i]->srcPort = ports.at(0);
                     inputs[i]->dstPort = ports.at(1);
                 }
@@ -3387,7 +3387,6 @@ void ComponentInstance::matchPorts() {
             }
         }
     }
-
 }
 
 QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {

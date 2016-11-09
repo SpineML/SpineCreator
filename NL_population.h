@@ -77,7 +77,6 @@ public:
     void read_inputs_from_xml(QDomElement  &e, QDomDocument *meta, projectObject *data);
     QPainterPath * addToPath(QPainterPath * path);
     bool connectsTo(QSharedPointer <population> pop);
-    void remove(nl_rootdata *data);
     void delAll(nl_rootdata *data);
     void delAll(projectObject *);
     QPointF currentLocation();
