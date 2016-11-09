@@ -37,10 +37,7 @@ public:
 
     virtual QString getName();
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
-    /*virtual void move(float, float);
-    virtual void draw(QPainter, float, float, float, int, int, QImage);
-    virtual bool is_clicked(float, float, float);*/
-    void remove(nl_rootdata *);
+
     void delAll(nl_rootdata *);
 
     void animate(QSharedPointer<systemObject>movingObj, QPointF delta);
@@ -49,7 +46,9 @@ public:
 
     void read_meta_data(QDomDocument * meta);
 
-    void addCurves();
+    // Override add_curves from projection.
+    void add_curves();
+
     void connect(QSharedPointer<genericInput> in);
     void disconnect();
 

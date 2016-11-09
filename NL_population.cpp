@@ -139,18 +139,20 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Neuron attribute 'name'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: missing Neuron attribute 'name'");
                 settings.endArray();
             }
+            DBG() << "LL:Neuron name is " << this->name;
+
             this->numNeurons = n.toElement().attribute("size").toInt();
             if (this->numNeurons == 0) {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Neuron attribute 'size', or 'size' is zero");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: missing Neuron attribute 'size', or 'size' is zero");
                 settings.endArray();
             }
             this->neuronTypeName = n.toElement().attribute("url");
@@ -160,15 +162,16 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Neuron attribute 'url'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: missing Neuron attribute 'url'");
                 settings.endArray();
             }
 
             QStringList tempName = this->neuronTypeName.split('.');
             // first section will hold the name
-            if (tempName.size() > 0)
+            if (tempName.size() > 0) {
                 this->neuronTypeName = tempName[0];
+            }
             this->neuronTypeName.replace("_", " ");
 
             // do we have errors - if so abort here
@@ -177,6 +180,7 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 if (num_errs > 0) {
+                    DBG() << "Aborting on errors";
                     return;
                 }
             }
@@ -188,14 +192,12 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             if (this->neuronTypeName == "SpikeSource") {
                 // make a spikes source
                 makeSpikeSource(thisSharedPointer);
-            }
-            else {
+            } else {
                 this->isSpikeSource = false;
             }
 
             // if not found then match
             if (!this->isSpikeSource) {
-
                 for (int i = 0; i < data->catalogNB.size(); ++i) {
                     if (neuronTypeName == data->catalogNB[i]->name) {
                         this->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance((QSharedPointer<Component>) data->catalogNB[i]));
@@ -203,7 +205,6 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                         this->neuronType->import_parameters_from_xml(n);
                     }
                 }
-
             }
 
             // if still missing then we have a problem
@@ -232,8 +233,8 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Layout attribute 'url'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: missing Layout attribute 'url'");
                 settings.endArray();
             }
             this->layoutName.chop(4);
@@ -367,12 +368,18 @@ void population::setupBounds()
 
 void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data)
 {
+    DBGBRK();
     // e starts out as a LL:Population
     DBG() << "population::read_inputs_from_xml called for element " << e.tagName();
     QDomNodeList nListNRN = e.elementsByTagName("LL:Neuron");
     DBG() << "LL:Neuron list has size " << nListNRN.size();
     if (nListNRN.size() == 1) {
         QDomElement e1 = nListNRN.item(0).toElement();
+        QString popname = e1.attribute("name", "unknown");
+
+        // Population name and ComponentInstance name should be the same.
+        DBG() << "Population name: " << popname << " neuronType (ComponentInstance) name:" << this->neuronType->getXMLName();
+
         QDomNodeList nList = e1.elementsByTagName("LL:Input");
         DBG() << "LL:Input list has size " << nList.size();
         for (int nrni = 0; nrni < (int) nList.size(); ++nrni) {
@@ -382,6 +389,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             QSharedPointer<genericInput> newInput = QSharedPointer<genericInput>(new genericInput);
             newInput->src.clear();
             newInput->dst.clear();
+            DBG() << "Setting destination to be neuronType->owner, with name: " << this->neuronType->owner->getName();
             newInput->destination = this->neuronType->owner;
             newInput->projInput = false;
 
@@ -391,6 +399,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             for (int i = 0; i < data->network.size(); ++i) {
                 DBG() << "XML element type: " << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
+                    DBG() << "Set newInput->src to the thing with name " << data->network[i]->neuronType->getXMLName();
                     newInput->src = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
@@ -401,11 +410,13 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
                             DBG() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
+                            DBG() << "(From WU) Set newInput->src to the thing with name " << newInput->src->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
                         if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
                             DBG() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
                             newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
+                            DBG() << "(From PS) Set newInput->src to the thing with name " << newInput->src->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
                     }
@@ -414,14 +425,11 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
             // read in port names
             newInput->srcPort = e2.attribute("src_port");
-            DBG() << "src_port: " << newInput->srcPort;
             newInput->dstPort = e2.attribute("dst_port");
-            DBG() << "dst_port: " << newInput->dstPort;
 
             // get connectivity
             QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
             if (type.count() == 1) {
-                DBG() << "AllToAllConnection";
                 delete newInput->connectionType;
                 newInput->connectionType = new alltoAll_connection;
                 QDomNode cNode = type.item(0);
@@ -429,7 +437,6 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
             type = e2.elementsByTagName("OneToOneConnection");
             if (type.count() == 1) {
-                DBG() << "OneToOneConnection";
                 delete newInput->connectionType;
                 newInput->connectionType = new onetoOne_connection;
                 QDomNode cNode = type.item(0);
@@ -437,7 +444,6 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
             type = e2.elementsByTagName("FixedProbabilityConnection");
             if (type.count() == 1) {
-                DBG() << "FixedProb";
                 delete newInput->connectionType;
                 newInput->connectionType = new fixedProb_connection;
                 QDomNode cNode = type.item(0);
@@ -445,7 +451,6 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
             type = e2.elementsByTagName("ConnectionList");
             if (type.count() == 1) {
-                DBG() << "ConnectionList";
                 delete newInput->connectionType;
                 newInput->connectionType = new csv_connection;
                 QDomNode cNode = type.item(0);
@@ -455,7 +460,9 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             }
 
             if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
-                newInput->dst = this->neuronType;
+                // neuronType is a ComponentInstance, owner is a systemObject. newInput->dst is a ComponentInstance.
+                newInput->dst = this->neuronType; // FIXME. This doesn't seem to be the right thing.
+                DBG() << "For population with name " << this->name << ", set newInput->dst to the thing with name " << newInput->dst->getXMLName();
                 DBG() << "Pushing back the newInput!";
                 this->neuronType->inputs.push_back(newInput);
                 newInput->src->outputs.push_back(newInput);
@@ -465,9 +472,9 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
         }
     }
 
-    // read metadata
+    // read metadata. This should add the curves to the generic inputs.
     for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
-        DBG() << "Reading metadata";
+        DBG() << "Reading metadata for input " << i;
         this->neuronType->inputs[i]->read_meta_data(meta);
     }
 

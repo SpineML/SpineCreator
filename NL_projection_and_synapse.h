@@ -90,7 +90,7 @@ public:
     QVector < bezierCurve > curves;
     QPointF start;
     bool is_clicked(float, float,float);
-    void add_curves();
+    virtual void add_curves();
 
     QSharedPointer <population> source;
     QSharedPointer <population> destination;

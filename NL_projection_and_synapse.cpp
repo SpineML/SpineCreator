@@ -151,9 +151,7 @@ int synapse::getSynapseIndex()
 
 QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap)
 {
-
     // create a new, identical, synapse
-
     QSharedPointer <synapse> newSyn = QSharedPointer <synapse>(new synapse());
 
     newSyn->weightUpdateType = QSharedPointer<ComponentInstance>(new ComponentInstance(this->weightUpdateType, true/*copy inputs / outputs*/));
@@ -195,7 +193,6 @@ QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QS
     }
 
     return qSharedPointerCast <systemObject> (newSyn);
-
 }
 
 void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
@@ -235,7 +232,6 @@ void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemOb
             }
         }
     }
-
 }
 
 projection::projection()
@@ -1032,7 +1028,7 @@ void projection::drawHandles(QPainter *painter, float GLscale,
         float dpi_ratio = settings.value("dpi", 1.0).toFloat();
 
 #ifdef Q_OS_MAC
-    dpi_ratio *= 0.5;
+        dpi_ratio *= 0.5;
 #endif
 
         path.addEllipse(this->transformPoint(this->start), 4*dpi_ratio, 4*dpi_ratio);
@@ -1195,7 +1191,7 @@ bool projection::deleteControlPoint(float xGL, float yGL, float GLscale)
 
         // then remove it if it is not the first or last, or a C1 or C2
         if (!this->selectedControlPoint.start && this->selectedControlPoint.type != C1 \
-                && this->selectedControlPoint.type != C2 && this->selectedControlPoint.ind != (int) this->curves.size()-1) {
+            && this->selectedControlPoint.type != C2 && this->selectedControlPoint.ind != (int) this->curves.size()-1) {
 
             // first transfer the old C1 to the next curve:
             this->curves[this->selectedControlPoint.ind+1].C1 = this->curves[this->selectedControlPoint.ind].C1;
@@ -1849,6 +1845,11 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
 void projection::add_curves()
 {
+    if (this->destination.isNull() || this->source.isNull()) {
+        DBG() << "Can't lay out; destination or source object is null";
+        return;
+    }
+
     bezierCurve newCurve;
     newCurve.end = this->destination->currentLocation();
     this->start = this->source->currentLocation();
@@ -2121,7 +2122,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->srcPort = n.toElement().attribute("input_src_port");
                 newInput->dstPort = n.toElement().attribute("input_dst_port");
 
-                // read in dst. CRASH
+                // read in dst.
                 newInput->dst = this->synapses[t]->weightUpdateType;
                 this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
 

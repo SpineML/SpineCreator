@@ -41,8 +41,8 @@ genericInput::genericInput()
     destination.clear();
 }
 
-genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput) {
-
+genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput)
+{
     this->type = inputObject;
 
     this->src = src;
@@ -64,21 +64,16 @@ genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointe
 
     this->connectionType = new onetoOne_connection;
 
-    // add to src and dst lists
-    //connect();
-
     // add curves if we are not a projection input
-    if (!projInput)
-        addCurves();
-
-    // make sure we sort out the ports!
-    //dst->matchPorts();
+    if (!projInput) {
+        this->add_curves();
+    }
 
     isVisualised = false;
 }
 
-void genericInput::connect(QSharedPointer<genericInput> in) {
-
+void genericInput::connect(QSharedPointer<genericInput> in)
+{
     // connect can be called multiple times due to the nature of Undo
     for (int i = 0; i < dst->inputs.size(); ++i) {
         if (dst->inputs[i] == this) {
@@ -93,22 +88,14 @@ void genericInput::connect(QSharedPointer<genericInput> in) {
         }
     }
 
-    //if (srcPos == -1 && dstPos == -1) {
-        dst->inputs.push_back(in);
-        src->outputs.push_back(in);
-    /*}
-    else
-    {
-        dst->inputs.insert(dst->inputs.begin()+dstPos, this);
-        src->outputs.insert(src->outputs.begin()+srcPos, this);
-    }*/
+    dst->inputs.push_back(in);
+    src->outputs.push_back(in);
 
-        dst->matchPorts();
-
+    dst->matchPorts();
 }
 
-void genericInput::disconnect() {
-
+void genericInput::disconnect()
+{
     for (int i = 0; i < dst->inputs.size(); ++i) {
         if (dst->inputs[i].data() == this) {
             dst->inputs.erase(dst->inputs.begin()+i);
@@ -121,42 +108,33 @@ void genericInput::disconnect() {
             srcPos = i;
         }
     }
-
 }
-
 
 genericInput::~genericInput()
 {
-
-    //disconnect();
-    /*if (this->projInput)
-        qDebug() << "Projection Input Deleted";
-    else
-        qDebug() << "Generic Input Deleted";*/
-
     delete this->connectionType;
 }
 
-QString genericInput::getName() {
+QString genericInput::getName()
+{
     return "input";
 }
 
-void genericInput::remove(nl_rootdata * data) {
-
+#if 0
+void genericInput::remove(nl_rootdata * data)
+{
     // remove from experiment
     for (int j = 0; j < data->experiments.size(); ++j) {
         //data->experiments[j]->purgeBadPointer(this);
     }
-
     //delete this;
-
 }
+#endif
 
-void genericInput::delAll(nl_rootdata *) {
-
+void genericInput::delAll(nl_rootdata *)
+{
     // remove references so we don't get deleted twice
     this->disconnect();
-
 }
 
 void genericInput::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style)
@@ -372,7 +350,13 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
     }
 }
 
-void genericInput::addCurves() {
+void genericInput::add_curves()
+{
+    DBG() << "genericInput::add_curves called. Existing curves:" << this->curves.size();
+    if (this->dst->owner.isNull() || this->src->owner.isNull()) {
+        DBG() << "Can't lay out; dst->owner or src->owner object is null";
+        return;
+    }
 
     // add curves for drawing:
     bezierCurve newCurve;
@@ -384,9 +368,11 @@ void genericInput::addCurves() {
 
     this->curves.push_back(newCurve);
 
+    if (this->destination.isNull() || this->source.isNull()) {
+        DBG() << "Warning: destination or source object is null";
+    }
 
     if (this->source->type == populationObject) {
-
         bool handled = false;
         // if we are from a population to a projection and the pop is the Synapse of the proj, handle differently for aesthetics
         if (this->destination->type == projectionObject) {
@@ -414,16 +400,15 @@ void genericInput::addCurves() {
             QPointF boxEdge = this->findBoxEdge(pop, dst->owner->currentLocation().x(), dst->owner->currentLocation().y());
             this->start = boxEdge;
         }
-
-
     }
+
     if (this->destination->type == populationObject) {
         QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->destination);
         CHECK_CAST(pop)
         QPointF boxEdge = this->findBoxEdge(pop, src->owner->currentLocation().x(), src->owner->currentLocation().y());
         this->curves.back().end = boxEdge;
-
     }
+
     // self connection population aesthetics
     if (this->destination == this->source && this->destination->type == populationObject) {
         QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->destination);
@@ -436,11 +421,10 @@ void genericInput::addCurves() {
         this->start = boxEdge;
         this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0, this->destination->currentLocation().y()+1.0);
         this->curves.back().C2 = QPointF(this->destination->currentLocation().x(), this->destination->currentLocation().y()+1.4);
-
     }
+
     // self projection connection aesthetics
     if (this->destination->type == projectionObject && this->source->type == projectionObject && this->destination == this->source) {
-
         QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (this->destination);
         CHECK_CAST(proj)
         QLineF line;
@@ -452,14 +436,11 @@ void genericInput::addCurves() {
         this->curves.back().C2 = line.p2();
         line.setAngle(line.angle()+70.0);
         this->curves.back().C1 = line.p2();
-
     }
 }
 
-
-
-void genericInput::animate(QSharedPointer<systemObject> movingObj, QPointF delta) {
-
+void genericInput::animate(QSharedPointer<systemObject> movingObj, QPointF delta)
+{
     if (this->curves.size() > 0) {
         // if we are a self connection we get moved twice, so only move half as much each time
         if (!(this->destination == (QSharedPointer<systemObject>)0)) {
@@ -483,8 +464,8 @@ void genericInput::animate(QSharedPointer<systemObject> movingObj, QPointF delta
     }
 }
 
-void genericInput::moveSelectedControlPoint(float xGL, float yGL) {
-
+void genericInput::moveSelectedControlPoint(float xGL, float yGL)
+{
     // convert to QPointF
     QPointF cursor(xGL, yGL);
     // move start
@@ -568,11 +549,10 @@ void genericInput::moveSelectedControlPoint(float xGL, float yGL) {
 
         }
     }
-
 }
 
-void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
-
+void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
+{
     // if we are a projection specific input, skip this
     if (this->projInput) return;
 
@@ -593,8 +573,8 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     start.setAttribute("y", this->start.y());
 
     // bezierCurves
-    QDomElement curves = meta.createElement( "curves" );
-    col.appendChild(curves);
+    QDomElement bcurves = meta.createElement( "curves" );
+    col.appendChild(bcurves);
 
     for (int i = 0; i < this->curves.size(); ++i) {
 
@@ -614,8 +594,7 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
         end.setAttribute("ypos", this->curves[i].end.y());
         curve.appendChild(end);
 
-        curves.appendChild(curve);
-
+        bcurves.appendChild(curve);
     }
 
     // write out connection metadata:
@@ -626,27 +605,41 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
     this->connectionType->write_metadata_xml(meta, c);
 
     col.appendChild(c);
-
 }
 
-void genericInput::read_meta_data(QDomDocument * meta) {
-
+void genericInput::read_meta_data(QDomDocument * meta)
+{
+    DBG() << "Called";
     // skip if a special input for a projection
-    if (this->projInput) return;
+    if (this->projInput) {
+        DBG() << "Special input for a projection; skip";
+        return;
+    }
 
     // now load the metadata for the projection:
     QDomNode metaNode = meta->documentElement().firstChild();
 
+    DBG() << "this:     source:" << this->src->getXMLName()
+          << "destination:" << this->dst->getXMLName()
+          << "srcPort:" <<  this->srcPort
+          << "dstPort:" <<  this->dstPort;
+
     while(!metaNode.isNull()) {
 
+        DBG() << "metaNode: source:" << metaNode.toElement().attribute("source", "")
+              << "destination:" << metaNode.toElement().attribute("destination", "")
+              << "srcPort:" <<  metaNode.toElement().attribute("srcPort", "")
+              << "dstPort:" <<  metaNode.toElement().attribute("dstPort", "");
 
-        if (metaNode.toElement().attribute("source", "") == this->src->getXMLName() && metaNode.toElement().attribute("destination", "") == this->dst->getXMLName() \
-                && metaNode.toElement().attribute("srcPort", "") == this->srcPort && metaNode.toElement().attribute("dstPort", "") == this->dstPort) {
-
+        if (metaNode.toElement().attribute("source", "") == this->src->getXMLName()
+            && metaNode.toElement().attribute("destination", "") == this->dst->getXMLName()
+            && metaNode.toElement().attribute("srcPort", "") == this->srcPort
+            && metaNode.toElement().attribute("dstPort", "") == this->dstPort) {
 
             QDomNode metaData = metaNode.toElement().firstChild();
             while (!metaData.isNull()) {
 
+                DBG() << "XML tag name: " << metaData.toElement().tagName();
                 if (metaData.toElement().tagName() == "start") {
                     this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
                 }
@@ -673,6 +666,7 @@ void genericInput::read_meta_data(QDomDocument * meta) {
                             vals = vals.nextSibling();
                         }
                         // add the filled out curve to the list
+                        DBG() << "Adding filled curve to this->curves from reading XML";
                         this->curves.push_back(newCurve);
                     }
 
@@ -712,20 +706,15 @@ void genericInput::read_meta_data(QDomDocument * meta) {
             // remove attribute to avoid further match and return
             metaNode.toElement().removeAttribute("source");
             return;
-
         }
 
         metaNode = metaNode.nextSibling();
     }
-
-
-
 }
 
 QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap)
 {
     // create a new, identical, genericInput
-
     QSharedPointer <genericInput> newIn = QSharedPointer <genericInput>(new genericInput());
 
     newIn->curves = this->curves;
@@ -746,7 +735,6 @@ QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *,
     objectMap.insert(this, newIn);
 
     return qSharedPointerCast <systemObject> (newIn);
-
 }
 
 void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemObject> > objectMap)
