@@ -924,6 +924,12 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     // get the model name
     this->name = root.toElement().attribute("name", "Untitled project");
 
+#if 0
+    if (!isProject) {
+        // Get cursor offset so it can be applied when loading metadata.
+    }
+#endif
+
     // only load metadata for projects
     QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
     DBG() << "metaFilePath:" << metaFilePath;
