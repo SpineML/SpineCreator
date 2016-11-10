@@ -1252,7 +1252,6 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
     reader->setDevice(&file);
 
     // load experiment:
-
     experiment * newExperiment = new experiment;
     newExperiment->readXML(reader, this);
 
@@ -1269,10 +1268,8 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
                  + " found in file '" + fileName + "'</b>");
     }
 
-    // we have loaded the XML file - discard the file handle
+    // we have loaded the XML file; discard file handle & clean up reader
     file.close();
-
-    // kill off the XML reader
     delete reader;
 }
 
@@ -1358,12 +1355,10 @@ void projectObject::select_project(nl_rootdata * data)
 
     data->currProject = this;
 
-    // update GUI
-    // experiment view
+    // update GUI experiment view
     data->main->viewELhandler->redraw();
 
-    // visualiser view
-    // configure TreeView
+    // visualiser view - configure TreeView
     if (data->main->viewVZ.OpenGLWidget != NULL) {
         if (!(data->main->viewVZ.sysModel == NULL)) {
             delete data->main->viewVZ.sysModel;
@@ -1561,7 +1556,7 @@ bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
         }
     }
 
-    // not found
+    // pointer not not found, return false
     return false;
 }
 
@@ -1590,7 +1585,6 @@ bool projectObject::isValidPointer(QSharedPointer <ComponentInstance> ptr)
         }
     }
 
-    // not found
     return false;
 }
 
@@ -1618,7 +1612,6 @@ bool projectObject::isValidPointer(QSharedPointer<Component> ptr)
         }
     }
 
-    // not found
     return false;
 }
 
