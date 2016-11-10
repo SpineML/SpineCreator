@@ -245,6 +245,11 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
 {
     DBG() << "projectObject::import_network(" << fileName << ")";
 
+    // Compute the extent of the existing network:
+    std::pair<QPointF, QPointF> ext = this->getNetworkExtent (this->network);
+    DBG() << "Network extent: TL:" << ext.first << " BR: " << ext.second;
+
+
     QDir project_dir(fileName);
 
     // Update current cursor position, used to offset the imported
@@ -984,11 +989,6 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population") {
-            {
-                QDomNodeList allneurons = e.elementsByTagName("LL:Neuron");
-                QDomElement firstneuron = allneurons.item(0).toElement();
-                DBG() << "AA Population name of first Neuron element:" << firstneuron.attribute("name", "unknown");
-            }
             // add population from population xml:
             QSharedPointer <population> pop = QSharedPointer<population> (new population());
             pop->readFromXML(e, &this->doc, &this->meta, this, pop);
@@ -1033,11 +1033,6 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
-            {
-                QDomNodeList allneurons = e.elementsByTagName("LL:Neuron");
-                QDomElement firstneuron = allneurons.item(0).toElement();
-                DBG() << "BB Population name of first Neuron element:" << firstneuron.attribute("name", "unknown");
-            }
             // with all the populations added, add the projections and join them up:
             this->network[counter]->load_projections_from_xml(e, &this->doc, &this->meta, this);
             DBG() << "After load_projections_from_xml, network["<<counter<<"]->projections.count is " << this->network[counter]->projections.count();
@@ -1373,6 +1368,43 @@ void projectObject::select_project(nl_rootdata * data)
 
     // redraw everything
     data->reDrawAll();
+}
+
+std::pair<QPointF, QPointF>
+projectObject::getNetworkExtent (QVector < QSharedPointer <population> >& pops)
+{
+    // Initialise the return object
+    std::pair<QPointF, QPointF> p;
+    p.first = QPointF(0,0); // Top-left co-ordinates
+    p.second = QPointF(0,0); // Bottom-right co-ordinates
+
+    if (pops.size() == 0) {
+        return p;
+    }
+
+    // Find top-left and bottom-right coordinates in one sweep through the populations
+    p.first.setX(pops[0]->getLeft());
+    p.first.setY(pops[0]->getTop());
+    p.second.setX(pops[0]->getRight());
+    p.second.setY(pops[0]->getBottom());
+    for (int i = 0; i < pops.size(); ++i) {
+        // Top left extent
+        if (pops[i]->getLeft() < p.first.x()) {
+            p.first.setX(pops[i]->getLeft());
+        }
+        if (pops[i]->getTop() > p.first.y()) {
+            p.first.setY(pops[i]->getTop());
+        }
+        // Bottom right extent
+        if (pops[i]->getRight() > p.second.x()) {
+            p.second.setX(pops[i]->getRight());
+        }
+        if (pops[i]->getBottom() < p.second.y()) {
+            p.second.setY(pops[i]->getBottom());
+        }
+    }
+
+    return p;
 }
 
 void projectObject::printIssues(QString title)

@@ -44,6 +44,21 @@ public:
     void deselect_project(nl_rootdata *);
     void select_project(nl_rootdata *);
 
+    /*!
+     * Find the extent of the network - positions of a set of
+     * populations.  Returns a pair of QPointFs - the first is the top
+     * left extent, the second is the bottom right extent. So, the
+     * left most extent is given by rtn.first.x() and the top most
+     * extent by rtn.first.y(). The right extent is rtn.second.x() and
+     * the bottom extent is rtn.second.y().
+     */
+    std::pair<QPointF, QPointF> getNetworkExtent (QVector < QSharedPointer <population> >& pops);
+
+    // To finish the job of allowing an imported network to be
+    // auto-located, we would need a translateNetwork() method, which
+    // updates all the positions of the populations and connections in
+    // the network.
+
     // errors
     void printIssues(QString);
 
@@ -89,6 +104,7 @@ public:
     // state of the visualizer QTreeWidget
     QStringList treeWidgetState;
 
+    // Getter for currentCursorPos
     cursorType getCursorPos (void);
 
 private:
