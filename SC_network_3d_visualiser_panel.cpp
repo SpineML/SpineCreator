@@ -47,7 +47,6 @@
 
 glConnectionWidget::glConnectionWidget(nl_rootdata * data, QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
-
     model = (QAbstractTableModel *)0;
     pos = QPointF(0,0);
     zoomFactor = 1.0;
@@ -62,30 +61,26 @@ glConnectionWidget::glConnectionWidget(nl_rootdata * data, QWidget *parent) : QG
     connect(&timer, SIGNAL(timeout()), this, SLOT(updateLogData()));
 
     timer.start(50);
-
     newLogTime = 0;
     currentLogTime = 0;
 
     orthoView = false;
-
     repaintAllowed = true;
 }
 
 void glConnectionWidget::initializeGL()
 {
-
     glEnable(GL_MULTISAMPLE);
-
-
 }
 
-void glConnectionWidget::toggleOrthoView(bool toggle) {
+void glConnectionWidget::toggleOrthoView(bool toggle)
+{
     orthoView = toggle;
     this->repaint();
 }
 
-void glConnectionWidget::clear() {
-
+void glConnectionWidget::clear()
+{
     selectedPops.clear();
     popColours.clear();
     popLogs.clear();
@@ -94,11 +89,11 @@ void glConnectionWidget::clear() {
     selectedIndex = 0;
     selectedType = 1;
     model = (QAbstractTableModel *)0;
-
 }
 
-void glConnectionWidget::addLogs(QVector < logData * > * logs) {
-
+// This builds a list of possible logs from the populations in the network.
+void glConnectionWidget::addLogs(QVector < logData * > * logs)
+{
     // for each population
     for (int i = 0; i < selectedPops.size(); ++i) {
 
@@ -117,24 +112,22 @@ void glConnectionWidget::addLogs(QVector < logData * > * logs) {
 
                 // check each log in turn
                 for (int k = 0; k < logs->size(); ++k) {
-                    if ((*logs)[k]->logName == possibleLogName)
-                        popLogs[i] = (*logs)[k];
+                    if ((*logs)[k]->logName == possibleLogName) {
+                        this->popLogs[i] = (*logs)[k];
+                    }
                 }
             }
-
         }
     }
-
 }
 
-void glConnectionWidget::updateLogDataTime(int index) {
-
+void glConnectionWidget::updateLogDataTime(int index)
+{
     newLogTime = index;
-
 }
 
-void glConnectionWidget::updateLogData() {
-
+void glConnectionWidget::updateLogData()
+{
     if (newLogTime == currentLogTime)
         return;
 
@@ -166,7 +159,7 @@ void glConnectionWidget::updateLogData() {
             if (logValues[j] < Q_INFINITY && (popLogs[i]->getMax()-popLogs[i]->getMin()) != 0) {
                 int val = ((logValues[j]-popLogs[i]->getMin())*255.0)/(popLogs[i]->getMax()-popLogs[i]->getMin());
                 val *= 3;
-                // complete the remap in just 4 ternarys 
+                // complete the remap in just 4 ternarys
                 int val3 = val > 511 ? val-512 : 0;
                 int val2 = val3 > 0 ? 511 : val;
                 val2 = val2 > 255 ? val2 - 256 : 0;
@@ -179,17 +172,12 @@ void glConnectionWidget::updateLogData() {
 
     // redraw!
     this->repaint();
-
 }
-
 
 void glConnectionWidget::resizeGL(int, int)
 {
-
     // setup the view
     this->repaint();
-
-
 }
 
 void glConnectionWidget::redraw() {
@@ -208,7 +196,6 @@ void glConnectionWidget::redraw() {
 
 void glConnectionWidget::redraw(int)
 {
-
     // we haven't updated the underlying data yet - but we want to show spinbox changes
     // get spinbox ptrs:
     QObject * temp = (QObject *) sender()->property("xptr").value<void *>();
@@ -226,7 +213,6 @@ void glConnectionWidget::redraw(int)
     loc3Offset.z = zSpin->value();
 
     this->repaint();
-
 }
 
 void glConnectionWidget::allowRepaint() {
@@ -1643,7 +1629,7 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
 
     }
     // check for logs:
-    addLogs(&data->main->viewGV.properties->logs);
+    addLogs(&data->main->viewGV.properties->logsForGraphs);
 
     // force redraw!
     this->repaint();

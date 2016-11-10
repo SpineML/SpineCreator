@@ -438,8 +438,8 @@ void settings_window::getScript()
 void settings_window::getWorkingDir()
 {
     QString wk_dir = QFileDialog::getExistingDirectory(this,
-                                                        tr("Choose the simulator's working directory"),
-                                                        qgetenv("HOME"));
+                                                       tr("Choose the simulator's working directory"),
+                                                       qgetenv("HOME"));
 
     if (!wk_dir.isEmpty()) {
         this->ui->scriptWDLineEdit->setText(wk_dir);

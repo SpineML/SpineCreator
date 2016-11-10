@@ -45,7 +45,7 @@ public:
     QAction * actionRefresh;
     QAction * actionSavePdf;
     QAction * actionSavePng;
-    QVector < logData * > logs;
+    QVector < logData * > logsForGraphs;
     QMdiSubWindow * currentSubWindow;
     QListWidget * datas;
     QListWidget * indices;

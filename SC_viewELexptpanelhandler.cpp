@@ -2027,7 +2027,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 
     // and insert logs into visualiser
     if (data->main->viewVZ.OpenGLWidget != NULL) {
-        data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV.properties->logs);
+        data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV.properties->logsForGraphs);
     }
 
     // get status

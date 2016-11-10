@@ -68,26 +68,24 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
     connect(datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
     connect(addPlot, SIGNAL(clicked()), this, SLOT(addPlotToCurrent()));
     connect(delLog, SIGNAL(clicked()), this, SLOT(deleteCurrentLog()));
-
 }
 
-viewGVpropertieslayout::~viewGVpropertieslayout() {
-
-    for (int i = 0; i < logs.size(); ++i)
-        delete logs[i];
+viewGVpropertieslayout::~viewGVpropertieslayout()
+{
+    for (int i = 0; i < logsForGraphs.size(); ++i) {
+        delete logsForGraphs[i];
+    }
 
     delete actionAddGraph;
     actionAddGraph = NULL;
 
-   // delete actionToGrid;
+    // delete actionToGrid;
     actionToGrid = NULL;
-
 }
 
-void viewGVpropertieslayout::setupPlot(QCustomPlot * plot) {
-
-    // configure the plot for use
-
+// configure the plot for use
+void viewGVpropertieslayout::setupPlot(QCustomPlot * plot)
+{
     // range
     plot->setInteraction(QCP::iRangeDrag, true);
     plot->setInteraction(QCP::iRangeZoom, true);
@@ -108,55 +106,50 @@ void viewGVpropertieslayout::setupPlot(QCustomPlot * plot) {
     // make bottom and left axes transfer their ranges to top and right axes:
     connect(plot->xAxis, SIGNAL(rangeChanged(QCPRange)), plot->xAxis2, SLOT(setRange(QCPRange)));
     connect(plot->yAxis, SIGNAL(rangeChanged(QCPRange)), plot->yAxis2, SLOT(setRange(QCPRange)));
-
-
 }
 
-void viewGVpropertieslayout::updateLogs() {
-
+void viewGVpropertieslayout::updateLogs()
+{
     disconnect(datas);
     datas->clear();
-    for (int i = 0; i < logs.size(); ++i) {
-        datas->addItem(logs[i]->logName);
+    for (int i = 0; i < logsForGraphs.size(); ++i) {
+        datas->addItem(logsForGraphs[i]->logName);
     }
     connect(datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
-
 }
 
-void viewGVpropertieslayout::deleteCurrentLog() {
-
+void viewGVpropertieslayout::deleteCurrentLog()
+{
     // get the log index
     int dataIndex = datas->currentRow();
 
     // check that we have a selection
-    if (dataIndex < 0)
+    if (dataIndex < 0) {
         return;
+    }
 
     // delete the log file
     QDir dir;
-    dir.remove(logs[dataIndex]->logFileXMLname);
-    dir.remove(logs[dataIndex]->logFile.fileName());
+    dir.remove(logsForGraphs[dataIndex]->logFileXMLname);
+    dir.remove(logsForGraphs[dataIndex]->logFile.fileName());
 
     // remove the log
-    logData * log = logs[dataIndex];
-    logs.erase(logs.begin()+dataIndex);
+    logData * log = logsForGraphs[dataIndex];
+    logsForGraphs.erase(logsForGraphs.begin()+dataIndex);
     delete log;
 
     // refresh display
     updateLogs();
-
 }
-
 
 void viewGVpropertieslayout::removeSelectedGraph()
 {
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
-    if (currPlot->selectedGraphs().size() > 0)
-    {
-    currPlot->removeGraph(currPlot->selectedGraphs().first());
-    currPlot->replot();
-  }
+    if (currPlot->selectedGraphs().size() > 0) {
+        currPlot->removeGraph(currPlot->selectedGraphs().first());
+        currPlot->replot();
+    }
 }
 
 void viewGVpropertieslayout::removeAllGraphs()
@@ -167,43 +160,52 @@ void viewGVpropertieslayout::removeAllGraphs()
     currPlot->replot();
 }
 
-void viewGVpropertieslayout::toggleHorizontalZoom() {
+void viewGVpropertieslayout::toggleHorizontalZoom()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
-    if (currPlot->axisRect()->rangeZoom() & Qt::Horizontal)
+    if (currPlot->axisRect()->rangeZoom() & Qt::Horizontal) {
         currPlot->axisRect()->setRangeZoom(currPlot->axisRect()->rangeZoom() & ~Qt::Horizontal);
-    else
+    } else {
         currPlot->axisRect()->setRangeZoom(currPlot->axisRect()->rangeZoom() | Qt::Horizontal);
+    }
 }
 
-void viewGVpropertieslayout::toggleHorizontalDrag() {
+void viewGVpropertieslayout::toggleHorizontalDrag()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
-    if (currPlot->axisRect()->rangeDrag() & Qt::Horizontal)
+    if (currPlot->axisRect()->rangeDrag() & Qt::Horizontal) {
         currPlot->axisRect()->setRangeDrag(currPlot->axisRect()->rangeDrag() & ~Qt::Horizontal);
-    else
+    } else {
         currPlot->axisRect()->setRangeDrag(currPlot->axisRect()->rangeDrag() | Qt::Horizontal);
+    }
 }
 
-void viewGVpropertieslayout::toggleVerticalZoom() {
+void viewGVpropertieslayout::toggleVerticalZoom()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
-    if (currPlot->axisRect()->rangeZoom() & Qt::Vertical)
+    if (currPlot->axisRect()->rangeZoom() & Qt::Vertical) {
         currPlot->axisRect()->setRangeZoom(currPlot->axisRect()->rangeZoom() & ~Qt::Vertical);
-    else
+    } else {
         currPlot->axisRect()->setRangeZoom(currPlot->axisRect()->rangeZoom() | Qt::Vertical);
+    }
 }
 
-void viewGVpropertieslayout::toggleVerticalDrag() {
+void viewGVpropertieslayout::toggleVerticalDrag()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
-    if (currPlot->axisRect()->rangeDrag() & Qt::Vertical)
+    if (currPlot->axisRect()->rangeDrag() & Qt::Vertical) {
         currPlot->axisRect()->setRangeDrag(currPlot->axisRect()->rangeDrag() & ~Qt::Vertical);
-    else
+    } else {
         currPlot->axisRect()->setRangeDrag(currPlot->axisRect()->rangeDrag() | Qt::Vertical);
+    }
 }
 
-void viewGVpropertieslayout::rescaleAxes() {
+void viewGVpropertieslayout::rescaleAxes()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
     currPlot->rescaleAxes();
@@ -217,59 +219,62 @@ void viewGVpropertieslayout::contextMenuRequest(QPoint pos)
     QMenu *menu = new QMenu(this);
     menu->setAttribute(Qt::WA_DeleteOnClose);
 
-    if (currPlot->legend->selectTest(pos, false) >= 0) // context menu on legend requested
-    {
-        /*menu->addAction("Move to top left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignTop|Qt::AlignLeft));
+    if (currPlot->legend->selectTest(pos, false) >= 0) { // context menu on legend requested
+#if 0
+        menu->addAction("Move to top left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignTop|Qt::AlignLeft));
         menu->addAction("Move to top center", this, SLOT(moveLegend()))->setData((int)(Qt::AlignTop|Qt::AlignHCenter));
         menu->addAction("Move to top right", this, SLOT(moveLegend()))->setData((int)(Qt::AlignTop|Qt::AlignRight));
         menu->addAction("Move to bottom right", this, SLOT(moveLegend()))->setData((int)(Qt::AlignBottom|Qt::AlignRight));
-        menu->addAction("Move to bottom left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignBottom|Qt::AlignLeft));*/
-    } else if (currPlot->xAxis->selectTest(pos, false) >= 0 || \
-               currPlot->xAxis2->selectTest(pos, false) >= 0)
-    {
+        menu->addAction("Move to bottom left", this, SLOT(moveLegend()))->setData((int)(Qt::AlignBottom|Qt::AlignLeft));
+#endif
+    } else if (currPlot->xAxis->selectTest(pos, false) >= 0
+               || currPlot->xAxis2->selectTest(pos, false) >= 0) {
         // enable / disable zoom
-        if (currPlot->axisRect()->rangeZoom() & Qt::Horizontal)
+        if (currPlot->axisRect()->rangeZoom() & Qt::Horizontal) {
             menu->addAction("Disable zoom on axis", this, SLOT(toggleHorizontalZoom()));
-        else
+        } else {
             menu->addAction("Enable zoom on axis", this, SLOT(toggleHorizontalZoom()));
+        }
 
         // enable / diable drag
-        if (currPlot->axisRect()->rangeDrag() & Qt::Horizontal)
+        if (currPlot->axisRect()->rangeDrag() & Qt::Horizontal) {
             menu->addAction("Disable drag on axis", this, SLOT(toggleHorizontalDrag()));
-        else
+        } else {
             menu->addAction("Enable drag on axis", this, SLOT(toggleHorizontalDrag()));
+        }
 
-    } else if (currPlot->yAxis->selectTest(pos, false) >= 0 || \
-               currPlot->yAxis2->selectTest(pos, false) >= 0)
-    {
-
+    } else if (currPlot->yAxis->selectTest(pos, false) >= 0
+               || currPlot->yAxis2->selectTest(pos, false) >= 0) {
         // enable / disable zoom
-        if (currPlot->axisRect()->rangeZoom() & Qt::Vertical)
+        if (currPlot->axisRect()->rangeZoom() & Qt::Vertical) {
             menu->addAction("Disable zoom on axis", this, SLOT(toggleVerticalZoom()));
-        else
+        } else {
             menu->addAction("Enable zoom on axis", this, SLOT(toggleVerticalZoom()));
+        }
 
         // enable / diable drag
-        if (currPlot->axisRect()->rangeDrag() & Qt::Vertical)
+        if (currPlot->axisRect()->rangeDrag() & Qt::Vertical) {
             menu->addAction("Disable drag on axis", this, SLOT(toggleVerticalDrag()));
-        else
+        } else {
             menu->addAction("Enable drag on axis", this, SLOT(toggleVerticalDrag()));
-
-    } else
-    {
-        if (currPlot->graphCount() > 0)
+        }
+    } else {
+        if (currPlot->graphCount() > 0) {
           menu->addAction("Scale axes to fit", this, SLOT(rescaleAxes()));
-        if (currPlot->selectedGraphs().size() > 0)
+        }
+        if (currPlot->selectedGraphs().size() > 0) {
           menu->addAction("Remove selected graph", this, SLOT(removeSelectedGraph()));
-        if (currPlot->graphCount() > 0)
+        }
+        if (currPlot->graphCount() > 0) {
           menu->addAction("Remove all graphs", this, SLOT(removeAllGraphs()));
+        }
     }
 
     menu->popup(currPlot->mapToGlobal(pos));
-    }
+}
 
-void viewGVpropertieslayout::dataSelectionChanged(int index) {
-
+void viewGVpropertieslayout::dataSelectionChanged(int index)
+{
     // use index to get log
     types->clear();
     indices->clear();
@@ -279,76 +284,75 @@ void viewGVpropertieslayout::dataSelectionChanged(int index) {
         return;
 
     // setup log indices
-    if (logs[index]->dataClass == ANALOGDATA) {
-        for (int i = 0; i < logs[index]->columns.size(); ++i) {
-            indices->addItem("Index " + QString::number(logs[index]->columns[i].index));
+    if (logsForGraphs[index]->dataClass == ANALOGDATA) {
+        for (int i = 0; i < logsForGraphs[index]->columns.size(); ++i) {
+            indices->addItem("Index " + QString::number(logsForGraphs[index]->columns[i].index));
         }
-    } else if (logs[index]->dataClass == EVENTDATA) {
-        for (int i = 0; i < logs[index]->eventIndices.size(); ++i) {
-            indices->addItem("Index " + QString::number(logs[index]->eventIndices[i]));
+    } else if (logsForGraphs[index]->dataClass == EVENTDATA) {
+        for (int i = 0; i < logsForGraphs[index]->eventIndices.size(); ++i) {
+            indices->addItem("Index " + QString::number(logsForGraphs[index]->eventIndices[i]));
         }
     }
     // start with all indices selected
     //indices->selectedItems();
 
     // setup plot types
-    if (logs[index]->dataClass == ANALOGDATA) {
+    if (logsForGraphs[index]->dataClass == ANALOGDATA) {
         // populate types with analog plot forms
         types->addItem("Line plot");
-    } else if (logs[index]->dataClass == EVENTDATA) {
+    } else if (logsForGraphs[index]->dataClass == EVENTDATA) {
         // populate types with event plot forms
         types->addItem("Raster plot");
         //types->addItem("Histogram");
     }
-
 }
 
-void viewGVpropertieslayout::addPlotToCurrent() {
-
+void viewGVpropertieslayout::addPlotToCurrent()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
 
     // get the log index
     int dataIndex = datas->currentRow();
 
-    if (dataIndex < 0)
+    if (dataIndex < 0) {
         return;
+    }
 
     // ok - if then time
-    if (logs[dataIndex]->dataClass == ANALOGDATA) {
+    if (logsForGraphs[dataIndex]->dataClass == ANALOGDATA) {
         if (types->currentRow() == 0) { // Line Plot
             QList < QListWidgetItem * > selectedItems = indices->selectedItems();
             for (int i = 0; i < selectedItems.size(); ++i) {
                 int index = indices->row(selectedItems[i]);
                 // now we have the row, draw the graph...
-                if (!logs[dataIndex]->plotLine(currPlot, index))
+                if (!logsForGraphs[dataIndex]->plotLine(currPlot, index)) {
                     qDebug() << "Oops, failed to plot";
+                }
             }
         }
     }
-    if (logs[dataIndex]->dataClass == EVENTDATA) {
+    if (logsForGraphs[dataIndex]->dataClass == EVENTDATA) {
         if (types->currentRow() == 0) { // Raster Plot
             QList < QListWidgetItem * > selectedItems = indices->selectedItems();
             QList < QVariant > indexList;
             for (int i = 0; i < selectedItems.size(); ++i) {
                 indexList.push_back( indices->row(selectedItems[i]));
             }
-            if (!logs[dataIndex]->plotRaster(currPlot, indexList))
+            if (!logsForGraphs[dataIndex]->plotRaster(currPlot, indexList)) {
                 qDebug() << "Oops, failed to plot";
+            }
         }
     }
-
 }
 
-
-void viewGVpropertieslayout::windowSelected(QMdiSubWindow * window) {
-
+void viewGVpropertieslayout::windowSelected(QMdiSubWindow * window)
+{
     if (window == NULL) {
         actionToGrid->setDisabled(true);
         actionSavePdf->setDisabled(true);
         actionSavePng->setDisabled(true);
         addButton->setDisabled(true);
-
     } else {
         actionToGrid->setDisabled(false);
         actionSavePdf->setDisabled(false);
@@ -362,18 +366,15 @@ void viewGVpropertieslayout::windowSelected(QMdiSubWindow * window) {
     for (int i = 0; i < windowList.count(); ++i) {
         if (windowList[i] == window) {
             currentSubWindow = windowList[i];
-           /*QLabel * label = qobject_cast <QLabel *> (this->layout()->itemAt(0)->widget());
-           if (label)
-                label->setText(QString::number(i));*/
+            /*QLabel * label = qobject_cast <QLabel *> (this->layout()->itemAt(0)->widget());
+              if (label) { label->setText(QString::number(i)); } */
         }
     }
-
 }
 
 //////////////////////////// TOOLBAR ////////////////////////////////
-
-void viewGVpropertieslayout::createToolbar() {
-
+void viewGVpropertieslayout::createToolbar()
+{
     QCommonStyle style;
 
     // create actions
@@ -409,11 +410,10 @@ void viewGVpropertieslayout::createToolbar() {
     // make the toolbar the right size
     viewGV->toolbar->setFixedHeight(28);
     viewGV->toolbar->layout()->setMargin(0);
-
 }
 
-void viewGVpropertieslayout::actionAddGraph_triggered() {
-
+void viewGVpropertieslayout::actionAddGraph_triggered()
+{
     QCustomPlot * plot = new QCustomPlot;
     setupPlot(plot);
 
@@ -424,48 +424,44 @@ void viewGVpropertieslayout::actionAddGraph_triggered() {
     }
 }
 
-void viewGVpropertieslayout::actionToGrid_triggered() {
-
+void viewGVpropertieslayout::actionToGrid_triggered()
+{
     viewGV->mdiarea->tileSubWindows();
-
 }
 
-void viewGVpropertieslayout::actionRefresh_triggered() {
-
+void viewGVpropertieslayout::actionRefresh_triggered()
+{
     // refresh all logs:
-    for (int i = 0; i < logs.size(); ++i) {
-        refreshLog(logs[i]);
+    for (int i = 0; i < logsForGraphs.size(); ++i) {
+        refreshLog(logsForGraphs[i]);
     }
-
 }
 
-void viewGVpropertieslayout::actionSavePdf_triggered() {
-
+void viewGVpropertieslayout::actionSavePdf_triggered()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save graph as pdf"), "", tr("Pdf (*.pdf)"));
 
-    if (!fileName.isEmpty())
+    if (!fileName.isEmpty()) {
         currPlot->savePdf(fileName);
-
+    }
 }
 
-void viewGVpropertieslayout::actionSavePng_triggered() {
-
+void viewGVpropertieslayout::actionSavePng_triggered()
+{
     // first get a pointer to the current plot!
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save graph as png"), "", tr("Png (*.png)"));
 
-    if (!fileName.isEmpty())
+    if (!fileName.isEmpty()) {
         currPlot->savePng(fileName);
-
+    }
 }
 
-
-
-void viewGVpropertieslayout::refreshLog(logData * log) {
+void viewGVpropertieslayout::refreshLog(logData * log)
+{
     if (log->setupFromXML()) {
-
         // find graphs from this log
 
         // get a list of the MDI windows
@@ -485,46 +481,39 @@ void viewGVpropertieslayout::refreshLog(logData * log) {
                     QString type = currPlot->graph(j)->property("type").toString();
 
                     if (type == "linePlot") {
-
                         // get index
                         int index = currPlot->graph(j)->property("index").toInt();
                         log->plotLine(currPlot, index, j);
 
                     } else if (type == "rasterPlot") {
-
                         // get indices
                         QList < QVariant > indices = currPlot->graph(j)->property("indices").toList();
                         log->plotRaster(currPlot, indices, j);
-
                     }
-
                 }
-
             }
         }
-
-
-    } else
-        return;
+    } // else return
 }
 
-void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path) {
-
+void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
+{
     // load the files
     for (int i = 0; i < fileNames.size(); ++i) {
 
         bool exists = false;
 
         QString logXMLname;
-        if (path)
+        if (path) {
             logXMLname = path->absoluteFilePath(fileNames[i]);
-        else
+        } else {
             logXMLname = fileNames[i];
+        }
 
         // check if we have the log
-        for (int i = 0; i < logs.size(); ++i) {
-            if (logs[i]->logFileXMLname == logXMLname) {
-                refreshLog(logs[i]);
+        for (int i = 0; i < logsForGraphs.size(); ++i) {
+            if (logsForGraphs[i]->logFileXMLname == logXMLname) {
+                refreshLog(logsForGraphs[i]);
                 exists = true;
             }
         }
@@ -538,17 +527,15 @@ void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path) {
                 delete log;
                 continue;
             }
-            logs.push_back(log);
+            logsForGraphs.push_back(log);
         }
     }
     updateLogs();
-
 }
 
-void viewGVpropertieslayout::actionLoadData_triggered() {
-
+void viewGVpropertieslayout::actionLoadData_triggered()
+{
     // file dialog:
     QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Load log"), qgetenv("HOME"), tr("XML files (*.xml);; All files (*)"));
     loadDataFiles(fileNames);
-
 }
