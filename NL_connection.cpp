@@ -22,6 +22,14 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
+
+
+#include "NL_connection.h"
+#include "SC_layout_cinterpreter.h"
+#include "SC_python_connection_generate_dialog.h"
+#include "SC_viewVZlayoutedithandler.h"
+#include "filteroutundoredoevents.h"
+
 #ifdef _DEBUG
   #undef _DEBUG
   #include <Python.h>
@@ -29,12 +37,6 @@
 #else
   #include <Python.h>
 #endif
-
-#include "NL_connection.h"
-#include "SC_layout_cinterpreter.h"
-#include "SC_python_connection_generate_dialog.h"
-#include "SC_viewVZlayoutedithandler.h"
-#include "filteroutundoredoevents.h"
 
 connection::connection()
 {

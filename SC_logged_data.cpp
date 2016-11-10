@@ -968,7 +968,13 @@ bool logData::setupFromXML() {
     // load the log file
     // get local dir
     QString dirPath = logFileXMLname;
+
+    qDebug() << dirPath;
+#ifndef Q_OS_WIN
     dirPath.resize(dirPath.lastIndexOf(QDir::separator()));
+#else
+    dirPath.resize(dirPath.lastIndexOf("/"));
+#endif
     QDir localDir(dirPath);
 
     if (!logFile.isOpen()) {

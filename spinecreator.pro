@@ -125,10 +125,15 @@ FORMS += mainwindow.ui \
 
 RESOURCES += icons.qrc
 
+win32:
+{
+
+}
+
 win32:release {
     DEFINES += _MATH_DEFINES_DEFINED
-    LIBS += "-LC:\SDKs\Graphviz232\lib\release\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
-    INCLUDEPATH += "C:\SDKs\Graphviz232\include"
+    LIBS += "-LD:\Graphviz\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
+    INCLUDEPATH += "D:\Graphviz\include"
     INCLUDEPATH += "C:\Python27\include"
     DEPENDPATH += "C:\SDKs\Graphviz232\lib\release\lib"
     DEPENDPATH += "C:\Python27\libs"
@@ -136,8 +141,8 @@ win32:release {
 }
 win32:debug {
     DEFINES += _MATH_DEFINES_DEFINED
-    LIBS += "-LC:\SDKs\Graphviz232\lib\debug\lib" "-LC:\Python27\libs" -lGLU32 -lpython27
-    INCLUDEPATH += "C:\SDKs\Graphviz232\include"
+    LIBS += "-LD:\Graphviz\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
+    INCLUDEPATH += "D:\Graphviz\include"
     INCLUDEPATH += "C:\Python27\include"
     DEPENDPATH += "C:\SDKs\Graphviz232\lib\debug\lib"
     DEPENDPATH += "C:\Python27\libs"
