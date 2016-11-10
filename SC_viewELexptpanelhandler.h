@@ -85,11 +85,13 @@ private:
     QTimer simTimeChecker;
     QString simTimeFileName;
     QString simCancelFileName;
+#ifdef Q_OS_WIN
+    QString logpath;
+#endif
     float simTimeMax;
     experiment * runExpt;
 
     void cleanUpPostRun(QString, QString);
-
 
 signals:
     void enableRun(bool);

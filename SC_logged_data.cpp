@@ -969,7 +969,6 @@ bool logData::setupFromXML() {
     // get local dir
     QString dirPath = logFileXMLname;
 
-    qDebug() << dirPath;
 #ifndef Q_OS_WIN
     dirPath.resize(dirPath.lastIndexOf(QDir::separator()));
 #else

@@ -1818,6 +1818,7 @@ void viewELExptPanelHandler::run()
 
     simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
 
+
     // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
     QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp";
 
@@ -1856,8 +1857,6 @@ void viewELExptPanelHandler::run()
             // Don't rebuild
         }
 
-        qDebug() << path;
-
        //qDebug() << QProcess::execute(path);
 
        //path = "notepad.exe";
@@ -1865,19 +1864,30 @@ void viewELExptPanelHandler::run()
         QProcess * simulator = new QProcess;
         simulator->setProcessEnvironment(env);
 
+#ifndef Q_OS_WIN
+        simulator->start(path,al);
+#else
         simulator->start(path);
+#endif
     }
 
     // Wait a couple of seconds for the process to start
-    /*if (simulator->waitForStarted() == false) {
+#ifndef Q_OS_WIN
+    if (simulator->waitForStarted() == false) {
         // Error - simulator failed to start
         this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
         //delete simulator; // Alex: this appears to be dangerous - we can have the wait for started fail, without the simulator crashing
                             // - in which case deleting the simulator causes a crash later on... for this reason I have left it as a memory leak
         return;
-    }*/
+    }
+#endif
 
-    qDebug() << "here";
+#ifdef Q_OS_WIN
+    settings.beginGroup("simulators/" + simName);
+    out_dir_name  = settings.value("working_dir").toString() + QDir::separator() + "temp";
+    settings.endGroup();
+    this->logpath = out_dir_name + QDir::separator() + "log";
+#endif
 
     connect(simulator, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(simulatorFinished(int, QProcess::ExitStatus)));
     connect(simulator, SIGNAL(readyReadStandardOutput()), this, SLOT(simulatorStandardOutput()));
@@ -1886,7 +1896,9 @@ void viewELExptPanelHandler::run()
     // now start a timer to check on the simulation progress
     connect(&simTimeChecker, SIGNAL(timeout()), this, SLOT(checkForSimTime()));
     this->simTimeMax = currentExperiment->setup.duration;
+
     this->simTimeFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "time.txt");
+    QFile::remove(simTimeFileName);
     this->simCancelFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "stop.txt");
     simTimeChecker.start(17);
 
@@ -1933,6 +1945,12 @@ void viewELExptPanelHandler::cancelRun() {
     QFile simCancelFile(simCancelFileName);
 
     simCancelFile.open(QFile::WriteOnly);
+    simCancelFile.close();
+
+#ifdef Q_OS_WIN
+    Sleep(2000);
+    this->simulatorFinished(0,QProcess::NormalExit);
+#endif
 
 }
 
@@ -1970,8 +1988,15 @@ void viewELExptPanelHandler::checkForSimTime() {
 
             }
         }
+#ifdef Q_OS_WIN
+    // check if we have finished...
+    if (simTimeCurr > this->simTimeMax*1000-0.2) {
+        Sleep(2000);
+        this->simulatorFinished(0,QProcess::NormalExit);
     }
-
+#endif
+        simTimeFile.close();
+    }
 }
 
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
@@ -2019,7 +2044,11 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     }
 
     // collect logs
+#ifndef Q_OS_WIN
     QDir logs(sender()->property("logpath").toString());
+#else
+    QDir logs(this->logpath);
+#endif
 
     QStringList filter;
     filter << "*.xml";
