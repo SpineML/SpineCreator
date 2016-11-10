@@ -1869,11 +1869,15 @@ void projection::add_curves()
 
     // source. if we are from a population to a projection and the pop
     // is the Synapse of the proj, handle differently for aesthetics
-    QPointF boxEdge = this->findBoxEdge(this->source, destination->currentLocation().x(), destination->currentLocation().y());
+    QPointF boxEdge = this->findBoxEdge(this->source,
+                                        destination->currentLocation().x(),
+                                        destination->currentLocation().y());
     this->start = boxEdge;
 
     // destination
-    boxEdge = this->findBoxEdge(this->destination, this->source->currentLocation().x(), this->source->currentLocation().y());
+    boxEdge = this->findBoxEdge(this->destination,
+                                this->source->currentLocation().x(),
+                                this->source->currentLocation().y());
     this->curves.back().end = boxEdge;
 
     // self connection aesthetics
@@ -1882,8 +1886,10 @@ void projection::add_curves()
         this->curves.back().end = boxEdge;
         boxEdge = this->findBoxEdge(this->source, 1000000.0, 1000000.0);
         this->start = boxEdge;
-        this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0, this->destination->currentLocation().y()+1.0);
-        this->curves.back().C2 = QPointF(this->destination->currentLocation().x(), this->destination->currentLocation().y()+1.4);
+        this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0,
+                                         this->destination->currentLocation().y()+1.0);
+        this->curves.back().C2 = QPointF(this->destination->currentLocation().x(),
+                                         this->destination->currentLocation().y()+1.4);
     }
 }
 
