@@ -598,7 +598,6 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
 
 void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 {
-    DBG() << "Called";
     // skip if a special input for a projection
     if (this->projInput) {
         DBG() << "Special input for a projection; skip";
@@ -608,17 +607,21 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
     // now load the metadata for the projection:
     QDomNode metaNode = meta->documentElement().firstChild();
 
+#if 0
     DBG() << "this:     source:" << this->src->getXMLName()
           << "destination:" << this->dst->getXMLName()
           << "srcPort:" <<  this->srcPort
           << "dstPort:" <<  this->dstPort;
+#endif
 
     while(!metaNode.isNull()) {
 
+#if 0
         DBG() << "metaNode: source:" << metaNode.toElement().attribute("source", "")
               << "destination:" << metaNode.toElement().attribute("destination", "")
               << "srcPort:" <<  metaNode.toElement().attribute("srcPort", "")
               << "dstPort:" <<  metaNode.toElement().attribute("dstPort", "");
+#endif
 
         if (metaNode.toElement().attribute("source", "") == this->src->getXMLName()
             && metaNode.toElement().attribute("destination", "") == this->dst->getXMLName()
@@ -628,9 +631,9 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
             QDomNode metaData = metaNode.toElement().firstChild();
             while (!metaData.isNull()) {
 
-                DBG() << "XML tag name: " << metaData.toElement().tagName();
                 if (metaData.toElement().tagName() == "start") {
-                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat()+cursorPos.x,
+                                          metaData.toElement().attribute("y","").toFloat()+cursorPos.y);
                 }
 
                 // find the curves tag
@@ -661,7 +664,6 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
                         DBG() << "Adding filled curve to this->curves from reading XML";
                         this->curves.push_back(newCurve);
                     }
-
                 }
 
                 // find tags for connection generators
