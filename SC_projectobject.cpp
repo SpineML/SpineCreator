@@ -16,6 +16,10 @@ projectObject::projectObject(QObject *parent) :
 
     this->undoStack = new QUndoStack(this);
 
+    // Screen cursor pos initialised in the nl_rootdata object to 0,0 also.
+    //this->currentCursorPos.x = 0.0;
+    //this->currentCursorPos.y = 0.0;
+
     // default fileNames
     this->networkFile = "model.xml";
     this->metaFile = "metaData.xml";
@@ -110,25 +114,25 @@ bool projectObject::open_project(QString fileName)
     settings.setValue("files/currentFileName", project_dir.absolutePath());
 
     // first try and open the project file
-    if (!load_project_file(fileName)) {
+    if (!this->load_project_file(fileName)) {
         printErrors("Errors found loading the project file:");
         return false;
     }
 
     // then load in all the components listed in the project file ///////////
     for (int i = 0; i < this->components.size(); ++i) {
-        loadComponent(this->components[i], project_dir);
+        this->loadComponent(this->components[i], project_dir);
     }
     printErrors("Errors found loading project Components:");
 
     // then load in all the layouts listed in the project file //////////////
     for (int i = 0; i < this->layouts.size(); ++i) {
-        loadLayout(this->layouts[i], project_dir);
+        this->loadLayout(this->layouts[i], project_dir);
     }
     printErrors("Errors found loading project Layouts:");
 
     // now the network //////////////////////////////////////////////////////
-    loadNetwork(this->networkFile, project_dir);
+    this->loadNetwork(this->networkFile, project_dir);
     if (printErrors("Errors prevented loading the Project:")) {
         return false;
     }
@@ -156,7 +160,7 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
         msgBox.exec();
         return false;
     }
-    qDebug() << "save_project ('" << fileName << "', rootData*)";
+    DBG() << "save_project ('" << fileName << "', rootData*)";
 
     QDir project_dir(fileName);
 
@@ -239,7 +243,7 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
 
 bool projectObject::import_network(QString fileName, cursorType cursorPos)
 {
-    qDebug() << "projectObject::import_network(" << fileName << ")";
+    DBG() << "projectObject::import_network(" << fileName << ")";
 
     QDir project_dir(fileName);
 
@@ -258,19 +262,19 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
     // load all the components in the list
     for (int i = 0; i < files.size(); ++i) {
         if (isComponent(project_dir.absoluteFilePath(files[i]))) {
-            loadComponent(files[i], project_dir);
+            this->loadComponent(files[i], project_dir);
         }
     }
 
     // load all the layouts in the list
     for (int i = 0; i < files.size(); ++i) {
         if (isLayout(project_dir.absoluteFilePath(files[i]))) {
-            loadLayout(files[i], project_dir);
+            this->loadLayout(files[i], project_dir);
         }
     }
 
     // load the network
-    loadNetwork(fileName, project_dir, false);
+    this->loadNetwork(fileName, project_dir, false);
     if (printErrors("Errors prevented importing the Network:")) {
         return false;
     }
@@ -304,7 +308,6 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
                 this->network[i]->neuronType->inputs[j]->add_curves();
             }
         }
-
     }
 
     // finally load the experiments
@@ -321,20 +324,14 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
 void projectObject::import_component(QString fileName)
 {
     QDir project_dir(fileName);
-
-    // remove filename
-    project_dir.cdUp();
-
+    project_dir.cdUp(); // removes filename
     loadComponent(fileName, project_dir);
 }
 
 void projectObject::import_layout(QString fileName)
 {
     QDir project_dir(fileName);
-
-    // remove filename
     project_dir.cdUp();
-
     loadLayout(fileName, project_dir);
 }
 
@@ -931,10 +928,8 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     // get the model name
     this->name = root.toElement().attribute("name", "Untitled project");
 
-    if (!isProject) {
-        // Get cursor offset so it can be applied when loading metadata.
-        DBG() << "Cursor position is " << this->currentCursorPos.x << "," << this->currentCursorPos.y;
-    }
+    // Cursor offset is applied when loading metadata. Should be 0 when opening a new project.
+    DBG() << "Cursor position is " << this->currentCursorPos.x << "," << this->currentCursorPos.y;
 
     // only load metadata for projects
     QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
@@ -1178,7 +1173,7 @@ void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir
         // should be unlinked.
         if (!ebd_files.contains(files[i])) {
             //unlink(files[i])
-            qDebug() << "Unlinking stale explicitDataBinaryFile: " << files[i];
+            DBG() << "Unlinking stale explicitDataBinaryFile: " << files[i];
             QFile::remove(projectDir.absoluteFilePath(files[i]));
         }
     }
@@ -1304,6 +1299,7 @@ void projectObject::copy_back_data(nl_rootdata * data)
     this->catalogGC = data->catalogUnsorted;
     this->catalogLAY = data->catalogLayout;
     this->experimentList = data->experiments;
+    this->currentCursorPos = data->cursor;
 }
 
 void projectObject::copy_out_data(nl_rootdata * data)
@@ -1316,6 +1312,7 @@ void projectObject::copy_out_data(nl_rootdata * data)
     data->catalogUnsorted = this->catalogGC;
     data->catalogLayout = this->catalogLAY;
     data->experiments = this->experimentList;
+    data->cursor = this->currentCursorPos;
 }
 
 void projectObject::deselect_project(nl_rootdata * data)
@@ -1444,10 +1441,10 @@ bool projectObject::printErrors(QString title)
         return false;
     }
 
-    // display errors:
     if (!errors.isEmpty()) {
-        // display errors (Seb has observed one hang here where the msgBox failed to show when there was a project error.
-        qDebug() << "Errors in SC_projectobject.cpp: " << errors;
+        // Display errors. (Seb has observed one hang here where the
+        // msgBox failed to show when there was a project error.
+        DBG() << "Errors in SC_projectobject.cpp: " << errors;
         QMessageBox msgBox;
         msgBox.setText("<P><b>" + title + "</b></P>" + errors);
         msgBox.setIcon(QMessageBox::Critical);

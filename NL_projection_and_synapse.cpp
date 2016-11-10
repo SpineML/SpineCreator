@@ -1757,9 +1757,14 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     // now load the metadata for the projection:
     QDomNode metaNode = meta->documentElement().firstChild();
 
+    // The current cursor position, for offsetting position -
+    // important when importing a network.
+    cursorType curs = data->getCursorPos();
+
     while(!metaNode.isNull()) {
 
-        if (metaNode.toElement().attribute("source", "") == this->source->name && metaNode.toElement().attribute("destination", "") == this->destination->name) {
+        if (metaNode.toElement().attribute("source", "") == this->source->name
+            && metaNode.toElement().attribute("destination", "") == this->destination->name) {
 
             this->projDrawStyle = (drawStyle) metaNode.toElement().attribute("style", QString::number(standardDrawStyleExcitatory)).toUInt();
             this->showLabel = (bool) metaNode.toElement().attribute("showlabel", 0).toUInt();
@@ -1768,7 +1773,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             while (!metaData.isNull()) {
 
                 if (metaData.toElement().tagName() == "start") {
-                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat()+curs.x,
+                                          metaData.toElement().attribute("y","").toFloat()+curs.y);
                 }
 
                 // find the curves tag
@@ -1781,13 +1787,16 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                         bezierCurve newCurve;
                         while (!vals.isNull()) {
                             if (vals.toElement().tagName() == "C1") {
-                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             if (vals.toElement().tagName() == "C2") {
-                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             if (vals.toElement().tagName() == "end") {
-                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                       vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             vals = vals.nextSibling();
                         }
@@ -1840,7 +1849,6 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     }
 
     this->print();
-    DBG() << "returning";
 }
 
 void projection::add_curves()
@@ -2145,11 +2153,11 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     for (int i = 0; i < synapses.size(); ++i) {
 
         for (int j = 0; j < synapses[i]->weightUpdateType->inputs.size(); ++j) {
-            synapses[i]->weightUpdateType->inputs[j]->read_meta_data(meta);
+            synapses[i]->weightUpdateType->inputs[j]->read_meta_data(meta, data->getCursorPos());
             synapses[i]->weightUpdateType->inputs[j]->dst->matchPorts();
         }
         for (int j = 0; j < synapses[i]->postsynapseType->inputs.size(); ++j) {
-            synapses[i]->postsynapseType->inputs[j]->read_meta_data(meta);
+            synapses[i]->postsynapseType->inputs[j]->read_meta_data(meta, data->getCursorPos());
             synapses[i]->postsynapseType->inputs[j]->dst->matchPorts();
         }
     }

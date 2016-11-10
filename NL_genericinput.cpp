@@ -596,7 +596,7 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
     col.appendChild(c);
 }
 
-void genericInput::read_meta_data(QDomDocument * meta)
+void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 {
     DBG() << "Called";
     // skip if a special input for a projection
@@ -643,13 +643,16 @@ void genericInput::read_meta_data(QDomDocument * meta)
                         bezierCurve newCurve;
                         while (!vals.isNull()) {
                             if (vals.toElement().tagName() == "C1") {
-                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat()+cursorPos.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+cursorPos.y);
                             }
                             if (vals.toElement().tagName() == "C2") {
-                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat()+cursorPos.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+cursorPos.y);
                             }
                             if (vals.toElement().tagName() == "end") {
-                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat()+cursorPos.x,
+                                                       vals.toElement().attribute("ypos").toFloat()+cursorPos.y);
                             }
 
                             vals = vals.nextSibling();

@@ -44,7 +44,12 @@ public:
     void moveSelectedControlPoint(float xGL, float yGL);
     void write_model_meta_xml(QDomDocument &meta, QDomElement &root) ;
 
-    void read_meta_data(QDomDocument * meta);
+    /*!
+     * Read the meta-data information in the QDomDocument* meta. Use
+     * cursorPos to offset the positions so that imported networks
+     * will appear at the location on the screen of the cursor.
+     */
+    void read_meta_data(QDomDocument * meta, cursorType cursorPos);
 
     // Override add_curves from projection.
     void add_curves();
