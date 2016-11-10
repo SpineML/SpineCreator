@@ -119,31 +119,31 @@ bool projectObject::open_project(QString fileName)
         return false;
     }
 
-    // then load in all the components listed in the project file ///////////
+    // then load in all the components listed in the project file
     for (int i = 0; i < this->components.size(); ++i) {
         this->loadComponent(this->components[i], project_dir);
     }
     printErrors("Errors found loading project Components:");
 
-    // then load in all the layouts listed in the project file //////////////
+    // then load in all the layouts listed in the project file
     for (int i = 0; i < this->layouts.size(); ++i) {
         this->loadLayout(this->layouts[i], project_dir);
     }
     printErrors("Errors found loading project Layouts:");
 
-    // now the network //////////////////////////////////////////////////////
+    // now the network
     this->loadNetwork(this->networkFile, project_dir);
     if (printErrors("Errors prevented loading the Project:")) {
         return false;
     }
 
-    // finally the experiments //////////////////////////////////////////////
+    // finally the experiments (this->experiments populated in this->load_project_file)
     for (int i = 0; i < this->experiments.size(); ++i) {
         loadExperiment(this->experiments[i], project_dir);
     }
     printErrors("Errors found loading project Experiments:");
 
-    // check for errors /////////////////////////////////////////////////////
+    // check for errors
     printWarnings("Issues were found while loading the project:");
 
     // store the new file name
@@ -247,6 +247,8 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
 
     QDir project_dir(fileName);
 
+    // Update current cursor position, used to offset the imported
+    // network (so it won't land on top of the existing network).
     this->currentCursorPos = cursorPos;
 
     // remove filename
@@ -256,24 +258,26 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
     QSettings settings;
     settings.setValue("files/currentFileName", project_dir.absolutePath());
 
-    // get a list of the files in the directory
+    // get a list of all the files in the directory containing fileName
     QStringList files = project_dir.entryList();
 
-    // load all the components in the list
+    // load all the component files
     for (int i = 0; i < files.size(); ++i) {
         if (isComponent(project_dir.absoluteFilePath(files[i]))) {
             this->loadComponent(files[i], project_dir);
         }
     }
 
-    // load all the layouts in the list
+    // load all the layout files
     for (int i = 0; i < files.size(); ++i) {
         if (isLayout(project_dir.absoluteFilePath(files[i]))) {
             this->loadLayout(files[i], project_dir);
         }
     }
 
-    // load the network
+    int firstNewPop = this->network.size();
+
+    // load the network file itself
     this->loadNetwork(fileName, project_dir, false);
     if (printErrors("Errors prevented importing the Network:")) {
         return false;
@@ -285,18 +289,28 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
     if (this->metaFile == "not found") {
         this->metaFile = "metaData.xml";
 
-        // place populations
-        for (int i = 0; i < this->network.size(); ++i) {
+        // place the new populations in a diagonal line:
+        for (int i = firstNewPop; i < this->network.size(); ++i) {
             QSharedPointer <population> p = this->network[i];
-            p->x = i*2.0f; p->targx = i*2.0f;
-            p->y = i*2.0f; p->targy = i*2.0f;
+
+            // Adds a bit to x and y positions, leaving the existing
+            // network populations unchanged and applying the cursor
+            // position offset - that is, the diagonal line of new
+            // populations starts at the cursor and is directed up and
+            // right.
+            p->x = (i-firstNewPop)*2.0f + this->currentCursorPos.x;
+            p->targx = p->x;
+            p->y = (i-firstNewPop)*2.0f + this->currentCursorPos.y;
+            p->targy = p->y;
+
             p->size = 1.0f;
             p->aspect_ratio = 5.0f/3.0f;
             p->setupBounds();
         }
 
-        // make projection (and generic input) curves
-        for (int i = 0; i < this->network.size(); ++i) {
+        // make projection and generic input curves to link up the
+        // newly placed populations
+        for (int i = firstNewPop; i < this->network.size(); ++i) {
 
             DBG() << "Placing " << this->network[i]->projections.size() << " projections for population in network["<<i<<"]";
             for (int j = 0; j < this->network[i]->projections.size(); ++j) {
@@ -310,9 +324,11 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
         }
     }
 
-    // finally load the experiments
+    // finally load the experiments. This will load ALL experiment
+    // files in the directory, which may include some stale ones,
+    // which will cause errors.
     for (int i = 0; i < files.size(); ++i) {
-        loadExperiment(files[i], project_dir, true);
+        this->loadExperiment(files[i], project_dir, true);
     }
 
     printWarnings("Issues found importing the Network:");
@@ -337,8 +353,7 @@ void projectObject::import_layout(QString fileName)
 
 bool projectObject::load_project_file(QString fileName)
 {
-    //////////////// OPEN FILE
-
+    // open the file
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)) {
         QMessageBox msgBox;
@@ -349,8 +364,6 @@ bool projectObject::load_project_file(QString fileName)
 
     // get a streamreader
     QXmlStreamReader * reader = new QXmlStreamReader;
-
-    // set the stream reader device to the file
     reader->setDevice(&file);
 
     // read elements
@@ -541,8 +554,6 @@ bool projectObject::save_project_file(QString fileName)
 
     // get a streamwriter
     QXmlStreamWriter * writer = new QXmlStreamWriter;
-
-    // set the stream reader device to the file
     writer->setDevice(&file);
 
     // write elements
@@ -702,7 +713,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
 
     if (classType.tagName() == "ComponentClass") {
 
-        // HANDLE SPINEML COMPONENTS ////////////////
+        // HANDLE SPINEML COMPONENTS //
 
         // create a new AL class instance and populate it from the data
         QSharedPointer<Component>tempALobject = QSharedPointer<Component> (new Component());
@@ -822,7 +833,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir)
 
     if (classType.tagName() == "LayoutClass") {
 
-            // HANDLE LAYOUTS ////////////////////
+            // HANDLE LAYOUTS
 
             // create a new AL class instance and populate it from the data
             QSharedPointer<NineMLLayout>tempALobject = QSharedPointer<NineMLLayout> (new NineMLLayout());
@@ -967,7 +978,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     // when counting through newly added populations.
     int firstNewPop = this->network.size();
 
-    //////////////// LOAD POPULATIONS
+    // LOAD POPULATIONS
     QDomNode n = this->doc.documentElement().firstChild();
     while (!n.isNull())  {
 
@@ -1013,7 +1024,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             DBG() << "Population Component name: " << this->network[i]->neuronType->getXMLName();
     }
 
-    //////////////// LOAD PROJECTIONS
+    // LOAD PROJECTIONS
     DBGBRK()
     DBG() << "LOADING PROJECTIONS...";
     n = this->doc.documentElement().firstChild();
@@ -1045,7 +1056,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         n = n.nextSibling();
     }
 
-    ///////////////// LOAD INPUTS
+    // LOAD INPUTS
     DBGBRK();
     DBG() << "LOADING INPUTS...";
     counter = firstNewPop;
@@ -1119,7 +1130,7 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
 
     // create a node for each population with the variables set
     for (int pop = 0; pop < this->network.size(); ++pop) {
-        //// WE NEED TO HAVE A PROPER MODEL NAME!
+        // WE NEED TO HAVE A PROPER MODEL NAME!
         this->network[pop]->write_population_xml(xmlOut);
     }
 
@@ -1254,7 +1265,8 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
         this->experimentList.push_back(newExperiment);
     } else {
         // add error tail
-        addError("<b>IN EXPERIMENT FILE '" + fileName + "'</b>");
+        addError("<b>" + QString::number(num_errs) + " error" + (num_errs==1?"":"s")
+                 + " found in file '" + fileName + "'</b>");
     }
 
     // we have loaded the XML file - discard the file handle
