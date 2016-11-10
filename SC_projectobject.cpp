@@ -113,6 +113,11 @@ bool projectObject::open_project(QString fileName)
     QSettings settings;
     settings.setValue("files/currentFileName", project_dir.absolutePath());
 
+    // Set currentCursorPos to 0 before opening a project to ensure we
+    // don't translate anything in position.
+    this->currentCursorPos.x = 0;
+    this->currentCursorPos.y = 0;
+
     // first try and open the project file
     if (!this->load_project_file(fileName)) {
         printErrors("Errors found loading the project file:");
