@@ -615,7 +615,6 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
         return;
     }
 
-    DBG() << "filePathString: " << filePathString;
     QDir saveDir(filePathString);
 
     bool saveBinaryConnections = settings.value("fileOptions/saveBinaryConnections", "error").toBool();

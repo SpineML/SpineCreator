@@ -40,6 +40,9 @@
  propagate through here.
 */
 
+#ifdef SHOW_MOUSE_DEBUGGING
+# define DBGMOUSE() qDebug() << __FUNCTION__ << ": "
+#endif
 
 nl_rootdata::nl_rootdata(QObject *parent) :
     QObject(parent)
@@ -699,11 +702,11 @@ void nl_rootdata::populationMoved(const QVector <QSharedPointer<population> >& p
 
 void nl_rootdata::onNewSelections (float xGL, float yGL)
 {
-    DBG() << " emitting updatePanel";
+    //DBGMOUSE() << " emitting updatePanel";
     emit updatePanel(this);
     for (int i = 0; i < this->selList.size(); ++i) {
         // register locations relative to cursor:
-        DBG() << "Setting a location offset...";
+        //DBGMOUSE() << "Setting a location offset...";
         this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
     }
 }
@@ -739,7 +742,7 @@ void nl_rootdata::deleteFromSelList (const QVector <QSharedPointer<systemObject>
 // When the "left" mouse goes down, select what's underneath, if anything.
 void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown)
 {
-    DBG() << " called, shift is " << (shiftDown ? "Down" : "Up");
+    //DBGMOUSE() << " called, shift is " << (shiftDown ? "Down" : "Up");
 
     // Record the position of the selection.
     this->lastLeftMouseDownPos.setX(xGL);
@@ -774,36 +777,36 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
     // 8. Something(s) were previously selected, user clicked on one of them -> User is moving selection.
 
     if (this->selList.empty()) { // Nothing previously selected.
-        DBG() << "Nothing prev. selected...";
+        //DBGMOUSE() << "Nothing prev. selected...";
         if (newlySelectedList.empty()) {
             // Nothing selected now, do nothing but show the cursor.
-            DBG() << "Nothing selected now, so show cursor.";
+            DBG() << "Show cursor at position " << xGL << "," << yGL;
             cursor.x = xGL;
             cursor.y = yGL;
             emit updatePanel(this);
         } else {
             // Have new selection, selList is empty, swap the contents
             // of newlySelectedList into selList.
-            DBG() << "New selection, swap new selection into selList.";
+            //DBGMOUSE() << "New selection, swap new selection into selList.";
             this->selList.swap (newlySelectedList);
             this->onNewSelections(xGL, yGL);
         }
 
     } else { // We have a previous selection.
-        DBG() << "We have a previous selection...";
+        //DBGMOUSE() << "We have a previous selection...";
         if (newlySelectedList.empty()) {
             // Nothing selected now.
-            DBG() << "Nothing is newly selected...";
+            //DBGMOUSE() << "Nothing is newly selected...";
             if (shiftDown) {
                 // User still has shift down; do nothing. Show cursor?
-                DBG() << "User has shift down. Show cursor.";
+                //DBGMOUSE() << "User has shift down. Show cursor.";
                 cursor.x = xGL;
                 cursor.y = yGL;
                 // If we selected nothing, then just this:
                 emit updatePanel(this);
             } else {
                 // Clear selection and show cursor:
-                DBG() << "User doesn't have shift down, so clear selection and show cursor.";
+                //DBGMOUSE() << "User doesn't have shift down, so clear selection and show cursor.";
                 this->cursor.x = xGL;
                 this->cursor.y = yGL;
                 this->selList.clear();
@@ -811,28 +814,28 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
             }
         } else {
             // Have new selection
-            DBG() << "We have a new selection...";
+            //DBGMOUSE() << "We have a new selection...";
             if (shiftDown) {
                 // User still has shift down; append, leaving cursor unchanged
                 if (!this->selListContains (newlySelectedList)) {
-                    DBG() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
+                    //DBGMOUSE() << "User has shift down, (some of) newlySelected is not in selList, so append newlySelected onto selList";
                     //this->selList.insert (this->selList.end(), newlySelectedList.begin(), newlySelectedList.end());
                     // since we have moved to QVectors this should have the same effect as the above - Alex 17 July 2014
                     this->selList += newlySelectedList;
                 } else {
                     // user has shift down,. but newlySelected is already in selList, so in this case REMOVE it!
-                    DBG() << "user has shift down clicking on existing object, so delete";
+                    //DBGMOUSE() << "user has shift down clicking on existing object, so delete";
                     this->deleteFromSelList (newlySelectedList);
                 }
             } else {
                 // Shift not down, user wishes to switch selection OR move several selected items
-                DBG() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
+                //DBGMOUSE() << "Shift is not down, so user wishes to switch selection or move selected items. Swap newly selected into selList";
                 if (this->selListContains (newlySelectedList)) {
-                    DBG() << "selList contains newly selected; user wishes to MOVE selected items.";
+                    //DBGMOUSE() << "selList contains newly selected; user wishes to MOVE selected items.";
                     // Nothing further to do here?
                 } else {
                     // Swap selection, leave cursor unchanged.
-                    DBG() << "newly selected not in selList. user wishes to switch selection. Swap newly selected into selList";
+                    //DBGMOUSE() << "newly selected not in selList. user wishes to switch selection. Swap newly selected into selList";
                     this->selList.swap (newlySelectedList);
                 }
 #if 0
@@ -1159,7 +1162,7 @@ void nl_rootdata::abortProjection()
 void nl_rootdata::mouseMoveGL(float xGL, float yGL)
 {
     selectionMoved = true;
-    //DBG() << "pos = " << xGL << " " << yGL;
+    //DBGMOUSE() << "pos = " << xGL << " " << yGL;
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
@@ -2026,29 +2029,29 @@ QSharedPointer<ComponentInstance> nl_rootdata::isValidPointer(ComponentInstance 
 // allow safe usage of NineMLComponent pointers
 QSharedPointer<Component> nl_rootdata::isValidPointer(Component * ptr)
 {
-    DBG() << ptr;
-    DBG() << "/////";
+    //DBG() << ptr;
+    //DBG() << "/////";
 
     for (int i = 0; i < this->catalogNrn.size(); ++i) {
-        DBG() << catalogNrn[i].data();
+        //DBG() << catalogNrn[i].data();
         if (catalogNrn[i] == ptr) {
             return catalogNrn[i];
         }
     }
     for (int i = 0; i < this->catalogPS.size(); ++i) {
-        DBG() << catalogPS[i].data();
+        //DBG() << catalogPS[i].data();
         if (catalogPS[i]  == ptr) {
             return catalogPS[i];
         }
     }
     for (int i = 0; i < this->catalogUnsorted.size(); ++i) {
-        DBG() << catalogUnsorted[i].data();
+        //DBG() << catalogUnsorted[i].data();
         if (catalogUnsorted[i]  == ptr) {
             return catalogUnsorted[i];
         }
     }
     for (int i = 0; i < this->catalogWU.size(); ++i) {
-        DBG() << catalogWU[i].data();
+        //DBG() << catalogWU[i].data();
         if (catalogWU[i] == ptr) {
             return catalogWU[i];
         }
