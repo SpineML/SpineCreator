@@ -16,6 +16,10 @@ projectObject::projectObject(QObject *parent) :
 
     this->undoStack = new QUndoStack(this);
 
+    // Screen cursor pos initialised in the nl_rootdata object to 0,0 also.
+    //this->currentCursorPos.x = 0.0;
+    //this->currentCursorPos.y = 0.0;
+
     // default fileNames
     this->networkFile = "model.xml";
     this->metaFile = "metaData.xml";
@@ -109,37 +113,42 @@ bool projectObject::open_project(QString fileName)
     QSettings settings;
     settings.setValue("files/currentFileName", project_dir.absolutePath());
 
+    // Set currentCursorPos to 0 before opening a project to ensure we
+    // don't translate anything in position.
+    this->currentCursorPos.x = 0;
+    this->currentCursorPos.y = 0;
+
     // first try and open the project file
-    if (!load_project_file(fileName)) {
+    if (!this->load_project_file(fileName)) {
         printErrors("Errors found loading the project file:");
         return false;
     }
 
-    // then load in all the components listed in the project file ///////////
+    // then load in all the components listed in the project file
     for (int i = 0; i < this->components.size(); ++i) {
-        loadComponent(this->components[i], project_dir);
+        this->loadComponent(this->components[i], project_dir);
     }
     printErrors("Errors found loading project Components:");
 
-    // then load in all the layouts listed in the project file //////////////
+    // then load in all the layouts listed in the project file
     for (int i = 0; i < this->layouts.size(); ++i) {
-        loadLayout(this->layouts[i], project_dir);
+        this->loadLayout(this->layouts[i], project_dir);
     }
     printErrors("Errors found loading project Layouts:");
 
-    // now the network //////////////////////////////////////////////////////
-    loadNetwork(this->networkFile, project_dir);
+    // now the network
+    this->loadNetwork(this->networkFile, project_dir);
     if (printErrors("Errors prevented loading the Project:")) {
         return false;
     }
 
-    // finally the experiments //////////////////////////////////////////////
+    // finally the experiments (this->experiments populated in this->load_project_file)
     for (int i = 0; i < this->experiments.size(); ++i) {
         loadExperiment(this->experiments[i], project_dir);
     }
     printErrors("Errors found loading project Experiments:");
 
-    // check for errors /////////////////////////////////////////////////////
+    // check for errors
     printWarnings("Issues were found while loading the project:");
 
     // store the new file name
@@ -156,7 +165,7 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
         msgBox.exec();
         return false;
     }
-    qDebug() << "save_project ('" << fileName << "', rootData*)";
+    DBG() << "save_project ('" << fileName << "', rootData*)";
 
     QDir project_dir(fileName);
 
@@ -237,9 +246,20 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
     return true;
 }
 
-bool projectObject::import_network(QString fileName)
+bool projectObject::import_network(QString fileName, cursorType cursorPos)
 {
+    DBG() << "projectObject::import_network(" << fileName << ")";
+
+    // Compute the extent of the existing network:
+    std::pair<QPointF, QPointF> ext = this->getNetworkExtent (this->network);
+    DBG() << "Network extent: TL:" << ext.first << " BR: " << ext.second;
+
+
     QDir project_dir(fileName);
+
+    // Update current cursor position, used to offset the imported
+    // network (so it won't land on top of the existing network).
+    this->currentCursorPos = cursorPos;
 
     // remove filename
     project_dir.cdUp();
@@ -248,55 +268,77 @@ bool projectObject::import_network(QString fileName)
     QSettings settings;
     settings.setValue("files/currentFileName", project_dir.absolutePath());
 
-    // get a list of the files in the directory
+    // get a list of all the files in the directory containing fileName
     QStringList files = project_dir.entryList();
 
-    // load all the components in the list
+    // load all the component files
     for (int i = 0; i < files.size(); ++i) {
-        if (isComponent(project_dir.absoluteFilePath(files[i])))
-            loadComponent(files[i], project_dir);
-    }
-
-    // load all the layouts in the list
-    for (int i = 0; i < files.size(); ++i) {
-        if (isLayout(project_dir.absoluteFilePath(files[i]))) {
-            loadLayout(files[i], project_dir);
+        if (isComponent(project_dir.absoluteFilePath(files[i]))) {
+            this->loadComponent(files[i], project_dir);
         }
     }
 
-    // load the network
-    loadNetwork(fileName, project_dir, false);
+    // load all the layout files
+    for (int i = 0; i < files.size(); ++i) {
+        if (isLayout(project_dir.absoluteFilePath(files[i]))) {
+            this->loadLayout(files[i], project_dir);
+        }
+    }
+
+    int firstNewPop = this->network.size();
+
+    // load the network file itself
+    this->loadNetwork(fileName, project_dir, false);
     if (printErrors("Errors prevented importing the Network:")) {
         return false;
     }
 
-    // set up metaData if not loaded
+    // set up metaData if not loaded. That's _this_ metaFile. We need
+    // to load the network making use of the metadata that comes
+    // alongside the model.xml file.
     if (this->metaFile == "not found") {
         this->metaFile = "metaData.xml";
 
-        // place populations
-        for (int i = 0; i < this->network.size(); ++i) {
+        // place the new populations in a diagonal line:
+        for (int i = firstNewPop; i < this->network.size(); ++i) {
             QSharedPointer <population> p = this->network[i];
-            p->x = i*2.0f; p->targx = i*2.0f;
-            p->y = i*2.0f; p->targy = i*2.0f;
+
+            // Adds a bit to x and y positions, leaving the existing
+            // network populations unchanged and applying the cursor
+            // position offset - that is, the diagonal line of new
+            // populations starts at the cursor and is directed up and
+            // right.
+            p->x = (i-firstNewPop)*2.0f + this->currentCursorPos.x;
+            p->targx = p->x;
+            p->y = (i-firstNewPop)*2.0f + this->currentCursorPos.y;
+            p->targy = p->y;
+
             p->size = 1.0f;
             p->aspect_ratio = 5.0f/3.0f;
             p->setupBounds();
         }
 
-        // make projection curves
-        for (int i = 0; i < this->network.size(); ++i) {
-            QSharedPointer <population> p = this->network[i];
-            for (int j = 0; j < p->projections.size(); ++j) {
-                QSharedPointer <projection> pr = p->projections[j];
-                pr->add_curves();
+        // make projection and generic input curves to link up the
+        // newly placed populations
+        for (int i = firstNewPop; i < this->network.size(); ++i) {
+
+            DBG() << "Placing " << this->network[i]->projections.size() << " projections for population in network["<<i<<"]";
+            for (int j = 0; j < this->network[i]->projections.size(); ++j) {
+                this->network[i]->projections[j]->add_curves();
+            }
+
+            DBG() << "Placing " << this->network[i]->neuronType->inputs.size() << " inputs for network["<<i<<"]";
+            for (int j = 0; j < this->network[i]->neuronType->inputs.count(); ++j) {
+                this->network[i]->neuronType->inputs[j]->add_curves();
             }
         }
     }
 
-    // finally load the experiments
+    // finally load the experiments. This will load ALL experiment
+    // files in the directory, which may include some stale ones,
+    // which will cause errors.
     for (int i = 0; i < files.size(); ++i) {
-        loadExperiment(files[i], project_dir, true);
+        this->loadExperiment(files[i], project_dir, true);
     }
 
     printWarnings("Issues found importing the Network:");
@@ -308,27 +350,20 @@ bool projectObject::import_network(QString fileName)
 void projectObject::import_component(QString fileName)
 {
     QDir project_dir(fileName);
-
-    // remove filename
-    project_dir.cdUp();
-
+    project_dir.cdUp(); // removes filename
     loadComponent(fileName, project_dir);
 }
 
 void projectObject::import_layout(QString fileName)
 {
     QDir project_dir(fileName);
-
-    // remove filename
     project_dir.cdUp();
-
     loadLayout(fileName, project_dir);
 }
 
 bool projectObject::load_project_file(QString fileName)
 {
-    //////////////// OPEN FILE
-
+    // open the file
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly)) {
         QMessageBox msgBox;
@@ -339,8 +374,6 @@ bool projectObject::load_project_file(QString fileName)
 
     // get a streamreader
     QXmlStreamReader * reader = new QXmlStreamReader;
-
-    // set the stream reader device to the file
     reader->setDevice(&file);
 
     // read elements
@@ -531,8 +564,6 @@ bool projectObject::save_project_file(QString fileName)
 
     // get a streamwriter
     QXmlStreamWriter * writer = new QXmlStreamWriter;
-
-    // set the stream reader device to the file
     writer->setDevice(&file);
 
     // write elements
@@ -692,7 +723,7 @@ void projectObject::loadComponent(QString fileName, QDir project_dir)
 
     if (classType.tagName() == "ComponentClass") {
 
-        // HANDLE SPINEML COMPONENTS ////////////////
+        // HANDLE SPINEML COMPONENTS //
 
         // create a new AL class instance and populate it from the data
         QSharedPointer<Component>tempALobject = QSharedPointer<Component> (new Component());
@@ -812,7 +843,7 @@ void projectObject::loadLayout(QString fileName, QDir project_dir)
 
     if (classType.tagName() == "LayoutClass") {
 
-            // HANDLE LAYOUTS ////////////////////
+            // HANDLE LAYOUTS
 
             // create a new AL class instance and populate it from the data
             QSharedPointer<NineMLLayout>tempALobject = QSharedPointer<NineMLLayout> (new NineMLLayout());
@@ -886,6 +917,11 @@ void projectObject::saveLayout(QString fileName, QDir project_dir, QSharedPointe
     this->doc.clear();
 }
 
+cursorType
+projectObject::getCursorPos (void)
+{
+    return this->currentCursorPos;
+}
 
 void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProject)
 {
@@ -913,14 +949,18 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     // get the model name
     this->name = root.toElement().attribute("name", "Untitled project");
 
-    // only load metadata for projects
+    // Cursor offset is applied when loading metadata. Should be 0 when opening a new project.
+    DBG() << "Cursor position is " << this->currentCursorPos.x << "," << this->currentCursorPos.y;
 
+    // only load metadata for projects
     QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
+    DBG() << "metaFilePath:" << metaFilePath;
     QFile fileMeta(metaFilePath);
 
     if (!fileMeta.open(QIODevice::ReadOnly)) {
         // if is not a project we don't expect a metaData file
         if (isProject) {
+            DBG() << "Could not open meta data file";
             addError("Could not open the MetaData file for reading");
             return;
         } else {
@@ -931,6 +971,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             addError("Could not parse the MetaData file XML - is the selected file correctly formed XML?");
             return;
         }
+
         // we have loaded the XML file - discard the file handle
         fileMeta.close();
 
@@ -940,11 +981,16 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             addError("MetaData file is not valid");
             return;
         }
+        DBG() << "Successfully loaded meta data for the network.";
     }
 
-    //////////////// LOAD POPULATIONS
+    // This is the starting point in this->network from which to count
+    // when counting through newly added populations.
+    int firstNewPop = this->network.size();
+
+    // LOAD POPULATIONS
     QDomNode n = this->doc.documentElement().firstChild();
-    while (!n.isNull()) {
+    while (!n.isNull())  {
 
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population") {
@@ -954,7 +1000,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             this->network.push_back(pop);
 
             // check for duplicate names:
-            for (int i = 0; i < this->network.size() - 1; ++i) {
+            for (int i = firstNewPop; i < this->network.size() - 1; ++i) {
                 if (this->network[i]->name == this->network.back()->name) {
                     this->network[i]->name = getUniquePopName(this->network[i]->name);
                     addWarning("Duplicate Population name found: renamed existing Population to '" + this->network[i]->name + "'");
@@ -968,6 +1014,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
             if (num_errs != 0) {
                 // no dice - give up!
+                DBG() << "There were errors reading the population. Giving up and returning.";
                 return;
             }
 
@@ -975,16 +1022,25 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         n = n.nextSibling();
     }
 
-    //////////////// LOAD PROJECTIONS
+    // Some debugging information:
+    DBG() << "Order of network names:";
+    for (int i = 0; i < this->network.size(); ++i) {
+            DBG() << "Population name: " << this->network[i]->name;
+            DBG() << "Population Component name: " << this->network[i]->neuronType->getXMLName();
+    }
+
+    // LOAD PROJECTIONS
+    DBGBRK()
+    DBG() << "LOADING PROJECTIONS...";
     n = this->doc.documentElement().firstChild();
-    int counter = 0;
+    int counter = firstNewPop;
     while (!n.isNull()) {
 
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
             // with all the populations added, add the projections and join them up:
             this->network[counter]->load_projections_from_xml(e, &this->doc, &this->meta, this);
-
+            DBG() << "After load_projections_from_xml, network["<<counter<<"]->projections.count is " << this->network[counter]->projections.count();
             // check for errors:
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
@@ -1000,20 +1056,42 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         n = n.nextSibling();
     }
 
-    ///////////////// LOAD INPUTS
-    counter = 0;
+    // LOAD INPUTS
+    DBGBRK();
+    DBG() << "LOADING INPUTS...";
+    counter = firstNewPop;
     n = this->doc.documentElement().firstChild();
     while (!n.isNull()) {
-
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
+            {
+                QDomNodeList allneurons = e.elementsByTagName("LL:Neuron");
+                QDomElement firstneuron = allneurons.item(0).toElement();
+                DBG() << "CC Population name of first Neuron element:" << firstneuron.attribute("name", "unknown");
+            }
+
             // add inputs
+            DBG() << "Adding inputs from LL:Population element with network->read_inputs_from_xml... " << e.text();
+            DBG() << "this->network[counter]->neuronType->getName():" << this->network[counter]->neuronType->getXMLName();
+            // neuronType is a ComponentInstance, owner is a systemObject.
+            DBG() << "this->network[counter]->neuronType->owner->getName():" << this->network[counter]->neuronType->owner->getName();
+            // network is a QVector of pointers to populations. Calls
+            // NL_population::read_inputs_from_xml to read the inputs to the populations
             this->network[counter]->read_inputs_from_xml(e, &this->meta, this);
 
+            DBG() << "After read_inputs_from_xml, network["<<counter<<"]->inputs.count is "
+                  << this->network[counter]->neuronType->inputs.count();
+
+            DBG() << "Check destination/source for population in network["<<counter<<"] which has "
+                  << this->network[counter]->neuronType->inputs.count() << " inputs";
+
+            // Now read inputs to the projections
             int projCount = 0;
             QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
+            DBG() << "Now read inputs for each of " << n2.size() << " projections in the population in network["<<counter<<"]...";
             for (int i = 0; i < (int) n2.size(); ++i) {
                 QDomElement e = n2.item(i).toElement();
+                DBG() << "Calling projections->read_inputs_from_xml...";
                 this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this, this->network[counter]->projections[projCount]);
                 ++projCount;
             }
@@ -1052,7 +1130,7 @@ void projectObject::saveNetwork(QString fileName, QDir projectDir)
 
     // create a node for each population with the variables set
     for (int pop = 0; pop < this->network.size(); ++pop) {
-        //// WE NEED TO HAVE A PROPER MODEL NAME!
+        // WE NEED TO HAVE A PROPER MODEL NAME!
         this->network[pop]->write_population_xml(xmlOut);
     }
 
@@ -1106,7 +1184,7 @@ void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir
         // should be unlinked.
         if (!ebd_files.contains(files[i])) {
             //unlink(files[i])
-            qDebug() << "Unlinking stale explicitDataBinaryFile: " << files[i];
+            DBG() << "Unlinking stale explicitDataBinaryFile: " << files[i];
             QFile::remove(projectDir.absoluteFilePath(files[i]));
         }
     }
@@ -1174,7 +1252,6 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
     reader->setDevice(&file);
 
     // load experiment:
-
     experiment * newExperiment = new experiment;
     newExperiment->readXML(reader, this);
 
@@ -1187,13 +1264,12 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
         this->experimentList.push_back(newExperiment);
     } else {
         // add error tail
-        addError("<b>IN EXPERIMENT FILE '" + fileName + "'</b>");
+        addError("<b>" + QString::number(num_errs) + " error" + (num_errs==1?"":"s")
+                 + " found in file '" + fileName + "'</b>");
     }
 
-    // we have loaded the XML file - discard the file handle
+    // we have loaded the XML file; discard file handle & clean up reader
     file.close();
-
-    // kill off the XML reader
     delete reader;
 }
 
@@ -1232,6 +1308,7 @@ void projectObject::copy_back_data(nl_rootdata * data)
     this->catalogGC = data->catalogUnsorted;
     this->catalogLAY = data->catalogLayout;
     this->experimentList = data->experiments;
+    this->currentCursorPos = data->cursor;
 }
 
 void projectObject::copy_out_data(nl_rootdata * data)
@@ -1244,6 +1321,7 @@ void projectObject::copy_out_data(nl_rootdata * data)
     data->catalogUnsorted = this->catalogGC;
     data->catalogLayout = this->catalogLAY;
     data->experiments = this->experimentList;
+    data->cursor = this->currentCursorPos;
 }
 
 void projectObject::deselect_project(nl_rootdata * data)
@@ -1277,12 +1355,10 @@ void projectObject::select_project(nl_rootdata * data)
 
     data->currProject = this;
 
-    // update GUI
-    // experiment view
+    // update GUI experiment view
     data->main->viewELhandler->redraw();
 
-    // visualiser view
-    // configure TreeView
+    // visualiser view - configure TreeView
     if (data->main->viewVZ.OpenGLWidget != NULL) {
         if (!(data->main->viewVZ.sysModel == NULL)) {
             delete data->main->viewVZ.sysModel;
@@ -1297,6 +1373,43 @@ void projectObject::select_project(nl_rootdata * data)
 
     // redraw everything
     data->reDrawAll();
+}
+
+std::pair<QPointF, QPointF>
+projectObject::getNetworkExtent (QVector < QSharedPointer <population> >& pops)
+{
+    // Initialise the return object
+    std::pair<QPointF, QPointF> p;
+    p.first = QPointF(0,0); // Top-left co-ordinates
+    p.second = QPointF(0,0); // Bottom-right co-ordinates
+
+    if (pops.size() == 0) {
+        return p;
+    }
+
+    // Find top-left and bottom-right coordinates in one sweep through the populations
+    p.first.setX(pops[0]->getLeft());
+    p.first.setY(pops[0]->getTop());
+    p.second.setX(pops[0]->getRight());
+    p.second.setY(pops[0]->getBottom());
+    for (int i = 0; i < pops.size(); ++i) {
+        // Top left extent
+        if (pops[i]->getLeft() < p.first.x()) {
+            p.first.setX(pops[i]->getLeft());
+        }
+        if (pops[i]->getTop() > p.first.y()) {
+            p.first.setY(pops[i]->getTop());
+        }
+        // Bottom right extent
+        if (pops[i]->getRight() > p.second.x()) {
+            p.second.setX(pops[i]->getRight());
+        }
+        if (pops[i]->getBottom() < p.second.y()) {
+            p.second.setY(pops[i]->getBottom());
+        }
+    }
+
+    return p;
 }
 
 void projectObject::printIssues(QString title)
@@ -1372,10 +1485,10 @@ bool projectObject::printErrors(QString title)
         return false;
     }
 
-    // display errors:
     if (!errors.isEmpty()) {
-        // display errors (Seb has observed one hang here where the msgBox failed to show when there was a project error.
-        qDebug() << "Errors in SC_projectobject.cpp: " << errors;
+        // Display errors. (Seb has observed one hang here where the
+        // msgBox failed to show when there was a project error.
+        DBG() << "Errors in SC_projectobject.cpp: " << errors;
         QMessageBox msgBox;
         msgBox.setText("<P><b>" + title + "</b></P>" + errors);
         msgBox.setIcon(QMessageBox::Critical);
@@ -1480,7 +1593,7 @@ bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
         }
     }
 
-    // not found
+    // pointer not not found, return false
     return false;
 }
 
@@ -1509,7 +1622,6 @@ bool projectObject::isValidPointer(QSharedPointer <ComponentInstance> ptr)
         }
     }
 
-    // not found
     return false;
 }
 
@@ -1537,7 +1649,6 @@ bool projectObject::isValidPointer(QSharedPointer<Component> ptr)
         }
     }
 
-    // not found
     return false;
 }
 

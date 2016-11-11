@@ -37,27 +37,37 @@ public:
 
     virtual QString getName();
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
-    /*virtual void move(float, float);
-    virtual void draw(QPainter, float, float, float, int, int, QImage);
-    virtual bool is_clicked(float, float, float);*/
-    void remove(nl_rootdata *);
+
     void delAll(nl_rootdata *);
 
     void animate(QSharedPointer<systemObject>movingObj, QPointF delta);
     void moveSelectedControlPoint(float xGL, float yGL);
     void write_model_meta_xml(QDomDocument &meta, QDomElement &root) ;
 
-    void read_meta_data(QDomDocument * meta);
+    /*!
+     * Read the meta-data information in the QDomDocument* meta. Use
+     * cursorPos to offset the positions so that imported networks
+     * will appear at the location on the screen of the cursor.
+     */
+    void read_meta_data(QDomDocument * meta, cursorType cursorPos);
 
-    void addCurves();
+    // Override add_curves from projection.
+    void add_curves();
+
     void connect(QSharedPointer<genericInput> in);
     void disconnect();
 
+    // NB: Very confusing, name clashes
+    // QSharedPointer<systemObject> destination(source) in the parent
+    // class (projection), which it overrides.
     QSharedPointer<systemObject> destination;
     QSharedPointer<systemObject> source;
 
-    QSharedPointer <ComponentInstance> src;
+    // FIXME: coder will ask "why destination and dst?". Refactor to
+    // be dstCmpt and srcCmpt.
     QSharedPointer <ComponentInstance> dst;
+    QSharedPointer <ComponentInstance> src;
+
     QString srcPort;
     QString dstPort;
     bool projInput;

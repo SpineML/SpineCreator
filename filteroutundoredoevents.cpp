@@ -26,11 +26,11 @@ bool FilterOutUndoRedoEvents::eventFilter(QObject * obj, QEvent *event)
         QKeyEvent * key = static_cast<QKeyEvent *>(event);
 
         if (key->key() == Qt::Key_Z) {
-            qDebug() << "Z";
+            //qDebug() << "Z";
             event->ignore();
             return true;
         } else {
-            qDebug() << "not Z";
+            //qDebug() << "not Z";
             event->accept();
             return false;
         }

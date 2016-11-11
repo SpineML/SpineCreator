@@ -29,6 +29,7 @@
 #include "SC_projectobject.h"
 #include <sstream>
 #include <iomanip>
+#include "globalHeader.h"
 
 synapse::synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs)
 {
@@ -130,7 +131,7 @@ QString synapse::getName()
     }
 
     if (index == -1) {
-        qDebug() << "Can't find synapse! In synapse::getName()";
+        DBG() << "Can't find synapse! In synapse::getName()";
         return "Err";
     }
 
@@ -150,9 +151,7 @@ int synapse::getSynapseIndex()
 
 QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QSharedPointer<systemObject> > &objectMap)
 {
-
     // create a new, identical, synapse
-
     QSharedPointer <synapse> newSyn = QSharedPointer <synapse>(new synapse());
 
     newSyn->weightUpdateType = QSharedPointer<ComponentInstance>(new ComponentInstance(this->weightUpdateType, true/*copy inputs / outputs*/));
@@ -194,7 +193,6 @@ QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QS
     }
 
     return qSharedPointerCast <systemObject> (newSyn);
-
 }
 
 void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
@@ -228,13 +226,12 @@ void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemOb
                 g->src = qSharedPointerDynamicCast <population> (objectMap[g->src.data()]);
                 g->dst = qSharedPointerDynamicCast <population> (objectMap[g->dst.data()]);
                 if (!g->src || !g->dst) {
-                    qDebug() << "Error casting objectMap lookup to population in synapse::remapSharedPointers";
+                    DBG() << "Error casting objectMap lookup to population in synapse::remapSharedPointers";
                     exit(-1);
                 }
             }
         }
     }
-
 }
 
 projection::projection()
@@ -244,7 +241,7 @@ projection::projection()
     this->destination.clear();
     this->source.clear();
 
-    currTarg = 0;
+    currTarg = 0; // Unused; remove.
     this->start = QPointF(0,0);
 
     this->tempTrans.GLscale = 100;
@@ -378,7 +375,7 @@ void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, Q
     if (movingObj->type == populationObject) {
         movingPop = qSharedPointerDynamicCast <population>(movingObj);
     } else {
-        qDebug() << "Incorrect object fed to projection animation";
+        DBG() << "Incorrect object fed to projection animation";
         return;
     }
 
@@ -391,7 +388,7 @@ void projection::animate(QSharedPointer<systemObject>movingObj, QPointF delta, Q
 
     // crash avoidance
     if (this->curves.size() == 0) {
-        qDebug() << "Projection created with no curves or bad access";
+        DBG() << "Projection created with no curves or bad access";
         return;
     }
 
@@ -1031,7 +1028,7 @@ void projection::drawHandles(QPainter *painter, float GLscale,
         float dpi_ratio = settings.value("dpi", 1.0).toFloat();
 
 #ifdef Q_OS_MAC
-    dpi_ratio *= 0.5;
+        dpi_ratio *= 0.5;
 #endif
 
         path.addEllipse(this->transformPoint(this->start), 4*dpi_ratio, 4*dpi_ratio);
@@ -1194,7 +1191,7 @@ bool projection::deleteControlPoint(float xGL, float yGL, float GLscale)
 
         // then remove it if it is not the first or last, or a C1 or C2
         if (!this->selectedControlPoint.start && this->selectedControlPoint.type != C1 \
-                && this->selectedControlPoint.type != C2 && this->selectedControlPoint.ind != (int) this->curves.size()-1) {
+            && this->selectedControlPoint.type != C2 && this->selectedControlPoint.ind != (int) this->curves.size()-1) {
 
             // first transfer the old C1 to the next curve:
             this->curves[this->selectedControlPoint.ind+1].C1 = this->curves[this->selectedControlPoint.ind].C1;
@@ -1365,8 +1362,8 @@ QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, floa
         line.lineTo(xGL, yGL);
         line.lineTo(xGL+0.01, yGL+0.01);
         QPainterPath overlap = line & box;
-        if (overlap.isEmpty())
-        {cerr << "oops! Collision not found";
+        if (overlap.isEmpty()) {
+            DBG() << "oops! Collision not found";
             newX = 0;
             newY = 0;
         } else {
@@ -1515,6 +1512,8 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
 void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta,
                              projectObject * data, QSharedPointer<projection> thisSharedPointer)
 {
+    DBG() << "projection::readFromXML called";
+
     this->type = projectionObject;
 
     this->selectedControlPoint.ind = -1;
@@ -1551,7 +1550,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     // link up src and dest
     bool linked = false;
     for (int i = 0; i < data->network.size(); ++i) {
-        //qDebug() << data->network[i]->name << srcName;
+        //DBG() << data->network[i]->name << srcName;
         if (data->network[i]->name == srcName) {
             this->source = data->network[i];
             linked = true;
@@ -1758,9 +1757,14 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     // now load the metadata for the projection:
     QDomNode metaNode = meta->documentElement().firstChild();
 
+    // The current cursor position, for offsetting position -
+    // important when importing a network.
+    cursorType curs = data->getCursorPos();
+
     while(!metaNode.isNull()) {
 
-        if (metaNode.toElement().attribute("source", "") == this->source->name && metaNode.toElement().attribute("destination", "") == this->destination->name) {
+        if (metaNode.toElement().attribute("source", "") == this->source->name
+            && metaNode.toElement().attribute("destination", "") == this->destination->name) {
 
             this->projDrawStyle = (drawStyle) metaNode.toElement().attribute("style", QString::number(standardDrawStyleExcitatory)).toUInt();
             this->showLabel = (bool) metaNode.toElement().attribute("showlabel", 0).toUInt();
@@ -1769,7 +1773,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             while (!metaData.isNull()) {
 
                 if (metaData.toElement().tagName() == "start") {
-                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat()+curs.x,
+                                          metaData.toElement().attribute("y","").toFloat()+curs.y);
                 }
 
                 // find the curves tag
@@ -1782,13 +1787,16 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                         bezierCurve newCurve;
                         while (!vals.isNull()) {
                             if (vals.toElement().tagName() == "C1") {
-                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             if (vals.toElement().tagName() == "C2") {
-                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             if (vals.toElement().tagName() == "end") {
-                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                       vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             vals = vals.nextSibling();
                         }
@@ -1845,53 +1853,78 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
 void projection::add_curves()
 {
-    // add sensible curves
-    // add curves for drawing:
-    bezierCurve newCurve;
-    newCurve.end = destination->currentLocation();
-    this->start = source->currentLocation();
+    if (this->destination.isNull() || this->source.isNull()) {
+        DBG() << "Can't lay out; destination or source object is null";
+        return;
+    }
 
-    newCurve.C1 = 0.5*(destination->currentLocation()+source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
-    newCurve.C2 = 0.5*(destination->currentLocation()+source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
+    bezierCurve newCurve;
+    newCurve.end = this->destination->currentLocation();
+    this->start = this->source->currentLocation();
+
+    newCurve.C1 = 0.5*(this->destination->currentLocation()+this->source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
+    newCurve.C2 = 0.5*(this->destination->currentLocation()+this->source->currentLocation()) + QPointF(float(rand() % 100)/200.0,float(rand() % 100)/200.0);
 
     this->curves.push_back(newCurve);
 
-    // source
-
-    // if we are from a population to a projection and the pop is the Synapse of the proj, handle differently for aesthetics
-    QPointF boxEdge = this->findBoxEdge(this->source, destination->currentLocation().x(), destination->currentLocation().y());
+    // source. if we are from a population to a projection and the pop
+    // is the Synapse of the proj, handle differently for aesthetics
+    QPointF boxEdge = this->findBoxEdge(this->source,
+                                        destination->currentLocation().x(),
+                                        destination->currentLocation().y());
     this->start = boxEdge;
 
     // destination
-
-    boxEdge = this->findBoxEdge(this->destination, source->currentLocation().x(), source->currentLocation().y());
+    boxEdge = this->findBoxEdge(this->destination,
+                                this->source->currentLocation().x(),
+                                this->source->currentLocation().y());
     this->curves.back().end = boxEdge;
 
     // self connection aesthetics
     if (this->destination == this->source) {
-
         QPointF boxEdge = this->findBoxEdge(this->destination, this->destination->currentLocation().x(), 1000000.0);
         this->curves.back().end = boxEdge;
         boxEdge = this->findBoxEdge(this->source, 1000000.0, 1000000.0);
         this->start = boxEdge;
-        this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0, this->destination->currentLocation().y()+1.0);
-        this->curves.back().C2 = QPointF(this->destination->currentLocation().x(), this->destination->currentLocation().y()+1.4);
-
+        this->curves.back().C1 = QPointF(this->destination->currentLocation().x()+1.0,
+                                         this->destination->currentLocation().y()+1.0);
+        this->curves.back().C2 = QPointF(this->destination->currentLocation().x(),
+                                         this->destination->currentLocation().y()+1.4);
     }
 }
 
 void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data,
                                       QSharedPointer<projection> thisSharedPointer)
 {
+    DBG() << "Find synapses in element " << e.tagName() << " dst " << e.attribute("dst_population","");
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
     if (colList.count() != this->synapses.size()) {
         // oh dear, something has gone badly wrong
-        qDebug() << "Size mismatch " << colList.count() << " != " << this->synapses.size();
+        DBG() << "Size mismatch " << colList.count() << " != " << this->synapses.size() << " for element:" << e.tagName();
+        if (e.hasAttribute("name")) {
+            DBG() << e.attribute("name", "");
+        }
+        DBG() << "Element content: ";
+        DBG() << e.text();
+        DBG() << ".*.";
+        // Is there really not a generic "application failed" scheme
+        // to access taht would give a popup and return the
+        // application to the state it was in before starting the
+        // feature?
     }
+    DBG() << "There are " << colList.count() << " synapses.";
 
+    // t iterates through the LL:Synapses in colList
     for (int t = 0; t < (int) colList.count(); ++t) {
+
+        if (t < this->synapses.size()) {
+            DBG() << "All is well, t is < synapses.size()=" << this->synapses.size();
+        } else {
+            DBG() << "WHOOP WHOOP, t >= synapses.size()!";
+        }
+
         QDomNode n = colList.item(t).toElement().firstChild();
         while (!n.isNull()) {
 
@@ -2087,13 +2120,11 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
 
-                    if (newInput->src != (QSharedPointer <ComponentInstance>)0)
-                    {this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
+                    if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
+                        this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
                         newInput->dst = this->synapses[t]->weightUpdateType;
-                        newInput->src->outputs.push_back(newInput);}
-                    else {}
-                        // ERRR
-
+                        newInput->src->outputs.push_back(newInput);
+                    } else {} // ERRR
                 }
 
                 // read in the synapseInput
@@ -2105,7 +2136,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->srcPort = n.toElement().attribute("input_src_port");
                 newInput->dstPort = n.toElement().attribute("input_dst_port");
 
-                // read in dst
+                // read in dst.
                 newInput->dst = this->synapses[t]->weightUpdateType;
                 this->synapses[t]->weightUpdateType->inputs.push_back(newInput);
 
@@ -2128,11 +2159,11 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     for (int i = 0; i < synapses.size(); ++i) {
 
         for (int j = 0; j < synapses[i]->weightUpdateType->inputs.size(); ++j) {
-            synapses[i]->weightUpdateType->inputs[j]->read_meta_data(meta);
+            synapses[i]->weightUpdateType->inputs[j]->read_meta_data(meta, data->getCursorPos());
             synapses[i]->weightUpdateType->inputs[j]->dst->matchPorts();
         }
         for (int j = 0; j < synapses[i]->postsynapseType->inputs.size(); ++j) {
-            synapses[i]->postsynapseType->inputs[j]->read_meta_data(meta);
+            synapses[i]->postsynapseType->inputs[j]->read_meta_data(meta, data->getCursorPos());
             synapses[i]->postsynapseType->inputs[j]->dst->matchPorts();
         }
     }
@@ -2184,13 +2215,12 @@ QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *
 
 void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
 {
-
     // remap src and dst:
     this->source = qSharedPointerDynamicCast <population> (objectMap[this->source.data()]);
     this->destination = qSharedPointerDynamicCast <population> (objectMap[this->destination.data()]);
 
     if (!this->source || !this->destination) {
-        qDebug() << "Error casting objectMap lookup to population in projection::remapSharedPointers";
+        DBG() << "Error casting objectMap lookup to population in projection::remapSharedPointers";
         exit(-1);
     }
 
@@ -2198,23 +2228,20 @@ void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <syste
     for (int i = 0; i < this->synapses.size(); ++i) {
         this->synapses[i]->remapSharedPointers(objectMap);
     }
-
-
 }
 
-
-void projection::print() {
-
-    std::cerr << "\n";
-    cerr << "   " << this->getName().toStdString() << " ####\n";
-    std::cerr << "   " <<  float(this->currTarg) << "\n";
-    std::cerr << "   " <<  this->destination->name.toStdString() << "\n";
-    std::cerr << "   " <<  this->source->name.toStdString() << "\n";
-    std::cerr << "   " <<  "Synapses:\n";
+void projection::print()
+{
+    DBG() << "Projection printout:";
+    DBG() << "---------------------------------";
+    DBG() << "   " << this->getName() << " ####";
+    //DBG() << "   " <<  float(this->currTarg);
+    DBG() << "   Dest:" <<  this->destination->name;
+    DBG() << "   Src: " <<  this->source->name;
+    DBG() << "   Synapses:";
     for (int i=0; i < (int) this->synapses.size(); ++i) {
-        std::cerr << "       " << this->synapses[i]->postsynapseType->component->name.toStdString()
-                  << " " << this->synapses[i]->weightUpdateType->component->name.toStdString()
-                  << " " << "\n";
+        DBG() << "       " << this->synapses[i]->postsynapseType->component->name
+              << " " << this->synapses[i]->weightUpdateType->component->name;
     }
-    cerr << "\n";
+    DBG() << "---------------------------------";
 }

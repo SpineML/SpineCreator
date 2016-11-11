@@ -1611,7 +1611,7 @@ void MainWindow::import_network()
     // store old name
     QString name = newProject->name;
 
-    if (newProject->import_network(fileName)) {
+    if (newProject->import_network(fileName, data.cursor)) {
         // success!
         // put new data back
         newProject->copy_out_data(&data);

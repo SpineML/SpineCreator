@@ -2863,7 +2863,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
         settings.endArray();
         settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'name' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Input - 'name' attribute missing");
         settings.endArray();
     }
 
@@ -2892,7 +2892,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
         settings.endArray();
         settings.beginWriteArray("errors");
         settings.setArrayIndex(num_errs + 1);
-        settings.setValue("errorText", "XML error in Experiment Input - 'target' attribute missing");
+        settings.setValue("errorText", "Error in Experiment Input - 'target' attribute missing");
         settings.endArray();
     }
 
@@ -2921,7 +2921,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
         settings.endArray();
         settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'port' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Input - 'port' attribute missing");
         settings.endArray();
     }
 
@@ -2949,7 +2949,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
                 settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - references missing port " + portName);
+                settings.setValue("errorText", "Error in Experiment Input - references missing port " + portName);
             settings.endArray();
         } else {
             portName = port->name;
@@ -2972,7 +2972,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
                 settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'value' attribute missing");
+                settings.setValue("errorText", "Error in Experiment Input - 'value' attribute missing");
             settings.endArray();
         }
 
@@ -2995,7 +2995,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     settings.endArray();
                     settings.beginWriteArray("errors");
                         settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'time' attribute missing");
+                        settings.setValue("errorText", "Error in Experiment Input - 'time' attribute missing");
                     settings.endArray();
                 }
 
@@ -3009,7 +3009,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     settings.endArray();
                     settings.beginWriteArray("errors");
                         settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'value' attribute missing");
+                        settings.setValue("errorText", "Error in Experiment Input - 'value' attribute missing");
                     settings.endArray();
                 }
 
@@ -3035,7 +3035,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'array_size' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Input - 'array_size' attribute missing");
             settings.endArray();
         }
 
@@ -3049,7 +3049,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input -  missing array_value tag");
+            settings.setValue("errorText", "Error in Experiment Input -  missing array_value tag");
             settings.endArray();
         }
 
@@ -3091,7 +3091,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     settings.endArray();
                     settings.beginWriteArray("errors");
                     settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "XML error in Experiment Input - 'index' attribute missing");
+                    settings.setValue("errorText", "Error in Experiment Input - 'index' attribute missing");
                     settings.endArray();
                 }
 
@@ -3106,7 +3106,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     settings.endArray();
                     settings.beginWriteArray("errors");
                     settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "XML error in Experiment Input - 'array_time' attribute missing");
+                    settings.setValue("errorText", "Error in Experiment Input - 'array_time' attribute missing");
                     settings.endArray();
                 }
 
@@ -3123,7 +3123,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     settings.endArray();
                     settings.beginWriteArray("errors");
                     settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "XML error in Experiment Input - 'array_value' attribute missing");
+                    settings.setValue("errorText", "Error in Experiment Input - 'array_value' attribute missing");
                     settings.endArray();
                 }
 
@@ -3158,7 +3158,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'tcp_port' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Input - 'tcp_port' attribute missing");
             settings.endArray();
         }
 
@@ -3181,7 +3181,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'size' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Input - 'size' attribute missing");
             settings.endArray();
         }
 
@@ -3194,7 +3194,7 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'command' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Input - 'command' attribute missing");
             settings.endArray();
         }
 
@@ -3325,7 +3325,7 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Output - 'size' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Output - 'size' attribute missing");
             settings.endArray();
         }
 
@@ -3338,7 +3338,7 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
             settings.endArray();
             settings.beginWriteArray("errors");
             settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Output - 'command' attribute missing");
+            settings.setValue("errorText", "Error in Experiment Output - 'command' attribute missing");
             settings.endArray();
         }
     }
