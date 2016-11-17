@@ -147,7 +147,7 @@ public slots:
     void onRightMouseDown(float xGL, float yGL, float GLscale);
     void mouseMoveGL(float, float);
     void updatePortMap(QString);
-    void updateComponentType(int index);
+    void updateComponentType(int index); // index is the menu index, I think.
     void updatePar();
     void updatePar(int);
     void updateLayoutPar();
@@ -202,6 +202,10 @@ public slots:
     void updateDrawStyle();
 
 private:
+
+    // A worker for the updateComponentType slot.
+    void updateComponentType(int index, QSharedPointer<systemObject> ptr, QString& type);
+
     /*!
      * \brief A population moved, so add it to the undostack
      *

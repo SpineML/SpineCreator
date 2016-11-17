@@ -212,9 +212,9 @@ signals:
 };
 
 /*!
- * \brief The ParameterInstance class represents an instance of the data that is described by a paramater componenet.
+ * \brief The ParameterInstance class represents an instance of the data that is described by a parameter componenet.
  * Put another way when the properties of a parameter are read from the network layer this is the data that is used to
- * instanciate the instances which match the description of the underlying paramater object. Reading and writing functions
+ * instanciate the instances which match the description of the underlying parameter object. Reading and writing functions
  * are avilaable for XML and binary data formats.
  *
  */

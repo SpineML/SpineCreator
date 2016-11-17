@@ -924,8 +924,9 @@ void nl_rootlayout::projSelected(QSharedPointer <projection> &proj, nl_rootdata*
     drawParamsLayout(data);
 }
 
-void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* data) {
-
+// Draws the input panel.
+void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* data)
+{
     emit showInput();
     emit setInputName("<u><b>" + in->getName() + "</b></u>");
     emit deleteProperties();
@@ -948,9 +949,11 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     // add port options
     QStringList portPairs;
 
-    for (int i = 0; i < in->dst->inputs.size(); ++i)
-        if (in == in->dst->inputs[i])
+    for (int i = 0; i < in->dst->inputs.size(); ++i) {
+        if (in == in->dst->inputs[i]) {
             portPairs = in->dst->getPortMatches(i, false);
+        }
+    }
 
     QString currPortPair = in->srcPort + "->" + in->dstPort;
 
@@ -982,7 +985,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     inputConnectionComboBox->addItem("All to All");
     inputConnectionComboBox->addItem("One to One");
     inputConnectionComboBox->addItem("Fixed Probability");
-    inputConnectionComboBox->addItem("Explicit List");
+    inputConnectionComboBox->addItem("Explicit List"); // Gen Input
     if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
         // add python scripts
         QSettings settings;

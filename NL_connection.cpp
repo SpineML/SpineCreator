@@ -460,12 +460,32 @@ int csv_connection::getIndex()
     }
 }
 
+void csv_connection::updateGlobalDelay (void)
+{
+    QCheckBox* sndr = (QCheckBox*)sender();
+    if (sndr->isChecked()) {
+        // Checked means "use global delays"
+        this->setNumCols (2);
+    } else {
+        this->setNumCols (3);
+    }
+
+    QSharedPointer<systemObject> ptr;
+    ptr = this;
+
+    // Now emit the signal to re-draw via nl_rootdata::updateComponentType.
+    nl_rootdata * data = (nl_rootdata *) sender()->property("data").value<void *>();
+    QString type("blah");
+    data->updateComponentType(4, ptr, type);
+}
+
 QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay)
 {
     // if we do not have a generator...
     if (this->generator == NULL) {
 
-        QHBoxLayout * hlay = new QHBoxLayout();
+        DBG() << "csv_connection::drawLayout: No generator";
+        QVBoxLayout * vlay = new QVBoxLayout();
 
         QTableView *tableView = new QTableView();
 
@@ -479,20 +499,33 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
         connMod->setConnection(this);
         tableView->setModel(connMod);
 
-        hlay->addWidget(tableView);
+        vlay->addWidget(tableView);
 
-        QPushButton *import = new QPushButton("Import");
-        import->setMaximumWidth(70);
-        import->setMaximumHeight(28);
+        QHBoxLayout * hlay = new QHBoxLayout();
+
+        QPushButton *import = new QPushButton("Import list");
         import->setToolTip("Import the explicit value list");
         import->setProperty("ptr", qVariantFromValue((void *) this));
-
         hlay->addWidget(import);
-
         // add connection:
         connect(import, SIGNAL(clicked()), data, SLOT(editConnections()));
 
-       // set up GL:
+        QCheckBox* globalDelay = new QCheckBox("Global delay");
+        globalDelay->setToolTip("Switch between a single, global delay for each connection or per-connection delays (which are not supported in some simulators).");
+        globalDelay->setProperty("ptr", qVariantFromValue((void *) this));
+        globalDelay->setProperty("data", qVariantFromValue((void *) data));
+        // Set from number of cols in connection
+        if (this->getNumCols() == 2) {
+            globalDelay->setCheckState(Qt::Checked);
+        } else { // should be 3
+            globalDelay->setCheckState(Qt::Unchecked);
+        }
+        hlay->addWidget(globalDelay);
+        connect(globalDelay, SIGNAL(clicked()), this, SLOT(updateGlobalDelay()));
+
+        vlay->addLayout(hlay);
+
+        // set up GL:
         if (viewVZhandler) {
             connect(viewVZhandler, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));
             if (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel() != (QAbstractTableModel *)0)
@@ -514,22 +547,20 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
             connect(connMod, SIGNAL(dataChanged(QModelIndex,QModelIndex)), viewVZhandler->viewVZ->OpenGLWidget, SLOT(connectionDataChanged(QModelIndex,QModelIndex)));
             connect(tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), viewVZhandler->viewVZ->OpenGLWidget, SLOT(connectionSelectionChanged(QItemSelection,QItemSelection)));
             connect(viewVZhandler, SIGNAL(deleteProperties()), import, SLOT(deleteLater()));
-            connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+            connect(viewVZhandler, SIGNAL(deleteProperties()), vlay, SLOT(deleteLater()));
         }
         if (rootLay) {
             //
             connect(rootLay, SIGNAL(deleteProperties()), import, SLOT(deleteLater()));
             connect(rootLay, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));
-            connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
+            connect(rootLay, SIGNAL(deleteProperties()), vlay, SLOT(deleteLater()));
         }
 
-        return hlay;
+        return vlay;
 
     } else {
-
         // we have a generator, so pass on the task of drawing the layout to it!
         return generator->drawLayout(data, viewVZhandler, rootLay);
-
     }
 }
 

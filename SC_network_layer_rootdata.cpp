@@ -1247,12 +1247,7 @@ void nl_rootdata::updatePortMap(QString var)
 
 void nl_rootdata::updateComponentType(int index)
 {
-    // update the components of the currently selected object
-    QSharedPointer <population> currSel;
-    QSharedPointer <synapse> targSel;
-    QSharedPointer<genericInput> inSel;
-
-    QSharedPointer<systemObject> ptr;
+    QSharedPointer<systemObject> ptr; // A "this" object.
     // get ptr
     if (selList.size() ==1) {
         ptr = selList[0];
@@ -1262,14 +1257,25 @@ void nl_rootdata::updateComponentType(int index)
         return;
     }
 
+    // get type of change
+    QString type = sender()->property("type").toString();
+
+    this->updateComponentType (index, ptr, type);
+}
+
+void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> ptr, QString& type)
+{
+    // update the components of the currently selected object
+    QSharedPointer <population> currSel;
+    QSharedPointer <synapse> targSel;
+    QSharedPointer<genericInput> inSel;
+
     // if projection we need the current synapse
     if (ptr->type == projectionObject) {
         QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (ptr);
         ptr = proj->synapses[proj->currTarg];
     }
 
-    // get type of change
-    QString type = sender()->property("type").toString();
 
     // event says we need to update the selected object accordingly, so we'll do that first:
     switch (ptr->type) {
@@ -1323,6 +1329,9 @@ void nl_rootdata::updateComponentType(int index)
             }
             break;
         case inputObject:
+            // In this case, force the explicit list to be
+            // connectivity ONLY with no delay? Or at least provide
+            // that option.
             inSel = qSharedPointerDynamicCast<genericInput> (ptr);
             if (type == "input") {
                 if (index >= 0) {

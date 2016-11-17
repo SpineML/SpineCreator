@@ -62,6 +62,15 @@ public:
 
     virtual QString getTypeStr(void);
 
+    /*!
+     * A ParameterInstance is all about a list of parameter values,
+     * but can also be FixedValue.
+     *
+     * A csv_connection or fixedprob_connection in a generic input
+     * needs a fixedvalue delay for our canonical simulator,
+     * SpineML_2_BRAHMS. It's necessary to be able to define a
+     * fixedvalue delay for a connection list in a generic input.
+     */
     ParameterInstance * delay;
 
     /*!
@@ -302,6 +311,12 @@ private:
     void sanitizeReplace (QString& str,
                           const QString& allowed,
                           const char replaceChar);
+
+public slots:
+    /*!
+     * Called when the "Global delay" checkbox is changed.
+     */
+    void updateGlobalDelay (void);
 };
 
 class pythonscript_connection : public connection
