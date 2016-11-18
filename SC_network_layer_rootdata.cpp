@@ -129,7 +129,7 @@ void nl_rootdata::redrawViews()
 void nl_rootdata::selectProject(QAction * action)
 {
     // deselect the current project
-    currProject->deselect_project(this);
+    this->currProject->deselect_project(this);
     // select the new project
     projects[action->property("number").toInt()]->select_project(this);
     redrawViews();
@@ -658,7 +658,7 @@ void nl_rootdata::projectionHandleMoved()
         // New position of the handle
         QSharedPointer<projection> projptr = qSharedPointerDynamicCast<projection>(this->selList[0]);
         QPointF newPos = projptr->selectedControlPointLocation();
-        currProject->undoStack->push(new moveProjectionHandle(this, projptr, lastLeftMouseDownPos, newPos));
+        this->currProject->undoStack->push(new moveProjectionHandle(this, projptr, lastLeftMouseDownPos, newPos));
     }
 }
 
@@ -697,7 +697,7 @@ void nl_rootdata::populationMoved(const QVector <QSharedPointer<population> >& p
         parentCmd->setText ("move population");
     }
 
-    currProject->undoStack->push(parentCmd);
+    this->currProject->undoStack->push(parentCmd);
 }
 
 void nl_rootdata::onNewSelections (float xGL, float yGL)
@@ -934,20 +934,20 @@ QColor nl_rootdata::getColor(QColor initCol)
 void nl_rootdata::deleteCurrentSelection()
 {
     if (selList.size() > 1) {
-        currProject->undoStack->push(new delSelection(this, selList));
+        this->currProject->undoStack->push(new delSelection(this, selList));
     } else if (selList.size() == 1) {
         // separate out:
         if (selList[0]->type == populationObject) {
             QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (selList[0]);
-            currProject->undoStack->push(new delPopulation(this,pop));
+            this->currProject->undoStack->push(new delPopulation(this,pop));
         }
         else if (selList[0]->type == projectionObject) {
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
-            currProject->undoStack->push(new delProjection(this, proj));
+            this->currProject->undoStack->push(new delProjection(this, proj));
         }
         else if (selList[0]->type == inputObject) {
             QSharedPointer <genericInput> in = qSharedPointerDynamicCast <genericInput> (selList[0]);
-            currProject->undoStack->push(new delInput(this,in));
+            this->currProject->undoStack->push(new delInput(this,in));
         }
     }
     this->undoOrRedoPerformed(0);
@@ -966,7 +966,7 @@ void nl_rootdata::addPopulation()
         pop->neuronType = QSharedPointer <ComponentInstance> (new ComponentInstance(this->catalogNrn[0]));
         pop->neuronType->owner = pop;
 
-        currProject->undoStack->push(new addPopulationCmd(this, pop));
+        this->currProject->undoStack->push(new addPopulationCmd(this, pop));
 
         emit updatePanel(this);
         emit redrawGLview();
@@ -987,7 +987,7 @@ void nl_rootdata::addSpikeSource()
         // make a spikes source
         pop->makeSpikeSource(pop);
 
-        currProject->undoStack->push(new addPopulationCmd(this, pop));
+        this->currProject->undoStack->push(new addPopulationCmd(this, pop));
 
         emit updatePanel(this);
         emit redrawGLview();
@@ -1024,7 +1024,7 @@ void nl_rootdata::addBezierOrProjection(float xGL, float yGL)
                         dest->reverseProjections.push_back(proj);
                         proj->destination = dest;
                         // add to undo stack
-                        currProject->undoStack->push(new addProjection(this, proj));
+                        this->currProject->undoStack->push(new addProjection(this, proj));
                         // redraw the parameters panel
                         emit updatePanel(this);
                         // tell gl viewport to stop tracking the mouse
@@ -1249,7 +1249,7 @@ void nl_rootdata::updateComponentType(int index)
 {
     QSharedPointer<systemObject> ptr; // A "this" object.
     // get ptr
-    if (selList.size() ==1) {
+    if (selList.size() == 1) {
         ptr = selList[0];
     }
 
@@ -1266,13 +1266,13 @@ void nl_rootdata::updateComponentType(int index)
 void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> ptr, QString& type)
 {
     // update the components of the currently selected object
-    QSharedPointer <population> currSel;
-    QSharedPointer <synapse> targSel;
+    QSharedPointer<population> currSel;
+    QSharedPointer<synapse> targSel;
     QSharedPointer<genericInput> inSel;
 
     // if projection we need the current synapse
     if (ptr->type == projectionObject) {
-        QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (ptr);
+        QSharedPointer<projection> proj = qSharedPointerDynamicCast<projection> (ptr);
         ptr = proj->synapses[proj->currTarg];
     }
 
@@ -1281,7 +1281,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
     switch (ptr->type) {
         case populationObject:
             // if there is a mis-match between the type and the selected type then update
-            currSel = qSharedPointerDynamicCast <population> (ptr);
+            currSel = qSharedPointerDynamicCast<population> (ptr);
 
             if (type == "layout") {
                 if (index >= 0) {
@@ -1296,18 +1296,18 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
                 if (index >= 0) {
                     if (currSel->neuronType->component->name != this->catalogNrn[index]->name || \
                         currSel->neuronType->component->path != this->catalogNrn[index]->path) {
-                        currProject->undoStack->push(new updateComponentTypeUndo(this, currSel->neuronType, this->catalogNrn[index]));
+                        this->currProject->undoStack->push(new updateComponentTypeUndo(this, currSel->neuronType, this->catalogNrn[index]));
                     }
                 }
             }
             break;
         case synapseObject:
-            targSel = qSharedPointerDynamicCast <synapse> (ptr);
+            targSel = qSharedPointerDynamicCast<synapse> (ptr);
             if (type == "weight_update") {
                 if (index >= 0) {
                     if (targSel->weightUpdateType->component->name != this->catalogWU[index]->name || \
                         targSel->weightUpdateType->component->path != this->catalogWU[index]->path) {
-                        currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->weightUpdateType, this->catalogWU[index]));
+                        this->currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->weightUpdateType, this->catalogWU[index]));
                     }
                 }
             }
@@ -1315,7 +1315,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
                 if (index >= 0) {
                     if (targSel->postsynapseType->component->name != this->catalogPS[index]->name || \
                         targSel->postsynapseType->component->path != this->catalogPS[index]->path) {
-                        currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->postsynapseType, this->catalogPS[index]));
+                        this->currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->postsynapseType, this->catalogPS[index]));
                     }
                 }
             }
@@ -1323,7 +1323,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
                 if (index >= 0) {
                     targSel->connectionType->setSynapseIndex(targSel->getSynapseIndex());
                     if (targSel->connectionType->getIndex() != index) {
-                        currProject->undoStack->push(new changeConnection(this, ptr, index));
+                        this->currProject->undoStack->push(new changeConnection(this, ptr, index));
                     }
                 }
             }
@@ -1336,20 +1336,60 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
             if (type == "input") {
                 if (index >= 0) {
                     if (inSel->connectionType->getIndex() != index) {
-                        currProject->undoStack->push(new changeConnection(this, ptr, index));
+                        this->currProject->undoStack->push(new changeConnection(this, ptr, index));
                     }
                 }
             }
             break;
         default:
-            cerr << "Something has gone badly wrong!";
+            cerr << "Object type problem in nl_rootdata::updateComponentType.";
             exit(-1);
             break;
     }
 
     // redraw GL view
     emit redrawGLview();
+    emit updatePanelView2("comboboxOSXfix");
+}
 
+void
+nl_rootdata::updateConnection (QSharedPointer<systemObject> newConn)
+{
+    if (newConn.isNull()) {
+        DBG() << "nl_rootdata::updateConnection called with QSharedPointer<systemObject> newConn that has no parent set.";
+        return;
+    }
+    QSharedPointer<synapse> targSel;
+    QSharedPointer<genericInput> inSel;
+
+    // if projection we need the current synapse
+    if (newConn->type == projectionObject) {
+        QSharedPointer<projection> proj = qSharedPointerDynamicCast<projection> (newConn);
+        newConn = proj->synapses[proj->currTarg];
+    }
+
+    int index = 0;
+    if (newConn->type == synapseObject) {
+        targSel = qSharedPointerDynamicCast<synapse> (newConn);
+        index = targSel->connectionType->getIndex();
+    } else if (newConn->type == inputObject) {
+        inSel = qSharedPointerDynamicCast<genericInput> (newConn);
+        index = inSel->connectionType->getIndex();
+
+        // Debug only
+        if (inSel->connectionType->type == CSV) {
+            csv_connection* csv = static_cast<csv_connection*>(inSel->connectionType);
+            DBG() << "newConn has " << csv->getNumCols() << " cols";
+        }
+
+    } else {
+        cerr << "Object type problem in nl_rootdata::updateConnection.";
+        exit(-1);
+    }
+
+    this->currProject->undoStack->push(new changeConnection(this, newConn, index));
+
+    emit redrawGLview();
     emit updatePanelView2("comboboxOSXfix");
 }
 
@@ -1367,7 +1407,7 @@ void nl_rootdata::updatePar()
         ParameterInstance * par = (ParameterInstance *) sender()->property("ptr").value<void *>();
         CHECK_CAST(dynamic_cast<ParameterInstance *>(par))
         QString newType = sender()->property("newType").toString();
-        currProject->undoStack->push(new updateParType(this, par, newType));
+        this->currProject->undoStack->push(new updateParType(this, par, newType));
     }
 
     // launch the list editor dialog
@@ -1386,7 +1426,7 @@ void nl_rootdata::updatePar()
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
         if (value != par->value[index]) {
-            currProject->undoStack->push(new updateParUndo(this, par, index, value));
+            this->currProject->undoStack->push(new updateParUndo(this, par, index, value));
         }
     }
 
@@ -1397,7 +1437,7 @@ void nl_rootdata::updatePar()
         float value = ((QDoubleSpinBox *) sender())->value();
         // only add undo if value has changed
         if (value != conn->p) {
-            currProject->undoStack->push(new updateConnProb(this, conn, value));
+            this->currProject->undoStack->push(new updateConnProb(this, conn, value));
         }
     }
 
@@ -1409,7 +1449,7 @@ void nl_rootdata::updatePar()
         QString par_name = ((QDoubleSpinBox *) sender())->property("par_name").toString();
         CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
         // only add undo if value has changed
-        currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
+        this->currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
     }
 
     if (action == "changePythonScriptProp") {
@@ -1419,7 +1459,7 @@ void nl_rootdata::updatePar()
         QString par_name = ((QComboBox *) sender())->currentText();
         CHECK_CAST(dynamic_cast<QComboBox *>(sender()))
         // only add undo if value has changed
-        currProject->undoStack->push(new undoUpdatePythonConnectionScriptProp(this, conn, par_name));
+        this->currProject->undoStack->push(new undoUpdatePythonConnectionScriptProp(this, conn, par_name));
     }
 }
 
@@ -1463,7 +1503,7 @@ void nl_rootdata::updateDrawStyle() {
                 // test if the cast succeeded
                 if (!proj.isNull()) {
                     QCheckBox* sndr = (QCheckBox*)sender();
-                    currProject->undoStack->push(new updateProjShowLabel(proj, sndr->isChecked(), proj->showLabel));
+                    this->currProject->undoStack->push(new updateProjShowLabel(proj, sndr->isChecked(), proj->showLabel));
                 }
             }
         }
@@ -1478,7 +1518,7 @@ void nl_rootdata::updateDrawStyle() {
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
                 // test if the cast succeeded
                 if (!proj.isNull()) {
-                    currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
+                    this->currProject->undoStack->push(new updateProjDrawStyle(proj, style, proj->style()));
                 }
             }
         }
@@ -1530,7 +1570,7 @@ void nl_rootdata::updateLayoutPar()
         CHECK_CAST(dynamic_cast<QDoubleSpinBox *> (sender()))
         QSharedPointer<NineMLLayoutData> layout = currSel->layoutType;
         if (layout->minimumDistance != source->value())
-            currProject->undoStack->push(new updateLayoutMinDist(this,layout,source->value()));
+            this->currProject->undoStack->push(new updateLayoutMinDist(this,layout,source->value()));
         break;
     }
     case 1:
@@ -1539,7 +1579,7 @@ void nl_rootdata::updateLayoutPar()
         CHECK_CAST(dynamic_cast<QSpinBox *> (sender()))
         QSharedPointer<NineMLLayoutData> layout = currSel->layoutType;
         if (layout->seed != source->value())
-            currProject->undoStack->push(new updateLayoutSeed(this,layout,source->value()));
+            this->currProject->undoStack->push(new updateLayoutSeed(this,layout,source->value()));
         break;
     }
     }
@@ -1560,7 +1600,7 @@ void nl_rootdata::setSize()
 
     // only update if we have a change
     if (value != currSel->numNeurons) {
-        currProject->undoStack->push(new setSizeUndo(this, currSel, value));
+        this->currProject->undoStack->push(new setSizeUndo(this, currSel, value));
     }
 }
 
@@ -1577,7 +1617,7 @@ void nl_rootdata::setLoc3()
     int value = ((QSpinBox *) sender())->value();
     CHECK_CAST(dynamic_cast<QSpinBox *>(sender()))
 
-    currProject->undoStack->push(new setLoc3Undo(this, currSel, index, value));
+    this->currProject->undoStack->push(new setLoc3Undo(this, currSel, index, value));
 }
 
 void nl_rootdata::renamePopulation()
@@ -1609,7 +1649,7 @@ void nl_rootdata::renamePopulation()
     // update name (undo-able)
     if (finalName != currSel->name) {
         titleLabel->setText("<u><b>" + finalName + "</b></u>");
-        currProject->undoStack->push(new updateTitle(currSel, finalName, currSel->name));
+        this->currProject->undoStack->push(new updateTitle(currSel, finalName, currSel->name));
     }
 
     // redraw view
@@ -1708,11 +1748,11 @@ void nl_rootdata::changeSynapse()
 
     } else if (dir.compare("add") == 0) {
         // add the Synapse
-        currProject->undoStack->push(new addSynapse(this, currSel));
+        this->currProject->undoStack->push(new addSynapse(this, currSel));
 
     } else if (dir.compare("rem") == 0) {
         // remove the Synapse
-        currProject->undoStack->push(new delSynapse(this, currSel, currSel->synapses[currTarg]));
+        this->currProject->undoStack->push(new delSynapse(this, currSel, currSel->synapses[currTarg]));
     }
     currSel->currTarg = currTarg;
 
@@ -1920,8 +1960,9 @@ QSharedPointer<systemObject> nl_rootdata::getObjectFromName(QString name)
 }
 
 
+#if 0
 // allow safe usage of systemObject pointers
-/*bool rootData::isValidPointer(systemObject * ptr)
+bool rootData::isValidPointer(systemObject * ptr)
 {
     // find the pop / projection / input reference
     for (int i = 0; i < this->populations.size(); ++i) {
@@ -1962,7 +2003,8 @@ QSharedPointer<systemObject> nl_rootdata::getObjectFromName(QString name)
 
     // not found
     return false;
-}*/
+}
+#endif
 
 QSharedPointer<systemObject> nl_rootdata::isValidPointer(systemObject * ptr)
 {
@@ -2038,9 +2080,6 @@ QSharedPointer<ComponentInstance> nl_rootdata::isValidPointer(ComponentInstance 
 // allow safe usage of NineMLComponent pointers
 QSharedPointer<Component> nl_rootdata::isValidPointer(Component * ptr)
 {
-    //DBG() << ptr;
-    //DBG() << "/////";
-
     for (int i = 0; i < this->catalogNrn.size(); ++i) {
         //DBG() << catalogNrn[i].data();
         if (catalogNrn[i] == ptr) {
@@ -2135,7 +2174,7 @@ void nl_rootdata::addgenericInput()
         sender()->disconnect((QObject *) 0);
 
         // add the genericInput
-        currProject->undoStack->push(new addInput(this, src, dstShr));
+        this->currProject->undoStack->push(new addInput(this, src, dstShr));
 
         // redraw panel
         emit updatePanel(this);
@@ -2162,7 +2201,7 @@ void nl_rootdata::delgenericInput()
     }
 
     // delete the genericInput
-    currProject->undoStack->push(new delInput(this, ptrShr));
+    this->currProject->undoStack->push(new delInput(this, ptrShr));
     emit updatePanel(this);
 }
 
@@ -2183,7 +2222,7 @@ void nl_rootdata::setTitle()
 
 void nl_rootdata::setModelTitle(QString model_name)
 {
-    currProject->undoStack->push(new updateModelTitle(this, model_name, currProject));
+    this->currProject->undoStack->push(new updateModelTitle(this, model_name, this->currProject));
     setCaptionOut(model_name);
 }
 
@@ -2249,7 +2288,7 @@ void nl_rootdata::pasteParsFromClipboard()
         if (selList[0]->type == populationObject) {
             if (sender()->property("source").toString() == "tab1") {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (selList[0]);
-                currProject->undoStack->push(new pastePars(this,clipboardCData,pop->neuronType));
+                this->currProject->undoStack->push(new pastePars(this,clipboardCData,pop->neuronType));
             }
         }
 
@@ -2257,10 +2296,10 @@ void nl_rootdata::pasteParsFromClipboard()
         if (selList[0]->type == projectionObject) {
             QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
             if (sender()->property("source").toString() == "tab1") {
-                currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->weightUpdateType)));
+                this->currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->weightUpdateType)));
             }
             if (sender()->property("source").toString() == "tab2") {
-                currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->postsynapseType)));
+                this->currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->postsynapseType)));
             }
         }
     }

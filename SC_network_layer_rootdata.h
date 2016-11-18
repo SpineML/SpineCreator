@@ -70,7 +70,9 @@ public:
     ComponentRootObject* import_component_xml_single(QString fileName);
     bool isComponentInUse(QSharedPointer<Component> oldComp);
     bool removeComponent(QSharedPointer<Component> oldComp);
-    //bool isValidPointer(systemObject *ptr);
+#if 0 // Not used/deprecated
+    bool isValidPointer(systemObject *ptr);
+#endif
     QSharedPointer<systemObject> isValidPointer(systemObject *ptr);
     QSharedPointer<ComponentInstance> isValidPointer(ComponentInstance *ptr);
     QSharedPointer<Component> isValidPointer(Component *ptr);
@@ -80,6 +82,13 @@ public:
      * Find the object selected by the mouse (called by onLeftMouseDown)
      */
     void findSelection (float xGL, float yGL, float GLscale, QVector <QSharedPointer<systemObject> >& newlySelectedList);
+
+
+    /*!
+     * Function to be called when a GenericInput or Synapse's internal
+     * connection is changed.
+     */
+    void updateConnection (QSharedPointer<systemObject> newConnection);
     //@}
 
 public:

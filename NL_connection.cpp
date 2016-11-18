@@ -108,6 +108,11 @@ int connection::getSynapseIndex (void)
     return this->synapseIndex;
 }
 
+void connection::setParent (QSharedPointer<systemObject> ptr)
+{
+    this->parent = ptr;
+}
+
 void connection::writeDelay(QXmlStreamWriter &xmlOut)
 {
     xmlOut.writeStartElement("Delay");
@@ -173,9 +178,11 @@ QLayout * alltoAll_connection::drawLayout(nl_rootdata *, viewVZLayoutEditHandler
 {
     QHBoxLayout * hlay = new QHBoxLayout();
     if (viewVZhandler) {
+        DBG() << "Connect viewVZhandler for deleteLater";
         connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
     }
     if (rootLay) {
+        DBG() << "Connect rotLay for deleteLater";
         connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
     }
     return hlay;
@@ -408,6 +415,7 @@ void fixedProb_connection::import_parameters_from_xml(QDomNode &e)
 
 csv_connection::csv_connection()
 {
+    DBG() << "::csv_connection(void)";
     type = CSV;
     numRows = 0;
     // no connectivity generator in constructor
@@ -417,9 +425,15 @@ csv_connection::csv_connection()
     this->dstName = "";
     this->synapseIndex = -3;
 
+    // Defaults to having 3 things in. This sets numCols to be 3 by default.
+#if 0
     this->values.push_back("src");
     this->values.push_back("dst");
     this->values.push_back("delay");
+#endif
+    this->values.clear(); // better to have empty values and fill explicitly
+    this->values.push_back("boo");
+    this->values.push_back("hoo");
 
     copiedFrom = NULL;
 
@@ -427,7 +441,7 @@ csv_connection::csv_connection()
     this->generateUUIDFilename();
 }
 
-QDir csv_connection::getLibDir (void)
+QDir csv_connection::getLibDir (void) const
 {
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
     QDir lib_dir = QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation));
@@ -465,18 +479,18 @@ void csv_connection::updateGlobalDelay (void)
     QCheckBox* sndr = (QCheckBox*)sender();
     if (sndr->isChecked()) {
         // Checked means "use global delays"
-        this->setNumCols (2);
+        DBG() << "sender checkbox is checked, set num cols to 2";
+        this->setNumCols (2); // Bad. This is destructive of the values.
     } else {
+        DBG() << "sender checkbox is unchecked, set num cols to 3";
         this->setNumCols (3);
     }
 
-    QSharedPointer<systemObject> ptr;
-    ptr = this;
+    DBG() << "csv_connection::updateGlobalDelay: this:" << this;
 
-    // Now emit the signal to re-draw via nl_rootdata::updateComponentType.
-    nl_rootdata * data = (nl_rootdata *) sender()->property("data").value<void *>();
-    QString type("blah");
-    data->updateComponentType(4, ptr, type);
+    // Get the pointer to the data object
+    nl_rootdata * data = (nl_rootdata *) sender()->property("dataptr").value<void *>();
+    data->updateConnection (this->parent);
 }
 
 QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay)
@@ -484,12 +498,11 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
     // if we do not have a generator...
     if (this->generator == NULL) {
 
-        DBG() << "csv_connection::drawLayout: No generator";
-        QVBoxLayout * vlay = new QVBoxLayout();
+        DBG() << "csv_connection::drawLayout: No generator. this:" << this;
 
-        QTableView *tableView = new QTableView();
-
-        csv_connectionModel *connMod = new csv_connectionModel();
+        QVBoxLayout* vlay = new QVBoxLayout();
+        QTableView* tableView = new QTableView();
+        csv_connectionModel* connMod = new csv_connectionModel();
 
         // rootLayout::projSelected has communicated this information
         // so we can stick it into this connection.
@@ -499,47 +512,60 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
         connMod->setConnection(this);
         tableView->setModel(connMod);
 
+        DBG() << "Add tableView";
         vlay->addWidget(tableView);
 
-        QHBoxLayout * hlay = new QHBoxLayout();
+        //QHBoxLayout * hlay = new QHBoxLayout();
 
         QPushButton *import = new QPushButton("Import list");
         import->setToolTip("Import the explicit value list");
         import->setProperty("ptr", qVariantFromValue((void *) this));
-        hlay->addWidget(import);
+        vlay->addWidget(import);
         // add connection:
         connect(import, SIGNAL(clicked()), data, SLOT(editConnections()));
 
         QCheckBox* globalDelay = new QCheckBox("Global delay");
         globalDelay->setToolTip("Switch between a single, global delay for each connection or per-connection delays (which are not supported in some simulators).");
-        globalDelay->setProperty("ptr", qVariantFromValue((void *) this));
-        globalDelay->setProperty("data", qVariantFromValue((void *) data));
+        globalDelay->setProperty("dataptr", qVariantFromValue((void *) data));
         // Set from number of cols in connection
         if (this->getNumCols() == 2) {
+            DBG() << "num cols is 2, setting globalDelay state to checked.";
             globalDelay->setCheckState(Qt::Checked);
         } else { // should be 3
+            DBG() << "num cols is 3, setting globalDelay state to unchecked.";
             globalDelay->setCheckState(Qt::Unchecked);
         }
-        hlay->addWidget(globalDelay);
+        DBG() << "Add globalDelay";
+        vlay->addWidget(globalDelay);
         connect(globalDelay, SIGNAL(clicked()), this, SLOT(updateGlobalDelay()));
 
-        vlay->addLayout(hlay);
+        //vlay->addLayout(hlay);
 
         // set up GL:
         if (viewVZhandler) {
+            DBG() << "viewVZhandler";
             connect(viewVZhandler, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));
-            if (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel() != (QAbstractTableModel *)0)
-            {
+            if (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel() != (QAbstractTableModel *)0) {
+                DBG() << "connectionsmodel is NOT null";
                 // don't fetch data if we already have for this connection
                 csv_connectionModel * connModel = dynamic_cast<csv_connectionModel *> (viewVZhandler->viewVZ->OpenGLWidget->getConnectionsModel());
                 CHECK_CAST(connModel);
-                if (connModel->getConnection() == this  && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.size() == this->getNumRows()) {
+#if 0
+                if (connModel->getConnection() == this
+                    && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.size() == this->getNumRows()
+                    && (int) viewVZhandler->viewVZ->OpenGLWidget->connections.cols() == this->getNumCols() // Add this.
+                    ) {
                     viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
                 } else {
+#endif
+                    DBG() << "setConnectionsModel and getConnections";
                     viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
                     viewVZhandler->viewVZ->OpenGLWidget->getConnections();
+#if 0
                 }
+#endif
             } else {
+                DBG() << "connectionsmodel is null";
                 viewVZhandler->viewVZ->OpenGLWidget->setConnectionsModel(connMod);
                 viewVZhandler->viewVZ->OpenGLWidget->getConnections();
             }
@@ -547,12 +573,16 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
             connect(connMod, SIGNAL(dataChanged(QModelIndex,QModelIndex)), viewVZhandler->viewVZ->OpenGLWidget, SLOT(connectionDataChanged(QModelIndex,QModelIndex)));
             connect(tableView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), viewVZhandler->viewVZ->OpenGLWidget, SLOT(connectionSelectionChanged(QItemSelection,QItemSelection)));
             connect(viewVZhandler, SIGNAL(deleteProperties()), import, SLOT(deleteLater()));
+            connect(viewVZhandler, SIGNAL(deleteProperties()), globalDelay, SLOT(deleteLater()));
+            //connect(viewVZhandler, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
             connect(viewVZhandler, SIGNAL(deleteProperties()), vlay, SLOT(deleteLater()));
         }
         if (rootLay) {
-            //
+            DBG() << "rootLay. connecting deleteLater slots";
             connect(rootLay, SIGNAL(deleteProperties()), import, SLOT(deleteLater()));
             connect(rootLay, SIGNAL(deleteProperties()), tableView, SLOT(deleteLater()));
+            connect(rootLay, SIGNAL(deleteProperties()), globalDelay, SLOT(deleteLater()));
+            //connect(rootLay, SIGNAL(deleteProperties()), hlay, SLOT(deleteLater()));
             connect(rootLay, SIGNAL(deleteProperties()), vlay, SLOT(deleteLater()));
         }
 
@@ -560,6 +590,7 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
 
     } else {
         // we have a generator, so pass on the task of drawing the layout to it!
+        DBG() << "calling generator->drawLayout";
         return generator->drawLayout(data, viewVZhandler, rootLay);
     }
 }
@@ -805,8 +836,10 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
         // do we have explicit delays
         bool explicit_delay = BinaryFileList.at(0).toElement().attribute("explicit_delay_flag").toInt();
         if (explicit_delay) {
+            DBG() << "Importing parameters from xml. Have explicit delay, so set num cols to 3";
             this->setNumCols(3);
         } else {
+            DBG() << "Importing parameters from xml. Have NO explicit delay, so set num cols to 2";
             this->setNumCols(2);
         }
 
@@ -1109,7 +1142,7 @@ void csv_connection::import_packed_binary(QFile& fileIn, QFile& fileOut)
     fileOut.flush();
 }
 
-int csv_connection::getNumRows()
+int csv_connection::getNumRows() const
 {
     return this->numRows;
 }
@@ -1119,7 +1152,7 @@ void csv_connection::setNumRows(int num)
     this->numRows = num;
 }
 
-int csv_connection::getNumCols()
+int csv_connection::getNumCols() const
 {
     return this->values.size();
 }
@@ -1130,15 +1163,16 @@ void csv_connection::setNumCols(int num)
         this->values.clear();
         this->values.push_back("src");
         this->values.push_back("dst");
-    }
-    if (num == 3) {
+    } else if (num == 3) {
         this->values.clear();
         this->values.push_back("src");
         this->values.push_back("dst");
         this->values.push_back("delay");
+    } else {
+        DBG() << "Bad number of cols requested.";
+        exit (-1);
     }
 }
-
 
 void csv_connection::getAllData(QVector < conn > &conns)
 {
@@ -1185,7 +1219,7 @@ void csv_connection::getAllData(QVector < conn > &conns)
     f.close();
 }
 
-float csv_connection::getData(int rowV, int col)
+float csv_connection::getData(int rowV, int col) const
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
@@ -1197,7 +1231,7 @@ float csv_connection::getData(int rowV, int col)
         return -0.1f;
     }
 
-    int colVal = getNumCols();
+    int colVal = this->getNumCols();
     if (colVal > 2) ++colVal;
     // we multiply by cols +1 as QT seems to do some padding on the stream
     int seekTo = rowV*(colVal)+col;
@@ -1226,7 +1260,7 @@ float csv_connection::getData(int rowV, int col)
     return -0.1f;
 }
 
-float csv_connection::getData(QModelIndex &index)
+float csv_connection::getData(QModelIndex &index) const
 {
     QFile f;
     QDir lib_dir = this->getLibDir();
@@ -1447,15 +1481,34 @@ void csv_connection::abortChanges()
     changes.clear();
 }
 
+void csv_connection::copyDataValues (const csv_connection* other)
+{
+    // If either this or other have 2 cols, then copy just 2 cols, if
+    // both have same number of cols, direct copy is fine.
+    int maxcol = 2;
+    if (this->getNumCols() == other->getNumCols()) {
+        // Direct copy data...
+        maxcol = other->getNumCols();
+    } // else copy data cols 1 and 2 only - maxcols remains 2.
+
+    DBG() << "Copying " << other->getNumRows() << " data from " << maxcol << " cols";
+    for (int i = 0; i < other->getNumRows(); ++i) {
+        for (int j = 0; j < maxcol; ++j) {
+            this->setData (i, j, other->getData(i,j));
+        }
+    }
+}
 
 connection * csv_connection::newFromExisting()
 {
-
     // create a new csv_connection
     csv_connection * c = new csv_connection;
 
     // only use the same columns
     c->values = this->values;
+
+    // Copy the parent. The new csv_connection will share the same parent.
+    c->parent = this->parent;
 
     // use the same delay
     c->delay = new ParameterInstance(this->delay);
@@ -1478,6 +1531,7 @@ connection * csv_connection::newFromExisting()
 
 }
 
+#ifdef _DEPRECATED_
 void csv_connection::copyDataFromOld()
 {
     if (this->copiedFrom) {
@@ -1488,6 +1542,7 @@ void csv_connection::copyDataFromOld()
         }
     }
 }
+#endif
 
 pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
 {
@@ -2533,9 +2588,11 @@ void pythonscript_connection::generate_connections()
             // otherwise...
             if (this->hasDelay) {
                 // if we have delays, resize
+                DBG() << "Set numcols to 3 as we hasDelay";
                 this->connection_target->setNumCols(3);
             } else {
                 //  no delays
+                DBG() << "Set numcols to 2 as we !hasDelay";
                 this->connection_target->setNumCols(2);
             }
         }

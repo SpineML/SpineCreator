@@ -180,7 +180,8 @@ void glConnectionWidget::resizeGL(int, int)
     this->repaint();
 }
 
-void glConnectionWidget::redraw() {
+void glConnectionWidget::redraw()
+{
     // refetch layout of current selection
     if (selectedObject != NULL) {
         if (selectedObject->type == populationObject) {
@@ -215,11 +216,12 @@ void glConnectionWidget::redraw(int)
     this->repaint();
 }
 
-void glConnectionWidget::allowRepaint() {
+void glConnectionWidget::allowRepaint()
+{
     this->repaintAllowed = true;
 }
 
-void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
+void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 {
 
     // avoid repainting too fast
@@ -473,12 +475,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     }
                     glEnd();
 
-
-
                 } else {
                     // ERR - CONNECTION INDEX OUT OF RANGE
                 }
-
             }
 
             // draw selected connections on top
@@ -502,14 +501,12 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                                 isSelected = true;
                                 break;
                             }
-                            if (connections[targNum][i].src == connections[targNum][selection[j].row()].src && selection[j].column() == 0)
-                            {
+                            if (connections[targNum][i].src == connections[targNum][selection[j].row()].src && selection[j].column() == 0) {
                                 glLineWidth(1.5f*lineScaleFactor);
                                 glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
                                 isSelected = true;
                             }
-                            if (connections[targNum][i].dst == connections[targNum][selection[j].row()].dst && selection[j].column() == 1)
-                            {
+                            if (connections[targNum][i].dst == connections[targNum][selection[j].row()].dst && selection[j].column() == 1) {
                                 glLineWidth(1.5f*lineScaleFactor);
                                 glColor4f(0.0f, 1.0f, 0.0f, 0.8f);
                                 isSelected = true;
@@ -517,8 +514,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         }
 
                         if (((int) connections[targNum][i].src == selectedIndex && selectedType == 1) \
-                                || ((int) connections[targNum][i].dst == selectedIndex && selectedType == 2))
-                        {
+                                || ((int) connections[targNum][i].dst == selectedIndex && selectedType == 2)) {
                             glLineWidth(1.5f*lineScaleFactor);
                             glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
                             isSelected = true;
@@ -542,8 +538,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                             glEnd();
                         }
 
-
-
                     } else {
                         // ERR - CONNECTION INDEX OUT OF RANGE
                     }
@@ -551,9 +545,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
             }
             glEnable(GL_DEPTH_TEST);
             connGenerationMutex->unlock();
-
         }
-
 
         if (conn->type == OnetoOne) {
 
@@ -565,13 +557,11 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
 
                         glLineWidth(1.5*lineScaleFactor);
                         glColor4f(0.0f, 0.0f, 1.0f, 0.8f);
-
-                         // draw in
+                        // draw in
                         glBegin(GL_LINES);
                         glVertex3f(src->layoutType->locations[i].x+srcX, src->layoutType->locations[i].y+srcY, src->layoutType->locations[i].z+srcZ);
                         glVertex3f(dst->layoutType->locations[i].x+dstX, dst->layoutType->locations[i].y+dstY, dst->layoutType->locations[i].z+dstZ);
                         glEnd();
-
                     }
                 }
 
@@ -586,7 +576,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         glVertex3f(src->layoutType->locations[i].x+srcX, src->layoutType->locations[i].y+srcY, src->layoutType->locations[i].z+srcZ);
                         glVertex3f(dstX, dstY, dstZ);
                         glEnd();
-
                     }
                 }
 
@@ -601,7 +590,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         glVertex3f(srcX, srcY, srcZ);
                         glVertex3f(dst->layoutType->locations[i].x+dst->loc3.x, dst->layoutType->locations[i].y+dst->loc3.y, dst->layoutType->locations[i].z+dst->loc3.z);
                         glEnd();
-
                     }
                 }
             }
@@ -621,7 +609,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                         glVertex3f(src->layoutType->locations[i].x+srcX, src->layoutType->locations[i].y+srcY, src->layoutType->locations[i].z+srcZ);
                         glVertex3f(dst->layoutType->locations[j].x+dstX, dst->layoutType->locations[j].y+dstY, dst->layoutType->locations[j].z+dstZ);
                         glEnd();
-
                     }
                 }
             }
@@ -737,10 +724,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                 glVertex3f(redrawLocs[i+1].x, redrawLocs[i+1].y,redrawLocs[i+1].z);
                 glEnd();
             }
-
-
         }
-
 
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_LIGHTING);
@@ -756,7 +740,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
     glDisable(GL_COLOR_MATERIAL);
 
     glMatrixMode(GL_MODELVIEW);
-
 
     if (popIndicesShown) {
         QPainter painter(this);
@@ -807,16 +790,17 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
                     winY -= this->height()/4.0;
                 }
 
-                if (imageSaveMode) {}
+                if (imageSaveMode) {
                     //painter.drawText(QRect(winX-(1.0-winZ)*220-20,imageSaveHeight-winY-(1.0-winZ)*220-10,40,20),QString::number(float(i)));
-                else
-                    if (orthoView)
+                } else {
+                    if (orthoView) {
                         painter.drawText(QRect(winX-(1.0-winZ)*220-10.0/zoomVal-10,this->height()-winY-(1.0-winZ)*220-10.0/zoomVal-10,40,20),QString::number(float(i)));
-                    else
+                    } else {
                         painter.drawText(QRect(winX-(1.0-winZ)*300-10.0/zoomVal,this->height()-winY-(1.0-winZ)*300-10.0/zoomVal,40,20),QString::number(float(i)));
-                    //painter.drawText(QRect(winX-(1.0-winZ)*600,this->height()-winY-(1.0-winZ)*600,40,20),QString::number(float(i)));
-                    //painter.drawText(QRect((winX-(1.0-winZ)*220-20),this->height()-(winY-(1.0-winZ)*220+50),40,20),QString::number(float(i)));
-
+                        //painter.drawText(QRect(winX-(1.0-winZ)*600,this->height()-winY-(1.0-winZ)*600,40,20),QString::number(float(i)));
+                        //painter.drawText(QRect((winX-(1.0-winZ)*220-20),this->height()-(winY-(1.0-winZ)*220+50),40,20),QString::number(float(i)));
+                    }
+                }
                 glPopMatrix();
             }
         }
@@ -830,12 +814,10 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/ )
     }
 
     glPopMatrix();
-
-
 }
 
-void glConnectionWidget::drawNeuron(GLfloat r, int rings, int segments, QColor col) {
-
+void glConnectionWidget::drawNeuron(GLfloat r, int rings, int segments, QColor col)
+{
     // draw a sphere to represent a neuron
     int i, j;
     for(i = 0; i <= rings; i++) {
@@ -862,11 +844,10 @@ void glConnectionWidget::drawNeuron(GLfloat r, int rings, int segments, QColor c
         }
         glEnd();
     }
-
 }
 
-void glConnectionWidget::setupView() {
-
+void glConnectionWidget::setupView()
+{
     int width;
     int height;
 
@@ -891,7 +872,6 @@ void glConnectionWidget::setupView() {
         float aspect = ((GLfloat)height)/((GLfloat)width);
         glOrtho(-scale, scale, -scale*aspect, scale*aspect, -100, 100000.0);
     }
-
 
     // preview mode
     if (locations.size() > 0) {
@@ -923,7 +903,6 @@ void glConnectionWidget::setupView() {
             }
         }
 
-
         // now we have max and min for each direction, calculate a view that takes everything in...
         // find the max length of an edge:
         loc lengths;
@@ -938,13 +917,11 @@ void glConnectionWidget::setupView() {
 
         // scale based on max length
         glTranslatef(0,0,-maxLen*1.3);
-        //glTranslatef(pos.x(),pos.y(),0);
 
         // rotate
         glRotatef(-45.0f, 1.0f,0.0f,0.0f);
         glTranslatef(0.0f,2.5f,2.5f);
         glRotatef(45.0f, 0.0f,0.0f,1.0f);
-
 
         // translate to centre
         loc centres;
@@ -958,8 +935,8 @@ void glConnectionWidget::setupView() {
         glMatrixMode(GL_MODELVIEW);
 
         return;
-    }
-    else if (selectedPops.size() > 0) {
+
+    } else if (selectedPops.size() > 0) {
 
         // default to 1st pop
         int selIndex = 0;
@@ -1006,7 +983,6 @@ void glConnectionWidget::setupView() {
             }
         }
 
-
         // now we have max and min for each direction, calculate a view that takes everything in...
         // find the max length of an edge:
         loc lengths;
@@ -1028,7 +1004,6 @@ void glConnectionWidget::setupView() {
         glTranslatef(0.0f,2.5f,2.5f);
         glRotatef(45.0f+rot.x(), 0.0f,0.0f,1.0f);
 
-
         // translate to centre
         loc centres;
         centres.x = (maxes.x + mins.x) / 2.0f;
@@ -1036,13 +1011,8 @@ void glConnectionWidget::setupView() {
         centres.z = (maxes.z + mins.z) / 2.0f;
 
         glTranslatef(-centres.x,-centres.y,-centres.z);
-
-
         glMatrixMode(GL_MODELVIEW);
-
         return;
-
-
     }
 
     glTranslatef(0.0f,0.0f,-10.0f*zoomFactor);
@@ -1052,12 +1022,10 @@ void glConnectionWidget::setupView() {
     glRotatef(45.0f, 0.0f,0.0f,1.0f);
 
     glMatrixMode(GL_MODELVIEW);
-
-
 }
 
-void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
-
+void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection)
+{
     // reset nrn index etc...
     selectedType = 1;
     selectedIndex = 0;
@@ -1095,7 +1063,6 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
                     selectedObject = currOutput;
                 }
             }
-
         }
 
         // projections
@@ -1104,8 +1071,9 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
             QSharedPointer <projection> currProj = qSharedPointerDynamicCast<projection> (currPop->projections[j]);
             CHECK_CAST(currProj)
 
-            if (currProj->getName() == item->name)
+            if (currProj->getName() == item->name) {
                 selectedObject = currProj;
+            }
 
             // synapses
             for (int k = 0; k < currProj->synapses.size(); ++k) {
@@ -1116,26 +1084,22 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection) {
                 if (currProj->getName() + ": Synapse " + QString::number(k) == item->name) {
                     selectedObject = currTarg;
                 }
-
             }
-
         }
-
     }
-    //qDebug() << "selected = " << selectedObject->getName();
-    // redraw
-    this->repaint();
 
+    this->repaint();
 }
 
-void glConnectionWidget::typeChanged(int) {
-
+void glConnectionWidget::typeChanged(int)
+{
     QString type = sender()->property("type").toString();
 
     if (type == "layout") {
 
-        if (selectedObject->type != populationObject)
+        if (selectedObject->type != populationObject) {
             qDebug() << "WARNING - bug found - report code 1";
+        }
 
         // find the selected object and get the locations, then force a redraw
         QString errs;
@@ -1146,24 +1110,16 @@ void glConnectionWidget::typeChanged(int) {
             this->data->updateStatusBar(errs,2000);
         }
         //this->currProjectionType = none;
-
     }
     if (type == "conn") {
-
         // find the locations of the src and dst:
-
-
     }
 
-
-
-    // redraw
     this->repaint();
-
 }
 
-void glConnectionWidget::parsChangedPopulation(int value) {
-
+void glConnectionWidget::parsChangedPopulation(int value)
+{
     // if the selected population is in the list (i.e. checked) then refetch locations
     for (int i = 0; i < selectedPops.size(); ++i) {
         if (selectedObject == selectedPops[i]) {
@@ -1183,35 +1139,11 @@ void glConnectionWidget::parsChangedPopulation(int value) {
         }
     }
 
-    // redraw
     this->repaint();
-
 }
 
-void glConnectionWidget::parsChangedPopulation(double) {
-
-    // if the selected population is in the list (i.e. checked) then refetch locations
-    for (int i = 0; i < selectedPops.size(); ++i) {
-        if (selectedObject == selectedPops[i]) {
-
-            QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (selectedObject);
-            QString errs;
-            currPop->layoutType->locations.clear();
-            currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
-            // display all errors
-            if (!errs.isEmpty()) {
-                //this->data->statusBarUpdate(errs,2000);
-            }
-        }
-    }
-    // redraw
-    this->repaint();
-
-}
-
-void glConnectionWidget::parsChangedPopulation() {
-
-
+void glConnectionWidget::parsChangedPopulation(double)
+{
     // if the selected population is in the list (i.e. checked) then refetch locations
     for (int i = 0; i < selectedPops.size(); ++i) {
         if (selectedObject == selectedPops[i]) {
@@ -1227,13 +1159,31 @@ void glConnectionWidget::parsChangedPopulation() {
         }
     }
 
-    // redraw
     this->repaint();
-
 }
 
-void glConnectionWidget::parsChangedProjections() {
+void glConnectionWidget::parsChangedPopulation()
+{
+    // if the selected population is in the list (i.e. checked) then refetch locations
+    for (int i = 0; i < selectedPops.size(); ++i) {
+        if (selectedObject == selectedPops[i]) {
 
+            QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (selectedObject);
+            QString errs;
+            currPop->layoutType->locations.clear();
+            currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
+            // display all errors
+            if (!errs.isEmpty()) {
+                //this->data->statusBarUpdate(errs,2000);
+            }
+        }
+    }
+
+    this->repaint();
+}
+
+void glConnectionWidget::parsChangedProjections()
+{
     this->refreshAll();
 
     for (int i = 0; i < selectedConns.size(); ++i) {
@@ -1264,21 +1214,13 @@ void glConnectionWidget::parsChangedProjections() {
                 ((pythonscript_connection *) conn)->setUnchanged(true);
             }
         }
-
-
     }
 
-
-    // redraw:
     repaint();
-
 }
 
-void glConnectionWidget::parsChangedProjection() {
-
-    /*if (!data->isValidPointer(selectedObject))
-        return;*/ //NOT NEEDED ANYMORE
-
+void glConnectionWidget::parsChangedProjection()
+{
     // can only be the current selection
     if (selectedObject->type == synapseObject || selectedObject->type == inputObject) {
 
@@ -1299,19 +1241,13 @@ void glConnectionWidget::parsChangedProjection() {
         }
 
         if (conn->type == CSV) {
-
             // generated connection
             this->getConnections();
-
         }
-
 
         // regrab data for python script based
         if (conn->type == Python) {
-
             // update the projection:
-
-
             // find selected object
             for (int i = 0; i < this->selectedConns.size(); ++i) {
 
@@ -1330,34 +1266,18 @@ void glConnectionWidget::parsChangedProjection() {
                         ((pythonscript_connection *) conn)->setUnchanged(true);
                     }
                 }
-
             }
-
         }
 
-
-        // redraw:
         repaint();
-
     }
-
 }
 
 // after switching views, check we haven't broken anything!
-void glConnectionWidget::refreshAll() {
-
+void glConnectionWidget::refreshAll()
+{
     // check on populations
     for (int i = 0; i < selectedPops.size(); ++i) {
-
-        // check pointer is valid - NOT NEEDED ANYMORE!
-        /*if (!data->isValidPointer(selectedPops[i])) {
-            // remove
-            selectedPops.erase(selectedPops.begin()+i);
-            popLogs.erase(popLogs.begin()+i);
-            popColours.erase(popColours.begin()+i);
-            --i;
-            continue;
-        }*/
 
         QSharedPointer <population> currPop = selectedPops[i];
 
@@ -1381,21 +1301,10 @@ void glConnectionWidget::refreshAll() {
                 this->data->updateStatusBar(errs,2000);
             }
         }
-
     }
 
     // check on projections
     for (int i = 0; i < selectedConns.size(); ++i) {
-
-        // check pointer is valid
-        /*if (!data->isValidPointer(selectedConns[i])) {
-            // remove
-            selectedConns.erase(selectedConns.begin()+i);
-            connections.erase(connections.begin()+i);
-            --i;
-            continue;
-        } NOT NEEDED ANYMORE */
-
         // check it isn't deleted
         if (selectedConns[i]->isDeleted) {
             // remove
@@ -1404,36 +1313,27 @@ void glConnectionWidget::refreshAll() {
             --i;
             continue;
         }
-
-
     }
-
 }
 
-
-void glConnectionWidget::setConnType(connectionType cType) {
-
+void glConnectionWidget::setConnType(connectionType cType)
+{
     this->currProjectionType = cType;
-
 }
 
-void glConnectionWidget::drawLocations(QVector <loc> locs) {
-
+void glConnectionWidget::drawLocations(QVector <loc> locs)
+{
     // redraw based on a set of location passed in (used for layout previews)
     for (int i = 0; i < locations.size(); ++i) {
         locations[i].clear();
     }
     locations.clear();
-
     this->locations.push_back(locs);
-
-    // redraw
     this->repaint();
-
 }
 
-void glConnectionWidget::clearLocations() {
-
+void glConnectionWidget::clearLocations()
+{
     // clear the set of location passed in (used for layout previews)
     for (int i = 0; i < locations.size(); ++i) {
         locations[i].clear();
@@ -1441,16 +1341,18 @@ void glConnectionWidget::clearLocations() {
     locations.clear();
 }
 
-void glConnectionWidget::setConnectionsModel(QAbstractTableModel * modelIn) {
+void glConnectionWidget::setConnectionsModel(QAbstractTableModel * modelIn)
+{
     model = modelIn;
 }
 
-QAbstractTableModel * glConnectionWidget::getConnectionsModel() {
+QAbstractTableModel * glConnectionWidget::getConnectionsModel()
+{
     return model;
 }
 
-void glConnectionWidget::getConnections() {
-
+void glConnectionWidget::getConnections()
+{
     if (selectedObject != NULL) {
         if (selectedObject->type == synapseObject) {
 
@@ -1459,23 +1361,19 @@ void glConnectionWidget::getConnections() {
             for (int i = 0; i < this->selectedConns.size(); ++i) {
 
                 if (selectedObject == selectedConns[i] && currTarg->connectionType->type == CSV) {
-
                     // refresh the connections
                     connections[i].clear();
                     ((csv_connection *) currTarg->connectionType)->getAllData(connections[i]);
-                    //qDebug() << "FETCHING CONNS";
-
                 }
             }
         }
     }
 
-    // force a redraw
-    repaint();
+    this->repaint();
 }
 
-void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
-
+void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
+{
     // this is fired when an item is checked or unchecked
 
     for (int i = 0; i < data->populations.size(); ++i) {
@@ -1566,7 +1464,6 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                                 connections.erase(connections.begin()+p);
                             }
                         }
-
                     }
                 }
             }
@@ -1622,40 +1519,32 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex) {
                         }
                     }
                 }
-
             }
-
         }
-
     }
     // check for logs:
     addLogs(&data->main->viewGV.properties->logsForGraphs);
 
     // force redraw!
     this->repaint();
-
 }
 
-void glConnectionWidget::connectionDataChanged(QModelIndex, QModelIndex) {
-
+void glConnectionWidget::connectionDataChanged(QModelIndex, QModelIndex)
+{
     // refetch the connections:
-    getConnections();
-
+    this->getConnections();
 }
 
-void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection) {
-
+void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection)
+{
     this->selectedIndex = 0;
     this->selectedType = 4;
-
     this->selection = ((QItemSelectionModel *) sender())->selectedIndexes();
-    // force redraw
-    repaint();
-
+    this->repaint();
 }
 
-void glConnectionWidget::mousePressEvent(QMouseEvent *event){
-
+void glConnectionWidget::mousePressEvent(QMouseEvent *event)
+{
     setCursor(Qt::ClosedHandCursor);
     button = event->button();
     origPos = event->globalPos();
@@ -1664,15 +1553,15 @@ void glConnectionWidget::mousePressEvent(QMouseEvent *event){
     origRot = event->globalPos();
     origRot.setX(origRot.x() - rot.x()*2);
     origRot.setY(origRot.y() - rot.y()*2);
-
 }
 
-void glConnectionWidget::mouseReleaseEvent(QMouseEvent *){
+void glConnectionWidget::mouseReleaseEvent(QMouseEvent *)
+{
     setCursor(Qt::ArrowCursor);
 }
 
-void glConnectionWidget::mouseMoveEvent(QMouseEvent *event){
-
+void glConnectionWidget::mouseMoveEvent(QMouseEvent *event)
+{
     if (button == Qt::LeftButton) {
         pos.setX(-(origPos.x() - event->globalPos().x())*0.01*zoomFactor);
         pos.setY((origPos.y() - event->globalPos().y())*0.01*zoomFactor);
@@ -1681,41 +1570,39 @@ void glConnectionWidget::mouseMoveEvent(QMouseEvent *event){
         rot.setX(-(origRot.x() - event->globalPos().x())*0.5);
         rot.setY(-(origRot.y() - event->globalPos().y())*0.5);
     }
-
-    repaint();
-
+    this->repaint();
 }
 
-void glConnectionWidget::wheelEvent(QWheelEvent *event){
-
+void glConnectionWidget::wheelEvent(QWheelEvent *event)
+{
     float val = float(event->delta()) / 320.0;
     val = pow(2.0f,val);
     if (event->orientation() == Qt::Vertical) {
         this->zoomFactor *= (val);
-        if (this->zoomFactor < 0.00001)
+        if (this->zoomFactor < 0.00001) {
             zoomFactor = 1;
-        repaint();
+        }
+        this->repaint();
     }
-
 }
 
-void glConnectionWidget::setPopIndicesShown(bool checkState){
+void glConnectionWidget::setPopIndicesShown(bool checkState)
+{
     popIndicesShown = checkState;
-    repaint();
+    this->repaint();
 }
 
-void glConnectionWidget::selectedNrnChanged(int index) {
-
+void glConnectionWidget::selectedNrnChanged(int index)
+{
     QString type = sender()->property("type").toString();
 
-    if (type == "index")
+    if (type == "index") {
         selectedIndex = index;
-    else if (type == "from") {
+    } else if (type == "from") {
         selectedType = index+1;
     }
 
-    repaint();
-
+    this->repaint();
 }
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
@@ -1739,8 +1626,8 @@ QImage glConnectionWidget:: renderQImage(int w, int h)
 }
 #endif
 
-QPixmap glConnectionWidget::renderImage(int width, int height) {
-
+QPixmap glConnectionWidget::renderImage(int width, int height)
+{
     QPixmap pix;
     imageSaveHeight = height;
     imageSaveWidth = width;
@@ -1756,8 +1643,7 @@ QPixmap glConnectionWidget::renderImage(int width, int height) {
 
     pix = QPixmap::fromImage(img);
 #else
-
-   pix = this->renderPixmap(width, height);
+    pix = this->renderPixmap(width, height);
 #endif
 
     QPainter painter(&pix);
@@ -1810,9 +1696,6 @@ QPixmap glConnectionWidget::renderImage(int width, int height) {
     }
 
     glPopMatrix();
-
     imageSaveMode = false;
-    //QImage image = pix.toImage();
     return pix;
-
 }

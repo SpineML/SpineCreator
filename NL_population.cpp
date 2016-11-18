@@ -435,6 +435,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new alltoAll_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->connectionType->setParent (newInput);
             }
             type = e2.elementsByTagName("OneToOneConnection");
             if (type.count() == 1) {
@@ -442,6 +443,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new onetoOne_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->connectionType->setParent (newInput);
             }
             type = e2.elementsByTagName("FixedProbabilityConnection");
             if (type.count() == 1) {
@@ -449,6 +451,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType = new fixedProb_connection;
                 QDomNode cNode = type.item(0);
                 newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->connectionType->setParent (newInput);
             }
             type = e2.elementsByTagName("ConnectionList");
             if (type.count() == 1) {
@@ -458,6 +461,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
                 newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
                 newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->connectionType->setParent (newInput);
             }
 
             if (newInput->src != (QSharedPointer <ComponentInstance>)0) {

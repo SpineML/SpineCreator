@@ -1619,24 +1619,28 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             if (n.toElement().tagName() == "AllToAllConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new alltoAll_connection;
+                newSynapse->connectionType->setParent (newSynapse);
                 newSynapse->connectionType->setSynapseIndex (i);
                 newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "OneToOneConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new onetoOne_connection;
+                newSynapse->connectionType->setParent (newSynapse);
                 newSynapse->connectionType->setSynapseIndex (i);
                 newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "FixedProbabilityConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new fixedProb_connection;
+                newSynapse->connectionType->setParent (newSynapse);
                 newSynapse->connectionType->setSynapseIndex (i);
                 newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "ConnectionList") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new csv_connection;
+                newSynapse->connectionType->setParent (newSynapse);
                 newSynapse->connectionType->setSrcName (srcName);
                 newSynapse->connectionType->setDstName (destName);
                 newSynapse->connectionType->setSynapseIndex (i);
@@ -1976,6 +1980,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     if (type.count() == 1) {
                         delete newInput->connectionType;
                         newInput->connectionType = new alltoAll_connection;
+                        newInput->connectionType->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
@@ -1983,6 +1988,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     if (type.count() == 1) {
                         delete newInput->connectionType;
                         newInput->connectionType = new onetoOne_connection;
+                        newInput->connectionType->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
@@ -1990,13 +1996,17 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     if (type.count() == 1) {
                         delete newInput->connectionType;
                         newInput->connectionType = new fixedProb_connection;
+                        newInput->connectionType->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         newInput->connectionType->import_parameters_from_xml(cNode);
                     }
                     type = e2.elementsByTagName("ConnectionList");
                     if (type.count() == 1) {
                         delete newInput->connectionType;
+                        DBG() << "Create new csv_connection";
                         newInput->connectionType = new csv_connection;
+                        DBG() << "Set parent for  new csv_connection";
+                        newInput->connectionType->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         // csv connection needs a synapse index set up.
                         newInput->connectionType->setSynapseIndex(t);

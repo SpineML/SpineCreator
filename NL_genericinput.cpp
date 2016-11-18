@@ -32,6 +32,8 @@ genericInput::genericInput()
 {
     // only used for loading from file - and all info will be specified so no need to muck about here - except this:
     this->connectionType = new alltoAll_connection;
+    // setParent has to be called with a QSharedPointer, so that has to be called externally.
+    //this->connectionType->setParent (this);
     this->type = inputObject;
     // for reinserting on undo / redo
     srcPos = -1;
@@ -63,6 +65,8 @@ genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointe
     this->selectedControlPoint.start = false;
 
     this->connectionType = new onetoOne_connection;
+    // setParent has to be called with a QSharedPointer, so that has to be called externally.
+    //this->connectionType->setParent (this);
 
     // add curves if we are not a projection input
     if (!projInput) {
@@ -716,6 +720,9 @@ QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *,
     newIn->isVisualised = this->isVisualised;
 
     newIn->connectionType = this->connectionType->newFromExisting();
+
+    newIn->connectionType->setParent(newIn);
+
     newIn->source = this->source;
     newIn->destination = this->destination;
     newIn->projInput = this->projInput;

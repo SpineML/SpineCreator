@@ -734,33 +734,29 @@ void nl_rootlayout::clearOld() {
     }
 }
 
-void nl_rootlayout::updatePanel(nl_rootdata* data) {
-
+void nl_rootlayout::updatePanel(nl_rootdata* data)
+{
     // update libraries
     updateLayoutList(data);
     updateComponentLists(data);
 
     // if we are not on view 1 do not update...
-    if (!this->parentWidget()->isVisible())
+    if (!this->parentWidget()->isVisible()) {
         return;
+    }
 
     // hide everything
     emit hideHeader();
 
     // find if there is only one selection, if not then clear all
     if (data->selList.size() != 1) {
-
         // configure model panel
         emit setModelName(data->currProject->name);
         data->setCaptionOut(data->currProject->name);
-
         // remove input properties
         emit deleteProperties();
-
         // show model panel
         emit showModel();
-
-        return;
 
     } else {
 
@@ -768,29 +764,21 @@ void nl_rootlayout::updatePanel(nl_rootdata* data) {
 
         // find what the selected item is...
         if (data->selList[0]->type == populationObject) {
-
             QSharedPointer<population> pop = qSharedPointerDynamicCast<population> (data->selList[0]);
-            popSelected(pop, data);
-            return;
+            this->popSelected(pop, data);
 
-        }
-        if (data->selList[0]->type == projectionObject) {
-
+        } else if (data->selList[0]->type == projectionObject) {
             QSharedPointer<projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
-            if (proj.isNull()) qDebug() << "Pointer is null!";
-            projSelected(proj, data);
-            return;
+            if (proj.isNull()) {
+                DBG() << "Pointer is null!";
+            }
+            this->projSelected(proj, data);
 
+        } else if (data->selList[0]->type == inputObject) {
+            DBG() << "Call inSelected";
+            this->inSelected(qSharedPointerDynamicCast<genericInput> (data->selList[0]), data);
         }
-        if (data->selList[0]->type == inputObject) {
-
-            inSelected(qSharedPointerDynamicCast<genericInput> (data->selList[0]), data);
-            return;
-
-        }
-
     }
-
 }
 
 void nl_rootlayout::popSelected(QSharedPointer <population> &pop, nl_rootdata* data) {
@@ -927,6 +915,7 @@ void nl_rootlayout::projSelected(QSharedPointer <projection> &proj, nl_rootdata*
 // Draws the input panel.
 void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* data)
 {
+    DBG() << "Called to draw input panel";
     emit showInput();
     emit setInputName("<u><b>" + in->getName() + "</b></u>");
     emit deleteProperties();
@@ -1008,12 +997,13 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
         case OnetoOne:
         case FixedProb:
         case CSV:
-            {
-
+        {
+            DBG() << "Calling connectionType->drawLayout...";
             QLayout * lay = in->connectionType->drawLayout(data, NULL, this);
-            this->insertLayout(this->count()-2,lay);
-            }
+            DBG() << "Inserting as this->count()-2 = " << this->count() - 2;
+            this->insertLayout(this->count()-2, lay);
             break;
+        }
         /*case CSV:
             {QPushButton *edit = new QPushButton("Edit");
             varLayout->addRow("Connection list", edit);

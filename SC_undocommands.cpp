@@ -709,6 +709,7 @@ changeConnection:: changeConnection(nl_rootdata * data, QSharedPointer<systemObj
     this->ptr = ptr;
     this->data = data;
     this->setText("change connection type on " + this->ptr->getName());
+    DBG() << this->text();
     // if we use an index only and the scripts change before an undo / redo we are in trouble, so if we have
     // a script we must get the script name right now (NOTE: this could still be an issue if we rename scripts)
     if (index >= Python) {
@@ -726,6 +727,7 @@ changeConnection:: changeConnection(nl_rootdata * data, QSharedPointer<systemObj
 
 void changeConnection::undo()
 {
+    DBG() << "changeConnection::undo() called";
     if (ptr->type == inputObject) {
         delete (qSharedPointerDynamicCast <genericInput> (ptr))->connectionType;
         (qSharedPointerDynamicCast <genericInput> (ptr))->connectionType = oldConn;
@@ -740,27 +742,51 @@ void changeConnection::undo()
 
 void changeConnection::redo()
 {
+    DBG() << "changeConnection::redo() called";
 
+    // ptr is a QSharedPointer<systemObject>; it's the newConn
     if (ptr->type == inputObject) {
+
+        DBG() << "It's a GenericInput connection";
         QSharedPointer<genericInput> ptrIn = qSharedPointerDynamicCast <genericInput> (ptr);
-        oldConn = ptrIn->connectionType;
+
+        oldConn = ptrIn->connectionType; // connection* oldConn
+        DBG() << "oldConn->parent->type: " << oldConn->parent->type;
+
         switch(index) {
         case AlltoAll:
             ptrIn->connectionType = new alltoAll_connection;
             ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrIn->connectionType->setParent (oldConn->parent);
             break;
         case OnetoOne:
             ptrIn->connectionType = new onetoOne_connection;
             ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrIn->connectionType->setParent (oldConn->parent);
             break;
         case FixedProb:
             ptrIn->connectionType = new fixedProb_connection;
             ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrIn->connectionType->setParent (oldConn->parent);
             break;
         case CSV:
+        {
+            csv_connection* oldcsv = static_cast<csv_connection*>(oldConn);
+            DBG() << "oldConn->getNumCols(): " << oldcsv->getNumCols();
+
+            // Why in fact create a new connection here. And does the existing one not exist? Memory leak?
             ptrIn->connectionType = new csv_connection;
+            csv_connection* newcsv = static_cast<csv_connection*>(ptrIn->connectionType);
+            DBG() << "newConn->getNumCols(): " << newcsv->getNumCols();
+
+            DBG() << "Now have a connection with new values.";
             ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrIn->connectionType->setParent (oldConn->parent);
+            newcsv->setNumCols(oldcsv->getNumCols());
+            newcsv->copyDataValues(oldcsv);
+
             break;
+        }
         case Python:
             break;
         case CSA:
@@ -778,6 +804,7 @@ void changeConnection::redo()
             QString script = settings.value(scriptName, "").toString();
             ptrIn->connectionType = new csv_connection;
             ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrIn->connectionType->setParent (oldConn->parent);
             ((csv_connection *)ptrIn->connectionType)->generator = new pythonscript_connection(qSharedPointerDynamicCast <population> (ptrIn->source), qSharedPointerDynamicCast <population> (ptrIn->destination), (csv_connection *) ptrIn->connectionType);
             // setup the generator:
             ((pythonscript_connection *) ((csv_connection *) ptrIn->connectionType)->generator)->scriptText = script;
@@ -785,29 +812,36 @@ void changeConnection::redo()
             ((pythonscript_connection *) ((csv_connection *) ptrIn->connectionType)->generator)->configureFromScript(script);
             settings.endGroup();
         }
-    }
-    if (ptr->type == synapseObject) {
+
+    } else if (ptr->type == synapseObject) {
+
+        DBG() << "synapse object";
         QSharedPointer<synapse> ptrSyn = qSharedPointerDynamicCast <synapse> (ptr);
         oldConn = ptrSyn->connectionType;
         switch(index) {
         case AlltoAll:
             ptrSyn->connectionType = new alltoAll_connection;
             ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrSyn->connectionType->setParent (oldConn->parent);
             break;
         case OnetoOne:
             ptrSyn->connectionType = new onetoOne_connection;
             ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrSyn->connectionType->setParent (oldConn->parent);
             break;
         case FixedProb:
             ptrSyn->connectionType = new fixedProb_connection;
             ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrSyn->connectionType->setParent (oldConn->parent);
             break;
         case CSV:
             ptrSyn->connectionType = new csv_connection;
             ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrSyn->connectionType->setParent (oldConn->parent);
             break;
         case Python:
             ptrSyn->connectionType = new csv_connection;
+            ptrSyn->connectionType->setParent (oldConn->parent);
             ((csv_connection *)ptrSyn->connectionType)->generator = new pythonscript_connection(qSharedPointerDynamicCast<population> (ptrSyn->proj->source), qSharedPointerDynamicCast<population> (ptrSyn->proj->destination), (csv_connection *)ptrSyn->connectionType);
             break;
         case CSA:
@@ -825,6 +859,7 @@ void changeConnection::redo()
             QString script = settings.value(scriptName, "").toString();
             ptrSyn->connectionType = new csv_connection;
             ptrSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
+            ptrSyn->connectionType->setParent (oldConn->parent);
             ((csv_connection *)ptrSyn->connectionType)->generator = new pythonscript_connection(qSharedPointerDynamicCast<population> (ptrSyn->proj->source), qSharedPointerDynamicCast<population> (ptrSyn->proj->destination), (csv_connection *)ptrSyn->connectionType);
             // setup the generator:
             ((pythonscript_connection *) ((csv_connection *)ptrSyn->connectionType)->generator)->scriptText = script;
@@ -832,7 +867,11 @@ void changeConnection::redo()
             ((pythonscript_connection *) ((csv_connection *)ptrSyn->connectionType)->generator)->configureFromScript(script);
             settings.endGroup();
         }
+
+    } else {
+        DBG() << "Unexpected object pointed to by ptr.";
     }
+
     isUndone = false;
     data->reDrawAll();
 }

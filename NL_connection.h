@@ -30,6 +30,8 @@
 #include "SC_network_layer_rootdata.h"
 #include "CL_classes.h"
 #include "NL_population.h"
+#include "NL_systemobject.h"
+
 
 #define NO_DELAY -1 // used to determine if Python Scripts have delay data
 
@@ -61,6 +63,21 @@ public:
     virtual int getIndex();
 
     virtual QString getTypeStr(void);
+
+    /*!
+     * The parent object which contains this connection. Will be
+     * either a GenericInput or a Synapse. The introduction of this
+     * makes this->synapseIndex possibly unnecessary. This was
+     * introduced so that csv_connections could contain the parent
+     * that they relate to, so that a checkbox in the panel could be
+     * used to change the connection features.
+     */
+    QSharedPointer<systemObject> parent;
+
+    /*!
+     * Setter for @see parent.
+     */
+    void setParent (QSharedPointer<systemObject> ptr);
 
     /*!
      * A ParameterInstance is all about a list of parameter values,
@@ -225,13 +242,23 @@ public:
     void import_packed_binary(QFile &fileIn, QFile& fileOut);
     QVector <float> fetchData(int index);
     void getAllData(QVector < conn > &conns);
-    float getData(int, int);
-    float getData(QModelIndex &index);
+    float getData(int, int) const;
+    float getData(QModelIndex &index) const;
     QString getHeader(int section);
-    int getNumRows();
+    int getNumRows() const;
     void setNumRows(int);
-    int getNumCols();
-    void setNumCols(int);
+
+    /*!
+     * Get the number of columns of data - the size of this->values.
+     */
+    int getNumCols() const;
+
+    /*!
+     * Set the number of cols required in values. Destructively
+     * resizes this->values.
+     */
+    void setNumCols(int n);
+
     void setData(const QModelIndex & index, float value);
     void setData(int, int, float);
     void clearData();
@@ -254,7 +281,15 @@ public:
     QLayout * drawLayout(nl_rootdata *, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay);
     int getIndex();
     connection * newFromExisting();
+#ifdef _DEPRECATED_
     void copyDataFromOld();
+#endif
+    /*!
+     * Copy the values from other into this. If both values have same
+     * number of cols, then direct copy the data and values, otherwise
+     * only copy src/dst values.
+     */
+    void copyDataValues (const csv_connection* other);
 
 private:
 
@@ -281,7 +316,17 @@ private:
 
     QXmlStreamWriter xmlOut;
     QXmlStreamReader xmlIn;
+
+    /*!
+     * The number of rows expected in the values QStringList.
+     */
     int numRows;
+
+    /*!
+     * The number of columns in the values QStringList. Should be 2 or 3.
+     */
+    int numCols;
+
     QVector < change > changes;
     csv_connection * copiedFrom;
 
@@ -302,7 +347,7 @@ private:
      * Get the directory used for storage of the connection binary
      * files - i.e. the model directory.
      */
-    QDir getLibDir (void);
+    QDir getLibDir (void) const;
 
     /*!
      * Replace chars in str which are not in the string allowed with
