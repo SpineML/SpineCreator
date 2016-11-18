@@ -240,7 +240,7 @@ public:
      * where S is the source index, D is the dest index, and optionally L is the delay.
      */
     void import_packed_binary(QFile &fileIn, QFile& fileOut);
-    QVector <float> fetchData(int index);
+
     void getAllData(QVector < conn > &conns);
     float getData(int, int) const;
     float getData(QModelIndex &index) const;
@@ -258,6 +258,12 @@ public:
      * resizes this->values.
      */
     void setNumCols(int n);
+
+    /*!
+     * Updates the data based on the current numcols, in case that has
+     * changed.
+     */
+    void updateDataForNumCols (void);
 
     void setData(const QModelIndex & index, float value);
     void setData(int, int, float);

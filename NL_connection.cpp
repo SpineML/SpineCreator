@@ -477,14 +477,23 @@ int csv_connection::getIndex()
 void csv_connection::updateGlobalDelay (void)
 {
     QCheckBox* sndr = (QCheckBox*)sender();
+    DBG() << "First data before setNumCols:"  << this->getData(0,0) << this->getData(0,1);
     if (sndr->isChecked()) {
         // Checked means "use global delays"
         DBG() << "sender checkbox is checked, set num cols to 2";
-        this->setNumCols (2); // Bad. This is destructive of the values.
+        this->setNumCols (2);
+
     } else {
         DBG() << "sender checkbox is unchecked, set num cols to 3";
         this->setNumCols (3);
     }
+    // Need to update the data here, I think. This call will go
+    // through the data and if numcols is now 2, discard all the delay
+    // values. If numcols is now 3, it should fill the delay values in
+    // with the fixed value if any, or 0.
+    this->updateDataForNumCols();
+
+    DBG() << "First data after setNumCols:"  << this->getData(0,0) << this->getData(0,1);
 
     DBG() << "csv_connection::updateGlobalDelay: this:" << this;
 
@@ -1219,6 +1228,16 @@ void csv_connection::getAllData(QVector < conn > &conns)
     f.close();
 }
 
+#if 0
+float csv_connection::getData(int rowV, int col) const
+{
+    int ncols = this->getNumCols();
+    return this->getData (rowV, col, ncols, ncols);
+}
+#endif
+
+// This ASSUMES that the data file has same number of cols. I need a
+// getDataAsIfColsWere (rowV, col, colVal). So, this becomes "get datum from rowV, col assuming that the data store underlying this object contains dataCols
 float csv_connection::getData(int rowV, int col) const
 {
     QFile f;
@@ -1231,9 +1250,9 @@ float csv_connection::getData(int rowV, int col) const
         return -0.1f;
     }
 
+    // we multiply by cols +1 as QT seems to do some padding on the stream
     int colVal = this->getNumCols();
     if (colVal > 2) ++colVal;
-    // we multiply by cols +1 as QT seems to do some padding on the stream
     int seekTo = rowV*(colVal)+col;
 
     if (seekTo*4 > f.size()) {
@@ -1383,6 +1402,12 @@ QString csv_connection::getHeader(int section)
     return this->values[section];
 }
 
+void csv_connection::updateDataForNumCols (void)
+{
+    DBG() << "Writeme next";
+    exit(-1);
+}
+
 void csv_connection::setData(const QModelIndex & index, float value)
 {
     QFile f;
@@ -1489,12 +1514,15 @@ void csv_connection::copyDataValues (const csv_connection* other)
     if (this->getNumCols() == other->getNumCols()) {
         // Direct copy data...
         maxcol = other->getNumCols();
+        DBG() << "Direct copy data in " << maxcol << " cols";
     } // else copy data cols 1 and 2 only - maxcols remains 2.
 
     DBG() << "Copying " << other->getNumRows() << " data from " << maxcol << " cols";
-    for (int i = 0; i < other->getNumRows(); ++i) {
-        for (int j = 0; j < maxcol; ++j) {
-            this->setData (i, j, other->getData(i,j));
+    for (this->numRows = 0; this->numRows < other->getNumRows(); ++this->numRows) {
+        for (int j = 0; j < maxcol; j++) {
+            float d = other->getData(this->numRows,j);
+            DBG() << "Setting data(" << this->numRows << "," << j << ") to " << d;
+            this->setData (this->numRows, j, d);
         }
     }
 }

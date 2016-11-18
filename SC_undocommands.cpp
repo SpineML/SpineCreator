@@ -782,8 +782,10 @@ void changeConnection::redo()
             DBG() << "Now have a connection with new values.";
             ptrIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             ptrIn->connectionType->setParent (oldConn->parent);
+            DBG() << "First data before setNumCols and copyDataValues:"  << oldcsv->getData(0,0) << oldcsv->getData(0,1);
             newcsv->setNumCols(oldcsv->getNumCols());
             newcsv->copyDataValues(oldcsv);
+            DBG() << "First data AFTER setNumCols and copyDataValues:"  << oldcsv->getData(0,0) << oldcsv->getData(0,1);
 
             break;
         }
