@@ -1358,30 +1358,12 @@ nl_rootdata::updateConnection (QSharedPointer<systemObject> existingConn, bool g
         DBG() << "nl_rootdata::updateConnection called with QSharedPointer<systemObject> existingConn that has no parent set.";
         return;
     }
-#if 0
-    QSharedPointer<synapse> targSel;
-    QSharedPointer<genericInput> inSel;
-#endif
 
     // if projection we need the current synapse
     if (existingConn->type == projectionObject) {
         QSharedPointer<projection> proj = qSharedPointerDynamicCast<projection> (existingConn);
         existingConn = proj->synapses[proj->currTarg];
     }
-
-#if 0
-    int index = 0;
-    if (existingConn->type == synapseObject) {
-        targSel = qSharedPointerDynamicCast<synapse> (existingConn);
-        index = targSel->connectionType->getIndex();
-    } else if (existingConn->type == inputObject) {
-        inSel = qSharedPointerDynamicCast<genericInput> (existingConn);
-        index = inSel->connectionType->getIndex();
-    } else {
-        cerr << "Object type problem in nl_rootdata::updateConnection.";
-        exit(-1);
-    }
-#endif
 
     this->currProject->undoStack->push(new globalConnectionDelayChange(this, existingConn, globalDelay));
 
@@ -2157,10 +2139,10 @@ void nl_rootdata::delgenericInput()
 void nl_rootdata::editConnections()
 {
     // launch the list editor dialog
-    csv_connection * conn = (csv_connection *) sender()->property("ptr").value<void *>();
-    CHECK_CAST(dynamic_cast<csv_connection *>(conn))
-    connectionListDialog * dialog  = new connectionListDialog(conn);
-    connect(dialog,SIGNAL(completed()), this, SLOT(reDrawAll()));
+    csv_connection* conn = (csv_connection*)sender()->property("ptr").value<void*>();
+    CHECK_CAST (dynamic_cast<csv_connection *>(conn))
+    connectionListDialog* dialog  = new connectionListDialog (conn);
+    connect (dialog, SIGNAL(completed()), this, SLOT(reDrawAll()));
     dialog->show();
 }
 
