@@ -469,17 +469,6 @@ int csv_connection::getIndex()
 void csv_connection::updateGlobalDelay (void)
 {
     QCheckBox* sndr = (QCheckBox*)sender();
-    // Fixme - the actual work here has to be carried out inside an undo class!
-#if 0
-    if (sndr->isChecked()) {
-        // Checked means "use global delays"
-        this->updateDataForNumCols(2);
-    } else {
-        this->updateDataForNumCols(3);
-    }
-#endif
-
-    // Get the pointer to the data object
     nl_rootdata * data = (nl_rootdata *) sender()->property("dataptr").value<void *>();
     data->updateConnection (this->parent, sndr->isChecked());
 }
