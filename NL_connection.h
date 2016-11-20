@@ -231,8 +231,11 @@ public:
      * Import data into the connection from a file written in Comma Seperated Variable format.
      * This format consists of ASCII text data written as S,D,L/n where S is the source index,
      * D is the destination index and L (optional) is the delay.
+     *
+     * Returns false if the import failed for any reason, otherwise returns true.
      */
-    void import_csv (QString filename);
+    bool import_csv (QString filename);
+
     /*!
      * \brief import_packed_binary
      * \param fileIn The source file from which to import

@@ -40,10 +40,10 @@
 
 connection::connection()
 {
-    type = none;
-    delay = new ParameterInstance("ms");
-    delay->name = "delay";
-    delay->currType = Undefined;
+    this->type = none;
+    this->delay = new ParameterInstance("ms");
+    this->delay->name = "delay";
+    this->delay->currType = Undefined;
     this->srcName = "";
     this->dstName = "";
     this->synapseIndex = -1;
@@ -51,7 +51,7 @@ connection::connection()
 
 connection::~connection()
 {
-    delete delay;
+    delete this->delay;
 }
 
 int connection::getIndex()
@@ -919,38 +919,44 @@ void csv_connection::fetch_headings()
 {
 }
 
-void csv_connection::import_csv(QString fileName)
+bool csv_connection::import_csv (QString fileName)
 {
     DBG() << "csv_connection::import_csv(" << fileName << ") called.";
 
-    this->numRows = 0;
+    if (fileName.isEmpty()) {
+        DBG() << "No data to read, return false";
+        return false;
+    }
 
-    this->changes.clear();
+    // Assume import fails to work. Set true once import has succeeded.
+    bool import_worked = false;
+
+    // open the input csv file for reading
+    QFile fileIn(fileName);
+    if (!fileIn.open(QIODevice::ReadOnly)) {
+        QMessageBox msgBox;
+        msgBox.setText("Could not open the selected CSV file");
+        msgBox.exec();
+        return import_worked;
+    }
 
     QFile f;
     QDir lib_dir = this->getLibDir();
-    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
+    // Set up a temporary uuid
+    f.setFileName(lib_dir.absoluteFilePath (this->uuidFilename));
     if (!f.open( QIODevice::ReadWrite | QIODevice::Truncate)) {
         QMessageBox msgBox;
         msgBox.setText("csv_connection::import_csv(QString): Could not open temporary file '"
                        + f.fileName() + "' for Explicit Connection");
         msgBox.exec();
-        return;
-    }
+        return import_worked;
+    } // else the data file for this connection has now been truncated, so numRows can be set to 0.
 
-    // open the input csv file for reading
-    QFile fileIn(fileName);
-
-    if (!fileIn.open(QIODevice::ReadOnly)) {
-        QMessageBox msgBox;
-        msgBox.setText("Could not open the selected file");
-        msgBox.exec();
-        return;
-    }
+    this->numRows = 0;
+    this->changes.clear();
 
     // use textstream so we can read lines into a QString
     QTextStream stream(&fileIn);
-
     QDataStream access(&f);
 
     // test for consistency:
@@ -984,14 +990,14 @@ void csv_connection::import_csv(QString fileName)
             QMessageBox msgBox;
             msgBox.setText("CSV file has too many columns");
             msgBox.exec();
-            return;
+            return import_worked;
         }
 
         if (fields.size() < 2) {
             QMessageBox msgBox;
             msgBox.setText("CSV file has too few columns");
             msgBox.exec();
-            return;
+            return import_worked;
         }
 
         if (numFields == -1) {
@@ -1010,20 +1016,22 @@ void csv_connection::import_csv(QString fileName)
                 float num = fields[i].toFloat();
                 access << num;
             }
-
         }
     }
 
     values.clear();
     for (int i = 0; i < (int)numFields; ++i) {
-        if (i == 0) this->values.push_back("src");
-        if (i == 1) this->values.push_back("dst");
-        if (i == 2) this->values.push_back("delay");
+        if (i == 0) { this->values.push_back("src"); }
+        if (i == 1) { this->values.push_back("dst"); }
+        if (i == 2) { this->values.push_back("delay"); }
     }
 
     // flush out the output...
     f.flush();
     f.close();
+
+    import_worked = true;
+    return import_worked;
 }
 
 
@@ -1467,7 +1475,7 @@ void csv_connection::clearData()
 
 void csv_connection::abortChanges()
 {
-    changes.clear();
+    this->changes.clear();
 }
 
 void csv_connection::copyDataValues (const csv_connection* other)

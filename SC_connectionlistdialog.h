@@ -29,32 +29,38 @@
 #include "globalHeader.h"
 
 namespace Ui {
-class connectionListDialog;
+    class connectionListDialog;
 }
 
 class connectionListDialog : public QDialog
 {
     Q_OBJECT
-    
+
 public:
-    explicit connectionListDialog(csv_connection * conn, QWidget *parent = 0);
+    explicit connectionListDialog (csv_connection* conn, QWidget* parent = 0);
     ~connectionListDialog();
-    
+
 private:
-    Ui::connectionListDialog *ui;
-    csv_connectionModel * vModel;
-    csv_connection * conn;
+    Ui::connectionListDialog* ui;
+    csv_connectionModel* vModel;
+    csv_connection* conn;
+
+    /*!
+     * A new csv_connection is created from @see conn. This new
+     * connection is used to read in the data. If the read of the csv
+     * data is successful, this new csv_connection replaces the one
+     * pointed to by conn.
+     */
+    csv_connection* newConn;
 
 signals:
     void completed();
 
 public slots:
-    void accept();
-    void reject();
-    void importCSV();
-    void updateValSize(int val);
-
-
+    void accept (void);
+    void reject (void);
+    void importCSV (void);
+    void updateValSize (int val);
 };
 
 #endif // CONNECTIONLISTDIALOG_H
