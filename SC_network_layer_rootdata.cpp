@@ -1276,14 +1276,13 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
         ptr = proj->synapses[proj->currTarg];
     }
 
-
     // event says we need to update the selected object accordingly, so we'll do that first:
     switch (ptr->type) {
         case populationObject:
             // if there is a mis-match between the type and the selected type then update
             currSel = qSharedPointerDynamicCast<population> (ptr);
 
-            if (type == "layout") {
+            if (type == "layout") { // a layout change
                 if (index >= 0) {
                     if (currSel->layoutType->component->name.compare(this->catalogLayout[index]->name) != 0) {
                         currSel->layoutType.clear();
@@ -1292,7 +1291,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
                     }
                 }
             }
-            if (type == "neuron") {
+            if (type == "neuron") { // a neuron change
                 if (index >= 0) {
                     if (currSel->neuronType->component->name != this->catalogNrn[index]->name || \
                         currSel->neuronType->component->path != this->catalogNrn[index]->path) {
@@ -1303,7 +1302,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
             break;
         case synapseObject:
             targSel = qSharedPointerDynamicCast<synapse> (ptr);
-            if (type == "weight_update") {
+            if (type == "weight_update") { // a weight update change
                 if (index >= 0) {
                     if (targSel->weightUpdateType->component->name != this->catalogWU[index]->name || \
                         targSel->weightUpdateType->component->path != this->catalogWU[index]->path) {
@@ -1311,7 +1310,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
                     }
                 }
             }
-            if (type == "postsynapse") {
+            if (type == "postsynapse") { // a post synapse change
                 if (index >= 0) {
                     if (targSel->postsynapseType->component->name != this->catalogPS[index]->name || \
                         targSel->postsynapseType->component->path != this->catalogPS[index]->path) {
@@ -1319,7 +1318,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
                     }
                 }
             }
-            if (type == "conn") {
+            if (type == "conn") { // a synapse connection change
                 if (index >= 0) {
                     targSel->connectionType->setSynapseIndex(targSel->getSynapseIndex());
                     if (targSel->connectionType->getIndex() != index) {
@@ -1333,7 +1332,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
             // connectivity ONLY with no delay? Or at least provide
             // that option.
             inSel = qSharedPointerDynamicCast<genericInput> (ptr);
-            if (type == "input") {
+            if (type == "input") { // a generic input connection change
                 if (index >= 0) {
                     if (inSel->connectionType->getIndex() != index) {
                         this->currProject->undoStack->push(new changeConnection(this, ptr, index));
@@ -1353,41 +1352,38 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
 }
 
 void
-nl_rootdata::updateConnection (QSharedPointer<systemObject> newConn)
+nl_rootdata::updateConnection (QSharedPointer<systemObject> existingConn, bool globalDelay)
 {
-    if (newConn.isNull()) {
-        DBG() << "nl_rootdata::updateConnection called with QSharedPointer<systemObject> newConn that has no parent set.";
+    if (existingConn.isNull()) {
+        DBG() << "nl_rootdata::updateConnection called with QSharedPointer<systemObject> existingConn that has no parent set.";
         return;
     }
+#if 0
     QSharedPointer<synapse> targSel;
     QSharedPointer<genericInput> inSel;
+#endif
 
     // if projection we need the current synapse
-    if (newConn->type == projectionObject) {
-        QSharedPointer<projection> proj = qSharedPointerDynamicCast<projection> (newConn);
-        newConn = proj->synapses[proj->currTarg];
+    if (existingConn->type == projectionObject) {
+        QSharedPointer<projection> proj = qSharedPointerDynamicCast<projection> (existingConn);
+        existingConn = proj->synapses[proj->currTarg];
     }
 
+#if 0
     int index = 0;
-    if (newConn->type == synapseObject) {
-        targSel = qSharedPointerDynamicCast<synapse> (newConn);
+    if (existingConn->type == synapseObject) {
+        targSel = qSharedPointerDynamicCast<synapse> (existingConn);
         index = targSel->connectionType->getIndex();
-    } else if (newConn->type == inputObject) {
-        inSel = qSharedPointerDynamicCast<genericInput> (newConn);
+    } else if (existingConn->type == inputObject) {
+        inSel = qSharedPointerDynamicCast<genericInput> (existingConn);
         index = inSel->connectionType->getIndex();
-
-        // Debug only
-        if (inSel->connectionType->type == CSV) {
-            csv_connection* csv = static_cast<csv_connection*>(inSel->connectionType);
-            DBG() << "newConn has " << csv->getNumCols() << " cols";
-        }
-
     } else {
         cerr << "Object type problem in nl_rootdata::updateConnection.";
         exit(-1);
     }
+#endif
 
-    this->currProject->undoStack->push(new changeConnection(this, newConn, index));
+    this->currProject->undoStack->push(new globalConnectionDelayChange(this, existingConn, globalDelay));
 
     emit redrawGLview();
     emit updatePanelView2("comboboxOSXfix");
@@ -1958,53 +1954,6 @@ QSharedPointer<systemObject> nl_rootdata::getObjectFromName(QString name)
 
     return currObject;
 }
-
-
-#if 0
-// allow safe usage of systemObject pointers
-bool rootData::isValidPointer(systemObject * ptr)
-{
-    // find the pop / projection / input reference
-    for (int i = 0; i < this->populations.size(); ++i) {
-
-        if (this->populations[i].data() == ptr) {
-            return true;
-        }
-
-        for (int j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j)
-            if (this->populations[i]->neuronType->inputs[j].data() == ptr) {
-                return true;
-            }
-
-        for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
-
-            if (this->populations[i]->projections[j].data() == ptr) {
-                return true;
-            }
-
-            for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (this->populations[i]->projections[j]->synapses[k].data() == ptr) {
-                    return true;
-                }
-                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
-                    if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l].data() == ptr) {
-                        return true;
-                    }
-                }
-
-                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
-                    if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l].data() == ptr) {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    // not found
-    return false;
-}
-#endif
 
 QSharedPointer<systemObject> nl_rootdata::isValidPointer(systemObject * ptr)
 {

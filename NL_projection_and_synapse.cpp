@@ -2003,9 +2003,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     type = e2.elementsByTagName("ConnectionList");
                     if (type.count() == 1) {
                         delete newInput->connectionType;
-                        DBG() << "Create new csv_connection";
                         newInput->connectionType = new csv_connection;
-                        DBG() << "Set parent for  new csv_connection";
                         newInput->connectionType->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         // csv connection needs a synapse index set up.

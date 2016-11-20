@@ -775,7 +775,6 @@ void nl_rootlayout::updatePanel(nl_rootdata* data)
             this->projSelected(proj, data);
 
         } else if (data->selList[0]->type == inputObject) {
-            DBG() << "Call inSelected";
             this->inSelected(qSharedPointerDynamicCast<genericInput> (data->selList[0]), data);
         }
     }
@@ -915,7 +914,6 @@ void nl_rootlayout::projSelected(QSharedPointer <projection> &proj, nl_rootdata*
 // Draws the input panel.
 void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* data)
 {
-    DBG() << "Called to draw input panel";
     emit showInput();
     emit setInputName("<u><b>" + in->getName() + "</b></u>");
     emit deleteProperties();
@@ -974,7 +972,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     inputConnectionComboBox->addItem("All to All");
     inputConnectionComboBox->addItem("One to One");
     inputConnectionComboBox->addItem("Fixed Probability");
-    inputConnectionComboBox->addItem("Explicit List"); // Gen Input
+    inputConnectionComboBox->addItem("Explicit List");
     if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
         // add python scripts
         QSettings settings;
@@ -998,32 +996,15 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
         case FixedProb:
         case CSV:
         {
-            DBG() << "Calling connectionType->drawLayout...";
             QLayout * lay = in->connectionType->drawLayout(data, NULL, this);
-            DBG() << "Inserting as this->count()-2 = " << this->count() - 2;
             this->insertLayout(this->count()-2, lay);
             break;
         }
-        /*case CSV:
-            {QPushButton *edit = new QPushButton("Edit");
-            varLayout->addRow("Connection list", edit);
-            edit->setMaximumWidth(70);
-            edit->setMaximumHeight(28);
-            edit->setToolTip("Edit the explicit value list");
-            edit->setProperty("ptr", qVariantFromValue((void *) in->connectionType));
-            // add to delete props
-            connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
-            connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
-            // add connection:
-            connect(edit, SIGNAL(clicked()), data, SLOT(editConnections()));
-            }
-            break;*/
         case CSA:
             break;
         case Python:
             varLayout->addRow("", new QLabel("Configure in visualiser"));
             // add to delete props
-            //connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
             connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::FieldRole)->widget(), SLOT(deleteLater()));
             break;
         case none:

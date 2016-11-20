@@ -213,16 +213,18 @@ private:
  */
 class csv_connection : public connection
 {
-        Q_OBJECT
+    Q_OBJECT
 public:
-
-#ifdef __DEPRECATED__
-    csv_connection(QString fileName);
-#endif
     csv_connection();
     ~csv_connection();
 
+    /*!
+     * Column headers really. A list of 2 or 3 strings as headers.
+     */
     QStringList values;
+
+    connection* generator;
+
     /*!
      * \brief import_csv
      * \param filename
@@ -230,7 +232,7 @@ public:
      * This format consists of ASCII text data written as S,D,L/n where S is the source index,
      * D is the destination index and L (optional) is the delay.
      */
-    void import_csv(QString filename);
+    void import_csv (QString filename);
     /*!
      * \brief import_packed_binary
      * \param fileIn The source file from which to import
@@ -239,57 +241,62 @@ public:
      * format consists of close packed binary data with the structure (int S)(int D)(opt float L)
      * where S is the source index, D is the dest index, and optionally L is the delay.
      */
-    void import_packed_binary(QFile &fileIn, QFile& fileOut);
+    void import_packed_binary (QFile &fileIn, QFile& fileOut);
 
-    void getAllData(QVector < conn > &conns);
-    float getData(int, int) const;
-    float getData(QModelIndex &index) const;
-    QString getHeader(int section);
-    int getNumRows() const;
-    void setNumRows(int);
+    void getAllData (QVector<conn>& conns);
+    float getData (int, int) const;
+    float getData (QModelIndex &index) const;
+    QString getHeader (int section);
+    int getNumRows (void) const;
+    void setNumRows (int);
 
     /*!
      * Get the number of columns of data - the size of this->values.
      */
-    int getNumCols() const;
+    int getNumCols (void) const;
 
     /*!
      * Set the number of cols required in values. Destructively
      * resizes this->values.
      */
-    void setNumCols(int n);
+    void setNumCols (int n);
 
     /*!
      * Updates the data based on the current numcols, in case that has
      * changed.
      */
-    void updateDataForNumCols (void);
+    void updateDataForNumCols (int num);
 
-    void setData(const QModelIndex & index, float value);
-    void setData(int, int, float);
-    void clearData();
-    void flushChangesToDisk();
-    void abortChanges();
+    void setData (const QModelIndex& index, float value);
+    void setData (int, int, float);
+
+    /*!
+     * Write out the connection data. If numCols is 3, then write out
+     * the fixedValue delay if it exists, other wise 0 for the delay
+     * column.
+     */
+    void setAllData (QVector<conn>& conns);
+
+    void clearData (void);
+    void flushChangesToDisk (void);
+    void abortChanges (void);
     /*!
      * Write out the node xml to the XML files, using the final
      * version of the filename for any file-based explicit connection
      * list.
      */
-    void write_node_xml(QXmlStreamWriter &xmlOut);
-    void write_metadata_xml(QDomDocument &, QDomNode &);
-    void import_parameters_from_xml(QDomNode &);
-    void read_metadata_xml(QDomNode &);
-    void setFileName(QString name);
-    QString getFileName();
-    QString getUUIDFileName();
-    void fetch_headings();
-    connection * generator;
-    QLayout * drawLayout(nl_rootdata *, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay);
-    int getIndex();
-    connection * newFromExisting();
-#ifdef _DEPRECATED_
-    void copyDataFromOld();
-#endif
+    void write_node_xml (QXmlStreamWriter& xmlOut);
+    void write_metadata_xml (QDomDocument&, QDomNode&);
+    void import_parameters_from_xml (QDomNode&);
+    void read_metadata_xml (QDomNode&);
+    void setFileName (QString name);
+    QString getFileName (void);
+    QString getUUIDFileName (void);
+    void fetch_headings (void);
+    QLayout* drawLayout (nl_rootdata*, viewVZLayoutEditHandler* viewVZhandler, nl_rootlayout* rootLay);
+    int getIndex (void);
+    connection* newFromExisting (void);
+
     /*!
      * Copy the values from other into this. If both values have same
      * number of cols, then direct copy the data and values, otherwise
@@ -324,30 +331,31 @@ private:
     QXmlStreamReader xmlIn;
 
     /*!
-     * The number of rows expected in the values QStringList.
+     * The number of rows expected in the data file.
      */
     int numRows;
 
     /*!
-     * The number of columns in the values QStringList. Should be 2 or 3.
+     * The number of columns in the values QStringList and in the data
+     * file. Should be 2 or 3.
      */
     int numCols;
 
-    QVector < change > changes;
-    csv_connection * copiedFrom;
+    QVector<change> changes;
+    csv_connection* copiedFrom;
 
     /*!
      * Generate a filename based on the source and destination
      * population names, throwing an exception if either of these is
      * not set.
      */
-    void generateFilename(void);
+    void generateFilename (void);
 
     /*!
      * Generate a unique filename for temporary use. This is used up
      * until the point at which the network file is written out.
      */
-    void generateUUIDFilename(void);
+    void generateUUIDFilename (void);
 
     /*!
      * Get the directory used for storage of the connection binary
