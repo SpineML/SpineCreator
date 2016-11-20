@@ -831,9 +831,8 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
         } else {
             DBG() << "Old, non-packed data format is no longer supported";
         }
-    }
 
-    if (BinaryFileList.count() != 1) {
+    } else { // BinaryFileList.count() != 1
 
         // No BinaryFileList, so the ConnectionList must be stated in the XML
         if (this->filename.isEmpty()) {
@@ -869,13 +868,17 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
                 float val_f = delayStr.toFloat();
                 access << val_f;
             } else {
-                if (this->values.size()> 2)
+                if (this->values.size()> 2) {
                     this->values.removeLast();
+                }
             }
         }
 
         f.close();
     }
+
+    // After loading, sort the connections.
+    this->sortData();
 
     //// LOAD DELAY
 
@@ -983,7 +986,6 @@ bool csv_connection::import_csv (QString fileName)
         // not a comment - so begin parsing and create an xml element
         this->numRows++;
 
-
         QStringList fields = line.split(",");
 
         if (fields.size() > 3) {
@@ -1030,10 +1032,12 @@ bool csv_connection::import_csv (QString fileName)
     f.flush();
     f.close();
 
+    // Sort the connection list now.
+    this->sortData();
+
     import_worked = true;
     return import_worked;
 }
-
 
 void csv_connection::import_packed_binary(QFile& fileIn, QFile& fileOut)
 {
@@ -1112,6 +1116,20 @@ void csv_connection::setNumCols(int num)
         DBG() << "Bad number of cols requested.";
         exit (-1);
     }
+}
+
+void csv_connection::sortData (void)
+{
+    QVector<conn> clist;
+    this->getAllData (clist);
+    std::sort (clist.begin(), clist.end(), csv_connection::sorttwo);
+    this->setAllData (clist);
+}
+
+bool csv_connection::sorttwo (conn a, conn b) {
+    if (a.src < b.src) { return true; }
+    if (a.src == b.src && a.dst < b.dst) { return true; }
+    return false;
 }
 
 void csv_connection::getAllData(QVector<conn>& conns)

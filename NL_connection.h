@@ -374,6 +374,16 @@ private:
                           const QString& allowed,
                           const char replaceChar);
 
+    /*!
+     * Sort connection data by src and dst indices.
+     */
+    void sortData (void);
+
+    /*!
+     * Function to be used with std::sort to sort connections.
+     */
+    static bool sorttwo (conn a, conn b);
+
 public slots:
     /*!
      * Called when the "Global delay" checkbox is changed.
