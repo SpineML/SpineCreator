@@ -32,6 +32,7 @@
 class exptBox : public QFrame
 {
     Q_OBJECT
+
 public:
     exptBox( QWidget *parent = 0);
 
@@ -40,21 +41,20 @@ signals:
 
 protected:
     void mouseReleaseEvent ( QMouseEvent *  ) ;
-
 };
 
-enum exptInType {
-
+enum exptInType
+{
     constant,
     arrayConstant,
     timevarying,
     arrayTimevarying,
     external,
     spikeList
-
 };
 
-class exptInLookup {
+class exptInLookup
+{
 public:
     static QString toString(exptInType val) {
         if (val == constant) return "Constant input";
@@ -65,44 +65,40 @@ public:
         if (val == spikeList) return "Explicit spike list input";
         return "error - unknown experiment type";
     }
-
 };
 
-enum procedure {
-
+enum procedure
+{
     SingleRun,
     RepeatRuns,
     Tuning
-
 };
 
-enum rateDistributionTypes {
-
+enum rateDistributionTypes
+{
     Regular,
     Poisson
-
 };
 
 
-enum solverType {
-
+enum solverType
+{
     ForwardEuler,
     RungeKutta
-
 };
 
-struct simulatorSetup {
-
+struct simulatorSetup
+{
     QString simType;
     float dt;
     float duration;
     solverType solver;
     int solverOrder;
     procedure exptProcedure;
-
 };
 
-struct externalObject {
+struct externalObject
+{
     int port;
     QString host;
     QString commandline;
@@ -121,10 +117,9 @@ struct externalObject {
 class exptInput : QObject
 {
     Q_OBJECT
-public:
 
-    exptInput()
-    {
+public:
+    exptInput() {
         edit = true;
         set=false;
         eventport.name="spike";
@@ -169,17 +164,28 @@ public:
  * The class represents all Outputs, with network outputs
  * slected using the isExternal bool.
  */
-class exptOutput : QObject {
+class exptOutput : QObject
+{
     Q_OBJECT
-public:
 
-    exptOutput() {edit = true; set=false; isExternal = false; name = "New Output"; portIsAnalog = true; indices="all"; \
-                           externalOutput.size=1; externalOutput.port = 50091; externalOutput.host = "127.0.0.1"; externalOutput.timestep = 0.0; \
-                           startTime = 0; endTime = 100000000;}
+public:
+    exptOutput() {
+        edit = true;
+        set=false;
+        isExternal = false;
+        name = "New Output";
+        portIsAnalog = true;
+        indices="all";
+        externalOutput.size=1;
+        externalOutput.port = 50091;
+        externalOutput.host = "127.0.0.1";
+        externalOutput.timestep = 0.0;
+        startTime = 0;
+        endTime = 100000000;
+    }
 
     exptOutput(exptOutput *);
-    //exptOutput outType;
-    //QVector < float > params;
+
     QSharedPointer <ComponentInstance> source;
     QString portName;
     bool portIsAnalog;
@@ -195,19 +201,16 @@ public:
     QVBoxLayout * drawOutput(nl_rootdata *data, viewELExptPanelHandler * handler);
     void writeXML(QXmlStreamWriter *, projectObject * data);
     void readXML(QXmlStreamReader * , projectObject *);
-
 };
 
-class exptLesion : QObject {
+class exptLesion : QObject
+{
     Q_OBJECT
+
 public:
-
     exptLesion() {edit = true; set=false;}
-
     exptLesion(exptLesion *);
 
-    //exptOutput outType;
-    //QVector < float > params;
     QSharedPointer <projection> proj;
     Port * port;
     bool edit;
@@ -216,15 +219,14 @@ public:
     QVBoxLayout * drawLesion(nl_rootdata *data, viewELExptPanelHandler * handler);
     void writeXML(QXmlStreamWriter *, projectObject *);
     void readXML(QXmlStreamReader * , projectObject *);
-
 };
 
-class exptChangeProp : QObject {
+class exptChangeProp : QObject
+{
     Q_OBJECT
+
 public:
-
     exptChangeProp() {edit = true; set=false; par = NULL; name = "New changed property";}
-
     exptChangeProp(exptChangeProp *);
 
     ParameterInstance * par;
@@ -236,9 +238,7 @@ public:
     QVBoxLayout * drawChangeProp(nl_rootdata *data, viewELExptPanelHandler * handler);
     void writeXML(QXmlStreamWriter *, projectObject * data);
     void readXML(QXmlStreamReader *);
-
 };
-
 
 class experiment : QObject
 {
@@ -281,7 +281,6 @@ private:
 
 public slots:
     void runDestroyed();
-
 };
 
 
@@ -309,7 +308,6 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *);
-
 };
 
 #endif // EXPERIMENT_H

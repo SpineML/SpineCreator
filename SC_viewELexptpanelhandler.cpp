@@ -473,7 +473,7 @@ void viewELExptPanelHandler::redrawExpt()
         formLesion->addLayout(out->drawLesion(this->data, this));
     }
 
-    //add new lesion
+    // add new lesion
     QPushButton * addLesion = new QPushButton("Add Lesion");
     addLesion->setIcon(QIcon(":/icons/toolbar/addShad.png"));
     addLesion->setFlat(true);
