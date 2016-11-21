@@ -621,48 +621,51 @@ void delSynapse::redo()
 
 // ######## ADD GENERIC INPUT #################
 
-addInput::addInput(nl_rootdata * data, QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, QUndoCommand *parent) :
+addInput::addInput(nl_rootdata * d, QSharedPointer <ComponentInstance> source, QSharedPointer <ComponentInstance> dest, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
-    this->data = data;
-    this->src = src;
-    this->dst = dst;
+    this->data = d;
+    this->src = source;
+    this->dst = dest;
     this->setText("add Input from " + this->src->getXMLName() + " to " + this->dst->getXMLName());
-    this->input = QSharedPointer<genericInput> (new genericInput(src, dst, !(parent==0)));
-    this->input->connect(this->input);
-    input->disconnect();
+    this->input = QSharedPointer<genericInput> (new genericInput(this->src, this->dst, !(parent==0)));
+    this->input->connectionType->setParent (this->input);
+    this->input->connect (this->input);
+    this->input->disconnect();
 }
 
 void addInput::undo()
 {
     // delete input (must disconnect it first!)
-    input->disconnect();
-    isDeleted = true;
+    this->input->disconnect();
+    this->isDeleted = true;
 }
 
 void addInput::redo()
 {
     // create new Synapse on projection
-    input->connect(input);
-    isDeleted = false;
+    this->input->connect(input);
+    this->isDeleted = false;
 }
 
 // ######## DELETE GENERIC INPUT #################
 
-delInput::delInput(nl_rootdata * data, QSharedPointer<genericInput> input, QUndoCommand *parent) :
+delInput::delInput(nl_rootdata * d, QSharedPointer<genericInput> i, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
-    isChild = false;
-    if (!(parent == 0) && (parent->text() != "Delete selection")) isChild = true;
-    this->input = input;
-    this->data = data;
+    this->isChild = false;
+    if (!(parent == 0) && (parent->text() != "Delete selection")) {
+        this->isChild = true;
+    }
+    this->input = i;
+    this->data = d;
     this->setText("delete Input from " + this->input->src->getXMLName() + " to " + this->input->dst->getXMLName());
-    input->isDeleted = true;
-    isDeleted = true;
-    selIndex = -1;
+    this->input->isDeleted = true;
+    this->isDeleted = true;
+    this->selIndex = -1;
 
     // sanity
-    if (input->source == NULL || input->destination == NULL) {
+    if (this->input->source == NULL || this->input->destination == NULL) {
         qDebug() << "ERROR - input without source or destination set";
     }
 }
