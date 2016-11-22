@@ -203,22 +203,58 @@ public:
     void readXML(QXmlStreamReader * , projectObject *);
 };
 
+/*!
+ * Currently this is specifically a projection lesion. I've proposed a
+ * GenericInputLesion in the SpineML spec, which derives from Lesion
+ * and adds src port and dst port names.
+ */
 class exptLesion : QObject
 {
     Q_OBJECT
 
 public:
-    exptLesion() {edit = true; set=false;}
+    exptLesion() {
+        this->edit = true;
+        this->set = false;
+    }
+
+    /*!
+     * \brief exptLesion::exptLesion copy constructor.
+     *
+     * Create a copy of an existing Lesion
+     */
     exptLesion(exptLesion *);
 
-    QSharedPointer <projection> proj;
-    Port * port;
+    /*!
+     * The projection and port are runtime determined from the
+     * src_population and dst_population specified in the xml.
+     */
+    //@{
+    QSharedPointer<projection> proj;
+    Port* port;
+    //@}
+
     bool edit;
     bool set;
 
-    QVBoxLayout * drawLesion(nl_rootdata *data, viewELExptPanelHandler * handler);
-    void writeXML(QXmlStreamWriter *, projectObject *);
-    void readXML(QXmlStreamReader * , projectObject *);
+    QVBoxLayout* drawLesion (nl_rootdata* data, viewELExptPanelHandler* handler);
+    void writeXML (QXmlStreamWriter *, projectObject *);
+    void readXML (QXmlStreamReader * , projectObject *);
+};
+
+class exptGenericInputLesion : public exptLesion
+{
+    void exptGenericInputLesion(void);
+    void ~exptGenericInputLesion(void);
+
+    /*!
+     * Determined from the src_population, src_port, dst_population
+     * and dst_port attributes in the GenericInputLesion
+     */
+    QSharedPointer<genericInput> gi;
+
+    void writeXML (QXmlStreamWriter* writer, projectObject* pobj);
+    void readXML (QXmlStreamReader* reader, projectObject* pobj);
 };
 
 class exptChangeProp : QObject

@@ -148,18 +148,6 @@ exptOutput::exptOutput(exptOutput * outToCopy)
 }
 
 /*!
- * \brief exptLesion::exptLesion
- * Create a copy of an existing Lesion
- */
-exptLesion::exptLesion(exptLesion * lToCopy)
-{
-    this->proj = lToCopy->proj;
-    this->port = lToCopy->port;
-    this->edit = false;
-    this->set = true;
-}
-
-/*!
  * \brief exptChangeProp::exptChangeProp
  * Create a copy of an existing ChangeProp
  */
@@ -1522,9 +1510,17 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
 
 // ################# LESIONS and CHANGES TO PARAMETERS
 
-QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler *handler)
+exptLesion::exptLesion(exptLesion* lToCopy)
 {
-    QVBoxLayout * layout = new QVBoxLayout;
+    this->proj = lToCopy->proj;
+    this->port = lToCopy->port;
+    this->edit = false;
+    this->set = true;
+}
+
+QVBoxLayout* exptLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* handler)
+{
+    QVBoxLayout* layout = new QVBoxLayout;
 
     QStringList elementList;
     for (int i = 0; i < data->populations.size(); ++i) {
@@ -1535,40 +1531,40 @@ QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler 
 
     if (edit) {
         // frame to add
-        QFrame * frame = new QFrame;
+        QFrame* frame = new QFrame;
         // setStyleSheet here if required.
         layout->addWidget(frame);
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
 
         frame->setLayout(new QHBoxLayout);
-        QHBoxLayout *frameLay = qobject_cast<QHBoxLayout *> (frame->layout());
+        QHBoxLayout* frameLay = qobject_cast<QHBoxLayout*> (frame->layout());
         CHECK_CAST(frameLay)
 
         frameLay->setContentsMargins(0,0,0,0);
         frameLay->setSpacing(0);
 
         // add Component LineEdit
-        QLineEdit * lineEdit = new QLineEdit;
+        QLineEdit* lineEdit = new QLineEdit;
         if (set) {
             lineEdit->setText(this->proj->getName());
         } else {
             lineEdit->setText("Type projection name");
         }
-        QCompleter *completer = new QCompleter(elementList, this);
+        QCompleter* completer = new QCompleter(elementList, this);
         completer->setCaseSensitivity(Qt::CaseInsensitive);
         lineEdit->setCompleter(completer);
         lineEdit->setMaximumWidth(220);
-        lineEdit->setProperty("ptr", qVariantFromValue((void *) this));
+        lineEdit->setProperty("ptr", qVariantFromValue((void*)this));
         connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setLesionProjection()));
         frameLay->addWidget(lineEdit);
 
         // accept all
-        QPushButton * accept = new QPushButton;
+        QPushButton* accept = new QPushButton;
         accept->setMaximumWidth(32);
         accept->setFlat(true);
         accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
-        accept->setProperty("ptr", qVariantFromValue((void *) this));
+        accept->setProperty("ptr", qVariantFromValue((void*)this));
         frameLay->addWidget(accept);
         if (!set) {
             accept->setDisabled(true);
@@ -1576,25 +1572,25 @@ QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler 
         QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptLesion()));
 
         // delete
-        QPushButton * del = new QPushButton;
+        QPushButton* del = new QPushButton;
         del->setMaximumWidth(32);
         del->setFlat(true);
         del->setIcon(QIcon(":/icons/toolbar/delShad.png"));
-        del->setProperty("ptr", qVariantFromValue((void *) this));
+        del->setProperty("ptr", qVariantFromValue((void*)this));
         frameLay->addWidget(del);
         QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delLesion()));
 
     } else {
 
         // new layout to contain name and port boxes
-        QFrame * frame = new QFrame;
+        QFrame* frame = new QFrame;
         frame->setStyleSheet("background-color :rgba(255,255,255,255)");
         layout->addWidget(frame);
 
-        QHBoxLayout * descAndEdit = new QHBoxLayout;
+        QHBoxLayout* descAndEdit = new QHBoxLayout;
         frame->setLayout(descAndEdit);
 
-        QLabel * name = new QLabel("Lesion projection from <b>" + this->proj->getName() + "</b>");
+        QLabel* name = new QLabel("Lesion projection from <b>" + this->proj->getName() + "</b>");
         name->setMaximumWidth(200);
         name->setWordWrap(true);
         descAndEdit->addWidget(name);
@@ -1602,17 +1598,176 @@ QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler 
         name->setFont(descFont);
 
         // edit button
-        QPushButton * edit = new QPushButton;
+        QPushButton* edit = new QPushButton;
         edit->setMaximumWidth(32);
         edit->setFlat(true);
         edit->setIcon(QIcon(":/icons/toolbar/edit.png"));
-        edit->setProperty("ptr", qVariantFromValue((void *) this));
+        edit->setProperty("ptr", qVariantFromValue((void*)this));
         descAndEdit->addWidget(edit);
         QObject::connect(edit, SIGNAL(clicked()), handler, SLOT(editLesion()));
     }
 
     return layout;
 }
+
+void exptLesion::readXML(QXmlStreamReader* reader, projectObject* data)
+{
+    QString srcName;
+    QString dstName;
+
+    this->proj.clear();
+
+    if (reader->attributes().hasAttribute("src_population")) {
+        srcName = reader->attributes().value("src_population").toString();
+    } else {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Lesion - missing src_population tag");
+        settings.endArray();
+    }
+    if (reader->attributes().hasAttribute("dst_population")) {
+        dstName = reader->attributes().value("dst_population").toString();
+    } else {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Lesion - missing dst_population tag");
+        settings.endArray();
+    }
+
+    // find projection
+    for (int i = 0; i < data->network.size(); ++i) {
+        for (int j = 0; j < data->network[i]->projections.size(); ++j) {
+            if (data->network[i]->projections[j]->source->neuronType->getXMLName() == srcName && data->network[i]->projections[j]->destination->neuronType->getXMLName() == dstName) {
+                this->proj = data->network[i]->projections[j];
+            }
+        }
+    }
+
+    if (this->proj == NULL) {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Lesion - references missing projection");
+        settings.endArray();
+    }
+
+    this->set = true;
+    this->edit = false;
+}
+
+void exptLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
+{
+    if (!this->set || this->edit) {
+        return;
+    }
+    xmlOut->writeEmptyElement("Lesion");
+    xmlOut->writeAttribute("src_population",this->proj->source->neuronType->getXMLName());
+    xmlOut->writeAttribute("dst_population",this->proj->destination->neuronType->getXMLName());
+}
+
+// ############# Generic input lesion
+
+void
+exptGenericInputLesion::exptGenericInputLesion(void)
+    : exptLesion()
+{
+}
+
+void
+exptGenericInputLesion::~exptGenericInputLesion(void)
+{
+}
+
+exptGenericInputLesion::exptGenericInputLesion(exptGenericInputLesion* lToCopy)
+{
+    this->gi = lToCopy->gi;
+    this->edit = false;
+    this->set = true;
+}
+
+void
+utilities::showError (QString emsg)
+{
+    QSettings settings;
+    int num_errs = settings.beginReadArray("errors");
+    settings.endArray();
+    settings.beginWriteArray("errors");
+    settings.setArrayIndex(num_errs + 1);
+    settings.setValue("errorText", emsg);
+    settings.endArray();
+}
+
+void exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
+{
+    QString srcName;
+    QString dstName;
+
+    this->proj.clear();
+
+    if (reader->attributes().hasAttribute("src")) {
+        srcName = reader->attributes().value("src").toString();
+    } else {
+        this->showError ("Error in Experiment Lesion - missing src_population tag");
+    }
+    if (reader->attributes().hasAttribute("dst")) {
+        dstName = reader->attributes().value("dst").toString();
+    } else {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Lesion - missing dst_population tag");
+        settings.endArray();
+    }
+
+    // find projection
+    for (int i = 0; i < data->network.size(); ++i) {
+        for (int j = 0; j < data->network[i]->projections.size(); ++j) {
+            if (data->network[i]->projections[j]->source->neuronType->getXMLName() == srcName && data->network[i]->projections[j]->destination->neuronType->getXMLName() == dstName) {
+                this->proj = data->network[i]->projections[j];
+            }
+        }
+    }
+
+    if (this->proj == NULL) {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Lesion - references missing projection");
+        settings.endArray();
+    }
+
+    this->set = true;
+    this->edit = false;
+}
+
+void exptGenericInputLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject* po)
+{
+    if (!this->set || this->edit) {
+        return;
+    }
+    xmlOut->writeEmptyElement("GenericInputLesion");
+    // Check source and destination systemObjects are populations or
+    // projections and get source/dest names accordingly.
+    xmlOut->writeAttribute("src_population",recast_(this->gi->source)->getXMLName());
+    // Similar for these:
+    xmlOut->writeAttribute("src_port",this->gi->source->neuronType->getXMLName());
+    xmlOut->writeAttribute("dst_population",this->gi->destination->neuronType->getXMLName());
+    xmlOut->writeAttribute("dst_port",this->gi->destination->neuronType->getXMLName());
+}
+
+// ############## exptChangeProp
 
 QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanelHandler *handler)
 {
@@ -2397,16 +2552,6 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data)
         writer->writeAttribute("host", this->externalOutput.host);
         writer->writeAttribute("timestep", QString::number(this->externalOutput.timestep));
     }
-}
-
-void exptLesion::writeXML(QXmlStreamWriter * xmlOut, projectObject*)
-{
-    if (!set || edit) {
-        return;
-    }
-    xmlOut->writeEmptyElement("Lesion");
-    xmlOut->writeAttribute("src_population",this->proj->source->neuronType->getXMLName());
-    xmlOut->writeAttribute("dst_population",this->proj->destination->neuronType->getXMLName());
 }
 
 void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
@@ -3360,59 +3505,6 @@ void exptChangeProp::readXML(QXmlStreamReader * reader)
             settings.endArray();
         }
     }
-    this->set = true;
-    this->edit = false;
-}
-
-void exptLesion::readXML(QXmlStreamReader * reader, projectObject * data)
-{
-    QString srcName;
-    QString dstName;
-
-    this->proj.clear();
-
-    if (reader->attributes().hasAttribute("src_population")) {
-        srcName = reader->attributes().value("src_population").toString();
-    } else {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-        settings.setArrayIndex(num_errs + 1);
-        settings.setValue("errorText", "Error in Experiment Lesion - missing src_population tag");
-        settings.endArray();
-    }
-    if (reader->attributes().hasAttribute("dst_population")) {
-        dstName = reader->attributes().value("dst_population").toString();
-    } else {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-        settings.setArrayIndex(num_errs + 1);
-        settings.setValue("errorText", "Error in Experiment Lesion - missing dst_population tag");
-        settings.endArray();
-    }
-
-    // find projection
-    for (int i = 0; i < data->network.size(); ++i) {
-        for (int j = 0; j < data->network[i]->projections.size(); ++j) {
-            if (data->network[i]->projections[j]->source->neuronType->getXMLName() == srcName && data->network[i]->projections[j]->destination->neuronType->getXMLName() == dstName) {
-                this->proj = data->network[i]->projections[j];
-            }
-        }
-    }
-
-    if (this->proj == NULL) {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-        settings.setArrayIndex(num_errs + 1);
-        settings.setValue("errorText", "Error in Experiment Lesion - references missing projection");
-        settings.endArray();
-    }
-
     this->set = true;
     this->edit = false;
 }
