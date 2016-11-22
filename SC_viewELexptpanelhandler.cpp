@@ -293,13 +293,6 @@ void viewELExptPanelHandler::redrawExpt()
         qDebug() << horiz_scroll << vert_scroll;
     }
 
-    // clear old stuff
-    //while(forDeleting.size() > 0) {
-        // Commented to attempt to avoid nasty bugs when comboboxes are deleted. I know it is a memory leak. Alex 23/05/2014
-        //forDeleting[0]->deleteLater();
-        //forDeleting.erase(forDeleting.begin());
-    //}
-
     emit this->deleteWidgets();
 
     recursiveDeleteExpt(exptSetup);
@@ -330,6 +323,11 @@ void viewELExptPanelHandler::redrawExpt()
     for (int i = 0; i < currentExperiment->lesions.size(); ++i) {
         if (currentExperiment->lesions[i]->edit == true) edit_going_on = true;
     }
+    for (int i = 0; i < currentExperiment->gilesions.size(); ++i) {
+        if (currentExperiment->gilesions[i]->getEdit() == true) {
+            edit_going_on = true;
+        }
+    }
     for (int i = 0; i < currentExperiment->changes.size(); ++i) {
         if (currentExperiment->changes[i]->edit == true) edit_going_on = true;
     }
@@ -342,7 +340,6 @@ void viewELExptPanelHandler::redrawExpt()
 
 
 #ifdef NEW_EXPERIMENT_VIEW
-
     // if pointer is not valid it is either NULL or the selected object was deleted
     if (this->data->isValidPointer(this->currSystemObject) == false) {
         // no selection, so draw up the simulator parameters to the panel
@@ -378,12 +375,9 @@ void viewELExptPanelHandler::redrawExpt()
                 comp = new QLabel("Component is '" + pop->neuronType->component->name + "'");
                 comp->setFont(sub1Font);
                 exptSetup->addWidget(comp);
-                // first put up the input ports that we can send inputs to
-
-                // then put up the loggable output ports
-
-                // then allow variable overrides
-
+                // First put up the input ports that we can send inputs to.
+                // Then put up the loggable output ports.
+                // Then allow variable overrides.
             } else {
                 // no Component, so say that is the issue
                 QLabel * comp;
@@ -391,10 +385,8 @@ void viewELExptPanelHandler::redrawExpt()
                 comp->setFont(sub1Font);
                 exptSetup->addWidget(comp);
             }
-
         }
     }
-
 
     // add a stretch to force the content to the top
     exptSetup->addStretch();
@@ -444,7 +436,7 @@ void viewELExptPanelHandler::redrawExpt()
         formOut->addLayout(out->drawOutput(this->data, this));
     }
 
-    //add new output
+    // add new output
     QPushButton * addOut = new QPushButton("Add Output");
     addOut->setIcon(QIcon(":/icons/toolbar/addShad.png"));
     addOut->setFlat(true);
@@ -462,18 +454,16 @@ void viewELExptPanelHandler::redrawExpt()
 
     // redraw CHANGES
 
+    // Lesions:
     QVBoxLayout * formLesion = new QVBoxLayout;
     exptChanges->addLayout(formLesion);
-
     formLesion->addWidget(new QLabel("Lesions"));
-
-    // existing
+    // existing lesions
     for (int i = 0; i < currentExperiment->lesions.size(); ++i) {
         exptLesion * out = currentExperiment->lesions[i];
         formLesion->addLayout(out->drawLesion(this->data, this));
     }
-
-    // add new lesion
+    // add new lesion button
     QPushButton * addLesion = new QPushButton("Add Lesion");
     addLesion->setIcon(QIcon(":/icons/toolbar/addShad.png"));
     addLesion->setFlat(true);
@@ -486,25 +476,45 @@ void viewELExptPanelHandler::redrawExpt()
             addLesion->setDisabled(true);
         }
     }
-
     connect(addLesion, SIGNAL(clicked()), this, SLOT(addLesion()));
-
     formLesion->addWidget(addLesion);
 
+    // Generic Input Lesions (This provides a separate UI for GI
+    // lesions, though it COULD be part of the same UI).
+    QVBoxLayout * formGILesion = new QVBoxLayout;
+    exptChanges->addLayout(formGILesion);
+    formGILesion->addWidget(new QLabel("GenericInput Lesions"));
+    // existing gi lesions
+    for (int i = 0; i < currentExperiment->gilesions.size(); ++i) {
+        exptGenericInputLesion * out = currentExperiment->gilesions[i];
+        formGILesion->addLayout(out->drawLesion(this->data, this));
+    }
+    // add new gi lesion button
+    QPushButton * addGILesion = new QPushButton("Add GenericInput Lesion");
+    addGILesion->setIcon(QIcon(":/icons/toolbar/addShad.png"));
+    addGILesion->setFlat(true);
+    addGILesion->setFocusPolicy(Qt::NoFocus);
+    addGILesion->setToolTip("Add a new generic input lesion to the current model");
+    addGILesion->setFont(addFont);
+    // grey out if editing:
+    for (int i=0; i < currentExperiment->gilesions.size(); ++i) {
+        if (currentExperiment->gilesions[i]->getEdit()) {
+            addGILesion->setDisabled(true);
+        }
+    }
+    connect(addGILesion, SIGNAL(clicked()), this, SLOT(addGILesion()));
+    formGILesion->addWidget(addGILesion);
 
-
+    // Property changes:
     QVBoxLayout * formPropChanges = new QVBoxLayout;
     exptChanges->addLayout(formPropChanges);
-
     formPropChanges->addWidget(new QLabel("Changed properties"));
-
     // existing
     for (int i = 0; i < currentExperiment->changes.size(); ++i) {
         exptChangeProp * out = currentExperiment->changes[i];
         formPropChanges->addLayout(out->drawChangeProp(this->data, this));
     }
-
-    //add new par change
+    // add new par change
     QPushButton * addChange = new QPushButton("Add Property Change");
     addChange->setIcon(QIcon(":/icons/toolbar/addShad.png"));
     addChange->setFlat(true);
@@ -517,9 +527,7 @@ void viewELExptPanelHandler::redrawExpt()
             addChange->setDisabled(true);
         }
     }
-
     connect(addChange, SIGNAL(clicked()), this, SLOT(addChangedProp()));
-
     formPropChanges->addWidget(addChange);
 
     exptSetup->addStretch();
@@ -532,7 +540,6 @@ void viewELExptPanelHandler::redrawExpt()
         scroll->horizontalScrollBar()->setValue(horiz_scroll);
         scroll->verticalScrollBar()->setValue(vert_scroll);
     }
-
 #endif
 }
 
@@ -1454,6 +1461,18 @@ void viewELExptPanelHandler::addLesion()
 
     // redraw to update the selection
     redrawExpt();
+}
+
+void viewELExptPanelHandler::addGILesion()
+{
+    // find currentExperiment and add a new generic input lesion
+    for (int i = 0; i < data->experiments.size(); ++i) {
+        if (data->experiments[i]->selected) {
+            data->experiments[i]->gilesions.push_back(new exptGenericInputLesion);
+            redrawExpt();
+            break;
+        }
+    }
 }
 
 void viewELExptPanelHandler::setLesionProjection()

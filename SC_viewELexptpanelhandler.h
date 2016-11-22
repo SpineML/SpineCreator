@@ -148,6 +148,7 @@ public slots:
     void toggleExternalOutput(bool);
     void setOutputExternalData();
     void addLesion();
+    void addGILesion();
     void setLesionProjection();
     void acceptLesion();
     void editLesion();

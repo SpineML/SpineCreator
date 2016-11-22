@@ -242,19 +242,97 @@ public:
     void readXML (QXmlStreamReader * , projectObject *);
 };
 
-class exptGenericInputLesion : public exptLesion
+/*!
+ * An analgo of the Lesion class for Generic Inputs. This maps to the
+ * GenericInputLesionType in the SpineML specification.
+ */
+class exptGenericInputLesion : QObject
 {
-    void exptGenericInputLesion(void);
-    void ~exptGenericInputLesion(void);
+    Q_OBJECT
+
+public: // methods
+    /*!
+     * Default constructor
+     */
+    exptGenericInputLesion();
 
     /*!
-     * Determined from the src_population, src_port, dst_population
-     * and dst_port attributes in the GenericInputLesion
+     * Copy constructor
+     */
+    exptGenericInputLesion (exptGenericInputLesion *);
+
+    /*!
+     * Re-draw the UI associated with this generic input lesion.
+     */
+    QVBoxLayout* drawLesion (nl_rootdata* data, viewELExptPanelHandler* handler);
+
+    /*!
+     * Read the XML for this generic input lesion change from the
+     * experiment layer file.
+     */
+    void readXML (QXmlStreamReader* reader, projectObject* pobj);
+
+    /*!
+     * Write out the XML for this generic input lesion change into the
+     * experiment layer file.
+     */
+    void writeXML (QXmlStreamWriter* writer, projectObject* pobj);
+
+    /*!
+     * Getter for this->edit.
+     */
+    bool getEdit (void);
+
+private: // methods
+    /*!
+     * Draw the lesion UI in "edit" mode. Called by @see drawLesion.
+     *
+     * @param elementList A list of the generic inputs which are to be lesioned.
+     *
+     * @param layout A QVBoxLayout, pre-allocated, in which the UI is to be laid out.
+     *
+     * @param handler For connecting slots in this UI.
+     *
+     * @return the layout.
+     */
+    QVBoxLayout* drawLesionEditMode (const QStringList& elementList,
+                                     QVBoxLayout* layout,
+                                     viewELExptPanelHandler* handler);
+
+    /*!
+     * Draw the lesion UI in non-edit or "view" mode. Called by @see
+     * drawLesion.
+     *
+     * @param elementList A list of the generic inputs which are to be lesioned.
+     *
+     * @param layout A QVBoxLayout, pre-allocated, in which the UI is to be laid out.
+     *
+     * @param handler For connecting slots in this UI.
+     *
+     * @return the layout.
+     */
+    QVBoxLayout* drawLesionViewMode (const QStringList& elementList,
+                                     QVBoxLayout* layout,
+                                     viewELExptPanelHandler* handler);
+
+private: // attributes
+    /*!
+     * Determined from the src, src_port, dst_population and dst
+     * attributes in the GenericInputLesion
      */
     QSharedPointer<genericInput> gi;
 
-    void writeXML (QXmlStreamWriter* writer, projectObject* pobj);
-    void readXML (QXmlStreamReader* reader, projectObject* pobj);
+    /*!
+     * Is the UI for this generic input lesion in "edit mode" or not?
+     * Determines how the UI is drawn.
+     */
+    bool edit;
+
+    /*!
+     * Initialised false. Set to true when @see gi points to a
+     * genericInput.
+     */
+    bool set;
 };
 
 class exptChangeProp : QObject
@@ -290,6 +368,7 @@ public:
     QVector < exptOutput * > outs;
     QVector < exptChangeProp * > changes;
     QVector < exptLesion * > lesions;
+    QVector < exptGenericInputLesion * > gilesions;
 
     QString name;
     QString description;

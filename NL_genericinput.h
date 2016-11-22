@@ -63,10 +63,17 @@ public:
     QSharedPointer<systemObject> destination;
     QSharedPointer<systemObject> source;
 
-    // FIXME: coder will ask "why destination and dst?". Refactor to
-    // be dstCmpt and srcCmpt.
+    /*!
+     * Fixme: Coder will ask "why destination and dst?". These are
+     * required as the source and destination objects could be of type
+     * synapse and then you don't know if it's the enclosed weight
+     * update or postsynapse component that forms the end of the
+     * genericinput connection. Refactor to be dstCmpt and srcCmpt.
+     */
+    //@{
     QSharedPointer <ComponentInstance> dst;
     QSharedPointer <ComponentInstance> src;
+    //@}
 
     QString srcPort;
     QString dstPort;

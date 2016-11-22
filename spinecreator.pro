@@ -21,6 +21,7 @@ SOURCES += main.cpp \
     qcustomplot.cpp \
     filteroutundoredoevents.cpp \
     CL_classes.cpp \
+    SC_utilities.cpp \
     NL_population.cpp \
     SC_projectobject.cpp \
     SC_aboutdialog.cpp \
@@ -69,6 +70,7 @@ HEADERS += mainwindow.h \
     filteroutundoredoevents.h \
     qmessageboxresizable.h \
     CL_classes.h \
+    SC_utilities.h \
     NL_population.h \
     SC_projectobject.h \
     SC_aboutdialog.h \

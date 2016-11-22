@@ -45,8 +45,8 @@ public:
     population(QSharedPointer <population> data, QSharedPointer<population> thisSharedPointer);
     void readFromXML(QDomElement &e, QDomDocument * doc, QDomDocument *meta, projectObject *data, QSharedPointer<population> thisSharedPointer);
     ~population();
-    QSharedPointer <ComponentInstance>neuronType;
-    QSharedPointer<NineMLLayoutData>layoutType;
+    QSharedPointer<ComponentInstance> neuronType;
+    QSharedPointer<NineMLLayoutData> layoutType;
     bool within_bounds(float x, float y);
     bool is_clicked(float, float, float );
     void animate(QSharedPointer<population> thisSharedPointer);
@@ -58,9 +58,9 @@ public:
     float topBound(float pos = 0);
     float bottomBound(float pos = 0);
     void move(float, float);
-    QString name;
+    QString name; // The name attribute of the <Neuron> inside the <Population>
     QString getName();
-    QString neuronTypeName;
+    QString neuronTypeName; // The url attribute of the <Neuron> inside the <Population>
     int numNeurons;
     QString layoutName;
     QVector < QSharedPointer <projection> > projections;

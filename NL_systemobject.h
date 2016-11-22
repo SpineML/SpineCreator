@@ -33,14 +33,13 @@
  * diagram". See saveNetworkImageDialog::drawOrderLessThan for the
  * reason why this is.
  */
-enum systemObjectType {
-
+enum systemObjectType
+{
     populationObject,
     projectionObject,
     synapseObject,
     inputObject,
     nullObject
-
 };
 
 class systemObject

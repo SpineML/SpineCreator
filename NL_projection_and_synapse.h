@@ -60,8 +60,8 @@ public:
     synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs = false);
     synapse(QSharedPointer <projection> proj, nl_rootdata * data, bool dontAddInputs = false);
     ~synapse();
-    QSharedPointer <ComponentInstance>postsynapseType;
-    QSharedPointer <ComponentInstance>weightUpdateType;
+    QSharedPointer<ComponentInstance> postsynapseType;
+    QSharedPointer<ComponentInstance> weightUpdateType;
     connection *connectionType;
     /*!
      * A label for the connection type. Filled with the connection
