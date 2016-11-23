@@ -1855,7 +1855,7 @@ exptGenericInputLesion::drawLesionViewMode (QVBoxLayout* layout, viewELExptPanel
     edit->setIcon(QIcon(":/icons/toolbar/edit.png"));
     edit->setProperty("ptr", qVariantFromValue((void*)this));
     descAndEdit->addWidget(edit);
-    QObject::connect(edit, SIGNAL(clicked()), handler, SLOT(editGenericLesion()));
+    QObject::connect(edit, SIGNAL(clicked()), handler, SLOT(editGILesion()));
 
     return layout;
 }

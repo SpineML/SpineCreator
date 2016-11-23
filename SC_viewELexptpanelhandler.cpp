@@ -1609,7 +1609,7 @@ void viewELExptPanelHandler::acceptGILesion()
 void viewELExptPanelHandler::editGILesion()
 {
     exptGenericInputLesion* gilesion = (exptGenericInputLesion*)sender()->property("ptr").value<void*>();
-    gilesion->edit = false;
+    gilesion->edit = true;
     redrawExpt();
 }
 
