@@ -297,6 +297,14 @@ public: // attributes
      */
     bool set;
 
+    /*
+     * Nice to have here would be bool searchPopulation, bool
+     * searchWeightUpdate and bool searchPostSynapse, which would come
+     * from a per-model or per-experiment setting. This would allow
+     * the drop down of candidate generic inputs to be smaller and
+     * more manageable. Haven't time to do this now.
+     */
+
 private: // methods
     /*!
      * Draw the lesion UI in "edit" mode. Called by @see drawLesion.
