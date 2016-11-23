@@ -483,14 +483,14 @@ void viewELExptPanelHandler::redrawExpt()
     // lesions, though it COULD be part of the same UI).
     QVBoxLayout * formGILesion = new QVBoxLayout;
     exptChanges->addLayout(formGILesion);
-    formGILesion->addWidget(new QLabel("GenericInput Lesions"));
+    formGILesion->addWidget(new QLabel("Generic Input Lesions"));
     // existing gi lesions
     for (int i = 0; i < currentExperiment->gilesions.size(); ++i) {
         exptGenericInputLesion * out = currentExperiment->gilesions[i];
         formGILesion->addLayout(out->drawLesion(this->data, this));
     }
     // add new gi lesion button
-    QPushButton * addGILesion = new QPushButton("Add GenericInput Lesion");
+    QPushButton * addGILesion = new QPushButton("Add Generic Input Lesion");
     addGILesion->setIcon(QIcon(":/icons/toolbar/addShad.png"));
     addGILesion->setFlat(true);
     addGILesion->setFocusPolicy(Qt::NoFocus);
