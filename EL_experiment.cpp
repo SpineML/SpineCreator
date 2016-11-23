@@ -1694,6 +1694,7 @@ exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
     } else {
         SCUtilities::storeError ("Error in Experiment GenericInputLesion - missing src tag");
     }
+
     if (reader->attributes().hasAttribute("dst")) {
         dst = reader->attributes().value("dst").toString();
     } else {
@@ -1705,6 +1706,7 @@ exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
     } else {
         SCUtilities::storeError ("Error in Experiment GenericInputLesion - missing src_port tag");
     }
+
     if (reader->attributes().hasAttribute("dst_port")) {
         dst_port = reader->attributes().value("dst_port").toString();
     } else {
@@ -1794,7 +1796,7 @@ exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
     if (set) {
         lineEdit->setText("FIXME"/*this->proj->getName()*/);
     } else {
-        lineEdit->setText("Type the name of the start of the connection");
+        lineEdit->setText("Type connection name");
     }
     QCompleter* completer = new QCompleter(elementList, this);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
@@ -1866,9 +1868,21 @@ exptGenericInputLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* ha
     QVBoxLayout* layout = new QVBoxLayout;
 
     QStringList elementList;
+
+    // data->populations: QVector < QSharedPointer <population> > populations;
     for (int i = 0; i < data->populations.size(); ++i) {
-        // Some alternative code here:
+        // First extract dsts from populations themselves:
+        QSharedPointer<population> pop = data->populations[i];
+        for (int j = 0; j < pop->neuronType->inputs.size(); ++j) { // or ->outputs
+            DBG() << "Candidate genericInput, contained in Population dst=" << pop->name
+                  << " with src = " << pop->neuronType->inputs[j]->src->component->name
+                  << ", src_port = " << pop->neuronType->inputs[j]->srcPort
+                  << ", dst_port = " << pop->neuronType->inputs[j]->dstPort;
+            elementList << pop->name;
+        }
+
 #if 0
+        // Then go through the projections contained within:
         for (int p = 0; p < data->populations[i]->projections.size(); ++p) {
             elementList << data->populations[i]->projections[p]->getName();
         }
@@ -1925,6 +1939,12 @@ bool
 exptGenericInputLesion::getEdit (void)
 {
     return this->edit;
+}
+
+void
+exptGenericInputLesion::setEdit (bool e)
+{
+    this->edit = e;
 }
 
 // ############## exptChangeProp

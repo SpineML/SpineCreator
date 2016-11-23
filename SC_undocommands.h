@@ -633,4 +633,20 @@ private:
     int location;
 };
 
+class deleteGILesionUndo: public QUndoCommand
+{
+public:
+    deleteGILesionUndo(nl_rootdata* data, experiment* expt, exptGenericInputLesion* l, QUndoCommand* parent = 0);
+    ~deleteGILesionUndo() {}
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    nl_rootdata * data;
+    experiment * expt;
+    exptGenericInputLesion * gilesion;
+    int location;
+};
+
 #endif // UNDOCOMMANDS_H

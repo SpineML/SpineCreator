@@ -153,6 +153,9 @@ public slots:
     void acceptLesion();
     void editLesion();
     void delLesion();
+    void acceptGILesion();
+    void editGILesion();
+    void delGILesion();
     void setChangeParComponent();
     void setChangeParName();
     void setChangeProp(QString name);

@@ -1542,6 +1542,44 @@ void viewELExptPanelHandler::delLesion()
     redrawExpt();
 }
 
+void viewELExptPanelHandler::acceptGILesion()
+{
+    exptGenericInputLesion* gilesion = (exptGenericInputLesion*)sender()->property("ptr").value<void*>();
+    gilesion->setEdit (false);
+    redrawExpt();
+}
+
+void viewELExptPanelHandler::editGILesion()
+{
+    exptGenericInputLesion* gilesion = (exptGenericInputLesion*)sender()->property("ptr").value<void*>();
+    gilesion->setEdit (false);
+    redrawExpt();
+}
+
+void viewELExptPanelHandler::delGILesion()
+{
+    experiment* currentExperiment = NULL;
+
+    // find currentExperiment
+    for (int i = 0; i < data->experiments.size(); ++i) {
+        if (data->experiments[i]->selected) {
+            currentExperiment = data->experiments[i];
+            break;
+        }
+    }
+
+    if (currentExperiment == NULL) {
+        return;
+    }
+
+    exptGenericInputLesion* gilesion = (exptGenericInputLesion*)sender()->property("ptr").value<void*>();
+
+    // push the command onto the undo stack
+    this->data->currProject->undoStack->push(new deleteGILesionUndo(this->data, currentExperiment, gilesion));
+
+    redrawExpt();
+}
+
 void viewELExptPanelHandler::setChangeParComponent()
 {
     // input text

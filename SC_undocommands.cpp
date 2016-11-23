@@ -1720,7 +1720,6 @@ void deleteChangePropUndo::redo()
     }
     // redraw to show user the result
     this->data->main->viewELhandler->redraw();
-
 }
 
 // delete a lesion - the output has no dependencies so is easy to remove and add back
@@ -1752,5 +1751,38 @@ void deleteLesionUndo::redo()
     }
     // redraw to show user the result
     this->data->main->viewELhandler->redraw();
+}
 
+// delete a lesion - the output has no dependencies so is easy to remove and add back
+deleteGILesionUndo::deleteGILesionUndo (nl_rootdata * data,
+                                        experiment * expt,
+                                        exptGenericInputLesion* l,
+                                        QUndoCommand *parent)
+    : QUndoCommand(parent)
+{
+    this->data = data;
+    this->expt = expt;
+    this->gilesion = l;
+    this->setText("GenericInput Lesion removed from experiment");
+}
+
+void deleteGILesionUndo::undo()
+{
+    // add the output back into the experiment
+    this->expt->gilesions.insert(this->expt->gilesions.begin()+this->location, this->gilesion);
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
+}
+
+void deleteGILesionUndo::redo()
+{
+    // remove the reference to the output from the experiment list
+    for (int i = 0; i < this->expt->gilesions.size(); ++i) {
+        if (this->expt->gilesions[i] == this->gilesion) {
+            this->expt->gilesions.erase(this->expt->gilesions.begin()+i);
+            this->location = i;
+        }
+    }
+    // redraw to show user the result
+    this->data->main->viewELhandler->redraw();
 }

@@ -283,6 +283,11 @@ public: // methods
      */
     bool getEdit (void);
 
+    /*!
+     * Setter for this->edit.
+     */
+    void setEdit (bool e);
+
 private: // methods
     /*!
      * Draw the lesion UI in "edit" mode. Called by @see drawLesion.
