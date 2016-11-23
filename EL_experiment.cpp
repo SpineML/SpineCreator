@@ -1545,8 +1545,8 @@ QVBoxLayout* exptLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* h
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
 
-        frame->setLayout(new QHBoxLayout);
-        QHBoxLayout* frameLay = qobject_cast<QHBoxLayout*> (frame->layout());
+        frame->setLayout(new QVBoxLayout);
+        QVBoxLayout* frameLay = qobject_cast<QVBoxLayout*> (frame->layout());
         CHECK_CAST(frameLay)
 
         frameLay->setContentsMargins(0,0,0,0);
@@ -1562,10 +1562,12 @@ QVBoxLayout* exptLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* h
         QCompleter* completer = new QCompleter(elementList, this);
         completer->setCaseSensitivity(Qt::CaseInsensitive);
         lineEdit->setCompleter(completer);
-        lineEdit->setMaximumWidth(220);
+        lineEdit->setMaximumWidth(380);
         lineEdit->setProperty("ptr", qVariantFromValue((void*)this));
         connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setLesionProjection()));
         frameLay->addWidget(lineEdit);
+
+        QHBoxLayout* buttonLayout = new QHBoxLayout;
 
         // accept all
         QPushButton* accept = new QPushButton;
@@ -1573,7 +1575,7 @@ QVBoxLayout* exptLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* h
         accept->setFlat(true);
         accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
         accept->setProperty("ptr", qVariantFromValue((void*)this));
-        frameLay->addWidget(accept);
+        buttonLayout->addWidget(accept);
         if (!set) {
             accept->setDisabled(true);
         }
@@ -1585,8 +1587,10 @@ QVBoxLayout* exptLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* h
         del->setFlat(true);
         del->setIcon(QIcon(":/icons/toolbar/delShad.png"));
         del->setProperty("ptr", qVariantFromValue((void*)this));
-        frameLay->addWidget(del);
+        buttonLayout->addWidget(del);
         QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delLesion()));
+
+        frameLay->addLayout(buttonLayout);
 
     } else {
 
@@ -1806,13 +1810,15 @@ exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
     connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setGILesion()));
     frameLay->addWidget(lineEdit);
 
+    QHBoxLayout* buttonLayout = new QHBoxLayout;
+
     // accept all
     QPushButton* accept = new QPushButton;
     accept->setMaximumWidth(32);
     accept->setFlat(true);
     accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
     accept->setProperty("ptr", qVariantFromValue((void*)this));
-    frameLay->addWidget(accept);
+    buttonLayout->addWidget(accept);
     if (!set) {
         accept->setDisabled(true);
     }
@@ -1824,8 +1830,10 @@ exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
     del->setFlat(true);
     del->setIcon(QIcon(":/icons/toolbar/delShad.png"));
     del->setProperty("ptr", qVariantFromValue((void*)this));
-    frameLay->addWidget(del);
+    buttonLayout->addWidget(del);
     QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delGILesion()));
+
+    frameLay->addLayout(buttonLayout);
 
     return layout;
 }
