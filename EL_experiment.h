@@ -278,49 +278,7 @@ public: // methods
      */
     void writeXML (QXmlStreamWriter* writer, projectObject* pobj);
 
-    /*!
-     * Getter for this->edit.
-     */
-    bool getEdit (void);
-
-    /*!
-     * Setter for this->edit.
-     */
-    void setEdit (bool e);
-
-private: // methods
-    /*!
-     * Draw the lesion UI in "edit" mode. Called by @see drawLesion.
-     *
-     * @param elementList A list of the generic inputs which are to be lesioned.
-     *
-     * @param layout A QVBoxLayout, pre-allocated, in which the UI is to be laid out.
-     *
-     * @param handler For connecting slots in this UI.
-     *
-     * @return the layout.
-     */
-    QVBoxLayout* drawLesionEditMode (const QStringList& elementList,
-                                     QVBoxLayout* layout,
-                                     viewELExptPanelHandler* handler);
-
-    /*!
-     * Draw the lesion UI in non-edit or "view" mode. Called by @see
-     * drawLesion.
-     *
-     * @param elementList A list of the generic inputs which are to be lesioned.
-     *
-     * @param layout A QVBoxLayout, pre-allocated, in which the UI is to be laid out.
-     *
-     * @param handler For connecting slots in this UI.
-     *
-     * @return the layout.
-     */
-    QVBoxLayout* drawLesionViewMode (const QStringList& elementList,
-                                     QVBoxLayout* layout,
-                                     viewELExptPanelHandler* handler);
-
-private: // attributes
+public: // attributes
     /*!
      * Determined from the src, src_port, dst_population and dst
      * attributes in the GenericInputLesion
@@ -338,6 +296,39 @@ private: // attributes
      * genericInput.
      */
     bool set;
+
+private: // methods
+    /*!
+     * Draw the lesion UI in "edit" mode. Called by @see drawLesion.
+     *
+     * @param elementList A list of the available generic inputs which
+     * could be lesioned.
+     *
+     * @param layout A QVBoxLayout, pre-allocated, in which the UI is
+     * to be laid out.
+     *
+     * @param handler For connecting slots in this UI.
+     *
+     * @return the layout.
+     */
+    QVBoxLayout* drawLesionEditMode (const QStringList& elementList,
+                                     QVBoxLayout* layout,
+                                     viewELExptPanelHandler* handler);
+
+    /*!
+     * Draw the lesion UI in non-edit or "view" mode. Called by @see
+     * drawLesion.
+     *
+     * @param layout A QVBoxLayout, pre-allocated, in which the UI is
+     * to be laid out.
+     *
+     * @param handler For connecting slots in this UI.
+     *
+     * @return the layout.
+     */
+    QVBoxLayout* drawLesionViewMode (QVBoxLayout* layout,
+                                     viewELExptPanelHandler* handler);
+
 };
 
 class exptChangeProp : QObject

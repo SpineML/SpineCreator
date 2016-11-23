@@ -72,6 +72,9 @@ public:
      */
     QString connectionTypeStr;
     bool isVisualised;
+    /*!
+     * Presumably this is the parent projection.
+     */
     QSharedPointer <projection> proj;
     QString getName();
     int getSynapseIndex();

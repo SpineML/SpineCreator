@@ -117,7 +117,9 @@ genericInput::~genericInput()
 
 QString genericInput::getName()
 {
-    return "input";
+    QString giname = this->src->getXMLName() + ":" + this->srcPort + " TO "
+        + this->dst->getXMLName() + ":" + this->dstPort;
+    return giname;
 }
 
 void genericInput::delAll(nl_rootdata *)

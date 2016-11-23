@@ -1714,57 +1714,57 @@ exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
     }
 
     // find generic input
-    bool notFound = true;
+    bool found = false;
 
     // This is each population
-    for (int i = 0; i < data->network.size() && notFound; ++i) {
+    for (int i = 0; i < data->network.size() && !found; ++i) {
 
         // Input could be in the neuron of this population.
         QSharedPointer<population> pop = qSharedPointerDynamicCast<population>(data->network[i]);
         if (pop->name == dst) { // pop->name is really the name of the Neuron element inside the Population. The Input is inside the Neuron.
             // Correct destination for our genericInput, now search for an input in here.
-            for (int j = 0; j < pop->neuronType->inputs.size() && notFound; ++j) { // or ->outputs
-                DBG() << "Candidate genericInput, contained in Population dst=" << pop->name
-                      << " with src = " << pop->neuronType->inputs[j]->src->component->name
-                      << ", src_port = " << pop->neuronType->inputs[j]->srcPort
-                      << ", dst_port = " << pop->neuronType->inputs[j]->dstPort;
-                if (pop->neuronType->inputs[j]->src->component->name == src
+            for (int j = 0; j < pop->neuronType->inputs.size() && !found; ++j) {
+                if (pop->neuronType->inputs[j]->src->getXMLName() == src
                     && pop->neuronType->inputs[j]->srcPort == src_port
                     && pop->neuronType->inputs[j]->dstPort == dst_port) {
-                    // Matches
-                    notFound = false;
+                    // Population (neuron) match
+                    this->gi = pop->neuronType->inputs[j];
+                    found = true;
                 }
             }
         }
-#if 0
-        // or it could be in one of the projections (within a synapse)
-        for (int j = 0; j < data->network[i]->projections.size() && notFound; ++j) {
-            // For each synapse in projections, test for weightupdate and postsynapse matching name.
 
-            for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-
-                // Test source match.
-                QSharedPointer<systemObject> s = this->gi->source;
-                if (s->type == populationObject) {
-                } else if (s->type == synapseObject) {
-                    xmlOut->writeAttribute("src", qSharedPointerDynamicCast<genericInput>(this->gi->source)->src->component->name);
-                } else {
-                    xmlOut->writeAttribute("src", "unknown");
+        // or it could be in one of the projections (i.e. within a synapse):
+        for (int j = 0; j < pop->projections.size() && !found; ++j) {
+            // For each synapse in projections, test for weightupdate and postsynapse matching name:
+            for (int k = 0; k < pop->projections[j]->synapses.size() && !found; ++k) {
+                // Check weight updates:
+                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size() && !found; ++l) {
+                    if (pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->src->getXMLName() == src
+                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->srcPort == src_port
+                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->dstPort == dst_port
+                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->dst->getXMLName() == dst) {
+                        // Weightupdate match
+                        this->gi = pop->projections[j]->synapses[k]->weightUpdateType->inputs[l];
+                        found = true;
+                    }
                 }
-
-                if (data->network[i]->projections[j]->source->neuronType->getXMLName() == src) {
-                }
-                if (data->network[i]->projections[j]->destination->neuronType->getXMLName() == dst) {
-                }
-                if (allmatch) {
-                    this->gi = data->network[i]->someinput;
+                // Check postsynapses:
+                for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size() && !found; ++l) {
+                    if (pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->src->getXMLName() == src
+                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->srcPort == src_port
+                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->dstPort == dst_port
+                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->dst->getXMLName() == dst) {
+                        // Postsynapse match
+                        this->gi = pop->projections[j]->synapses[k]->postsynapseType->inputs[l];
+                        found = true;
+                    }
                 }
             }
         }
-#endif
     }
 
-    if (notFound) {
+    if (!found) {
         SCUtilities::storeError ("Error in Experiment Lesion - references a non-existent genericinput");
     }
 
@@ -1784,8 +1784,8 @@ exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
     frame->setMaximumWidth(380);
     frame->setContentsMargins(0,0,0,0);
 
-    frame->setLayout(new QHBoxLayout);
-    QHBoxLayout* frameLay = qobject_cast<QHBoxLayout*> (frame->layout());
+    frame->setLayout(new QVBoxLayout);
+    QVBoxLayout* frameLay = qobject_cast<QVBoxLayout*> (frame->layout());
     CHECK_CAST(frameLay);
 
     frameLay->setContentsMargins(0,0,0,0);
@@ -1794,16 +1794,16 @@ exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
     // add Component LineEdit
     QLineEdit* lineEdit = new QLineEdit;
     if (set) {
-        lineEdit->setText("FIXME"/*this->proj->getName()*/);
+        lineEdit->setText(this->gi->getName());
     } else {
         lineEdit->setText("Type connection name");
     }
     QCompleter* completer = new QCompleter(elementList, this);
     completer->setCaseSensitivity(Qt::CaseInsensitive);
     lineEdit->setCompleter(completer);
-    lineEdit->setMaximumWidth(220);
+    lineEdit->setMaximumWidth(380);
     lineEdit->setProperty("ptr", qVariantFromValue((void*)this));
-    connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setLesionProjection()));
+    connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setGILesion()));
     frameLay->addWidget(lineEdit);
 
     // accept all
@@ -1816,7 +1816,7 @@ exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
     if (!set) {
         accept->setDisabled(true);
     }
-    QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptLesion()));
+    QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptGILesion()));
 
     // delete
     QPushButton* del = new QPushButton;
@@ -1825,15 +1825,13 @@ exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
     del->setIcon(QIcon(":/icons/toolbar/delShad.png"));
     del->setProperty("ptr", qVariantFromValue((void*)this));
     frameLay->addWidget(del);
-    QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delLesion()));
+    QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delGILesion()));
 
     return layout;
 }
 
 QVBoxLayout*
-exptGenericInputLesion::drawLesionViewMode (const QStringList& elementList,
-                                            QVBoxLayout* layout,
-                                            viewELExptPanelHandler* handler)
+exptGenericInputLesion::drawLesionViewMode (QVBoxLayout* layout, viewELExptPanelHandler* handler)
 {
     // new layout to contain name and port boxes
     QFrame* frame = new QFrame;
@@ -1843,7 +1841,7 @@ exptGenericInputLesion::drawLesionViewMode (const QStringList& elementList,
     QHBoxLayout* descAndEdit = new QHBoxLayout;
     frame->setLayout(descAndEdit);
 
-    QLabel* name = new QLabel("Lesion genericinput from <b>FIXME</b>" /*+ this->proj->getName() + "</b>"*/);
+    QLabel* name = new QLabel("Lesion genericinput from <b>" + this->gi->getName() + "</b>");
     name->setMaximumWidth(200);
     name->setWordWrap(true);
     descAndEdit->addWidget(name);
@@ -1867,32 +1865,43 @@ exptGenericInputLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* ha
 {
     QVBoxLayout* layout = new QVBoxLayout;
 
-    QStringList elementList;
-
-    // data->populations: QVector < QSharedPointer <population> > populations;
-    for (int i = 0; i < data->populations.size(); ++i) {
-        // First extract dsts from populations themselves:
-        QSharedPointer<population> pop = data->populations[i];
-        for (int j = 0; j < pop->neuronType->inputs.size(); ++j) { // or ->outputs
-            DBG() << "Candidate genericInput, contained in Population dst=" << pop->name
-                  << " with src = " << pop->neuronType->inputs[j]->src->component->name
-                  << ", src_port = " << pop->neuronType->inputs[j]->srcPort
-                  << ", dst_port = " << pop->neuronType->inputs[j]->dstPort;
-            elementList << pop->name;
-        }
-
-#if 0
-        // Then go through the projections contained within:
-        for (int p = 0; p < data->populations[i]->projections.size(); ++p) {
-            elementList << data->populations[i]->projections[p]->getName();
-        }
-#endif
-    }
-
     if (edit) {
+        // If in edit mode, build the elementList of available generic inputs.
+        QStringList elementList;
+        // data->populations is an instance of: QVector<QSharedPointer<population> >
+        for (int i = 0; i < data->populations.size(); ++i) {
+            // First extract dsts from populations themselves:
+            QSharedPointer<population> pop = data->populations[i];
+            for (int j = 0; j < pop->neuronType->inputs.size(); ++j) { // or ->outputs
+                DBG() << "Candidate genericInput, contained in Population dst=" << pop->name
+                      << " with src = " << pop->neuronType->inputs[j]->src->component->name
+                      << ", src_port = " << pop->neuronType->inputs[j]->srcPort
+                      << ", dst_port = " << pop->neuronType->inputs[j]->dstPort;
+                elementList <<  pop->neuronType->inputs[j]->getName();
+            }
+
+            // Then go through the projections contained within:
+            for (int j = 0; j < pop->projections.size(); ++j) {
+                // For each synapse in projections, test for weightupdate and postsynapse containing inputs
+                for (int k = 0; k < pop->projections[j]->synapses.size(); ++k) {
+                    // Find inputs from the weight update and postsynapses on this synapse:
+                    for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                        DBG() << "Candidate weightupdate genericInput: "
+                              << pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->getName();
+                        elementList << pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->getName();
+                    }
+                    for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                        DBG() << "Candidate postsynapse genericInput: "
+                              << pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->getName();
+                        elementList << pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->getName();
+                    }
+                }
+            }
+        }
         layout = this->drawLesionEditMode (elementList, layout, handler);
+
     } else { // !edit
-        layout = this->drawLesionViewMode (elementList, layout, handler);
+        layout = this->drawLesionViewMode (layout, handler);
     }
 
     return layout;
@@ -1910,41 +1919,19 @@ exptGenericInputLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject* po)
     QSharedPointer<systemObject> s = this->gi->source;
     if (s->type == populationObject) {
         // Input should be in the neuron of this population.
-        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (s);
+        QSharedPointer <population> pop = qSharedPointerDynamicCast<population>(s);
         xmlOut->writeAttribute("src", pop->name);
     } else if (s->type == synapseObject) {
-        xmlOut->writeAttribute("src", qSharedPointerDynamicCast<genericInput>(this->gi->source)->src->component->name);
+        xmlOut->writeAttribute("src", qSharedPointerDynamicCast<genericInput>(s)->src->component->name);
     } else {
+        DBG() << "Unknown systemObject type " << s->type;
         xmlOut->writeAttribute("src", "unknown");
     }
-    // src_port is simply stored in the genericInput:
-    xmlOut->writeAttribute("src_port", qSharedPointerDynamicCast<genericInput>(this->gi->source)->srcPort);
+    xmlOut->writeAttribute("src_port", this->gi->srcPort);
 
-    // Add dst and dst_port attributes:
-    QSharedPointer<systemObject> d = this->gi->destination;
-    if (d->type == populationObject) {
-        // Input should be in the neuron of this population.
-        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (d);
-        xmlOut->writeAttribute("dst", pop->name);
-    } else if (d->type == synapseObject) {
-        xmlOut->writeAttribute("dst", qSharedPointerDynamicCast<genericInput>(this->gi->destination)->dst->component->name);
-    } else {
-        xmlOut->writeAttribute("dst", "unknown");
-    }
-    // dst_port is simply stored in the genericInput:
-    xmlOut->writeAttribute("dst_port", qSharedPointerDynamicCast<genericInput>(this->gi->source)->dstPort);
-}
-
-bool
-exptGenericInputLesion::getEdit (void)
-{
-    return this->edit;
-}
-
-void
-exptGenericInputLesion::setEdit (bool e)
-{
-    this->edit = e;
+    // This shouyld be it for destination:
+    xmlOut->writeAttribute("dst", this->gi->dst->getXMLName());
+    xmlOut->writeAttribute("dst_port", this->gi->dstPort);
 }
 
 // ############## exptChangeProp

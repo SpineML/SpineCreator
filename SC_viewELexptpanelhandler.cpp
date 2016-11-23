@@ -324,7 +324,7 @@ void viewELExptPanelHandler::redrawExpt()
         if (currentExperiment->lesions[i]->edit == true) edit_going_on = true;
     }
     for (int i = 0; i < currentExperiment->gilesions.size(); ++i) {
-        if (currentExperiment->gilesions[i]->getEdit() == true) {
+        if (currentExperiment->gilesions[i]->edit == true) {
             edit_going_on = true;
         }
     }
@@ -498,7 +498,7 @@ void viewELExptPanelHandler::redrawExpt()
     addGILesion->setFont(addFont);
     // grey out if editing:
     for (int i=0; i < currentExperiment->gilesions.size(); ++i) {
-        if (currentExperiment->gilesions[i]->getEdit()) {
+        if (currentExperiment->gilesions[i]->edit) {
             addGILesion->setDisabled(true);
         }
     }
@@ -1475,6 +1475,63 @@ void viewELExptPanelHandler::addGILesion()
     }
 }
 
+#define NO_GILESION lesionedGI == (QSharedPointer<genericInput>)0
+void viewELExptPanelHandler::setGILesion (void)
+{
+    // input text
+    QString text = ((QLineEdit *) sender())->text();
+    DBG() << "Input text is: " << text;
+
+    QSharedPointer<genericInput> lesionedGI = (QSharedPointer<genericInput>)0;
+
+    // find the selected genericInput by matching up with the text from the UI
+    for (int i = 0; i < data->populations.size() && NO_GILESION; ++i) {
+        // First extract dsts from populations themselves:
+        QSharedPointer<population> pop = data->populations[i];
+        for (int j = 0; j < pop->neuronType->inputs.size(); ++j) { // or ->outputs
+            if (pop->neuronType->inputs[j]->getName() == text) {
+                lesionedGI = pop->neuronType->inputs[j];
+            }
+        }
+
+        // Then go through the projections contained within:
+        for (int j = 0; j < pop->projections.size() && NO_GILESION; ++j) {
+            // For each synapse in projections, test for weightupdate and postsynapse containing inputs
+            for (int k = 0; k < pop->projections[j]->synapses.size() && NO_GILESION; ++k) {
+                // Find inputs from the weight update and postsynapses on this synapse:
+                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size() && NO_GILESION; ++l) {
+                    if (pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->getName() == text) {
+                        lesionedGI = pop->projections[j]->synapses[k]->weightUpdateType->inputs[l];
+                    }
+                }
+                for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size() && NO_GILESION; ++l) {
+                    if (pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->getName() == text) {
+                        lesionedGI = pop->projections[j]->synapses[k]->postsynapseType->inputs[l];
+                    }
+                }
+            }
+        }
+    }
+
+    exptGenericInputLesion* gilesion = (exptGenericInputLesion*)sender()->property("ptr").value<void *>();
+    if (lesionedGI != (QSharedPointer<genericInput>)0) {
+        DBG() << "Found GI to lesion which is " << lesionedGI->getName();
+        gilesion->gi = lesionedGI;
+        gilesion->set = true;
+        QPalette p = ((QLineEdit*) sender())->palette();
+        p.setColor( QPalette::Normal, QPalette::Base, QColor(200, 255, 200) );
+        ((QLineEdit *) sender())->setPalette(p);
+    } else {
+        gilesion->set = false;
+        QPalette p = ((QLineEdit*) sender())->palette();
+        p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
+        ((QLineEdit*) sender())->setPalette(p);
+    }
+
+    // redraw to update the selection
+    redrawExpt();
+}
+
 void viewELExptPanelHandler::setLesionProjection()
 {
     // input text
@@ -1545,14 +1602,14 @@ void viewELExptPanelHandler::delLesion()
 void viewELExptPanelHandler::acceptGILesion()
 {
     exptGenericInputLesion* gilesion = (exptGenericInputLesion*)sender()->property("ptr").value<void*>();
-    gilesion->setEdit (false);
+    gilesion->edit = false;
     redrawExpt();
 }
 
 void viewELExptPanelHandler::editGILesion()
 {
     exptGenericInputLesion* gilesion = (exptGenericInputLesion*)sender()->property("ptr").value<void*>();
-    gilesion->setEdit (false);
+    gilesion->edit = false;
     redrawExpt();
 }
 

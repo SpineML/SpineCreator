@@ -35,7 +35,11 @@ public:
     genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput = false);
     ~genericInput();
 
+    /*!
+     * Returns an identifier for this genericInput connection.
+     */
     virtual QString getName();
+
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
 
     void delAll(nl_rootdata *);
