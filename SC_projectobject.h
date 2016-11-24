@@ -78,6 +78,14 @@ public:
 
     // info
     QString name;
+    /*!
+     * Return a filename-friendly version of @see name. This is used
+     * as the sub-directory in the working directory where the model
+     * is simulated. It means that we don't get a pollution of the
+     * "Loaded Logs" when working in the graph interface.
+     */
+    QString getFilenameFriendlyName (void);
+
     QString filePath;
 
     QString networkFile;

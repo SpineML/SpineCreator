@@ -2057,8 +2057,6 @@ void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e
 
 void pythonscript_connection::read_metadata_xml(QDomNode &e)
 {
-    DBG() << "pythonscript_connection::read_metadata_xml called";
-
     // read in the settings for this generator
     QDomNode node = e.firstChild();
 
@@ -2080,10 +2078,8 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
 
             // load the parameters from the metadata
             for (int i = 0; i < this->parNames.size(); ++i) {
-                DBG() << "ParName = " << this->parNames[i];
                 this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
             }
-
         }
 
         // read the config metadata
@@ -2112,7 +2108,7 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
     if (settings.value(this->scriptName,"not found") == this->scriptText) {
         // User's library DOES contain a script whose name and content
         // matches the one in the model.
-        DBG() << "Your library has an identical copy of the model script " << this->scriptName;
+        // DBG() << "Your library has an identical copy of the model script " << this->scriptName;
 
     } else if (settings.value(this->scriptName,"not found") == "not found") {
 

@@ -1535,8 +1535,6 @@ void projection::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
 void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta,
                              projectObject * data, QSharedPointer<projection> thisSharedPointer)
 {
-    DBG() << "projection::readFromXML called";
-
     this->type = projectionObject;
 
     this->selectedControlPoint.ind = -1;
@@ -1875,7 +1873,9 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         metaNode = metaNode.nextSibling();
     }
 
+#ifdef __DEBUG_PROJECTION_READXML
     this->print();
+#endif
 }
 
 void projection::add_curves()
@@ -1923,12 +1923,15 @@ void projection::add_curves()
 void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data,
                                       QSharedPointer<projection> thisSharedPointer)
 {
+#ifdef __DEBUG_READ_INPUTS
     DBG() << "Find synapses in element " << e.tagName() << " dst " << e.attribute("dst_population","");
+#endif
     // load the inputs:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
     if (colList.count() != this->synapses.size()) {
         // oh dear, something has gone badly wrong
+#ifdef __DEBUG_READ_INPUTS
         DBG() << "Size mismatch " << colList.count() << " != " << this->synapses.size() << " for element:" << e.tagName();
         if (e.hasAttribute("name")) {
             DBG() << e.attribute("name", "");
@@ -1936,22 +1939,26 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
         DBG() << "Element content: ";
         DBG() << e.text();
         DBG() << ".*.";
+#endif
         // Is there really not a generic "application failed" scheme
         // to access taht would give a popup and return the
         // application to the state it was in before starting the
         // feature?
     }
+#ifdef __DEBUG_READ_INPUTS
     DBG() << "There are " << colList.count() << " synapses.";
+#endif
 
     // t iterates through the LL:Synapses in colList
     for (int t = 0; t < (int) colList.count(); ++t) {
 
+#ifdef __DEBUG_READ_INPUTS
         if (t < this->synapses.size()) {
             DBG() << "All is well, t is < synapses.size()=" << this->synapses.size();
         } else {
             DBG() << "WHOOP WHOOP, t >= synapses.size()!";
         }
-
+#endif
         QDomNode n = colList.item(t).toElement().firstChild();
         while (!n.isNull()) {
 

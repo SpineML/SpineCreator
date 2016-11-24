@@ -602,14 +602,16 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 {
     // skip if a special input for a projection
     if (this->projInput) {
+#ifdef __DEBUG_READ_META
         DBG() << "Special input for a projection; skip";
+#endif
         return;
     }
 
     // now load the metadata for the projection:
     QDomNode metaNode = meta->documentElement().firstChild();
 
-#if 0
+#ifdef __DEBUG_READ_META
     DBG() << "this:     source:" << this->src->getXMLName()
           << "destination:" << this->dst->getXMLName()
           << "srcPort:" <<  this->srcPort
@@ -618,7 +620,7 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 
     while(!metaNode.isNull()) {
 
-#if 0
+#ifdef __DEBUG_READ_META
         DBG() << "metaNode: source:" << metaNode.toElement().attribute("source", "")
               << "destination:" << metaNode.toElement().attribute("destination", "")
               << "srcPort:" <<  metaNode.toElement().attribute("srcPort", "")
@@ -663,7 +665,9 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
                             vals = vals.nextSibling();
                         }
                         // add the filled out curve to the list
+#ifdef __DEBUG_READ_META
                         DBG() << "Adding filled curve to this->curves from reading XML";
+#endif
                         this->curves.push_back(newCurve);
                     }
                 }
