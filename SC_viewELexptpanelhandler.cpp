@@ -1452,10 +1452,15 @@ void viewELExptPanelHandler::addLesion()
 
     // find currentExperiment
     for (int i = 0; i < data->experiments.size(); ++i) {
-        if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
+        if (data->experiments[i]->selected) {
+            currentExperiment = data->experiments[i];
+            break;
+        }
     }
 
-    if (currentExperiment == NULL) return;
+    if (currentExperiment == NULL) {
+        return;
+    }
 
     currentExperiment->lesions.push_back(new exptLesion);
 
@@ -1550,7 +1555,15 @@ void viewELExptPanelHandler::setLesionProjection()
 
     if (lesionedProj != (QSharedPointer <projection>)0) {
         lesion->proj = lesionedProj;
+
         lesion->set = true;
+
+        // Here find out if there are any associated genericinput
+        // lesions that need to be added to the experiment layer. Find
+        // generic inputs which have as their input or output this
+        // projection's postsynapse or weightupdate.
+        lesion->setAssocGILesions();
+
         QPalette p = ((QLineEdit *) sender())->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(200, 255, 200) );
         ((QLineEdit *) sender())->setPalette(p);

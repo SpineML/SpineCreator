@@ -1668,6 +1668,29 @@ void exptLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
     xmlOut->writeAttribute("dst_population",this->proj->destination->neuronType->getXMLName());
 }
 
+void
+exptLesion::setAssocGILesions (void)
+{
+    DBG() << "Called";
+
+    if (!this->set) {
+        DBG() << "proj not set, returning.";
+        return;
+    }
+
+    for (int k = 0; k < this->proj->synapses.size(); ++k) {
+        // Find inputs from the weight update and postsynapses on this synapse:
+        for (int l = 0; l < this->proj->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+            DBG() << "Adding weightupdate assoc GI lesion " << this->proj->synapses[k]->postsynapseType->inputs[l]->getName();
+            this->assocGILesions.append (this->proj->synapses[k]->weightUpdateType->inputs[l]);
+        }
+        for (int l = 0; l < this->proj->synapses[k]->postsynapseType->inputs.size(); ++l) {
+            DBG() << "Adding postsynapse assoc GI lesion " << this->proj->synapses[k]->postsynapseType->inputs[l]->getName();
+            this->assocGILesions.append (this->proj->synapses[k]->postsynapseType->inputs[l]);
+        }
+    }
+}
+
 // ############# Generic input lesion
 
 exptGenericInputLesion::exptGenericInputLesion (void)

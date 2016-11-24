@@ -204,46 +204,7 @@ public:
 };
 
 /*!
- * Currently this is specifically a projection lesion. I've proposed a
- * GenericInputLesion in the SpineML spec, which derives from Lesion
- * and adds src port and dst port names.
- */
-class exptLesion : QObject
-{
-    Q_OBJECT
-
-public:
-    exptLesion() {
-        this->edit = true;
-        this->set = false;
-    }
-
-    /*!
-     * \brief exptLesion::exptLesion copy constructor.
-     *
-     * Create a copy of an existing Lesion
-     */
-    exptLesion(exptLesion *);
-
-    /*!
-     * The projection and port are runtime determined from the
-     * src_population and dst_population specified in the xml.
-     */
-    //@{
-    QSharedPointer<projection> proj;
-    Port* port;
-    //@}
-
-    bool edit;
-    bool set;
-
-    QVBoxLayout* drawLesion (nl_rootdata* data, viewELExptPanelHandler* handler);
-    void writeXML (QXmlStreamWriter *, projectObject *);
-    void readXML (QXmlStreamReader * , projectObject *);
-};
-
-/*!
- * An analgo of the Lesion class for Generic Inputs. This maps to the
+ * An analog of the Lesion class for Generic Inputs. This maps to the
  * GenericInputLesionType in the SpineML specification.
  */
 class exptGenericInputLesion : QObject
@@ -336,6 +297,59 @@ private: // methods
      */
     QVBoxLayout* drawLesionViewMode (QVBoxLayout* layout,
                                      viewELExptPanelHandler* handler);
+
+};
+
+/*!
+ * Currently this is specifically a projection lesion. I've proposed a
+ * GenericInputLesion in the SpineML spec, which derives from Lesion
+ * and adds src port and dst port names.
+ */
+class exptLesion : QObject
+{
+    Q_OBJECT
+
+public:
+    exptLesion() {
+        this->edit = true;
+        this->set = false;
+    }
+
+    /*!
+     * \brief exptLesion::exptLesion copy constructor.
+     *
+     * Create a copy of an existing Lesion
+     */
+    exptLesion(exptLesion *);
+
+    /*!
+     * The projection and port are runtime determined from the
+     * src_population and dst_population specified in the xml.
+     */
+    //@{
+    QSharedPointer<projection> proj;
+    Port* port;
+    //@}
+
+    bool edit;
+    bool set;
+
+    /*!
+     * A vector of generic input lesions which are associated with
+     * this projection lesion.
+     */
+    QVector<exptGenericInputLesion* > assocGILesions;
+
+    /*!
+     * Requires this->proj to be set. Fills assocGILesions with any
+     * generic inputs that are connected to the postsynapse or
+     * weightupdate components of this projection.
+     */
+    void setAssocGILesions (void);
+
+    QVBoxLayout* drawLesion (nl_rootdata* data, viewELExptPanelHandler* handler);
+    void writeXML (QXmlStreamWriter *, projectObject *);
+    void readXML (QXmlStreamReader * , projectObject *);
 
 };
 
