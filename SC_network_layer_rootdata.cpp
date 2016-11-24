@@ -134,6 +134,10 @@ void nl_rootdata::selectProject(QAction * action)
     projects[action->property("number").toInt()]->select_project(this);
     redrawViews();
     main->updateTitle();
+
+    // Update logs as the project has changed.
+    DBG() << "update logs as project has changed.";
+    main->updateDatas();
 }
 
 void nl_rootdata::replaceComponent(QSharedPointer<Component> oldComp, QSharedPointer<Component> newComp)

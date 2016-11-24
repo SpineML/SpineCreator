@@ -717,6 +717,9 @@ void viewELExptPanelHandler::changeSelection()
     // otherwise select it
     data->experiments[index]->select(&(data->experiments));
 
+    // Update logs files given we've changed the selected experiment
+    this->main->updateDatas();
+
     // redraw to update the selection
     redrawPanel();
     redrawExpt();
@@ -735,6 +738,9 @@ void viewELExptPanelHandler::changedEngine(QString sim)
     if (currentExperiment == NULL) return;
 
     currentExperiment->setup.simType = sim;
+
+    // Log file location will have changed if the engine changed.
+    this->main->updateDatas();
 
     // redraw to update the selection
     redrawExpt();
@@ -1788,7 +1794,6 @@ void viewELExptPanelHandler::delChangedProp()
 
 void viewELExptPanelHandler::run()
 {
-
     QSettings settings;
 
     QToolButton * runButton = qobject_cast < QToolButton * > (sender());
@@ -1964,11 +1969,17 @@ void viewELExptPanelHandler::run()
     simulator->setWorkingDirectory(wk_dir.absolutePath());
     simulator->setProcessEnvironment(env);
 
-    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
+    // This is a project-specific* output directory, stored in a
+    // folder in the working directory.
+    //
+    // *: Actually, it's experiment specific, because if another
+    // experiment in the same project has a different simulator, then
+    // this path will differ. However, I don't add a _exptN
+    // suffix. That said, true experiment-specific data storage would
+    // enable easy comparison of two experiments and would be great.
+    QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp" + QDir::separator() + data->currProject->getFilenameFriendlyName() + "_e" + QString::number(currentExptNum);
 
-    // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
-    // FIXME: It would be great if this were project-specific, so that each project has its own temp dir.
-    QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp";
+    simulator->setProperty("logpath", out_dir_name + QDir::separator() + "log");
 
     QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
                                        // to the model being executed,
@@ -2100,7 +2111,6 @@ void viewELExptPanelHandler::checkForSimTime() {
 
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 {
-
     // stop updating the bar
     simTimeChecker.disconnect();
     simTimeChecker.stop();
@@ -2142,7 +2152,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         }
     }
 
-    // collect logs
+    // Update the view of the logfiles
     QDir logs(sender()->property("logpath").toString());
 
     QStringList filter;

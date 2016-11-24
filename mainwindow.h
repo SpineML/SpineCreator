@@ -129,6 +129,11 @@ public:
     QString toolbarStyleSheet;
     void setProjectMenu();
 
+    /*!
+     * Update the view of the logfiles
+     */
+    void updateDatas (void);
+
 private:
     Ui::MainWindow *ui;
     GLWidget *glWidget;

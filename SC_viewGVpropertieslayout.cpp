@@ -110,12 +110,25 @@ void viewGVpropertieslayout::setupPlot(QCustomPlot * plot)
 
 void viewGVpropertieslayout::updateLogs()
 {
+    DBG() << "re-populating this->datas";
     disconnect(datas);
     datas->clear();
     for (int i = 0; i < logsForGraphs.size(); ++i) {
         datas->addItem(logsForGraphs[i]->logName);
     }
     connect(datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
+}
+
+void viewGVpropertieslayout::clearLogs()
+{
+    DBG() << "Clearing out logsForGraphs and datas (UI element)";
+    disconnect(this->datas);
+    this->datas->clear();
+    for (int i = 0; i < logsForGraphs.size(); ++i) {
+        delete logsForGraphs[i];
+    }
+    logsForGraphs.clear();
+    connect(this->datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
 }
 
 void viewGVpropertieslayout::deleteCurrentLog()
@@ -498,6 +511,7 @@ void viewGVpropertieslayout::refreshLog(logData * log)
 
 void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
 {
+    DBG() << "called to load a list of files of size " << fileNames.size() << " with path " << path->absolutePath();
     // load the files
     for (int i = 0; i < fileNames.size(); ++i) {
 

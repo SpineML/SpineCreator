@@ -504,6 +504,59 @@ void MainWindow::setProjectMenu()
     connect(data.projectActions, SIGNAL(triggered(QAction*)), &data, SLOT(selectProject(QAction*)));
 }
 
+void MainWindow::updateDatas (void)
+{
+    // fetch current experiment sim engine
+    experiment * currentExperiment = NULL;
+    int currentExptNum = -1;
+    for (int i = 0; i < data.experiments.size(); ++i) {
+        if (data.experiments[i]->selected) {
+            currentExperiment = data.experiments[i];
+            currentExptNum = i;
+            break;
+        }
+    }
+
+    // Build up the correct log path (compare with code in
+    // SC_viewELexptpanelhander.cpp)
+    if (currentExptNum != -1) {
+        QSettings settings;
+        QString simName = currentExperiment->setup.simType;
+        settings.beginGroup("simulators/" + simName);
+        QString wk_dir_string = settings.value("working_dir").toString();
+        settings.endGroup();
+        wk_dir_string = QDir::toNativeSeparators(wk_dir_string);
+        QDir wk_dir(wk_dir_string);
+        QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp"
+            + QDir::separator() + data.currProject->getFilenameFriendlyName()
+            + "_e" + QString::number(currentExptNum);
+        QString perexpt_logpath = out_dir_name + QDir::separator() + "log";
+        QDir logs(perexpt_logpath);
+        QStringList filter;
+        filter << "*.xml";
+        logs.setNameFilters(filter);
+
+        if (this->viewGV.properties->currentDatasDir != perexpt_logpath) {
+            DBG() << "Log dir changed. CurrentDatasDir:" << this->viewGV.properties->currentDatasDir;
+            DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;
+
+            this->viewGV.properties->currentDatasDir = perexpt_logpath;
+            // add logs to graphs
+            this->viewGV.properties->clearLogs();
+            this->viewGV.properties->loadDataFiles(logs.entryList(), &logs);
+            // and insert logs into visualiser
+            if (this->viewVZ.OpenGLWidget != NULL) {
+                this->viewVZ.OpenGLWidget->addLogs(&this->viewGV.properties->logsForGraphs);
+            }
+        } else {
+            DBG() << "Log dir UNchanged. CurrentDatasDir:" << this->viewGV.properties->currentDatasDir;
+            DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;
+        }
+    } else {
+        DBG() << "Current expt num is -1, no current experiment exists to update logs from";
+    }
+}
+
 bool MainWindow::promptToSave()
 {
     // check what the user wants to do
@@ -795,6 +848,7 @@ void MainWindow::initViewEL()
     ((QVBoxLayout *) selContent0->layout())->insertWidget(1,line0b);
 
     this->viewELhandler = new viewELExptPanelHandler(&(this->viewEL), &(this->data));
+    this->viewELhandler->main = this;
 
     // internal connections
     //connect(run, SIGNAL(clicked()), this->viewELhandler, SLOT(run()));
@@ -824,8 +878,9 @@ void MainWindow::initViewCL()
     // add a root layout
     viewCL.layout = new QHBoxLayout();
     // delete any existing layout and replace with this one
-    if (viewCL.frame->layout())
+    if (viewCL.frame->layout()) {
         delete viewCL.frame->layout();
+    }
     viewCL.frame->setLayout(viewCL.layout);
 
     // get rid of the margins and padding
@@ -1454,6 +1509,9 @@ void MainWindow::import_project(const QString& filePath)
     // Update the recent projects menu
     this->updateRecentProjects(filePath);
     this->updateTitle();
+
+    // Update list of graphable logs.
+    this->updateDatas();
 }
 
 void MainWindow::export_project(const QString& filePath)
@@ -1969,6 +2027,9 @@ void MainWindow::viewGVshow()
     // show this view
     this->viewGV.subWin->show();
 
+    // In case the experiment changed, update the logs
+    this->updateDatas();
+
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
 
@@ -2022,6 +2083,10 @@ void MainWindow::viewELshow()
 
     // titlebar
     updateTitle();
+
+    // Data logs, if experiment has changed.
+    DBG() << "update logs as experiment layer has been selected.";
+    this->updateDatas();
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }

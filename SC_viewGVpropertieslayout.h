@@ -38,6 +38,10 @@ public:
     ~viewGVpropertieslayout();
     void setupPlot(QCustomPlot * plot);
     void loadDataFiles(QStringList, QDir * path = 0);
+    /*!
+     * Clears this->datas
+     */
+    void clearLogs();
     viewGVstruct * viewGV;
     QAction * actionAddGraph;
     QAction * actionToGrid;
@@ -51,14 +55,18 @@ public:
     QListWidget * indices;
     QListWidget * types;
     QPushButton * addButton;
+    /*!
+     * The log directory which is currently being viewed.
+     */
+    QString currentDatasDir;
 
 private:
     void createToolbar();
     void updateLogs();
     void refreshLog(logData * log);
-    
+
 signals:
-    
+
 public slots:
     // property slots
     void windowSelected(QMdiSubWindow *);
