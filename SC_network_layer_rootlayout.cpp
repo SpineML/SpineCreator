@@ -490,6 +490,9 @@ void nl_rootlayout::initTabBoxProjection(nl_rootdata * ) {
     CHECK_CAST(qobject_cast<QVBoxLayout *> (tab1->layout()));
     weightUpdateComboBox = this->addDropBox((QVBoxLayout *) tab1->layout(),"Weight Update", "weight_update");
 
+    this->weightUpdateTitle = new QLabel("<b>WeightUpdate name:</b>");
+    tab1->layout()->addWidget(this->weightUpdateTitle);
+
     // connect for configure
     connect(this, SIGNAL(setWeightUpdateType(int)), weightUpdateComboBox, SLOT(setCurrentIndex(int)));
 
@@ -503,6 +506,9 @@ void nl_rootlayout::initTabBoxProjection(nl_rootdata * ) {
 
     CHECK_CAST(qobject_cast<QVBoxLayout *> (tab2->layout()));
     postSynapseComboBox = this->addDropBox((QVBoxLayout *) tab2->layout(),"Post-synapse", "postsynapse");
+
+    this->postSynapseTitle = new QLabel("<b>PostSynapse name:</b>");
+    tab2->layout()->addWidget(this->postSynapseTitle);
 
     // connect for configure
     connect(this, SIGNAL(setPostSynapseType(int)), postSynapseComboBox, SLOT(setCurrentIndex(int)));
@@ -1148,6 +1154,8 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
         case projectionObject:
             if (i == 0) {
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
+                QString wuname = "<b>Name:</b> " + proj->synapses[proj->currTarg]->getWeightUpdateName();
+                this->weightUpdateTitle->setText(wuname);
                 type9ml = proj->synapses[proj->currTarg]->weightUpdateType;
                 type = "syn";
                 // check if current component validates
@@ -1172,6 +1180,8 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
             }
             if (i == 1) {
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
+                QString psname = "<b>Name:</b> " + proj->synapses[proj->currTarg]->getPostSynapseName();
+                this->postSynapseTitle->setText(psname);
                 type9ml = proj->synapses[proj->currTarg]->postsynapseType;
                 type = "psp";
                 // check if current component validates

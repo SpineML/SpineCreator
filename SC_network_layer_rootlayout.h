@@ -82,6 +82,10 @@ private:
     QComboBox * postSynapseComboBox;
     QComboBox * connectionComboBox;
 
+    // Title field for weightupdate/postsynapse. Issue#105
+    QLabel * weightUpdateTitle;
+    QLabel * postSynapseTitle;
+
     // port selection for input
     QComboBox * inputPortSelection;
     QComboBox * inputConnectionComboBox;
