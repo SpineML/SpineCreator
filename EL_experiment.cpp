@@ -26,6 +26,7 @@
 #include "SC_network_layer_rootdata.h"
 #include "SC_projectobject.h"
 #include "SC_utilities.h"
+#include <QRegularExpression>
 
 experiment::experiment()
 {
@@ -1522,6 +1523,7 @@ exptLesion::exptLesion(exptLesion* lToCopy)
 {
     this->proj = lToCopy->proj;
     this->port = lToCopy->port;
+    this->exptParent = lToCopy->exptParent;
     this->edit = false;
     this->set = true;
 }
@@ -1669,24 +1671,64 @@ void exptLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
 }
 
 void
-exptLesion::setAssocGILesions (void)
+exptLesion::setAssocGenericInputs (void)
 {
-    DBG() << "Called";
-
     if (!this->set) {
         DBG() << "proj not set, returning.";
         return;
     }
 
+    if (!this->assocGenericInputs.isEmpty()) {
+        DBG() << "Already got the generic inputs, returning.";
+        return;
+    }
+
+    QString srcPopName = this->proj->source->getName();
     for (int k = 0; k < this->proj->synapses.size(); ++k) {
+
         // Find inputs from the weight update and postsynapses on this synapse:
         for (int l = 0; l < this->proj->synapses[k]->weightUpdateType->inputs.size(); ++l) {
-            DBG() << "Adding weightupdate assoc GI lesion " << this->proj->synapses[k]->postsynapseType->inputs[l]->getName();
-            this->assocGILesions.append (this->proj->synapses[k]->weightUpdateType->inputs[l]);
+
+            // If the generic input's name is like:
+            // srcPopName:(anything) TO synName weight_update:(anything)
+            // Then ignore it (it's internal to the projection). Use regexp for the matching:
+            QString giName = this->proj->synapses[k]->weightUpdateType->inputs[l]->getName();
+            QString synWUName = this->proj->synapses[k]->getWeightUpdateName();
+            QString pat = "^" + srcPopName + ":.* TO " + synWUName + ":.*$";
+            QRegularExpression r(pat);
+            QRegularExpressionMatch match = r.match(giName);
+
+            if (!match.hasMatch()) {
+                DBG() << "Adding weightupdate assoc GI lesion " << giName
+                      << " for synapse WU name " << synWUName << " source " << srcPopName;
+                QSharedPointer<genericInput> gi = this->proj->synapses[k]->weightUpdateType->inputs[l];
+                exptGenericInputLesion* gil = new exptGenericInputLesion(gi);
+                this->assocGenericInputs.push_back (gil);
+                this->exptParent->gilesions.push_back (gil);
+            }
         }
+
         for (int l = 0; l < this->proj->synapses[k]->postsynapseType->inputs.size(); ++l) {
-            DBG() << "Adding postsynapse assoc GI lesion " << this->proj->synapses[k]->postsynapseType->inputs[l]->getName();
-            this->assocGILesions.append (this->proj->synapses[k]->postsynapseType->inputs[l]);
+
+            // If generic input's name is like:
+            // synName weight_update:(anything) TO synName postsynapse:(anything)
+            // Then ignore it,
+            QString giName = this->proj->synapses[k]->postsynapseType->inputs[l]->getName();
+            QString synWUName = this->proj->synapses[k]->getWeightUpdateName();
+            QString synPSName = this->proj->synapses[k]->getPostSynapseName();
+            QString pat = "^" + synWUName + ":.* TO " + synPSName + ":.*$";
+            QRegularExpression r(pat);
+            QRegularExpressionMatch match = r.match(giName);
+
+            if (!match.hasMatch()) {
+                DBG() << "Adding postsynapse assoc GI lesion " << giName
+                      << " for synapsePS name " << synPSName << " source " << srcPopName;
+
+                QSharedPointer<genericInput> gi = this->proj->synapses[k]->postsynapseType->inputs[l];
+                exptGenericInputLesion* gil = new exptGenericInputLesion(gi);
+                this->assocGenericInputs.push_back (gil);
+                this->exptParent->gilesions.push_back (gil);
+            }
         }
     }
 }
@@ -1702,6 +1744,13 @@ exptGenericInputLesion::exptGenericInputLesion (void)
 exptGenericInputLesion::exptGenericInputLesion (exptGenericInputLesion* lToCopy)
 {
     this->gi = lToCopy->gi;
+    this->edit = false;
+    this->set = true;
+}
+
+exptGenericInputLesion::exptGenericInputLesion (QSharedPointer<genericInput> g)
+{
+    this->gi = g;
     this->edit = false;
     this->set = true;
 }
@@ -2946,7 +2995,7 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data)
                                     }
                                     //cerr << reader->name().toString().toStdString() << " ##AFTERPROP#####\n";
                                 } else if (reader->name() == "Lesion") {
-                                    exptLesion * lesion = new exptLesion;
+                                    exptLesion * lesion = new exptLesion(this);
                                     lesion->readXML(reader, data);
                                     this->lesions.push_back(lesion);
                                     reader->readNextStartElement();

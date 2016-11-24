@@ -1462,7 +1462,7 @@ void viewELExptPanelHandler::addLesion()
         return;
     }
 
-    currentExperiment->lesions.push_back(new exptLesion);
+    currentExperiment->lesions.push_back(new exptLesion(currentExperiment));
 
     // redraw to update the selection
     redrawExpt();
@@ -1562,7 +1562,7 @@ void viewELExptPanelHandler::setLesionProjection()
         // lesions that need to be added to the experiment layer. Find
         // generic inputs which have as their input or output this
         // projection's postsynapse or weightupdate.
-        lesion->setAssocGILesions();
+        lesion->setAssocGenericInputs();
 
         QPalette p = ((QLineEdit *) sender())->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(200, 255, 200) );

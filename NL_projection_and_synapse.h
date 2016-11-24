@@ -77,10 +77,17 @@ public:
      */
     QSharedPointer <projection> proj;
     QString getName();
+    QString getWeightUpdateName();
+    QString getPostSynapseName();
     int getSynapseIndex();
     virtual void delAll(nl_rootdata *);
     QSharedPointer < systemObject > newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > &);
     void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
+private:
+    /*!
+     * Get the index of this synapse.
+     */
+    int getIndex (void);
 };
 
 // A projection contains synapses.

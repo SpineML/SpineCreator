@@ -223,6 +223,11 @@ public: // methods
     exptGenericInputLesion (exptGenericInputLesion *);
 
     /*!
+     * Construct from passed in pointer to a generic input.
+     */
+    exptGenericInputLesion (QSharedPointer<genericInput> g);
+
+    /*!
      * Re-draw the UI associated with this generic input lesion.
      */
     QVBoxLayout* drawLesion (nl_rootdata* data, viewELExptPanelHandler* handler);
@@ -301,6 +306,12 @@ private: // methods
 };
 
 /*!
+ * Forward declaration - need access to experiment inside an
+ * exptLesion.
+ */
+class experiment;
+
+/*!
  * Currently this is specifically a projection lesion. I've proposed a
  * GenericInputLesion in the SpineML spec, which derives from Lesion
  * and adds src port and dst port names.
@@ -310,17 +321,21 @@ class exptLesion : QObject
     Q_OBJECT
 
 public:
-    exptLesion() {
-        this->edit = true;
-        this->set = false;
-    }
-
     /*!
      * \brief exptLesion::exptLesion copy constructor.
      *
      * Create a copy of an existing Lesion
      */
     exptLesion(exptLesion *);
+
+    /*!
+     * Construct with a parent experiment.
+     */
+    exptLesion(experiment* e) {
+        this->edit = true;
+        this->set = false;
+        this->exptParent = e;
+    }
 
     /*!
      * The projection and port are runtime determined from the
@@ -335,22 +350,26 @@ public:
     bool set;
 
     /*!
+     * The parent experiment in which this exptLesion exists.
+     */
+    experiment* exptParent;
+
+    /*!
      * A vector of generic input lesions which are associated with
      * this projection lesion.
      */
-    QVector<exptGenericInputLesion* > assocGILesions;
+    QVector<exptGenericInputLesion*> assocGenericInputs;
 
     /*!
-     * Requires this->proj to be set. Fills assocGILesions with any
+     * Requires this->proj to be set. Fills genericInputs with any
      * generic inputs that are connected to the postsynapse or
      * weightupdate components of this projection.
      */
-    void setAssocGILesions (void);
+    void setAssocGenericInputs (void);
 
     QVBoxLayout* drawLesion (nl_rootdata* data, viewELExptPanelHandler* handler);
     void writeXML (QXmlStreamWriter *, projectObject *);
     void readXML (QXmlStreamReader * , projectObject *);
-
 };
 
 class exptChangeProp : QObject

@@ -122,20 +122,43 @@ void synapse::delAll(nl_rootdata *)
 
 QString synapse::getName()
 {
-    // get index:
+    int index = -1;
+    if ((index = this->getIndex()) == -1) {
+        DBG() << "Can't find synapse! In synapse::getName()";
+        return "Err";
+    }
+    return this->proj->getName() + ": Synapse " + QString::number(index);
+}
+
+int synapse::getIndex (void)
+{
     int index = -1;
     for (int i = 0; i < this->proj->synapses.size(); ++i) {
         if (this->proj->synapses[i].data() == this) {
             index = i;
         }
     }
+    return index;
+}
 
-    if (index == -1) {
+QString synapse::getWeightUpdateName (void)
+{
+    int index = -1;
+    if ((index = this->getIndex()) == -1) {
         DBG() << "Can't find synapse! In synapse::getName()";
         return "Err";
     }
+    return this->proj->getName() + " Synapse " + QString::number(index) + " weight_update";
+}
 
-    return this->proj->getName() + ": Synapse " + QString::number(index);
+QString synapse::getPostSynapseName()
+{
+    int index = -1;
+    if ((index = this->getIndex()) == -1) {
+        DBG() << "Can't find synapse! In synapse::getName()";
+        return "Err";
+    }
+    return this->proj->getName() + " Synapse " + QString::number(index) + " postsynapse";
 }
 
 int synapse::getSynapseIndex()
