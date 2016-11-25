@@ -1286,6 +1286,10 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
     settings.endArray();
 
     if (num_errs == 0) {
+        if (this->experimentList.isEmpty()) {
+            // If this is the first experiment to be loaded, then make it selected.
+            newExperiment->selected = true;
+        }
         this->experimentList.push_back(newExperiment);
     } else {
         // add error tail

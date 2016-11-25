@@ -90,12 +90,6 @@ public:
     bool plotRaster(QCustomPlot * plot, QList < QVariant > indices, int update = -1);
     bool calculateBinaryDataStride();
     int calculateBinaryDataOffset(int);
-
-signals:
-    
-public slots:
-
-    
 };
 
 #endif // LOGDATA_H

@@ -52,7 +52,8 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
     this->layout()->addWidget(indices);
     types = new QListWidget;
     types->setSelectionMode(QAbstractItemView::SingleSelection);
-    types->setMaximumHeight(150);
+    types->setMinimumHeight(40);
+    types->setMaximumHeight(50);
     this->layout()->addWidget(new QLabel("Plot type"));
     this->layout()->addWidget(types);
     QPushButton * addPlot = new QPushButton("Add plot");
@@ -122,13 +123,21 @@ void viewGVpropertieslayout::updateLogs()
 void viewGVpropertieslayout::clearLogs()
 {
     DBG() << "Clearing out logsForGraphs and datas (UI element)";
-    disconnect(this->datas);
-    this->datas->clear();
-    for (int i = 0; i < logsForGraphs.size(); ++i) {
-        delete logsForGraphs[i];
+    // disconnect(this->datas);
+    // FIXME: Need to do the right thing here. What if a log has a plot associated with it?
+    QVector<logData*>::iterator j = this->logsForGraphs.begin();
+    while (j != this->logsForGraphs.end()) {
+        if ((*j)->plot == NULL) {
+            DBG() << "Null plot, deleting from logsForGraphs";
+            delete *j;
+            // this->datas[i].remove();
+            this->logsForGraphs.erase(j);
+        } else {
+            DBG() << "Non-null plot, keep this one.";
+        }
+        ++j;
     }
-    logsForGraphs.clear();
-    connect(this->datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
+    //connect(this->datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
 }
 
 void viewGVpropertieslayout::deleteCurrentLog()
@@ -289,21 +298,22 @@ void viewGVpropertieslayout::contextMenuRequest(QPoint pos)
 void viewGVpropertieslayout::dataSelectionChanged(int index)
 {
     // use index to get log
-    types->clear();
-    indices->clear();
+    this->types->clear();
+    this->indices->clear();
 
     // no s
-    if (index == -1)
+    if (index == -1) {
         return;
+    }
 
     // setup log indices
     if (logsForGraphs[index]->dataClass == ANALOGDATA) {
         for (int i = 0; i < logsForGraphs[index]->columns.size(); ++i) {
-            indices->addItem("Index " + QString::number(logsForGraphs[index]->columns[i].index));
+            this->indices->addItem("Index " + QString::number(logsForGraphs[index]->columns[i].index));
         }
     } else if (logsForGraphs[index]->dataClass == EVENTDATA) {
         for (int i = 0; i < logsForGraphs[index]->eventIndices.size(); ++i) {
-            indices->addItem("Index " + QString::number(logsForGraphs[index]->eventIndices[i]));
+            this->indices->addItem("Index " + QString::number(logsForGraphs[index]->eventIndices[i]));
         }
     }
     // start with all indices selected
@@ -312,11 +322,13 @@ void viewGVpropertieslayout::dataSelectionChanged(int index)
     // setup plot types
     if (logsForGraphs[index]->dataClass == ANALOGDATA) {
         // populate types with analog plot forms
-        types->addItem("Line plot");
+        this->types->addItem("Line plot");
+        this->types->setCurrentItem(this->types->item(0));
     } else if (logsForGraphs[index]->dataClass == EVENTDATA) {
         // populate types with event plot forms
-        types->addItem("Raster plot");
-        //types->addItem("Histogram");
+        this->types->addItem("Raster plot");
+        //this->types->addItem("Histogram");
+        this->types->setCurrentItem(this->types->item(0));
     }
 }
 
@@ -511,7 +523,14 @@ void viewGVpropertieslayout::refreshLog(logData * log)
 
 void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
 {
-    DBG() << "called to load a list of files of size " << fileNames.size() << " with path " << path->absolutePath();
+    if (path) {
+    DBG() << "called to load a list of files of size "
+          << fileNames.size() << " with path " << path->absolutePath();
+    } else {
+        DBG() << "called to load a list of files of size "
+              << fileNames.size();
+    }
+
     // load the files
     for (int i = 0; i < fileNames.size(); ++i) {
 
@@ -544,12 +563,13 @@ void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
             logsForGraphs.push_back(log);
         }
     }
-    updateLogs();
+    this->updateLogs();
 }
 
 void viewGVpropertieslayout::actionLoadData_triggered()
 {
     // file dialog:
-    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Load log"), qgetenv("HOME"), tr("XML files (*.xml);; All files (*)"));
-    loadDataFiles(fileNames);
+    QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Load log"), qgetenv("HOME"),
+                                                          tr("XML files (*.xml);; All files (*)"));
+    this->loadDataFiles(fileNames);
 }

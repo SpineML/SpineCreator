@@ -50,6 +50,9 @@ public:
     QAction * actionSavePdf;
     QAction * actionSavePng;
     QVector < logData * > logsForGraphs;
+    /*!
+     * The currently selected graph sub-window.
+     */
     QMdiSubWindow * currentSubWindow;
     QListWidget * datas;
     QListWidget * indices;
