@@ -29,19 +29,21 @@
 #include "qcustomplot.h"
 #include "globalHeader.h"
 
-enum fileFormat {
+enum fileFormat
+{
     BINARY,
     CSVFormat,
     SSVFormat
 };
 
-enum dataClasses {
+enum dataClasses
+{
     ANALOGDATA,
     EVENTDATA
 };
 
-
-enum dataType {
+enum dataType
+{
     TYPE_DOUBLE,
     TYPE_FLOAT,
     TYPE_INT32,
@@ -49,8 +51,8 @@ enum dataType {
     TYPE_STRING
 };
 
-
-struct column {
+struct column
+{
     int index;
     QString heading;
     QString dims;
@@ -82,6 +84,19 @@ public:
     double min;
     double max;
 
+    /*!
+     * Set false by default; true if there is a plot associated with
+     * this logData object.
+     *
+     * Would prefer touse null-ness of this->plot, but that didn't
+     * work.
+     *
+     * This is set true in @see plotLine & @see plotRaster, and set
+     * false again by the destroyed signal of the QCustomPlot
+     * sub-window.
+     */
+    bool hasPlot;
+
     bool setupFromXML();
     double getMax();
     double getMin();
@@ -90,6 +105,13 @@ public:
     bool plotRaster(QCustomPlot * plot, QList < QVariant > indices, int update = -1);
     bool calculateBinaryDataStride();
     int calculateBinaryDataOffset(int);
+
+public slots:
+    /*!
+     * Called when the associated QCustomPlot is destroyed. Sets
+     * hasPlot back to false.
+     */
+    void onPlotDestroyed (void);
 };
 
 #endif // LOGDATA_H

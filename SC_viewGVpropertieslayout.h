@@ -28,7 +28,7 @@
 #include <QtGui>
 #include "SC_logged_data.h"
 
-struct viewGVstruct;
+struct viewGVstruct; // Defined in mainwindow.h
 
 class viewGVpropertieslayout : public QWidget
 {

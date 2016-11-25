@@ -122,22 +122,32 @@ void viewGVpropertieslayout::updateLogs()
 
 void viewGVpropertieslayout::clearLogs()
 {
-    DBG() << "Clearing out logsForGraphs and datas (UI element)";
+    DBG() << "Clearing out logsForGraphs and datas (UI element). logsForGraphs size" << logsForGraphs.size();
     // disconnect(this->datas);
     // FIXME: Need to do the right thing here. What if a log has a plot associated with it?
     QVector<logData*>::iterator j = this->logsForGraphs.begin();
     while (j != this->logsForGraphs.end()) {
-        if ((*j)->plot == NULL) {
-            DBG() << "Null plot, deleting from logsForGraphs";
-            delete *j;
-            // this->datas[i].remove();
-            this->logsForGraphs.erase(j);
+        if ((*j) == (logData*)0) {
+            //DBG() << "Null logData*, just erase it from logsForGraphs.";
+            j = this->logsForGraphs.erase(j);
         } else {
-            DBG() << "Non-null plot, keep this one.";
+            // Non-null logData*
+            if ((*j)->hasPlot == false) {
+                //DBG() << "logData has no plot, deleting from logsForGraphs...";
+                delete (*j);
+                // this->datas[i].remove();
+                //DBG() << "Erase from logsForGraphs...";
+                j = this->logsForGraphs.erase(j);
+                //DBG() << "After erase, logsForGraphs size" << logsForGraphs.size();
+            } else {
+                //DBG() << "This logData has a plot, keep it in the logsForGraphs list..";
+                j++;
+            }
         }
-        ++j;
     }
     //connect(this->datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
+    //DBG() << "At end, logsForGraphs size" << logsForGraphs.size();
+    this->updateLogs();
 }
 
 void viewGVpropertieslayout::deleteCurrentLog()
@@ -316,19 +326,33 @@ void viewGVpropertieslayout::dataSelectionChanged(int index)
             this->indices->addItem("Index " + QString::number(logsForGraphs[index]->eventIndices[i]));
         }
     }
-    // start with all indices selected
-    //indices->selectedItems();
 
     // setup plot types
     if (logsForGraphs[index]->dataClass == ANALOGDATA) {
-        // populate types with analog plot forms
+
+        // populate types with analog plot forms:
         this->types->addItem("Line plot");
+
+        // Pre-select Line plot, as there is only one option.
         this->types->setCurrentItem(this->types->item(0));
+
+        // For line plots, it's common to select one or a few traces
+        // so don't select all items in this->indices.
+
     } else if (logsForGraphs[index]->dataClass == EVENTDATA) {
-        // populate types with event plot forms
+
+        // populate types with event plot forms:
         this->types->addItem("Raster plot");
-        //this->types->addItem("Histogram");
+        // An alternative plot type is: this->types->addItem("Histogram");
+
+        // Pre-select Raster plot, as there is only one option.
         this->types->setCurrentItem(this->types->item(0));
+
+        // Typically we want to select all items for a raster plot, so do this here:
+        this->indices->setSelectionMode(QAbstractItemView::ExtendedSelection); // or QAbstractItemView::MultiSelection?
+        for (int i = 0; i < this->indices->count(); ++i) {
+            this->indices->item(i)->setSelected(true);
+        }
     }
 }
 
@@ -338,34 +362,37 @@ void viewGVpropertieslayout::addPlotToCurrent()
     QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
 
     // get the log index
-    int dataIndex = datas->currentRow();
+    int dataIndex = this->datas->currentRow();
 
     if (dataIndex < 0) {
         return;
     }
 
     // ok - if then time
-    if (logsForGraphs[dataIndex]->dataClass == ANALOGDATA) {
+    if (this->logsForGraphs[dataIndex]->dataClass == ANALOGDATA) {
         if (types->currentRow() == 0) { // Line Plot
-            QList < QListWidgetItem * > selectedItems = indices->selectedItems();
+            QList < QListWidgetItem * > selectedItems = this->indices->selectedItems();
             for (int i = 0; i < selectedItems.size(); ++i) {
                 int index = indices->row(selectedItems[i]);
                 // now we have the row, draw the graph...
-                if (!logsForGraphs[dataIndex]->plotLine(currPlot, index)) {
-                    qDebug() << "Oops, failed to plot";
+                DBG() << "Draw graph for dataIndex=" << dataIndex << " indices index=" << index;
+                if (!this->logsForGraphs[dataIndex]->plotLine(currPlot, index)) {
+                    DBG() << "Oops, failed to plot";
+                //} else {
+                    //DBG() << "logsForGraphs[" << dataIndex << "]->plot=" << this->logsForGraphs[dataIndex]->plot;
                 }
             }
         }
     }
-    if (logsForGraphs[dataIndex]->dataClass == EVENTDATA) {
+    if (this->logsForGraphs[dataIndex]->dataClass == EVENTDATA) {
         if (types->currentRow() == 0) { // Raster Plot
             QList < QListWidgetItem * > selectedItems = indices->selectedItems();
             QList < QVariant > indexList;
             for (int i = 0; i < selectedItems.size(); ++i) {
                 indexList.push_back( indices->row(selectedItems[i]));
             }
-            if (!logsForGraphs[dataIndex]->plotRaster(currPlot, indexList)) {
-                qDebug() << "Oops, failed to plot";
+            if (!this->logsForGraphs[dataIndex]->plotRaster(currPlot, indexList)) {
+                DBG() << "Oops, failed to plot";
             }
         }
     }
@@ -439,10 +466,10 @@ void viewGVpropertieslayout::createToolbar()
 
 void viewGVpropertieslayout::actionAddGraph_triggered()
 {
-    QCustomPlot * plot = new QCustomPlot;
-    setupPlot(plot);
+    QCustomPlot* plot = new QCustomPlot;
+    this->setupPlot (plot);
 
-    QMdiSubWindow * mdiSubWin = viewGV->mdiarea->addSubWindow(plot);
+    QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(plot);
 
     if (mdiSubWin != NULL) {
         mdiSubWin->setVisible(true);
