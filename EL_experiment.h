@@ -391,6 +391,11 @@ public:
     void readXML(QXmlStreamReader *);
 };
 
+/*!
+ * The experiment objects are stored in nl_rootdata::experiments
+ * (defined in SC_network_layer_rootdata.h) for the selected project
+ * and in projectObject::experimentList for deselected projects.
+ */
 class experiment : QObject
 {
     Q_OBJECT
