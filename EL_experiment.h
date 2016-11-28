@@ -242,7 +242,7 @@ public: // methods
      * Write out the XML for this generic input lesion change into the
      * experiment layer file.
      */
-    void writeXML (QXmlStreamWriter* writer, projectObject* pobj);
+    void writeXML (QXmlStreamWriter* writer, projectObject*);
 
 public: // attributes
     /*!

@@ -1988,7 +1988,7 @@ exptGenericInputLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* ha
 }
 
 void
-exptGenericInputLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject* po)
+exptGenericInputLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
 {
     if (!this->set || this->edit) {
         return;
