@@ -541,13 +541,21 @@ void MainWindow::updateDatas (void)
             DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;
 
             this->viewGV.properties->currentDatasDir = perexpt_logpath;
-            // add logs to graphs
+
+            // add logs to graphs - this becomes: 1) Store graphed
+            // logs to old experiment. 2) clear logs. 3) Restore saved
+            // graphed logs for new experiment. 4) List/load remainint
+            // log files.
+            this->viewGV.properties->storeGraphs (currentExperiment); // or is currentExperiment the newly selected one?
             this->viewGV.properties->clearLogs();
+            this->viewGV.properties->restoreGraphs (nextExperiment); // How to find this (or the old experiment)?
             this->viewGV.properties->loadDataFiles(logs.entryList(), &logs);
+
             // and insert logs into visualiser
             if (this->viewVZ.OpenGLWidget != NULL) {
                 this->viewVZ.OpenGLWidget->addLogs(&this->viewGV.properties->logsForGraphs);
             }
+            // Re-draw the relevant graphs.
         } else {
             DBG() << "Log dir UNchanged. CurrentDatasDir:" << this->viewGV.properties->currentDatasDir;
             DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;

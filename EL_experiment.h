@@ -28,6 +28,7 @@
 #include "globalHeader.h"
 #include "CL_classes.h"
 #include "SC_viewELexptpanelhandler.h"
+#include "SC_logged_data.h"
 
 class exptBox : public QFrame
 {
@@ -302,7 +303,6 @@ private: // methods
      */
     QVBoxLayout* drawLesionViewMode (QVBoxLayout* layout,
                                      viewELExptPanelHandler* handler);
-
 };
 
 /*!
@@ -432,6 +432,36 @@ public:
     bool subEdit;
     QLabel * progressBar;
     QToolButton * runButton;
+
+    /*!
+     * This is the experiment's list of sub-windows. This list is
+     * stored here so that when switching between experiments, I can
+     * re-draw the graphs for each experiment and then potentially
+     * compare two experiment outputs.
+     */
+    // This may alternatively need to be a set of the data needed to
+    // re-create QMdiSubWindows, if I can't hide them away and then
+    // remap them later. I CAN hide them - in the sense of iconifying
+    // them. Perhaps that would work for now?
+    //QList<QMdiSubWindow*> windowList;
+
+
+    /*!
+     * The logs that are currently plotted. Needs to also store the
+     * indices which are plotted.
+     */
+    QList<logData> graphedLogs;
+
+    /*!
+     * Iconify all of this experiments sub windows. Think I would
+     * prefer them to completely vanish rather than just iconify, then
+     * I can remove all the logs when switching between experiments
+     * and completely re-draw all the windows.
+     *
+     * Having an entire QMdiArea for each experiment may be the best
+     * approach to all this...
+     */
+    //void hideSubWindows (void);
 
 private:
     exptBox * currBoxPtr;

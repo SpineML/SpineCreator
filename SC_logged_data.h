@@ -88,7 +88,7 @@ public:
      * Set false by default; true if there is a plot associated with
      * this logData object.
      *
-     * Would prefer touse null-ness of this->plot, but that didn't
+     * Would prefer to use null-ness of this->plot, but that didn't
      * work.
      *
      * This is set true in @see plotLine & @see plotRaster, and set

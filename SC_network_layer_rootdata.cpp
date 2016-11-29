@@ -138,6 +138,9 @@ void nl_rootdata::selectProject(QAction * action)
     // Update logs as the project has changed.
     DBG() << "update logs as project has changed.";
     main->updateDatas();
+
+    // Update the plots here, or can we roll that into updateDatas? probably.
+    //main->updatePlots();
 }
 
 void nl_rootdata::replaceComponent(QSharedPointer<Component> oldComp, QSharedPointer<Component> newComp)

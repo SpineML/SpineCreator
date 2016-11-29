@@ -123,8 +123,7 @@ void viewGVpropertieslayout::updateLogs()
 void viewGVpropertieslayout::clearLogs()
 {
     DBG() << "Clearing out logsForGraphs and datas (UI element). logsForGraphs size" << logsForGraphs.size();
-    // disconnect(this->datas);
-    // FIXME: Need to do the right thing here. What if a log has a plot associated with it?
+    // Remove logs unless the log has a plot associated with it.
     QVector<logData*>::iterator j = this->logsForGraphs.begin();
     while (j != this->logsForGraphs.end()) {
         if ((*j) == (logData*)0) {
@@ -135,7 +134,6 @@ void viewGVpropertieslayout::clearLogs()
             if ((*j)->hasPlot == false) {
                 //DBG() << "logData has no plot, deleting from logsForGraphs...";
                 delete (*j);
-                // this->datas[i].remove();
                 //DBG() << "Erase from logsForGraphs...";
                 j = this->logsForGraphs.erase(j);
                 //DBG() << "After erase, logsForGraphs size" << logsForGraphs.size();
@@ -145,7 +143,6 @@ void viewGVpropertieslayout::clearLogs()
             }
         }
     }
-    //connect(this->datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
     //DBG() << "At end, logsForGraphs size" << logsForGraphs.size();
     this->updateLogs();
 }
