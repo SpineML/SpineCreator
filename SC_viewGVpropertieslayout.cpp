@@ -260,9 +260,51 @@ void viewGVpropertieslayout::restoreGraphs (experiment* e)
     while (j != this->currentExperiment->graphedLogs.end()) {
         DBG() << "Append pointer to existing logData onto logsForGraphs";
         this->logsForGraphs.append (*j);
+
+        // Now re-create the graph(s)
+        QMap<QCustomPlot*, QMdiSubWindow*> mPlots = (*j)->getPlots();
+        QMap<QCustomPlot*, QMdiSubWindow*>::iterator i = mPlots.begin();
+        bool added = false;
+        while (i != mPlots.end()) {
+            QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(i.key());
+            if (mdiSubWin != NULL) {
+                mdiSubWin->setVisible(true);
+                // Add the mdiSubWin back into mPlots:
+                mPlots[i.key()] = mdiSubWin;
+                this->addLinesRasters (*j, /*i.key(),*/ mdiSubWin);
+                added = true;
+            }
+            ++i;
+        }
+        if (added) {
+            (*j)->addPlots (mPlots);
+        }
         ++j;
     }
-    // A later loadDataFiles() call should cause these logs to be graphed.
+}
+
+void viewGVpropertieslayout::addLinesRasters (logData* log, /*QCustomPlot* currPlot,*/ QMdiSubWindow* subWin)
+{
+    QCustomPlot* currPlot = (QCustomPlot*)subWin->widget();
+
+    // loop through graphs in the plot
+    for (int j = 0; j < currPlot->graphCount(); ++j) {
+        // if the graph is from this log
+        if (currPlot->graph(j)->property("source").toString() == log->logFileXMLname) {
+            // extract remaining graph data
+            QString type = currPlot->graph(j)->property("type").toString();
+            if (type == "linePlot") {
+                // get index
+                int index = currPlot->graph(j)->property("index").toInt();
+                log->plotLine(currPlot, subWin, index, j);
+
+            } else if (type == "rasterPlot") {
+                // get indices
+                QList < QVariant > indices = currPlot->graph(j)->property("indices").toList();
+                log->plotRaster(currPlot, subWin, indices, j);
+            }
+        }
+    }
 }
 
 void viewGVpropertieslayout::deleteCurrentLog()
@@ -627,51 +669,44 @@ void viewGVpropertieslayout::actionSavePng_triggered()
     }
 }
 
+// Originally intended to refresh the graphs based on there being new data in the backend. So what I'm trying to do here isn't right.
 void viewGVpropertieslayout::refreshLog(logData * log)
 {
-    DBG() << "Called";
-
     if (log->setupFromXML()) {
         // find graphs from this log
-        DBG() << "find graphs from the log " << log->logFileXMLname;
 
-        // get a list of the MDI windows
+        // get a list of the MDI windows which are visible
         QList<QMdiSubWindow *> subWins = viewGV->mdiarea->subWindowList();
 
-        // If subWins.size() == 0, there are no windows. However, still want to plot.
-        if (subWins.size() == 0) { // What about when we're refreshing the 2nd window? More work to do here.
-            // Create a new plot:
-            QMdiSubWindow* msw = this->addSubWindow();
-            log->restorePlots (msw);
+        // loop and extract the plot
+        for (int i = 0; i < subWins.size(); ++i) {
 
-        } else {
-            // loop and extract the plot
-            for (int i = 0; i < subWins.size(); ++i) {
-                DBG() << "Got a subWin #" << i << " from which to get a currPlot...";
-                QCustomPlot* currPlot = (QCustomPlot*)subWins[i]->widget();
+#if 0
+            QCustomPlot* currPlot = (QCustomPlot*)subWins[i]->widget();
+#endif
+            // loop through graphs in the plot
+            this->addLinesRasters (log, /*currPlot,*/ subWins[i]);
+#if 0
+            for (int j = 0; j < currPlot->graphCount(); ++j) {
+                // if the graph is from this log
+                if (currPlot->graph(j)->property("source").toString() == log->logFileXMLname) {
 
-                // loop through graphs in the plot
-                for (int j = 0; j < currPlot->graphCount(); ++j) {
-                    DBG() <<
-                        // if the graph is from this log
-                        if (currPlot->graph(j)->property("source").toString() == log->logFileXMLname) {
+                    // extract remaining graph data
+                    QString type = currPlot->graph(j)->property("type").toString();
 
-                            // extract remaining graph data
-                            QString type = currPlot->graph(j)->property("type").toString();
+                    if (type == "linePlot") {
+                        // get index
+                        int index = currPlot->graph(j)->property("index").toInt();
+                        log->plotLine(currPlot, subWins[i], index, j);
 
-                            if (type == "linePlot") {
-                                // get index
-                                int index = currPlot->graph(j)->property("index").toInt();
-                                log->plotLine(currPlot, subWins[i], index, j);
-
-                            } else if (type == "rasterPlot") {
-                                // get indices
-                                QList < QVariant > indices = currPlot->graph(j)->property("indices").toList();
-                                log->plotRaster(currPlot, subWins[i], indices, j);
-                            }
-                        }
+                    } else if (type == "rasterPlot") {
+                        // get indices
+                        QList < QVariant > indices = currPlot->graph(j)->property("indices").toList();
+                        log->plotRaster(currPlot, subWins[i], indices, j);
+                    }
                 }
             }
+#endif
         }
 
     } // else return

@@ -104,6 +104,10 @@ private:
     void createToolbar();
     void updateLogs();
     void refreshLog(logData * log);
+    /*!
+     * Run through the logData and plot all data on subWin.
+     */
+    void addLinesRasters (logData* log, /*QCustomPlot* currPlot,*/ QMdiSubWindow* subWin);
 
 signals:
 

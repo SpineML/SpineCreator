@@ -73,6 +73,8 @@ public:
      * A map of the plots associated with this logData object, and the QMdiSubWindows as well.
      */
     QMap<QCustomPlot*, QMdiSubWindow*> plots;
+    QMap<QCustomPlot*, QMdiSubWindow*> getPlots (void) { return this->plots; }
+    void addPlots (QMap<QCustomPlot*, QMdiSubWindow*>& theplots) { this->plots.swap (theplots); }
 
     QString logFileXMLname;
     double timeStep;
