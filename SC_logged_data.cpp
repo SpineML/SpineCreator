@@ -35,6 +35,13 @@ logData::logData(QObject *parent) :
     this->hasPlot = false;
 }
 
+void logData::deleteLogFile (void)
+{
+    QDir dir;
+    dir.remove(this->logFileXMLname);
+    dir.remove(this->logFile.fileName());
+}
+
 double logData::getMax()
 {
     if (max != Q_INFINITY) {
@@ -247,11 +254,11 @@ QVector < double > logData::getRow(int rowNum)
     return rowData;
 }
 
-bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
+bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int update) {
 
     // if no plot give up
     if (plot == NULL) {
-        DBG() << "No plot exists, give up.";
+        DBG() << "No plot passed in, give up.";
         return false;
     }
 
@@ -260,6 +267,8 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
         DBG() << "Out of range/no file";
         return false;
     }
+
+    this->plots.insert (plot, msw);
 
     // clear existing data;
     colData[colNum].clear();
@@ -359,6 +368,7 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
 
     if (update == -1) {
         // add graph and setup data and name
+        DBG() << "plot->addGraph called";
         plot->addGraph();
         plot->graph(plot->graphCount()-1)->setData(times, colData[colNum]);
         plot->graph(plot->graphCount()-1)->setName("Index " + QString::number(columns[colNum].index));
@@ -382,6 +392,7 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
 
 
     } else {
+        DBG() << "plot->graph(update) called";
         plot->graph(update)->setData(times, colData[colNum]);
     }
 
@@ -403,11 +414,14 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
     return true;
 }
 
-bool logData::plotRaster(QCustomPlot * plot, QList < QVariant > indices, int update) {
+bool logData::plotRaster(QCustomPlot * plot, QMdiSubWindow* msw, QList < QVariant > indices, int update) {
 
     // if no plot give up
-    if (plot == NULL)
+    if (plot == NULL) {
         return false;
+    }
+
+    this->plots.insert (plot, msw);
 
     // clear existing data;
     colData[0].clear();
@@ -544,6 +558,7 @@ bool logData::plotRaster(QCustomPlot * plot, QList < QVariant > indices, int upd
     }
 
     // add graph and setup data and name, or update existing
+    DBG() << "plot-> functions to be called";
     if (update == -1) {
 
         plot->addGraph();
@@ -586,6 +601,20 @@ bool logData::plotRaster(QCustomPlot * plot, QList < QVariant > indices, int upd
     connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
     this->hasPlot = true;
     return true;
+}
+
+void logData::closePlots (QMdiArea* mdiarea)
+{
+    DBG() << "called";
+    DBG() << "num windows: " << mdiarea->subWindowList().size();
+
+    // In subWindowList find the subwindow containing plot
+    // For each of plots, close
+    QMapIterator<QCustomPlot*, QMdiSubWindow*> i(this->plots);
+    foreach (QMdiSubWindow* msw, this->plots) {
+        // Note - only remove the subwindows, not the plots themselves.
+        mdiarea->removeSubWindow (msw);
+    }
 }
 
 void logData::onPlotDestroyed (void)

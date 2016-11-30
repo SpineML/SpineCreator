@@ -445,12 +445,16 @@ public:
     // them. Perhaps that would work for now?
     //QList<QMdiSubWindow*> windowList;
 
-
     /*!
      * The logs that are currently plotted. Needs to also store the
-     * indices which are plotted.
+     * indices which are plotted. The memory for these logData objects
+     * is managed with SC_viewGVpropertieslayout.cpp.
      */
-    QList<logData> graphedLogs;
+    QVector<logData*> graphedLogs;
+
+    void clearGraphedLogs (void) {
+        this->graphedLogs.clear();
+    }
 
     /*!
      * Iconify all of this experiments sub windows. Think I would

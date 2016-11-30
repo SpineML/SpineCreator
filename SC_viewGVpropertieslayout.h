@@ -27,6 +27,7 @@
 
 #include <QtGui>
 #include "SC_logged_data.h"
+#include "EL_experiment.h"
 
 struct viewGVstruct; // Defined in mainwindow.h
 
@@ -38,26 +39,62 @@ public:
     ~viewGVpropertieslayout();
     void setupPlot(QCustomPlot * plot);
     void loadDataFiles(QStringList, QDir * path = 0);
+
     /*!
      * Clears this->datas
      */
     void clearLogs();
+
+    /*!
+     * Store the logDatas for the currently rendered graphs into a
+     * list in this->currentExperiment.
+     *
+     * For each graph, save the logData to
+     * this->currentExperiment->graphedLogs (QList<logData>)
+     */
+    void storeGraphs (void);
+
+    /*!
+     * Restore the list of logDatas for rendering from experiment* e,
+     * plotting each one. Set this->currentExperiment = e.
+     */
+    void restoreGraphs (experiment* e);
+
     viewGVstruct * viewGV;
+
+    /*!
+     * Called when the user presses a button to create a new, empty
+     * graph window.
+     */
     QAction * actionAddGraph;
+
     QAction * actionToGrid;
     QAction * actionLoadData;
     QAction * actionRefresh;
     QAction * actionSavePdf;
     QAction * actionSavePng;
-    QVector < logData * > logsForGraphs;
+    QVector<logData*> logsForGraphs;
+
     /*!
      * The currently selected graph sub-window.
      */
     QMdiSubWindow * currentSubWindow;
+
+    /*!
+     * The experiment which is currently "in view"
+     */
+    experiment * currentExperiment;
+
     QListWidget * datas;
     QListWidget * indices;
     QListWidget * types;
+
+    /*!
+     * This is "add a graph of the data to the current, existent plot
+     * window".
+     */
     QPushButton * addButton;
+
     /*!
      * The log directory which is currently being viewed.
      */

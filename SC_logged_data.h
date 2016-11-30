@@ -26,6 +26,7 @@
 #define LOGDATA_H
 
 #include <QObject>
+#include <QMdiArea>
 #include "qcustomplot.h"
 #include "globalHeader.h"
 
@@ -67,29 +68,25 @@ class logData : public QObject
     Q_OBJECT
 public:
     explicit logData(QObject *parent = 0);
-    QCustomPlot * plot;
-    QFile logFile;
+
+    /*!
+     * A map of the plots associated with this logData object, and the QMdiSubWindows as well.
+     */
+    QMap<QCustomPlot*, QMdiSubWindow*> plots;
+
     QString logFileXMLname;
-    fileFormat dataFormat;
-    QVector < column > columns;
-    double endTime;
-    QVector < int > eventIndices;
-    int binaryDataStride;
-    QVector < QVector < double > > colData;
     double timeStep;
-    dataClasses dataClass;
-    QString eventPortName;
     QString logName;
-    bool allLogged;
-    double min;
-    double max;
+    dataClasses dataClass;
+    QVector < column > columns;
+    QVector < int > eventIndices;
 
     /*!
      * Set false by default; true if there is a plot associated with
      * this logData object.
      *
      * Would prefer to use null-ness of this->plot, but that didn't
-     * work.
+     * work. (Now know why).
      *
      * This is set true in @see plotLine & @see plotRaster, and set
      * false again by the destroyed signal of the QCustomPlot
@@ -97,14 +94,36 @@ public:
      */
     bool hasPlot;
 
+public: // but really private
+    QFile logFile;
+public: // but really private 2.
+    fileFormat dataFormat;
+    double endTime;
+    int binaryDataStride;
+    QVector < QVector < double > > colData;
+    QString eventPortName;
+    bool allLogged;
+    double min;
+    double max;
+
+public:
+    /*!
+     * Delete the log file associated with this logData
+     */
+    void deleteLogFile (void);
     bool setupFromXML();
     double getMax();
     double getMin();
     QVector < double > getRow(int rowNum);
-    bool plotLine(QCustomPlot * plot, int colNum, int update = -1);
-    bool plotRaster(QCustomPlot * plot, QList < QVariant > indices, int update = -1);
+    bool plotLine(QCustomPlot* plot, QMdiSubWindow* msw, int colNum, int update = -1);
+    bool plotRaster(QCustomPlot* plot, QMdiSubWindow* msw, QList < QVariant > indices, int update = -1);
     bool calculateBinaryDataStride();
     int calculateBinaryDataOffset(int);
+
+    /*!
+     * Close all the plots associated with this logData.
+     */
+    void closePlots (QMdiArea* mdiarea);
 
 public slots:
     /*!

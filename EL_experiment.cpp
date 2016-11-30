@@ -44,6 +44,8 @@ experiment::experiment()
     subEdit = false;
     running = false;
 
+    //this->graphedLogs.resize(0*sizeof(logData*));
+    this->graphedLogs.clear();
     this->progressBar = NULL;
     this->runButton = NULL;
 }
@@ -112,6 +114,7 @@ experiment::experiment(experiment * exptToCopy)
     this->selected = false;
     this->editing = false;
     //this->saveWithDateStamp = exptToCopy->saveWithDateStamp;
+    this->graphedLogs.clear();
     this->runButton = NULL;
     this->progressBar = NULL;
 }

@@ -39,6 +39,10 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
     // add layout
     this->setLayout(new QVBoxLayout);
 
+    this->currentExperiment = (experiment*)0;
+
+    this->logsForGraphs.clear();
+
     // add widgets
     datas = new QListWidget;
     // set width to stop dock being resized too small
@@ -109,6 +113,7 @@ void viewGVpropertieslayout::setupPlot(QCustomPlot * plot)
     connect(plot->yAxis, SIGNAL(rangeChanged(QCPRange)), plot->yAxis2, SLOT(setRange(QCPRange)));
 }
 
+// This is really "refreshDatasFromLogs"
 void viewGVpropertieslayout::updateLogs()
 {
     DBG() << "re-populating this->datas";
@@ -122,6 +127,7 @@ void viewGVpropertieslayout::updateLogs()
 
 void viewGVpropertieslayout::clearLogs()
 {
+#ifdef __CLEAR_LOGS_EXCEPT_RENDERED_ONES__
     DBG() << "Clearing out logsForGraphs and datas (UI element). logsForGraphs size" << logsForGraphs.size();
     // Remove logs unless the log has a plot associated with it.
     QVector<logData*>::iterator j = this->logsForGraphs.begin();
@@ -143,8 +149,120 @@ void viewGVpropertieslayout::clearLogs()
             }
         }
     }
+#else // clear all/most logs
+    QVector<logData*>::iterator j = this->logsForGraphs.begin();
+    while (j != this->logsForGraphs.end()) {
+        if ((*j) != (logData*)0) {
+            if ((*j)->hasPlot == false) {
+                delete (*j);
+            } // else don't delete the logData; it's memory is
+              // maintained, and a pointer should exist inside one of
+              // the experiment*s in the projectobject.
+        }
+        j = this->logsForGraphs.erase(j);
+    }
+#endif
     //DBG() << "At end, logsForGraphs size" << logsForGraphs.size();
     this->updateLogs();
+}
+
+void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
+{
+    if (path) {
+        DBG() << "called to load a list of files of size "
+              << fileNames.size() << " with path " << path->absolutePath();
+    } else {
+        DBG() << "called to load a list of files of size "
+              << fileNames.size();
+    }
+
+    // load the files
+    for (int i = 0; i < fileNames.size(); ++i) {
+
+        bool exists = false;
+
+        QString logXMLname;
+        if (path) {
+            logXMLname = path->absoluteFilePath(fileNames[i]);
+        } else {
+            logXMLname = fileNames[i];
+        }
+
+        // check if we have the log
+        //DBG() << "logsForGraphs size is " << this->logsForGraphs.size();
+        for (int i = 0; i < this->logsForGraphs.size(); ++i) {
+            if (this->logsForGraphs[i]->logFileXMLname == logXMLname) {
+                DBG() "Refreshing existing log " << logXMLname << "...";
+                this->refreshLog(logsForGraphs[i]);
+                exists = true;
+            }
+        }
+
+        // otherwise...
+        if (!exists) {
+            logData * log = new logData();
+            log->logFileXMLname = logXMLname;
+            if (!log->setupFromXML()) {
+                qDebug() << "Failed to read XML";
+                delete log;
+                continue;
+            }
+            DBG() << "Push back " << logXMLname << " onto logsForGraphs";
+            logsForGraphs.push_back(log);
+        }
+    }
+    this->updateLogs();
+}
+
+void viewGVpropertieslayout::storeGraphs (void)
+{
+    if (this->currentExperiment == (experiment*)0) {
+        DBG() << "No currentExperiment; can't storeGraphs";
+        return;
+    }
+
+    this->currentExperiment->clearGraphedLogs();
+
+    QVector<logData*>::iterator j = this->logsForGraphs.begin();
+    while (j != this->logsForGraphs.end()) {
+        if ((*j) != (logData*)0 && (*j)->hasPlot == true) {
+            DBG() << "This logData has a plot, add it to currentExperiment->graphedLogs.";
+            // Close associated plot sub-windows
+            (*j)->closePlots(this->viewGV->mdiarea);
+
+            this->currentExperiment->graphedLogs.append(*j);
+        }
+        j++;
+    }
+}
+
+void viewGVpropertieslayout::restoreGraphs (experiment* e)
+{
+    if (!this->logsForGraphs.isEmpty()) {
+        DBG() << "ERROR: logsForGraphs needs to be emptied with clearLogs()";
+        return;
+    }
+
+    if (e == (experiment*)0) {
+        DBG() << "ERROR: need to be passed a non-null experiment*";
+        return;
+    }
+
+    this->currentExperiment = e;
+
+    if (this->currentExperiment->graphedLogs.isEmpty()) {
+        DBG() << "INFO: graphedLogs is empty";
+        return;
+    }
+
+    DBG() << "Restore graphedLogs for experiment " << this->currentExperiment->name;
+    QVector<logData*>::iterator j = this->currentExperiment->graphedLogs.begin();
+    while (j != this->currentExperiment->graphedLogs.end()) {
+        DBG() << "Append pointer to existing logData onto logsForGraphs";
+        this->logsForGraphs.append (*j);
+        ++j;
+    }
+    // A later loadDataFiles() call should cause these logs to be graphed.
 }
 
 void viewGVpropertieslayout::deleteCurrentLog()
@@ -158,9 +276,7 @@ void viewGVpropertieslayout::deleteCurrentLog()
     }
 
     // delete the log file
-    QDir dir;
-    dir.remove(logsForGraphs[dataIndex]->logFileXMLname);
-    dir.remove(logsForGraphs[dataIndex]->logFile.fileName());
+    logsForGraphs[dataIndex]->deleteLogFile();
 
     // remove the log
     logData * log = logsForGraphs[dataIndex];
@@ -351,6 +467,9 @@ void viewGVpropertieslayout::dataSelectionChanged(int index)
             this->indices->item(i)->setSelected(true);
         }
     }
+
+    // Ensure the add-to-plot button is correctly enabled:
+    addButton->setDisabled(false);
 }
 
 void viewGVpropertieslayout::addPlotToCurrent()
@@ -373,7 +492,7 @@ void viewGVpropertieslayout::addPlotToCurrent()
                 int index = indices->row(selectedItems[i]);
                 // now we have the row, draw the graph...
                 DBG() << "Draw graph for dataIndex=" << dataIndex << " indices index=" << index;
-                if (!this->logsForGraphs[dataIndex]->plotLine(currPlot, index)) {
+                if (!this->logsForGraphs[dataIndex]->plotLine(currPlot, currentSubWindow, index)) {
                     DBG() << "Oops, failed to plot";
                 //} else {
                     //DBG() << "logsForGraphs[" << dataIndex << "]->plot=" << this->logsForGraphs[dataIndex]->plot;
@@ -388,7 +507,7 @@ void viewGVpropertieslayout::addPlotToCurrent()
             for (int i = 0; i < selectedItems.size(); ++i) {
                 indexList.push_back( indices->row(selectedItems[i]));
             }
-            if (!this->logsForGraphs[dataIndex]->plotRaster(currPlot, indexList)) {
+            if (!this->logsForGraphs[dataIndex]->plotRaster(currPlot, currentSubWindow, indexList)) {
                 DBG() << "Oops, failed to plot";
             }
         }
@@ -467,9 +586,9 @@ void viewGVpropertieslayout::actionAddGraph_triggered()
     this->setupPlot (plot);
 
     QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(plot);
-
     if (mdiSubWin != NULL) {
         mdiSubWin->setVisible(true);
+        // Add the mdiSubWin somewhere so it can be removed programatically.
     }
 }
 
@@ -482,7 +601,7 @@ void viewGVpropertieslayout::actionRefresh_triggered()
 {
     // refresh all logs:
     for (int i = 0; i < logsForGraphs.size(); ++i) {
-        refreshLog(logsForGraphs[i]);
+        this->refreshLog(logsForGraphs[i]);
     }
 }
 
@@ -510,84 +629,52 @@ void viewGVpropertieslayout::actionSavePng_triggered()
 
 void viewGVpropertieslayout::refreshLog(logData * log)
 {
+    DBG() << "Called";
+
     if (log->setupFromXML()) {
         // find graphs from this log
+        DBG() << "find graphs from the log " << log->logFileXMLname;
 
         // get a list of the MDI windows
         QList<QMdiSubWindow *> subWins = viewGV->mdiarea->subWindowList();
 
-        // loop and extract the plot
-        for (int i = 0; i < subWins.size(); ++i) {
-            QCustomPlot * currPlot = (QCustomPlot *) subWins[i]->widget();
+        // If subWins.size() == 0, there are no windows. However, still want to plot.
+        if (subWins.size() == 0) { // What about when we're refreshing the 2nd window? More work to do here.
+            // Create a new plot:
+            QMdiSubWindow* msw = this->addSubWindow();
+            log->restorePlots (msw);
 
-            // loop through graphs in the plot
-            for (int j = 0; j < currPlot->graphCount(); ++j) {
+        } else {
+            // loop and extract the plot
+            for (int i = 0; i < subWins.size(); ++i) {
+                DBG() << "Got a subWin #" << i << " from which to get a currPlot...";
+                QCustomPlot* currPlot = (QCustomPlot*)subWins[i]->widget();
 
-                // if the graph is from this log
-                if (currPlot->graph(j)->property("source").toString() == log->logFileXMLname) {
+                // loop through graphs in the plot
+                for (int j = 0; j < currPlot->graphCount(); ++j) {
+                    DBG() <<
+                        // if the graph is from this log
+                        if (currPlot->graph(j)->property("source").toString() == log->logFileXMLname) {
 
-                    // extract remaining graph data
-                    QString type = currPlot->graph(j)->property("type").toString();
+                            // extract remaining graph data
+                            QString type = currPlot->graph(j)->property("type").toString();
 
-                    if (type == "linePlot") {
-                        // get index
-                        int index = currPlot->graph(j)->property("index").toInt();
-                        log->plotLine(currPlot, index, j);
+                            if (type == "linePlot") {
+                                // get index
+                                int index = currPlot->graph(j)->property("index").toInt();
+                                log->plotLine(currPlot, subWins[i], index, j);
 
-                    } else if (type == "rasterPlot") {
-                        // get indices
-                        QList < QVariant > indices = currPlot->graph(j)->property("indices").toList();
-                        log->plotRaster(currPlot, indices, j);
-                    }
+                            } else if (type == "rasterPlot") {
+                                // get indices
+                                QList < QVariant > indices = currPlot->graph(j)->property("indices").toList();
+                                log->plotRaster(currPlot, subWins[i], indices, j);
+                            }
+                        }
                 }
             }
         }
+
     } // else return
-}
-
-void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
-{
-    if (path) {
-    DBG() << "called to load a list of files of size "
-          << fileNames.size() << " with path " << path->absolutePath();
-    } else {
-        DBG() << "called to load a list of files of size "
-              << fileNames.size();
-    }
-
-    // load the files
-    for (int i = 0; i < fileNames.size(); ++i) {
-
-        bool exists = false;
-
-        QString logXMLname;
-        if (path) {
-            logXMLname = path->absoluteFilePath(fileNames[i]);
-        } else {
-            logXMLname = fileNames[i];
-        }
-
-        // check if we have the log
-        for (int i = 0; i < logsForGraphs.size(); ++i) {
-            if (logsForGraphs[i]->logFileXMLname == logXMLname) {
-                refreshLog(logsForGraphs[i]);
-                exists = true;
-            }
-        }
-
-        // otherwise...
-        if (!exists) {
-            logData * log = new logData();
-            log->logFileXMLname = logXMLname;
-            if (!log->setupFromXML()) {
-                qDebug() << "Failed to read XML";
-                delete log;
-                continue;
-            }
-            logsForGraphs.push_back(log);
-        }
-    }
-    this->updateLogs();
 }
 
 void viewGVpropertieslayout::actionLoadData_triggered()
