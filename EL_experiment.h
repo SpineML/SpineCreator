@@ -29,6 +29,7 @@
 #include "CL_classes.h"
 #include "SC_viewELexptpanelhandler.h"
 #include "SC_logged_data.h"
+#include "SC_plotinfo.h"
 
 class exptBox : public QFrame
 {
@@ -434,24 +435,10 @@ public:
     QToolButton * runButton;
 
     /*!
-     * The logs that are currently plotted. Needs to also store the
-     * indices which are plotted. The memory for these logData objects
-     * is managed with SC_viewGVpropertieslayout.cpp.
-     *
-     * This is probably NOT the thing to store, as it doesn't incorporate
-     * information about which plot windows the data was plotted in.
-     */
-    QVector<logData*> vLogData;
-
-    void clearVLogData (void) {
-        this->vLogData.clear();
-    }
-
-    /*!
      * \brief The visible plots for the experiment. Inside the QCustomPlots
      * are the graphs and each graph has a source and indices tag.
      */
-    QVector<QCustomPlot*> visiblePlots;
+    QVector<PlotInfo> visiblePlots;
 
     void clearVisiblePlots (void) {
         this->visiblePlots.clear();

@@ -30,6 +30,8 @@
 
 experiment::experiment()
 {
+    DBG() << "constructor";
+
     // defaults
     setup.dt = 0.1f;
     setup.duration = 1;
@@ -45,13 +47,14 @@ experiment::experiment()
     running = false;
 
     //this->graphedLogs.resize(0*sizeof(logData*));
-    this->vLogData.clear();
+    this->visiblePlots.clear();
     this->progressBar = NULL;
     this->runButton = NULL;
 }
 
 experiment::~experiment()
 {
+    DBG() << "deconstructor";
     for (int i = 0; i < ins.size(); ++i) {
         delete ins[i];
     }
@@ -77,6 +80,7 @@ experiment::~experiment()
  */
 experiment::experiment(experiment * exptToCopy)
 {
+    DBG() << "copy constructor";
 
     this->setup.dt = exptToCopy->setup.dt;
     this->setup.duration = exptToCopy->setup.duration;
@@ -114,7 +118,7 @@ experiment::experiment(experiment * exptToCopy)
     this->selected = false;
     this->editing = false;
     //this->saveWithDateStamp = exptToCopy->saveWithDateStamp;
-    this->vLogData.clear();
+    this->visiblePlots.clear();
     this->runButton = NULL;
     this->progressBar = NULL;
 }

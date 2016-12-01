@@ -125,42 +125,15 @@ void viewGVpropertieslayout::updateLogList()
 
 void viewGVpropertieslayout::clearVLogData()
 {
-#ifdef __CLEAR_LOGS_EXCEPT_RENDERED_ONES__
-    DBG() << "Clearing out logsForGraphs and datas (UI element). logsForGraphs size" << logsForGraphs.size();
-    // Remove logs unless the log has a plot associated with it.
-    QVector<logData*>::iterator j = this->logsForGraphs.begin();
-    while (j != this->logsForGraphs.end()) {
-        if ((*j) == (logData*)0) {
-            //DBG() << "Null logData*, just erase it from logsForGraphs.";
-            j = this->logsForGraphs.erase(j);
-        } else {
-            // Non-null logData*
-            if ((*j)->hasPlot == false) {
-                //DBG() << "logData has no plot, deleting from logsForGraphs...";
-                delete (*j);
-                //DBG() << "Erase from logsForGraphs...";
-                j = this->logsForGraphs.erase(j);
-                //DBG() << "After erase, logsForGraphs size" << logsForGraphs.size();
-            } else {
-                //DBG() << "This logData has a plot, keep it in the logsForGraphs list..";
-                j++;
-            }
-        }
-    }
-#else // clear all/most logs
+    // If logData's deconstructor worked, then this would be just vLogData.clear():
     QVector<logData*>::iterator j = this->vLogData.begin();
     while (j != this->vLogData.end()) {
         if ((*j) != (logData*)0) {
-            if ((*j)->numPlots() == 0) {
-                delete (*j);
-            } // else don't delete the logData; it's memory is
-              // maintained, and a pointer should exist inside one of
-              // the experiment*s in the projectobject.
+            delete (*j);
         }
         j = this->vLogData.erase(j);
     }
-#endif
-    //DBG() << "At end, logsForGraphs size" << logsForGraphs.size();
+
     this->updateLogList();
 }
 
@@ -210,80 +183,8 @@ void viewGVpropertieslayout::populateVLogData (QStringList fileNames, QDir* path
             this->vLogData.push_back(log);
         }
     }
+
     this->updateLogList();
-}
-
-void viewGVpropertieslayout::storeLogDataToExpt (void)
-{
-    DBG() << "Called";
-
-    if (this->currentExperiment == (experiment*)0) {
-        DBG() << "No currentExperiment; can't store LogData";
-        return;
-    }
-
-    this->currentExperiment->clearVLogData();
-
-    QVector<logData*>::iterator ld = this->vLogData.begin();
-    while (ld != this->vLogData.end()) {
-        if ((*ld) != (logData*)0 && (*ld)->numPlots() > 0) {
-            DBG() << "This logData has a plot or plots, add it to currentExperiment->graphedLogs.";
-            // Close associated plot sub-windows
-            this->currentExperiment->vLogData.append(*ld);
-            (*ld)->closePlots(this->viewGV->mdiarea);
-        }
-        ld++;
-    }
-}
-
-void viewGVpropertieslayout::restoreLogDataFromExpt (experiment* e)
-{
-    DBG() << "Called";
-
-    if (!this->vLogData.isEmpty()) {
-        DBG() << "ERROR: logsForGraphs needs to be emptied with clearLogs()";
-        return;
-    }
-
-    if (e == (experiment*)0) {
-        DBG() << "ERROR: need to be passed a non-null experiment*";
-        return;
-    }
-
-    this->currentExperiment = e;
-
-    if (this->currentExperiment->vLogData.isEmpty()) {
-        DBG() << "INFO: graphedLogs is empty";
-        return;
-    }
-
-    DBG() << "Restore graphedLogs for experiment " << this->currentExperiment->name;
-    QVector<logData*>::iterator ld = this->currentExperiment->vLogData.begin();
-    while (ld != this->currentExperiment->vLogData.end()) {
-        DBG() << "Append pointer to existing logData onto logsForGraphs";
-        this->vLogData.append (*ld);
-
-        // Now re-create the graph(s)
-        QMap<QCustomPlot*, QMdiSubWindow*> mPlots = (*ld)->getPlots();
-        QMap<QCustomPlot*, QMdiSubWindow*>::iterator i = mPlots.begin();
-        bool added = false;
-        while (i != mPlots.end()) {
-            DBG() << "addSubWindow for log " << (*ld)->logName;
-            QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(i.key());
-            if (mdiSubWin != NULL) {
-                mdiSubWin->setVisible(true);
-                // Add the mdiSubWin back into mPlots:
-                mPlots[i.key()] = mdiSubWin;
-                this->addLinesRasters (*ld, mdiSubWin);
-                added = true;
-            }
-            ++i;
-        }
-        if (added) {
-            (*ld)->addPlots (mPlots);
-        }
-        ++ld;
-    }
 }
 
 void viewGVpropertieslayout::storePlotsToExpt (void)
@@ -298,22 +199,17 @@ void viewGVpropertieslayout::storePlotsToExpt (void)
     this->currentExperiment->clearVisiblePlots();
 
     QList<QMdiSubWindow*> subWins = this->viewGV->mdiarea->subWindowList();
-
     QList<QMdiSubWindow*>::iterator sw = subWins.begin();
     while (sw != subWins.end()) {
         if ((*sw) != (QMdiSubWindow*)0) {
-
             DBG() << "Append the plot from the subwindow to the experiment's plot list...";
-            // Make a copy of the QCustomPlot
-            DBG() << "Making copy of QCustomPlot " << (QCustomPlot*)(*sw)->widget();
-            QCustomPlot* cp = new QCustomPlot ((QCustomPlot*)(*sw)->widget());
-            DBG() << "Copy is " << cp;
+            // Make a copy of the QCustomPlot information
+            PlotInfo p((QCustomPlot*)(*sw)->widget());
+            this->currentExperiment->visiblePlots.append(p);
 
-            this->currentExperiment->visiblePlots.append(cp);
-
-            // Close the window here (also closing the old QCustomPlot)
-            (*sw)->close();
+            //(*sw)->close();
         }
+        DBG() << "PlotInfo p went out of scope";
         sw++;
     }
 }
@@ -339,45 +235,88 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
     // Not all of these may be QCustomPlots
     int i = 0;
     while (i < subWins.size()) {
-        if (/*QCustomPlot* cp = */qobject_cast<QCustomPlot*>(subWins[i]->widget())) {
+        if (qobject_cast<QCustomPlot*>(subWins[i]->widget())) {
             subWins[i]->close();
         } else {
-            DBG() << "The subwindow type " << subWins[i]->widget()->metaObject()->className() << " is not a QCustomPlot.";
+            DBG() << "The subwindow type "
+                  << subWins[i]->widget()->metaObject()->className() << " is not a QCustomPlot.";
         }
         ++i;
     }
 
-
     DBG() << "Restore plots for experiment " << this->currentExperiment->name;
-
     bool added = false;
-
-    DBG() << "Restoring " << this->currentExperiment->visiblePlots.size() << " plot to the experiment.";
-
-    QVector<QCustomPlot*>::iterator cp = this->currentExperiment->visiblePlots.begin();
-
-    while (cp != this->currentExperiment->visiblePlots.end()) {
-
+    int pi = 0;
+    while (pi < this->currentExperiment->visiblePlots.size()) {
         // Now re-create the graph(s)
-        //if (/*QCustomPlot* cp = */qobject_cast<QCustomPlot*>(*cp)) {
-        QCustomPlot* cplot = *cp;
-            QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(cplot);
-            if (mdiSubWin != NULL) {
-                added = true;
-                mdiSubWin->setVisible(true);
-                //this->addLinesRasters (*cp, mdiSubWin);
-            }
-        //} else {
-            DBG() << "ERROR: That QCustomPlot pointer isn't a QCustomPlot...";
-        //}
+        QCustomPlot* cplot = new QCustomPlot();
+        this->setupPlot (cplot);
 
-        ++cp;
+        // setup and restore from pi.
+        DBG() << "Calling addGraphsToPlot";
+        this->addGraphsToPlot (this->currentExperiment->visiblePlots.at(pi), cplot);
+
+        QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(cplot);
+        if (mdiSubWin != NULL) {
+            added = true;
+            mdiSubWin->setVisible(true);
+        } else {
+            DBG() << "ERROR: Couldn't add sub window to mdiarea (viewGVpropertieslayout::restoreLogDataFromExpt)";
+        }
+        ++pi;
     }
+
     if (!added) {
-        DBG() << "Add an empty subwindow and tile it";
+        DBG() << "Add an empty subwindow";
         this->actionAddGraphSubWin_triggered();
-        this->actionToGrid_triggered();
     }
+
+    // Lastly, tile the windows.
+    this->actionToGrid_triggered();
+}
+
+void
+viewGVpropertieslayout::addGraphsToPlot (const PlotInfo& pi, QCustomPlot* plot)
+{
+    // add graph and setup data and name
+    DBG() << "called for plot title" << pi.getTitle();
+
+    for (int i = 0; i < pi.graphs.size(); ++i) {
+        plot->addGraph();
+        plot->graph(plot->graphCount()-1)->setData (pi.graphs[i].data);
+        plot->graph(plot->graphCount()-1)->setName ("Index " + QString::number(i));
+
+        // add properties to graph so we know what it came from
+        plot->graph(plot->graphCount()-1)->setProperty("type", pi.graphs[i].type);
+        plot->graph(plot->graphCount()-1)->setProperty("source", pi.graphs[i].source);
+        if (i != pi.graphs[i].index) {
+            DBG() << "Expect i == " << i << " == graphs[i].index == " << pi.graphs[i].index << "?";
+        }
+        plot->graph(plot->graphCount()-1)->setProperty("index", pi.graphs[i].index);
+
+        // axis labels
+        plot->xAxis->setLabel(pi.xlabel);
+        plot->yAxis->setLabel(pi.ylabel);
+
+        // alternate colours
+        QPen pen;
+        pen.setColor((Qt::GlobalColor) (7+(plot->graphCount()-1)%11));
+        plot->graph(plot->graphCount()-1)->setPen(pen);
+    }
+    // fit all if not an update
+    plot->rescaleAxes();
+    plot->legend->setVisible(true);
+    // title
+#if 0
+    if (plot->plotLayout()->rowCount() == 1) {
+        plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
+        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, pi.getTitle()));
+    }
+#endif
+    plot->replot();
+
+    // Connect an "on destroyed" handler
+    // connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
 }
 
 void viewGVpropertieslayout::addLinesRasters (logData* log, QMdiSubWindow* subWin)

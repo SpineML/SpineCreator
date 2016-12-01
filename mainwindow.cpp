@@ -544,17 +544,17 @@ void MainWindow::updateDatas (void)
 
             // Restore the graph plots and the log data for the experiment:
 
-            // 1.
+            // 1. Store plot info in the current expt, then close sub windows.
             this->viewGV.properties->storePlotsToExpt();
 
-            // 2.
+            // 2. clear out vLogData as we'll re-read from the new expt log directory
             this->viewGV.properties->clearVLogData(); // clears logs, deleting memory except for those
                                                       // stored in the viewGV's current experiment.
 
-            // 3.
+            // 3. Read new expt log directory
             this->viewGV.properties->populateVLogData (logs.entryList(), &logs);
 
-            // 4.
+            // 4. Restore the plots to be visible again.
             this->viewGV.properties->restorePlotsFromExpt (currentExperiment);
 
             // and insert logs into visualiser

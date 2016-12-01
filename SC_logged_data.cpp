@@ -255,7 +255,7 @@ QVector < double > logData::getRow(int rowNum)
 
 bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int update) {
 
-    // if no plot give up
+    // if no plot give up. FIXME - could get plot from msw. That's always where it comes from.
     if (plot == NULL) {
         DBG() << "No plot passed in, give up.";
         return false;
@@ -267,6 +267,7 @@ bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int up
         return false;
     }
 
+    // Don't need this->plots anymore? Or used as temporary storage only?
     this->plots.insert (plot, msw);
 
     // clear existing data;
@@ -406,8 +407,8 @@ bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int up
     // redraw
     plot->replot();
 
-    // Ensure that when destroyed, the relevant plot will be removed.
-    connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
+    // Ensure that when destroyed, the relevant plot will be removed. (no longer required)
+    //connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
 
     return true;
 }

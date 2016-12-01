@@ -56,24 +56,8 @@ public:
     void clearVLogData (void);
 
     /*!
-     * Store the logDatas for the currently rendered graphs into a
-     * list in this->currentExperiment.
-     *
-     * For each graph, save the logData to
-     * this->currentExperiment->graphedLogs (QList<logData>)
-     */
-    void storeLogDataToExpt (void);
-
-    /*!
      * \brief Store the visible QCustomPlots to the current experiment.
-     */
-    void storePlotsToExpt (void);
-
-    /*!
-     * Restore the list of logDatas for rendering from experiment* e,
-     * plotting all the plots for each one. Set this->currentExperiment = e.
-     */
-    void restoreLogDataFromExpt (experiment* e);
+     */    void storePlotsToExpt (void);
 
     /*!
      * \brief Restore plots from an experiment into the graph view area.
@@ -193,6 +177,12 @@ public slots:
      * \brief Add a graph to the current sub window.
      */
     void addGraphsToCurrent();
+
+    /*!
+     * Add the graphs defined in the give PlotInfo object to the
+     * QCustomPlot plot.
+     */
+    void addGraphsToPlot (const PlotInfo& pi, QCustomPlot* plot);
 
     /*!
      * \brief Delete the currently selected log file.
