@@ -546,11 +546,11 @@ void MainWindow::updateDatas (void)
             // logs to old experiment. 2) clear logs. 3) Restore saved
             // graphed logs for new experiment. 4) List/load remainint
             // log files.
-            this->viewGV.properties->storeGraphs(); // viewGV.properties has a currentExperiment field.
-            this->viewGV.properties->clearLogs(); // clears logs, deleting memory except for those
+            this->viewGV.properties->storeLogDataToExpt(); // viewGV.properties has a currentExperiment field.
+            this->viewGV.properties->clearVLogData(); // clears logs, deleting memory except for those
                                                   // stored in the viewGV's current experiment.
-            this->viewGV.properties->restoreGraphs (currentExperiment);
-            this->viewGV.properties->loadLogDataFiles(logs.entryList(), &logs);
+            this->viewGV.properties->restoreLogDataFromExpt (currentExperiment);
+            this->viewGV.properties->populateVLogData (logs.entryList(), &logs);
 
             // and insert logs into visualiser
             if (this->viewVZ.OpenGLWidget != NULL) {

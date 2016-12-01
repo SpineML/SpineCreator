@@ -37,13 +37,23 @@ class viewGVpropertieslayout : public QWidget
 public:
     explicit viewGVpropertieslayout(viewGVstruct* viewGVin, QWidget* parent = 0);
     ~viewGVpropertieslayout();
-    void setupPlot(QCustomPlot* plot);
-    void loadLogDataFiles(QStringList, QDir* path = 0);
 
     /*!
-     * Clears this->datas
+     * \brief configure a new QCustomPlot for use.
      */
-    void clearLogs();
+    void setupPlot (QCustomPlot* plot);
+
+    /*!
+     * \brief populateVLogData Populate @see vLogData from the given list of files.
+     * \param filelist The list of log file names or absolute file paths.
+     * \param path A directory whose path is prepended to the members of filelist.
+     */
+    void populateVLogData (QStringList filelist, QDir* path = 0);
+
+    /*!
+     * Clears out this->vLogData
+     */
+    void clearVLogData (void);
 
     /*!
      * Store the logDatas for the currently rendered graphs into a
@@ -52,14 +62,18 @@ public:
      * For each graph, save the logData to
      * this->currentExperiment->graphedLogs (QList<logData>)
      */
-    void storeGraphs (void);
+    void storeLogDataToExpt (void);
 
     /*!
      * Restore the list of logDatas for rendering from experiment* e,
      * plotting all the plots for each one. Set this->currentExperiment = e.
      */
-    void restoreGraphs (experiment* e);
+    void restoreLogDataFromExpt (experiment* e);
 
+    /*!
+     * \brief viewGV - a structure defined in mainwindow.h holding
+     * information about the graphing interface of SpineCreator.
+     */
     viewGVstruct* viewGV;
 
     /*!
@@ -68,6 +82,9 @@ public:
      */
     QAction* actionAddGraphSubWin;
 
+    /*!
+     * \brief actionToGrid Tile all the subwindows.
+     */
     QAction* actionToGrid;
 
     /*!
@@ -98,17 +115,27 @@ public:
     /*!
      * The list widgets which appear on the right hand side of the graph view.
      */
-    //@{
     QListWidget* logList;
+
+    /*!
+     * \brief dataIndexList is a list of the individual data sets within each
+     * log file. Corresponds to the elements in a population.
+     */
     QListWidget* dataIndexList;
+
+    /*!
+     * \brief A list of the plot types for a given logData. Currently there's
+     * only one option, depending on the data type; line graphs or raster plots.
+     */
     QListWidget* typeList;
-    //@}
 
     /*!
      * This is "add a graph of the data to the current, existent plot
-     * window".
+     * window". In this class, we'll use "graph" to mean the graph of
+     * a single set of data, which may be one of many existing in the
+     * file backend of a given logData object
      */
-    QPushButton * addButton;
+    QPushButton* addGraphButton;
 
     /*!
      * The log directory which is currently being viewed.
@@ -116,12 +143,24 @@ public:
     QString currentLogDataDir;
 
 private:
-    void createToolbar();
-    void updateLogList();
-    void refreshLog(logData* log);
+    /*!
+     * \brief Create the tool bar that sits above the graphing area. Called once.
+     */
+    void createToolbar (void);
 
     /*!
-     * Run through the logData and plot all data on subWin.
+     * \brief Update @see logList
+     */
+    void updateLogList (void);
+
+    /*!
+     * \brief refreshLog
+     * \param log
+     */
+    void refreshLog (logData* log);
+
+    /*!
+     * Run through the logData object and graph all data on @see subWin.
      */
     void addLinesRasters (logData* log, QMdiSubWindow* subWin);
 
@@ -129,20 +168,47 @@ signals:
 
 public slots:
     // property slots
-    void windowSelected(QMdiSubWindow*);
-    void logListSelectionChanged(int);
-    void addPlotToCurrent();
+    /*!
+     * \brief Actions to carry out when a sub window is selected by the user.
+     */
+    void windowSelected (QMdiSubWindow* window);
+
+    /*!
+     * \brief Called when the list of selected logs is changed by the user.
+     */
+    void logListSelectionChanged (int);
+
+    /*!
+     * \brief Add a graph to the current sub window.
+     */
+    void addGraphsToCurrent();
+
+    /*!
+     * \brief Delete the currently selected log file.
+     *
+     * This looks at the currently selected log in @see logList, deletes
+     * the log files behind it (the .xml and .bin files) and then removes
+     * the corresponding entry from @see vLogData and @see logList
+     */
     void deleteCurrentLog();
 
-    // plot slots
+    // graph slots
+    /*!
+     * \brief Remove the selected graph from the currently selected subwindow.
+     */
     void removeSelectedGraph();
+
+    /*!
+     * \brief Remove all graphs from the currently selected subwindow.
+     */
     void removeAllGraphs();
+
     void toggleHorizontalZoom();
     void toggleHorizontalDrag();
     void toggleVerticalZoom();
     void toggleVerticalDrag();
     void rescaleAxes();
-    void contextMenuRequest(QPoint pos);
+    void contextMenuRequest (QPoint pos);
 
     // toolbar slots
     void actionAddGraphSubWin_triggered();

@@ -2160,7 +2160,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     logs.setNameFilters(filter);
 
     // add logs to graphs
-    data->main->viewGV.properties->loadLogDataFiles(logs.entryList(), &logs);
+    data->main->viewGV.properties->populateVLogData (logs.entryList(), &logs);
 
     // and insert logs into visualiser
     if (data->main->viewVZ.OpenGLWidget != NULL) {
