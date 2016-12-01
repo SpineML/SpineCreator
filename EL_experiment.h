@@ -434,38 +434,28 @@ public:
     QToolButton * runButton;
 
     /*!
-     * This is the experiment's list of sub-windows. This list is
-     * stored here so that when switching between experiments, I can
-     * re-draw the graphs for each experiment and then potentially
-     * compare two experiment outputs.
-     */
-    // This may alternatively need to be a set of the data needed to
-    // re-create QMdiSubWindows, if I can't hide them away and then
-    // remap them later. I CAN hide them - in the sense of iconifying
-    // them. Perhaps that would work for now?
-    //QList<QMdiSubWindow*> windowList;
-
-    /*!
      * The logs that are currently plotted. Needs to also store the
      * indices which are plotted. The memory for these logData objects
      * is managed with SC_viewGVpropertieslayout.cpp.
+     *
+     * This is probably NOT the thing to store, as it doesn't incorporate
+     * information about which plot windows the data was plotted in.
      */
-    QVector<logData*> graphedLogs;
+    QVector<logData*> vLogData;
 
-    void clearGraphedLogs (void) {
-        this->graphedLogs.clear();
+    void clearVLogData (void) {
+        this->vLogData.clear();
     }
 
     /*!
-     * Iconify all of this experiments sub windows. Think I would
-     * prefer them to completely vanish rather than just iconify, then
-     * I can remove all the logs when switching between experiments
-     * and completely re-draw all the windows.
-     *
-     * Having an entire QMdiArea for each experiment may be the best
-     * approach to all this...
+     * \brief The visible plots for the experiment. Inside the QCustomPlots
+     * are the graphs and each graph has a source and indices tag.
      */
-    //void hideSubWindows (void);
+    QVector<QCustomPlot*> visiblePlots;
+
+    void clearVisiblePlots (void) {
+        this->visiblePlots.clear();
+    }
 
 private:
     exptBox * currBoxPtr;

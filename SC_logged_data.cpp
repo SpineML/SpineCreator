@@ -601,23 +601,24 @@ bool logData::plotRaster(QCustomPlot * plot, QMdiSubWindow* msw, QList < QVarian
     return true;
 }
 
+// No longer required
 void logData::closePlots (QMdiArea* mdiarea)
 {
-    DBG() << "called";
-    DBG() << "num windows: " << mdiarea->subWindowList().size();
-
+    DBG() << "Called. num windows: " << mdiarea->subWindowList().size();
+#if 0
     // In subWindowList find the subwindow containing plot
     // For each of plots, close
     foreach (QMdiSubWindow* msw, this->plots) {
         // Note - only remove the subwindows, not the plots themselves.
         mdiarea->removeSubWindow (msw);
     }
+#endif
 }
 
 void logData::onPlotDestroyed (void)
 {
     // Do any clearing?
-    DBG() << "Plot destroyed. Which one? Remove correct plot from logData->plots";
+    DBG() << "A plot was destroyed.";
 }
 
 bool logData::calculateBinaryDataStride()

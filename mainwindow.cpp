@@ -542,15 +542,20 @@ void MainWindow::updateDatas (void)
 
             this->viewGV.properties->currentLogDataDir = perexpt_logpath;
 
-            // add logs to graphs - this becomes: 1) Store graphed
-            // logs to old experiment. 2) clear logs. 3) Restore saved
-            // graphed logs for new experiment. 4) List/load remainint
-            // log files.
-            this->viewGV.properties->storeLogDataToExpt(); // viewGV.properties has a currentExperiment field.
+            // Restore the graph plots and the log data for the experiment:
+
+            // 1.
+            this->viewGV.properties->storePlotsToExpt();
+
+            // 2.
             this->viewGV.properties->clearVLogData(); // clears logs, deleting memory except for those
-                                                  // stored in the viewGV's current experiment.
-            this->viewGV.properties->restoreLogDataFromExpt (currentExperiment);
+                                                      // stored in the viewGV's current experiment.
+
+            // 3.
             this->viewGV.properties->populateVLogData (logs.entryList(), &logs);
+
+            // 4.
+            this->viewGV.properties->restorePlotsFromExpt (currentExperiment);
 
             // and insert logs into visualiser
             if (this->viewVZ.OpenGLWidget != NULL) {

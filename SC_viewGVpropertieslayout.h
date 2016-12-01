@@ -65,10 +65,21 @@ public:
     void storeLogDataToExpt (void);
 
     /*!
+     * \brief Store the visible QCustomPlots to the current experiment.
+     */
+    void storePlotsToExpt (void);
+
+    /*!
      * Restore the list of logDatas for rendering from experiment* e,
      * plotting all the plots for each one. Set this->currentExperiment = e.
      */
     void restoreLogDataFromExpt (experiment* e);
+
+    /*!
+     * \brief Restore plots from an experiment into the graph view area.
+     * \param e Pointer to the experiment which holds the list of plots to restore.
+     */
+    void restorePlotsFromExpt (experiment* e);
 
     /*!
      * \brief viewGV - a structure defined in mainwindow.h holding
