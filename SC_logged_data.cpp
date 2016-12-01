@@ -32,7 +32,6 @@ logData::logData(QObject *parent) :
     QObject(parent)
 {
     this->timeStep = 0.1;
-    this->hasPlot = false;
 }
 
 void logData::deleteLogFile (void)
@@ -407,10 +406,9 @@ bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int up
     // redraw
     plot->replot();
 
-    // Ensure that when destroyed, the plot will set the "hasPlot"
-    // flag in the logData* object to false:
+    // Ensure that when destroyed, the relevant plot will be removed.
     connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
-    this->hasPlot = true;
+
     return true;
 }
 
@@ -599,7 +597,7 @@ bool logData::plotRaster(QCustomPlot * plot, QMdiSubWindow* msw, QList < QVarian
     plot->replot();
 
     connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
-    this->hasPlot = true;
+
     return true;
 }
 
@@ -610,7 +608,6 @@ void logData::closePlots (QMdiArea* mdiarea)
 
     // In subWindowList find the subwindow containing plot
     // For each of plots, close
-    QMapIterator<QCustomPlot*, QMdiSubWindow*> i(this->plots);
     foreach (QMdiSubWindow* msw, this->plots) {
         // Note - only remove the subwindows, not the plots themselves.
         mdiarea->removeSubWindow (msw);
@@ -619,11 +616,12 @@ void logData::closePlots (QMdiArea* mdiarea)
 
 void logData::onPlotDestroyed (void)
 {
-    this->hasPlot = false;
+    // Do any clearing?
+    DBG() << "Plot destroyed. Which one? Remove correct plot from logData->plots";
 }
 
-bool logData::calculateBinaryDataStride() {
-
+bool logData::calculateBinaryDataStride()
+{
     binaryDataStride = 0;
 
     for (int i = 0; i < (int) columns.size(); ++i) {

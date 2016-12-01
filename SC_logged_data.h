@@ -74,7 +74,10 @@ public:
      */
     QMap<QCustomPlot*, QMdiSubWindow*> plots;
     QMap<QCustomPlot*, QMdiSubWindow*> getPlots (void) { return this->plots; }
-    void addPlots (QMap<QCustomPlot*, QMdiSubWindow*>& theplots) { this->plots.swap (theplots); }
+    void addPlots (QMap<QCustomPlot*, QMdiSubWindow*>& theplots) {
+        // CHECKME: Sensible?
+        this->plots.swap (theplots);
+    }
 
     QString logFileXMLname;
     double timeStep;
@@ -84,17 +87,11 @@ public:
     QVector < int > eventIndices;
 
     /*!
-     * Set false by default; true if there is a plot associated with
-     * this logData object.
-     *
-     * Would prefer to use null-ness of this->plot, but that didn't
-     * work. (Now know why).
-     *
-     * This is set true in @see plotLine & @see plotRaster, and set
-     * false again by the destroyed signal of the QCustomPlot
-     * sub-window.
+     * Return the number of QCustomPlots associated with this logData object.
      */
-    bool hasPlot;
+    bool numPlots (void) {
+        return this->plots.size();
+    }
 
 public: // but really private
     QFile logFile;
@@ -129,8 +126,7 @@ public:
 
 public slots:
     /*!
-     * Called when the associated QCustomPlot is destroyed. Sets
-     * hasPlot back to false.
+     * Called when the associated QCustomPlot is destroyed. Should remove entry from this->plots
      */
     void onPlotDestroyed (void);
 };

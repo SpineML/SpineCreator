@@ -35,10 +35,10 @@ class viewGVpropertieslayout : public QWidget
 {
     Q_OBJECT
 public:
-    explicit viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget *parent = 0);
+    explicit viewGVpropertieslayout(viewGVstruct* viewGVin, QWidget* parent = 0);
     ~viewGVpropertieslayout();
-    void setupPlot(QCustomPlot * plot);
-    void loadDataFiles(QStringList, QDir * path = 0);
+    void setupPlot(QCustomPlot* plot);
+    void loadLogDataFiles(QStringList, QDir* path = 0);
 
     /*!
      * Clears this->datas
@@ -56,38 +56,53 @@ public:
 
     /*!
      * Restore the list of logDatas for rendering from experiment* e,
-     * plotting each one. Set this->currentExperiment = e.
+     * plotting all the plots for each one. Set this->currentExperiment = e.
      */
     void restoreGraphs (experiment* e);
 
-    viewGVstruct * viewGV;
+    viewGVstruct* viewGV;
 
     /*!
      * Called when the user presses a button to create a new, empty
      * graph window.
      */
-    QAction * actionAddGraph;
+    QAction* actionAddGraphSubWin;
 
-    QAction * actionToGrid;
-    QAction * actionLoadData;
-    QAction * actionRefresh;
-    QAction * actionSavePdf;
-    QAction * actionSavePng;
-    QVector<logData*> logsForGraphs;
+    QAction* actionToGrid;
+
+    /*!
+     * \brief actionLoadData Open a dialog to load some log data
+     */
+    QAction* actionLoadLogData;
+
+    QAction* actionRefreshLogData;
+    QAction* actionSavePdf;
+    QAction* actionSavePng;
+
+    /*!
+     * \brief vLogData A vector of pointers to the logData objects
+     * which are being shown for the current experiment.
+     */
+    QVector<logData*> vLogData;
 
     /*!
      * The currently selected graph sub-window.
      */
-    QMdiSubWindow * currentSubWindow;
+    QMdiSubWindow* currentSubWindow;
 
     /*!
      * The experiment which is currently "in view"
      */
-    experiment * currentExperiment;
+    experiment* currentExperiment;
 
-    QListWidget * datas;
-    QListWidget * indices;
-    QListWidget * types;
+    /*!
+     * The list widgets which appear on the right hand side of the graph view.
+     */
+    //@{
+    QListWidget* logList;
+    QListWidget* dataIndexList;
+    QListWidget* typeList;
+    //@}
 
     /*!
      * This is "add a graph of the data to the current, existent plot
@@ -98,23 +113,24 @@ public:
     /*!
      * The log directory which is currently being viewed.
      */
-    QString currentDatasDir;
+    QString currentLogDataDir;
 
 private:
     void createToolbar();
-    void updateLogs();
-    void refreshLog(logData * log);
+    void updateLogList();
+    void refreshLog(logData* log);
+
     /*!
      * Run through the logData and plot all data on subWin.
      */
-    void addLinesRasters (logData* log, /*QCustomPlot* currPlot,*/ QMdiSubWindow* subWin);
+    void addLinesRasters (logData* log, QMdiSubWindow* subWin);
 
 signals:
 
 public slots:
     // property slots
-    void windowSelected(QMdiSubWindow *);
-    void dataSelectionChanged(int);
+    void windowSelected(QMdiSubWindow*);
+    void logListSelectionChanged(int);
     void addPlotToCurrent();
     void deleteCurrentLog();
 
@@ -129,10 +145,10 @@ public slots:
     void contextMenuRequest(QPoint pos);
 
     // toolbar slots
-    void actionAddGraph_triggered();
+    void actionAddGraphSubWin_triggered();
     void actionToGrid_triggered();
-    void actionLoadData_triggered();
-    void actionRefresh_triggered();
+    void actionLoadLogData_triggered();
+    void actionRefreshLogData_triggered();
     void actionSavePdf_triggered();
     void actionSavePng_triggered();
 };

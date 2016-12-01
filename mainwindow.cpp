@@ -536,11 +536,11 @@ void MainWindow::updateDatas (void)
         filter << "*.xml";
         logs.setNameFilters(filter);
 
-        if (this->viewGV.properties->currentDatasDir != perexpt_logpath) {
-            DBG() << "Log dir changed. CurrentDatasDir:" << this->viewGV.properties->currentDatasDir;
+        if (this->viewGV.properties->currentLogDataDir != perexpt_logpath) {
+            DBG() << "Log dir changed. CurrentDatasDir:" << this->viewGV.properties->currentLogDataDir;
             DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;
 
-            this->viewGV.properties->currentDatasDir = perexpt_logpath;
+            this->viewGV.properties->currentLogDataDir = perexpt_logpath;
 
             // add logs to graphs - this becomes: 1) Store graphed
             // logs to old experiment. 2) clear logs. 3) Restore saved
@@ -550,15 +550,15 @@ void MainWindow::updateDatas (void)
             this->viewGV.properties->clearLogs(); // clears logs, deleting memory except for those
                                                   // stored in the viewGV's current experiment.
             this->viewGV.properties->restoreGraphs (currentExperiment);
-            this->viewGV.properties->loadDataFiles(logs.entryList(), &logs);
+            this->viewGV.properties->loadLogDataFiles(logs.entryList(), &logs);
 
             // and insert logs into visualiser
             if (this->viewVZ.OpenGLWidget != NULL) {
-                this->viewVZ.OpenGLWidget->addLogs(&this->viewGV.properties->logsForGraphs);
+                this->viewVZ.OpenGLWidget->addLogs(&this->viewGV.properties->vLogData);
             }
             // Re-draw the relevant graphs.
         } else {
-            DBG() << "Log dir UNchanged. CurrentDatasDir:" << this->viewGV.properties->currentDatasDir;
+            DBG() << "Log dir UNchanged. CurrentDatasDir:" << this->viewGV.properties->currentLogDataDir;
             DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;
         }
     } else {

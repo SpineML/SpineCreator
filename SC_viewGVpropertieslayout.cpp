@@ -41,25 +41,25 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
 
     this->currentExperiment = (experiment*)0;
 
-    this->logsForGraphs.clear();
+    this->vLogData.clear();
 
     // add widgets
-    datas = new QListWidget;
+    logList = new QListWidget;
     // set width to stop dock being resized too small
-    datas->setMinimumWidth(200);
-    datas->setSelectionMode(QAbstractItemView::SingleSelection);
+    logList->setMinimumWidth(200);
+    logList->setSelectionMode(QAbstractItemView::SingleSelection);
     this->layout()->addWidget(new QLabel("Loaded logs"));
-    this->layout()->addWidget(datas);
-    indices = new QListWidget;
-    indices->setSelectionMode(QAbstractItemView::MultiSelection);
+    this->layout()->addWidget(logList);
+    dataIndexList = new QListWidget;
+    dataIndexList->setSelectionMode(QAbstractItemView::MultiSelection);
     this->layout()->addWidget(new QLabel("Select log indices to plot"));
-    this->layout()->addWidget(indices);
-    types = new QListWidget;
-    types->setSelectionMode(QAbstractItemView::SingleSelection);
-    types->setMinimumHeight(40);
-    types->setMaximumHeight(50);
+    this->layout()->addWidget(dataIndexList);
+    typeList = new QListWidget;
+    typeList->setSelectionMode(QAbstractItemView::SingleSelection);
+    typeList->setMinimumHeight(40);
+    typeList->setMaximumHeight(50);
     this->layout()->addWidget(new QLabel("Plot type"));
-    this->layout()->addWidget(types);
+    this->layout()->addWidget(typeList);
     QPushButton * addPlot = new QPushButton("Add plot");
     this->layout()->addWidget(addPlot);
     addButton = addPlot;
@@ -70,19 +70,19 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
 
     // connect
     connect(viewGV->mdiarea, SIGNAL(subWindowActivated(QMdiSubWindow*)), this, SLOT(windowSelected(QMdiSubWindow*)));
-    connect(datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
+    connect(logList, SIGNAL(currentRowChanged(int)), this, SLOT(logListSelectionChanged(int)));
     connect(addPlot, SIGNAL(clicked()), this, SLOT(addPlotToCurrent()));
     connect(delLog, SIGNAL(clicked()), this, SLOT(deleteCurrentLog()));
 }
 
 viewGVpropertieslayout::~viewGVpropertieslayout()
 {
-    for (int i = 0; i < logsForGraphs.size(); ++i) {
-        delete logsForGraphs[i];
+    for (int i = 0; i < vLogData.size(); ++i) {
+        delete vLogData[i];
     }
 
-    delete actionAddGraph;
-    actionAddGraph = NULL;
+    delete actionAddGraphSubWin;
+    actionAddGraphSubWin = NULL;
 
     // delete actionToGrid;
     actionToGrid = NULL;
@@ -113,16 +113,15 @@ void viewGVpropertieslayout::setupPlot(QCustomPlot * plot)
     connect(plot->yAxis, SIGNAL(rangeChanged(QCPRange)), plot->yAxis2, SLOT(setRange(QCPRange)));
 }
 
-// This is really "refreshDatasFromLogs"
-void viewGVpropertieslayout::updateLogs()
+void viewGVpropertieslayout::updateLogList()
 {
-    DBG() << "re-populating this->datas";
-    disconnect(datas);
-    datas->clear();
-    for (int i = 0; i < logsForGraphs.size(); ++i) {
-        datas->addItem(logsForGraphs[i]->logName);
+    DBG() << "re-populating this->logList";
+    disconnect(logList);
+    logList->clear();
+    for (int i = 0; i < vLogData.size(); ++i) {
+        logList->addItem(vLogData[i]->logName);
     }
-    connect(datas, SIGNAL(currentRowChanged(int)), this, SLOT(dataSelectionChanged(int)));
+    connect(logList, SIGNAL(currentRowChanged(int)), this, SLOT(logListSelectionChanged(int)));
 }
 
 void viewGVpropertieslayout::clearLogs()
@@ -150,23 +149,23 @@ void viewGVpropertieslayout::clearLogs()
         }
     }
 #else // clear all/most logs
-    QVector<logData*>::iterator j = this->logsForGraphs.begin();
-    while (j != this->logsForGraphs.end()) {
+    QVector<logData*>::iterator j = this->vLogData.begin();
+    while (j != this->vLogData.end()) {
         if ((*j) != (logData*)0) {
-            if ((*j)->hasPlot == false) {
+            if ((*j)->numPlots() == 0) {
                 delete (*j);
             } // else don't delete the logData; it's memory is
               // maintained, and a pointer should exist inside one of
               // the experiment*s in the projectobject.
         }
-        j = this->logsForGraphs.erase(j);
+        j = this->vLogData.erase(j);
     }
 #endif
     //DBG() << "At end, logsForGraphs size" << logsForGraphs.size();
-    this->updateLogs();
+    this->updateLogList();
 }
 
-void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
+void viewGVpropertieslayout::loadLogDataFiles(QStringList fileNames, QDir * path)
 {
     if (path) {
         DBG() << "called to load a list of files of size "
@@ -190,16 +189,17 @@ void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
 
         // check if we have the log
         //DBG() << "logsForGraphs size is " << this->logsForGraphs.size();
-        for (int i = 0; i < this->logsForGraphs.size(); ++i) {
-            if (this->logsForGraphs[i]->logFileXMLname == logXMLname) {
+        for (int i = 0; i < this->vLogData.size(); ++i) {
+            if (this->vLogData[i]->logFileXMLname == logXMLname) {
                 DBG() "Refreshing existing log " << logXMLname << "...";
-                this->refreshLog(logsForGraphs[i]);
+                this->refreshLog(vLogData[i]);
                 exists = true;
             }
         }
 
         // otherwise...
         if (!exists) {
+            DBG() << "Create a new logData object";
             logData * log = new logData();
             log->logFileXMLname = logXMLname;
             if (!log->setupFromXML()) {
@@ -208,14 +208,16 @@ void viewGVpropertieslayout::loadDataFiles(QStringList fileNames, QDir * path)
                 continue;
             }
             DBG() << "Push back " << logXMLname << " onto logsForGraphs";
-            logsForGraphs.push_back(log);
+            vLogData.push_back(log);
         }
     }
-    this->updateLogs();
+    this->updateLogList();
 }
 
 void viewGVpropertieslayout::storeGraphs (void)
 {
+    DBG() << "Called";
+
     if (this->currentExperiment == (experiment*)0) {
         DBG() << "No currentExperiment; can't storeGraphs";
         return;
@@ -223,14 +225,13 @@ void viewGVpropertieslayout::storeGraphs (void)
 
     this->currentExperiment->clearGraphedLogs();
 
-    QVector<logData*>::iterator j = this->logsForGraphs.begin();
-    while (j != this->logsForGraphs.end()) {
-        if ((*j) != (logData*)0 && (*j)->hasPlot == true) {
-            DBG() << "This logData has a plot, add it to currentExperiment->graphedLogs.";
+    QVector<logData*>::iterator j = this->vLogData.begin();
+    while (j != this->vLogData.end()) {
+        if ((*j) != (logData*)0 && (*j)->numPlots() > 0) {
+            DBG() << "This logData has a plot or plots, add it to currentExperiment->graphedLogs.";
             // Close associated plot sub-windows
-            (*j)->closePlots(this->viewGV->mdiarea);
-
             this->currentExperiment->graphedLogs.append(*j);
+            (*j)->closePlots(this->viewGV->mdiarea);
         }
         j++;
     }
@@ -238,7 +239,9 @@ void viewGVpropertieslayout::storeGraphs (void)
 
 void viewGVpropertieslayout::restoreGraphs (experiment* e)
 {
-    if (!this->logsForGraphs.isEmpty()) {
+    DBG() << "Called";
+
+    if (!this->vLogData.isEmpty()) {
         DBG() << "ERROR: logsForGraphs needs to be emptied with clearLogs()";
         return;
     }
@@ -259,19 +262,20 @@ void viewGVpropertieslayout::restoreGraphs (experiment* e)
     QVector<logData*>::iterator j = this->currentExperiment->graphedLogs.begin();
     while (j != this->currentExperiment->graphedLogs.end()) {
         DBG() << "Append pointer to existing logData onto logsForGraphs";
-        this->logsForGraphs.append (*j);
+        this->vLogData.append (*j);
 
         // Now re-create the graph(s)
         QMap<QCustomPlot*, QMdiSubWindow*> mPlots = (*j)->getPlots();
         QMap<QCustomPlot*, QMdiSubWindow*>::iterator i = mPlots.begin();
         bool added = false;
         while (i != mPlots.end()) {
+            DBG() << "addSubWindow for log " << (*j)->logName;
             QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(i.key());
             if (mdiSubWin != NULL) {
                 mdiSubWin->setVisible(true);
                 // Add the mdiSubWin back into mPlots:
                 mPlots[i.key()] = mdiSubWin;
-                this->addLinesRasters (*j, /*i.key(),*/ mdiSubWin);
+                this->addLinesRasters (*j, mdiSubWin);
                 added = true;
             }
             ++i;
@@ -283,7 +287,7 @@ void viewGVpropertieslayout::restoreGraphs (experiment* e)
     }
 }
 
-void viewGVpropertieslayout::addLinesRasters (logData* log, /*QCustomPlot* currPlot,*/ QMdiSubWindow* subWin)
+void viewGVpropertieslayout::addLinesRasters (logData* log, QMdiSubWindow* subWin)
 {
     QCustomPlot* currPlot = (QCustomPlot*)subWin->widget();
 
@@ -310,7 +314,7 @@ void viewGVpropertieslayout::addLinesRasters (logData* log, /*QCustomPlot* currP
 void viewGVpropertieslayout::deleteCurrentLog()
 {
     // get the log index
-    int dataIndex = datas->currentRow();
+    int dataIndex = logList->currentRow();
 
     // check that we have a selection
     if (dataIndex < 0) {
@@ -318,15 +322,15 @@ void viewGVpropertieslayout::deleteCurrentLog()
     }
 
     // delete the log file
-    logsForGraphs[dataIndex]->deleteLogFile();
+    vLogData[dataIndex]->deleteLogFile();
 
     // remove the log
-    logData * log = logsForGraphs[dataIndex];
-    logsForGraphs.erase(logsForGraphs.begin()+dataIndex);
+    logData * log = vLogData[dataIndex];
+    vLogData.erase(vLogData.begin()+dataIndex);
     delete log;
 
     // refresh display
-    updateLogs();
+    updateLogList();
 }
 
 void viewGVpropertieslayout::removeSelectedGraph()
@@ -460,11 +464,11 @@ void viewGVpropertieslayout::contextMenuRequest(QPoint pos)
     menu->popup(currPlot->mapToGlobal(pos));
 }
 
-void viewGVpropertieslayout::dataSelectionChanged(int index)
+void viewGVpropertieslayout::logListSelectionChanged(int index)
 {
     // use index to get log
-    this->types->clear();
-    this->indices->clear();
+    this->typeList->clear();
+    this->dataIndexList->clear();
 
     // no s
     if (index == -1) {
@@ -472,41 +476,41 @@ void viewGVpropertieslayout::dataSelectionChanged(int index)
     }
 
     // setup log indices
-    if (logsForGraphs[index]->dataClass == ANALOGDATA) {
-        for (int i = 0; i < logsForGraphs[index]->columns.size(); ++i) {
-            this->indices->addItem("Index " + QString::number(logsForGraphs[index]->columns[i].index));
+    if (vLogData[index]->dataClass == ANALOGDATA) {
+        for (int i = 0; i < vLogData[index]->columns.size(); ++i) {
+            this->dataIndexList->addItem("Index " + QString::number(vLogData[index]->columns[i].index));
         }
-    } else if (logsForGraphs[index]->dataClass == EVENTDATA) {
-        for (int i = 0; i < logsForGraphs[index]->eventIndices.size(); ++i) {
-            this->indices->addItem("Index " + QString::number(logsForGraphs[index]->eventIndices[i]));
+    } else if (vLogData[index]->dataClass == EVENTDATA) {
+        for (int i = 0; i < vLogData[index]->eventIndices.size(); ++i) {
+            this->dataIndexList->addItem("Index " + QString::number(vLogData[index]->eventIndices[i]));
         }
     }
 
     // setup plot types
-    if (logsForGraphs[index]->dataClass == ANALOGDATA) {
+    if (vLogData[index]->dataClass == ANALOGDATA) {
 
         // populate types with analog plot forms:
-        this->types->addItem("Line plot");
+        this->typeList->addItem("Line plot");
 
         // Pre-select Line plot, as there is only one option.
-        this->types->setCurrentItem(this->types->item(0));
+        this->typeList->setCurrentItem(this->typeList->item(0));
 
         // For line plots, it's common to select one or a few traces
         // so don't select all items in this->indices.
 
-    } else if (logsForGraphs[index]->dataClass == EVENTDATA) {
+    } else if (vLogData[index]->dataClass == EVENTDATA) {
 
         // populate types with event plot forms:
-        this->types->addItem("Raster plot");
+        this->typeList->addItem("Raster plot");
         // An alternative plot type is: this->types->addItem("Histogram");
 
         // Pre-select Raster plot, as there is only one option.
-        this->types->setCurrentItem(this->types->item(0));
+        this->typeList->setCurrentItem(this->typeList->item(0));
 
         // Typically we want to select all items for a raster plot, so do this here:
-        this->indices->setSelectionMode(QAbstractItemView::ExtendedSelection); // or QAbstractItemView::MultiSelection?
-        for (int i = 0; i < this->indices->count(); ++i) {
-            this->indices->item(i)->setSelected(true);
+        this->dataIndexList->setSelectionMode(QAbstractItemView::ExtendedSelection); // or QAbstractItemView::MultiSelection?
+        for (int i = 0; i < this->dataIndexList->count(); ++i) {
+            this->dataIndexList->item(i)->setSelected(true);
         }
     }
 
@@ -517,24 +521,24 @@ void viewGVpropertieslayout::dataSelectionChanged(int index)
 void viewGVpropertieslayout::addPlotToCurrent()
 {
     // first get a pointer to the current plot!
-    QCustomPlot * currPlot = (QCustomPlot *) currentSubWindow->widget();
+    QCustomPlot* currPlot = (QCustomPlot*)currentSubWindow->widget();
 
     // get the log index
-    int dataIndex = this->datas->currentRow();
+    int dataIndex = this->logList->currentRow();
 
     if (dataIndex < 0) {
         return;
     }
 
     // ok - if then time
-    if (this->logsForGraphs[dataIndex]->dataClass == ANALOGDATA) {
-        if (types->currentRow() == 0) { // Line Plot
-            QList < QListWidgetItem * > selectedItems = this->indices->selectedItems();
+    if (this->vLogData[dataIndex]->dataClass == ANALOGDATA) {
+        if (typeList->currentRow() == 0) { // Line Plot
+            QList < QListWidgetItem * > selectedItems = this->dataIndexList->selectedItems();
             for (int i = 0; i < selectedItems.size(); ++i) {
-                int index = indices->row(selectedItems[i]);
+                int index = dataIndexList->row(selectedItems[i]);
                 // now we have the row, draw the graph...
                 DBG() << "Draw graph for dataIndex=" << dataIndex << " indices index=" << index;
-                if (!this->logsForGraphs[dataIndex]->plotLine(currPlot, currentSubWindow, index)) {
+                if (!this->vLogData[dataIndex]->plotLine(currPlot, currentSubWindow, index)) {
                     DBG() << "Oops, failed to plot";
                 //} else {
                     //DBG() << "logsForGraphs[" << dataIndex << "]->plot=" << this->logsForGraphs[dataIndex]->plot;
@@ -542,14 +546,14 @@ void viewGVpropertieslayout::addPlotToCurrent()
             }
         }
     }
-    if (this->logsForGraphs[dataIndex]->dataClass == EVENTDATA) {
-        if (types->currentRow() == 0) { // Raster Plot
-            QList < QListWidgetItem * > selectedItems = indices->selectedItems();
+    if (this->vLogData[dataIndex]->dataClass == EVENTDATA) {
+        if (typeList->currentRow() == 0) { // Raster Plot
+            QList < QListWidgetItem * > selectedItems = dataIndexList->selectedItems();
             QList < QVariant > indexList;
             for (int i = 0; i < selectedItems.size(); ++i) {
-                indexList.push_back( indices->row(selectedItems[i]));
+                indexList.push_back( dataIndexList->row(selectedItems[i]));
             }
-            if (!this->logsForGraphs[dataIndex]->plotRaster(currPlot, currentSubWindow, indexList)) {
+            if (!this->vLogData[dataIndex]->plotRaster(currPlot, currentSubWindow, indexList)) {
                 DBG() << "Oops, failed to plot";
             }
         }
@@ -588,42 +592,43 @@ void viewGVpropertieslayout::createToolbar()
     QCommonStyle style;
 
     // create actions
-    actionAddGraph = new QAction(QIcon(":/icons/toolbar/images/new_file.png"),"",viewGV->mainwindow);
-    actionAddGraph->setToolTip("Add a new plot");
+    actionAddGraphSubWin = new QAction(QIcon(":/icons/toolbar/images/new_file.png"),"",viewGV->mainwindow);
+    actionAddGraphSubWin->setToolTip("Add a new plot");
     actionToGrid = new QAction(QIcon(":/icons/toolbar/images/tile_windows.png"),"",viewGV->mainwindow);
     actionToGrid->setToolTip("Tile plots");
-    actionLoadData = new QAction(QIcon(":/icons/toolbar/images/open_file.png"),"",viewGV->mainwindow);
-    actionLoadData->setToolTip("Load data");
-    actionRefresh = new QAction(QIcon(":/icons/toolbar/images/refresh.png"),"",viewGV->mainwindow);
-    actionRefresh->setToolTip("Refresh data manually");
+    actionLoadLogData = new QAction(QIcon(":/icons/toolbar/images/open_file.png"),"",viewGV->mainwindow);
+    actionLoadLogData->setToolTip("Load data");
+    actionRefreshLogData = new QAction(QIcon(":/icons/toolbar/images/refresh.png"),"",viewGV->mainwindow);
+    actionRefreshLogData->setToolTip("Refresh data manually");
     actionSavePdf = new QAction(QIcon(":/icons/toolbar/images/pdf_save.png"),"",viewGV->mainwindow);
     actionSavePdf->setToolTip("Save plot as pdf");
     actionSavePng = new QAction(QIcon(":/icons/toolbar/images/png_save.png"),"",viewGV->mainwindow);
     actionSavePng->setToolTip("save plot as png");
 
     // connect actions
-    connect(actionAddGraph, SIGNAL(triggered()), this, SLOT(actionAddGraph_triggered()));
+    connect(actionAddGraphSubWin, SIGNAL(triggered()), this, SLOT(actionAddGraphSubWin_triggered()));
     connect(actionToGrid, SIGNAL(triggered()), this, SLOT(actionToGrid_triggered()));
-    connect(actionLoadData, SIGNAL(triggered()), this, SLOT(actionLoadData_triggered()));
-    connect(actionRefresh, SIGNAL(triggered()), this, SLOT(actionRefresh_triggered()));
+    connect(actionLoadLogData, SIGNAL(triggered()), this, SLOT(actionLoadLogData_triggered()));
+    connect(actionRefreshLogData, SIGNAL(triggered()), this, SLOT(actionRefreshLogData_triggered()));
     connect(actionSavePdf, SIGNAL(triggered()), this, SLOT(actionSavePdf_triggered()));
     connect(actionSavePng, SIGNAL(triggered()), this, SLOT(actionSavePng_triggered()));
 
     // add actions to toolbar
-    viewGV->toolbar->addAction(actionAddGraph);
+    viewGV->toolbar->addAction(actionAddGraphSubWin);
     viewGV->toolbar->addAction(actionSavePdf);
     viewGV->toolbar->addAction(actionSavePng);
     viewGV->toolbar->addAction(actionToGrid);
-    viewGV->toolbar->addAction(actionLoadData);
-    viewGV->toolbar->addAction(actionRefresh);
+    viewGV->toolbar->addAction(actionLoadLogData);
+    viewGV->toolbar->addAction(actionRefreshLogData);
 
     // make the toolbar the right size
     viewGV->toolbar->setFixedHeight(28);
     viewGV->toolbar->layout()->setMargin(0);
 }
 
-void viewGVpropertieslayout::actionAddGraph_triggered()
+void viewGVpropertieslayout::actionAddGraphSubWin_triggered()
 {
+    DBG() << "Create a new QCustomPlot object";
     QCustomPlot* plot = new QCustomPlot;
     this->setupPlot (plot);
 
@@ -639,11 +644,11 @@ void viewGVpropertieslayout::actionToGrid_triggered()
     viewGV->mdiarea->tileSubWindows();
 }
 
-void viewGVpropertieslayout::actionRefresh_triggered()
+void viewGVpropertieslayout::actionRefreshLogData_triggered()
 {
     // refresh all logs:
-    for (int i = 0; i < logsForGraphs.size(); ++i) {
-        this->refreshLog(logsForGraphs[i]);
+    for (int i = 0; i < vLogData.size(); ++i) {
+        this->refreshLog (vLogData[i]);
     }
 }
 
@@ -669,7 +674,7 @@ void viewGVpropertieslayout::actionSavePng_triggered()
     }
 }
 
-// Originally intended to refresh the graphs based on there being new data in the backend. So what I'm trying to do here isn't right.
+// Originally intended to refresh the graphs based on there being new data in the backend.
 void viewGVpropertieslayout::refreshLog(logData * log)
 {
     if (log->setupFromXML()) {
@@ -680,42 +685,16 @@ void viewGVpropertieslayout::refreshLog(logData * log)
 
         // loop and extract the plot
         for (int i = 0; i < subWins.size(); ++i) {
-
-#if 0
-            QCustomPlot* currPlot = (QCustomPlot*)subWins[i]->widget();
-#endif
-            // loop through graphs in the plot
-            this->addLinesRasters (log, /*currPlot,*/ subWins[i]);
-#if 0
-            for (int j = 0; j < currPlot->graphCount(); ++j) {
-                // if the graph is from this log
-                if (currPlot->graph(j)->property("source").toString() == log->logFileXMLname) {
-
-                    // extract remaining graph data
-                    QString type = currPlot->graph(j)->property("type").toString();
-
-                    if (type == "linePlot") {
-                        // get index
-                        int index = currPlot->graph(j)->property("index").toInt();
-                        log->plotLine(currPlot, subWins[i], index, j);
-
-                    } else if (type == "rasterPlot") {
-                        // get indices
-                        QList < QVariant > indices = currPlot->graph(j)->property("indices").toList();
-                        log->plotRaster(currPlot, subWins[i], indices, j);
-                    }
-                }
-            }
-#endif
+            this->addLinesRasters (log, subWins[i]);
         }
 
     } // else return
 }
 
-void viewGVpropertieslayout::actionLoadData_triggered()
+void viewGVpropertieslayout::actionLoadLogData_triggered()
 {
     // file dialog:
     QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Load log"), qgetenv("HOME"),
                                                           tr("XML files (*.xml);; All files (*)"));
-    this->loadDataFiles(fileNames);
+    this->loadLogDataFiles(fileNames);
 }
