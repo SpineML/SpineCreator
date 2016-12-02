@@ -748,11 +748,13 @@ void MainWindow::initViewGV()
     viewGV.properties = new viewGVpropertieslayout(&this->viewGV);
     viewGV.dock->setWidget(viewGV.properties);
 
+#if 0 // No need now - this is done when attempting to restore plots and that function ensures there's always at least one window avialable.
     // add a window
     QCustomPlot * plot = new QCustomPlot;
     viewGV.properties->setupPlot(plot);
     viewGV.mdiarea->addSubWindow(plot);
     viewGV.mdiarea->tileSubWindows();
+#endif
 
     // add sub window area to layout
     ((QGridLayout *) this->ui->centralWidget->layout())->addWidget(viewGV.subWin, 0, ((QGridLayout *) this->ui->centralWidget->layout())->columnCount(),4,1);

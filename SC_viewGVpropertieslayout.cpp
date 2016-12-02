@@ -202,12 +202,12 @@ void viewGVpropertieslayout::storePlotsToExpt (void)
     QList<QMdiSubWindow*>::iterator sw = subWins.begin();
     while (sw != subWins.end()) {
         if ((*sw) != (QMdiSubWindow*)0) {
-#if 1 // comment out for debugging
+
             DBG() << "Append PlotInfo from the subwindow to the experiment's plot list...";
             // Make a copy of the QCustomPlot information
             PlotInfo p((QCustomPlot*)(*sw)->widget());
             this->currentExperiment->visiblePlots.append(p);
-#endif
+
             DBG() << "Close plot window";
             (*sw)->close();
         }
@@ -221,6 +221,9 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
 
     if (e == (experiment*)0) {
         DBG() << "ERROR: need to be passed a non-null experiment*";
+        // Add an empty graph before returning
+        this->actionAddGraphSubWin_triggered();
+        this->actionToGrid_triggered();
         return;
     }
 
@@ -228,21 +231,10 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
 
     if (this->currentExperiment->visiblePlots.isEmpty()) {
         DBG() << "INFO: The new experiment has no plots to render";
+        // Add an empty graph for user's first graph:
+        this->actionAddGraphSubWin_triggered();
+        this->actionToGrid_triggered();
         return;
-    }
-
-    // Close all windows in preparation for restoring
-    QList<QMdiSubWindow*> subWins = this->viewGV->mdiarea->subWindowList();
-    // Not all of these may be QCustomPlots
-    int i = 0;
-    while (i < subWins.size()) {
-        if (qobject_cast<QCustomPlot*>(subWins[i]->widget())) {
-            subWins[i]->close();
-        } else {
-            DBG() << "The subwindow type "
-                  << subWins[i]->widget()->metaObject()->className() << " is not a QCustomPlot.";
-        }
-        ++i;
     }
 
     DBG() << "Restore plots for experiment " << this->currentExperiment->name;
@@ -269,11 +261,12 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
     }
 
     if (!added) {
+        // This is only going to occur if the mdiarea->addSubWindow(cplot) fails.
         DBG() << "Add an empty subwindow";
         this->actionAddGraphSubWin_triggered();
     }
 
-    // Lastly, tile the windows.
+    // Lastly, tile the restored windows.
     this->actionToGrid_triggered();
 }
 
