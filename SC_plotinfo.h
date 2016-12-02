@@ -39,14 +39,16 @@ public: // methods
     // Copy constructor
     SingleGraph(const SingleGraph& rhs);
 
-    void setData (QCPDataMap* d);
+    // Set up this->data from the passed in QCPDataMap.
+    void setData (const QCPDataMap* d);
 
 public: // attributes
     QString type;
     QString source;
     int index;
-    // Same data container as used in a QCustomPlot graph
-    QCPDataMap* data;
+    // Same data container as used in a QCustomPlot graph. Note it's a
+    // concrete object.
+    QCPDataMap data;
 };
 
 /*!
@@ -74,6 +76,12 @@ public: // attributes
     QVector<SingleGraph> graphs;
     QString xlabel;
     QString ylabel;
+    double xrangelower;
+    double xrangeupper;
+    double yrangelower;
+    double yrangeupper;
+    double xtickstep;
+    double ytickstep;
 private: // attributes
     QString title;
 };

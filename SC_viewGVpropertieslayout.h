@@ -159,6 +159,27 @@ private:
      */
     void addLinesRasters (logData* log, QMdiSubWindow* subWin);
 
+    /*!
+     * Common functions used in addLine/RasterGraphtToPlot.
+     */
+    //@{
+    void alternatePlotColours (QCustomPlot* plot);
+    void addGraphSetDataCommon (PlotInfo& pi, QCustomPlot* plot, int i);
+    void setGraphSettingsCommon (PlotInfo& pi, QCustomPlot* plot, int i);
+    //@}
+
+    /*!
+     * Add a raster graph with data from pi.graph(i) to plot. Called
+     * from @see addGraphsToPlot.
+     */
+    void addRasterGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i);
+
+    /*!
+     * Add a line graph with data from pi.graph(i) to plot. Called
+     * from @see addGraphsToPlot.
+     */
+    void addLineGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i);
+
 signals:
 
 public slots:
@@ -181,8 +202,11 @@ public slots:
     /*!
      * Add the graphs defined in the give PlotInfo object to the
      * QCustomPlot plot.
+     *
+     * PlotInfo& would be a const PlotInfo&, but qcustomplot doesn't provide
+     * a QCPData::setData(const QCPDataMap*) method.
      */
-    void addGraphsToPlot (const PlotInfo& pi, QCustomPlot* plot);
+    void addGraphsToPlot (PlotInfo& pi, QCustomPlot* plot);
 
     /*!
      * \brief Delete the currently selected log file.

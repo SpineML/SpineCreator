@@ -171,7 +171,7 @@ void viewGVpropertieslayout::populateVLogData (QStringList fileNames, QDir* path
 
         // otherwise...
         if (!exists) {
-            DBG() << "Create a new logData object";
+            //DBG() << "Create a new logData object";
             logData * log = new logData();
             log->logFileXMLname = logXMLname;
             if (!log->setupFromXML()) {
@@ -179,7 +179,7 @@ void viewGVpropertieslayout::populateVLogData (QStringList fileNames, QDir* path
                 delete log;
                 continue;
             }
-            DBG() << "Push back " << logXMLname << " onto logsForGraphs";
+            //DBG() << "Push back " << logXMLname << " onto logsForGraphs";
             this->vLogData.push_back(log);
         }
     }
@@ -202,14 +202,15 @@ void viewGVpropertieslayout::storePlotsToExpt (void)
     QList<QMdiSubWindow*>::iterator sw = subWins.begin();
     while (sw != subWins.end()) {
         if ((*sw) != (QMdiSubWindow*)0) {
-            DBG() << "Append the plot from the subwindow to the experiment's plot list...";
+#if 1 // comment out for debugging
+            DBG() << "Append PlotInfo from the subwindow to the experiment's plot list...";
             // Make a copy of the QCustomPlot information
             PlotInfo p((QCustomPlot*)(*sw)->widget());
             this->currentExperiment->visiblePlots.append(p);
-
-            //(*sw)->close();
+#endif
+            DBG() << "Close plot window";
+            (*sw)->close();
         }
-        DBG() << "PlotInfo p went out of scope";
         sw++;
     }
 }
@@ -254,7 +255,8 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
 
         // setup and restore from pi.
         DBG() << "Calling addGraphsToPlot";
-        this->addGraphsToPlot (this->currentExperiment->visiblePlots.at(pi), cplot);
+        // .at(pi) would be better but can't pass const PlotInfo& to addGraphsToPlot
+        this->addGraphsToPlot (this->currentExperiment->visiblePlots[pi], cplot);
 
         QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(cplot);
         if (mdiSubWin != NULL) {
@@ -275,48 +277,91 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
     this->actionToGrid_triggered();
 }
 
+#define MAKE_A_COPY true // Used below in calls to setData from QCPData
 void
-viewGVpropertieslayout::addGraphsToPlot (const PlotInfo& pi, QCustomPlot* plot)
+viewGVpropertieslayout::addRasterGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i)
+{
+    this->addGraphSetDataCommon (pi, plot, i);
+    plot->graph(plot->graphCount()-1)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 1));
+    plot->graph(plot->graphCount()-1)->setLineStyle(QCPGraph::lsNone);
+#if 0
+    // Construct indices.
+    QMap<double, QCPData>::const_iterator j = pi.graphs(i).data.constBegin();
+    QList<QVariant> indices;
+    while (j != pi.graphs(i).data.constEnd()) {
+        // (int)j.key() adds to indices
+        indices.insert ((int)j.key());
+        ++j;
+    }
+    QVariant var(indices); // Found in pi.graphs(i).data
+    plot->graph(plot->graphCount()-1)->setProperty("indices", var); // Perhaps will have to collect indices from out of the old plot?
+#endif
+    this->setGraphSettingsCommon (pi, plot, i);
+}
+
+void
+viewGVpropertieslayout::addLineGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i)
+{
+    this->addGraphSetDataCommon (pi, plot, i);
+    plot->graph(plot->graphCount()-1)->setName ("Index " + QString::number(i));
+    plot->graph(plot->graphCount()-1)->setProperty("index", pi.graphs[i].index);
+    this->setGraphSettingsCommon (pi, plot, i);
+}
+
+void
+viewGVpropertieslayout::alternatePlotColours (QCustomPlot* plot)
+{
+    QPen pen;
+    pen.setColor((Qt::GlobalColor) (7+(plot->graphCount()-1)%11));
+    plot->graph(plot->graphCount()-1)->setPen(pen);
+}
+
+void
+viewGVpropertieslayout::addGraphSetDataCommon (PlotInfo& pi, QCustomPlot* plot, int i)
+{
+    plot->addGraph();
+    QCPDataMap* dmptr = &(pi.graphs[i].data);
+    plot->graph(plot->graphCount()-1)->setData (dmptr, MAKE_A_COPY);
+}
+
+void
+viewGVpropertieslayout::setGraphSettingsCommon (PlotInfo& pi, QCustomPlot* plot, int i)
+{
+    plot->graph(plot->graphCount()-1)->setProperty("type", pi.graphs[i].type);
+    plot->graph(plot->graphCount()-1)->setProperty("source", pi.graphs[i].source);
+    plot->xAxis->setLabel(pi.xlabel);
+    plot->yAxis->setLabel(pi.ylabel);
+    this->alternatePlotColours (plot);
+    plot->xAxis->setRange(pi.xrangelower, pi.xrangeupper);
+    plot->yAxis->setRange(pi.yrangelower, pi.yrangeupper);
+    plot->xAxis->setTickStep(pi.xtickstep);
+    plot->yAxis->setTickStep(pi.ytickstep);
+}
+
+void
+viewGVpropertieslayout::addGraphsToPlot (PlotInfo& pi, QCustomPlot* plot)
 {
     // add graph and setup data and name
     DBG() << "called for plot title" << pi.getTitle();
 
     for (int i = 0; i < pi.graphs.size(); ++i) {
-        plot->addGraph();
-        plot->graph(plot->graphCount()-1)->setData (pi.graphs[i].data);
-        plot->graph(plot->graphCount()-1)->setName ("Index " + QString::number(i));
-
-        // add properties to graph so we know what it came from
-        plot->graph(plot->graphCount()-1)->setProperty("type", pi.graphs[i].type);
-        plot->graph(plot->graphCount()-1)->setProperty("source", pi.graphs[i].source);
-        if (i != pi.graphs[i].index) {
-            DBG() << "Expect i == " << i << " == graphs[i].index == " << pi.graphs[i].index << "?";
+        if (pi.graphs[i].type == "rasterPlot") {
+            this->addRasterGraphToPlot (pi, plot, i);
+        } else {
+            this->addLineGraphToPlot (pi, plot, i);
         }
-        plot->graph(plot->graphCount()-1)->setProperty("index", pi.graphs[i].index);
-
-        // axis labels
-        plot->xAxis->setLabel(pi.xlabel);
-        plot->yAxis->setLabel(pi.ylabel);
-
-        // alternate colours
-        QPen pen;
-        pen.setColor((Qt::GlobalColor) (7+(plot->graphCount()-1)%11));
-        plot->graph(plot->graphCount()-1)->setPen(pen);
     }
+
     // fit all if not an update
     plot->rescaleAxes();
     plot->legend->setVisible(true);
     // title
-#if 0
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
         plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, pi.getTitle()));
     }
-#endif
-    plot->replot();
 
-    // Connect an "on destroyed" handler
-    // connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
+    plot->replot();
 }
 
 void viewGVpropertieslayout::addLinesRasters (logData* log, QMdiSubWindow* subWin)

@@ -119,16 +119,7 @@ public:
     bool calculateBinaryDataStride();
     int calculateBinaryDataOffset(int);
 
-    /*!
-     * Close all the plots associated with this logData.
-     */
-    void closePlots (QMdiArea* mdiarea);
-
 public slots:
-    /*!
-     * Called when the associated QCustomPlot is destroyed. Should remove entry from this->plots
-     */
-    void onPlotDestroyed (void);
 };
 
 #endif // LOGDATA_H
