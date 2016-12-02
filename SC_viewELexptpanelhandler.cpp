@@ -160,23 +160,24 @@ void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
 
 void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
 {
+    DBG() << "Called";
     QLayoutItem * item;
-    while ((item = parentLayout->takeAt(0))) {
+    while ((item = parentLayout->takeAt(0))) { // invalid index 0
         if (item->widget()) {
             if (item->widget()->property("noDelete")!=true) {
                 item->widget()->disconnect((QObject *)0);
                 item->widget()->hide();
                 connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
-                qDebug() << "Mee: " << item->widget();
+                DBG() << "Disconnected, hid and connected for deleteLater: " << item->widget();
             } else {
-                qDebug() << "Moo: " << item->widget();
+                DBG() << "noDelete set for: " << item->widget();
             }
         }
-        if (item->layout())
+        if (item->layout()) {
             recursiveDeleteLoop(item->layout());
+        }
         delete item;
     }
-
 }
 
 void viewELExptPanelHandler::redraw()
@@ -290,7 +291,7 @@ void viewELExptPanelHandler::redrawExpt()
         // store the scroll location so we can replace it later
         horiz_scroll = scroll->horizontalScrollBar()->value();
         vert_scroll = scroll->verticalScrollBar()->value();
-        qDebug() << horiz_scroll << vert_scroll;
+        //qDebug() << horiz_scroll << vert_scroll;
     }
 
     emit this->deleteWidgets();

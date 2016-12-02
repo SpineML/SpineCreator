@@ -2,7 +2,7 @@
 
 SingleGraph::SingleGraph()
 {
-    DBG() << "Constructor";
+    DBG() << "Constructor for " << this;
     this->type = "";
     this->source = "";
     this->index = -1;
@@ -12,15 +12,16 @@ SingleGraph::SingleGraph()
 SingleGraph::~SingleGraph()
 {
     if (this->data != (QCPDataMap*)0) {
-        DBG() << "Deconstructor (deletes data)";
+        DBG() << "Deconstructor (deletes data) for " << this;
         delete this->data;
     } else {
-        DBG() << "Deconstructor (deletes no data)";
+        DBG() << "Deconstructor (deletes no data) for " << this;
     }
 }
 
 SingleGraph::SingleGraph(const SingleGraph& rhs)
 {
+    DBG() << "Copy constructor for " << this;
     this->type = rhs.type;
     this->source = rhs.source;
     this->index = rhs.index;
@@ -31,12 +32,15 @@ void
 SingleGraph::setData (QCPDataMap* d)
 {
     // Want a copy of the data pointed to by d:
-    this->data = new QCPDataMap(*d);
+    DBG() << "called for " << this << " to set data map " << d;
+    QCPDataMap& dm = *d;
+    this->data = new QCPDataMap(dm);
+    DBG() << "this->data is now " << this->data;
 }
 
 PlotInfo::PlotInfo()
 {
-    DBG() << "Constructor";
+    DBG() << "Constructor for " << this;
     this->xlabel = "";
     this->ylabel = "";
     this->title = "none";
@@ -44,12 +48,13 @@ PlotInfo::PlotInfo()
 
 PlotInfo::PlotInfo(QCustomPlot* p)
 {
-    DBG() << "Constructor (with QCustomPlot* arg)";
+    DBG() << "Constructor (with QCustomPlot* arg) for " << this;
     this->setupFrom (p);
 }
 
 PlotInfo::PlotInfo (const PlotInfo& rhs)
 {
+    DBG() << "Copy constructor for " << this;
     this->xlabel = rhs.xlabel;
     this->ylabel = rhs.ylabel;
     this->title = rhs.getTitle();
@@ -58,18 +63,20 @@ PlotInfo::PlotInfo (const PlotInfo& rhs)
 
 PlotInfo::~PlotInfo()
 {
-        DBG() << "Deconstructor";
+    DBG() << "Deconstructor for " << this;
 }
 
 QString
 PlotInfo::getTitle (void) const
 {
+    DBG() << "called for " << this;
     return this->title;
 }
 
 void
 PlotInfo::setupFrom (QCustomPlot* p)
 {
+    DBG() << "called for " << this;
     for (int i = 0; i < p->graphCount(); ++i) {
         SingleGraph g;
         g.type = (QString)p->graph(i)->property("type").toString();
