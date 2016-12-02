@@ -1995,7 +1995,7 @@ void viewELExptPanelHandler::run()
 
 
     // Wait a couple of seconds for the process to start
-    if (!simulator->waitForStarted(100)) {
+    if (!simulator->waitForStarted(1000)) {
         // Error - simulator failed to start
         this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
         //delete simulator; // Alex: this appears to be dangerous - we can have the wait for started fail, without the simulator crashing
