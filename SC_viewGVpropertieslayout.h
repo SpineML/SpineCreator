@@ -194,6 +194,13 @@ private:
      */
     void addLineGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i);
 
+    /*!
+     * If true, the x axes of all the visible plots should be kept to
+     * the same range - editing the range in one plot should lead to
+     * the range changing in all the others.
+     */
+    bool unifyTime;
+
 signals:
 
 public slots:
@@ -223,6 +230,13 @@ public slots:
     void addGraphsToPlot (PlotInfo& pi, QCustomPlot* plot);
 
     /*!
+     * Set the range r on the x axis for all plots other than the
+     * current one. This is a "unify time" option for multiple
+     * graphs. Cool.
+     */
+    void unifyRangeForAllPlots (const QCPRange& r);
+
+    /*!
      * \brief Delete the currently selected log file.
      *
      * This looks at the currently selected log in @see logList, deletes
@@ -230,6 +244,12 @@ public slots:
      * the corresponding entry from @see vLogData and @see logList
      */
     void deleteCurrentLog();
+
+    /*!
+     * Toggle the feature which keeps the x axis (time) ranges the
+     * same on all graphs.
+     */
+    void toggleUnifyTime (void);
 
     // graph slots
     /*!

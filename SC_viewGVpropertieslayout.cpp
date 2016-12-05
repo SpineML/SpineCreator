@@ -65,7 +65,10 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
     this->addGraphButton = agb;
     QPushButton * dlb = new QPushButton("Delete log file (PERMANENTLY)");
     this->layout()->addWidget(dlb);
-
+    this->unifyTime = true;
+    QCheckBox* unifyTimeButton = new QCheckBox("Unify time axes");
+    unifyTimeButton->setCheckState (Qt::Checked);
+    this->layout()->addWidget (unifyTimeButton);
     ((QVBoxLayout *)this->layout())->addStretch();
 
     // connect
@@ -73,6 +76,7 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
     connect(this->logList, SIGNAL(currentRowChanged(int)), this, SLOT(logListSelectionChanged(int)));
     connect(agb, SIGNAL(clicked()), this, SLOT(addGraphsToCurrent()));
     connect(dlb, SIGNAL(clicked()), this, SLOT(deleteCurrentLog()));
+    connect(unifyTimeButton, SIGNAL(clicked()), this, SLOT(toggleUnifyTime()));
 }
 
 viewGVpropertieslayout::~viewGVpropertieslayout()
@@ -110,6 +114,40 @@ void viewGVpropertieslayout::setupPlot(QCustomPlot * plot)
     // make bottom and left axes transfer their ranges to top and right axes:
     connect(plot->xAxis, SIGNAL(rangeChanged(QCPRange)), plot->xAxis2, SLOT(setRange(QCPRange)));
     connect(plot->yAxis, SIGNAL(rangeChanged(QCPRange)), plot->yAxis2, SLOT(setRange(QCPRange)));
+
+    // Connect signal to unify the time axis range
+    connect(plot->xAxis, SIGNAL(rangeChanged(QCPRange)), this, SLOT(unifyRangeForAllPlots(QCPRange)));
+}
+
+void viewGVpropertieslayout::unifyRangeForAllPlots (const QCPRange& r)
+{
+    if (this->unifyTime) {
+        // Need sender, so we don't try to set range for that one.
+        QCustomPlot* senderPlot = qobject_cast<QCustomPlot*>(sender());
+
+        QList<QMdiSubWindow*> subWins = this->viewGV->mdiarea->subWindowList();
+        QList<QMdiSubWindow*>::iterator sw = subWins.begin();
+        while (sw != subWins.end()) {
+            if ((*sw) != (QMdiSubWindow*)0) {
+                QCustomPlot* p = (QCustomPlot*)(*sw)->widget();
+                if (p != senderPlot) {
+                    // Disconnect handler, change range, then re-connect the handler:
+                    bool disconnected = disconnect (p->xAxis, SIGNAL(rangeChanged(QCPRange)),
+                                                    this, SLOT(unifyRangeForAllPlots(QCPRange)));
+                    if (disconnected) {
+                        p->xAxis->setRange(r);
+                        p->replot();
+                        bool connected = connect(p->xAxis, SIGNAL(rangeChanged(QCPRange)),
+                                                 this, SLOT(unifyRangeForAllPlots(QCPRange)));
+                        if (!connected) {
+                            DBG() << "WARNING: Failed to re-connect unifyRangeForAllPlots signal";
+                        }
+                    }
+                }
+            }
+            sw++;
+        }
+    } // else not configured to unify time axes
 }
 
 void viewGVpropertieslayout::updateLogList()
@@ -418,6 +456,16 @@ void viewGVpropertieslayout::deleteCurrentLog()
 
     // refresh display
     this->updateLogList();
+}
+
+void viewGVpropertieslayout::toggleUnifyTime (void)
+{
+    QCheckBox* sndr = qobject_cast<QCheckBox*>(sender());
+    if (sndr->checkState() == Qt::Checked) {
+        this->unifyTime = true;
+    } else {
+        this->unifyTime = false;
+    }
 }
 
 void viewGVpropertieslayout::removeSelectedGraph()
