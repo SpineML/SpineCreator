@@ -340,6 +340,10 @@ viewGVpropertieslayout::setGraphSettingsCommon (PlotInfo& pi, QCustomPlot* plot,
     plot->yAxis->axisRect()->setRangeZoomFactor(pi.yrangezoomfactor);
     plot->xAxis->axisRect()->setRangeDrag(pi.xrangedrag);
     plot->yAxis->axisRect()->setRangeDrag(pi.yrangedrag);
+
+    // Probably need to check layout element exists:
+    QCPPlotTitle* t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+    t->setText (pi.getTitle());
 }
 
 void
@@ -356,10 +360,7 @@ viewGVpropertieslayout::addGraphsToPlot (PlotInfo& pi, QCustomPlot* plot)
         }
     }
 
-    // fit all if not an update
-
-    DBG() << "NOT rescaling axes on adding a graph to a plot...";
-    // plot->rescaleAxes();
+    // Removed a call here to rescale the plot.
 
     plot->legend->setVisible(true);
     // title
@@ -395,6 +396,20 @@ void viewGVpropertieslayout::addLinesRasters (logData* log, QMdiSubWindow* subWi
         } // else graph not from this log
 
     } // end loop through graphs in plot.
+
+#if 0
+    // It may be necessary to update the title of the graph.
+    if (currPlot->plotLayout()->rowCount() == 1) {
+        currPlot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
+        currPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(currPlot, log->logName));
+    } else {
+        // Update title
+        QCPPlotTitle* t = (QCPPlotTitle*)currPlot->plotLayout()->element (0, 0);
+        if (t->text().isEmpty()) {
+            t->setText (log->logName);
+        }
+    }
+#endif
 }
 
 void viewGVpropertieslayout::deleteCurrentLog()
@@ -617,8 +632,6 @@ void viewGVpropertieslayout::addGraphsToCurrent()
                 DBG() << "Draw graph for dataIndex=" << dataIndex << " indices index=" << index;
                 if (!this->vLogData[dataIndex]->plotLine(currPlot, this->currentSubWindow, index)) {
                     DBG() << "Oops, failed to plot";
-                //} else {
-                    //DBG() << "logsForGraphs[" << dataIndex << "]->plot=" << this->logsForGraphs[dataIndex]->plot;
                 }
             }
         }

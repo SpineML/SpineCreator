@@ -401,7 +401,13 @@ bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int up
     // title
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
-        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, logName));
+        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, this->logName));
+    } else {
+        // update title as it's empty
+        QCPPlotTitle* t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+        if (t->text().isEmpty()) {
+            t->setText (this->logName);
+        }
     }
 
     // redraw
@@ -591,7 +597,12 @@ bool logData::plotRaster(QCustomPlot * plot, QMdiSubWindow* msw, QList < QVarian
     // title
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
-        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, logName));
+        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, this->logName));
+    } else {
+        QCPPlotTitle* t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+        if (t->text().isEmpty()) {
+            t->setText (this->logName);
+        }
     }
 
     // redraw
