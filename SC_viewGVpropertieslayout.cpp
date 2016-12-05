@@ -190,7 +190,13 @@ void viewGVpropertieslayout::populateVLogData (QStringList fileNames, QDir* path
 void viewGVpropertieslayout::storePlotsToExpt (void)
 {
     DBG() << "Called";
-
+#if 0 // Project closed check done in mainwindow.
+    if (project_closed) {
+        // Can't/no need to store plots
+        DBG() << "The project was closed; can't store plots";
+        return;
+    }
+#endif
     if (this->currentExperiment == (experiment*)0) {
         DBG() << "No currentExperiment; can't store plots";
         return;
@@ -213,6 +219,21 @@ void viewGVpropertieslayout::storePlotsToExpt (void)
         }
         sw++;
     }
+}
+
+void viewGVpropertieslayout::clearPlots (void)
+{
+    QList<QMdiSubWindow*> subWins = this->viewGV->mdiarea->subWindowList();
+    QList<QMdiSubWindow*>::iterator sw = subWins.begin();
+    while (sw != subWins.end()) {
+        if ((*sw) != (QMdiSubWindow*)0) {
+            (*sw)->close();
+        }
+        sw++;
+    }
+    // Having cleared, create a single empty plot ready for the next project/experiment.
+    this->actionAddGraphSubWin_triggered();
+    this->actionToGrid_triggered();
 }
 
 void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
@@ -325,10 +346,18 @@ viewGVpropertieslayout::setGraphSettingsCommon (PlotInfo& pi, QCustomPlot* plot,
     plot->xAxis->setLabel(pi.xlabel);
     plot->yAxis->setLabel(pi.ylabel);
     this->alternatePlotColours (plot);
-    plot->xAxis->setRange(pi.xrangelower, pi.xrangeupper);
-    plot->yAxis->setRange(pi.yrangelower, pi.yrangeupper);
     plot->xAxis->setTickStep(pi.xtickstep);
     plot->yAxis->setTickStep(pi.ytickstep);
+    plot->xAxis->setRange(pi.xrangelower, pi.xrangeupper);
+    plot->yAxis->setRange(pi.yrangelower, pi.yrangeupper);
+    // Setting rangezoom, rangedrag, etc not strictly necessary, but
+    // keeps the plots in same state for the user:
+    plot->xAxis->axisRect()->setRangeZoom(pi.xrangezoom);
+    plot->yAxis->axisRect()->setRangeZoom(pi.yrangezoom);
+    plot->xAxis->axisRect()->setRangeZoomFactor(pi.xrangezoomfactor);
+    plot->yAxis->axisRect()->setRangeZoomFactor(pi.yrangezoomfactor);
+    plot->xAxis->axisRect()->setRangeDrag(pi.xrangedrag);
+    plot->yAxis->axisRect()->setRangeDrag(pi.yrangedrag);
 }
 
 void
@@ -346,7 +375,10 @@ viewGVpropertieslayout::addGraphsToPlot (PlotInfo& pi, QCustomPlot* plot)
     }
 
     // fit all if not an update
-    plot->rescaleAxes();
+
+    DBG() << "NOT rescaling axes on adding a graph to a plot...";
+    // plot->rescaleAxes();
+
     plot->legend->setVisible(true);
     // title
     if (plot->plotLayout()->rowCount() == 1) {

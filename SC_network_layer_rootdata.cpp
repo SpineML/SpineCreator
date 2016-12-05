@@ -143,6 +143,31 @@ void nl_rootdata::selectProject(QAction * action)
     //main->updatePlots();
 }
 
+bool nl_rootdata::doesExperimentExist (experiment* e)
+{
+    // Search QVector < experiment *> experiments;
+    QVector<experiment*>::const_iterator ex = this->experiments.constBegin();
+    while (ex != this->experiments.constEnd()) {
+        if ((*ex) == e) {
+            //DBG() << e << " exists in nl_rootdata::experiments.";
+            return true;
+        }
+        ++ex;
+    }
+
+    // Search each QVector < projectObject * > projects;
+    QVector<projectObject*>::const_iterator po = this->projects.constBegin();
+    while (po != this->projects.constEnd()) {
+        if ((*po)->doesExperimentExist (e) == true) {
+            //DBG() << e << " exists in nl_rootdata::projects.";
+            return true;
+        }
+        ++po;
+    }
+
+    return false;
+}
+
 void nl_rootdata::replaceComponent(QSharedPointer<Component> oldComp, QSharedPointer<Component> newComp)
 {
     for (int p = 0; p < this->populations.size(); ++p) {

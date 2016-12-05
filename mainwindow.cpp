@@ -544,12 +544,17 @@ void MainWindow::updateDatas (void)
 
             // Restore the graph plots and the log data for the experiment:
 
-            // 1. Store plot info in the current expt, then close sub windows.
-            this->viewGV.properties->storePlotsToExpt();
+            // 1. Store plot info in the current expt pointed to in
+            // the viewGV, then close sub windows.
+            if (data.doesExperimentExist(this->viewGV.properties->currentExperiment)) {
+                this->viewGV.properties->storePlotsToExpt();
+            } else {
+                DBG() << "No such experiment, can't store plots";
+                this->viewGV.properties->clearPlots();
+            }
 
             // 2. clear out vLogData as we'll re-read from the new expt log directory
-            this->viewGV.properties->clearVLogData(); // clears logs, deleting memory except for those
-                                                      // stored in the viewGV's current experiment.
+            this->viewGV.properties->clearVLogData();
 
             // 3. Read new expt log directory
             this->viewGV.properties->populateVLogData (logs.entryList(), &logs);
@@ -568,6 +573,8 @@ void MainWindow::updateDatas (void)
         }
     } else {
         DBG() << "Current expt num is -1, no current experiment exists to update logs from";
+        // Just need to clear any stale graphs
+        this->viewGV.properties->clearPlots();
     }
 }
 
@@ -1664,6 +1671,8 @@ void MainWindow::close_project()
         ui->action_Close_project->setEnabled(false);
 
     this->data.redrawViews();
+
+    this->updateDatas();
 
     this->updateTitle();
 }

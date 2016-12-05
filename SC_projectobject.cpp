@@ -1302,6 +1302,20 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
     delete reader;
 }
 
+bool projectObject::doesExperimentExist (experiment* e)
+{
+    // Search QVector < experiment *> experiments;
+    QVector<experiment*>::const_iterator ex = this->experimentList.constBegin();
+    while (ex != this->experimentList.constEnd()) {
+        if ((*ex) == e) {
+            return true;
+        }
+        ++ex;
+    }
+
+    return false;
+}
+
 void projectObject::saveExperiment(QString fileName, QDir project_dir, experiment * expt)
 {
     QString absPath = project_dir.absoluteFilePath(fileName);

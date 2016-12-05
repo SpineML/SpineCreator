@@ -2,7 +2,6 @@
 
 SingleGraph::SingleGraph()
 {
-    //DBG() << "Constructor for " << this;
     this->type = "";
     this->source = "";
     this->index = -1;
@@ -10,12 +9,10 @@ SingleGraph::SingleGraph()
 
 SingleGraph::~SingleGraph()
 {
-    DBG() << "Deconstructor (deletes no data) for " << this;
 }
 
 SingleGraph::SingleGraph(const SingleGraph& rhs)
 {
-    DBG() << "Copy constructor for " << this;
     this->type = rhs.type;
     this->source = rhs.source;
     this->index = rhs.index;
@@ -25,7 +22,6 @@ SingleGraph::SingleGraph(const SingleGraph& rhs)
 void
 SingleGraph::setData (const QCPDataMap* d)
 {
-    DBG() << "Copy QCPDataMap...";
     this->data.clear();
 
     // QCPDataMap is a typedef in qcustomplot.h for QMap<double, QCPData>
@@ -39,7 +35,6 @@ SingleGraph::setData (const QCPDataMap* d)
 
 PlotInfo::PlotInfo()
 {
-    //DBG() << "Constructor for " << this;
     this->xlabel = "";
     this->ylabel = "";
     this->xrangeupper = 0;
@@ -53,13 +48,11 @@ PlotInfo::PlotInfo()
 
 PlotInfo::PlotInfo(QCustomPlot* p)
 {
-    //DBG() << "Constructor (with QCustomPlot* arg) for " << this;
     this->setupFrom (p);
 }
 
 PlotInfo::PlotInfo (const PlotInfo& rhs)
 {
-    //DBG() << "Copy constructor for " << this;
     this->xlabel = rhs.xlabel;
     this->ylabel = rhs.ylabel;
     this->xrangeupper = rhs.xrangeupper;
@@ -68,26 +61,31 @@ PlotInfo::PlotInfo (const PlotInfo& rhs)
     this->yrangelower = rhs.yrangelower;
     this->xtickstep = rhs.xtickstep;
     this->ytickstep = rhs.ytickstep;
+    this->xrangedrag = rhs.xrangedrag;
+    this->yrangedrag = rhs.yrangedrag;
+    this->xrangezoom = rhs.xrangezoom;
+    this->yrangezoom = rhs.yrangezoom;
+    this->xrangezoomfactor = rhs.xrangezoomfactor;
+    this->yrangezoomfactor = rhs.yrangezoomfactor;
+    this->xoffset = rhs.xoffset;
+    this->yoffset = rhs.yoffset;
     this->title = rhs.getTitle();
     this->graphs = rhs.graphs;
 }
 
 PlotInfo::~PlotInfo()
 {
-    //DBG() << "Deconstructor for " << this;
 }
 
 QString
 PlotInfo::getTitle (void) const
 {
-    //DBG() << "called for " << this;
     return this->title;
 }
 
 void
 PlotInfo::setupFrom (QCustomPlot* p)
 {
-    //DBG() << "called for " << this;
     for (int i = 0; i < p->graphCount(); ++i) {
         SingleGraph g;
         g.type = (QString)p->graph(i)->property("type").toString();
@@ -105,11 +103,24 @@ PlotInfo::setupFrom (QCustomPlot* p)
     this->xlabel = p->xAxis->label();
     this->ylabel = p->yAxis->label();
 
-    this->xrangelower = p->xAxis->range().lower;
-    this->xrangeupper = p->xAxis->range().upper;
-    this->xrangelower = p->yAxis->range().lower;
-    this->xrangeupper = p->yAxis->range().upper;
-
     this->xtickstep = p->xAxis->tickStep();
     this->ytickstep = p->yAxis->tickStep();
+
+    this->xrangelower = p->xAxis->range().lower;
+    this->xrangeupper = p->xAxis->range().upper;
+    this->yrangelower = p->yAxis->range().lower;
+    this->yrangeupper = p->yAxis->range().upper;
+
+    // These are the setting for the axis - can the axis be dragged, zoomed etc:
+    this->xrangedrag = p->xAxis->axisRect()->rangeDrag();
+    this->yrangedrag = p->yAxis->axisRect()->rangeDrag();
+    this->xrangezoom = p->xAxis->axisRect()->rangeZoom();
+    this->yrangezoom = p->yAxis->axisRect()->rangeZoom();
+    this->xrangezoomfactor = p->xAxis->axisRect()->rangeZoomFactor(Qt::Horizontal);
+    this->yrangezoomfactor = p->yAxis->axisRect()->rangeZoomFactor(Qt::Vertical);
+
+    // Don't know what offset does; it's stored here but not restored
+    // in viewGVpropertieslayout::setGraphSettingsCommon
+    this->xoffset = p->xAxis->offset();
+    this->yoffset = p->yAxis->offset();
 }

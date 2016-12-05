@@ -76,6 +76,13 @@ public:
     void redrawViews();
 
     /*!
+     * Return true if the passed in experiment pointer is found in any
+     * of the experiments either in the current nl_rootdata instance,
+     * or in any of the project objects.
+     */
+    bool doesExperimentExist (experiment* e);
+
+    /*!
      * Find the object selected by the mouse (called by onLeftMouseDown)
      */
     void findSelection (float xGL, float yGL, float GLscale, QVector <QSharedPointer<systemObject> >& newlySelectedList);

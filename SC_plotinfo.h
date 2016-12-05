@@ -74,6 +74,11 @@ public: // methods
 
 public: // attributes
     QVector<SingleGraph> graphs;
+    /*!
+     * Axis setting attributes. setup from the QCPAxis objects in a
+     * QCustomPlot.
+     */
+    //@{
     QString xlabel;
     QString ylabel;
     double xrangelower;
@@ -82,8 +87,18 @@ public: // attributes
     double yrangeupper;
     double xtickstep;
     double ytickstep;
+    Qt::Orientations xrangedrag;
+    Qt::Orientations yrangedrag;
+    Qt::Orientations xrangezoom;
+    Qt::Orientations yrangezoom;
+    double xrangezoomfactor;
+    double yrangezoomfactor;
+    int xoffset;
+    int yoffset;
+    //@}
+
 private: // attributes
-    QString title;
+    QString title; // one lonely, private attribute, for no particularly important reason.
 };
 
 #endif // PLOTINFO_H

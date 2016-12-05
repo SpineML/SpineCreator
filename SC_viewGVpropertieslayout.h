@@ -57,7 +57,15 @@ public:
 
     /*!
      * \brief Store the visible QCustomPlots to the current experiment.
-     */    void storePlotsToExpt (void);
+     */
+    void storePlotsToExpt (void);
+
+    /*!
+     * \brief Close visible QCustomPlots, without trying to store them
+     * away (used if the project for which the plots are being viewed
+     * was closed).
+     */
+    void clearPlots (void);
 
     /*!
      * \brief Restore plots from an experiment into the graph view area.

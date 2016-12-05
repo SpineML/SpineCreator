@@ -86,6 +86,12 @@ public:
      */
     QString getFilenameFriendlyName (void);
 
+    /*!
+     * Does the given experiment pointer match one stored for this
+     * project?
+     */
+    bool doesExperimentExist (experiment* e);
+
     QString filePath;
 
     QString networkFile;
