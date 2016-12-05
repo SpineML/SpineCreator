@@ -68,10 +68,16 @@ public:
     void clearPlots (void);
 
     /*!
+     * Add an empty plot and tile it.
+     */
+    void addEmptyPlot (void);
+
+    /*!
      * \brief Restore plots from an experiment into the graph view area.
      * \param e Pointer to the experiment which holds the list of plots to restore.
+     * \return the number of plots restored.
      */
-    void restorePlotsFromExpt (experiment* e);
+    int restorePlotsFromExpt (experiment* e);
 
     /*!
      * \brief viewGV - a structure defined in mainwindow.h holding

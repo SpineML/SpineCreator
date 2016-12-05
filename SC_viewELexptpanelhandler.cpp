@@ -160,7 +160,6 @@ void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
 
 void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
 {
-    DBG() << "Called";
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) { // invalid index 0
         if (item->widget()) {
@@ -168,9 +167,6 @@ void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
                 item->widget()->disconnect((QObject *)0);
                 item->widget()->hide();
                 connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
-                DBG() << "Disconnected, hid and connected for deleteLater: " << item->widget();
-            } else {
-                DBG() << "noDelete set for: " << item->widget();
             }
         }
         if (item->layout()) {

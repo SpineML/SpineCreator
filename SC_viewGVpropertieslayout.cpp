@@ -189,14 +189,6 @@ void viewGVpropertieslayout::populateVLogData (QStringList fileNames, QDir* path
 
 void viewGVpropertieslayout::storePlotsToExpt (void)
 {
-    DBG() << "Called";
-#if 0 // Project closed check done in mainwindow.
-    if (project_closed) {
-        // Can't/no need to store plots
-        DBG() << "The project was closed; can't store plots";
-        return;
-    }
-#endif
     if (this->currentExperiment == (experiment*)0) {
         DBG() << "No currentExperiment; can't store plots";
         return;
@@ -208,14 +200,10 @@ void viewGVpropertieslayout::storePlotsToExpt (void)
     QList<QMdiSubWindow*>::iterator sw = subWins.begin();
     while (sw != subWins.end()) {
         if ((*sw) != (QMdiSubWindow*)0) {
-
-            DBG() << "Append PlotInfo from the subwindow to the experiment's plot list...";
             // Make a copy of the QCustomPlot information
             PlotInfo p((QCustomPlot*)(*sw)->widget());
+            DBG() << "Stored PlotInfo for plot '" << p.getTitle() << "'";
             this->currentExperiment->visiblePlots.append(p);
-
-            DBG() << "Close plot window";
-            (*sw)->close();
         }
         sw++;
     }
@@ -231,35 +219,32 @@ void viewGVpropertieslayout::clearPlots (void)
         }
         sw++;
     }
-    // Having cleared, create a single empty plot ready for the next project/experiment.
+}
+
+void viewGVpropertieslayout::addEmptyPlot (void)
+{
+    DBG() << "INFO: ADD EMPTY PLOT";
     this->actionAddGraphSubWin_triggered();
     this->actionToGrid_triggered();
 }
 
-void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
+int viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
 {
-    DBG() << "Called";
+    int numrestored = 0;
 
     if (e == (experiment*)0) {
         DBG() << "ERROR: need to be passed a non-null experiment*";
-        // Add an empty graph before returning
-        this->actionAddGraphSubWin_triggered();
-        this->actionToGrid_triggered();
-        return;
+        return numrestored;
     }
 
     this->currentExperiment = e;
 
     if (this->currentExperiment->visiblePlots.isEmpty()) {
         DBG() << "INFO: The new experiment has no plots to render";
-        // Add an empty graph for user's first graph:
-        this->actionAddGraphSubWin_triggered();
-        this->actionToGrid_triggered();
-        return;
+        return numrestored;
     }
 
     DBG() << "Restore plots for experiment " << this->currentExperiment->name;
-    bool added = false;
     int pi = 0;
     while (pi < this->currentExperiment->visiblePlots.size()) {
         // Now re-create the graph(s)
@@ -273,7 +258,7 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
 
         QMdiSubWindow* mdiSubWin = this->viewGV->mdiarea->addSubWindow(cplot);
         if (mdiSubWin != NULL) {
-            added = true;
+            ++numrestored;
             mdiSubWin->setVisible(true);
         } else {
             DBG() << "ERROR: Couldn't add sub window to mdiarea (viewGVpropertieslayout::restoreLogDataFromExpt)";
@@ -281,14 +266,11 @@ void viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
         ++pi;
     }
 
-    if (!added) {
-        // This is only going to occur if the mdiarea->addSubWindow(cplot) fails.
-        DBG() << "Add an empty subwindow";
-        this->actionAddGraphSubWin_triggered();
+    if (numrestored > 0) {
+        this->actionToGrid_triggered();
     }
 
-    // Lastly, tile the restored windows.
-    this->actionToGrid_triggered();
+    return numrestored;
 }
 
 #define MAKE_A_COPY true // Used below in calls to setData from QCPData

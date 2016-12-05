@@ -544,14 +544,13 @@ void MainWindow::updateDatas (void)
 
             // Restore the graph plots and the log data for the experiment:
 
-            // 1. Store plot info in the current expt pointed to in
-            // the viewGV, then close sub windows.
+            // 1. Store plot info in the current expt pointed to in the viewGV
             if (data.doesExperimentExist(this->viewGV.properties->currentExperiment)) {
                 this->viewGV.properties->storePlotsToExpt();
-            } else {
-                DBG() << "No such experiment, can't store plots";
-                this->viewGV.properties->clearPlots();
             }
+
+            // 1.5 clear plots
+            this->viewGV.properties->clearPlots();
 
             // 2. clear out vLogData as we'll re-read from the new expt log directory
             this->viewGV.properties->clearVLogData();
@@ -559,8 +558,11 @@ void MainWindow::updateDatas (void)
             // 3. Read new expt log directory
             this->viewGV.properties->populateVLogData (logs.entryList(), &logs);
 
-            // 4. Restore the plots to be visible again.
-            this->viewGV.properties->restorePlotsFromExpt (currentExperiment);
+            // 4. Restore the plots to be visible again, or if there are none, add a single empty plot
+            int numrestored = this->viewGV.properties->restorePlotsFromExpt (currentExperiment);
+            if (numrestored == 0) {
+                this->viewGV.properties->addEmptyPlot();
+            }
 
             // and insert logs into visualiser
             if (this->viewVZ.OpenGLWidget != NULL) {
@@ -575,6 +577,7 @@ void MainWindow::updateDatas (void)
         DBG() << "Current expt num is -1, no current experiment exists to update logs from";
         // Just need to clear any stale graphs
         this->viewGV.properties->clearPlots();
+        this->viewGV.properties->addEmptyPlot();
     }
 }
 

@@ -30,8 +30,6 @@
 
 experiment::experiment()
 {
-    DBG() << "constructor";
-
     // defaults
     setup.dt = 0.1f;
     setup.duration = 1;
@@ -54,7 +52,6 @@ experiment::experiment()
 
 experiment::~experiment()
 {
-    DBG() << "deconstructor";
     for (int i = 0; i < ins.size(); ++i) {
         delete ins[i];
     }
@@ -80,8 +77,6 @@ experiment::~experiment()
  */
 experiment::experiment(experiment * exptToCopy)
 {
-    DBG() << "copy constructor";
-
     this->setup.dt = exptToCopy->setup.dt;
     this->setup.duration = exptToCopy->setup.duration;
     this->setup.exptProcedure = exptToCopy->setup.exptProcedure;
