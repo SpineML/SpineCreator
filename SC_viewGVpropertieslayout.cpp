@@ -396,20 +396,6 @@ void viewGVpropertieslayout::addLinesRasters (logData* log, QMdiSubWindow* subWi
         } // else graph not from this log
 
     } // end loop through graphs in plot.
-
-#if 0
-    // It may be necessary to update the title of the graph.
-    if (currPlot->plotLayout()->rowCount() == 1) {
-        currPlot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
-        currPlot->plotLayout()->addElement(0, 0, new QCPPlotTitle(currPlot, log->logName));
-    } else {
-        // Update title
-        QCPPlotTitle* t = (QCPPlotTitle*)currPlot->plotLayout()->element (0, 0);
-        if (t->text().isEmpty()) {
-            t->setText (log->logName);
-        }
-    }
-#endif
 }
 
 void viewGVpropertieslayout::deleteCurrentLog()
