@@ -2095,7 +2095,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 QDomElement e2;
 
                 for (int i = 0; i < (int) nList.size(); ++i) {
-                    e2 = nList.item(0).toElement();
+                    e2 = nList.item(i).toElement();
 
                     QSharedPointer<genericInput> newInput = QSharedPointer<genericInput> (new genericInput);
                     newInput->src = (QSharedPointer <ComponentInstance>)0;
