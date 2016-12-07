@@ -9,6 +9,7 @@ SingleGraph::SingleGraph()
 
 SingleGraph::~SingleGraph()
 {
+    // Got Segfault here with a <not accessible> data member attribute.
 }
 
 SingleGraph::SingleGraph(const SingleGraph& rhs)

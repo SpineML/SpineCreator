@@ -50,6 +50,7 @@ public: // attributes
     // concrete object.
     QCPDataMap data;
 };
+Q_DECLARE_TYPEINFO(SingleGraph, Q_MOVABLE_TYPE);
 
 /*!
  * \brief The PlotInfo class holds information from a QCustomPlot in

@@ -441,6 +441,7 @@ public:
     QVector<PlotInfo> visiblePlots;
 
     void clearVisiblePlots (void) {
+        // This clearing can cause a Segfault.
         this->visiblePlots.clear();
     }
 

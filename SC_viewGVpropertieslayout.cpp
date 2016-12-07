@@ -649,6 +649,11 @@ void viewGVpropertieslayout::addGraphsToCurrent()
 {
     QCustomPlot* currPlot = (QCustomPlot*)this->currentSubWindow->widget();
 
+    if (this->unifyTime) {
+        // In this case, if there are other plots, then scale to those plots.
+        // WRITEME NEXT
+    }
+
     // get the log index
     int dataIndex = this->logList->currentRow();
 
