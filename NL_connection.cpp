@@ -1296,14 +1296,35 @@ void csv_connection::generateFilename(void)
     }
 
     if (this->srcName.isEmpty()) {
-        // leave filename empty and return
-        DBG() << "csv_connection::srcName is empty!";
-        return;
+        // cast this->parent to genericInput or Synapse and then get parent->src->getXMLName();
+        if (this->parent->type == inputObject) {
+            QSharedPointer<genericInput> giparent = qSharedPointerDynamicCast<genericInput> (this->parent);
+            this->srcName = giparent->src->getXMLName();
+#if 0 // If it's ever the case that for a synapse object the srcName is empty, do something like this:
+        } else if (this->parent->type == synapseObject) {
+            QSharedPointer<synapse> synparent = qSharedPointerDynamicCast<synapse> (this->parent);
+            this->srcName = synparent->src->getXMLName();
+#endif
+        } else {
+            // leave filename empty and return
+            DBG() << "csv_connection::srcName is empty!";
+            return;
+        }
     }
 
     if (this->dstName.isEmpty()) {
-        DBG() << "csv_connection::dstName is empty!";
-        return;
+        if (this->parent->type == inputObject) {
+            QSharedPointer<genericInput> giparent = qSharedPointerDynamicCast<genericInput> (this->parent);
+            this->dstName = giparent->dst->getXMLName();
+#if 0
+        } else if (this->parent->type == synapseObject) {
+            QSharedPointer<synapse> synparent = qSharedPointerDynamicCast<synapse> (this->parent);
+            this->dstName = synparent->dst->getXMLName();
+#endif
+        } else {
+            DBG() << "csv_connection::dstName is empty!";
+            return;
+        }
     }
 
     // Now make sure srcName and dstName are filename friendly -
