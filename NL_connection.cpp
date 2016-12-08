@@ -1458,12 +1458,23 @@ void csv_connection::setAllData (QVector<conn>& conns)
     int seekTo = 0;
     f.seek(seekTo*4);
 
-    float singleDelay = 0.0;
+    float singleDelay = -1.0;
     if (nc == 3) {
         if (this->delay != (ParameterInstance*)0) {
             if (this->delay->currType == FixedValue) {
                 singleDelay = (float)this->delay->value[0];
-            } // else delay remains 0
+            } else {
+                // We have a ParameterInstance, but it's not
+                // null. It's also not a FixedValue. If the delays are
+                // specified as individual, per-connection delays,
+                // then we will never have copied them into the
+                // ParameterInstance object, but they will exist, so
+                // write out the individual delays here.
+                singleDelay = -1.0;
+            }
+        } else {
+            // No delay ParameterInstance, so write out delay from conns[i].
+            singleDelay = -1.0;
         }
     }
 
@@ -1471,7 +1482,11 @@ void csv_connection::setAllData (QVector<conn>& conns)
         access << (qint32) conns[i].src;
         access << (qint32) conns[i].dst;
         if (nc == 3) {
-            access << (float) singleDelay;
+            if (singleDelay > 1.0) {
+                access << (float) singleDelay;
+            } else {
+                access << (float) conns[i].metric;
+            }
         }
         f.flush();
     }
