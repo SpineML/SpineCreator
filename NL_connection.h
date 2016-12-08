@@ -246,7 +246,12 @@ public:
      */
     void import_packed_binary (QFile &fileIn, QFile& fileOut);
 
+    /*!
+     * Gets data from the file "backing store" in this->uuidFilename
+     * and puts it in the QVector<conn>& conns.
+     */
     void getAllData (QVector<conn>& conns);
+
     float getData (int, int) const;
     float getData (QModelIndex &index) const;
     QString getHeader (int section);
