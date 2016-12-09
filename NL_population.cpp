@@ -139,11 +139,6 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
 
         if (n.toElement().tagName() == "LL:Neuron") {
 
-            if (n.isComment()) {
-                n = n.nextSibling();
-                continue;
-            }
-
             // get attributes
             this->name = n.toElement().attribute("name");
             if (this->name == "") {
