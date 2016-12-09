@@ -308,6 +308,10 @@ void Component::load(QDomDocument *doc)
     QDomNode n = doc->documentElement().firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
         QDomElement e = n.toElement();
         if( e.tagName() == "ComponentClass" )
         {
@@ -329,6 +333,10 @@ void Component::load(QDomDocument *doc)
             QDomNode n2 = e.firstChild();
             while( !n2.isNull() )
             {
+                if (n2.isComment()) {
+                    n2 = n2.nextSibling();
+                    continue;
+                }
                 QDomElement e2 = n2.toElement();
                 if( e2.tagName() == "Parameter" )
                 {
@@ -342,6 +350,11 @@ void Component::load(QDomDocument *doc)
                     QDomNode n3 = e2.firstChild();
                     while( !n3.isNull() )
                     {
+                        if (n3.isComment()) {
+                            // Ignore XML comments
+                            n3 = n3.nextSibling();
+                            continue;
+                        }
                         QDomElement e3 = n3.toElement();
                         if( e3.tagName() == "Regime" )
                         {
@@ -885,6 +898,10 @@ void OnEvent::readIn(QDomElement e) {
     QDomNode n = e.firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "StateAssignment" )
         {
@@ -966,6 +983,10 @@ void OnImpulse::readIn(QDomElement e) {
     QDomNode n = e.firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "StateAssignment" )
         {
@@ -1064,6 +1085,10 @@ void OnCondition::readIn(QDomElement e) {
     QDomNode n = e.firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "StateAssignment" )
         {
@@ -1497,6 +1522,10 @@ void Regime::readIn(QDomElement e)
     QDomNode n = e.firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "TimeDerivative" )
         {
