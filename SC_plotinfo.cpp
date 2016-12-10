@@ -9,7 +9,6 @@ SingleGraph::SingleGraph()
 
 SingleGraph::~SingleGraph()
 {
-    // Got Segfault here with a <not accessible> data member attribute.
 }
 
 SingleGraph::SingleGraph(const SingleGraph& rhs)
@@ -29,7 +28,7 @@ SingleGraph::setData (const QCPDataMap* d)
     QMap<double, QCPData>::const_iterator i = d->constBegin();
 
     while (i != d->constEnd()) {
-        this->data.insert((double)i.key(), (QCPData)i.value());
+        this->data.insert(i.value().key, i.value().value);
         ++i;
     }
 }

@@ -46,9 +46,8 @@ public: // attributes
     QString type;
     QString source;
     int index;
-    // Same data container as used in a QCustomPlot graph. Note it's a
-    // concrete object.
-    QCPDataMap data;
+    // The data from the map. A subset of what can be saved in a QCPDataMap.
+    QMap<double, double> data;
 };
 Q_DECLARE_TYPEINFO(SingleGraph, Q_MOVABLE_TYPE);
 

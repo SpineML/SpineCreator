@@ -311,7 +311,6 @@ int viewGVpropertieslayout::restorePlotsFromExpt (experiment* e)
     return numrestored;
 }
 
-#define MAKE_A_COPY true // Used below in calls to setData from QCPData
 void
 viewGVpropertieslayout::addRasterGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i)
 {
@@ -354,8 +353,17 @@ void
 viewGVpropertieslayout::addGraphSetDataCommon (PlotInfo& pi, QCustomPlot* plot, int i)
 {
     plot->addGraph();
-    QCPDataMap* dmptr = &(pi.graphs[i].data);
-    plot->graph(plot->graphCount()-1)->setData (dmptr, MAKE_A_COPY);
+
+    // Create a new QCPDataMap from pi.graphs[i].data and add it to
+    // the QCustomPlot.
+    QCPDataMap* dmptr = new QCPDataMap;
+    QMap<double, double>::const_iterator it = pi.graphs[i].data.constBegin();
+    while (it != pi.graphs[i].data.constEnd()) {
+        QCPData dat(it.key(),it.value());
+        dmptr->insert(it.key(), dat);
+        ++it;
+    }
+    plot->graph(plot->graphCount()-1)->setData (dmptr);
 }
 
 void
