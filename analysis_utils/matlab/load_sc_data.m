@@ -147,7 +147,7 @@ function [ data, count, t ] = load_sc_data (varargin)
         [ data, count ] = fread (fid, [num_neurons, Inf], 'double=>double');
 
         % Construct time series in milliseconds.
-        t = [0 : dt : (dt*count)-dt];
+        t = [0 : dt : (dt*count/num_neurons)-dt];
 
         % Finally, close the file.
         rtn = fclose (fid);
