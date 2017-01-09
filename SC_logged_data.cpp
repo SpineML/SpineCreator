@@ -396,18 +396,39 @@ bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int up
         plot->graph(update)->setData(times, colData[colNum]);
     }
 
-    plot->legend->setVisible(true);
+    plot->legend->setVisible(false); // fixme, make this an option
 
     // title
+    QCPPlotTitle* t = (QCPPlotTitle*)0;
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
         plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, this->logName));
+        t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+
     } else {
         // update title as it's empty
-        QCPPlotTitle* t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+        t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
         if (t->text().isEmpty()) {
             t->setText (this->logName);
         }
+    }
+    // Set font size based on text length here.
+    QFont f = t->font();
+    int len = this->logName.size();
+    int fs = 15; // original default for plots
+    if (len <= 24) {
+        fs = 15;
+    } else if (len > 24 && len <= 32) {
+        fs = 12;
+    } else if (len > 32 && len <= 43) {
+        fs = 10;
+    } else {
+        fs = 8;
+    }
+
+    if (f.pointSize() != fs) {
+        f.setPointSize(fs);
+        t->setFont(f);
     }
 
     // redraw

@@ -408,7 +408,7 @@ viewGVpropertieslayout::addGraphsToPlot (PlotInfo& pi, QCustomPlot* plot)
 
     // Removed a call here to rescale the plot.
 
-    plot->legend->setVisible(true);
+    plot->legend->setVisible(false); // fixme: Make this an option
     // title
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
