@@ -416,6 +416,11 @@ public:
     QString name;
     QString description;
 
+    /*!
+     * A menu action for this experiment. Shows up in the Experiments menu.
+     */
+    QAction* menuAction;
+
     exptBox * getBox(viewELExptPanelHandler *);
     void writeXML(QXmlStreamWriter *, projectObject *data);
     void readXML(QXmlStreamReader * , projectObject *);
@@ -423,6 +428,11 @@ public:
     void purgeBadPointer(QSharedPointer <ComponentInstance>ptr);
     void purgeBadPointer(QSharedPointer<Component>ptr, QSharedPointer<Component>newPtr);
     void updateChanges(QSharedPointer <ComponentInstance> ptr);
+
+    /*!
+     * Set up the action for this experiment.
+     */
+    QAction* action (int i);
 
     bool selected;
     void select(QVector < experiment * > *);

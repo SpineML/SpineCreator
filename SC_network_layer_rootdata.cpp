@@ -79,6 +79,7 @@ nl_rootdata::nl_rootdata(QObject *parent) :
 
     clipboardCData.clear();
     projectActions = NULL;
+    this->experimentActions = NULL;
 
     catalogConn.push_back("1");
     catalogConn.push_back("2");
@@ -131,13 +132,25 @@ void nl_rootdata::selectProject(QAction * action)
     // deselect the current project
     this->currProject->deselect_project(this);
     // select the new project
-    projects[action->property("number").toInt()]->select_project(this);
+    this->projects[action->property("number").toInt()]->select_project(this);
+
+    this->main->setExperimentMenu();
+
     this->redrawViews();
-    main->updateTitle();
+    this->main->updateTitle();
 
     // Update the viewGV for the new project/experiment, initialising
     // if necessary with MainWindow::viewGVreshow:
-    main->viewGVreshow();
+    this->main->viewGVreshow();
+}
+
+void nl_rootdata::selectExperiment(QAction* action)
+{
+    DBG() << "nl_rootdata::selectExperiment called.";
+    // Update the selected experiment in data.
+    this->main->selectExperiment (action->property("number").toInt());
+    this->main->viewELhandler->redraw();
+    this->main->viewGVreshow();
 }
 
 bool nl_rootdata::doesExperimentExist (experiment* e)

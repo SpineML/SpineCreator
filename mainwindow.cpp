@@ -245,8 +245,6 @@ MainWindow(QWidget *parent) :
     ui->menuEdit->addAction(undoAction);
     ui->menuEdit->addAction(redoAction);
 
-    //settings.setValue("model/model_name", "Untitled Project");
-
     projectObject * newProject = new projectObject();
 
     data.currProject = newProject;
@@ -258,6 +256,12 @@ MainWindow(QWidget *parent) :
     connect(undoStacks, SIGNAL(indexChanged(int)), this, SLOT(undoOrRedoPerformed(int)));
     connect(undoStacks, SIGNAL(cleanChanged(bool)), this, SLOT(updateTitle()));
 
+    // Configure two QActions which will be presented in the Experiment menu.
+    this->data.dupExpAction = new QAction("Duplicate experiment", this);
+    connect(data.dupExpAction, SIGNAL(triggered()), this, SLOT(actionDuplicate_experiment_triggered()));
+#if 0
+    this->data.runExpAction = new QAction("Run experiment", this);
+#endif
     // check for version control
     configureVCSMenu();
 
@@ -335,7 +339,7 @@ MainWindow(QWidget *parent) :
     // add the library to the component file list
     addComponentsToFileList();
 
-    createActions();
+    this->createActions();
 
     timer->start(16);
 
@@ -355,7 +359,8 @@ MainWindow(QWidget *parent) :
     ui->action_Close_project->setEnabled(false);
 
     // setup projects
-    setProjectMenu();
+    this->setProjectMenu();
+    this->setExperimentMenu(); // ?
 
     // show current view
     this->ui->view1->show();
@@ -501,6 +506,55 @@ void MainWindow::setProjectMenu()
     // add the action group to the menu
     ui->menuProject->addActions(data.projectActions->actions());
     connect(data.projectActions, SIGNAL(triggered(QAction*)), &data, SLOT(selectProject(QAction*)));
+}
+
+void MainWindow::setExperimentMenu()
+{
+    ui->menuExperiment->clear(); // existing menu actions.
+
+    // Add entries for each experiment to the menu and connect up a
+    // suitable function to switch between experiments.
+    if (this->data.experimentActions != NULL) {
+        delete this->data.experimentActions;
+    }
+
+    // Add Duplicate experiment and Run experiment actions.
+    this->ui->menuExperiment->addAction (this->data.dupExpAction);
+#if 0
+    this->ui->menuExperiment->addAction (this->data.runExpAction);
+#endif
+    // Add a list of available experiments
+    this->data.experimentActions = new QActionGroup(this);
+    // Each experiment is going to have a QAction stored for it.
+    for (int i = 0; i < this->data.experiments.size(); ++i) {
+        QAction* a = this->data.experiments[i]->action(i);
+        a->setChecked (this->data.experiments[i]->selected);
+        this->data.experimentActions->addAction (a);
+    }
+    this->ui->menuExperiment->addActions (this->data.experimentActions->actions());
+    connect (data.experimentActions, SIGNAL(triggered(QAction*)), &data, SLOT(selectExperiment(QAction*)));
+}
+
+void MainWindow::selectExperiment (int exptNum)
+{
+    DBG() << "MainWindow::selectExperiment called; experiments.size: " << data.experiments.size();
+
+    for (int i = 0; i < data.experiments.size(); ++i) {
+        data.experiments[i]->selected = ((i == exptNum) ? true : false);
+        DBG() << "experiment " << i << " is selected?: " << data.experiments[i]->selected;
+        if (data.experiments[i]->selected == true) {
+            // Then make sure there's a viewGV for the experiment.
+            if (!this->existsViewGV(data.experiments[i])) {
+                if (data.experiments[i] == (experiment*)0) {
+                    DBG() << "Error: null experiment*! continuing...";
+                    continue;
+                }
+                this->initViewGV (data.experiments[i]);
+            } else {
+                this->viewGVreshow();
+            }
+        }
+    }
 }
 
 int MainWindow::getCurrentExptNum (void)
@@ -781,15 +835,25 @@ void MainWindow::cleanupViewGV (viewGVstruct* vgv)
     delete vgv->subWin;
 }
 
+bool MainWindow::existsViewGV (experiment* e)
+{
+    bool rtn(false);
+    if (e == (experiment*)0) {
+        return rtn;
+    }
+    if (this->viewGV.find(e) != this->viewGV.end()) {
+        rtn = true;
+    }
+    return rtn;
+}
+
 void MainWindow::initViewGV(experiment* e)
 {
     DBG() << "Called";
 
-    if (this->viewGV.find(e) != this->viewGV.end()) {
+    if (this->existsViewGV (e)) {
         DBG() << "A viewGV for the given experiment already exists.";
         return;
-    } else {
-        DBG() << "Creating a new viewGV...";
     }
 
     // viewGV becomes map of viewGVstructs, keyed by experiment pointer.
@@ -881,19 +945,6 @@ void MainWindow::initViewEL()
 
     // add toolbar to the frame
     ((QVBoxLayout *) selContent0->layout())->insertWidget(0, toolbar0);
-
-    //QCommonStyle style;
-
-    // add a run button to the toolbar
-    /*QToolButton * run = new QToolButton();
-    run->setMinimumHeight(27);
-    run->setStyleSheet("QToolButton { color: white; border: 0px; }");
-    run->setText("Run experiment");
-    run->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    run->setToolTip("Run the selected experiment in the chosen simulator");
-    run->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-    toolbar0->layout()->addWidget(run);*/
-
     ((QHBoxLayout *) toolbar0->layout())->addStretch();
 
     QFrame* line0b = new QFrame();
@@ -905,10 +956,6 @@ void MainWindow::initViewEL()
 
     this->viewELhandler = new viewELExptPanelHandler(&(this->viewEL), &(this->data));
     this->viewELhandler->main = this;
-
-    // internal connections
-    //connect(run, SIGNAL(clicked()), this->viewELhandler, SLOT(run()));
-    //connect(this->viewELhandler, SIGNAL(enableRun(bool)), run, SLOT(setEnabled(bool)));
 }
 
 void MainWindow::connectViewEL()
@@ -1422,7 +1469,9 @@ void MainWindow::createActions()
     connect(ui->actionRepository_status, SIGNAL(triggered()), this, SLOT(actionRepStatus_triggered()));
     connect(ui->actionRepository_log, SIGNAL(triggered()), this, SLOT(actionRepLog_triggered()));
     connect(ui->actionRe_scan_for_VCS, SIGNAL(triggered()), this, SLOT(actionRescanVCS_triggered()));
+
     connect(ui->actionDuplicate_experiment, SIGNAL(triggered()), this, SLOT(actionDuplicate_experiment_triggered()));
+    // actionRun_experiment is connected up when it is available.
 
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(about()));
 
@@ -1465,7 +1514,8 @@ void MainWindow::new_project()
     // move to viewNL
     updateNetworkButtons(&data);
 
-    setProjectMenu();
+    this->setProjectMenu();
+    // No need to setExperimentMenu; there are no experiments in a new project.
 
     if (data.projects.size() > 1)
         ui->action_Close_project->setEnabled(true);
@@ -1547,9 +1597,6 @@ void MainWindow::import_project(const QString& filePath)
         viewVZ.OpenGLWidget->clear();
     }
 
-    // model to viewNL
-    //this->viewNLshow();
-
     // redraw
     this->ui->viewport->changed = 1;
     configureVCSMenu();
@@ -1557,6 +1604,7 @@ void MainWindow::import_project(const QString& filePath)
     updateNetworkButtons(&data);
 
     this->setProjectMenu();
+    this->setExperimentMenu();
 
     if (data.projects.size() > 1) {
         ui->action_Close_project->setEnabled(true);
@@ -1733,6 +1781,7 @@ void MainWindow::close_project()
     // Update the project menu as we may have removed a project from
     // within the list:
     this->setProjectMenu();
+    this->setExperimentMenu();
 
     if (data.projects.size() > 1) {
         ui->action_Close_project->setEnabled(true);
@@ -1778,7 +1827,8 @@ void MainWindow::import_network()
         this->ui->viewport->changed = 1;
         configureVCSMenu();
         updateNetworkButtons(&data);
-        setProjectMenu();
+        this->setProjectMenu();
+        this->setExperimentMenu();
 
     } else {
         // failure - delete newProject was commented out here.
@@ -2086,6 +2136,7 @@ void MainWindow::saveImageAction()
 
 bool MainWindow::viewGVvisible (void)
 {
+    DBG() << "Called to see if the Graph View (GV) is currently visible.";
     bool rtn(false);
     DBG() << "this->viewGV has size " << this->viewGV.size();
     QMap<experiment*, viewGVstruct*>::iterator vgvi = this->viewGV.begin();
@@ -2097,6 +2148,12 @@ bool MainWindow::viewGVvisible (void)
         }
         ++vgvi;
     }
+
+    if (this->emptyGV.subWin->isVisible() == true) {
+        rtn = true;
+    }
+
+    DBG() << "returning " << rtn;
     return rtn;
 }
 
@@ -2117,7 +2174,7 @@ void MainWindow::viewGVshow()
 
     experiment* e = this->getCurrentExpt();
     if (e != (experiment*)0
-        && this->viewGV.find(e) == this->viewGV.end()) {
+        && this->existsViewGV(e) == false) {
         DBG() << "This experiment needs a viewGV to be initialised...";
         this->initViewGV(e);
     }
@@ -2152,6 +2209,18 @@ void MainWindow::viewGVshow()
         this->viewCL.root->addItemsToolbar->hide();
     }
     this->viewCL.dock->hide();
+
+    // menus
+    ui->menuBar->clear();
+    ui->menuBar->addMenu(ui->menuFile);
+    ui->menuBar->addMenu(ui->menuEdit);
+    ui->menuBar->addMenu(ui->menuProject);
+
+    ui->menuBar->addMenu(ui->menuExperiment);
+    // Now add each experiment in the project...
+
+    ui->menuBar->addMenu(ui->menuModel); // actually version control
+    ui->menuBar->addMenu(ui->menuHelp);
 
     DBG() << "Current expt num is " << this->getCurrentExptNum();
 

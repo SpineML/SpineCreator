@@ -569,14 +569,10 @@ void viewELExptPanelHandler::redrawPanel()
 
     // add experiments
     for (int i = data->experiments.size()-1; i >= 0; --i) {
-
         exptBox * box = data->experiments[i]->getBox(this);
-
         box->setProperty("index", i);
         connect(box, SIGNAL(clicked()), this, SLOT(changeSelection()));
-
         panel->insertWidget(2, box);
-
     }
 }
 
@@ -2157,11 +2153,17 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     logs.setNameFilters(filter);
 
     // add logs to graphs
-    data->main->viewGV[currentExperiment]->properties->populateVLogData (logs.entryList(), &logs);
+    // First ensure viewGV[currentExperiment] exists. if not, do nothing?
+    if (main->existsViewGV(currentExperiment)) {
+        DBG() << "viewGV exists for currentExperiment; updating logdata etc.";
+        data->main->viewGV[currentExperiment]->properties->populateVLogData (logs.entryList(), &logs);
 
-    // and insert logs into visualiser
-    if (data->main->viewVZ.OpenGLWidget != NULL) {
-        data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV[currentExperiment]->properties->vLogData);
+        // and insert logs into visualiser
+        if (data->main->viewVZ.OpenGLWidget != NULL) {
+            data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV[currentExperiment]->properties->vLogData);
+        }
+    } else {
+        DBG() << "viewGV didn't exist for currentExperiment, so not updating logdata etc.";
     }
 
     // get status

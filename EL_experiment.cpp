@@ -48,6 +48,9 @@ experiment::experiment()
     this->visiblePlots.clear();
     this->progressBar = NULL;
     this->runButton = NULL;
+
+    this->menuAction = new QAction(this);
+    this->action(0);
 }
 
 experiment::~experiment()
@@ -67,6 +70,8 @@ experiment::~experiment()
     for (int i = 0; i < changes.size(); ++i) {
         delete changes[i];
     }
+
+    delete this->menuAction;
 }
 
 /*!
@@ -116,6 +121,18 @@ experiment::experiment(experiment * exptToCopy)
     this->visiblePlots.clear();
     this->runButton = NULL;
     this->progressBar = NULL;
+
+    // Create a default menuAction.
+    this->menuAction = new QAction(this);
+    this->action(0);
+}
+
+QAction* experiment::action (int i)
+{
+    this->menuAction->setProperty ("number", QString::number(i));
+    this->menuAction->setText (this->name);
+    this->menuAction->setCheckable (true);
+    return this->menuAction;
 }
 
 /*!

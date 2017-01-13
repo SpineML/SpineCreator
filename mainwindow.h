@@ -145,9 +145,20 @@ public:
     void setProjectMenu();
 
     /*!
+     * Populate the experiment menu with all the project/experiment
+     * pairs? Or just with the experiments for the current project?
+     */
+    void setExperimentMenu();
+
+    /*!
      * Update the view of the logfiles
      */
     void updateDatas (void);
+
+    /*!
+     * Set the given experiment selected; deselect others.
+     */
+    void selectExperiment (int exptNum);
 
     /*!
      * Get the current experiment number; return -1 if not found
@@ -179,6 +190,12 @@ public:
      * viewELExptPanelHandler::changeSelection()
      */
     void initViewGV(experiment* e);
+
+    /*!
+     * Return true if a viewGVstruct exists in this->viewGV for the
+     * experiment e.
+     */
+    bool existsViewGV(experiment* e);
 
     /*!
      * Return true if any of the viewGV members has a visible

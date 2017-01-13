@@ -125,6 +125,11 @@ public:
     versionControl* version;
     MainWindow* main;
     QActionGroup* projectActions;
+    QActionGroup* experimentActions;
+    QAction* dupExpAction; // This duplicate button should go to the expt interface only.
+#if 0 // Leave only a run button in the expt list to reduce maintenance.
+    QAction* runExpAction;
+#endif
     QSharedPointer <projection> currentlySelectedProjection;
     //@}
 
@@ -209,6 +214,13 @@ public slots:
      */
     void pasteSelectionFromClipboard();
     void selectProject(QAction *);
+
+    /*!
+     * Select an experiment based on the QAction calling the
+     * selection.
+     */
+    void selectExperiment(QAction*);
+
     void reDrawAll();
 
     void updateDrawStyle();
