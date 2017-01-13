@@ -264,9 +264,8 @@ MainWindow(QWidget *parent) :
     // EXPERIMENT EDITOR initialisation
     initViewEL();
 
-    // GRAPH VIEWER initialisation
-    initViewGV();
-    connectViewGV();
+    // The empty graph view used when there is no open experiment for a project
+    this->initEmptyGV();
 
     // NETWORK LAYER initialisation (there isn't much!)
     ui->butB->setEnabled(false);
@@ -504,18 +503,37 @@ void MainWindow::setProjectMenu()
     connect(data.projectActions, SIGNAL(triggered(QAction*)), &data, SLOT(selectProject(QAction*)));
 }
 
-void MainWindow::updateDatas (void)
+int MainWindow::getCurrentExptNum (void)
 {
-    // fetch current experiment sim engine
-    experiment * currentExperiment = NULL;
     int currentExptNum = -1;
     for (int i = 0; i < data.experiments.size(); ++i) {
         if (data.experiments[i]->selected) {
-            currentExperiment = data.experiments[i];
             currentExptNum = i;
             break;
         }
     }
+    return currentExptNum;
+}
+
+experiment* MainWindow::getCurrentExpt (void)
+{
+    experiment* currentExperiment = (experiment*)0;
+    for (int i = 0; i < data.experiments.size(); ++i) {
+        if (data.experiments[i]->selected) {
+            currentExperiment = data.experiments[i];
+            break;
+        }
+    }
+    return currentExperiment;
+}
+
+void MainWindow::updateDatas (void)
+{
+    // fetch current experiment sim engine
+    int currentExptNum = this->getCurrentExptNum();
+    experiment* currentExperiment = this->getCurrentExpt();
+
+    DBG() << "Current expt num is " << currentExptNum;
 
     // Build up the correct log path (compare with code in
     // SC_viewELexptpanelhander.cpp)
@@ -536,48 +554,25 @@ void MainWindow::updateDatas (void)
         filter << "*.xml";
         logs.setNameFilters(filter);
 
-        if (this->viewGV.properties->currentLogDataDir != perexpt_logpath) {
-            DBG() << "Log dir changed. CurrentDatasDir:" << this->viewGV.properties->currentLogDataDir;
+        if (this->viewGV[currentExperiment]->properties->currentLogDataDir != perexpt_logpath) {
+            DBG() << "Log dir changed. CurrentDatasDir:" << this->viewGV[currentExperiment]->properties->currentLogDataDir;
             DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;
 
-            this->viewGV.properties->currentLogDataDir = perexpt_logpath;
+            this->viewGV[currentExperiment]->properties->currentLogDataDir = perexpt_logpath;
 
-            // Restore the graph plots and the log data for the experiment:
-
-            // 1. Store plot info in the current expt pointed to in the viewGV
-            if (data.doesExperimentExist(this->viewGV.properties->currentExperiment)) {
-                this->viewGV.properties->storePlotsToExpt();
-            }
-
-            // 1.5 clear plots
-            this->viewGV.properties->clearPlots();
-
-            // 2. clear out vLogData as we'll re-read from the new expt log directory
-            this->viewGV.properties->clearVLogData();
-
-            // 3. Read new expt log directory
-            this->viewGV.properties->populateVLogData (logs.entryList(), &logs);
-
-            // 4. Restore the plots to be visible again, or if there are none, add a single empty plot
-            int numrestored = this->viewGV.properties->restorePlotsFromExpt (currentExperiment);
-            if (numrestored == 0) {
-                this->viewGV.properties->addEmptyPlot();
-            }
-
+            // Clear plots and add an empty one.
+            this->viewGV[currentExperiment]->properties->clearPlots();
+            this->viewGV[currentExperiment]->properties->addEmptyPlot();
+            // Clear out vLogData as we'll re-read from the new expt log directory
+            this->viewGV[currentExperiment]->properties->clearVLogData();
+            this->viewGV[currentExperiment]->properties->populateVLogData (logs.entryList(), &logs);
             // and insert logs into visualiser
             if (this->viewVZ.OpenGLWidget != NULL) {
-                this->viewVZ.OpenGLWidget->addLogs(&this->viewGV.properties->vLogData);
+                this->viewVZ.OpenGLWidget->addLogs(&this->viewGV[currentExperiment]->properties->vLogData);
             }
-            // Re-draw the relevant graphs.
-        } else {
-            DBG() << "Log dir UNchanged. CurrentDatasDir:" << this->viewGV.properties->currentLogDataDir;
-            DBG() << "perexpt_logpath for currentExptNum "<< currentExptNum << ": " << perexpt_logpath;
         }
     } else {
-        DBG() << "Current expt num is -1, no current experiment exists to update logs from";
-        // Just need to clear any stale graphs
-        this->viewGV.properties->clearPlots();
-        this->viewGV.properties->addEmptyPlot();
+        DBG() << "Current expt num is -1, no current experiment exists, nothing to do.";
     }
 }
 
@@ -716,65 +711,100 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::initViewGV()
+void MainWindow::initEmptyGV (void)
+{
+    this->setupViewGV (&this->emptyGV);
+    this->emptyGV.properties->clearPlots();
+    this->emptyGV.properties->addEmptyPlot();
+}
+
+void MainWindow::setupViewGV (viewGVstruct* vgv)
 {
     // add ref to this
-    viewGV.mainwindow = this;
+    vgv->mainwindow = this;
 
-    // add a sub-window
-    viewGV.subWin = new QMainWindow(this);
-    viewGV.subWin->setWindowFlags(Qt::Widget);
+    // add a sub-window. This should be the only thing we need to explicitly delete. With luck...
+    vgv->subWin = new QMainWindow(this);
+    vgv->subWin->setWindowFlags(Qt::Widget);
 
     // add toolbar
-    viewGV.toolbar = new QToolBar("Graphing Toolbar");
-    viewGV.toolbar->setAllowedAreas(Qt::TopToolBarArea);
+    vgv->toolbar = new QToolBar("Graphing Toolbar");
+    vgv->toolbar->setAllowedAreas(Qt::TopToolBarArea);
 #ifdef Q_OS_MAC
     // Don't set toolbar stylesheet for Mac, current QT implementation ignores it.
 #else
-    viewGV.toolbar->setStyleSheet(this->toolbarStyleSheet);
+    vgv->toolbar->setStyleSheet(this->toolbarStyleSheet);
 #endif
-    viewGV.subWin->addToolBar(Qt::TopToolBarArea,viewGV.toolbar);
+    vgv->subWin->addToolBar(Qt::TopToolBarArea,vgv->toolbar);
 
     // make a central widget
-    viewGV.subWin->setCentralWidget(new QFrame);
+    vgv->subWin->setCentralWidget(new QFrame);
 
     // assign a layout to the central widget
-    viewGV.subWin->centralWidget()->setLayout(new QHBoxLayout);
+    vgv->subWin->centralWidget()->setLayout(new QHBoxLayout);
 
     // setup the spacing
-    viewGV.subWin->centralWidget()->layout()->setSpacing(0);
-    viewGV.subWin->centralWidget()->layout()->setContentsMargins(0,0,0,0);
+    vgv->subWin->centralWidget()->layout()->setSpacing(0);
+    vgv->subWin->centralWidget()->layout()->setContentsMargins(0,0,0,0);
 
     // create a new mdi area to hold the graph windows
-    viewGV.mdiarea = new QMdiArea(viewGV.subWin);
-    viewGV.subWin->centralWidget()->layout()->addWidget(viewGV.mdiarea);
+    vgv->mdiarea = new QMdiArea(vgv->subWin);
+    vgv->subWin->centralWidget()->layout()->addWidget(vgv->mdiarea); // mdiarea owned by subWin.
 
     // add a dock widget
-    viewGV.dock = new QDockWidget("Log data");
-    viewGV.dock->setFeatures(QDockWidget::DockWidgetMovable);
-    viewGV.subWin->addDockWidget(Qt::RightDockWidgetArea,viewGV.dock);
+    vgv->dock = new QDockWidget("Log data");
+    vgv->dock->setFeatures(QDockWidget::DockWidgetMovable);
+    // The dock becomes owned by the subWin, so shouldn't need to
+    // explicitly delete the subWin:
+    vgv->subWin->addDockWidget(Qt::RightDockWidgetArea,vgv->dock);
 
     // add the properties editor
-    viewGV.properties = new viewGVpropertieslayout(&this->viewGV);
-    viewGV.dock->setWidget(viewGV.properties);
-
-#if 0 // No need now - this is done when attempting to restore plots and that function ensures there's always at least one window avialable.
-    // add a window
-    QCustomPlot * plot = new QCustomPlot;
-    viewGV.properties->setupPlot(plot);
-    viewGV.mdiarea->addSubWindow(plot);
-    viewGV.mdiarea->tileSubWindows();
-#endif
+    vgv->properties = new viewGVpropertieslayout(vgv);
+    vgv->dock->setWidget(vgv->properties); // the properties should be
+                                           // parented to the dock, so
+                                           // when the QDockWidget is
+                                           // deallocated, then the
+                                           // properties should be
+                                           // automatically.
 
     // add sub window area to layout
-    ((QGridLayout *) this->ui->centralWidget->layout())->addWidget(viewGV.subWin, 0, ((QGridLayout *) this->ui->centralWidget->layout())->columnCount(),4,1);
+    ((QGridLayout*)this->ui->centralWidget->layout())->addWidget(vgv->subWin, 0,
+                                                                 ((QGridLayout*)this->ui->centralWidget->layout())->columnCount(), 4, 1);
 
     // hide to start with
-    viewGV.subWin->hide();
+    vgv->subWin->hide();
 }
 
-void MainWindow::connectViewGV()
+void MainWindow::cleanupViewGV (viewGVstruct* vgv)
 {
+    vgv->subWin->hide();
+    delete vgv->subWin;
+}
+
+void MainWindow::initViewGV(experiment* e)
+{
+    DBG() << "Called";
+
+    if (this->viewGV.find(e) != this->viewGV.end()) {
+        DBG() << "A viewGV for the given experiment already exists.";
+        return;
+    } else {
+        DBG() << "Creating a new viewGV...";
+    }
+
+    // viewGV becomes map of viewGVstructs, keyed by experiment pointer.
+    viewGVstruct* vgv = new viewGVstruct;
+
+    // add ref to expt
+    vgv->e = e;
+
+    this->setupViewGV(vgv);
+
+    // Now add it to the QMap:
+    this->viewGV[e] = vgv;
+
+    // This populates the list of available data for the experiment:
+    this->updateDatas();
 }
 
 void MainWindow::initViewEL()
@@ -1484,6 +1514,8 @@ void MainWindow::import_project()
 
 void MainWindow::import_project(const QString& filePath)
 {
+    DBG() << "called";
+
     if (filePath.isEmpty()) {
         return;
     }
@@ -1536,8 +1568,17 @@ void MainWindow::import_project(const QString& filePath)
     this->updateRecentProjects(filePath);
     this->updateTitle();
 
-    // Update list of graphable logs.
-    this->updateDatas();
+    // Initialise the graph view for the default experiment of the
+    // newly-imported project.
+    experiment* e = this->getCurrentExpt();
+    if (e != (experiment*)0) {
+        this->initViewGV (e);
+    } else {
+        DBG() << "Can't init viewGV; no current experiment";
+    }
+
+    // This will re-paint the graph window if necessary.
+    this->viewGVreshow();
 }
 
 void MainWindow::export_project(const QString& filePath)
@@ -1650,10 +1691,35 @@ void MainWindow::close_project()
 
             // find another project to switch to:
             data.currProject->deselect_project(&data);
-            if (i == 0)
+            if (i == 0) {
                 data.projects[1]->select_project(&data);
-            else
+            } else {
                 data.projects[0]->select_project(&data);
+            }
+
+            DBG() << "Before cleanup, viewGV has size " << this->viewGV.size();
+            // Before deleting the project, remove all the viewGV
+            // entries which point to the experiments in the project.
+            QVector<experiment*>::iterator ie = data.projects[i]->experimentList.begin();
+            int expnum = 0;
+            while (ie != data.projects[i]->experimentList.end()) {
+                // remove from viewGV
+                if (this->viewGV[*ie] != (viewGVstruct*)0) {
+                    // Cleanup memory which is the responsibility of the viewGVstruct in this->viewGV:
+                    viewGVstruct* vgv = this->viewGV[*ie];
+                    this->cleanupViewGV (vgv);
+                    // delete the viewGVstruct object:
+                    delete vgv;
+                    // then remove the pointer from the QMap:
+                    this->viewGV.remove(*ie);
+                    DBG() << "Removed viewGV for expt " << expnum << " in this project";
+                } else {
+                    DBG() << "There is no viewGV for expt " << expnum << " in this project";
+                }
+                ++ie;
+                ++expnum;
+            }
+            DBG() << "After cleanup, viewGV has size " << this->viewGV.size();
 
             // now delete the project. First delete the thing pointed
             // to by the pointer in the QVector<projectObject*>
@@ -1668,14 +1734,13 @@ void MainWindow::close_project()
     // within the list:
     this->setProjectMenu();
 
-    if (data.projects.size() > 1)
+    if (data.projects.size() > 1) {
         ui->action_Close_project->setEnabled(true);
-    else
+    } else {
         ui->action_Close_project->setEnabled(false);
+    }
 
     this->data.redrawViews();
-
-    this->updateDatas();
 
     this->updateTitle();
 }
@@ -2019,8 +2084,44 @@ void MainWindow::saveImageAction()
     }
 }
 
+bool MainWindow::viewGVvisible (void)
+{
+    bool rtn(false);
+    DBG() << "this->viewGV has size " << this->viewGV.size();
+    QMap<experiment*, viewGVstruct*>::iterator vgvi = this->viewGV.begin();
+    while (vgvi != this->viewGV.end()) {
+        if (vgvi.value() != (viewGVstruct*)0
+            && vgvi.value()->subWin->isVisible() == true) {
+            rtn = true;
+            break;
+        }
+        ++vgvi;
+    }
+    return rtn;
+}
+
+void MainWindow::viewGVreshow (void)
+{
+    // IF we're in the viewGV, then remove the old and show the
+    // new. This is required when switching projects or experiments
+    // whilst in the viewGV.
+    if (this->viewGVvisible() == true) {
+        this->hideViewGV();
+        this->viewGVshow();
+    }
+}
+
 void MainWindow::viewGVshow()
 {
+    DBG() << "called";
+
+    experiment* e = this->getCurrentExpt();
+    if (e != (experiment*)0
+        && this->viewGV.find(e) == this->viewGV.end()) {
+        DBG() << "This experiment needs a viewGV to be initialised...";
+        this->initViewGV(e);
+    }
+
     // reset all view buttons to 'inactive' look
     this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
     this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
@@ -2052,17 +2153,24 @@ void MainWindow::viewGVshow()
     }
     this->viewCL.dock->hide();
 
-    // show this view
-    this->viewGV.subWin->show();
+    DBG() << "Current expt num is " << this->getCurrentExptNum();
 
-    // In case the experiment changed, update the logs
-    this->updateDatas();
+    // show the relevant view for the selected experiment
+    if (e != (experiment*)0) {
+        this->viewGV[e]->subWin->show();
+    } else {
+        // Do a standard, empty setup?
+        DBG() << "make graph area look empty in a nice way.";
+        this->emptyGV.subWin->show();
+    }
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
 }
 
 void MainWindow::viewELshow()
 {
+    DBG() << "called";
+
     // reset all view buttons to 'inactive' look
     this->ui->tab0->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
     this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:QColor(0,0,0,0); }");
@@ -2083,7 +2191,8 @@ void MainWindow::viewELshow()
     this->viewELhandler->redraw();
 
     // hide the other views
-    this->viewGV.subWin->hide();
+    this->hideViewGV();
+
     this->ui->view1->hide();
     if (this->viewVZ.OpenGLWidget != NULL) {
         this->viewVZ.view->hide();
@@ -2113,10 +2222,24 @@ void MainWindow::viewELshow()
     updateTitle();
 
     // Data logs, if experiment has changed.
-    DBG() << "update logs as experiment layer has been selected.";
-    this->updateDatas();
+    //DBG() << "update logs as experiment layer has been selected.";
+    DBG() << "updateDatas used to be called from here.";
+    //this->updateDatas();
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );
+}
+
+void MainWindow::hideViewGV (void)
+{
+    QMap<experiment*, viewGVstruct*>::iterator vgvi = this->viewGV.begin();
+    while (vgvi != this->viewGV.end()) {
+        if (vgvi.value() != (viewGVstruct*)0) {
+            vgvi.value()->subWin->hide();
+        }
+        ++vgvi;
+    }
+    // Hide the emptyViewGV also:
+    this->emptyGV.subWin->hide();
 }
 
 void MainWindow::viewNLshow()
@@ -2140,8 +2263,8 @@ void MainWindow::viewNLshow()
     // set the current view button to the 'active' look
     this->ui->tab1->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
-    // hide the other views
-    this->viewGV.subWin->hide();
+    this->hideViewGV();
+
     this->viewEL.view->hide();
     if (this->viewVZ.OpenGLWidget != NULL) {
         this->viewVZ.view->hide();
@@ -2208,7 +2331,7 @@ void MainWindow::viewVZshow()
     this->ui->tab2->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
     // hide the other views
-    this->viewGV.subWin->hide();
+    this->hideViewGV();
     this->ui->view1->hide();
     this->viewEL.view->hide();
     this->viewCL.frame->hide();
@@ -2285,7 +2408,7 @@ void MainWindow::viewCLshow()
     this->ui->tab3->setStyleSheet("QToolButton { border: 0px; color:white; background:rgba(255,255,255,40%); }");
 
     // hide the other views
-    this->viewGV.subWin->hide();
+    this->hideViewGV();
     this->ui->view1->hide();
     this->viewEL.view->hide();
     if (this->viewVZ.OpenGLWidget != NULL) {
@@ -2484,8 +2607,12 @@ void MainWindow::actionDeleteItems_triggered()
     if (ui->view1->isVisible()) {
         data.deleteCurrentSelection();
     }
-    if (viewGV.subWin->isVisible()) {
-        viewGV.properties->deleteCurrentLog();
+
+    experiment* e = this->getCurrentExpt();
+    if (e != (experiment*)0) {
+        if (this->viewGV[e]->subWin->isVisible()) {
+            this->viewGV[e]->properties->deleteCurrentLog();
+        }
     }
 }
 

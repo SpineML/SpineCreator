@@ -1523,7 +1523,10 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
         }
     }
     // check for logs:
-    addLogs(&data->main->viewGV.properties->vLogData);
+    experiment* currentExperiment = data->main->getCurrentExpt();
+    if (currentExperiment != (experiment*)0) {
+        addLogs(&data->main->viewGV[currentExperiment]->properties->vLogData);
+    }
 
     // force redraw!
     this->repaint();

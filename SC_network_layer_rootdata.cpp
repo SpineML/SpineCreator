@@ -132,15 +132,12 @@ void nl_rootdata::selectProject(QAction * action)
     this->currProject->deselect_project(this);
     // select the new project
     projects[action->property("number").toInt()]->select_project(this);
-    redrawViews();
+    this->redrawViews();
     main->updateTitle();
 
-    // Update logs as the project has changed.
-    DBG() << "update logs as project has changed.";
-    main->updateDatas();
-
-    // Update the plots here, or can we roll that into updateDatas? probably.
-    //main->updatePlots();
+    // Update the viewGV for the new project/experiment, initialising
+    // if necessary with MainWindow::viewGVreshow:
+    main->viewGVreshow();
 }
 
 bool nl_rootdata::doesExperimentExist (experiment* e)

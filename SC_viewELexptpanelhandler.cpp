@@ -708,14 +708,15 @@ void viewELExptPanelHandler::changeSelection()
     emit enableRun(true);
 
     // check if this is the selected box - if it is then do nothing
-    if (data->experiments[index]->selected)
+    if (data->experiments[index]->selected) {
         return;
+    }
 
     // otherwise select it
     data->experiments[index]->select(&(data->experiments));
 
-    // Update logs files given we've changed the selected experiment
-    this->main->updateDatas();
+    // Initialise the viewGV for the experiment if necessary
+    this->main->initViewGV (data->experiments[index]);
 
     // redraw to update the selection
     redrawPanel();
@@ -2113,17 +2114,16 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     simTimeChecker.stop();
     QFile::remove(simCancelFileName);
 
-    experiment * currentExperiment = NULL;
-
-    // find currentExperiment
+    // find currentExperiment (could make use of MainWindow::getCurrentExpt)
+    experiment* currentExperiment = (experiment*)0;
     for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
-
-    if (currentExperiment == NULL) {
+    if (currentExperiment == (experiment*)0) {
         this->cleanUpPostRun("", "");
         return;
     }
+
     float proportion = 0;
     if (currentExperiment->progressBar) {
         currentExperiment->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 0), ") \
@@ -2157,11 +2157,11 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     logs.setNameFilters(filter);
 
     // add logs to graphs
-    data->main->viewGV.properties->populateVLogData (logs.entryList(), &logs);
+    data->main->viewGV[currentExperiment]->properties->populateVLogData (logs.entryList(), &logs);
 
     // and insert logs into visualiser
     if (data->main->viewVZ.OpenGLWidget != NULL) {
-        data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV.properties->vLogData);
+        data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV[currentExperiment]->properties->vLogData);
     }
 
     // get status
@@ -2195,7 +2195,6 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     }
 
     this->cleanUpPostRun("", "");
-
 }
 
 void viewELExptPanelHandler::simulatorStandardOutput()

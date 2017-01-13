@@ -43,6 +43,8 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
 
     this->vLogData.clear();
 
+    this->currentSubWindow = (QMdiSubWindow*)0;
+
     // add widgets
     this->logList = new QListWidget;
     // set width to stop dock being resized too small
@@ -655,6 +657,11 @@ void viewGVpropertieslayout::logListSelectionChanged(int index)
 
 void viewGVpropertieslayout::addGraphsToCurrent()
 {
+    if (this->currentSubWindow == (QMdiSubWindow*)0) {
+        // No graph is selected.
+        return;
+    }
+
     QCustomPlot* currPlot = (QCustomPlot*)this->currentSubWindow->widget();
 
     if (this->unifyTime) {

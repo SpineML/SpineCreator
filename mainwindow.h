@@ -39,6 +39,8 @@
 #include "SC_viewGVpropertieslayout.h"
 #include "SC_component_view.h"
 #include "SC_versioncontrol.h"
+#include "EL_experiment.h" // or maybe just a forward declaration of class experiment?
+#include <QMap>
 
 /*!
  * paths used to store the last used directory for file open/save
@@ -56,12 +58,13 @@ namespace Ui {
 }
 
 struct viewGVstruct {
-    QMainWindow * subWin;
-    QMdiArea * mdiarea;
+    QMainWindow * subWin; // This is the thing which contains the mdiarea.
+    QMdiArea * mdiarea; // This is created and then added to the subWin.
     QDockWidget * dock;
     QToolBar * toolbar;
     MainWindow * mainwindow;
     viewGVpropertieslayout * properties;
+    experiment* e; // The experiment to which this graph view pertains.
 };
 
 struct viewELstruct {
@@ -117,7 +120,19 @@ public:
     ~MainWindow();
     nl_rootdata data;
     QUndoGroup * undoStacks;
-    viewGVstruct viewGV;
+
+    /*!
+     * A key-value map of viewGVstruct*s, indexed by experiment
+     * pointer.
+     */
+    QMap<experiment*, viewGVstruct*> viewGV;
+
+    /*!
+     * An empty viewGV which can be used, if necessary, to make the
+     * Graph View look empty, but sensible.
+     */
+    viewGVstruct emptyGV;
+
     viewELstruct viewEL;
     viewNLstruct viewNL;
     viewVZstruct viewVZ;
@@ -133,6 +148,50 @@ public:
      * Update the view of the logfiles
      */
     void updateDatas (void);
+
+    /*!
+     * Get the current experiment number; return -1 if not found
+     */
+    int getCurrentExptNum (void);
+
+    /*!
+     * Get pointer to current experiment. Return (experiment*)0 if
+     * there is no current experiment.
+     */
+    experiment* getCurrentExpt (void);
+
+    void initEmptyGV (void);
+
+    /*!
+     * Does the work for initViewGV and initEmptyGV.
+     */
+    void setupViewGV (viewGVstruct* vgv);
+
+    /*!
+     * Deconstruct the viewGVstruct, deleting any allocated data
+     * necessary before the viewGVstruct* vgv can then itself be
+     * deleted.
+     */
+    void cleanupViewGV (viewGVstruct* vgv);
+
+    /*!
+     * Initialise view GV. Has to be public as it is called from
+     * viewELExptPanelHandler::changeSelection()
+     */
+    void initViewGV(experiment* e);
+
+    /*!
+     * Return true if any of the viewGV members has a visible
+     * subWin. This should return the same answer as for the question
+     * "is the user in the graph view?".
+     */
+    bool viewGVvisible (void);
+
+    /*!
+     * Re-paint the viewGV, in case the project or experiment was
+     * changed in a menu.
+     */
+    void viewGVreshow (void);
 
 private:
     Ui::MainWindow *ui;
@@ -152,8 +211,6 @@ private:
     QDomDocument tempDoc;
     void initViewEL();
     void connectViewEL();
-    void initViewGV();
-    void connectViewGV();
     void initViewCL();
     void connectViewCL();
     void initViewVZ();
@@ -162,6 +219,11 @@ private:
     bool isChanged();
     bool promptToSave();
     void clearComponents();
+    /*!
+     * Hide each graph view; there's one for each experiment and each
+     * project. Also hides the emptyGV.
+     */
+    void hideViewGV (void);
 
 public slots:
     void import_project();
