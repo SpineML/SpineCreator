@@ -211,37 +211,37 @@ void nl_rootdata::replaceComponent(QSharedPointer<Component> oldComp, QSharedPoi
                 QSharedPointer <synapse> syn = proj->synapses[sy];
 
                 // replace references
-                if (syn->weightUpdateType->component == oldComp) {
+                if (syn->weightUpdateCmpt->component == oldComp) {
                     // has the type changed?
                     if (newComp->type != "weight_update") {
-                        syn->weightUpdateType->migrateComponent(catalogWU[0]);
+                        syn->weightUpdateCmpt->migrateComponent(catalogWU[0]);
                         for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
-                            currExpt->updateChanges(syn->weightUpdateType);
+                            currExpt->updateChanges(syn->weightUpdateCmpt);
                         }
                     } else {
-                        syn->weightUpdateType->migrateComponent(newComp);
+                        syn->weightUpdateCmpt->migrateComponent(newComp);
                         for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
-                            currExpt->updateChanges(syn->weightUpdateType);
+                            currExpt->updateChanges(syn->weightUpdateCmpt);
                         }
                     }
                 }
 
                 // replace references
-                if (syn->postsynapseType->component == oldComp) {
+                if (syn->postSynapseCmpt->component == oldComp) {
                     // has the type changed?
                     if (newComp->type != "postsynapse") {
-                        syn->postsynapseType->migrateComponent(catalogPS[0]);
+                        syn->postSynapseCmpt->migrateComponent(catalogPS[0]);
                         for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
-                            currExpt->updateChanges(syn->postsynapseType);
+                            currExpt->updateChanges(syn->postSynapseCmpt);
                         }
                     } else {
-                        syn->postsynapseType->migrateComponent(newComp);
+                        syn->postSynapseCmpt->migrateComponent(newComp);
                         for (int i = 0; i < experiments.size(); ++i) {
                             experiment * currExpt = experiments[i];
-                            currExpt->updateChanges(syn->postsynapseType);
+                            currExpt->updateChanges(syn->postSynapseCmpt);
                         }
                     }
                 }
@@ -281,12 +281,12 @@ bool nl_rootdata::isComponentInUse(QSharedPointer<Component> oldComp)
                 QSharedPointer <synapse> syn = proj->synapses[sy];
 
                 // replace references
-                if (syn->weightUpdateType->component == oldComp) {
+                if (syn->weightUpdateCmpt->component == oldComp) {
                     return true;
                 }
 
                 // replace references
-                if (syn->postsynapseType->component == oldComp) {
+                if (syn->postSynapseCmpt->component == oldComp) {
                     return true;
                 }
             }
@@ -597,9 +597,9 @@ void nl_rootdata::dragSelect(float xGL, float yGL)
 
 
                 // select generic inputs for weightupdate
-                for (int c = 0; c < projT->weightUpdateType->inputs.size(); ++c) {
+                for (int c = 0; c < projT->weightUpdateCmpt->inputs.size(); ++c) {
 
-                    QSharedPointer<genericInput> in = projT->weightUpdateType->inputs[c];
+                    QSharedPointer<genericInput> in = projT->weightUpdateCmpt->inputs[c];
 
                     if (in->curves.size() > 0) {
                         if (dragSelection.contains(in->start) && dragSelection.contains(in->curves.back().end)) {
@@ -618,9 +618,9 @@ void nl_rootdata::dragSelect(float xGL, float yGL)
                 }
 
                 // select generic inputs for postsynapse
-                for (int c = 0; c < projT->postsynapseType->inputs.size(); ++c) {
+                for (int c = 0; c < projT->postSynapseCmpt->inputs.size(); ++c) {
 
-                    QSharedPointer<genericInput> in = projT->postsynapseType->inputs[c];
+                    QSharedPointer<genericInput> in = projT->postSynapseCmpt->inputs[c];
 
                     if (in->curves.size() > 0) {
                         if (dragSelection.contains(in->start) && dragSelection.contains(in->curves.back().end)) {
@@ -927,22 +927,22 @@ void nl_rootdata::findSelection (float xGL, float yGL, float GLscale, QVector <Q
 
                 QSharedPointer <synapse> col = this->populations[i]->projections[j]->synapses[k];
 
-                for (int l = 0; l < col->weightUpdateType->inputs.size(); ++l) {
+                for (int l = 0; l < col->weightUpdateCmpt->inputs.size(); ++l) {
 
                     // find if an edge of the input is hit
-                    if (col->weightUpdateType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
+                    if (col->weightUpdateCmpt->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
                         //  add to selection list
-                        newlySelectedList.push_back(col->weightUpdateType->inputs[l]);
+                        newlySelectedList.push_back(col->weightUpdateCmpt->inputs[l]);
                         // selection complete, move on
                         return;
                     }
                 }
 
-                for (int l = 0; l < col->postsynapseType->inputs.size(); ++l) {
+                for (int l = 0; l < col->postSynapseCmpt->inputs.size(); ++l) {
                     // find if an edge of the input is hit
-                    if (col->postsynapseType->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
+                    if (col->postSynapseCmpt->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
                         //  add to selection list
-                        newlySelectedList.push_back(col->postsynapseType->inputs[l]);
+                        newlySelectedList.push_back(col->postSynapseCmpt->inputs[l]);
                         // selection complete, move on
                         return;
                     }
@@ -1346,17 +1346,17 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
             targSel = qSharedPointerDynamicCast<synapse> (ptr);
             if (type == "weight_update") { // a weight update change
                 if (index >= 0) {
-                    if (targSel->weightUpdateType->component->name != this->catalogWU[index]->name || \
-                        targSel->weightUpdateType->component->path != this->catalogWU[index]->path) {
-                        this->currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->weightUpdateType, this->catalogWU[index]));
+                    if (targSel->weightUpdateCmpt->component->name != this->catalogWU[index]->name || \
+                        targSel->weightUpdateCmpt->component->path != this->catalogWU[index]->path) {
+                        this->currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->weightUpdateCmpt, this->catalogWU[index]));
                     }
                 }
             }
             if (type == "postsynapse") { // a post synapse change
                 if (index >= 0) {
-                    if (targSel->postsynapseType->component->name != this->catalogPS[index]->name || \
-                        targSel->postsynapseType->component->path != this->catalogPS[index]->path) {
-                        this->currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->postsynapseType, this->catalogPS[index]));
+                    if (targSel->postSynapseCmpt->component->name != this->catalogPS[index]->name || \
+                        targSel->postSynapseCmpt->component->path != this->catalogPS[index]->path) {
+                        this->currProject->undoStack->push(new updateComponentTypeUndo(this, targSel->postSynapseCmpt, this->catalogPS[index]));
                     }
                 }
             }
@@ -2003,15 +2003,15 @@ QSharedPointer<systemObject> nl_rootdata::isValidPointer(systemObject * ptr)
                 if (this->populations[i]->projections[j]->synapses[k].data() == ptr) {
                     return this->populations[i]->projections[j]->synapses[k];
                 }
-                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
-                    if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l].data() == ptr) {
-                        return this->populations[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l];
+                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l].data() == ptr) {
+                        return this->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l];
                     }
                 }
 
-                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
-                    if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l].data() == ptr) {
-                        return this->populations[i]->projections[j]->synapses[k]->postsynapseType->inputs[l];
+                for (int l = 0; l < this->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->inputs.size(); ++l) {
+                    if (this->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->inputs[l].data() == ptr) {
+                        return this->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->inputs[l];
                     }
                 }
             }
@@ -2035,11 +2035,11 @@ QSharedPointer<ComponentInstance> nl_rootdata::isValidPointer(ComponentInstance 
 
         for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType.data() == ptr) {
-                    return this->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt.data() == ptr) {
+                    return this->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (this->populations[i]->projections[j]->synapses[k]->postsynapseType.data() == ptr) {
-                    return this->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (this->populations[i]->projections[j]->synapses[k]->postSynapseCmpt.data() == ptr) {
+                    return this->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }
@@ -2121,11 +2121,11 @@ void nl_rootdata::addgenericInput()
         }
         for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < this->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = this->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (this->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == text) {
+                    src = this->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (this->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = this->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (this->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == text) {
+                    src = this->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }
@@ -2238,14 +2238,14 @@ void nl_rootdata::copyParsToClipboard()
                     clipboardCData.clear();
                 }
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
-                clipboardCData = QSharedPointer<ComponentInstance> (new ComponentInstance(proj->synapses[proj->currTarg]->weightUpdateType));
+                clipboardCData = QSharedPointer<ComponentInstance> (new ComponentInstance(proj->synapses[proj->currTarg]->weightUpdateCmpt));
             }
             if (sender()->property("source").toString() == "tab2") {
                 if (clipboardCData.isNull()) {
                     clipboardCData.clear();
                 }
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
-                clipboardCData = QSharedPointer<ComponentInstance> (new ComponentInstance(proj->synapses[proj->currTarg]->postsynapseType));
+                clipboardCData = QSharedPointer<ComponentInstance> (new ComponentInstance(proj->synapses[proj->currTarg]->postSynapseCmpt));
             }
         }
     }
@@ -2269,10 +2269,10 @@ void nl_rootdata::pasteParsFromClipboard()
         if (selList[0]->type == projectionObject) {
             QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (selList[0]);
             if (sender()->property("source").toString() == "tab1") {
-                this->currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->weightUpdateType)));
+                this->currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->weightUpdateCmpt)));
             }
             if (sender()->property("source").toString() == "tab2") {
-                this->currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->postsynapseType)));
+                this->currProject->undoStack->push(new pastePars(this,clipboardCData,(proj->synapses[proj->currTarg]->postSynapseCmpt)));
             }
         }
     }

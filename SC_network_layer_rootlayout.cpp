@@ -882,12 +882,12 @@ void nl_rootlayout::projSelected(QSharedPointer <projection> &proj, nl_rootdata*
 
     // set comboboxes
     for (int i = 0; i < data->catalogWU.size(); ++i) {
-        if (proj->synapses[proj->currTarg]->weightUpdateType->component == data->catalogWU[i]) {
+        if (proj->synapses[proj->currTarg]->weightUpdateCmpt->component == data->catalogWU[i]) {
             emit setWeightUpdateType(i);
         }
     }
     for (int i = 0; i < data->catalogPS.size(); ++i) {
-        if (proj->synapses[proj->currTarg]->postsynapseType->component == data->catalogPS[i]) {
+        if (proj->synapses[proj->currTarg]->postSynapseCmpt->component == data->catalogPS[i]) {
             emit setPostSynapseType(i);
         }
     }
@@ -1156,7 +1156,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
                 QString wuname = "<b>Name:</b> " + proj->synapses[proj->currTarg]->getWeightUpdateName();
                 this->weightUpdateTitle->setText(wuname);
-                type9ml = proj->synapses[proj->currTarg]->weightUpdateType;
+                type9ml = proj->synapses[proj->currTarg]->weightUpdateCmpt;
                 type = "syn";
                 // check if current component validates
                 (qSharedPointerCast <ComponentInstance> (type9ml))->component->validateComponent();
@@ -1182,7 +1182,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
                 QString psname = "<b>Name:</b> " + proj->synapses[proj->currTarg]->getPostSynapseName();
                 this->postSynapseTitle->setText(psname);
-                type9ml = proj->synapses[proj->currTarg]->postsynapseType;
+                type9ml = proj->synapses[proj->currTarg]->postSynapseCmpt;
                 type = "psp";
                 // check if current component validates
                 (qSharedPointerCast <ComponentInstance> (type9ml))->component->validateComponent();
@@ -1489,8 +1489,8 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                     elementList << data->populations[i]->neuronType->getXMLName();
                     for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
                         for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                            elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                            elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                            elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
+                            elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
                         }
                     }
                 }

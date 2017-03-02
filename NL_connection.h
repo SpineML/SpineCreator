@@ -91,12 +91,14 @@ public:
     ParameterInstance * delay;
 
     /*!
-     * The source population for this connection.
+     * The source population for this connection, if there is one (the
+     * source may be a WU or PS component).
      */
     QSharedPointer <population> srcPop;
 
     /*!
-     * The destination population for this connection.
+     * The destination population for this connection, if there is one
+     * (the dest may be a WU or PS component).
      */
     QSharedPointer <population> dstPop;
 

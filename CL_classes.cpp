@@ -3262,7 +3262,7 @@ QString ComponentInstance::getXMLName() {
         QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
         CHECK_CAST(projOwner)
         for (int i = 0; i < projOwner->synapses.size(); ++i) {
-            if (projOwner->synapses[i]->weightUpdateType == this) {
+            if (projOwner->synapses[i]->weightUpdateCmpt == this) {
                 return this->owner->getName() + " Synapse " + QString::number(float(i)) + " weight_update";
             }
         }
@@ -3272,7 +3272,7 @@ QString ComponentInstance::getXMLName() {
         QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
         CHECK_CAST(projOwner)
         for (int i = 0; i < projOwner->synapses.size(); ++i) {
-            if (projOwner->synapses[i]->postsynapseType == this) {
+            if (projOwner->synapses[i]->postSynapseCmpt == this) {
                 return this->owner->getName() + " Synapse " +  QString::number(float(i)) + " postsynapse";
             }
         }

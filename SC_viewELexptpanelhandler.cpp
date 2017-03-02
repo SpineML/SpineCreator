@@ -840,11 +840,11 @@ void viewELExptPanelHandler::setInputComponent()
         }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }
@@ -1282,11 +1282,11 @@ void viewELExptPanelHandler::setOutputComponent()
         }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }
@@ -1504,14 +1504,14 @@ void viewELExptPanelHandler::setGILesion (void)
             // For each synapse in projections, test for weightupdate and postsynapse containing inputs
             for (int k = 0; k < pop->projections[j]->synapses.size() && NO_GILESION; ++k) {
                 // Find inputs from the weight update and postsynapses on this synapse:
-                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size() && NO_GILESION; ++l) {
-                    if (pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->getName() == text) {
-                        lesionedGI = pop->projections[j]->synapses[k]->weightUpdateType->inputs[l];
+                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size() && NO_GILESION; ++l) {
+                    if (pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->getName() == text) {
+                        lesionedGI = pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l];
                     }
                 }
-                for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size() && NO_GILESION; ++l) {
-                    if (pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->getName() == text) {
-                        lesionedGI = pop->projections[j]->synapses[k]->postsynapseType->inputs[l];
+                for (int l = 0; l < pop->projections[j]->synapses[k]->postSynapseCmpt->inputs.size() && NO_GILESION; ++l) {
+                    if (pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->getName() == text) {
+                        lesionedGI = pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l];
                     }
                 }
             }
@@ -1663,11 +1663,11 @@ void viewELExptPanelHandler::setChangeParComponent()
         }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }

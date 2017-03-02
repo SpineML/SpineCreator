@@ -70,9 +70,9 @@ public:
     void disconnect();
 
     /*!
-     * NB: Very confusing, name clashes
-     * QSharedPointer<systemObject> destination(source) in the parent
-     * class (projection), which it overrides.
+     * NB: Very confusing, source/destination attribute names clash
+     * with QSharedPointer<population> source/destination in the
+     * parent class (projection), which these override.
      */
     //@{
     QSharedPointer<systemObject> destination;

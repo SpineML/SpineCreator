@@ -2286,16 +2286,16 @@ ParameterInstance * pythonscript_connection::getPropPointer()
             }
             if (isConn) {
                 // now we know which weight update we have to look at
-                for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
-                    if (syn->weightUpdateType->ParameterList[k]->name == this->weightProp) {
+                for (int k = 0; k < syn->weightUpdateCmpt->ParameterList.size(); ++k) {
+                    if (syn->weightUpdateCmpt->ParameterList[k]->name == this->weightProp) {
                         // found the weight
-                        return syn->weightUpdateType->ParameterList[k];
+                        return syn->weightUpdateCmpt->ParameterList[k];
                     }
                 }
-                for (int k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
-                    if (syn->weightUpdateType->StateVariableList[k]->name == this->weightProp) {
+                for (int k = 0; k < syn->weightUpdateCmpt->StateVariableList.size(); ++k) {
+                    if (syn->weightUpdateCmpt->StateVariableList[k]->name == this->weightProp) {
                         // found the weight
-                        return syn->weightUpdateType->StateVariableList[k];
+                        return syn->weightUpdateCmpt->StateVariableList[k];
                     }
                 }
             }
@@ -2327,13 +2327,13 @@ QStringList pythonscript_connection::getPropList()
             }
             if (isConn) {
                 // now we know which weight update we have to look at
-                for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateCmpt->ParameterList.size(); ++k) {
                     // found the weight
-                    list.push_back(syn->weightUpdateType->ParameterList[k]->name);
+                    list.push_back(syn->weightUpdateCmpt->ParameterList[k]->name);
                 }
-                for (int k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateCmpt->StateVariableList.size(); ++k) {
                     // found the weight
-                    list.push_back(syn->weightUpdateType->StateVariableList[k]->name);
+                    list.push_back(syn->weightUpdateCmpt->StateVariableList[k]->name);
                 }
             }
         }

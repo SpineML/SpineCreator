@@ -408,15 +408,15 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     //DBGRI() << "   Projection name: " << data->network[i]->projections[j]->getName();
                     for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
                         //DBGRI() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
-                        if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
+                        if (data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == srcName) {
                             //DBGRI() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                             //DBGRI() << "(From WU) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
-                        if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
+                        if (data->network[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == srcName) {
                             //DBGRI() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
-                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->postSynapseCmpt;
                             //DBGRI() << "(From PS) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
@@ -914,14 +914,14 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut)
                 projection->synapses[j]->connectionType->write_node_xml(xmlOut);
 
                 xmlOut.writeStartElement("LL:WeightUpdate");
-                xmlOut.writeAttribute("name", projection->synapses[j]->weightUpdateType->getXMLName());
+                xmlOut.writeAttribute("name", projection->synapses[j]->weightUpdateCmpt->getXMLName());
 
-                projection->synapses[j]->weightUpdateType->write_node_xml(xmlOut);
+                projection->synapses[j]->weightUpdateCmpt->write_node_xml(xmlOut);
                 xmlOut.writeEndElement(); // synapse
 
                 xmlOut.writeStartElement("LL:PostSynapse");
-                xmlOut.writeAttribute("name", projection->synapses[j]->postsynapseType->getXMLName());
-                projection->synapses[j]->postsynapseType->write_node_xml(xmlOut);
+                xmlOut.writeAttribute("name", projection->synapses[j]->postSynapseCmpt->getXMLName());
+                projection->synapses[j]->postSynapseCmpt->write_node_xml(xmlOut);
                 xmlOut.writeEndElement(); // postsynapse
 
                 xmlOut.writeEndElement(); // Synapse

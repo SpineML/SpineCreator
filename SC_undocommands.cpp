@@ -80,16 +80,16 @@ delSelection::delSelection(nl_rootdata * data, QVector <QSharedPointer<systemObj
                 for (int k = 0; k <pop->projections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->projections[k];
                     for (int l = 0; l < proj->synapses.size(); ++l) {
-                        if (input->srcCmpt == proj->synapses[l]->weightUpdateType || input->dstCmpt == proj->synapses[l]->weightUpdateType || \
-                                input->srcCmpt == proj->synapses[l]->postsynapseType || input->dstCmpt == proj->synapses[l]->postsynapseType)
+                        if (input->srcCmpt == proj->synapses[l]->weightUpdateCmpt || input->dstCmpt == proj->synapses[l]->weightUpdateCmpt || \
+                                input->srcCmpt == proj->synapses[l]->postSynapseCmpt || input->dstCmpt == proj->synapses[l]->postSynapseCmpt)
                             alreadyDeleted = true;
                     }
                 }
                 for (int k = 0; k <pop->reverseProjections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->reverseProjections[k];
                     for (int l = 0; l < proj->synapses.size(); ++l) {
-                        if (input->srcCmpt == proj->synapses[l]->weightUpdateType || input->dstCmpt == proj->synapses[l]->weightUpdateType || \
-                                input->srcCmpt == proj->synapses[l]->postsynapseType || input->dstCmpt == proj->synapses[l]->postsynapseType)
+                        if (input->srcCmpt == proj->synapses[l]->weightUpdateCmpt || input->dstCmpt == proj->synapses[l]->weightUpdateCmpt || \
+                                input->srcCmpt == proj->synapses[l]->postSynapseCmpt || input->dstCmpt == proj->synapses[l]->postSynapseCmpt)
                             alreadyDeleted = true;
                     }
                 }
@@ -474,9 +474,9 @@ addSynapse::addSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QUn
     syn->connectionType->setSynapseIndex(proj->synapses.size());
     proj->synapses.push_back(syn);
     // spawn children for projInputs
-    new addInput(data, proj->source->neuronType, this->syn->weightUpdateType, this);
-    new addInput(data, this->syn->weightUpdateType, this->syn->postsynapseType, this);
-    new addInput(data, this->syn->postsynapseType, this->proj->destination->neuronType, this);
+    new addInput(data, proj->source->neuronType, this->syn->weightUpdateCmpt, this);
+    new addInput(data, this->syn->weightUpdateCmpt, this->syn->postSynapseCmpt, this);
+    new addInput(data, this->syn->postSynapseCmpt, this->proj->destination->neuronType, this);
     isDeleted = false;
 }
 
@@ -512,49 +512,49 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
     isUndone = false;
 
     // spawn children
-    for (int i = 0; i < this->syn->postsynapseType->inputs.size(); ++i) {
-        new delInput(data, this->syn->postsynapseType->inputs[i], this);
+    for (int i = 0; i < this->syn->postSynapseCmpt->inputs.size(); ++i) {
+        new delInput(data, this->syn->postSynapseCmpt->inputs[i], this);
     }
-    for (int i = 0; i < this->syn->postsynapseType->outputs.size(); ++i) {
+    for (int i = 0; i < this->syn->postSynapseCmpt->outputs.size(); ++i) {
         // ok, find out if the input for this output is deleted
         bool destination_deleted = false;
         for (int j = 0; j < data->selList.size(); ++j) {
-            if (this->syn->postsynapseType->outputs[i]->destination == data->selList[j])
+            if (this->syn->postSynapseCmpt->outputs[i]->destination == data->selList[j])
                 destination_deleted = true;
             if (data->selList[j]->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (data->selList[j]);
                 for (int k = 0; k < pop->projections.size(); ++k)
-                    if (this->syn->postsynapseType->outputs[i]->destination == pop->projections[k])
+                    if (this->syn->postSynapseCmpt->outputs[i]->destination == pop->projections[k])
                         destination_deleted = true;
                 for (int k = 0; k < pop->reverseProjections.size(); ++k)
-                    if (this->syn->postsynapseType->outputs[i]->destination == pop->reverseProjections[k])
+                    if (this->syn->postSynapseCmpt->outputs[i]->destination == pop->reverseProjections[k])
                         destination_deleted = true;
             }
         }
         if (!destination_deleted)
-            new delInput(data, this->syn->postsynapseType->outputs[i], this);
+            new delInput(data, this->syn->postSynapseCmpt->outputs[i], this);
     }
-    for (int i = 0; i < this->syn->weightUpdateType->inputs.size(); ++i) {
-        new delInput(data, this->syn->weightUpdateType->inputs[i], this);
+    for (int i = 0; i < this->syn->weightUpdateCmpt->inputs.size(); ++i) {
+        new delInput(data, this->syn->weightUpdateCmpt->inputs[i], this);
     }
-    for (int i = 0; i < this->syn->weightUpdateType->outputs.size(); ++i) {
+    for (int i = 0; i < this->syn->weightUpdateCmpt->outputs.size(); ++i) {
         // ok, find out if the input for this output is deleted
         bool destination_deleted = false;
         for (int j = 0; j < data->selList.size(); ++j) {
-            if (this->syn->weightUpdateType->outputs[i]->destination == data->selList[j])
+            if (this->syn->weightUpdateCmpt->outputs[i]->destination == data->selList[j])
                 destination_deleted = true;
             if (data->selList[j]->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (data->selList[j]);
                 for (int k = 0; k < pop->projections.size(); ++k)
-                    if (this->syn->weightUpdateType->outputs[i]->destination == pop->projections[k])
+                    if (this->syn->weightUpdateCmpt->outputs[i]->destination == pop->projections[k])
                         destination_deleted = true;
                 for (int k = 0; k < pop->reverseProjections.size(); ++k)
-                    if (this->syn->weightUpdateType->outputs[i]->destination == pop->reverseProjections[k])
+                    if (this->syn->weightUpdateCmpt->outputs[i]->destination == pop->reverseProjections[k])
                         destination_deleted = true;
             }
         }
         if (!destination_deleted) {
-            new delInput(data, this->syn->weightUpdateType->outputs[i], this);
+            new delInput(data, this->syn->weightUpdateCmpt->outputs[i], this);
         }
     }
     // go into experiments and delete all referencing objects
@@ -565,7 +565,7 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
         for (int j = 0; j < currExpt->ins.size(); ++j) {
             // if input references deleted pop the push a delete
             exptInput * in = currExpt->ins[j];
-            if (in->target == this->syn->weightUpdateType || in->target == this->syn->postsynapseType) {
+            if (in->target == this->syn->weightUpdateCmpt || in->target == this->syn->postSynapseCmpt) {
                 new deleteInputUndo(data, currExpt, in, this);
             }
         }
@@ -573,7 +573,7 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
         for (int j = 0; j < currExpt->outs.size(); ++j) {
             // if input references deleted pop the push a delete
             exptOutput * out = currExpt->outs[j];
-            if (out->source == this->syn->weightUpdateType || out->source == this->syn->postsynapseType) {
+            if (out->source == this->syn->weightUpdateCmpt || out->source == this->syn->postSynapseCmpt) {
                 new deleteOutputUndo(data, currExpt, out, this);
             }
         }
@@ -581,7 +581,7 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
         for (int j = 0; j < currExpt->changes.size(); ++j) {
             // if input references deleted pop the push a delete
             exptChangeProp * prop = currExpt->changes[j];
-            if (prop->component == this->syn->weightUpdateType || prop->component == this->syn->postsynapseType) {
+            if (prop->component == this->syn->weightUpdateCmpt || prop->component == this->syn->postSynapseCmpt) {
                 new deleteChangePropUndo(data, currExpt, prop, this);
             }
         }

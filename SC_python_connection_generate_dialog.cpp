@@ -117,10 +117,10 @@ void generate_dialog::moveFromThread() {
                     // if we have found the connection
                     if (syn->connectionType == currConnPy) {
                         // now we know which weight update we have to look at
-                        for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
-                            if (syn->weightUpdateType->ParameterList[k]->name == currConnPy->weightProp) {
+                        for (int k = 0; k < syn->weightUpdateCmpt->ParameterList.size(); ++k) {
+                            if (syn->weightUpdateCmpt->ParameterList[k]->name == currConnPy->weightProp) {
                                 // found the weight - now to alter it
-                                ParameterInstance * par = syn->weightUpdateType->ParameterList[k];
+                                ParameterInstance * par = syn->weightUpdateCmpt->ParameterList[k];
                                 par->currType = ExplicitList;
                                 par->value = currConnPy->weights;
                             }

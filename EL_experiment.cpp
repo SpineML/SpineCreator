@@ -633,27 +633,27 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogRecvPort \
-                            || data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogReducePort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode== AnalogRecvPort \
+                            || data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode== AnalogReducePort) {
                         portsExist = true;
                         break;
                     }
                 }
 
                 if (portsExist)
-                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogRecvPort \
-                            || data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogReducePort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode== AnalogRecvPort \
+                            || data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode== AnalogReducePort) {
                         portsExist = true;
                         break;
                     }
                 }
 
                 if (portsExist) {
-                    elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
                 }
             }
         }
@@ -1221,40 +1221,40 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode== AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
-                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList.size(); ++p) {
-                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList[p]->mode== EventSendPort) {
+                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->EventPortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->EventPortList[p]->mode== EventSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
                 if (portsExist) {
-                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
                 }
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode== AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
-                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList.size(); ++p) {
-                        if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList[p]->mode== EventSendPort) {
+                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->EventPortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->EventPortList[p]->mode== EventSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
                 if (portsExist) {
-                    elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
                 }
             }
         }
@@ -1706,12 +1706,12 @@ exptLesion::setAssocGenericInputs (void)
     for (int k = 0; k < this->proj->synapses.size(); ++k) {
 
         // Find inputs from the weight update and postsynapses on this synapse:
-        for (int l = 0; l < this->proj->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+        for (int l = 0; l < this->proj->synapses[k]->weightUpdateCmpt->inputs.size(); ++l) {
 
             // If the generic input's name is like:
             // srcPopName:(anything) TO synName weight_update:(anything)
             // Then ignore it (it's internal to the projection). Use regexp for the matching:
-            QString giName = this->proj->synapses[k]->weightUpdateType->inputs[l]->getName();
+            QString giName = this->proj->synapses[k]->weightUpdateCmpt->inputs[l]->getName();
             QString synWUName = this->proj->synapses[k]->getWeightUpdateName();
             QString pat = "^" + srcPopName + ":.* TO " + synWUName + ":.*$";
             QRegularExpression r(pat);
@@ -1720,19 +1720,19 @@ exptLesion::setAssocGenericInputs (void)
             if (!match.hasMatch()) {
                 DBG() << "Adding weightupdate assoc GI lesion " << giName
                       << " for synapse WU name " << synWUName << " source " << srcPopName;
-                QSharedPointer<genericInput> gi = this->proj->synapses[k]->weightUpdateType->inputs[l];
+                QSharedPointer<genericInput> gi = this->proj->synapses[k]->weightUpdateCmpt->inputs[l];
                 exptGenericInputLesion* gil = new exptGenericInputLesion(gi);
                 this->assocGenericInputs.push_back (gil);
                 this->exptParent->gilesions.push_back (gil);
             }
         }
 
-        for (int l = 0; l < this->proj->synapses[k]->postsynapseType->inputs.size(); ++l) {
+        for (int l = 0; l < this->proj->synapses[k]->postSynapseCmpt->inputs.size(); ++l) {
 
             // If generic input's name is like:
             // synName weight_update:(anything) TO synName postsynapse:(anything)
             // Then ignore it,
-            QString giName = this->proj->synapses[k]->postsynapseType->inputs[l]->getName();
+            QString giName = this->proj->synapses[k]->postSynapseCmpt->inputs[l]->getName();
             QString synWUName = this->proj->synapses[k]->getWeightUpdateName();
             QString synPSName = this->proj->synapses[k]->getPostSynapseName();
             QString pat = "^" + synWUName + ":.* TO " + synPSName + ":.*$";
@@ -1743,7 +1743,7 @@ exptLesion::setAssocGenericInputs (void)
                 DBG() << "Adding postsynapse assoc GI lesion " << giName
                       << " for synapsePS name " << synPSName << " source " << srcPopName;
 
-                QSharedPointer<genericInput> gi = this->proj->synapses[k]->postsynapseType->inputs[l];
+                QSharedPointer<genericInput> gi = this->proj->synapses[k]->postSynapseCmpt->inputs[l];
                 exptGenericInputLesion* gil = new exptGenericInputLesion(gi);
                 this->assocGenericInputs.push_back (gil);
                 this->exptParent->gilesions.push_back (gil);
@@ -1834,24 +1834,24 @@ exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
             // For each synapse in projections, test for weightupdate and postsynapse matching name:
             for (int k = 0; k < pop->projections[j]->synapses.size() && !found; ++k) {
                 // Check weight updates:
-                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size() && !found; ++l) {
-                    if (pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->srcCmpt->getXMLName() == src
-                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->srcPort == src_port
-                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->dstPort == dst_port
-                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->dstCmpt->getXMLName() == dst) {
+                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size() && !found; ++l) {
+                    if (pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->srcCmpt->getXMLName() == src
+                        && pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->srcPort == src_port
+                        && pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->dstPort == dst_port
+                        && pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->dstCmpt->getXMLName() == dst) {
                         // Weightupdate match
-                        this->gi = pop->projections[j]->synapses[k]->weightUpdateType->inputs[l];
+                        this->gi = pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l];
                         found = true;
                     }
                 }
                 // Check postsynapses:
-                for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size() && !found; ++l) {
-                    if (pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->srcCmpt->getXMLName() == src
-                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->srcPort == src_port
-                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->dstPort == dst_port
-                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->dstCmpt->getXMLName() == dst) {
+                for (int l = 0; l < pop->projections[j]->synapses[k]->postSynapseCmpt->inputs.size() && !found; ++l) {
+                    if (pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->srcCmpt->getXMLName() == src
+                        && pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->srcPort == src_port
+                        && pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->dstPort == dst_port
+                        && pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->dstCmpt->getXMLName() == dst) {
                         // Postsynapse match
-                        this->gi = pop->projections[j]->synapses[k]->postsynapseType->inputs[l];
+                        this->gi = pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l];
                         found = true;
                     }
                 }
@@ -1984,15 +1984,15 @@ exptGenericInputLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* ha
                 // For each synapse in projections, test for weightupdate and postsynapse containing inputs
                 for (int k = 0; k < pop->projections[j]->synapses.size(); ++k) {
                     // Find inputs from the weight update and postsynapses on this synapse:
-                    for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                    for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size(); ++l) {
                         DBG() << "Candidate weightupdate genericInput: "
-                              << pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->getName();
-                        elementList << pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->getName();
+                              << pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->getName();
+                        elementList << pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->getName();
                     }
-                    for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                    for (int l = 0; l < pop->projections[j]->synapses[k]->postSynapseCmpt->inputs.size(); ++l) {
                         DBG() << "Candidate postsynapse genericInput: "
-                              << pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->getName();
-                        elementList << pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->getName();
+                              << pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->getName();
+                        elementList << pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->getName();
                     }
                 }
             }
@@ -2044,8 +2044,8 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
         elementList << data->populations[i]->neuronType->getXMLName();
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
+                elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
             }
         }
     }
@@ -2896,12 +2896,12 @@ QSharedPointer <ComponentInstance> getTargetFromData(QString TargetName, project
         }
         for (int j = 0; j < data->network[i]->projections.size(); ++j) {
             for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-                if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == TargetName) {
-                    return data->network[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == TargetName) {
+                    return data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                     break;
                 }
-                if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == TargetName) {
-                    return data->network[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->network[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == TargetName) {
+                    return data->network[i]->projections[j]->synapses[k]->postSynapseCmpt;
                     break;
                 }
             }

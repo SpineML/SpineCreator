@@ -789,11 +789,11 @@ void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<syste
     } else if (oldSource->type == projectionObject) {
         QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldSource);
         for (int i = 0; i < p->synapses.size(); ++i) {
-            if (this->srcCmpt == p->synapses[i]->weightUpdateType) {
-                this->srcCmpt = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->weightUpdateType;
+            if (this->srcCmpt == p->synapses[i]->weightUpdateCmpt) {
+                this->srcCmpt = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->weightUpdateCmpt;
             }
-            if (this->srcCmpt == p->synapses[i]->postsynapseType) {
-                this->srcCmpt = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->postsynapseType;
+            if (this->srcCmpt == p->synapses[i]->postSynapseCmpt) {
+                this->srcCmpt = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->postSynapseCmpt;
             }
         }
     }
@@ -802,12 +802,12 @@ void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<syste
     } else if (oldDestination->type == projectionObject) {
         QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldDestination);
         for (int i = 0; i < p->synapses.size(); ++i) {
-            qDebug() << this->dstCmpt->getXMLName() << " " << p->synapses[i]->postsynapseType->getXMLName() << ": " << (this->dstCmpt == p->synapses[i]->postsynapseType);
-            if (this->dstCmpt == p->synapses[i]->weightUpdateType) {
-                this->dstCmpt = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->weightUpdateType;
+            qDebug() << this->dstCmpt->getXMLName() << " " << p->synapses[i]->postSynapseCmpt->getXMLName() << ": " << (this->dstCmpt == p->synapses[i]->postSynapseCmpt);
+            if (this->dstCmpt == p->synapses[i]->weightUpdateCmpt) {
+                this->dstCmpt = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->weightUpdateCmpt;
             }
-            if (this->dstCmpt == p->synapses[i]->postsynapseType) {
-                this->dstCmpt = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->postsynapseType;
+            if (this->dstCmpt == p->synapses[i]->postSynapseCmpt) {
+                this->dstCmpt = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->postSynapseCmpt;
             }
         }
     }
