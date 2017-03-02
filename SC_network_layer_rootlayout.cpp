@@ -491,7 +491,7 @@ void nl_rootlayout::initTabBoxProjection(nl_rootdata * ) {
     weightUpdateComboBox = this->addDropBox((QVBoxLayout *) tab1->layout(),"Weight Update", "weight_update");
 
     this->weightUpdateTitle = new QLabel("<b>WeightUpdate name:</b>");
-    tab1->layout()->addWidget(this->weightUpdateTitle);
+    ((QVBoxLayout *)tab1->layout())->insertWidget(tab1->layout()->count()-1, this->weightUpdateTitle);
 
     // connect for configure
     connect(this, SIGNAL(setWeightUpdateType(int)), weightUpdateComboBox, SLOT(setCurrentIndex(int)));
@@ -552,7 +552,7 @@ void nl_rootlayout::initFinish(nl_rootdata * data) {
 
         // layout
         QHBoxLayout * cp = new QHBoxLayout();
-        tabLayout->insertLayout(tabLayout->count() - 1, cp);
+        tabLayout->insertLayout(tabLayout->count() - 2, cp);
 
         QPushButton * copy = new QPushButton("Copy");
 
@@ -1139,7 +1139,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 // doesn't validate - warn and skip
                 if (num_errs != 0) {
                     QLabel * validateWarning = new QLabel("Component does not validate: please correct");
-                    tabLayout->insertWidget(tabLayout->count() - (1), validateWarning);
+                    tabLayout->insertWidget(tabLayout->count() - 2, validateWarning);
                     // connect to delete
                     connect(this, SIGNAL(deleteProperties()), validateWarning, SLOT(deleteLater()));
                     skipTab = true;
