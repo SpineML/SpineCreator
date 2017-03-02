@@ -32,7 +32,7 @@ class genericInput : public projection // inherit systemObject through projectio
 {
 public:
     genericInput();
-    genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput = false);
+    genericInput(QSharedPointer <ComponentInstance> srcCmpt, QSharedPointer <ComponentInstance> dstCmpt, bool projInput = false);
     ~genericInput();
 
     /*!
@@ -75,8 +75,8 @@ public:
      * genericinput connection. Refactor to be dstCmpt and srcCmpt.
      */
     //@{
-    QSharedPointer <ComponentInstance> dst;
-    QSharedPointer <ComponentInstance> src;
+    QSharedPointer <ComponentInstance> dstCmpt;
+    QSharedPointer <ComponentInstance> srcCmpt;
     //@}
 
     QString srcPort;

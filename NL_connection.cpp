@@ -632,8 +632,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 
         if (this->filename.isEmpty()) {
             QMessageBox msgBox;
-            msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
-                           + "' (filename could not be generated from src/dest population names)");
+            msgBox.setText("Error creating exported binary connection file srcName/dstName:'" + this->srcName
+                           + "/" + this->dstName + "' (filename could not be generated from src/dest population names)");
             msgBox.exec();
             return;
         }
@@ -1288,11 +1288,16 @@ void csv_connection::generateFilename(void)
 
     // Test this->src and this->dst first
     if (!this->src.isNull()) {
+        // What if src is a WU?
         this->srcName = this->src->name;
+    } else {
+        DBG() << "src is null - there's no population as a source for this connection.";
     }
 
     if (!this->dst.isNull()) {
         this->dstName = this->dst->name;
+    } else {
+        DBG() << "dst is null - there's no population as a destination for this connection.";
     }
 
     if (this->srcName.isEmpty()) {

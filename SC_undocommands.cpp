@@ -80,16 +80,16 @@ delSelection::delSelection(nl_rootdata * data, QVector <QSharedPointer<systemObj
                 for (int k = 0; k <pop->projections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->projections[k];
                     for (int l = 0; l < proj->synapses.size(); ++l) {
-                        if (input->src == proj->synapses[l]->weightUpdateType || input->dst == proj->synapses[l]->weightUpdateType || \
-                                input->src == proj->synapses[l]->postsynapseType || input->dst == proj->synapses[l]->postsynapseType)
+                        if (input->srcCmpt == proj->synapses[l]->weightUpdateType || input->dstCmpt == proj->synapses[l]->weightUpdateType || \
+                                input->srcCmpt == proj->synapses[l]->postsynapseType || input->dstCmpt == proj->synapses[l]->postsynapseType)
                             alreadyDeleted = true;
                     }
                 }
                 for (int k = 0; k <pop->reverseProjections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->reverseProjections[k];
                     for (int l = 0; l < proj->synapses.size(); ++l) {
-                        if (input->src == proj->synapses[l]->weightUpdateType || input->dst == proj->synapses[l]->weightUpdateType || \
-                                input->src == proj->synapses[l]->postsynapseType || input->dst == proj->synapses[l]->postsynapseType)
+                        if (input->srcCmpt == proj->synapses[l]->weightUpdateType || input->dstCmpt == proj->synapses[l]->weightUpdateType || \
+                                input->srcCmpt == proj->synapses[l]->postsynapseType || input->dstCmpt == proj->synapses[l]->postsynapseType)
                             alreadyDeleted = true;
                     }
                 }
@@ -659,7 +659,7 @@ delInput::delInput(nl_rootdata * d, QSharedPointer<genericInput> i, QUndoCommand
     }
     this->input = i;
     this->data = d;
-    this->setText("delete Input from " + this->input->src->getXMLName() + " to " + this->input->dst->getXMLName());
+    this->setText("delete Input from " + this->input->srcCmpt->getXMLName() + " to " + this->input->dstCmpt->getXMLName());
     this->input->isDeleted = true;
     this->isDeleted = true;
     this->selIndex = -1;

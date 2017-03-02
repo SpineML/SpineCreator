@@ -45,8 +45,8 @@ genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointe
 {
     this->type = inputObject;
 
-    this->src = src;
-    this->dst = dst;
+    this->srcCmpt = src;
+    this->dstCmpt = dst;
     this->source = src->owner;
     this->destination = dst->owner;
 
@@ -75,36 +75,36 @@ genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointe
 void genericInput::connect(QSharedPointer<genericInput> in)
 {
     // connect can be called multiple times due to the nature of Undo
-    for (int i = 0; i < dst->inputs.size(); ++i) {
-        if (dst->inputs[i] == this) {
+    for (int i = 0; i < dstCmpt->inputs.size(); ++i) {
+        if (dstCmpt->inputs[i] == this) {
             // already there - give up
             return;
         }
     }
-    for (int i = 0; i < src->outputs.size(); ++i) {
-        if (src->outputs[i] == this) {
+    for (int i = 0; i < srcCmpt->outputs.size(); ++i) {
+        if (srcCmpt->outputs[i] == this) {
             // already there - give up
             return;
         }
     }
 
-    dst->inputs.push_back(in);
-    src->outputs.push_back(in);
+    dstCmpt->inputs.push_back(in);
+    srcCmpt->outputs.push_back(in);
 
-    dst->matchPorts();
+    dstCmpt->matchPorts();
 }
 
 void genericInput::disconnect()
 {
-    for (int i = 0; i < dst->inputs.size(); ++i) {
-        if (dst->inputs[i].data() == this) {
-            dst->inputs.erase(dst->inputs.begin()+i);
+    for (int i = 0; i < dstCmpt->inputs.size(); ++i) {
+        if (dstCmpt->inputs[i].data() == this) {
+            dstCmpt->inputs.erase(dstCmpt->inputs.begin()+i);
             dstPos = i;
         }
     }
-    for (int i = 0; i < src->outputs.size(); ++i) {
-        if (src->outputs[i].data() == this) {
-            src->outputs.erase(src->outputs.begin()+i);
+    for (int i = 0; i < srcCmpt->outputs.size(); ++i) {
+        if (srcCmpt->outputs[i].data() == this) {
+            srcCmpt->outputs.erase(srcCmpt->outputs.begin()+i);
             srcPos = i;
         }
     }
@@ -117,8 +117,8 @@ genericInput::~genericInput()
 
 QString genericInput::getName()
 {
-    QString giname = this->src->getXMLName() + ":" + this->srcPort + " TO "
-        + this->dst->getXMLName() + ":" + this->dstPort;
+    QString giname = this->srcCmpt->getXMLName() + ":" + this->srcPort + " TO "
+        + this->dstCmpt->getXMLName() + ":" + this->dstPort;
     return giname;
 }
 
@@ -344,18 +344,18 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 void genericInput::add_curves()
 {
     DBG() << "genericInput::add_curves called. Existing curves:" << this->curves.size();
-    if (this->dst->owner.isNull() || this->src->owner.isNull()) {
+    if (this->dstCmpt->owner.isNull() || this->srcCmpt->owner.isNull()) {
         DBG() << "Can't lay out; dst->owner or src->owner object is null";
         return;
     }
 
     // add curves for drawing:
     bezierCurve newCurve;
-    newCurve.end = dst->owner->currentLocation();
-    this->start = src->owner->currentLocation();
+    newCurve.end = dstCmpt->owner->currentLocation();
+    this->start = srcCmpt->owner->currentLocation();
 
-    newCurve.C1 = 0.5*(dst->owner->currentLocation()+src->owner->currentLocation());
-    newCurve.C2 = 0.5*(dst->owner->currentLocation()+src->owner->currentLocation());
+    newCurve.C1 = 0.5*(dstCmpt->owner->currentLocation()+srcCmpt->owner->currentLocation());
+    newCurve.C2 = 0.5*(dstCmpt->owner->currentLocation()+srcCmpt->owner->currentLocation());
 
     this->curves.push_back(newCurve);
 
@@ -388,7 +388,7 @@ void genericInput::add_curves()
         if (!handled) {
             QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->source);
             CHECK_CAST(pop)
-            QPointF boxEdge = this->findBoxEdge(pop, dst->owner->currentLocation().x(), dst->owner->currentLocation().y());
+            QPointF boxEdge = this->findBoxEdge(pop, dstCmpt->owner->currentLocation().x(), dstCmpt->owner->currentLocation().y());
             this->start = boxEdge;
         }
     }
@@ -396,7 +396,7 @@ void genericInput::add_curves()
     if (this->destination->type == populationObject) {
         QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->destination);
         CHECK_CAST(pop)
-        QPointF boxEdge = this->findBoxEdge(pop, src->owner->currentLocation().x(), src->owner->currentLocation().y());
+        QPointF boxEdge = this->findBoxEdge(pop, srcCmpt->owner->currentLocation().x(), srcCmpt->owner->currentLocation().y());
         this->curves.back().end = boxEdge;
     }
 
@@ -552,8 +552,8 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
     root.appendChild(col);
 
     // uniquely identify the input
-    col.setAttribute("source", this->src->getXMLName());
-    col.setAttribute("destination", this->dst->getXMLName());
+    col.setAttribute("source", this->srcCmpt->getXMLName());
+    col.setAttribute("destination", this->dstCmpt->getXMLName());
     col.setAttribute("srcPort", this->srcPort);
     col.setAttribute("dstPort", this->dstPort);
 
@@ -627,8 +627,8 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
               << "dstPort:" <<  metaNode.toElement().attribute("dstPort", "");
 #endif
 
-        if (metaNode.toElement().attribute("source", "") == this->src->getXMLName()
-            && metaNode.toElement().attribute("destination", "") == this->dst->getXMLName()
+        if (metaNode.toElement().attribute("source", "") == this->srcCmpt->getXMLName()
+            && metaNode.toElement().attribute("destination", "") == this->dstCmpt->getXMLName()
             && metaNode.toElement().attribute("srcPort", "") == this->srcPort
             && metaNode.toElement().attribute("dstPort", "") == this->dstPort) {
 
@@ -732,8 +732,8 @@ QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *,
     newIn->srcPort = this->srcPort;
     newIn->dstPort = this->dstPort;
 
-    newIn->src = this->src;
-    newIn->dst = this->dst;
+    newIn->srcCmpt = this->srcCmpt;
+    newIn->dstCmpt = this->dstCmpt;
 
     objectMap.insert(this, newIn);
 
@@ -766,39 +766,39 @@ void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<syste
     this->source = objectMap[this->source.data()];
     this->destination = objectMap[this->destination.data()];
 
-    qDebug() << "Before src = " << this->src->getXMLName();
-    qDebug() << "Before dst = " << this->dst->getXMLName();
+    qDebug() << "Before src = " << this->srcCmpt->getXMLName();
+    qDebug() << "Before dst = " << this->dstCmpt->getXMLName();
 
     // now remap src and dst by finding out what they were, and using the new version
     if (oldSource->type == populationObject) {
         qDebug() << "source = " << oldSource.data() << " -> " << this->source.data();
-        this->src = (qSharedPointerDynamicCast < population > (this->source))->neuronType;
+        this->srcCmpt = (qSharedPointerDynamicCast < population > (this->source))->neuronType;
     } else if (oldSource->type == projectionObject) {
         QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldSource);
         for (int i = 0; i < p->synapses.size(); ++i) {
-            if (this->src == p->synapses[i]->weightUpdateType) {
-                this->src = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->weightUpdateType;
+            if (this->srcCmpt == p->synapses[i]->weightUpdateType) {
+                this->srcCmpt = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->weightUpdateType;
             }
-            if (this->src == p->synapses[i]->postsynapseType) {
-                this->src = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->postsynapseType;
+            if (this->srcCmpt == p->synapses[i]->postsynapseType) {
+                this->srcCmpt = qSharedPointerDynamicCast < projection > (this->source)->synapses[i]->postsynapseType;
             }
         }
     }
     if (oldDestination->type == populationObject) {
-        this->dst = (qSharedPointerDynamicCast < population > (this->destination))->neuronType;
+        this->dstCmpt = (qSharedPointerDynamicCast < population > (this->destination))->neuronType;
     } else if (oldDestination->type == projectionObject) {
         QSharedPointer < projection > p = qSharedPointerDynamicCast < projection > (oldDestination);
         for (int i = 0; i < p->synapses.size(); ++i) {
-            qDebug() << this->dst->getXMLName() << " " << p->synapses[i]->postsynapseType->getXMLName() << ": " << (this->dst == p->synapses[i]->postsynapseType);
-            if (this->dst == p->synapses[i]->weightUpdateType) {
-                this->dst = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->weightUpdateType;
+            qDebug() << this->dstCmpt->getXMLName() << " " << p->synapses[i]->postsynapseType->getXMLName() << ": " << (this->dstCmpt == p->synapses[i]->postsynapseType);
+            if (this->dstCmpt == p->synapses[i]->weightUpdateType) {
+                this->dstCmpt = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->weightUpdateType;
             }
-            if (this->dst == p->synapses[i]->postsynapseType) {
-                this->dst = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->postsynapseType;
+            if (this->dstCmpt == p->synapses[i]->postsynapseType) {
+                this->dstCmpt = qSharedPointerDynamicCast < projection > (this->destination)->synapses[i]->postsynapseType;
             }
         }
     }
-    qDebug() << "After src = " << this->src->getXMLName();
-    qDebug() << "After dst = " << this->dst->getXMLName();
+    qDebug() << "After src = " << this->srcCmpt->getXMLName();
+    qDebug() << "After dst = " << this->dstCmpt->getXMLName();
 
 }

@@ -1819,7 +1819,7 @@ exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
         if (pop->name == dst) { // pop->name is really the name of the Neuron element inside the Population. The Input is inside the Neuron.
             // Correct destination for our genericInput, now search for an input in here.
             for (int j = 0; j < pop->neuronType->inputs.size() && !found; ++j) {
-                if (pop->neuronType->inputs[j]->src->getXMLName() == src
+                if (pop->neuronType->inputs[j]->srcCmpt->getXMLName() == src
                     && pop->neuronType->inputs[j]->srcPort == src_port
                     && pop->neuronType->inputs[j]->dstPort == dst_port) {
                     // Population (neuron) match
@@ -1835,10 +1835,10 @@ exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
             for (int k = 0; k < pop->projections[j]->synapses.size() && !found; ++k) {
                 // Check weight updates:
                 for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size() && !found; ++l) {
-                    if (pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->src->getXMLName() == src
+                    if (pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->srcCmpt->getXMLName() == src
                         && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->srcPort == src_port
                         && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->dstPort == dst_port
-                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->dst->getXMLName() == dst) {
+                        && pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->dstCmpt->getXMLName() == dst) {
                         // Weightupdate match
                         this->gi = pop->projections[j]->synapses[k]->weightUpdateType->inputs[l];
                         found = true;
@@ -1846,10 +1846,10 @@ exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
                 }
                 // Check postsynapses:
                 for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size() && !found; ++l) {
-                    if (pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->src->getXMLName() == src
+                    if (pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->srcCmpt->getXMLName() == src
                         && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->srcPort == src_port
                         && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->dstPort == dst_port
-                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->dst->getXMLName() == dst) {
+                        && pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->dstCmpt->getXMLName() == dst) {
                         // Postsynapse match
                         this->gi = pop->projections[j]->synapses[k]->postsynapseType->inputs[l];
                         found = true;
@@ -1973,7 +1973,7 @@ exptGenericInputLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* ha
             QSharedPointer<population> pop = data->populations[i];
             for (int j = 0; j < pop->neuronType->inputs.size(); ++j) { // or ->outputs
                 DBG() << "Candidate genericInput, contained in Population dst=" << pop->name
-                      << " with src = " << pop->neuronType->inputs[j]->src->component->name
+                      << " with src = " << pop->neuronType->inputs[j]->srcCmpt->component->name
                       << ", src_port = " << pop->neuronType->inputs[j]->srcPort
                       << ", dst_port = " << pop->neuronType->inputs[j]->dstPort;
                 elementList <<  pop->neuronType->inputs[j]->getName();
@@ -2021,7 +2021,7 @@ exptGenericInputLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
         QSharedPointer <population> pop = qSharedPointerDynamicCast<population>(s);
         xmlOut->writeAttribute("src", pop->name);
     } else if (s->type == synapseObject) {
-        xmlOut->writeAttribute("src", qSharedPointerDynamicCast<genericInput>(s)->src->component->name);
+        xmlOut->writeAttribute("src", qSharedPointerDynamicCast<genericInput>(s)->srcCmpt->component->name);
     } else {
         DBG() << "Unknown systemObject type " << s->type;
         xmlOut->writeAttribute("src", "unknown");
@@ -2029,7 +2029,7 @@ exptGenericInputLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
     xmlOut->writeAttribute("src_port", this->gi->srcPort);
 
     // This shouyld be it for destination:
-    xmlOut->writeAttribute("dst", this->gi->dst->getXMLName());
+    xmlOut->writeAttribute("dst", this->gi->dstCmpt->getXMLName());
     xmlOut->writeAttribute("dst_port", this->gi->dstPort);
 }
 

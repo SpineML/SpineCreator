@@ -926,7 +926,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
 
     data->currentlySelectedProjection = in;
 
-    QString XMLname = in->src->getXMLName() + " to " + in->dst->getXMLName();
+    QString XMLname = in->srcCmpt->getXMLName() + " to " + in->dstCmpt->getXMLName();
     inputSrcName->setToolTip(XMLname);
     // shorten if too long (tooltip will have full name)
     if (XMLname.size() > 12) {
@@ -942,9 +942,9 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     // add port options
     QStringList portPairs;
 
-    for (int i = 0; i < in->dst->inputs.size(); ++i) {
-        if (in == in->dst->inputs[i]) {
-            portPairs = in->dst->getPortMatches(i, false);
+    for (int i = 0; i < in->dstCmpt->inputs.size(); ++i) {
+        if (in == in->dstCmpt->inputs[i]) {
+            portPairs = in->dstCmpt->getPortMatches(i, false);
         }
     }
 
@@ -979,7 +979,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     inputConnectionComboBox->addItem("One to One");
     inputConnectionComboBox->addItem("Fixed Probability");
     inputConnectionComboBox->addItem("Explicit List");
-    if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
+    if (in->srcCmpt->owner->type == populationObject && in->dstCmpt->owner->type == populationObject) {
         // add python scripts
         QSettings settings;
         settings.beginGroup("pythonscripts");
@@ -1399,7 +1399,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
 
                     QHBoxLayout * inputLay = new QHBoxLayout;
                     connect(this, SIGNAL(deleteProperties()), inputLay, SLOT(deleteLater()));
-                    QString XMLname = componentData->inputs[input]->src->getXMLName();
+                    QString XMLname = componentData->inputs[input]->srcCmpt->getXMLName();
                     QLabel * srcName = new QLabel();
                     connect(this, SIGNAL(deleteProperties()), srcName, SLOT(deleteLater()));
                     srcName->setToolTip(XMLname);
@@ -1438,7 +1438,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                     if (portPairs.size() == 0) {
                         portMatches->setDisabled(true);
                         // also add stuff to indicate the issue
-                        if (currInput->dst->component->name != "none") {
+                        if (currInput->dstCmpt->component->name != "none") {
                             portMatches->addItem("No matches found");
                             portMatches->setToolTip("No compatible port matches were found. This may be due to inconsistent dimensions (including exponents).");
                         }

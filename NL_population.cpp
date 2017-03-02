@@ -388,8 +388,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             QDomElement e2 = nList.item(nrni).toElement();
 
             QSharedPointer<genericInput> newInput = QSharedPointer<genericInput>(new genericInput);
-            newInput->src.clear();
-            newInput->dst.clear();
+            newInput->srcCmpt.clear();
+            newInput->dstCmpt.clear();
             //DBGRI() << "Setting destination to be neuronType->owner, with name: " << this->neuronType->owner->getName();
             newInput->destination = this->neuronType->owner;
             newInput->projInput = false;
@@ -401,7 +401,7 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 //DBGRI() << "XML element type: " << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
                     //DBGRI() << "Set newInput->src to the thing with name " << data->network[i]->neuronType->getXMLName();
-                    newInput->src = data->network[i]->neuronType;
+                    newInput->srcCmpt = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
                 for (int j = 0; j < data->network[i]->projections.size(); ++j) {
@@ -410,14 +410,14 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         //DBGRI() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
                         if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
                             //DBGRI() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                            newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
-                            //DBGRI() << "(From WU) Set newInput->src to the thing with name " << newInput->src->getXMLName();
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
+                            //DBGRI() << "(From WU) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
                         if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
                             //DBGRI() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
-                            newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
-                            //DBGRI() << "(From PS) Set newInput->src to the thing with name " << newInput->src->getXMLName();
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
+                            //DBGRI() << "(From PS) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
                     }
@@ -464,13 +464,13 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->connectionType->setParent (newInput);
             }
 
-            if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
+            if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {
                 // neuronType is a ComponentInstance, owner is a systemObject. newInput->dst is a ComponentInstance.
-                newInput->dst = this->neuronType; // FIXME. This doesn't seem to be the right thing.
-                //DBGRI() << "For population with name " << this->name << ", set newInput->dst to the thing with name " << newInput->dst->getXMLName();
+                newInput->dstCmpt = this->neuronType; // FIXME. This doesn't seem to be the right thing.
+                //DBGRI() << "For population with name " << this->name << ", set newInput->dst to the thing with name " << newInput->dstCmpt->getXMLName();
                 //DBGRI() << "Pushing back the newInput!";
                 this->neuronType->inputs.push_back(newInput);
-                newInput->src->outputs.push_back(newInput);
+                newInput->srcCmpt->outputs.push_back(newInput);
             } else {
                 // Error
             }
