@@ -402,19 +402,17 @@ void experiment::runDestroyed()
 
 void experiment::select(QVector < experiment * > * experiments)
 {
-    // deselect all
+    // first deselect all
     for (int i = 0; i < experiments->size(); ++i) {
         (*experiments)[i]->deselect();
         (*experiments)[i]->editing = false;
     }
-
-    // select this experiment
+    // then select this experiment
     this->selected = true;
 }
 
 void experiment::deselect()
 {
-    // select this experiment
     this->selected = false;
 }
 

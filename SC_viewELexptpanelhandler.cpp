@@ -714,7 +714,9 @@ void viewELExptPanelHandler::changeSelection()
     // Initialise the viewGV for the experiment if necessary
     this->main->initViewGV (data->experiments[index]);
 
-    // redraw to update the selection
+    // Update the experiment menu
+    this->main->setExperimentMenu();
+
     redrawPanel();
     redrawExpt();
 }
@@ -736,7 +738,6 @@ void viewELExptPanelHandler::changedEngine(QString sim)
     // Log file location will have changed if the engine changed.
     this->main->updateDatas();
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -783,7 +784,6 @@ void viewELExptPanelHandler::changedSolver(int index)
 
     currentExperiment->setup.solver = type;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -800,7 +800,6 @@ void viewELExptPanelHandler::changedSolverOrder(int val)
 
     currentExperiment->setup.solverOrder = val;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -817,7 +816,6 @@ void viewELExptPanelHandler::addInput()
 
     currentExperiment->ins.push_back(new exptInput);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -867,7 +865,7 @@ void viewELExptPanelHandler::setInputComponent()
         // UI changes required so hit up a redraw
         // disconnect sender so it doesn't flip out when it loses focus
         sender()->disconnect((QObject *)0);
-        // redraw to update the selection
+
         redrawExpt();
     } else {
         in->set = false;
@@ -889,7 +887,6 @@ void viewELExptPanelHandler::setInputPort(int index)
     // disconnect sender so it doesn't flip out when it loses focus
     sender()->disconnect((QObject *)0);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -905,7 +902,6 @@ void viewELExptPanelHandler::setInputType(int index)
     // disconnect sender so it doesn't flip out when it loses focus
     sender()->disconnect((QObject *)0);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -918,7 +914,6 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
     else if (index == 1)
         in->rateDistribution = Poisson;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1000,7 +995,6 @@ void viewELExptPanelHandler::acceptInput()
     // Mark that we're no longer editing this input
     in->edit = false;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1009,7 +1003,6 @@ void viewELExptPanelHandler::editInput()
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     in->edit = true;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1029,7 +1022,6 @@ void viewELExptPanelHandler::delInput()
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteInputUndo(this->data, currentExperiment, in));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1160,7 +1152,6 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1175,7 +1166,6 @@ void viewELExptPanelHandler::fillInputParams()
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1212,7 +1202,6 @@ void viewELExptPanelHandler::setInputAddTVRow()
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1242,7 +1231,6 @@ void viewELExptPanelHandler::setInputDelTVRow()
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1259,7 +1247,6 @@ void viewELExptPanelHandler::addOutput()
 
     currentExperiment->outs.push_back(new exptOutput);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1310,7 +1297,7 @@ void viewELExptPanelHandler::setOutputComponent()
         // UI change so hit up a redraw
         // disconnect sender so it doesn't flip out when it loses focus
         sender()->disconnect((QObject *)0);
-        // redraw to update the selection
+
         redrawExpt();
     } else {
         qDebug() << "moo2";
@@ -1330,13 +1317,11 @@ void viewELExptPanelHandler::setOutputPort(int index)
     out->portName = port->name;
     out->portIsAnalog = port->isAnalog();
 
-    // redraw to update the selection
     redrawExpt();
 }
 
 void viewELExptPanelHandler::setOutputType()
 {
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1389,7 +1374,6 @@ void viewELExptPanelHandler::acceptOutput()
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     out->edit = false;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1398,7 +1382,6 @@ void viewELExptPanelHandler::editOutput()
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     out->edit = true;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1418,7 +1401,6 @@ void viewELExptPanelHandler::delOutput()
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteOutputUndo(this->data, currentExperiment, out));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1464,7 +1446,6 @@ void viewELExptPanelHandler::addLesion()
 
     currentExperiment->lesions.push_back(new exptLesion(currentExperiment));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1533,7 +1514,6 @@ void viewELExptPanelHandler::setGILesion (void)
         ((QLineEdit*) sender())->setPalette(p);
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1574,7 +1554,6 @@ void viewELExptPanelHandler::setLesionProjection()
         ((QLineEdit *) sender())->setPalette(p);
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1582,7 +1561,6 @@ void viewELExptPanelHandler::acceptLesion()
 {
     exptLesion * lesion = (exptLesion *) sender()->property("ptr").value<void *>();
     lesion->edit = false;
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1608,7 +1586,6 @@ void viewELExptPanelHandler::delLesion()
 
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteLesionUndo(this->data, currentExperiment, lesion));
-
     redrawExpt();
 }
 
@@ -1646,7 +1623,6 @@ void viewELExptPanelHandler::delGILesion()
 
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteGILesionUndo(this->data, currentExperiment, gilesion));
-
     redrawExpt();
 }
 
@@ -1699,7 +1675,6 @@ void viewELExptPanelHandler::setChangeParComponent()
     // disconnect sender so it doesn't flip out when it loses focus
     sender()->disconnect((QObject *)0);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1748,7 +1723,6 @@ void viewELExptPanelHandler::addChangedProp()
 
     currentExperiment->changes.push_back(new exptChangeProp);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1782,7 +1756,6 @@ void viewELExptPanelHandler::delChangedProp()
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteChangePropUndo(this->data, currentExperiment, prop));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
