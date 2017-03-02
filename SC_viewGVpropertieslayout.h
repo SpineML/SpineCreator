@@ -56,11 +56,6 @@ public:
     void clearVLogData (void);
 
     /*!
-     * \brief Store the visible QCustomPlots to the current experiment.
-     */
-    void storePlotsToExpt (void);
-
-    /*!
      * \brief Close visible QCustomPlots, without trying to store them
      * away (used if the project for which the plots are being viewed
      * was closed).
@@ -71,13 +66,6 @@ public:
      * Add an empty plot and tile it.
      */
     void addEmptyPlot (void);
-
-    /*!
-     * \brief Restore plots from an experiment into the graph view area.
-     * \param e Pointer to the experiment which holds the list of plots to restore.
-     * \return the number of plots restored.
-     */
-    int restorePlotsFromExpt (experiment* e);
 
     /*!
      * \brief viewGV - a structure defined in mainwindow.h holding
@@ -174,27 +162,6 @@ private:
     void addLinesRasters (logData* log, QMdiSubWindow* subWin);
 
     /*!
-     * Common functions used in addLine/RasterGraphtToPlot.
-     */
-    //@{
-    void alternatePlotColours (QCustomPlot* plot);
-    void addGraphSetDataCommon (PlotInfo& pi, QCustomPlot* plot, int i);
-    void setGraphSettingsCommon (PlotInfo& pi, QCustomPlot* plot, int i);
-    //@}
-
-    /*!
-     * Add a raster graph with data from pi.graph(i) to plot. Called
-     * from @see addGraphsToPlot.
-     */
-    void addRasterGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i);
-
-    /*!
-     * Add a line graph with data from pi.graph(i) to plot. Called
-     * from @see addGraphsToPlot.
-     */
-    void addLineGraphToPlot (PlotInfo& pi, QCustomPlot* plot, int i);
-
-    /*!
      * If true, the x axes of all the visible plots should be kept to
      * the same range - editing the range in one plot should lead to
      * the range changing in all the others.
@@ -219,15 +186,6 @@ public slots:
      * \brief Add a graph to the current sub window.
      */
     void addGraphsToCurrent();
-
-    /*!
-     * Add the graphs defined in the give PlotInfo object to the
-     * QCustomPlot plot.
-     *
-     * PlotInfo& would be a const PlotInfo&, but qcustomplot doesn't provide
-     * a QCPData::setData(const QCPDataMap*) method.
-     */
-    void addGraphsToPlot (PlotInfo& pi, QCustomPlot* plot);
 
     /*!
      * Set the range r on the x axis for all plots other than the

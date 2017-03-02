@@ -45,7 +45,6 @@ experiment::experiment()
     running = false;
 
     //this->graphedLogs.resize(0*sizeof(logData*));
-    this->visiblePlots.clear();
     this->progressBar = NULL;
     this->runButton = NULL;
 
@@ -117,8 +116,6 @@ experiment::experiment(experiment * exptToCopy)
 
     this->selected = false;
     this->editing = false;
-    //this->saveWithDateStamp = exptToCopy->saveWithDateStamp;
-    this->visiblePlots.clear();
     this->runButton = NULL;
     this->progressBar = NULL;
 
@@ -405,19 +402,17 @@ void experiment::runDestroyed()
 
 void experiment::select(QVector < experiment * > * experiments)
 {
-    // deselect all
+    // first deselect all
     for (int i = 0; i < experiments->size(); ++i) {
         (*experiments)[i]->deselect();
         (*experiments)[i]->editing = false;
     }
-
-    // select this experiment
+    // then select this experiment
     this->selected = true;
 }
 
 void experiment::deselect()
 {
-    // select this experiment
     this->selected = false;
 }
 
