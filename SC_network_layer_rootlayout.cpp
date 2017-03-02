@@ -1172,7 +1172,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 // doesn't validate - warn and skip
                 if (num_errs != 0) {
                     QLabel * validateWarning = new QLabel("Component does not validate: please correct");
-                    tabLayout->insertWidget(tabLayout->count() - (1), validateWarning);
+                    tabLayout->insertWidget(tabLayout->count() - 2, validateWarning);
                     // connect to delete
                     connect(this, SIGNAL(deleteProperties()), validateWarning, SLOT(deleteLater()));
                     skipTab = true;
@@ -1198,7 +1198,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 // doesn't validate - warn and skip
                 if (num_errs != 0) {
                     QLabel * validateWarning = new QLabel("Component does not validate: please correct");
-                    tabLayout->insertWidget(tabLayout->count() - (1), validateWarning);
+                    tabLayout->insertWidget(tabLayout->count() - 2, validateWarning);
                     // connect to delete
                     connect(this, SIGNAL(deleteProperties()), validateWarning, SLOT(deleteLater()));
                     skipTab = true;
@@ -1267,7 +1267,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
 
             if (listSize > 0) {
                 QHBoxLayout * Box = new QHBoxLayout();
-                tabLayout->insertLayout(tabLayout->count() - (1), Box);
+                tabLayout->insertLayout(tabLayout->count() - 2, Box);
                 QLabel * sectionTitle = new QLabel(boxTitle);
                 Box->addWidget(sectionTitle);
 
@@ -1276,7 +1276,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 connect(this, SIGNAL(deleteProperties()), Box, SLOT(deleteLater()));
 
                 QFormLayout * varLayout = new QFormLayout();
-                tabLayout->insertLayout(tabLayout->count() - (1), varLayout);
+                tabLayout->insertLayout(tabLayout->count() - 2, varLayout);
                 connect(this, SIGNAL(deleteProperties()), varLayout, SLOT(deleteLater()));
 
                 for (int l = 0; l < listSize; ++l) {
@@ -1325,7 +1325,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                         {// draw in p and seed boxes:
 
                         QLayout * lay = conn->drawLayout(data, NULL, this);
-                        tabLayout->insertLayout(tabLayout->count() - (1), lay);
+                        tabLayout->insertLayout(tabLayout->count() - 2, lay);
 
                         /*QDoubleSpinBox *pSpin = new QDoubleSpinBox;
                         pSpin->setRange(0, 1);
@@ -1393,7 +1393,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 connect(this, SIGNAL(deleteProperties()), inputLayHeader, SLOT(deleteLater()));
                 inputLayHeader->addWidget(new QLabel("<b>Inputs</b>"));
                 connect(this, SIGNAL(deleteProperties()), inputLayHeader->itemAt(inputLayHeader->count()-1)->widget(), SLOT(deleteLater()));
-                tabLayout->insertLayout(tabLayout->count()-1, inputLayHeader);
+                tabLayout->insertLayout(tabLayout->count()-2, inputLayHeader);
 
                 for (int input = 0; input < componentData->inputs.size(); ++input) {
 
@@ -1451,7 +1451,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
 
                     inputLay->addWidget(portMatches);
 
-                    tabLayout->insertLayout(tabLayout->count()-1, inputLay);
+                    tabLayout->insertLayout(tabLayout->count()-2, inputLay);
 
                     /////// DELETE BUTTON
                     QPushButton * delInput = new QPushButton;
@@ -1482,7 +1482,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 addInput->addWidget(new QLabel("Add from "));
                 connect(this, SIGNAL(deleteProperties()), addInput->itemAt(addInput->count()-1)->widget(), SLOT(deleteLater()));
 
-                tabLayout->insertLayout(tabLayout->count()-1, addInput);
+                tabLayout->insertLayout(tabLayout->count()-2, addInput);
 
                 QStringList elementList;
                 for (int i = 0; i < data->populations.size(); ++i) {
