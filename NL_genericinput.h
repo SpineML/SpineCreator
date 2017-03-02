@@ -61,18 +61,21 @@ public:
     void connect(QSharedPointer<genericInput> in);
     void disconnect();
 
-    // NB: Very confusing, name clashes
-    // QSharedPointer<systemObject> destination(source) in the parent
-    // class (projection), which it overrides.
+    /*!
+     * NB: Very confusing, name clashes
+     * QSharedPointer<systemObject> destination(source) in the parent
+     * class (projection), which it overrides.
+     */
+    //@{
     QSharedPointer<systemObject> destination;
     QSharedPointer<systemObject> source;
+    //@}
 
     /*!
-     * Fixme: Coder will ask "why destination and dst?". These are
-     * required as the source and destination objects could be of type
-     * synapse and then you don't know if it's the enclosed weight
-     * update or postsynapse component that forms the end of the
-     * genericinput connection. Refactor to be dstCmpt and srcCmpt.
+     * These are required as the source and destination objects could
+     * be of type synapse and then you don't know if it's the enclosed
+     * weight update or postsynapse component that forms the end of
+     * the genericinput connection.
      */
     //@{
     QSharedPointer <ComponentInstance> dstCmpt;
@@ -85,7 +88,11 @@ public:
     int srcPos;
     int dstPos;
 
-    connection * conn;
+    /*!
+     * Pointer to the connection object associated with this
+     * genericInput.
+     */
+    connection* conn;
 
     bool isVisualised;
 
