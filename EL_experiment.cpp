@@ -45,7 +45,6 @@ experiment::experiment()
     running = false;
 
     //this->graphedLogs.resize(0*sizeof(logData*));
-    this->visiblePlots.clear();
     this->progressBar = NULL;
     this->runButton = NULL;
 
@@ -117,8 +116,6 @@ experiment::experiment(experiment * exptToCopy)
 
     this->selected = false;
     this->editing = false;
-    //this->saveWithDateStamp = exptToCopy->saveWithDateStamp;
-    this->visiblePlots.clear();
     this->runButton = NULL;
     this->progressBar = NULL;
 

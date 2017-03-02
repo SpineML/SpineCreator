@@ -29,7 +29,6 @@
 #include "CL_classes.h"
 #include "SC_viewELexptpanelhandler.h"
 #include "SC_logged_data.h"
-#include "SC_plotinfo.h"
 
 class exptBox : public QFrame
 {
@@ -443,17 +442,6 @@ public:
     bool subEdit;
     QLabel * progressBar;
     QToolButton * runButton;
-
-    /*!
-     * \brief The visible plots for the experiment. Inside the QCustomPlots
-     * are the graphs and each graph has a source and indices tag.
-     */
-    QVector<PlotInfo> visiblePlots;
-
-    void clearVisiblePlots (void) {
-        // This clearing can cause a Segfault.
-        this->visiblePlots.clear();
-    }
 
 private:
     exptBox * currBoxPtr;

@@ -47,7 +47,6 @@ SOURCES += main.cpp \
     NL_genericinput.cpp \
     SC_python_connection_generate_dialog.cpp \
     SC_logged_data.cpp \
-    SC_plotinfo.cpp \
     SC_component_scene.cpp \
     SC_component_view.cpp \
     SC_component_propertiesmanager.cpp \
