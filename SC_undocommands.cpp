@@ -766,6 +766,7 @@ void changeConnection::redo()
             break;
         case OnetoOne:
             newConnIn->conn = new onetoOne_connection;
+            newConnIn->conn->setParent(newConnIn);
             newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
             newConnIn->conn->setParent (oldConn->parent);
             break;
@@ -831,6 +832,7 @@ void changeConnection::redo()
             break;
         case OnetoOne:
             newConnSyn->connectionType = new onetoOne_connection;
+            newConnSyn->connectionType->setParent(newConnSyn);
             newConnSyn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
             newConnSyn->connectionType->setParent (oldConn->parent);
             break;

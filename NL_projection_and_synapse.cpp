@@ -180,6 +180,7 @@ QSharedPointer < systemObject > synapse::newFromExisting(QMap<systemObject *, QS
     newSyn->weightUpdateCmpt = QSharedPointer<ComponentInstance>(new ComponentInstance(this->weightUpdateCmpt, true/*copy inputs / outputs*/));
     newSyn->postSynapseCmpt = QSharedPointer<ComponentInstance>(new ComponentInstance(this->postSynapseCmpt, true/*copy inputs / outputs*/));
     newSyn->connectionType = this->connectionType->newFromExisting();
+    newSyn->connectionType->setParent(newSyn);
     newSyn->isVisualised = this->isVisualised;
 
     objectMap.insert(this, newSyn);
@@ -1647,7 +1648,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             else if (n.toElement().tagName() == "OneToOneConnection") {
                 delete newSynapse->connectionType;
                 newSynapse->connectionType = new onetoOne_connection;
-                newSynapse->connectionType->setParent (newSynapse);
+                newSynapse->connectionType->setParent(newSynapse);
                 newSynapse->connectionType->setSynapseIndex (i);
                 newSynapse->connectionType->import_parameters_from_xml(n);
             }
@@ -2147,6 +2148,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     if (type.count() == 1) {
                         delete newInput->conn;
                         newInput->conn = new onetoOne_connection;
+                        newInput->conn->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         newInput->conn->import_parameters_from_xml(cNode);
                     }

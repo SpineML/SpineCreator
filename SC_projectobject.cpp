@@ -167,6 +167,7 @@ bool projectObject::open_project(QString fileName)
 
 bool projectObject::save_project(QString fileName, nl_rootdata * data)
 {
+
     if (!fileName.contains(".")) {
         QMessageBox msgBox;
         msgBox.setText("Project file needs .proj suffix.");
@@ -1523,6 +1524,7 @@ bool projectObject::printErrors(QString title)
 
         // clear errors
         settings.remove("errors");
+        settings.setProperty("MERR", QString("True"));
 
     } else {
         return false;

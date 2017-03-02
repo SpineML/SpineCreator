@@ -3284,6 +3284,26 @@ QString ComponentInstance::getXMLName() {
 
 }
 
+int ComponentInstance::getSize() {
+
+    if (this->component->type == "neuron_body") {
+        QSharedPointer <population> popOwner = qSharedPointerDynamicCast <population> (this->owner);
+        CHECK_CAST(popOwner)
+        return (popOwner->numNeurons);
+    }
+    if (this->component->type == "weight_update") {
+        // not defined
+        return -1;
+    }
+    if (this->component->type == "postsynapse") {
+        // find which Synapse we are attached to
+        QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
+        CHECK_CAST(projOwner)
+        return projOwner->destination->numNeurons;
+    }
+
+}
+
 void ComponentInstance::removeReferences() {
 
     // remove the inputs (they'll take themselves off the vector)

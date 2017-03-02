@@ -1789,6 +1789,7 @@ void viewELExptPanelHandler::delChangedProp()
 void viewELExptPanelHandler::run()
 {
     QSettings settings;
+    settings.setProperty("MERR", QString("False"));
 
     QToolButton * runButton = qobject_cast < QToolButton * > (sender());
     if (runButton) {
@@ -1942,7 +1943,7 @@ void viewELExptPanelHandler::run()
         // save_project changes the current project's filepath.
         if (!this->data->currProject->save_project(tFilePath, this->data)) {
             qDebug() << "Failed to save the model into the temporary model directory";
-            runButton->setEnabled(true);
+            this->cleanUpPostRun("Model save error", "The simulation could not be started");
             // Revert currProject->filePath here
             this->data->currProject->filePath = previousFilePath;
             return;

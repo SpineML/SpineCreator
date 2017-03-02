@@ -32,6 +32,8 @@
 
 #include <QUuid>
 
+#include <QSettings>
+
 #include "NL_connection.h"
 #include "SC_layout_cinterpreter.h"
 #include "SC_python_connection_generate_dialog.h"
@@ -255,9 +257,81 @@ QLayout * onetoOne_connection::drawLayout(nl_rootdata *, viewVZLayoutEditHandler
 
 void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 {
-    xmlOut.writeStartElement("OneToOneConnection");
-    this->writeDelay(xmlOut);
-    xmlOut.writeEndElement(); // oneToOneConnection
+    // Sanity check - if we are exporting for simulation, we want to make sure
+    // that src and dst are the same size...
+    // if parent is inputObject, that means we can access the destination and source from that object
+    int srcSize = -2;
+    int dstSize = -1;
+    QString srcName = "";
+    QString dstName = "";
+    QSettings settings;
+    if (!this->parent.isNull()) {
+        switch (this->parent->type) {
+        case synapseObject:
+        {
+            // This is the usual
+            DBG() << "onetoOne_connection parent is a synapseObject";
+            // Test this->src and this->dst first
+            if (!this->srcPop.isNull()) {
+                srcSize = this->srcPop->numNeurons;
+                srcName = this->srcPop->getName();
+            } // else src is null - there's no population as a destination for this connection
+            if (!this->dstPop.isNull()) {
+                dstSize = this->dstPop->numNeurons;
+                dstName = this->dstPop->getName();
+            } // else dst is null - there's no population as a destination for this connection
+            break;
+        }
+        case projectionObject:
+        {
+            DBG() << "onetoOne_connection parent is a projectionObject (unexpected)";
+            break;
+        }
+        case populationObject:
+        {
+            DBG() << "onetoOne_connection parent is a populationObject (unexpected)";
+            break;
+        }
+        case inputObject:
+        {
+            DBG() << "onetoOne_connection parent is an inputObject (genericInput)";
+            QSharedPointer<genericInput> par = qSharedPointerCast <genericInput> (this->parent);
+            srcSize = par->getSrcSize();
+            srcName = par->getSrcName();
+            dstSize = par->getDestSize();
+            dstName = par->getDestName();
+            if (srcSize == -1 || dstSize == -1) {
+                int num_errs = settings.beginReadArray("errors");
+                settings.endArray();
+                settings.beginWriteArray("errors");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  QString("One to one connections to Weight Updates are not allowed: ") + par->getSrcName() + QString(" -> ") + par->getDestName());
+                settings.endArray();
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    } else {
+        srcSize = dstSize;
+    }
+    if (srcSize != dstSize) {
+
+       int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  QString("One to one connection with different src and dst sizes: ") + srcName + QString(" -> ") + dstName);
+        settings.endArray();
+
+    } else {
+
+        xmlOut.writeStartElement("OneToOneConnection");
+        this->writeDelay(xmlOut);
+        xmlOut.writeEndElement(); // oneToOneConnection
+
+    }
 }
 
 void onetoOne_connection::import_parameters_from_xml(QDomNode &e)

@@ -48,6 +48,14 @@ public:
     QString getDestName();
     //@}
 
+    /*!
+     * Get source and destination sizes for this generic input.
+     */
+    //@{
+    int getSrcSize();
+    int getDestSize();
+    //@}
+
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
 
     void delAll(nl_rootdata *);

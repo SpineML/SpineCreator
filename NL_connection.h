@@ -176,7 +176,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(nl_rootdata * data, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay);
-    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterInstance(this->delay); return c;}
+    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterInstance(this->delay); c->parent = this->parent; return c;}
 
 private:
 };

@@ -62,7 +62,7 @@ genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointe
     this->selectedControlPoint.ind = -1;
     this->selectedControlPoint.start = false;
 
-    this->conn = new onetoOne_connection;
+    this->conn = new alltoAll_connection;
 
     // add curves if we are not a projection input
     if (!projInput) {
@@ -132,6 +132,16 @@ QString genericInput::getSrcName()
 {
     QString sname = this->srcCmpt->getXMLName() + ":" + this->srcPort;
     return sname;
+}
+
+int genericInput::getDestSize()
+{
+    return dstCmpt->getSize();
+}
+
+int genericInput::getSrcSize()
+{
+    return srcCmpt->getSize();
 }
 
 void genericInput::delAll(nl_rootdata *)
