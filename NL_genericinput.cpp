@@ -122,6 +122,18 @@ QString genericInput::getName()
     return giname;
 }
 
+QString genericInput::getDestName()
+{
+    QString dname = this->dstCmpt->getXMLName() + ":" + this->dstPort;
+    return dname;
+}
+
+QString genericInput::getSrcName()
+{
+    QString sname = this->srcCmpt->getXMLName() + ":" + this->srcPort;
+    return sname;
+}
+
 void genericInput::delAll(nl_rootdata *)
 {
     // remove references so we don't get deleted twice

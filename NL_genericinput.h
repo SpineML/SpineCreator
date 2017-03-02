@@ -40,6 +40,14 @@ public:
      */
     virtual QString getName();
 
+    /*!
+     * Get source and destination names for this generic input. Includes ports.
+     */
+    //@{
+    QString getSrcName();
+    QString getDestName();
+    //@}
+
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
 
     void delAll(nl_rootdata *);

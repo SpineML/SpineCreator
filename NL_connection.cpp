@@ -1286,18 +1286,41 @@ void csv_connection::generateFilename(void)
     QString baseName = "conn_";
     this->filename = "";
 
-    // Test this->src and this->dst first
-    if (!this->srcPop.isNull()) {
-        // What if src is a WU?
-        this->srcName = this->srcPop->name;
-    } else {
-        DBG() << "src is null - there's no population as a source for this connection.";
+    // if parent is inputObject, that means we can access the destination and source from that object
+    switch (this->parent->type) {
+    case synapseObject:
+    {
+        // This is the usual
+        DBG() << "csv_connection parent is a synapseObject";
+        // Test this->src and this->dst first
+        if (!this->srcPop.isNull()) {
+            this->srcName = this->srcPop->name;
+        } // else src is null - there's no population as a destination for this connection
+        if (!this->dstPop.isNull()) {
+            this->dstName = this->dstPop->name;
+        } // else dst is null - there's no population as a destination for this connection
+        break;
     }
-
-    if (!this->dstPop.isNull()) {
-        this->dstName = this->dstPop->name;
-    } else {
-        DBG() << "dst is null - there's no population as a destination for this connection.";
+    case projectionObject:
+    {
+        DBG() << "csv_connection parent is a projectionObject (unexpected)";
+        break;
+    }
+    case populationObject:
+    {
+        DBG() << "csv_connection parent is a populationObject (unexpected)";
+        break;
+    }
+    case inputObject:
+    {
+        DBG() << "csv_connection parent is an inputObject (genericInput)";
+        QSharedPointer<genericInput> par = qSharedPointerCast <genericInput> (this->parent);
+        this->srcName = par->getSrcName();
+        this->dstName = par->getDestName();
+        break;
+    }
+    default:
+        break;
     }
 
     if (this->srcName.isEmpty()) {
@@ -1319,7 +1342,11 @@ void csv_connection::generateFilename(void)
     this->sanitizeReplace (this->srcName, allowed, replaceChar);
     this->sanitizeReplace (this->dstName, allowed, replaceChar);
 
-    this->filename = baseName + this->srcName + "_to_" + this->dstName + "_syn" + QString::number(this->synapseIndex) + ".bin";
+    if (this->synapseIndex > -1) {
+        this->filename = baseName + this->srcName + "_to_" + this->dstName + "_syn" + QString::number(this->synapseIndex) + ".bin";
+    } else {
+        this->filename = baseName + this->srcName + "_to_" + this->dstName + ".bin";
+    }
 }
 
 void csv_connection::sanitizeReplace (QString& str,
