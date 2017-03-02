@@ -3331,6 +3331,7 @@ int ComponentInstance::getSize() {
         return projOwner->destination->numNeurons;
     }
 
+    return -1;
 }
 
 void ComponentInstance::removeReferences() {
