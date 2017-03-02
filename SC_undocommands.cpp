@@ -80,16 +80,16 @@ delSelection::delSelection(nl_rootdata * data, QVector <QSharedPointer<systemObj
                 for (int k = 0; k <pop->projections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->projections[k];
                     for (int l = 0; l < proj->synapses.size(); ++l) {
-                        if (input->src == proj->synapses[l]->weightUpdateType || input->dst == proj->synapses[l]->weightUpdateType || \
-                                input->src == proj->synapses[l]->postsynapseType || input->dst == proj->synapses[l]->postsynapseType)
+                        if (input->srcCmpt == proj->synapses[l]->weightUpdateCmpt || input->dstCmpt == proj->synapses[l]->weightUpdateCmpt || \
+                                input->srcCmpt == proj->synapses[l]->postSynapseCmpt || input->dstCmpt == proj->synapses[l]->postSynapseCmpt)
                             alreadyDeleted = true;
                     }
                 }
                 for (int k = 0; k <pop->reverseProjections.size(); ++k) {
                     QSharedPointer <projection> proj = pop->reverseProjections[k];
                     for (int l = 0; l < proj->synapses.size(); ++l) {
-                        if (input->src == proj->synapses[l]->weightUpdateType || input->dst == proj->synapses[l]->weightUpdateType || \
-                                input->src == proj->synapses[l]->postsynapseType || input->dst == proj->synapses[l]->postsynapseType)
+                        if (input->srcCmpt == proj->synapses[l]->weightUpdateCmpt || input->dstCmpt == proj->synapses[l]->weightUpdateCmpt || \
+                                input->srcCmpt == proj->synapses[l]->postSynapseCmpt || input->dstCmpt == proj->synapses[l]->postSynapseCmpt)
                             alreadyDeleted = true;
                     }
                 }
@@ -474,9 +474,9 @@ addSynapse::addSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QUn
     syn->connectionType->setSynapseIndex(proj->synapses.size());
     proj->synapses.push_back(syn);
     // spawn children for projInputs
-    new addInput(data, proj->source->neuronType, this->syn->weightUpdateType, this);
-    new addInput(data, this->syn->weightUpdateType, this->syn->postsynapseType, this);
-    new addInput(data, this->syn->postsynapseType, this->proj->destination->neuronType, this);
+    new addInput(data, proj->source->neuronType, this->syn->weightUpdateCmpt, this);
+    new addInput(data, this->syn->weightUpdateCmpt, this->syn->postSynapseCmpt, this);
+    new addInput(data, this->syn->postSynapseCmpt, this->proj->destination->neuronType, this);
     isDeleted = false;
 }
 
@@ -512,49 +512,49 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
     isUndone = false;
 
     // spawn children
-    for (int i = 0; i < this->syn->postsynapseType->inputs.size(); ++i) {
-        new delInput(data, this->syn->postsynapseType->inputs[i], this);
+    for (int i = 0; i < this->syn->postSynapseCmpt->inputs.size(); ++i) {
+        new delInput(data, this->syn->postSynapseCmpt->inputs[i], this);
     }
-    for (int i = 0; i < this->syn->postsynapseType->outputs.size(); ++i) {
+    for (int i = 0; i < this->syn->postSynapseCmpt->outputs.size(); ++i) {
         // ok, find out if the input for this output is deleted
         bool destination_deleted = false;
         for (int j = 0; j < data->selList.size(); ++j) {
-            if (this->syn->postsynapseType->outputs[i]->destination == data->selList[j])
+            if (this->syn->postSynapseCmpt->outputs[i]->destination == data->selList[j])
                 destination_deleted = true;
             if (data->selList[j]->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (data->selList[j]);
                 for (int k = 0; k < pop->projections.size(); ++k)
-                    if (this->syn->postsynapseType->outputs[i]->destination == pop->projections[k])
+                    if (this->syn->postSynapseCmpt->outputs[i]->destination == pop->projections[k])
                         destination_deleted = true;
                 for (int k = 0; k < pop->reverseProjections.size(); ++k)
-                    if (this->syn->postsynapseType->outputs[i]->destination == pop->reverseProjections[k])
+                    if (this->syn->postSynapseCmpt->outputs[i]->destination == pop->reverseProjections[k])
                         destination_deleted = true;
             }
         }
         if (!destination_deleted)
-            new delInput(data, this->syn->postsynapseType->outputs[i], this);
+            new delInput(data, this->syn->postSynapseCmpt->outputs[i], this);
     }
-    for (int i = 0; i < this->syn->weightUpdateType->inputs.size(); ++i) {
-        new delInput(data, this->syn->weightUpdateType->inputs[i], this);
+    for (int i = 0; i < this->syn->weightUpdateCmpt->inputs.size(); ++i) {
+        new delInput(data, this->syn->weightUpdateCmpt->inputs[i], this);
     }
-    for (int i = 0; i < this->syn->weightUpdateType->outputs.size(); ++i) {
+    for (int i = 0; i < this->syn->weightUpdateCmpt->outputs.size(); ++i) {
         // ok, find out if the input for this output is deleted
         bool destination_deleted = false;
         for (int j = 0; j < data->selList.size(); ++j) {
-            if (this->syn->weightUpdateType->outputs[i]->destination == data->selList[j])
+            if (this->syn->weightUpdateCmpt->outputs[i]->destination == data->selList[j])
                 destination_deleted = true;
             if (data->selList[j]->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (data->selList[j]);
                 for (int k = 0; k < pop->projections.size(); ++k)
-                    if (this->syn->weightUpdateType->outputs[i]->destination == pop->projections[k])
+                    if (this->syn->weightUpdateCmpt->outputs[i]->destination == pop->projections[k])
                         destination_deleted = true;
                 for (int k = 0; k < pop->reverseProjections.size(); ++k)
-                    if (this->syn->weightUpdateType->outputs[i]->destination == pop->reverseProjections[k])
+                    if (this->syn->weightUpdateCmpt->outputs[i]->destination == pop->reverseProjections[k])
                         destination_deleted = true;
             }
         }
         if (!destination_deleted) {
-            new delInput(data, this->syn->weightUpdateType->outputs[i], this);
+            new delInput(data, this->syn->weightUpdateCmpt->outputs[i], this);
         }
     }
     // go into experiments and delete all referencing objects
@@ -565,7 +565,7 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
         for (int j = 0; j < currExpt->ins.size(); ++j) {
             // if input references deleted pop the push a delete
             exptInput * in = currExpt->ins[j];
-            if (in->target == this->syn->weightUpdateType || in->target == this->syn->postsynapseType) {
+            if (in->target == this->syn->weightUpdateCmpt || in->target == this->syn->postSynapseCmpt) {
                 new deleteInputUndo(data, currExpt, in, this);
             }
         }
@@ -573,7 +573,7 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
         for (int j = 0; j < currExpt->outs.size(); ++j) {
             // if input references deleted pop the push a delete
             exptOutput * out = currExpt->outs[j];
-            if (out->source == this->syn->weightUpdateType || out->source == this->syn->postsynapseType) {
+            if (out->source == this->syn->weightUpdateCmpt || out->source == this->syn->postSynapseCmpt) {
                 new deleteOutputUndo(data, currExpt, out, this);
             }
         }
@@ -581,7 +581,7 @@ delSynapse::delSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QSh
         for (int j = 0; j < currExpt->changes.size(); ++j) {
             // if input references deleted pop the push a delete
             exptChangeProp * prop = currExpt->changes[j];
-            if (prop->component == this->syn->weightUpdateType || prop->component == this->syn->postsynapseType) {
+            if (prop->component == this->syn->weightUpdateCmpt || prop->component == this->syn->postSynapseCmpt) {
                 new deleteChangePropUndo(data, currExpt, prop, this);
             }
         }
@@ -629,7 +629,7 @@ addInput::addInput(nl_rootdata * d, QSharedPointer <ComponentInstance> source, Q
     this->dst = dest;
     this->setText("add Input from " + this->src->getXMLName() + " to " + this->dst->getXMLName());
     this->input = QSharedPointer<genericInput> (new genericInput(this->src, this->dst, !(parent==0)));
-    this->input->connectionType->setParent (this->input);
+    this->input->conn->setParent (this->input);
     this->input->connect (this->input);
     this->input->disconnect();
 }
@@ -659,7 +659,7 @@ delInput::delInput(nl_rootdata * d, QSharedPointer<genericInput> i, QUndoCommand
     }
     this->input = i;
     this->data = d;
-    this->setText("delete Input from " + this->input->src->getXMLName() + " to " + this->input->dst->getXMLName());
+    this->setText("delete Input from " + this->input->srcCmpt->getXMLName() + " to " + this->input->dstCmpt->getXMLName());
     this->input->isDeleted = true;
     this->isDeleted = true;
     this->selIndex = -1;
@@ -729,8 +729,8 @@ void changeConnection::undo()
 {
     if (newConn->type == inputObject) {
         // Switching back from newConn to oldConn.
-        delete (qSharedPointerDynamicCast <genericInput> (newConn))->connectionType;
-        (qSharedPointerDynamicCast <genericInput> (newConn))->connectionType = oldConn;
+        delete (qSharedPointerDynamicCast <genericInput> (newConn))->conn;
+        (qSharedPointerDynamicCast <genericInput> (newConn))->conn = oldConn;
     }
     if (newConn->type == synapseObject) {
         delete (qSharedPointerDynamicCast <synapse> (newConn))->connectionType;
@@ -747,7 +747,7 @@ void changeConnection::redo()
 
         QSharedPointer<genericInput> newConnIn = qSharedPointerDynamicCast <genericInput> (newConn);
         // This ensures that oldConn points to the previous connection instance.
-        oldConn = newConnIn->connectionType; // connection* oldConn
+        oldConn = newConnIn->conn; // connection* oldConn
 
         // Now, for changed connections one creates a new connection
         // object. This class was designed initially to handle just
@@ -760,19 +760,19 @@ void changeConnection::redo()
         // features into oldConn.
         switch(index) {
         case AlltoAll:
-            newConnIn->connectionType = new alltoAll_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn = new alltoAll_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         case OnetoOne:
-            newConnIn->connectionType = new onetoOne_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn = new onetoOne_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         case FixedProb:
-            newConnIn->connectionType = new fixedProb_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn = new fixedProb_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         case CSV:
         {
@@ -780,17 +780,17 @@ void changeConnection::redo()
                 // Then this is a csv_connection to csv_connection
                 // change, so transfer information from old to new.
                 csv_connection* oldcsv = static_cast<csv_connection*>(oldConn);
-                newConnIn->connectionType = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
-                csv_connection* newcsv = static_cast<csv_connection*>(newConnIn->connectionType);
+                newConnIn->conn = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
+                csv_connection* newcsv = static_cast<csv_connection*>(newConnIn->conn);
                 // For some reason newFromExisting doesn't copy data values. dunno why.
                 newcsv->copyDataValues(oldcsv);
 
             } else {
                 // Switching from another connection type (e.g. alltoall)
-                newConnIn->connectionType = new csv_connection;
+                newConnIn->conn = new csv_connection;
             }
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         }
         case Python:
@@ -808,14 +808,14 @@ void changeConnection::redo()
             QStringList scripts = settings.childKeys();
             // get the script associated with that index
             QString script = settings.value(scriptName, "").toString();
-            newConnIn->connectionType = new csv_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
-            ((csv_connection *)newConnIn->connectionType)->generator = new pythonscript_connection(qSharedPointerDynamicCast <population> (newConnIn->source), qSharedPointerDynamicCast <population> (newConnIn->destination), (csv_connection *) newConnIn->connectionType);
+            newConnIn->conn = new csv_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
+            ((csv_connection *)newConnIn->conn)->generator = new pythonscript_connection(qSharedPointerDynamicCast <population> (newConnIn->source), qSharedPointerDynamicCast <population> (newConnIn->destination), (csv_connection *) newConnIn->conn);
             // setup the generator:
-            ((pythonscript_connection *) ((csv_connection *) newConnIn->connectionType)->generator)->scriptText = script;
-            ((pythonscript_connection *) ((csv_connection *) newConnIn->connectionType)->generator)->scriptName = scriptName;
-            ((pythonscript_connection *) ((csv_connection *) newConnIn->connectionType)->generator)->configureFromScript(script);
+            ((pythonscript_connection *) ((csv_connection *) newConnIn->conn)->generator)->scriptText = script;
+            ((pythonscript_connection *) ((csv_connection *) newConnIn->conn)->generator)->scriptName = scriptName;
+            ((pythonscript_connection *) ((csv_connection *) newConnIn->conn)->generator)->configureFromScript(script);
             settings.endGroup();
         }
 
@@ -907,8 +907,8 @@ void globalConnectionDelayChange::undo()
 {
     if (this->connParent->type == inputObject) {
         // Switching back from connParent to oldConn.
-        delete (qSharedPointerDynamicCast <genericInput> (this->connParent))->connectionType;
-        (qSharedPointerDynamicCast <genericInput> (this->connParent))->connectionType = oldConn;
+        delete (qSharedPointerDynamicCast <genericInput> (this->connParent))->conn;
+        (qSharedPointerDynamicCast <genericInput> (this->connParent))->conn = oldConn;
     }
     if (this->connParent->type == synapseObject) {
         delete (qSharedPointerDynamicCast <synapse> (this->connParent))->connectionType;
@@ -925,7 +925,7 @@ void globalConnectionDelayChange::redo()
 
         QSharedPointer<genericInput> connParentIn = qSharedPointerDynamicCast <genericInput> (this->connParent);
         // This ensures that oldConn points to the previous connection instance.
-        this->oldConn = connParentIn->connectionType; // connection* oldConn
+        this->oldConn = connParentIn->conn; // connection* oldConn
 
         // Now, for changed connections one creates a new connection
         // object. This class was designed initially to handle just
@@ -943,9 +943,9 @@ void globalConnectionDelayChange::redo()
         // This is a csv_connection to csv_connection
         // change, so transfer information from old to new.
         csv_connection* oldcsv = static_cast<csv_connection*>(this->oldConn);
-        connParentIn->connectionType = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
+        connParentIn->conn = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
 
-        csv_connection* newcsv = static_cast<csv_connection*>(connParentIn->connectionType);
+        csv_connection* newcsv = static_cast<csv_connection*>(connParentIn->conn);
         newcsv->copyDataValues(oldcsv); // This is not handled in newFromExisting.
 
         // Now make the actual change to the new connection
@@ -955,8 +955,8 @@ void globalConnectionDelayChange::redo()
             newcsv->updateDataForNumCols(3);
         }
 
-        connParentIn->connectionType->setSynapseIndex (this->oldConn->getSynapseIndex());
-        connParentIn->connectionType->setParent (this->oldConn->parent);
+        connParentIn->conn->setSynapseIndex (this->oldConn->getSynapseIndex());
+        connParentIn->conn->setParent (this->oldConn->parent);
 
     } else if (this->connParent->type == synapseObject) {
 

@@ -32,13 +32,21 @@ class genericInput : public projection // inherit systemObject through projectio
 {
 public:
     genericInput();
-    genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput = false);
+    genericInput(QSharedPointer <ComponentInstance> srcCmpt, QSharedPointer <ComponentInstance> dstCmpt, bool projInput = false);
     ~genericInput();
 
     /*!
      * Returns an identifier for this genericInput connection.
      */
     virtual QString getName();
+
+    /*!
+     * Get source and destination names for this generic input. Includes ports.
+     */
+    //@{
+    QString getSrcName();
+    QString getDestName();
+    //@}
 
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
 
@@ -61,22 +69,25 @@ public:
     void connect(QSharedPointer<genericInput> in);
     void disconnect();
 
-    // NB: Very confusing, name clashes
-    // QSharedPointer<systemObject> destination(source) in the parent
-    // class (projection), which it overrides.
-    QSharedPointer<systemObject> destination;
-    QSharedPointer<systemObject> source;
-
     /*!
-     * Fixme: Coder will ask "why destination and dst?". These are
-     * required as the source and destination objects could be of type
-     * synapse and then you don't know if it's the enclosed weight
-     * update or postsynapse component that forms the end of the
-     * genericinput connection. Refactor to be dstCmpt and srcCmpt.
+     * NB: Very confusing, source/destination attribute names clash
+     * with QSharedPointer<population> source/destination in the
+     * parent class (projection), which these override.
      */
     //@{
-    QSharedPointer <ComponentInstance> dst;
-    QSharedPointer <ComponentInstance> src;
+    QSharedPointer<systemObject> destination;
+    QSharedPointer<systemObject> source;
+    //@}
+
+    /*!
+     * These are required as the source and destination objects could
+     * be of type synapse and then you don't know if it's the enclosed
+     * weight update or postsynapse component that forms the end of
+     * the genericinput connection.
+     */
+    //@{
+    QSharedPointer <ComponentInstance> dstCmpt;
+    QSharedPointer <ComponentInstance> srcCmpt;
     //@}
 
     QString srcPort;
@@ -85,7 +96,11 @@ public:
     int srcPos;
     int dstPos;
 
-    connection * connectionType;
+    /*!
+     * Pointer to the connection object associated with this
+     * genericInput.
+     */
+    connection* conn;
 
     bool isVisualised;
 

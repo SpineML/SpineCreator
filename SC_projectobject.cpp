@@ -1619,16 +1619,16 @@ bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
                     return true;
                 }
 
-                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size(); ++l) {
 
-                    if (this->network[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l] == ptr) {
+                    if (this->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l] == ptr) {
                         return true;
                     }
                 }
 
-                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->postSynapseCmpt->inputs.size(); ++l) {
 
-                    if (this->network[i]->projections[j]->synapses[k]->postsynapseType->inputs[l] == ptr) {
+                    if (this->network[i]->projections[j]->synapses[k]->postSynapseCmpt->inputs[l] == ptr) {
                         return true;
                     }
                 }
@@ -1654,11 +1654,11 @@ bool projectObject::isValidPointer(QSharedPointer <ComponentInstance> ptr)
 
             for (int k = 0; k < this->network[i]->projections[j]->synapses.size(); ++k) {
 
-                if (this->network[i]->projections[j]->synapses[k]->weightUpdateType == ptr) {
+                if (this->network[i]->projections[j]->synapses[k]->weightUpdateCmpt == ptr) {
                     return true;
                 }
 
-                if (this->network[i]->projections[j]->synapses[k]->postsynapseType == ptr) {
+                if (this->network[i]->projections[j]->synapses[k]->postSynapseCmpt == ptr) {
                         return true;
                 }
             }
@@ -1709,13 +1709,13 @@ QSharedPointer <ComponentInstance> projectObject::getComponentDataFromName(QStri
             for (int k = 0; k < proj->synapses.size(); ++k) {
                 // current synapse
                 QSharedPointer <synapse> syn = proj->synapses[k];
-                if (syn->weightUpdateType->getXMLName() == name) {
+                if (syn->weightUpdateCmpt->getXMLName() == name) {
                     // found - return the ComponentData
-                    return syn->weightUpdateType;
+                    return syn->weightUpdateCmpt;
                 }
-                if (syn->postsynapseType->getXMLName() == name) {
+                if (syn->postSynapseCmpt->getXMLName() == name) {
                     // found - return the ComponentData
-                    return syn->postsynapseType;
+                    return syn->postSynapseCmpt;
                 }
             }
         }

@@ -91,14 +91,16 @@ public:
     ParameterInstance * delay;
 
     /*!
-     * The source population for this connection.
+     * The source population for this connection, if there is one (the
+     * source may be a WU or PS component).
      */
-    QSharedPointer <population> src;
+    QSharedPointer <population> srcPop;
 
     /*!
-     * The destination population for this connection.
+     * The destination population for this connection, if there is one
+     * (the dest may be a WU or PS component).
      */
-    QSharedPointer <population> dst;
+    QSharedPointer <population> dstPop;
 
     /*!
      * Setter for srcName.
@@ -395,7 +397,7 @@ class pythonscript_connection : public connection
 {
         Q_OBJECT
 public:
-    pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *conn_targ);
+    pythonscript_connection(QSharedPointer <population> srcPop, QSharedPointer <population> dstPop, csv_connection *conn_targ);
     pythonscript_connection() {
         type = Python;
         this->isAList = false;
@@ -419,8 +421,8 @@ public:
     float rotation;
     QString errorLog;
 
-    QSharedPointer <population> src;
-    QSharedPointer <population> dst;
+    QSharedPointer <population> srcPop;
+    QSharedPointer <population> dstPop;
     QVector < conn > *conns;
     QMutex * mutex;
     bool isList();
