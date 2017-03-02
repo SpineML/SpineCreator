@@ -900,7 +900,6 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                     DBG() << "Warning: resizing this->params to 0 (exptInput::drawInput)";
                 }
                 this->params.resize(componentSize);
-                this->params.fill(0);
                 // add items from params
                 for (int i = 0; i < params.size(); ++i) {
                     QTableWidgetItem * item = new QTableWidgetItem;
