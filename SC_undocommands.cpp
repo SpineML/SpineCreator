@@ -629,7 +629,7 @@ addInput::addInput(nl_rootdata * d, QSharedPointer <ComponentInstance> source, Q
     this->dst = dest;
     this->setText("add Input from " + this->src->getXMLName() + " to " + this->dst->getXMLName());
     this->input = QSharedPointer<genericInput> (new genericInput(this->src, this->dst, !(parent==0)));
-    this->input->connectionType->setParent (this->input);
+    this->input->conn->setParent (this->input);
     this->input->connect (this->input);
     this->input->disconnect();
 }
@@ -729,8 +729,8 @@ void changeConnection::undo()
 {
     if (newConn->type == inputObject) {
         // Switching back from newConn to oldConn.
-        delete (qSharedPointerDynamicCast <genericInput> (newConn))->connectionType;
-        (qSharedPointerDynamicCast <genericInput> (newConn))->connectionType = oldConn;
+        delete (qSharedPointerDynamicCast <genericInput> (newConn))->conn;
+        (qSharedPointerDynamicCast <genericInput> (newConn))->conn = oldConn;
     }
     if (newConn->type == synapseObject) {
         delete (qSharedPointerDynamicCast <synapse> (newConn))->connectionType;
@@ -747,7 +747,7 @@ void changeConnection::redo()
 
         QSharedPointer<genericInput> newConnIn = qSharedPointerDynamicCast <genericInput> (newConn);
         // This ensures that oldConn points to the previous connection instance.
-        oldConn = newConnIn->connectionType; // connection* oldConn
+        oldConn = newConnIn->conn; // connection* oldConn
 
         // Now, for changed connections one creates a new connection
         // object. This class was designed initially to handle just
@@ -760,19 +760,19 @@ void changeConnection::redo()
         // features into oldConn.
         switch(index) {
         case AlltoAll:
-            newConnIn->connectionType = new alltoAll_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn = new alltoAll_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         case OnetoOne:
-            newConnIn->connectionType = new onetoOne_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn = new onetoOne_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         case FixedProb:
-            newConnIn->connectionType = new fixedProb_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn = new fixedProb_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         case CSV:
         {
@@ -780,17 +780,17 @@ void changeConnection::redo()
                 // Then this is a csv_connection to csv_connection
                 // change, so transfer information from old to new.
                 csv_connection* oldcsv = static_cast<csv_connection*>(oldConn);
-                newConnIn->connectionType = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
-                csv_connection* newcsv = static_cast<csv_connection*>(newConnIn->connectionType);
+                newConnIn->conn = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
+                csv_connection* newcsv = static_cast<csv_connection*>(newConnIn->conn);
                 // For some reason newFromExisting doesn't copy data values. dunno why.
                 newcsv->copyDataValues(oldcsv);
 
             } else {
                 // Switching from another connection type (e.g. alltoall)
-                newConnIn->connectionType = new csv_connection;
+                newConnIn->conn = new csv_connection;
             }
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
             break;
         }
         case Python:
@@ -808,14 +808,14 @@ void changeConnection::redo()
             QStringList scripts = settings.childKeys();
             // get the script associated with that index
             QString script = settings.value(scriptName, "").toString();
-            newConnIn->connectionType = new csv_connection;
-            newConnIn->connectionType->setSynapseIndex (oldConn->getSynapseIndex());
-            newConnIn->connectionType->setParent (oldConn->parent);
-            ((csv_connection *)newConnIn->connectionType)->generator = new pythonscript_connection(qSharedPointerDynamicCast <population> (newConnIn->source), qSharedPointerDynamicCast <population> (newConnIn->destination), (csv_connection *) newConnIn->connectionType);
+            newConnIn->conn = new csv_connection;
+            newConnIn->conn->setSynapseIndex (oldConn->getSynapseIndex());
+            newConnIn->conn->setParent (oldConn->parent);
+            ((csv_connection *)newConnIn->conn)->generator = new pythonscript_connection(qSharedPointerDynamicCast <population> (newConnIn->source), qSharedPointerDynamicCast <population> (newConnIn->destination), (csv_connection *) newConnIn->conn);
             // setup the generator:
-            ((pythonscript_connection *) ((csv_connection *) newConnIn->connectionType)->generator)->scriptText = script;
-            ((pythonscript_connection *) ((csv_connection *) newConnIn->connectionType)->generator)->scriptName = scriptName;
-            ((pythonscript_connection *) ((csv_connection *) newConnIn->connectionType)->generator)->configureFromScript(script);
+            ((pythonscript_connection *) ((csv_connection *) newConnIn->conn)->generator)->scriptText = script;
+            ((pythonscript_connection *) ((csv_connection *) newConnIn->conn)->generator)->scriptName = scriptName;
+            ((pythonscript_connection *) ((csv_connection *) newConnIn->conn)->generator)->configureFromScript(script);
             settings.endGroup();
         }
 
@@ -907,8 +907,8 @@ void globalConnectionDelayChange::undo()
 {
     if (this->connParent->type == inputObject) {
         // Switching back from connParent to oldConn.
-        delete (qSharedPointerDynamicCast <genericInput> (this->connParent))->connectionType;
-        (qSharedPointerDynamicCast <genericInput> (this->connParent))->connectionType = oldConn;
+        delete (qSharedPointerDynamicCast <genericInput> (this->connParent))->conn;
+        (qSharedPointerDynamicCast <genericInput> (this->connParent))->conn = oldConn;
     }
     if (this->connParent->type == synapseObject) {
         delete (qSharedPointerDynamicCast <synapse> (this->connParent))->connectionType;
@@ -925,7 +925,7 @@ void globalConnectionDelayChange::redo()
 
         QSharedPointer<genericInput> connParentIn = qSharedPointerDynamicCast <genericInput> (this->connParent);
         // This ensures that oldConn points to the previous connection instance.
-        this->oldConn = connParentIn->connectionType; // connection* oldConn
+        this->oldConn = connParentIn->conn; // connection* oldConn
 
         // Now, for changed connections one creates a new connection
         // object. This class was designed initially to handle just
@@ -943,9 +943,9 @@ void globalConnectionDelayChange::redo()
         // This is a csv_connection to csv_connection
         // change, so transfer information from old to new.
         csv_connection* oldcsv = static_cast<csv_connection*>(this->oldConn);
-        connParentIn->connectionType = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
+        connParentIn->conn = oldcsv->newFromExisting(); // allocates csv_connection and copies most data.
 
-        csv_connection* newcsv = static_cast<csv_connection*>(connParentIn->connectionType);
+        csv_connection* newcsv = static_cast<csv_connection*>(connParentIn->conn);
         newcsv->copyDataValues(oldcsv); // This is not handled in newFromExisting.
 
         // Now make the actual change to the new connection
@@ -955,8 +955,8 @@ void globalConnectionDelayChange::redo()
             newcsv->updateDataForNumCols(3);
         }
 
-        connParentIn->connectionType->setSynapseIndex (this->oldConn->getSynapseIndex());
-        connParentIn->connectionType->setParent (this->oldConn->parent);
+        connParentIn->conn->setSynapseIndex (this->oldConn->getSynapseIndex());
+        connParentIn->conn->setParent (this->oldConn->parent);
 
     } else if (this->connParent->type == synapseObject) {
 

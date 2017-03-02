@@ -987,7 +987,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
         inputConnectionComboBox->addItems(scripts);
         settings.endGroup();
     }
-    inputConnectionComboBox->setCurrentIndex(in->connectionType->getIndex());
+    inputConnectionComboBox->setCurrentIndex(in->conn->getIndex());
     connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     QFormLayout * varLayout = new QFormLayout;
@@ -996,13 +996,13 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     connect(this, SIGNAL(deleteProperties()), varLayout, SLOT(deleteLater()));
 
     // other connectivity:
-    switch (in->connectionType->type) {
+    switch (in->conn->type) {
         case AlltoAll:
         case OnetoOne:
         case FixedProb:
         case CSV:
         {
-            QLayout * lay = in->connectionType->drawLayout(data, NULL, this);
+            QLayout * lay = in->conn->drawLayout(data, NULL, this);
             this->insertLayout(this->count()-2, lay);
             break;
         }
@@ -1019,26 +1019,26 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
 
     // delay
     QSharedPointer<ComponentRootInstance> null;
-    switch (in->connectionType->type) {
+    switch (in->conn->type) {
         case AlltoAll:
         case OnetoOne:
         case FixedProb:
         case CSA:
             // add delay box:
-            drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
+            drawSingleParam(varLayout, in->conn->delay, data, true, "conn", null, in->conn);
             break;
         case CSV:
-            CHECK_CAST(dynamic_cast<csv_connection *>(in->connectionType))
-            if (((csv_connection *) in->connectionType)->getNumCols() != 3) {
+            CHECK_CAST(dynamic_cast<csv_connection *>(in->conn))
+            if (((csv_connection *) in->conn)->getNumCols() != 3) {
                 // add delay box:
-                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
+                drawSingleParam(varLayout, in->conn->delay, data, true, "conn", null, in->conn);
             }
             break;
         case Python:
             // add delay box:
-            CHECK_CAST(dynamic_cast<pythonscript_connection *>(in->connectionType))
-            if (!((pythonscript_connection *)in->connectionType)->hasDelay) {
-                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
+            CHECK_CAST(dynamic_cast<pythonscript_connection *>(in->conn))
+            if (!((pythonscript_connection *)in->conn)->hasDelay) {
+                drawSingleParam(varLayout, in->conn->delay, data, true, "conn", null, in->conn);
             }
             break;
         case none:

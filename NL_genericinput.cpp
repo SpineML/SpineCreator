@@ -31,7 +31,7 @@
 genericInput::genericInput()
 {
     // only used for loading from file - and all info will be specified so no need to muck about here - except this:
-    this->connectionType = new alltoAll_connection;
+    this->conn = new alltoAll_connection;
     this->type = inputObject;
     // for reinserting on undo / redo
     srcPos = -1;
@@ -62,7 +62,7 @@ genericInput::genericInput(QSharedPointer <ComponentInstance> src, QSharedPointe
     this->selectedControlPoint.ind = -1;
     this->selectedControlPoint.start = false;
 
-    this->connectionType = new onetoOne_connection;
+    this->conn = new onetoOne_connection;
 
     // add curves if we are not a projection input
     if (!projInput) {
@@ -112,7 +112,7 @@ void genericInput::disconnect()
 
 genericInput::~genericInput()
 {
-    delete this->connectionType;
+    delete this->conn;
 }
 
 QString genericInput::getName()
@@ -593,7 +593,7 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
     QDomElement c = meta.createElement( "connection" );
 
     // add the metadata description (if there is one)
-    this->connectionType->write_metadata_xml(meta, c);
+    this->conn->write_metadata_xml(meta, c);
 
     col.appendChild(c);
 }
@@ -680,8 +680,8 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
                     if (!metaData.firstChildElement().isNull()) {
 
                         // add connection generator if we are a csv
-                        if (this->connectionType->type == CSV) {
-                            csv_connection * conn = dynamic_cast<csv_connection *> (this->connectionType);
+                        if (this->conn->type == CSV) {
+                            csv_connection * conn = dynamic_cast<csv_connection *> (this->conn);
                             CHECK_CAST(conn)
                             QSharedPointer <population> popsrc = qSharedPointerDynamicCast <population>(this->source);
                             CHECK_CAST(popsrc)
@@ -721,9 +721,9 @@ QSharedPointer <systemObject> genericInput::newFromExisting(QMap<systemObject *,
     newIn->start = this->start;
     newIn->isVisualised = this->isVisualised;
 
-    newIn->connectionType = this->connectionType->newFromExisting();
+    newIn->conn = this->conn->newFromExisting();
 
-    newIn->connectionType->setParent(newIn);
+    newIn->conn->setParent(newIn);
 
     newIn->source = this->source;
     newIn->destination = this->destination;
@@ -744,8 +744,8 @@ void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<syste
 {
 
     // connection, if it has a generator
-    if (this->connectionType->type == CSV) {
-        csv_connection * c = dynamic_cast < csv_connection * > (this->connectionType);
+    if (this->conn->type == CSV) {
+        csv_connection * c = dynamic_cast < csv_connection * > (this->conn);
         if (c && c->generator != NULL) {
             pythonscript_connection * g = dynamic_cast < pythonscript_connection * > (c->generator);
             if (g) {

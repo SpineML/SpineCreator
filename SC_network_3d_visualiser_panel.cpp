@@ -387,7 +387,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
         } else {
             QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (selectedConns[targNum]);
             CHECK_CAST(currIn)
-            conn = currIn->connectionType;
+            conn = currIn->conn;
             src = qSharedPointerDynamicCast <population> (currIn->source);
             CHECK_CAST(src)
             dst = qSharedPointerDynamicCast <population> (currIn->destination);
@@ -1195,7 +1195,7 @@ void glConnectionWidget::parsChangedProjections()
             conn = currTarg->connectionType;
         } else {
             QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (selectedConns[i]);
-            conn = currIn->connectionType;
+            conn = currIn->conn;
         }
 
         // regrab data for python based
@@ -1235,7 +1235,7 @@ void glConnectionWidget::parsChangedProjection()
             dst = currTarg->proj->destination;
         } else {
             QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (selectedObject);
-            conn = currIn->connectionType;
+            conn = currIn->conn;
             src = qSharedPointerDynamicCast <population> (currIn->source); // would not be here if was not true
             dst = qSharedPointerDynamicCast <population> (currIn->destination);
         }
@@ -1433,24 +1433,24 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
                             selectedConns.push_back(currIn);
                             connections.resize(connections.size()+1);
 
-                            if (currIn->connectionType->type == CSV) {
+                            if (currIn->conn->type == CSV) {
                                 // load in the connections
-                                ((csv_connection *) currIn->connectionType)->getAllData(connections.back());
-                            } else if (currIn->connectionType->type == Python) {
-                                if (((pythonscript_connection *) currIn->connectionType)->connections.size() > 0 && !((pythonscript_connection *) currIn->connectionType)->changed()) {
-                                    connections.back() = ((pythonscript_connection *) currIn->connectionType)->connections;
+                                ((csv_connection *) currIn->conn)->getAllData(connections.back());
+                            } else if (currIn->conn->type == Python) {
+                                if (((pythonscript_connection *) currIn->conn)->connections.size() > 0 && !((pythonscript_connection *) currIn->conn)->changed()) {
+                                    connections.back() = ((pythonscript_connection *) currIn->conn)->connections;
                                 } else {
                                     // generate
                                     // launch version increment dialog box:
                                     QSharedPointer <population> popSrc = qSharedPointerDynamicCast <population> (currIn->source);
                                     QSharedPointer <population> popDst = qSharedPointerDynamicCast <population> (currIn->destination);
-                                    generate_dialog generate(((pythonscript_connection *) currIn->connectionType), popSrc, popDst, connections.back(), connGenerationMutex, this);
+                                    generate_dialog generate(((pythonscript_connection *) currIn->conn), popSrc, popDst, connections.back(), connGenerationMutex, this);
                                     bool retVal = generate.exec();
                                     if (!retVal) {
                                         continue;
                                     }
-                                    ((pythonscript_connection *) currIn->connectionType)->connections = connections.back();
-                                    ((pythonscript_connection *) currIn->connectionType)->setUnchanged(true);
+                                    ((pythonscript_connection *) currIn->conn)->connections = connections.back();
+                                    ((pythonscript_connection *) currIn->conn)->setUnchanged(true);
                                 }
                             }
 

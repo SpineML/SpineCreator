@@ -431,37 +431,37 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             // get connectivity
             QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new alltoAll_connection;
+                delete newInput->conn;
+                newInput->conn = new alltoAll_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
             type = e2.elementsByTagName("OneToOneConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new onetoOne_connection;
+                delete newInput->conn;
+                newInput->conn = new onetoOne_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
             type = e2.elementsByTagName("FixedProbabilityConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new fixedProb_connection;
+                delete newInput->conn;
+                newInput->conn = new fixedProb_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
             type = e2.elementsByTagName("ConnectionList");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new csv_connection;
+                delete newInput->conn;
+                newInput->conn = new csv_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
-                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->src = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->conn->dst = qSharedPointerDynamicCast <population> (newInput->destination);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
 
             if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {

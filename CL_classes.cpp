@@ -762,14 +762,14 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                   xmlOut.writeAttribute("src", ptr->inputs[i]->srcCmpt->getXMLName());
                   xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
                   xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
-                  if (ptr->inputs[i]->connectionType->type == Python) {
-                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
-                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
-                  } else if (ptr->inputs[i]->connectionType->type == CSV) {
-                      ((csv_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
-                      ((csv_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
+                  if (ptr->inputs[i]->conn->type == Python) {
+                      ((pythonscript_connection *) ptr->inputs[i]->conn)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((pythonscript_connection *) ptr->inputs[i]->conn)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
+                  } else if (ptr->inputs[i]->conn->type == CSV) {
+                      ((csv_connection *) ptr->inputs[i]->conn)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((csv_connection *) ptr->inputs[i]->conn)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
                   }
-                  ptr->inputs[i]->connectionType->write_node_xml(xmlOut);
+                  ptr->inputs[i]->conn->write_node_xml(xmlOut);
                   xmlOut.writeEndElement(); // input
               }
 

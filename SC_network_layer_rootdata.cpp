@@ -1376,7 +1376,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
             inSel = qSharedPointerDynamicCast<genericInput> (ptr);
             if (type == "input") { // a generic input connection change
                 if (index >= 0) {
-                    if (inSel->connectionType->getIndex() != index) {
+                    if (inSel->conn->getIndex() != index) {
                         this->currProject->undoStack->push(new changeConnection(this, ptr, index));
                     }
                 }

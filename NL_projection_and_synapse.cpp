@@ -2008,37 +2008,37 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     // get connectivity
                     QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
                     if (type.count() == 1) {
-                        delete newInput->connectionType;
-                        newInput->connectionType = new alltoAll_connection;
-                        newInput->connectionType->setParent(newInput);
+                        delete newInput->conn;
+                        newInput->conn = new alltoAll_connection;
+                        newInput->conn->setParent(newInput);
                         QDomNode cNode = type.item(0);
-                        newInput->connectionType->import_parameters_from_xml(cNode);
+                        newInput->conn->import_parameters_from_xml(cNode);
                     }
                     type = e2.elementsByTagName("OneToOneConnection");
                     if (type.count() == 1) {
-                        delete newInput->connectionType;
-                        newInput->connectionType = new onetoOne_connection;
-                        newInput->connectionType->setParent(newInput);
+                        delete newInput->conn;
+                        newInput->conn = new onetoOne_connection;
+                        newInput->conn->setParent(newInput);
                         QDomNode cNode = type.item(0);
-                        newInput->connectionType->import_parameters_from_xml(cNode);
+                        newInput->conn->import_parameters_from_xml(cNode);
                     }
                     type = e2.elementsByTagName("FixedProbabilityConnection");
                     if (type.count() == 1) {
-                        delete newInput->connectionType;
-                        newInput->connectionType = new fixedProb_connection;
-                        newInput->connectionType->setParent(newInput);
+                        delete newInput->conn;
+                        newInput->conn = new fixedProb_connection;
+                        newInput->conn->setParent(newInput);
                         QDomNode cNode = type.item(0);
-                        newInput->connectionType->import_parameters_from_xml(cNode);
+                        newInput->conn->import_parameters_from_xml(cNode);
                     }
                     type = e2.elementsByTagName("ConnectionList");
                     if (type.count() == 1) {
-                        delete newInput->connectionType;
-                        newInput->connectionType = new csv_connection;
-                        newInput->connectionType->setParent(newInput);
+                        delete newInput->conn;
+                        newInput->conn = new csv_connection;
+                        newInput->conn->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         // csv connection needs a synapse index set up.
-                        newInput->connectionType->setSynapseIndex(t);
-                        newInput->connectionType->import_parameters_from_xml(cNode);
+                        newInput->conn->setSynapseIndex(t);
+                        newInput->conn->import_parameters_from_xml(cNode);
                     }
 
                     if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {
@@ -2138,24 +2138,24 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     // get connectivity
                     QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
                     if (type.count() == 1) {
-                        delete newInput->connectionType;
-                        newInput->connectionType = new alltoAll_connection;
+                        delete newInput->conn;
+                        newInput->conn = new alltoAll_connection;
                         QDomNode cNode = type.item(0);
-                        newInput->connectionType->import_parameters_from_xml(cNode);
+                        newInput->conn->import_parameters_from_xml(cNode);
                     }
                     type = e2.elementsByTagName("OneToOneConnection");
                     if (type.count() == 1) {
-                        delete newInput->connectionType;
-                        newInput->connectionType = new onetoOne_connection;
+                        delete newInput->conn;
+                        newInput->conn = new onetoOne_connection;
                         QDomNode cNode = type.item(0);
-                        newInput->connectionType->import_parameters_from_xml(cNode);
+                        newInput->conn->import_parameters_from_xml(cNode);
                     }
                     type = e2.elementsByTagName("FixedProbabilityConnection");
                     if (type.count() == 1) {
-                        delete newInput->connectionType;
-                        newInput->connectionType = new fixedProb_connection;
+                        delete newInput->conn;
+                        newInput->conn = new fixedProb_connection;
                         QDomNode cNode = type.item(0);
-                        newInput->connectionType->import_parameters_from_xml(cNode);
+                        newInput->conn->import_parameters_from_xml(cNode);
                     }
 
                     if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {

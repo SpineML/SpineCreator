@@ -85,7 +85,7 @@ public:
     int srcPos;
     int dstPos;
 
-    connection * connectionType;
+    connection * conn;
 
     bool isVisualised;
 
