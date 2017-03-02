@@ -132,6 +132,11 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
 
     while(!n.isNull()) {
 
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         if (n.toElement().tagName() == "LL:Neuron") {
 
             // get attributes
@@ -299,6 +304,11 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
     n = metaE.firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "xPos" ) {
             this->x = e2.attribute("value", "").toFloat() + data->getCursorPos().x;

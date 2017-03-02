@@ -1636,6 +1636,11 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         QDomNode n = colList.item(i).toElement().firstChild();
         while (!n.isNull()) {
 
+            if (n.isComment()) {
+                n = n.nextSibling();
+                continue;
+            }
+
             // get connectivity
 
             if (n.toElement().tagName() == "AllToAllConnection") {
@@ -1962,6 +1967,11 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 #endif
         QDomNode n = colList.item(t).toElement().firstChild();
         while (!n.isNull()) {
+
+            if (n.isComment()) {
+                n = n.nextSibling();
+                continue;
+            }
 
             // postsynapse inputs
             if (n.toElement().tagName() == "LL:PostSynapse") {

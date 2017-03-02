@@ -1001,6 +1001,11 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     QDomNode n = this->doc.documentElement().firstChild();
     while (!n.isNull())  {
 
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population") {
             // add population from population xml:
@@ -1049,6 +1054,11 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     int counter = firstNewPop;
     while (!n.isNull()) {
 
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
             // with all the populations added, add the projections and join them up:
@@ -1079,6 +1089,12 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     counter = firstNewPop;
     n = this->doc.documentElement().firstChild();
     while (!n.isNull()) {
+
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
             {
