@@ -1205,7 +1205,7 @@ void glConnectionWidget::parsChangedProjections()
             if (((pythonscript_connection *) conn)->changed()) {
                 connections[i].clear();
                 // launch version increment dialog box:
-                generate_dialog generate(((pythonscript_connection *) conn), ((pythonscript_connection *) conn)->src, ((pythonscript_connection *) conn)->dst, connections[i], connGenerationMutex, this);
+                generate_dialog generate(((pythonscript_connection *) conn), ((pythonscript_connection *) conn)->srcPop, ((pythonscript_connection *) conn)->dstPop, connections[i], connGenerationMutex, this);
                 bool retVal = generate.exec();
                 if (!retVal) {
                     return;

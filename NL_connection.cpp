@@ -484,8 +484,8 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
 
         // rootLayout::projSelected has communicated this information
         // so we can stick it into this connection.
-        this->src = data->currentlySelectedProjection->source;
-        this->dst = data->currentlySelectedProjection->destination;
+        this->srcPop = data->currentlySelectedProjection->source;
+        this->dstPop = data->currentlySelectedProjection->destination;
 
         connMod->setConnection(this);
         tableView->setModel(connMod);
@@ -1287,15 +1287,15 @@ void csv_connection::generateFilename(void)
     this->filename = "";
 
     // Test this->src and this->dst first
-    if (!this->src.isNull()) {
+    if (!this->srcPop.isNull()) {
         // What if src is a WU?
-        this->srcName = this->src->name;
+        this->srcName = this->srcPop->name;
     } else {
         DBG() << "src is null - there's no population as a source for this connection.";
     }
 
-    if (!this->dst.isNull()) {
-        this->dstName = this->dst->name;
+    if (!this->dstPop.isNull()) {
+        this->dstName = this->dstPop->name;
     } else {
         DBG() << "dst is null - there's no population as a destination for this connection.";
     }
@@ -1557,8 +1557,8 @@ pythonscript_connection::pythonscript_connection(QSharedPointer <population> src
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;
-    this->src = src;
-    this->dst = dst;
+    this->srcPop = src;
+    this->dstPop = dst;
     this->connection_target = conn_targ;
 }
 
@@ -1909,7 +1909,7 @@ bool pythonscript_connection::changed()
         par_changed = true;
     }
 
-    if (src->numNeurons != srcSize || dst->numNeurons != dstSize || par_changed) {
+    if (srcPop->numNeurons != srcSize || dstPop->numNeurons != dstSize || par_changed) {
         return true;
     } else {
         return hasChanged;
@@ -1919,8 +1919,8 @@ bool pythonscript_connection::changed()
 void pythonscript_connection::setUnchanged(bool state)
 {
     if (state) {
-        srcSize = src->numNeurons;
-        dstSize = dst->numNeurons;
+        srcSize = srcPop->numNeurons;
+        dstSize = dstPop->numNeurons;
         for (int i = 0; i <this->lastGeneratedParValues.size(); ++i) {
             this->lastGeneratedParValues[i] = this->parValues[i];
         }
@@ -2007,7 +2007,7 @@ void pythonscript_connection::regenerateConnections()
     QMutex * connGenerationMutex = new QMutex();
 
     this->connections.clear();
-    generate_dialog generate(this, this->src, this->dst, this->connections, connGenerationMutex, (QWidget *)NULL);
+    generate_dialog generate(this, this->srcPop, this->dstPop, this->connections, connGenerationMutex, (QWidget *)NULL);
     bool retVal = generate.exec();
     if (!retVal) {
         return;
@@ -2240,8 +2240,8 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
 
 ParameterInstance * pythonscript_connection::getPropPointer()
 {
-    for (int i = 0; i < this->src->projections.size(); ++i) {
-        QSharedPointer <projection> proj = this->src->projections[i];
+    for (int i = 0; i < this->srcPop->projections.size(); ++i) {
+        QSharedPointer <projection> proj = this->srcPop->projections[i];
         for (int j = 0; j < proj->synapses.size(); ++j) {
             QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
@@ -2281,8 +2281,8 @@ ParameterInstance * pythonscript_connection::getPropPointer()
 QStringList pythonscript_connection::getPropList()
 {
     QStringList list;
-    for (int i = 0; i < this->src->projections.size(); ++i) {
-        QSharedPointer <projection> proj = this->src->projections[i];
+    for (int i = 0; i < this->srcPop->projections.size(); ++i) {
+        QSharedPointer <projection> proj = this->srcPop->projections[i];
         for (int j = 0; j < proj->synapses.size(); ++j) {
             QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
@@ -2485,12 +2485,12 @@ void pythonscript_connection::generate_connections()
 
     // regenerate src and dst locations
     QString errorLog;
-    src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
+    srcPop->layoutType->generateLayout(srcPop->numNeurons,&srcPop->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         DBG() << "no src locs";
         return;
     }
-    dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
+    dstPop->layoutType->generateLayout(dstPop->numNeurons,&dstPop->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         DBG() << "no dst locs";
         return;
@@ -2500,8 +2500,8 @@ void pythonscript_connection::generate_connections()
     PyObject * argsPy = PyTuple_New(this->parNames.size()+2/* 2 for the src and dst locations*/);
 
     // convert the locations into Python Objects:
-    PyObject * srcPy = vectorLocToList(&src->layoutType->locations);
-    PyObject * dstPy = vectorLocToList(&dst->layoutType->locations);
+    PyObject * srcPy = vectorLocToList(&srcPop->layoutType->locations);
+    PyObject * dstPy = vectorLocToList(&dstPop->layoutType->locations);
 
     // add them to the tuple
     PyTuple_SetItem(argsPy,0,srcPy);
@@ -2574,8 +2574,8 @@ void pythonscript_connection::generate_connections()
     if (this->connection_target != NULL) {
 
         DBG() << "pythonscript_connection::generate_connections: setting src/dst popn names in connection_target";
-        this->connection_target->setSrcName (this->src->name);
-        this->connection_target->setDstName (this->dst->name);
+        this->connection_target->setSrcName (this->srcPop->name);
+        this->connection_target->setDstName (this->dstPop->name);
 
         // remove existing connections
         this->connection_target->clearData();
@@ -2635,8 +2635,8 @@ connection * pythonscript_connection::newFromExisting()
     c->connection_target = this->connection_target;
     c->scriptName = this->scriptName;
     c->scriptText = this->scriptText;
-    c->src = this->src;
-    c->dst = this->dst;
+    c->srcPop = this->srcPop;
+    c->dstPop = this->dstPop;
 
     // copy script pars
     c->parNames = this->parNames;

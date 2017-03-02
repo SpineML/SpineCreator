@@ -40,8 +40,8 @@ generate_dialog::generate_dialog(pythonscript_connection * currConn, QSharedPoin
     // generating connectivity
 
     this->currConn = currConn;
-    currConn->src = src;
-    currConn->dst = dst;
+    currConn->srcPop = src;
+    currConn->dstPop = dst;
     currConn->conns = &conns;
     currConn->mutex = mutex;
 
@@ -110,8 +110,8 @@ void generate_dialog::moveFromThread() {
             ui->errors->setText(currConnPy->pythonErrors);
         } else {
             // move the weights across
-            for (int i = 0; i < currConnPy->src->projections.size(); ++i) {
-                QSharedPointer <projection> proj = currConnPy->src->projections[i];
+            for (int i = 0; i < currConnPy->srcPop->projections.size(); ++i) {
+                QSharedPointer <projection> proj = currConnPy->srcPop->projections[i];
                 for (int j = 0; j < proj->synapses.size(); ++j) {
                     QSharedPointer <synapse> syn = proj->synapses[j];
                     // if we have found the connection

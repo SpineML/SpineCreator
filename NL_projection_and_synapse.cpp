@@ -246,9 +246,9 @@ void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemOb
         if (c && c->generator != NULL) {
             pythonscript_connection * g = dynamic_cast < pythonscript_connection * > (c->generator);
             if (g) {
-                g->src = qSharedPointerDynamicCast <population> (objectMap[g->src.data()]);
-                g->dst = qSharedPointerDynamicCast <population> (objectMap[g->dst.data()]);
-                if (!g->src || !g->dst) {
+                g->srcPop = qSharedPointerDynamicCast <population> (objectMap[g->srcPop.data()]);
+                g->dstPop = qSharedPointerDynamicCast <population> (objectMap[g->dstPop.data()]);
+                if (!g->srcPop || !g->dstPop) {
                     DBG() << "Error casting objectMap lookup to population in synapse::remapSharedPointers";
                     exit(-1);
                 }

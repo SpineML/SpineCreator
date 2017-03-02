@@ -598,6 +598,7 @@ void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
     col.appendChild(c);
 }
 
+#define __DEBUG_READ_META 1
 void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 {
     // skip if a special input for a projection
@@ -612,8 +613,8 @@ void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
     QDomNode metaNode = meta->documentElement().firstChild();
 
 #ifdef __DEBUG_READ_META
-    DBG() << "this:     source:" << this->src->getXMLName()
-          << "destination:" << this->dst->getXMLName()
+    DBG() << "this:     source:" << this->srcCmpt->getXMLName()
+          << "destination:" << this->dstCmpt->getXMLName()
           << "srcPort:" <<  this->srcPort
           << "dstPort:" <<  this->dstPort;
 #endif
@@ -749,9 +750,9 @@ void genericInput::remapSharedPointers(QMap<systemObject *, QSharedPointer<syste
         if (c && c->generator != NULL) {
             pythonscript_connection * g = dynamic_cast < pythonscript_connection * > (c->generator);
             if (g) {
-                g->src = qSharedPointerDynamicCast <population> (objectMap[g->src.data()]);
-                g->dst = qSharedPointerDynamicCast <population> (objectMap[g->dst.data()]);
-                if (!g->src || !g->dst) {
+                g->srcPop = qSharedPointerDynamicCast <population> (objectMap[g->srcPop.data()]);
+                g->dstPop = qSharedPointerDynamicCast <population> (objectMap[g->dstPop.data()]);
+                if (!g->srcPop || !g->dstPop) {
                     qDebug() << "Error casting objectMap lookup to population in genericInput::remapSharedPointers";
                     exit(-1);
                 }

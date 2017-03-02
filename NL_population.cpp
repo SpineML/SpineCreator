@@ -458,8 +458,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 delete newInput->conn;
                 newInput->conn = new csv_connection;
                 QDomNode cNode = type.item(0);
-                newInput->conn->src = qSharedPointerDynamicCast <population> (newInput->source);
-                newInput->conn->dst = qSharedPointerDynamicCast <population> (newInput->destination);
+                newInput->conn->srcPop = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->conn->dstPop = qSharedPointerDynamicCast <population> (newInput->destination);
                 newInput->conn->import_parameters_from_xml(cNode);
                 newInput->conn->setParent (newInput);
             }
@@ -909,8 +909,8 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut)
                 // add each Synapse
                 xmlOut.writeStartElement("LL:Synapse");
 
-                projection->synapses[j]->connectionType->src = projection->source;
-                projection->synapses[j]->connectionType->dst = projection->destination;
+                projection->synapses[j]->connectionType->srcPop = projection->source;
+                projection->synapses[j]->connectionType->dstPop = projection->destination;
                 projection->synapses[j]->connectionType->write_node_xml(xmlOut);
 
                 xmlOut.writeStartElement("LL:WeightUpdate");
