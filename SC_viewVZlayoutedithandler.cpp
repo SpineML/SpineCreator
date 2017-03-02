@@ -836,7 +836,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
 
         // set index
         connectionComboBox->disconnect(data);
-        connectionComboBox->setCurrentIndex(input->connectionType->getIndex());
+        connectionComboBox->setCurrentIndex(input->conn->getIndex());
         connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     }
@@ -1238,7 +1238,7 @@ void viewVZLayoutEditHandler::drawDeletables() {
             currConn = currSyn->connectionType;
         } else {
             QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (this->viewVZ->currObject);
-            currConn = currIn->connectionType;
+            currConn = currIn->conn;
         }
 
         // change display options based on type of connection

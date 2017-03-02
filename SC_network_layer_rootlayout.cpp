@@ -491,7 +491,7 @@ void nl_rootlayout::initTabBoxProjection(nl_rootdata * ) {
     weightUpdateComboBox = this->addDropBox((QVBoxLayout *) tab1->layout(),"Weight Update", "weight_update");
 
     this->weightUpdateTitle = new QLabel("<b>WeightUpdate name:</b>");
-    tab1->layout()->addWidget(this->weightUpdateTitle);
+    ((QVBoxLayout *)tab1->layout())->insertWidget(tab1->layout()->count()-1, this->weightUpdateTitle);
 
     // connect for configure
     connect(this, SIGNAL(setWeightUpdateType(int)), weightUpdateComboBox, SLOT(setCurrentIndex(int)));
@@ -552,7 +552,7 @@ void nl_rootlayout::initFinish(nl_rootdata * data) {
 
         // layout
         QHBoxLayout * cp = new QHBoxLayout();
-        tabLayout->insertLayout(tabLayout->count() - 1, cp);
+        tabLayout->insertLayout(tabLayout->count() - 2, cp);
 
         QPushButton * copy = new QPushButton("Copy");
 
@@ -882,12 +882,12 @@ void nl_rootlayout::projSelected(QSharedPointer <projection> &proj, nl_rootdata*
 
     // set comboboxes
     for (int i = 0; i < data->catalogWU.size(); ++i) {
-        if (proj->synapses[proj->currTarg]->weightUpdateType->component == data->catalogWU[i]) {
+        if (proj->synapses[proj->currTarg]->weightUpdateCmpt->component == data->catalogWU[i]) {
             emit setWeightUpdateType(i);
         }
     }
     for (int i = 0; i < data->catalogPS.size(); ++i) {
-        if (proj->synapses[proj->currTarg]->postsynapseType->component == data->catalogPS[i]) {
+        if (proj->synapses[proj->currTarg]->postSynapseCmpt->component == data->catalogPS[i]) {
             emit setPostSynapseType(i);
         }
     }
@@ -926,7 +926,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
 
     data->currentlySelectedProjection = in;
 
-    QString XMLname = in->src->getXMLName() + " to " + in->dst->getXMLName();
+    QString XMLname = in->srcCmpt->getXMLName() + " to " + in->dstCmpt->getXMLName();
     inputSrcName->setToolTip(XMLname);
     // shorten if too long (tooltip will have full name)
     if (XMLname.size() > 12) {
@@ -942,9 +942,9 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     // add port options
     QStringList portPairs;
 
-    for (int i = 0; i < in->dst->inputs.size(); ++i) {
-        if (in == in->dst->inputs[i]) {
-            portPairs = in->dst->getPortMatches(i, false);
+    for (int i = 0; i < in->dstCmpt->inputs.size(); ++i) {
+        if (in == in->dstCmpt->inputs[i]) {
+            portPairs = in->dstCmpt->getPortMatches(i, false);
         }
     }
 
@@ -979,7 +979,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     inputConnectionComboBox->addItem("One to One");
     inputConnectionComboBox->addItem("Fixed Probability");
     inputConnectionComboBox->addItem("Explicit List");
-    if (in->src->owner->type == populationObject && in->dst->owner->type == populationObject) {
+    if (in->srcCmpt->owner->type == populationObject && in->dstCmpt->owner->type == populationObject) {
         // add python scripts
         QSettings settings;
         settings.beginGroup("pythonscripts");
@@ -987,7 +987,7 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
         inputConnectionComboBox->addItems(scripts);
         settings.endGroup();
     }
-    inputConnectionComboBox->setCurrentIndex(in->connectionType->getIndex());
+    inputConnectionComboBox->setCurrentIndex(in->conn->getIndex());
     connect(inputConnectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     QFormLayout * varLayout = new QFormLayout;
@@ -996,13 +996,13 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
     connect(this, SIGNAL(deleteProperties()), varLayout, SLOT(deleteLater()));
 
     // other connectivity:
-    switch (in->connectionType->type) {
+    switch (in->conn->type) {
         case AlltoAll:
         case OnetoOne:
         case FixedProb:
         case CSV:
         {
-            QLayout * lay = in->connectionType->drawLayout(data, NULL, this);
+            QLayout * lay = in->conn->drawLayout(data, NULL, this);
             this->insertLayout(this->count()-2, lay);
             break;
         }
@@ -1019,26 +1019,26 @@ void nl_rootlayout::inSelected(QSharedPointer<genericInput> in, nl_rootdata* dat
 
     // delay
     QSharedPointer<ComponentRootInstance> null;
-    switch (in->connectionType->type) {
+    switch (in->conn->type) {
         case AlltoAll:
         case OnetoOne:
         case FixedProb:
         case CSA:
             // add delay box:
-            drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
+            drawSingleParam(varLayout, in->conn->delay, data, true, "conn", null, in->conn);
             break;
         case CSV:
-            CHECK_CAST(dynamic_cast<csv_connection *>(in->connectionType))
-            if (((csv_connection *) in->connectionType)->getNumCols() != 3) {
+            CHECK_CAST(dynamic_cast<csv_connection *>(in->conn))
+            if (((csv_connection *) in->conn)->getNumCols() != 3) {
                 // add delay box:
-                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
+                drawSingleParam(varLayout, in->conn->delay, data, true, "conn", null, in->conn);
             }
             break;
         case Python:
             // add delay box:
-            CHECK_CAST(dynamic_cast<pythonscript_connection *>(in->connectionType))
-            if (!((pythonscript_connection *)in->connectionType)->hasDelay) {
-                drawSingleParam(varLayout, in->connectionType->delay, data, true, "conn", null, in->connectionType);
+            CHECK_CAST(dynamic_cast<pythonscript_connection *>(in->conn))
+            if (!((pythonscript_connection *)in->conn)->hasDelay) {
+                drawSingleParam(varLayout, in->conn->delay, data, true, "conn", null, in->conn);
             }
             break;
         case none:
@@ -1139,7 +1139,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 // doesn't validate - warn and skip
                 if (num_errs != 0) {
                     QLabel * validateWarning = new QLabel("Component does not validate: please correct");
-                    tabLayout->insertWidget(tabLayout->count() - (1), validateWarning);
+                    tabLayout->insertWidget(tabLayout->count() - 2, validateWarning);
                     // connect to delete
                     connect(this, SIGNAL(deleteProperties()), validateWarning, SLOT(deleteLater()));
                     skipTab = true;
@@ -1156,7 +1156,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
                 QString wuname = "<b>Name:</b> " + proj->synapses[proj->currTarg]->getWeightUpdateName();
                 this->weightUpdateTitle->setText(wuname);
-                type9ml = proj->synapses[proj->currTarg]->weightUpdateType;
+                type9ml = proj->synapses[proj->currTarg]->weightUpdateCmpt;
                 type = "syn";
                 // check if current component validates
                 (qSharedPointerCast <ComponentInstance> (type9ml))->component->validateComponent();
@@ -1172,7 +1172,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 // doesn't validate - warn and skip
                 if (num_errs != 0) {
                     QLabel * validateWarning = new QLabel("Component does not validate: please correct");
-                    tabLayout->insertWidget(tabLayout->count() - (1), validateWarning);
+                    tabLayout->insertWidget(tabLayout->count() - 2, validateWarning);
                     // connect to delete
                     connect(this, SIGNAL(deleteProperties()), validateWarning, SLOT(deleteLater()));
                     skipTab = true;
@@ -1182,7 +1182,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (data->selList[0]);
                 QString psname = "<b>Name:</b> " + proj->synapses[proj->currTarg]->getPostSynapseName();
                 this->postSynapseTitle->setText(psname);
-                type9ml = proj->synapses[proj->currTarg]->postsynapseType;
+                type9ml = proj->synapses[proj->currTarg]->postSynapseCmpt;
                 type = "psp";
                 // check if current component validates
                 (qSharedPointerCast <ComponentInstance> (type9ml))->component->validateComponent();
@@ -1198,7 +1198,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 // doesn't validate - warn and skip
                 if (num_errs != 0) {
                     QLabel * validateWarning = new QLabel("Component does not validate: please correct");
-                    tabLayout->insertWidget(tabLayout->count() - (1), validateWarning);
+                    tabLayout->insertWidget(tabLayout->count() - 2, validateWarning);
                     // connect to delete
                     connect(this, SIGNAL(deleteProperties()), validateWarning, SLOT(deleteLater()));
                     skipTab = true;
@@ -1267,7 +1267,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
 
             if (listSize > 0) {
                 QHBoxLayout * Box = new QHBoxLayout();
-                tabLayout->insertLayout(tabLayout->count() - (1), Box);
+                tabLayout->insertLayout(tabLayout->count() - 2, Box);
                 QLabel * sectionTitle = new QLabel(boxTitle);
                 Box->addWidget(sectionTitle);
 
@@ -1276,7 +1276,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 connect(this, SIGNAL(deleteProperties()), Box, SLOT(deleteLater()));
 
                 QFormLayout * varLayout = new QFormLayout();
-                tabLayout->insertLayout(tabLayout->count() - (1), varLayout);
+                tabLayout->insertLayout(tabLayout->count() - 2, varLayout);
                 connect(this, SIGNAL(deleteProperties()), varLayout, SLOT(deleteLater()));
 
                 for (int l = 0; l < listSize; ++l) {
@@ -1325,7 +1325,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                         {// draw in p and seed boxes:
 
                         QLayout * lay = conn->drawLayout(data, NULL, this);
-                        tabLayout->insertLayout(tabLayout->count() - (1), lay);
+                        tabLayout->insertLayout(tabLayout->count() - 2, lay);
 
                         /*QDoubleSpinBox *pSpin = new QDoubleSpinBox;
                         pSpin->setRange(0, 1);
@@ -1393,13 +1393,13 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 connect(this, SIGNAL(deleteProperties()), inputLayHeader, SLOT(deleteLater()));
                 inputLayHeader->addWidget(new QLabel("<b>Inputs</b>"));
                 connect(this, SIGNAL(deleteProperties()), inputLayHeader->itemAt(inputLayHeader->count()-1)->widget(), SLOT(deleteLater()));
-                tabLayout->insertLayout(tabLayout->count()-1, inputLayHeader);
+                tabLayout->insertLayout(tabLayout->count()-2, inputLayHeader);
 
                 for (int input = 0; input < componentData->inputs.size(); ++input) {
 
                     QHBoxLayout * inputLay = new QHBoxLayout;
                     connect(this, SIGNAL(deleteProperties()), inputLay, SLOT(deleteLater()));
-                    QString XMLname = componentData->inputs[input]->src->getXMLName();
+                    QString XMLname = componentData->inputs[input]->srcCmpt->getXMLName();
                     QLabel * srcName = new QLabel();
                     connect(this, SIGNAL(deleteProperties()), srcName, SLOT(deleteLater()));
                     srcName->setToolTip(XMLname);
@@ -1438,7 +1438,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                     if (portPairs.size() == 0) {
                         portMatches->setDisabled(true);
                         // also add stuff to indicate the issue
-                        if (currInput->dst->component->name != "none") {
+                        if (currInput->dstCmpt->component->name != "none") {
                             portMatches->addItem("No matches found");
                             portMatches->setToolTip("No compatible port matches were found. This may be due to inconsistent dimensions (including exponents).");
                         }
@@ -1451,7 +1451,7 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
 
                     inputLay->addWidget(portMatches);
 
-                    tabLayout->insertLayout(tabLayout->count()-1, inputLay);
+                    tabLayout->insertLayout(tabLayout->count()-2, inputLay);
 
                     /////// DELETE BUTTON
                     QPushButton * delInput = new QPushButton;
@@ -1482,15 +1482,15 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                 addInput->addWidget(new QLabel("Add from "));
                 connect(this, SIGNAL(deleteProperties()), addInput->itemAt(addInput->count()-1)->widget(), SLOT(deleteLater()));
 
-                tabLayout->insertLayout(tabLayout->count()-1, addInput);
+                tabLayout->insertLayout(tabLayout->count()-2, addInput);
 
                 QStringList elementList;
                 for (int i = 0; i < data->populations.size(); ++i) {
                     elementList << data->populations[i]->neuronType->getXMLName();
                     for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
                         for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                            elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                            elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                            elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
+                            elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
                         }
                     }
                 }

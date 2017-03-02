@@ -578,7 +578,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" + ptr->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
 
@@ -597,7 +597,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" +ptr->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" +ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
 
@@ -615,7 +615,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
 
             // search out the Synapse population and add the postsynapticMapping
             for (int i = 0; i < (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs.size(); ++i) {
-                if ((qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->src == this && \
+                if ((qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcCmpt == this && \
                     (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->projInput == true) {
 
                     // check we have ports
@@ -625,7 +625,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                         settings.endArray();
                         settings.beginWriteArray("warnings");
                             settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->src->getXMLName() + "' and '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dst->getXMLName() + "'");
+                            settings.setValue("warnText",  "No matched ports between '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcCmpt->getXMLName() + "' and '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
 
@@ -754,22 +754,22 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                        settings.endArray();
                        settings.beginWriteArray("warnings");
                            settings.setArrayIndex(num_errs + 1);
-                           settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->src->getXMLName() + "' and '" + ptr->inputs[i]->dst->getXMLName() + "'");
+                           settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                        settings.endArray();
                    }
 
                   xmlOut.writeStartElement("LL:Input");
-                  xmlOut.writeAttribute("src", ptr->inputs[i]->src->getXMLName());
+                  xmlOut.writeAttribute("src", ptr->inputs[i]->srcCmpt->getXMLName());
                   xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
                   xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
-                  if (ptr->inputs[i]->connectionType->type == Python) {
-                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
-                      ((pythonscript_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
-                  } else if (ptr->inputs[i]->connectionType->type == CSV) {
-                      ((csv_connection *) ptr->inputs[i]->connectionType)->src = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
-                      ((csv_connection *) ptr->inputs[i]->connectionType)->dst = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
+                  if (ptr->inputs[i]->conn->type == Python) {
+                      ((pythonscript_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((pythonscript_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
+                  } else if (ptr->inputs[i]->conn->type == CSV) {
+                      ((csv_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                      ((csv_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
                   }
-                  ptr->inputs[i]->connectionType->write_node_xml(xmlOut);
+                  ptr->inputs[i]->conn->write_node_xml(xmlOut);
                   xmlOut.writeEndElement(); // input
               }
 
@@ -2610,14 +2610,14 @@ void ComponentInstance::copyFrom(QSharedPointer <ComponentInstance>src, QSharedP
 
     // update reference in outputs:
     for (int i = 0; i < outputs.size(); ++i) {
-        outputs[i]->src = thisSharedPointer;
+        outputs[i]->srcCmpt = thisSharedPointer;
         // remove the port name reference
         outputs[i]->srcPort.clear();
     }
 
     // update reference in inputs:
     for (int i = 0; i < inputs.size(); ++i) {
-        inputs[i]->dst = thisSharedPointer;
+        inputs[i]->dstCmpt = thisSharedPointer;
         // remove dstPort name reference
         this->inputs[i]->dstPort.clear();
     }
@@ -2641,7 +2641,7 @@ void ComponentInstance::copyFrom(QSharedPointer <ComponentInstance>src, QSharedP
 
     // also do this on outputs:
     for (int i = 0; i < this->outputs.size(); ++i) {
-        this->outputs[i]->dst->matchPorts();
+        this->outputs[i]->dstCmpt->matchPorts();
     }
 }
 
@@ -3262,7 +3262,7 @@ QString ComponentInstance::getXMLName() {
         QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
         CHECK_CAST(projOwner)
         for (int i = 0; i < projOwner->synapses.size(); ++i) {
-            if (projOwner->synapses[i]->weightUpdateType == this) {
+            if (projOwner->synapses[i]->weightUpdateCmpt == this) {
                 return this->owner->getName() + " Synapse " + QString::number(float(i)) + " weight_update";
             }
         }
@@ -3272,7 +3272,7 @@ QString ComponentInstance::getXMLName() {
         QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
         CHECK_CAST(projOwner)
         for (int i = 0; i < projOwner->synapses.size(); ++i) {
-            if (projOwner->synapses[i]->postsynapseType == this) {
+            if (projOwner->synapses[i]->postSynapseCmpt == this) {
                 return this->owner->getName() + " Synapse " +  QString::number(float(i)) + " postsynapse";
             }
         }
@@ -3281,6 +3281,26 @@ QString ComponentInstance::getXMLName() {
         return "Reading the none from the Unsorted list - bad!";
     }
     return "error (" + this->component->name + ")";
+
+}
+
+int ComponentInstance::getSize() {
+
+    if (this->component->type == "neuron_body") {
+        QSharedPointer <population> popOwner = qSharedPointerDynamicCast <population> (this->owner);
+        CHECK_CAST(popOwner)
+        return (popOwner->numNeurons);
+    }
+    if (this->component->type == "weight_update") {
+        // not defined
+        return -1;
+    }
+    if (this->component->type == "postsynapse") {
+        // find which Synapse we are attached to
+        QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
+        CHECK_CAST(projOwner)
+        return projOwner->destination->numNeurons;
+    }
 
 }
 
@@ -3395,16 +3415,16 @@ QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {
         currInput = this->outputs[index];
     }
 
-    for (int j = 0; j < currInput->src->component->AnalogPortList.size(); ++j) {
+    for (int j = 0; j < currInput->srcCmpt->component->AnalogPortList.size(); ++j) {
 
-        AnalogPort * currSendPort = currInput->src->component->AnalogPortList[j];
+        AnalogPort * currSendPort = currInput->srcCmpt->component->AnalogPortList[j];
 
         // if is a send port
         if (currSendPort->mode == AnalogSendPort) {
 
-            for (int k = 0; k < currInput->dst->component->AnalogPortList.size(); ++k) {
+            for (int k = 0; k < currInput->dstCmpt->component->AnalogPortList.size(); ++k) {
 
-                AnalogPort * currRecvPort = currInput->dst->component->AnalogPortList[k];
+                AnalogPort * currRecvPort = currInput->dstCmpt->component->AnalogPortList[k];
 
                 if (currRecvPort->mode == AnalogRecvPort || currRecvPort->mode == AnalogReducePort) {
 
@@ -3420,16 +3440,16 @@ QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {
         }
     }
 
-    for (int j = 0; j < currInput->src->component->EventPortList.size(); ++j) {
+    for (int j = 0; j < currInput->srcCmpt->component->EventPortList.size(); ++j) {
 
-        EventPort * currSendPort = currInput->src->component->EventPortList[j];
+        EventPort * currSendPort = currInput->srcCmpt->component->EventPortList[j];
 
         // if is a send port
         if (currSendPort->mode == EventSendPort) {
 
-            for (int k = 0; k < currInput->dst->component->EventPortList.size(); ++k) {
+            for (int k = 0; k < currInput->dstCmpt->component->EventPortList.size(); ++k) {
 
-                EventPort * currRecvPort = currInput->dst->component->EventPortList[k];
+                EventPort * currRecvPort = currInput->dstCmpt->component->EventPortList[k];
 
                 if (currRecvPort->mode == EventRecvPort) {
 
@@ -3442,16 +3462,16 @@ QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {
         }
     }
 
-    for (int j = 0; j < currInput->src->component->ImpulsePortList.size(); ++j) {
+    for (int j = 0; j < currInput->srcCmpt->component->ImpulsePortList.size(); ++j) {
 
-        ImpulsePort * currSendPort = currInput->src->component->ImpulsePortList[j];
+        ImpulsePort * currSendPort = currInput->srcCmpt->component->ImpulsePortList[j];
 
         // if is a send port
         if (currSendPort->mode == ImpulseSendPort) {
 
-            for (int k = 0; k < currInput->dst->component->ImpulsePortList.size(); ++k) {
+            for (int k = 0; k < currInput->dstCmpt->component->ImpulsePortList.size(); ++k) {
 
-                ImpulsePort * currRecvPort = currInput->dst->component->ImpulsePortList[k];
+                ImpulsePort * currRecvPort = currInput->dstCmpt->component->ImpulsePortList[k];
 
                 if (currRecvPort->mode == ImpulseRecvPort) {
 

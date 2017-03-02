@@ -75,6 +75,15 @@ void NineMLALScene::initialiseScene(QSharedPointer<Component>al)
         addRegimeItem(al->RegimeList[i]);
     }
 
+    // if no regime, then add one
+    if (al->RegimeList.size() == 0) {
+        al->RegimeList.push_back(new Regime());
+        al->RegimeList[0]->name = "Regime";
+        al->initial_regime = al->RegimeList[0];
+        al->initial_regime_name = al->RegimeList[0]->name;
+        addRegimeItem(al->RegimeList[0]);
+    }
+
     //create on condition/event items (must be done after all regime items are created)
     for (int i=0; i<al->RegimeList.size();i++)
     {
@@ -530,10 +539,12 @@ void NineMLALScene::deleteSelectedItem()
         const int type = g->type();
         if (type == RegimeGraphicsItem::Type)
         {
-            //delete the graphics item
-            RegimeGraphicsItem *ri = (RegimeGraphicsItem*)g;
-            removeRegimeItem(ri);
-            root->notifyDataChange();
+            //delete the graphics item (unless it is the last regime)
+            if (this->rg_items.size() > 1) {
+                RegimeGraphicsItem *ri = (RegimeGraphicsItem*)g;
+                removeRegimeItem(ri);
+                root->notifyDataChange();
+            }
         }
         else if (type == TimeDerivativeTextItem::Type)
         {

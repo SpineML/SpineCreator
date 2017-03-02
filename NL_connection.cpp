@@ -32,6 +32,8 @@
 
 #include <QUuid>
 
+#include <QSettings>
+
 #include "NL_connection.h"
 #include "SC_layout_cinterpreter.h"
 #include "SC_python_connection_generate_dialog.h"
@@ -255,9 +257,81 @@ QLayout * onetoOne_connection::drawLayout(nl_rootdata *, viewVZLayoutEditHandler
 
 void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 {
-    xmlOut.writeStartElement("OneToOneConnection");
-    this->writeDelay(xmlOut);
-    xmlOut.writeEndElement(); // oneToOneConnection
+    // Sanity check - if we are exporting for simulation, we want to make sure
+    // that src and dst are the same size...
+    // if parent is inputObject, that means we can access the destination and source from that object
+    int srcSize = -2;
+    int dstSize = -1;
+    QString srcName = "";
+    QString dstName = "";
+    QSettings settings;
+    if (!this->parent.isNull()) {
+        switch (this->parent->type) {
+        case synapseObject:
+        {
+            // This is the usual
+            DBG() << "onetoOne_connection parent is a synapseObject";
+            // Test this->src and this->dst first
+            if (!this->srcPop.isNull()) {
+                srcSize = this->srcPop->numNeurons;
+                srcName = this->srcPop->getName();
+            } // else src is null - there's no population as a destination for this connection
+            if (!this->dstPop.isNull()) {
+                dstSize = this->dstPop->numNeurons;
+                dstName = this->dstPop->getName();
+            } // else dst is null - there's no population as a destination for this connection
+            break;
+        }
+        case projectionObject:
+        {
+            DBG() << "onetoOne_connection parent is a projectionObject (unexpected)";
+            break;
+        }
+        case populationObject:
+        {
+            DBG() << "onetoOne_connection parent is a populationObject (unexpected)";
+            break;
+        }
+        case inputObject:
+        {
+            DBG() << "onetoOne_connection parent is an inputObject (genericInput)";
+            QSharedPointer<genericInput> par = qSharedPointerCast <genericInput> (this->parent);
+            srcSize = par->getSrcSize();
+            srcName = par->getSrcName();
+            dstSize = par->getDestSize();
+            dstName = par->getDestName();
+            if (srcSize == -1 || dstSize == -1) {
+                int num_errs = settings.beginReadArray("errors");
+                settings.endArray();
+                settings.beginWriteArray("errors");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  QString("One to one connections to Weight Updates are not allowed: ") + par->getSrcName() + QString(" -> ") + par->getDestName());
+                settings.endArray();
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    } else {
+        srcSize = dstSize;
+    }
+    if (srcSize != dstSize) {
+
+       int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  QString("One to one connection with different src and dst sizes: ") + srcName + QString(" -> ") + dstName);
+        settings.endArray();
+
+    } else {
+
+        xmlOut.writeStartElement("OneToOneConnection");
+        this->writeDelay(xmlOut);
+        xmlOut.writeEndElement(); // oneToOneConnection
+
+    }
 }
 
 void onetoOne_connection::import_parameters_from_xml(QDomNode &e)
@@ -484,8 +558,8 @@ QLayout * csv_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler
 
         // rootLayout::projSelected has communicated this information
         // so we can stick it into this connection.
-        this->src = data->currentlySelectedProjection->source;
-        this->dst = data->currentlySelectedProjection->destination;
+        this->srcPop = data->currentlySelectedProjection->source;
+        this->dstPop = data->currentlySelectedProjection->destination;
 
         connMod->setConnection(this);
         tableView->setModel(connMod);
@@ -632,8 +706,8 @@ void csv_connection::write_node_xml(QXmlStreamWriter &xmlOut)
 
         if (this->filename.isEmpty()) {
             QMessageBox msgBox;
-            msgBox.setText("Error creating exported binary connection file '" + saveFullFileName
-                           + "' (filename could not be generated from src/dest population names)");
+            msgBox.setText("Error creating exported binary connection file srcName/dstName:'" + this->srcName
+                           + "/" + this->dstName + "' (filename could not be generated from src/dest population names)");
             msgBox.exec();
             return;
         }
@@ -1286,13 +1360,41 @@ void csv_connection::generateFilename(void)
     QString baseName = "conn_";
     this->filename = "";
 
-    // Test this->src and this->dst first
-    if (!this->src.isNull()) {
-        this->srcName = this->src->name;
+    // if parent is inputObject, that means we can access the destination and source from that object
+    switch (this->parent->type) {
+    case synapseObject:
+    {
+        // This is the usual
+        DBG() << "csv_connection parent is a synapseObject";
+        // Test this->src and this->dst first
+        if (!this->srcPop.isNull()) {
+            this->srcName = this->srcPop->name;
+        } // else src is null - there's no population as a destination for this connection
+        if (!this->dstPop.isNull()) {
+            this->dstName = this->dstPop->name;
+        } // else dst is null - there's no population as a destination for this connection
+        break;
     }
-
-    if (!this->dst.isNull()) {
-        this->dstName = this->dst->name;
+    case projectionObject:
+    {
+        DBG() << "csv_connection parent is a projectionObject (unexpected)";
+        break;
+    }
+    case populationObject:
+    {
+        DBG() << "csv_connection parent is a populationObject (unexpected)";
+        break;
+    }
+    case inputObject:
+    {
+        DBG() << "csv_connection parent is an inputObject (genericInput)";
+        QSharedPointer<genericInput> par = qSharedPointerCast <genericInput> (this->parent);
+        this->srcName = par->getSrcName();
+        this->dstName = par->getDestName();
+        break;
+    }
+    default:
+        break;
     }
 
     if (this->srcName.isEmpty()) {
@@ -1335,7 +1437,11 @@ void csv_connection::generateFilename(void)
     this->sanitizeReplace (this->srcName, allowed, replaceChar);
     this->sanitizeReplace (this->dstName, allowed, replaceChar);
 
-    this->filename = baseName + this->srcName + "_to_" + this->dstName + "_syn" + QString::number(this->synapseIndex) + ".bin";
+    if (this->synapseIndex > -1) {
+        this->filename = baseName + this->srcName + "_to_" + this->dstName + "_syn" + QString::number(this->synapseIndex) + ".bin";
+    } else {
+        this->filename = baseName + this->srcName + "_to_" + this->dstName + ".bin";
+    }
 }
 
 void csv_connection::sanitizeReplace (QString& str,
@@ -1588,8 +1694,8 @@ pythonscript_connection::pythonscript_connection(QSharedPointer <population> src
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;
-    this->src = src;
-    this->dst = dst;
+    this->srcPop = src;
+    this->dstPop = dst;
     this->connection_target = conn_targ;
 }
 
@@ -1940,7 +2046,7 @@ bool pythonscript_connection::changed()
         par_changed = true;
     }
 
-    if (src->numNeurons != srcSize || dst->numNeurons != dstSize || par_changed) {
+    if (srcPop->numNeurons != srcSize || dstPop->numNeurons != dstSize || par_changed) {
         return true;
     } else {
         return hasChanged;
@@ -1950,8 +2056,8 @@ bool pythonscript_connection::changed()
 void pythonscript_connection::setUnchanged(bool state)
 {
     if (state) {
-        srcSize = src->numNeurons;
-        dstSize = dst->numNeurons;
+        srcSize = srcPop->numNeurons;
+        dstSize = dstPop->numNeurons;
         for (int i = 0; i <this->lastGeneratedParValues.size(); ++i) {
             this->lastGeneratedParValues[i] = this->parValues[i];
         }
@@ -2038,7 +2144,7 @@ void pythonscript_connection::regenerateConnections()
     QMutex * connGenerationMutex = new QMutex();
 
     this->connections.clear();
-    generate_dialog generate(this, this->src, this->dst, this->connections, connGenerationMutex, (QWidget *)NULL);
+    generate_dialog generate(this, this->srcPop, this->dstPop, this->connections, connGenerationMutex, (QWidget *)NULL);
     bool retVal = generate.exec();
     if (!retVal) {
         return;
@@ -2093,8 +2199,6 @@ void pythonscript_connection::write_metadata_xml(QDomDocument &meta, QDomNode &e
 
 void pythonscript_connection::read_metadata_xml(QDomNode &e)
 {
-    DBG() << "pythonscript_connection::read_metadata_xml called";
-
     // read in the settings for this generator
     QDomNode node = e.firstChild();
 
@@ -2116,10 +2220,8 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
 
             // load the parameters from the metadata
             for (int i = 0; i < this->parNames.size(); ++i) {
-                DBG() << "ParName = " << this->parNames[i];
                 this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
             }
-
         }
 
         // read the config metadata
@@ -2148,7 +2250,7 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
     if (settings.value(this->scriptName,"not found") == this->scriptText) {
         // User's library DOES contain a script whose name and content
         // matches the one in the model.
-        DBG() << "Your library has an identical copy of the model script " << this->scriptName;
+        // DBG() << "Your library has an identical copy of the model script " << this->scriptName;
 
     } else if (settings.value(this->scriptName,"not found") == "not found") {
 
@@ -2275,8 +2377,8 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
 
 ParameterInstance * pythonscript_connection::getPropPointer()
 {
-    for (int i = 0; i < this->src->projections.size(); ++i) {
-        QSharedPointer <projection> proj = this->src->projections[i];
+    for (int i = 0; i < this->srcPop->projections.size(); ++i) {
+        QSharedPointer <projection> proj = this->srcPop->projections[i];
         for (int j = 0; j < proj->synapses.size(); ++j) {
             QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
@@ -2294,16 +2396,16 @@ ParameterInstance * pythonscript_connection::getPropPointer()
             }
             if (isConn) {
                 // now we know which weight update we have to look at
-                for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
-                    if (syn->weightUpdateType->ParameterList[k]->name == this->weightProp) {
+                for (int k = 0; k < syn->weightUpdateCmpt->ParameterList.size(); ++k) {
+                    if (syn->weightUpdateCmpt->ParameterList[k]->name == this->weightProp) {
                         // found the weight
-                        return syn->weightUpdateType->ParameterList[k];
+                        return syn->weightUpdateCmpt->ParameterList[k];
                     }
                 }
-                for (int k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
-                    if (syn->weightUpdateType->StateVariableList[k]->name == this->weightProp) {
+                for (int k = 0; k < syn->weightUpdateCmpt->StateVariableList.size(); ++k) {
+                    if (syn->weightUpdateCmpt->StateVariableList[k]->name == this->weightProp) {
                         // found the weight
-                        return syn->weightUpdateType->StateVariableList[k];
+                        return syn->weightUpdateCmpt->StateVariableList[k];
                     }
                 }
             }
@@ -2316,8 +2418,8 @@ ParameterInstance * pythonscript_connection::getPropPointer()
 QStringList pythonscript_connection::getPropList()
 {
     QStringList list;
-    for (int i = 0; i < this->src->projections.size(); ++i) {
-        QSharedPointer <projection> proj = this->src->projections[i];
+    for (int i = 0; i < this->srcPop->projections.size(); ++i) {
+        QSharedPointer <projection> proj = this->srcPop->projections[i];
         for (int j = 0; j < proj->synapses.size(); ++j) {
             QSharedPointer <synapse> syn = proj->synapses[j];
             // if we have found the connection
@@ -2335,13 +2437,13 @@ QStringList pythonscript_connection::getPropList()
             }
             if (isConn) {
                 // now we know which weight update we have to look at
-                for (int k = 0; k < syn->weightUpdateType->ParameterList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateCmpt->ParameterList.size(); ++k) {
                     // found the weight
-                    list.push_back(syn->weightUpdateType->ParameterList[k]->name);
+                    list.push_back(syn->weightUpdateCmpt->ParameterList[k]->name);
                 }
-                for (int k = 0; k < syn->weightUpdateType->StateVariableList.size(); ++k) {
+                for (int k = 0; k < syn->weightUpdateCmpt->StateVariableList.size(); ++k) {
                     // found the weight
-                    list.push_back(syn->weightUpdateType->StateVariableList[k]->name);
+                    list.push_back(syn->weightUpdateCmpt->StateVariableList[k]->name);
                 }
             }
         }
@@ -2520,12 +2622,12 @@ void pythonscript_connection::generate_connections()
 
     // regenerate src and dst locations
     QString errorLog;
-    src->layoutType->generateLayout(src->numNeurons,&src->layoutType->locations,errorLog);
+    srcPop->layoutType->generateLayout(srcPop->numNeurons,&srcPop->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         DBG() << "no src locs";
         return;
     }
-    dst->layoutType->generateLayout(dst->numNeurons,&dst->layoutType->locations,errorLog);
+    dstPop->layoutType->generateLayout(dstPop->numNeurons,&dstPop->layoutType->locations,errorLog);
     if (!errorLog.isEmpty()) {
         DBG() << "no dst locs";
         return;
@@ -2535,8 +2637,8 @@ void pythonscript_connection::generate_connections()
     PyObject * argsPy = PyTuple_New(this->parNames.size()+2/* 2 for the src and dst locations*/);
 
     // convert the locations into Python Objects:
-    PyObject * srcPy = vectorLocToList(&src->layoutType->locations);
-    PyObject * dstPy = vectorLocToList(&dst->layoutType->locations);
+    PyObject * srcPy = vectorLocToList(&srcPop->layoutType->locations);
+    PyObject * dstPy = vectorLocToList(&dstPop->layoutType->locations);
 
     // add them to the tuple
     PyTuple_SetItem(argsPy,0,srcPy);
@@ -2609,8 +2711,8 @@ void pythonscript_connection::generate_connections()
     if (this->connection_target != NULL) {
 
         DBG() << "pythonscript_connection::generate_connections: setting src/dst popn names in connection_target";
-        this->connection_target->setSrcName (this->src->name);
-        this->connection_target->setDstName (this->dst->name);
+        this->connection_target->setSrcName (this->srcPop->name);
+        this->connection_target->setDstName (this->dstPop->name);
 
         // remove existing connections
         this->connection_target->clearData();
@@ -2670,8 +2772,8 @@ connection * pythonscript_connection::newFromExisting()
     c->connection_target = this->connection_target;
     c->scriptName = this->scriptName;
     c->scriptText = this->scriptText;
-    c->src = this->src;
-    c->dst = this->dst;
+    c->srcPop = this->srcPop;
+    c->dstPop = this->dstPop;
 
     // copy script pars
     c->parNames = this->parNames;
