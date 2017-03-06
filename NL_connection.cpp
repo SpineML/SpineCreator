@@ -300,14 +300,14 @@ void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut)
             srcName = par->getSrcName();
             dstSize = par->getDestSize();
             dstName = par->getDestName();
-            if (srcSize == -1 || dstSize == -1) {
+            /*if (srcSize == -1 || dstSize == -1) {
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
                 settings.setArrayIndex(num_errs + 1);
                 settings.setValue("errorText",  QString("One to one connections to Weight Updates are not allowed: ") + par->getSrcName() + QString(" -> ") + par->getDestName());
                 settings.endArray();
-            }
+            }*/
             break;
         }
         default:
@@ -316,7 +316,7 @@ void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut)
     } else {
         srcSize = dstSize;
     }
-    if (srcSize != dstSize) {
+    if (srcSize != dstSize && false) { // not used for now
 
        int num_errs = settings.beginReadArray("errors");
         settings.endArray();
@@ -909,9 +909,9 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
     } else { // BinaryFileList.count() != 1
 
         // No BinaryFileList, so the ConnectionList must be stated in the XML
-        if (this->filename.isEmpty()) {
+        /*if (this->filename.isEmpty()) {
             this->generateFilename();
-        }
+        }*/
 
         // load connections from xml
         QFile f;

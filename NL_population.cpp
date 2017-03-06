@@ -444,8 +444,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 delete newInput->conn;
                 newInput->conn = new alltoAll_connection;
                 QDomNode cNode = type.item(0);
-                newInput->conn->import_parameters_from_xml(cNode);
                 newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
             type = e2.elementsByTagName("OneToOneConnection");
             if (type.count() == 1) {
@@ -453,16 +453,16 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->conn = new onetoOne_connection;
                 newInput->conn->setParent(newInput);
                 QDomNode cNode = type.item(0);
-                newInput->conn->import_parameters_from_xml(cNode);
                 newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
             type = e2.elementsByTagName("FixedProbabilityConnection");
             if (type.count() == 1) {
                 delete newInput->conn;
                 newInput->conn = new fixedProb_connection;
                 QDomNode cNode = type.item(0);
-                newInput->conn->import_parameters_from_xml(cNode);
                 newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
             type = e2.elementsByTagName("ConnectionList");
             if (type.count() == 1) {
@@ -471,8 +471,8 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 QDomNode cNode = type.item(0);
                 newInput->conn->srcPop = qSharedPointerDynamicCast <population> (newInput->source);
                 newInput->conn->dstPop = qSharedPointerDynamicCast <population> (newInput->destination);
-                newInput->conn->import_parameters_from_xml(cNode);
                 newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
 
             if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {

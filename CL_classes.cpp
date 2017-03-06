@@ -3321,8 +3321,10 @@ int ComponentInstance::getSize() {
         return (popOwner->numNeurons);
     }
     if (this->component->type == "weight_update") {
-        // not defined
-        return -1;
+        // only valid for postsynaptic inputs.. I think???
+        QSharedPointer <projection> projOwner = qSharedPointerDynamicCast <projection> (this->owner);
+        CHECK_CAST(projOwner)
+        return projOwner->destination->numNeurons;
     }
     if (this->component->type == "postsynapse") {
         // find which Synapse we are attached to
@@ -3331,7 +3333,7 @@ int ComponentInstance::getSize() {
         return projOwner->destination->numNeurons;
     }
 
-    return -1;
+    return 0;
 }
 
 void ComponentInstance::removeReferences() {

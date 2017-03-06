@@ -2166,6 +2166,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     if (type.count() == 1) {
                         delete newInput->conn;
                         newInput->conn = new fixedProb_connection;
+                        newInput->conn->setParent(newInput);
                         QDomNode cNode = type.item(0);
                         newInput->conn->import_parameters_from_xml(cNode);
                     }
