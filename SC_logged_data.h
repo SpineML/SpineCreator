@@ -26,22 +26,25 @@
 #define LOGDATA_H
 
 #include <QObject>
+#include <QMdiArea>
 #include "qcustomplot.h"
 #include "globalHeader.h"
 
-enum fileFormat {
+enum fileFormat
+{
     BINARY,
     CSVFormat,
     SSVFormat
 };
 
-enum dataClasses {
+enum dataClasses
+{
     ANALOGDATA,
     EVENTDATA
 };
 
-
-enum dataType {
+enum dataType
+{
     TYPE_DOUBLE,
     TYPE_FLOAT,
     TYPE_INT32,
@@ -49,8 +52,8 @@ enum dataType {
     TYPE_STRING
 };
 
-
-struct column {
+struct column
+{
     int index;
     QString heading;
     QString dims;
@@ -65,37 +68,58 @@ class logData : public QObject
     Q_OBJECT
 public:
     explicit logData(QObject *parent = 0);
-    QCustomPlot * plot;
-    QFile logFile;
+
+    /*!
+     * A map of the plots associated with this logData object, and the QMdiSubWindows as well.
+     */
+    QMap<QCustomPlot*, QMdiSubWindow*> plots;
+    QMap<QCustomPlot*, QMdiSubWindow*> getPlots (void) { return this->plots; }
+    void addPlots (QMap<QCustomPlot*, QMdiSubWindow*>& theplots) {
+        // CHECKME: Sensible?
+        this->plots.swap (theplots);
+    }
+
     QString logFileXMLname;
-    fileFormat dataFormat;
+    double timeStep;
+    QString logName;
+    dataClasses dataClass;
     QVector < column > columns;
-    double endTime;
     QVector < int > eventIndices;
+
+    /*!
+     * Return the number of QCustomPlots associated with this logData object.
+     */
+    bool numPlots (void) {
+        return this->plots.size();
+    }
+
+public: // but really private
+    QFile logFile;
+public: // but really private 2.
+    fileFormat dataFormat;
+    double endTime;
     int binaryDataStride;
     QVector < QVector < double > > colData;
-    double timeStep;
-    dataClasses dataClass;
     QString eventPortName;
-    QString logName;
     bool allLogged;
     double min;
     double max;
 
+public:
+    /*!
+     * Delete the log file associated with this logData
+     */
+    void deleteLogFile (void);
     bool setupFromXML();
     double getMax();
     double getMin();
     QVector < double > getRow(int rowNum);
-    bool plotLine(QCustomPlot * plot, int colNum, int update = -1);
-    bool plotRaster(QCustomPlot * plot, QList < QVariant > indices, int update = -1);
+    bool plotLine(QCustomPlot* plot, QMdiSubWindow* msw, int colNum, int update = -1);
+    bool plotRaster(QCustomPlot* plot, QMdiSubWindow* msw, QList < QVariant > indices, int update = -1);
     bool calculateBinaryDataStride();
     int calculateBinaryDataOffset(int);
 
-signals:
-    
 public slots:
-
-    
 };
 
 #endif // LOGDATA_H

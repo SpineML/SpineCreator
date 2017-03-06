@@ -27,60 +27,211 @@
 
 #include <QtGui>
 #include "SC_logged_data.h"
+#include "EL_experiment.h"
 
-struct viewGVstruct;
+struct viewGVstruct; // Defined in mainwindow.h
 
 class viewGVpropertieslayout : public QWidget
 {
     Q_OBJECT
 public:
-    explicit viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget *parent = 0);
+    explicit viewGVpropertieslayout(viewGVstruct* viewGVin, QWidget* parent = 0);
     ~viewGVpropertieslayout();
-    void setupPlot(QCustomPlot * plot);
-    void loadDataFiles(QStringList, QDir * path = 0);
-    viewGVstruct * viewGV;
-    QAction * actionAddGraph;
-    QAction * actionToGrid;
-    QAction * actionLoadData;
-    QAction * actionRefresh;
-    QAction * actionSavePdf;
-    QAction * actionSavePng;
-    QVector < logData * > logsForGraphs;
-    QMdiSubWindow * currentSubWindow;
-    QListWidget * datas;
-    QListWidget * indices;
-    QListWidget * types;
-    QPushButton * addButton;
+
+    /*!
+     * \brief configure a new QCustomPlot for use.
+     */
+    void setupPlot (QCustomPlot* plot);
+
+    /*!
+     * \brief populateVLogData Populate @see vLogData from the given list of files.
+     * \param filelist The list of log file names or absolute file paths.
+     * \param path A directory whose path is prepended to the members of filelist.
+     */
+    void populateVLogData (QStringList filelist, QDir* path = 0);
+
+    /*!
+     * Clears out this->vLogData
+     */
+    void clearVLogData (void);
+
+    /*!
+     * \brief Close visible QCustomPlots, without trying to store them
+     * away (used if the project for which the plots are being viewed
+     * was closed).
+     */
+    void clearPlots (void);
+
+    /*!
+     * Add an empty plot and tile it.
+     */
+    void addEmptyPlot (void);
+
+    /*!
+     * \brief viewGV - a structure defined in mainwindow.h holding
+     * information about the graphing interface of SpineCreator.
+     */
+    viewGVstruct* viewGV;
+
+    /*!
+     * Called when the user presses a button to create a new, empty
+     * graph window.
+     */
+    QAction* actionAddGraphSubWin;
+
+    /*!
+     * \brief actionToGrid Tile all the subwindows.
+     */
+    QAction* actionToGrid;
+
+    /*!
+     * \brief actionLoadData Open a dialog to load some log data
+     */
+    QAction* actionLoadLogData;
+
+    QAction* actionRefreshLogData;
+    QAction* actionSavePdf;
+    QAction* actionSavePng;
+
+    /*!
+     * \brief vLogData A vector of pointers to the logData objects
+     * which are being shown for the current experiment.
+     */
+    QVector<logData*> vLogData;
+
+    /*!
+     * The currently selected graph sub-window.
+     */
+    QMdiSubWindow* currentSubWindow;
+
+    /*!
+     * The experiment which is currently "in view"
+     */
+    experiment* currentExperiment;
+
+    /*!
+     * The list widgets which appear on the right hand side of the graph view.
+     */
+    QListWidget* logList;
+
+    /*!
+     * \brief dataIndexList is a list of the individual data sets within each
+     * log file. Corresponds to the elements in a population.
+     */
+    QListWidget* dataIndexList;
+
+    /*!
+     * \brief A list of the plot types for a given logData. Currently there's
+     * only one option, depending on the data type; line graphs or raster plots.
+     */
+    QListWidget* typeList;
+
+    /*!
+     * This is "add a graph of the data to the current, existent plot
+     * window". In this class, we'll use "graph" to mean the graph of
+     * a single set of data, which may be one of many existing in the
+     * file backend of a given logData object
+     */
+    QPushButton* addGraphButton;
+
+    /*!
+     * The log directory which is currently being viewed.
+     */
+    QString currentLogDataDir;
 
 private:
-    void createToolbar();
-    void updateLogs();
-    void refreshLog(logData * log);
-    
+    /*!
+     * \brief Create the tool bar that sits above the graphing area. Called once.
+     */
+    void createToolbar (void);
+
+    /*!
+     * \brief Update @see logList
+     */
+    void updateLogList (void);
+
+    /*!
+     * \brief refreshLog
+     * \param log
+     */
+    void refreshLog (logData* log);
+
+    /*!
+     * Run through the logData object and graph all data on @see subWin.
+     */
+    void addLinesRasters (logData* log, QMdiSubWindow* subWin);
+
+    /*!
+     * If true, the x axes of all the visible plots should be kept to
+     * the same range - editing the range in one plot should lead to
+     * the range changing in all the others.
+     */
+    bool unifyTime;
+
 signals:
-    
+
 public slots:
     // property slots
-    void windowSelected(QMdiSubWindow *);
-    void dataSelectionChanged(int);
-    void addPlotToCurrent();
+    /*!
+     * \brief Actions to carry out when a sub window is selected by the user.
+     */
+    void windowSelected (QMdiSubWindow* window);
+
+    /*!
+     * \brief Called when the list of selected logs is changed by the user.
+     */
+    void logListSelectionChanged (int);
+
+    /*!
+     * \brief Add a graph to the current sub window.
+     */
+    void addGraphsToCurrent();
+
+    /*!
+     * Set the range r on the x axis for all plots other than the
+     * current one. This is a "unify time" option for multiple
+     * graphs. Cool.
+     */
+    void unifyRangeForAllPlots (const QCPRange& r);
+
+    /*!
+     * \brief Delete the currently selected log file.
+     *
+     * This looks at the currently selected log in @see logList, deletes
+     * the log files behind it (the .xml and .bin files) and then removes
+     * the corresponding entry from @see vLogData and @see logList
+     */
     void deleteCurrentLog();
 
-    // plot slots
+    /*!
+     * Toggle the feature which keeps the x axis (time) ranges the
+     * same on all graphs.
+     */
+    void toggleUnifyTime (void);
+
+    // graph slots
+    /*!
+     * \brief Remove the selected graph from the currently selected subwindow.
+     */
     void removeSelectedGraph();
+
+    /*!
+     * \brief Remove all graphs from the currently selected subwindow.
+     */
     void removeAllGraphs();
+
     void toggleHorizontalZoom();
     void toggleHorizontalDrag();
     void toggleVerticalZoom();
     void toggleVerticalDrag();
     void rescaleAxes();
-    void contextMenuRequest(QPoint pos);
+    void contextMenuRequest (QPoint pos);
 
     // toolbar slots
-    void actionAddGraph_triggered();
+    void actionAddGraphSubWin_triggered();
     void actionToGrid_triggered();
-    void actionLoadData_triggered();
-    void actionRefresh_triggered();
+    void actionLoadLogData_triggered();
+    void actionRefreshLogData_triggered();
     void actionSavePdf_triggered();
     void actionSavePng_triggered();
 };

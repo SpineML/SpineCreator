@@ -668,6 +668,7 @@ public:
     ComponentInstance(){}
     virtual ~ComponentInstance();
     QString getXMLName();
+    int getSize();
     void matchPorts();
     QStringList getPortMatches(int index, bool isOutput);
     void removeReferences();

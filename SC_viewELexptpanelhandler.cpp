@@ -161,22 +161,19 @@ void viewELExptPanelHandler::recursiveDelete(QLayout * parentLayout)
 void viewELExptPanelHandler::recursiveDeleteExpt(QLayout * parentLayout)
 {
     QLayoutItem * item;
-    while ((item = parentLayout->takeAt(0))) {
+    while ((item = parentLayout->takeAt(0))) { // invalid index 0
         if (item->widget()) {
             if (item->widget()->property("noDelete")!=true) {
                 item->widget()->disconnect((QObject *)0);
                 item->widget()->hide();
                 connect(this, SIGNAL(deleteWidgets()),item->widget(), SLOT(deleteLater()));
-                qDebug() << "Mee: " << item->widget();
-            } else {
-                qDebug() << "Moo: " << item->widget();
             }
         }
-        if (item->layout())
+        if (item->layout()) {
             recursiveDeleteLoop(item->layout());
+        }
         delete item;
     }
-
 }
 
 void viewELExptPanelHandler::redraw()
@@ -290,7 +287,7 @@ void viewELExptPanelHandler::redrawExpt()
         // store the scroll location so we can replace it later
         horiz_scroll = scroll->horizontalScrollBar()->value();
         vert_scroll = scroll->verticalScrollBar()->value();
-        qDebug() << horiz_scroll << vert_scroll;
+        //qDebug() << horiz_scroll << vert_scroll;
     }
 
     emit this->deleteWidgets();
@@ -572,14 +569,10 @@ void viewELExptPanelHandler::redrawPanel()
 
     // add experiments
     for (int i = data->experiments.size()-1; i >= 0; --i) {
-
         exptBox * box = data->experiments[i]->getBox(this);
-
         box->setProperty("index", i);
         connect(box, SIGNAL(clicked()), this, SLOT(changeSelection()));
-
         panel->insertWidget(2, box);
-
     }
 }
 
@@ -711,13 +704,19 @@ void viewELExptPanelHandler::changeSelection()
     emit enableRun(true);
 
     // check if this is the selected box - if it is then do nothing
-    if (data->experiments[index]->selected)
+    if (data->experiments[index]->selected) {
         return;
+    }
 
     // otherwise select it
     data->experiments[index]->select(&(data->experiments));
 
-    // redraw to update the selection
+    // Initialise the viewGV for the experiment if necessary
+    this->main->initViewGV (data->experiments[index]);
+
+    // Update the experiment menu
+    this->main->setExperimentMenu();
+
     redrawPanel();
     redrawExpt();
 }
@@ -736,7 +735,9 @@ void viewELExptPanelHandler::changedEngine(QString sim)
 
     currentExperiment->setup.simType = sim;
 
-    // redraw to update the selection
+    // Log file location will have changed if the engine changed.
+    this->main->updateDatas();
+
     redrawExpt();
 }
 
@@ -783,7 +784,6 @@ void viewELExptPanelHandler::changedSolver(int index)
 
     currentExperiment->setup.solver = type;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -800,7 +800,6 @@ void viewELExptPanelHandler::changedSolverOrder(int val)
 
     currentExperiment->setup.solverOrder = val;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -817,7 +816,6 @@ void viewELExptPanelHandler::addInput()
 
     currentExperiment->ins.push_back(new exptInput);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -840,11 +838,11 @@ void viewELExptPanelHandler::setInputComponent()
         }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }
@@ -867,7 +865,7 @@ void viewELExptPanelHandler::setInputComponent()
         // UI changes required so hit up a redraw
         // disconnect sender so it doesn't flip out when it loses focus
         sender()->disconnect((QObject *)0);
-        // redraw to update the selection
+
         redrawExpt();
     } else {
         in->set = false;
@@ -889,7 +887,6 @@ void viewELExptPanelHandler::setInputPort(int index)
     // disconnect sender so it doesn't flip out when it loses focus
     sender()->disconnect((QObject *)0);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -905,7 +902,6 @@ void viewELExptPanelHandler::setInputType(int index)
     // disconnect sender so it doesn't flip out when it loses focus
     sender()->disconnect((QObject *)0);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -918,7 +914,6 @@ void viewELExptPanelHandler::setInputRateDistributionType(int index)
     else if (index == 1)
         in->rateDistribution = Poisson;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1000,7 +995,6 @@ void viewELExptPanelHandler::acceptInput()
     // Mark that we're no longer editing this input
     in->edit = false;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1009,7 +1003,6 @@ void viewELExptPanelHandler::editInput()
     exptInput * in = (exptInput *) sender()->property("ptr").value<void *>();
     in->edit = true;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1029,7 +1022,6 @@ void viewELExptPanelHandler::delInput()
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteInputUndo(this->data, currentExperiment, in));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1160,7 +1152,6 @@ void viewELExptPanelHandler::setInputParams(int row, int col)
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1175,7 +1166,6 @@ void viewELExptPanelHandler::fillInputParams()
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1212,7 +1202,6 @@ void viewELExptPanelHandler::setInputAddTVRow()
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1242,7 +1231,6 @@ void viewELExptPanelHandler::setInputDelTVRow()
         }
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1259,7 +1247,6 @@ void viewELExptPanelHandler::addOutput()
 
     currentExperiment->outs.push_back(new exptOutput);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1282,11 +1269,11 @@ void viewELExptPanelHandler::setOutputComponent()
         }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }
@@ -1310,7 +1297,7 @@ void viewELExptPanelHandler::setOutputComponent()
         // UI change so hit up a redraw
         // disconnect sender so it doesn't flip out when it loses focus
         sender()->disconnect((QObject *)0);
-        // redraw to update the selection
+
         redrawExpt();
     } else {
         qDebug() << "moo2";
@@ -1330,13 +1317,11 @@ void viewELExptPanelHandler::setOutputPort(int index)
     out->portName = port->name;
     out->portIsAnalog = port->isAnalog();
 
-    // redraw to update the selection
     redrawExpt();
 }
 
 void viewELExptPanelHandler::setOutputType()
 {
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1389,7 +1374,6 @@ void viewELExptPanelHandler::acceptOutput()
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     out->edit = false;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1398,7 +1382,6 @@ void viewELExptPanelHandler::editOutput()
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
     out->edit = true;
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1418,7 +1401,6 @@ void viewELExptPanelHandler::delOutput()
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteOutputUndo(this->data, currentExperiment, out));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1464,7 +1446,6 @@ void viewELExptPanelHandler::addLesion()
 
     currentExperiment->lesions.push_back(new exptLesion(currentExperiment));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1504,14 +1485,14 @@ void viewELExptPanelHandler::setGILesion (void)
             // For each synapse in projections, test for weightupdate and postsynapse containing inputs
             for (int k = 0; k < pop->projections[j]->synapses.size() && NO_GILESION; ++k) {
                 // Find inputs from the weight update and postsynapses on this synapse:
-                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateType->inputs.size() && NO_GILESION; ++l) {
-                    if (pop->projections[j]->synapses[k]->weightUpdateType->inputs[l]->getName() == text) {
-                        lesionedGI = pop->projections[j]->synapses[k]->weightUpdateType->inputs[l];
+                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size() && NO_GILESION; ++l) {
+                    if (pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->getName() == text) {
+                        lesionedGI = pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l];
                     }
                 }
-                for (int l = 0; l < pop->projections[j]->synapses[k]->postsynapseType->inputs.size() && NO_GILESION; ++l) {
-                    if (pop->projections[j]->synapses[k]->postsynapseType->inputs[l]->getName() == text) {
-                        lesionedGI = pop->projections[j]->synapses[k]->postsynapseType->inputs[l];
+                for (int l = 0; l < pop->projections[j]->synapses[k]->postSynapseCmpt->inputs.size() && NO_GILESION; ++l) {
+                    if (pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->getName() == text) {
+                        lesionedGI = pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l];
                     }
                 }
             }
@@ -1533,7 +1514,6 @@ void viewELExptPanelHandler::setGILesion (void)
         ((QLineEdit*) sender())->setPalette(p);
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1574,7 +1554,6 @@ void viewELExptPanelHandler::setLesionProjection()
         ((QLineEdit *) sender())->setPalette(p);
     }
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1582,7 +1561,6 @@ void viewELExptPanelHandler::acceptLesion()
 {
     exptLesion * lesion = (exptLesion *) sender()->property("ptr").value<void *>();
     lesion->edit = false;
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1608,7 +1586,6 @@ void viewELExptPanelHandler::delLesion()
 
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteLesionUndo(this->data, currentExperiment, lesion));
-
     redrawExpt();
 }
 
@@ -1646,7 +1623,6 @@ void viewELExptPanelHandler::delGILesion()
 
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteGILesionUndo(this->data, currentExperiment, gilesion));
-
     redrawExpt();
 }
 
@@ -1663,11 +1639,11 @@ void viewELExptPanelHandler::setChangeParComponent()
         }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                 }
-                if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == text) {
-                    src = data->populations[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == text) {
+                    src = data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt;
                 }
             }
         }
@@ -1699,7 +1675,6 @@ void viewELExptPanelHandler::setChangeParComponent()
     // disconnect sender so it doesn't flip out when it loses focus
     sender()->disconnect((QObject *)0);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1748,7 +1723,6 @@ void viewELExptPanelHandler::addChangedProp()
 
     currentExperiment->changes.push_back(new exptChangeProp);
 
-    // redraw to update the selection
     redrawExpt();
 }
 
@@ -1782,14 +1756,13 @@ void viewELExptPanelHandler::delChangedProp()
     // push the command onto the undo stack
     this->data->currProject->undoStack->push(new deleteChangePropUndo(this->data, currentExperiment, prop));
 
-    // redraw to update the selection
     redrawExpt();
 }
 
 void viewELExptPanelHandler::run()
 {
-
     QSettings settings;
+    settings.setProperty("MERR", QString("False"));
 
     QToolButton * runButton = qobject_cast < QToolButton * > (sender());
     if (runButton) {
@@ -1943,7 +1916,7 @@ void viewELExptPanelHandler::run()
         // save_project changes the current project's filepath.
         if (!this->data->currProject->save_project(tFilePath, this->data)) {
             qDebug() << "Failed to save the model into the temporary model directory";
-            runButton->setEnabled(true);
+            this->cleanUpPostRun("Model save error", "The simulation could not be started");
             // Revert currProject->filePath here
             this->data->currProject->filePath = previousFilePath;
             return;
@@ -1964,11 +1937,17 @@ void viewELExptPanelHandler::run()
     simulator->setWorkingDirectory(wk_dir.absolutePath());
     simulator->setProcessEnvironment(env);
 
-    simulator->setProperty("logpath", wk_dir_string + QDir::separator() + "temp" + QDir::separator() + "log");
+    // This is a project-specific* output directory, stored in a
+    // folder in the working directory.
+    //
+    // *: Actually, it's experiment specific, because if another
+    // experiment in the same project has a different simulator, then
+    // this path will differ. However, I don't add a _exptN
+    // suffix. That said, true experiment-specific data storage would
+    // enable easy comparison of two experiments and would be great.
+    QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp" + QDir::separator() + data->currProject->getFilenameFriendlyName() + "_e" + QString::number(currentExptNum);
 
-    // set a directory to work in (This is used to set up the SpineCreator - simulation communication)
-    // FIXME: It would be great if this were project-specific, so that each project has its own temp dir.
-    QString out_dir_name = wk_dir.absolutePath() + QDir::separator() + "temp";
+    simulator->setProperty("logpath", out_dir_name + QDir::separator() + "log");
 
     QFileInfo projFileInfo(tFilePath); // tFilePath contains the path
                                        // to the model being executed,
@@ -2100,23 +2079,21 @@ void viewELExptPanelHandler::checkForSimTime() {
 
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
 {
-
     // stop updating the bar
     simTimeChecker.disconnect();
     simTimeChecker.stop();
     QFile::remove(simCancelFileName);
 
-    experiment * currentExperiment = NULL;
-
-    // find currentExperiment
+    // find currentExperiment (could make use of MainWindow::getCurrentExpt)
+    experiment* currentExperiment = (experiment*)0;
     for (int i = 0; i < data->experiments.size(); ++i) {
         if (data->experiments[i]->selected) {currentExperiment = data->experiments[i]; break;}
     }
-
-    if (currentExperiment == NULL) {
+    if (currentExperiment == (experiment*)0) {
         this->cleanUpPostRun("", "");
         return;
     }
+
     float proportion = 0;
     if (currentExperiment->progressBar) {
         currentExperiment->progressBar->setStyleSheet(QString("QLabel {background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(150, 255, 150, 0), ") \
@@ -2142,7 +2119,7 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         }
     }
 
-    // collect logs
+    // Update the view of the logfiles
     QDir logs(sender()->property("logpath").toString());
 
     QStringList filter;
@@ -2150,11 +2127,17 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     logs.setNameFilters(filter);
 
     // add logs to graphs
-    data->main->viewGV.properties->loadDataFiles(logs.entryList(), &logs);
+    // First ensure viewGV[currentExperiment] exists. if not, do nothing?
+    if (main->existsViewGV(currentExperiment)) {
+        DBG() << "viewGV exists for currentExperiment; updating logdata etc.";
+        data->main->viewGV[currentExperiment]->properties->populateVLogData (logs.entryList(), &logs);
 
-    // and insert logs into visualiser
-    if (data->main->viewVZ.OpenGLWidget != NULL) {
-        data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV.properties->logsForGraphs);
+        // and insert logs into visualiser
+        if (data->main->viewVZ.OpenGLWidget != NULL) {
+            data->main->viewVZ.OpenGLWidget->addLogs(&data->main->viewGV[currentExperiment]->properties->vLogData);
+        }
+    } else {
+        DBG() << "viewGV didn't exist for currentExperiment, so not updating logdata etc.";
     }
 
     // get status
@@ -2188,7 +2171,6 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     }
 
     this->cleanUpPostRun("", "");
-
 }
 
 void viewELExptPanelHandler::simulatorStandardOutput()

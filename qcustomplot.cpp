@@ -9158,7 +9158,7 @@ QCustomPlot::~QCustomPlot()
 }
 
 /*!
-  Sets which elements are forcibly drawn antialiased as an \a or combination of QCP::AntialiasedElement.
+  Sets which elementsaddGraphsToCurrent are forcibly drawn antialiased as an \a or combination of QCP::AntialiasedElement.
 
   This overrides the antialiasing settings for whole element groups, normally controlled with the
   \a setAntialiasing function on the individual elements. If an element is neither specified in

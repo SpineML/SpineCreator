@@ -43,6 +43,11 @@ public:
     nl_rootdata * data;
     //void redraw();
 
+    /*!
+     * pointer to the parent window.
+     */
+    MainWindow* main;
+
 private:
     viewELstruct * viewEL;
     void redrawExpt();

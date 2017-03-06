@@ -31,14 +31,21 @@
 logData::logData(QObject *parent) :
     QObject(parent)
 {
-    plot = NULL;
-    timeStep = 0.1;
+    this->timeStep = 0.1;
 }
 
-double logData::getMax() {
+void logData::deleteLogFile (void)
+{
+    QDir dir;
+    dir.remove(this->logFileXMLname);
+    dir.remove(this->logFile.fileName());
+}
 
-    if (max != Q_INFINITY)
+double logData::getMax()
+{
+    if (max != Q_INFINITY) {
         return max;
+    }
 
     // no max, must calculate
     double tempMax = -Q_INFINITY;
@@ -46,22 +53,24 @@ double logData::getMax() {
     rowData.push_back(-Q_INFINITY);
     int i = 0;
     while (rowData.size() > 0) {
-        for (int j = 0; j < rowData.size(); ++j)
-            if (rowData[j] > tempMax && rowData[j] < Q_INFINITY)
+        for (int j = 0; j < rowData.size(); ++j) {
+            if (rowData[j] > tempMax && rowData[j] < Q_INFINITY) {
                 tempMax = rowData[j];
-                //qDebug() << rowData[0] << rowData[1]<< rowData[2]<< rowData[3]<< rowData[4]<< rowData[5]<< rowData[6]<< rowData[7]<< rowData[8]<< rowData[9];}
+            }
+        }
+        //qDebug() << rowData[0] << rowData[1]<< rowData[2]<< rowData[3]<< rowData[4]<< rowData[5]<< rowData[6]<< rowData[7]<< rowData[8]<< rowData[9];}
         rowData = getRow(i);
         ++i;
     }
     max = tempMax;
     return max;
-
 }
 
-double logData::getMin() {
-
-    if (min != Q_INFINITY)
+double logData::getMin()
+{
+    if (min != Q_INFINITY) {
         return min;
+    }
 
     // no min, must calculate
     double tempMin = Q_INFINITY;
@@ -69,9 +78,11 @@ double logData::getMin() {
     rowData.push_back(Q_INFINITY);
     int i = 0;
     while (rowData.size() > 0) {
-        for (int j = 0; j < rowData.size(); ++j)
-            if (rowData[j] < tempMin)
+        for (int j = 0; j < rowData.size(); ++j) {
+            if (rowData[j] < tempMin) {
                 tempMin = rowData[j];
+            }
+        }
         rowData = getRow(i);
         ++i;
     }
@@ -79,9 +90,8 @@ double logData::getMin() {
     return min;
 }
 
-QVector < double > logData::getRow(int rowNum) {
-
-
+QVector < double > logData::getRow(int rowNum)
+{
     QVector < double > rowData;
 
     // is not analog return empty
@@ -92,8 +102,9 @@ QVector < double > logData::getRow(int rowNum) {
     switch (dataFormat) {
     case BINARY:
     {
-        if (!calculateBinaryDataStride())
+        if (!calculateBinaryDataStride()) {
             return rowData;
+        }
 
         // stream data from file
         QDataStream data(&logFile);
@@ -102,15 +113,17 @@ QVector < double > logData::getRow(int rowNum) {
         data.skipRawData(binaryDataStride*rowNum);
 
         // if we skip to the end of the file
-        if (data.atEnd())
+        if (data.atEnd()) {
             return rowData;
+        }
 
         // check that all are same type
         dataType mainType;
         mainType = columns[0].type;
         for (int i = 0; i < columns.size(); ++i) {
-            if (columns[i].type != mainType)
+            if (columns[i].type != mainType) {
                 return rowData;
+            }
         }
 
         switch (columns[0].type) {
@@ -240,15 +253,22 @@ QVector < double > logData::getRow(int rowNum) {
     return rowData;
 }
 
-bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
+bool logData::plotLine(QCustomPlot *plot, QMdiSubWindow* msw, int colNum, int update) {
 
-    // if no plot give up
-    if (plot == NULL)
+    // if no plot give up. FIXME - could get plot from msw. That's always where it comes from.
+    if (plot == NULL) {
+        DBG() << "No plot passed in, give up.";
         return false;
+    }
 
     // if out of range give up (should also catch no file)
-    if (colNum >= (int) columns.size())
+    if (colNum >= (int) columns.size()) {
+        DBG() << "Out of range/no file";
         return false;
+    }
+
+    // Don't need this->plots anymore? Or used as temporary storage only?
+    this->plots.insert (plot, msw);
 
     // clear existing data;
     colData[colNum].clear();
@@ -257,11 +277,13 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
     switch (dataFormat) {
     case BINARY:
     {
-        if (!calculateBinaryDataStride())
+        if (!calculateBinaryDataStride()) {
             return false;
+        }
         int offset = calculateBinaryDataOffset(colNum);
-        if (offset == -1)
+        if (offset == -1) {
             return false;
+        }
 
         // stream data from file
         QDataStream data(&logFile);
@@ -280,8 +302,8 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
                 if (data.atEnd())
                     break;
             }
-        }
             break;
+        }
         case TYPE_FLOAT:
         {
             float tempFloat;
@@ -294,8 +316,8 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
                 if (data.atEnd())
                     break;
             }
-        }
             break;
+        }
         case TYPE_INT64:
         {
             // not supported currently
@@ -309,8 +331,8 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
                 if (data.atEnd())
                     break;
             }
-        }
             break;
+        }
         case TYPE_INT32:
         {
             int tempInt;
@@ -322,21 +344,20 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
                 if (data.atEnd())
                     break;
             }
-        }
             break;
+        }
         case TYPE_STRING:
             return false;
+            break;
         }
-    }
-        break;
+        // what about default:?
+    } // end case BINARY
     case CSVFormat:
     case SSVFormat:
-
         break;
     default:
         // oops, bad dataType
         return false;
-
     }
 
     //
@@ -347,6 +368,7 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
 
     if (update == -1) {
         // add graph and setup data and name
+        DBG() << "plot->addGraph called";
         plot->addGraph();
         plot->graph(plot->graphCount()-1)->setData(times, colData[colNum]);
         plot->graph(plot->graphCount()-1)->setName("Index " + QString::number(columns[colNum].index));
@@ -370,28 +392,62 @@ bool logData::plotLine(QCustomPlot *plot, int colNum, int update) {
 
 
     } else {
+        DBG() << "plot->graph(update) called";
         plot->graph(update)->setData(times, colData[colNum]);
     }
 
-    plot->legend->setVisible(true);
+    plot->legend->setVisible(false); // fixme, make this an option
 
     // title
+    QCPPlotTitle* t = (QCPPlotTitle*)0;
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
-        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, logName));
+        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, this->logName));
+        t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+
+    } else {
+        // update title as it's empty
+        t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+        if (t->text().isEmpty()) {
+            t->setText (this->logName);
+        }
+    }
+    // Set font size based on text length here.
+    QFont f = t->font();
+    int len = this->logName.size();
+    int fs = 15; // original default for plots
+    if (len <= 24) {
+        fs = 15;
+    } else if (len > 24 && len <= 32) {
+        fs = 12;
+    } else if (len > 32 && len <= 43) {
+        fs = 10;
+    } else {
+        fs = 8;
+    }
+
+    if (f.pointSize() != fs) {
+        f.setPointSize(fs);
+        t->setFont(f);
     }
 
     // redraw
     plot->replot();
 
+    // Ensure that when destroyed, the relevant plot will be removed. (no longer required)
+    //connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
+
     return true;
 }
 
-bool logData::plotRaster(QCustomPlot * plot, QList < QVariant > indices, int update) {
+bool logData::plotRaster(QCustomPlot * plot, QMdiSubWindow* msw, QList < QVariant > indices, int update) {
 
     // if no plot give up
-    if (plot == NULL)
+    if (plot == NULL) {
         return false;
+    }
+
+    this->plots.insert (plot, msw);
 
     // clear existing data;
     colData[0].clear();
@@ -528,6 +584,7 @@ bool logData::plotRaster(QCustomPlot * plot, QList < QVariant > indices, int upd
     }
 
     // add graph and setup data and name, or update existing
+    DBG() << "plot-> functions to be called";
     if (update == -1) {
 
         plot->addGraph();
@@ -561,17 +618,24 @@ bool logData::plotRaster(QCustomPlot * plot, QList < QVariant > indices, int upd
     // title
     if (plot->plotLayout()->rowCount() == 1) {
         plot->plotLayout()->insertRow(0); // inserts an empty row above the default axis rect
-        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, logName));
+        plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(plot, this->logName));
+    } else {
+        QCPPlotTitle* t = (QCPPlotTitle*)plot->plotLayout()->element (0, 0);
+        if (t->text().isEmpty()) {
+            t->setText (this->logName);
+        }
     }
 
     // redraw
     plot->replot();
 
+    connect(plot, SIGNAL(destroyed()), this, SLOT(onPlotDestroyed()));
+
     return true;
 }
 
-bool logData::calculateBinaryDataStride() {
-
+bool logData::calculateBinaryDataStride()
+{
     binaryDataStride = 0;
 
     for (int i = 0; i < (int) columns.size(); ++i) {

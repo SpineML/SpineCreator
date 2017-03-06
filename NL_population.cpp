@@ -132,6 +132,11 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
 
     while(!n.isNull()) {
 
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         if (n.toElement().tagName() == "LL:Neuron") {
 
             // get attributes
@@ -145,7 +150,6 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
                 settings.setValue("errorText",  "XML error: missing Neuron attribute 'name'");
                 settings.endArray();
             }
-            DBG() << "LL:Neuron name is " << this->name;
 
             this->numNeurons = n.toElement().attribute("size").toInt();
             if (this->numNeurons == 0) {
@@ -300,6 +304,11 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
     n = metaE.firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "xPos" ) {
             this->x = e2.attribute("value", "").toFloat() + data->getCursorPos().x;
@@ -367,57 +376,58 @@ void population::setupBounds()
     this->bottom = this->y-this->size/2.0;
 }
 
+#define DBGRI() qDebug() << __FUNCTION__ << ": "
 void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data)
 {
-    DBGBRK();
+    //DBGBRK();
     // e starts out as a LL:Population
-    DBG() << "population::read_inputs_from_xml called for element " << e.tagName();
+    //DBGRI() << "population::read_inputs_from_xml called for element " << e.tagName();
     QDomNodeList nListNRN = e.elementsByTagName("LL:Neuron");
-    DBG() << "LL:Neuron list has size " << nListNRN.size();
+    //DBGRI() << "LL:Neuron list has size " << nListNRN.size();
     if (nListNRN.size() == 1) {
         QDomElement e1 = nListNRN.item(0).toElement();
         QString popname = e1.attribute("name", "unknown");
 
         // Population name and ComponentInstance name should be the same.
-        DBG() << "Population name: " << popname << " neuronType (ComponentInstance) name:" << this->neuronType->getXMLName();
+        //DBGRI() << "Population name: " << popname << " neuronType (ComponentInstance) name:" << this->neuronType->getXMLName();
 
         QDomNodeList nList = e1.elementsByTagName("LL:Input");
-        DBG() << "LL:Input list has size " << nList.size();
+        //DBGRI() << "LL:Input list has size " << nList.size();
         for (int nrni = 0; nrni < (int) nList.size(); ++nrni) {
 
             QDomElement e2 = nList.item(nrni).toElement();
 
             QSharedPointer<genericInput> newInput = QSharedPointer<genericInput>(new genericInput);
-            newInput->src.clear();
-            newInput->dst.clear();
-            DBG() << "Setting destination to be neuronType->owner, with name: " << this->neuronType->owner->getName();
+            newInput->srcCmpt.clear();
+            newInput->dstCmpt.clear();
+            //DBGRI() << "Setting destination to be neuronType->owner, with name: " << this->neuronType->owner->getName();
             newInput->destination = this->neuronType->owner;
             newInput->projInput = false;
 
             // read in src from XML and locate src in existing projectobject data:
             QString srcName = e2.attribute("src");
-            DBG() << "srcName: " << srcName;
+            //DBGRI() << "srcName: " << srcName;
             for (int i = 0; i < data->network.size(); ++i) {
-                DBG() << "XML element type: " << data->network[i]->neuronType->getXMLName();
+                //DBGRI() << "XML element type: " << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
-                    DBG() << "Set newInput->src to the thing with name " << data->network[i]->neuronType->getXMLName();
-                    newInput->src = data->network[i]->neuronType;
+                    //DBGRI() << "Set newInput->src to the thing with name " << data->network[i]->neuronType->getXMLName();
+                    newInput->srcCmpt = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
                 for (int j = 0; j < data->network[i]->projections.size(); ++j) {
-                    DBG() << "   Projection name: " << data->network[i]->projections[j]->getName();
+                    //DBGRI() << "   Projection name: " << data->network[i]->projections[j]->getName();
                     for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-                        DBG() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
-                        if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
-                            DBG() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                            newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
-                            DBG() << "(From WU) Set newInput->src to the thing with name " << newInput->src->getXMLName();
+                        //DBGRI() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
+                        if (data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == srcName) {
+                            //DBGRI() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt;
+                            //DBGRI() << "(From WU) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
-                        if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
-                            DBG() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
-                            newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
-                            DBG() << "(From PS) Set newInput->src to the thing with name " << newInput->src->getXMLName();
+                        if (data->network[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == srcName) {
+                            //DBGRI() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->postSynapseCmpt;
+                            //DBGRI() << "(From PS) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
                     }
@@ -431,46 +441,47 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             // get connectivity
             QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new alltoAll_connection;
+                delete newInput->conn;
+                newInput->conn = new alltoAll_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
             type = e2.elementsByTagName("OneToOneConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new onetoOne_connection;
+                delete newInput->conn;
+                newInput->conn = new onetoOne_connection;
+                newInput->conn->setParent(newInput);
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
             type = e2.elementsByTagName("FixedProbabilityConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new fixedProb_connection;
+                delete newInput->conn;
+                newInput->conn = new fixedProb_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
             type = e2.elementsByTagName("ConnectionList");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new csv_connection;
+                delete newInput->conn;
+                newInput->conn = new csv_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
-                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
-                newInput->connectionType->import_parameters_from_xml(cNode);
-                newInput->connectionType->setParent (newInput);
+                newInput->conn->srcPop = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->conn->dstPop = qSharedPointerDynamicCast <population> (newInput->destination);
+                newInput->conn->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
             }
 
-            if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
+            if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {
                 // neuronType is a ComponentInstance, owner is a systemObject. newInput->dst is a ComponentInstance.
-                newInput->dst = this->neuronType; // FIXME. This doesn't seem to be the right thing.
-                DBG() << "For population with name " << this->name << ", set newInput->dst to the thing with name " << newInput->dst->getXMLName();
-                DBG() << "Pushing back the newInput!";
+                newInput->dstCmpt = this->neuronType; // FIXME. This doesn't seem to be the right thing.
+                //DBGRI() << "For population with name " << this->name << ", set newInput->dst to the thing with name " << newInput->dstCmpt->getXMLName();
+                //DBGRI() << "Pushing back the newInput!";
                 this->neuronType->inputs.push_back(newInput);
-                newInput->src->outputs.push_back(newInput);
+                newInput->srcCmpt->outputs.push_back(newInput);
             } else {
                 // Error
             }
@@ -479,12 +490,12 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
     // read metadata. This should add the curves to the generic inputs.
     for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
-        DBG() << "Reading metadata for input " << i;
+        //DBGRI() << "Reading metadata for input " << i;
         this->neuronType->inputs[i]->read_meta_data(meta, data->getCursorPos());
     }
 
     this->neuronType->matchPorts();
-    DBG() << "population::read_inputs_from_xml returning";
+    //DBGRI() << "population::read_inputs_from_xml returning";
 }
 
 void population::delAll(nl_rootdata * data)
@@ -909,19 +920,19 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut)
                 // add each Synapse
                 xmlOut.writeStartElement("LL:Synapse");
 
-                projection->synapses[j]->connectionType->src = projection->source;
-                projection->synapses[j]->connectionType->dst = projection->destination;
+                projection->synapses[j]->connectionType->srcPop = projection->source;
+                projection->synapses[j]->connectionType->dstPop = projection->destination;
                 projection->synapses[j]->connectionType->write_node_xml(xmlOut);
 
                 xmlOut.writeStartElement("LL:WeightUpdate");
-                xmlOut.writeAttribute("name", projection->synapses[j]->weightUpdateType->getXMLName());
+                xmlOut.writeAttribute("name", projection->synapses[j]->weightUpdateCmpt->getXMLName());
 
-                projection->synapses[j]->weightUpdateType->write_node_xml(xmlOut);
+                projection->synapses[j]->weightUpdateCmpt->write_node_xml(xmlOut);
                 xmlOut.writeEndElement(); // synapse
 
                 xmlOut.writeStartElement("LL:PostSynapse");
-                xmlOut.writeAttribute("name", projection->synapses[j]->postsynapseType->getXMLName());
-                projection->synapses[j]->postsynapseType->write_node_xml(xmlOut);
+                xmlOut.writeAttribute("name", projection->synapses[j]->postSynapseCmpt->getXMLName());
+                projection->synapses[j]->postSynapseCmpt->write_node_xml(xmlOut);
                 xmlOut.writeEndElement(); // postsynapse
 
                 xmlOut.writeEndElement(); // Synapse
@@ -1023,11 +1034,11 @@ void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, 
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
     for (int i = 0; i < (int) cList.count(); ++i) {
         QDomElement e2 = cList.item(i).toElement();
-        DBG() << "Reading " << e2.tagName() << " dst_population: " << e2.attribute("dst_population", "no-dest-specified");
+        //DBG() << "Reading " << e2.tagName() << " dst_population: " << e2.attribute("dst_population", "no-dest-specified");
         this->projections.push_back(QSharedPointer<projection>(new projection()));
         this->projections.back()->readFromXML(e2, doc, meta, data, this->projections.back());
     }
-    DBG() << "Read " << cList.count() << " projections from XML";
+    //DBG() << "Read " << cList.count() << " projections from XML";
 }
 
 void population::getNeuronLocations(QVector <loc> *locations,QColor * cols)

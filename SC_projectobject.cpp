@@ -103,6 +103,14 @@ projectObject::~projectObject()
     this->catalogGC.clear();
 }
 
+QString projectObject::getFilenameFriendlyName (void)
+{
+    // Make nameFname directory-friendly, replace spaces with '_'
+    QString nameFname = this->name;
+    nameFname.replace(' ', '_');
+    return nameFname;
+}
+
 bool projectObject::open_project(QString fileName)
 {
     QDir project_dir(fileName);
@@ -159,6 +167,7 @@ bool projectObject::open_project(QString fileName)
 
 bool projectObject::save_project(QString fileName, nl_rootdata * data)
 {
+
     if (!fileName.contains(".")) {
         QMessageBox msgBox;
         msgBox.setText("Project file needs .proj suffix.");
@@ -950,11 +959,11 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     this->name = root.toElement().attribute("name", "Untitled project");
 
     // Cursor offset is applied when loading metadata. Should be 0 when opening a new project.
-    DBG() << "Cursor position is " << this->currentCursorPos.x << "," << this->currentCursorPos.y;
+    //DBG() << "Cursor position is " << this->currentCursorPos.x << "," << this->currentCursorPos.y;
 
     // only load metadata for projects
     QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
-    DBG() << "metaFilePath:" << metaFilePath;
+    //DBG() << "metaFilePath:" << metaFilePath;
     QFile fileMeta(metaFilePath);
 
     if (!fileMeta.open(QIODevice::ReadOnly)) {
@@ -981,7 +990,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             addError("MetaData file is not valid");
             return;
         }
-        DBG() << "Successfully loaded meta data for the network.";
+        //DBG() << "Successfully loaded meta data for the network.";
     }
 
     // This is the starting point in this->network from which to count
@@ -991,6 +1000,11 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     // LOAD POPULATIONS
     QDomNode n = this->doc.documentElement().firstChild();
     while (!n.isNull())  {
+
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
 
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population") {
@@ -1022,25 +1036,36 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         n = n.nextSibling();
     }
 
+#ifdef __DEBUG_LOAD_NETWORK
     // Some debugging information:
     DBG() << "Order of network names:";
     for (int i = 0; i < this->network.size(); ++i) {
             DBG() << "Population name: " << this->network[i]->name;
             DBG() << "Population Component name: " << this->network[i]->neuronType->getXMLName();
     }
+#endif
 
     // LOAD PROJECTIONS
+#ifdef __DEBUG_LOAD_NETWORK
     DBGBRK()
     DBG() << "LOADING PROJECTIONS...";
+#endif
     n = this->doc.documentElement().firstChild();
     int counter = firstNewPop;
     while (!n.isNull()) {
+
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
 
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
             // with all the populations added, add the projections and join them up:
             this->network[counter]->load_projections_from_xml(e, &this->doc, &this->meta, this);
+#ifdef __DEBUG_LOAD_NETWORK
             DBG() << "After load_projections_from_xml, network["<<counter<<"]->projections.count is " << this->network[counter]->projections.count();
+#endif
             // check for errors:
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
@@ -1057,41 +1082,58 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     }
 
     // LOAD INPUTS
+#ifdef __DEBUG_LOAD_NETWORK
     DBGBRK();
     DBG() << "LOADING INPUTS...";
+#endif
     counter = firstNewPop;
     n = this->doc.documentElement().firstChild();
     while (!n.isNull()) {
+
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         QDomElement e = n.toElement();
         if (e.tagName() == "LL:Population" ) {
             {
                 QDomNodeList allneurons = e.elementsByTagName("LL:Neuron");
                 QDomElement firstneuron = allneurons.item(0).toElement();
+#ifdef __DEBUG_LOAD_NETWORK
                 DBG() << "CC Population name of first Neuron element:" << firstneuron.attribute("name", "unknown");
+#endif
             }
 
             // add inputs
+#ifdef __DEBUG_LOAD_NETWORK
             DBG() << "Adding inputs from LL:Population element with network->read_inputs_from_xml... " << e.text();
             DBG() << "this->network[counter]->neuronType->getName():" << this->network[counter]->neuronType->getXMLName();
             // neuronType is a ComponentInstance, owner is a systemObject.
             DBG() << "this->network[counter]->neuronType->owner->getName():" << this->network[counter]->neuronType->owner->getName();
+#endif
             // network is a QVector of pointers to populations. Calls
             // NL_population::read_inputs_from_xml to read the inputs to the populations
             this->network[counter]->read_inputs_from_xml(e, &this->meta, this);
 
+#ifdef __DEBUG_LOAD_NETWORK
             DBG() << "After read_inputs_from_xml, network["<<counter<<"]->inputs.count is "
                   << this->network[counter]->neuronType->inputs.count();
 
             DBG() << "Check destination/source for population in network["<<counter<<"] which has "
                   << this->network[counter]->neuronType->inputs.count() << " inputs";
-
+#endif
             // Now read inputs to the projections
             int projCount = 0;
             QDomNodeList n2 = n.toElement().elementsByTagName("LL:Projection");
+#ifdef __DEBUG_LOAD_NETWORK
             DBG() << "Now read inputs for each of " << n2.size() << " projections in the population in network["<<counter<<"]...";
+#endif
             for (int i = 0; i < (int) n2.size(); ++i) {
                 QDomElement e = n2.item(i).toElement();
+#ifdef __DEBUG_LOAD_NETWORK
                 DBG() << "Calling projections->read_inputs_from_xml...";
+#endif
                 this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this, this->network[counter]->projections[projCount]);
                 ++projCount;
             }
@@ -1261,6 +1303,10 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
     settings.endArray();
 
     if (num_errs == 0) {
+        if (this->experimentList.isEmpty()) {
+            // If this is the first experiment to be loaded, then make it selected.
+            newExperiment->selected = true;
+        }
         this->experimentList.push_back(newExperiment);
     } else {
         // add error tail
@@ -1271,6 +1317,20 @@ void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skip
     // we have loaded the XML file; discard file handle & clean up reader
     file.close();
     delete reader;
+}
+
+bool projectObject::doesExperimentExist (experiment* e)
+{
+    // Search QVector < experiment *> experiments;
+    QVector<experiment*>::const_iterator ex = this->experimentList.constBegin();
+    while (ex != this->experimentList.constEnd()) {
+        if ((*ex) == e) {
+            return true;
+        }
+        ++ex;
+    }
+
+    return false;
 }
 
 void projectObject::saveExperiment(QString fileName, QDir project_dir, experiment * expt)
@@ -1480,6 +1540,7 @@ bool projectObject::printErrors(QString title)
 
         // clear errors
         settings.remove("errors");
+        settings.setProperty("MERR", QString("True"));
 
     } else {
         return false;
@@ -1576,16 +1637,16 @@ bool projectObject::isValidPointer(QSharedPointer<systemObject> ptr)
                     return true;
                 }
 
-                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->weightUpdateType->inputs.size(); ++l) {
+                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size(); ++l) {
 
-                    if (this->network[i]->projections[j]->synapses[k]->weightUpdateType->inputs[l] == ptr) {
+                    if (this->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l] == ptr) {
                         return true;
                     }
                 }
 
-                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->postsynapseType->inputs.size(); ++l) {
+                for (int l = 0; l < this->network[i]->projections[j]->synapses[k]->postSynapseCmpt->inputs.size(); ++l) {
 
-                    if (this->network[i]->projections[j]->synapses[k]->postsynapseType->inputs[l] == ptr) {
+                    if (this->network[i]->projections[j]->synapses[k]->postSynapseCmpt->inputs[l] == ptr) {
                         return true;
                     }
                 }
@@ -1611,11 +1672,11 @@ bool projectObject::isValidPointer(QSharedPointer <ComponentInstance> ptr)
 
             for (int k = 0; k < this->network[i]->projections[j]->synapses.size(); ++k) {
 
-                if (this->network[i]->projections[j]->synapses[k]->weightUpdateType == ptr) {
+                if (this->network[i]->projections[j]->synapses[k]->weightUpdateCmpt == ptr) {
                     return true;
                 }
 
-                if (this->network[i]->projections[j]->synapses[k]->postsynapseType == ptr) {
+                if (this->network[i]->projections[j]->synapses[k]->postSynapseCmpt == ptr) {
                         return true;
                 }
             }
@@ -1666,13 +1727,13 @@ QSharedPointer <ComponentInstance> projectObject::getComponentDataFromName(QStri
             for (int k = 0; k < proj->synapses.size(); ++k) {
                 // current synapse
                 QSharedPointer <synapse> syn = proj->synapses[k];
-                if (syn->weightUpdateType->getXMLName() == name) {
+                if (syn->weightUpdateCmpt->getXMLName() == name) {
                     // found - return the ComponentData
-                    return syn->weightUpdateType;
+                    return syn->weightUpdateCmpt;
                 }
-                if (syn->postsynapseType->getXMLName() == name) {
+                if (syn->postSynapseCmpt->getXMLName() == name) {
                     // found - return the ComponentData
-                    return syn->postsynapseType;
+                    return syn->postSynapseCmpt;
                 }
             }
         }

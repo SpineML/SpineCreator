@@ -28,6 +28,7 @@
 #include "globalHeader.h"
 #include "CL_classes.h"
 #include "SC_viewELexptpanelhandler.h"
+#include "SC_logged_data.h"
 
 class exptBox : public QFrame
 {
@@ -242,7 +243,7 @@ public: // methods
      * Write out the XML for this generic input lesion change into the
      * experiment layer file.
      */
-    void writeXML (QXmlStreamWriter* writer, projectObject* pobj);
+    void writeXML (QXmlStreamWriter* writer, projectObject*);
 
 public: // attributes
     /*!
@@ -302,7 +303,6 @@ private: // methods
      */
     QVBoxLayout* drawLesionViewMode (QVBoxLayout* layout,
                                      viewELExptPanelHandler* handler);
-
 };
 
 /*!
@@ -391,6 +391,11 @@ public:
     void readXML(QXmlStreamReader *);
 };
 
+/*!
+ * The experiment objects are stored in nl_rootdata::experiments
+ * (defined in SC_network_layer_rootdata.h) for the selected project
+ * and in projectObject::experimentList for deselected projects.
+ */
 class experiment : QObject
 {
     Q_OBJECT
@@ -410,6 +415,11 @@ public:
     QString name;
     QString description;
 
+    /*!
+     * A menu action for this experiment. Shows up in the Experiments menu.
+     */
+    QAction* menuAction;
+
     exptBox * getBox(viewELExptPanelHandler *);
     void writeXML(QXmlStreamWriter *, projectObject *data);
     void readXML(QXmlStreamReader * , projectObject *);
@@ -417,6 +427,11 @@ public:
     void purgeBadPointer(QSharedPointer <ComponentInstance>ptr);
     void purgeBadPointer(QSharedPointer<Component>ptr, QSharedPointer<Component>newPtr);
     void updateChanges(QSharedPointer <ComponentInstance> ptr);
+
+    /*!
+     * Set up the action for this experiment.
+     */
+    QAction* action (int i);
 
     bool selected;
     void select(QVector < experiment * > *);
