@@ -1961,13 +1961,15 @@ void viewELExptPanelHandler::run()
            << "-o" << out_dir_name//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
 
-        // There's no REBUILD env var set, even though it's in my settings.
-        QByteArray rbuild = qgetenv ("REBUILD");
-        if (rbuild == "true") {
-            al << "-r"; // Add the -r option for rebuilding
-        } else {
-            // Don't rebuild
-        }
+        // In settings we set REBUILD - apparently to be an
+        // environment variable. However, the way to set
+        // convert_script_s2b to rebuild is to pass a -r option.
+        settings.beginGroup("simulators/" + simName);
+        QString rebuild = settings.value("envVar/REBUILD").toString();
+        settings.endGroup();
+        if (rebuild == "true") {
+            al << "-r"; // Add the -r option for rebuilding components
+        } // else don't rebuild
 
         simulator->start(path, al);
     }
