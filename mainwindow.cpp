@@ -105,72 +105,62 @@ MainWindow(QWidget *parent) :
         qDebug() << "oops - program crashed. Handle? (could be multiple programs open - but that could be a problem too...)";
     }
 
-    // add the default simulators if it isn't done already
+    // This really means "is *SpineML_2_BRAHMS* present?".
     if (!settings.value("simulators/BRAHMS/present", false).toBool()) {
 
 #ifdef Q_OS_LINUX
 
-        // On Linux, search for an installed version of Brahms and
-        // spineml-2-brahms. If these aren't present, then what?
+        // On Linux, search for an installed version of
+        // spineml-2-brahms and set corresponding defaults for
+        // working_dir and path.
 
         // NB: These settings paths are case insensitive. Do CI
         // searches in the code to find where they're used.
 
         // See viewELexptpanelhandler.cpp for the use of these settings.
 
-        // BRAHMS settings
-        //
-        QFile brahms_executable("/usr/bin/brahms");
-        QFile brahms_exe_alt_locn("/usr/local/SystemML/BRAHMS/bin/brahms");
-        if (brahms_executable.exists()) {
-
-            // We have a packaged version of brahms.
-            settings.setValue("simulators/BRAHMS/present", true);
-
-            // Note - packaged version of BRAHMS requires SYSTEMML_INSTALL_PATH to be empty.
-            settings.setValue("simulators/BRAHMS/envVar/SYSTEMML_INSTALL_PATH", "");
-
-            // Packaged version of BRAHMS is found in the normal system PATH
-            settings.setValue("simulators/BRAHMS/envVar/PATH",
-                              QDir::toNativeSeparators(qgetenv("PATH")));
-
-        } else if (brahms_exe_alt_locn.exists()) {
-
-            // We have the older version of brahms, with simpler packaging
-            settings.setValue("simulators/BRAHMS/present", true);
-
-            settings.setValue("simulators/BRAHMS/envVar/SYSTEMML_INSTALL_PATH",
-                              QDir::toNativeSeparators("/usr/local/SystemML/"));
-
-            settings.setValue("simulators/BRAHMS/envVar/PATH",
-                              QDir::toNativeSeparators(qgetenv("PATH") + ":/usr/local/SystemML/BRAHMS/bin/"));
-
-        } else {
-            // No installed version of brahms.
-            settings.setValue("simulators/BRAHMS/present", false);
-        }
+        // I'm simply going to assume that SpineML_2_BRAHMS will be
+        // present, as for the Mac case, below.
+        settings.setValue("simulators/BRAHMS/present", true);
 
         // spineml-2-brahms settings
         //
         // It may be that this directory will be used - the convert_script_s2b may create this in the home dir.
-        QFile convert_script_s2b("/usr/bin/convert_script_s2b");
+        QFile convert_script_packaged("/usr/bin/convert_script_s2b");
         QFile convert_script_home(QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
-        if (convert_script_s2b.exists()) {
-            // We have the packaged version of the convert script
-            settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
-            settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators("/usr/bin/convert_script_s2b"));
+
+        if (convert_script_packaged.exists()) {
+            // We have the _packaged_ version of the convert script
+            if (settings.value("simulators/BRAHMS/working_dir").toString().compare("") == 0) {
+                // Then there was no value set for working_dir; we can change it.
+                settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
+            }
+            if (settings.value("simulators/BRAHMS/path").toString().compare("") == 0) {
+                settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators("/usr/bin/convert_script_s2b"));
+            }
+
         } else if (convert_script_home.exists()) {
-            settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS"));
-            settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
+            if (settings.value("simulators/BRAHMS/working_dir").toString().compare("") == 0) {
+                settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS"));
+            }
+            if (settings.value("simulators/BRAHMS/path").toString().compare("") == 0) {
+                settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
+            }
+
         } else {
-            // No SpineML to BRAHMS. Set a default value for simulators/BRAHMS/path
-            settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/spineml-2-brahms"));
+            // No SpineML to BRAHMS script in the usual locations. Set default values unless already set.
+            if (settings.value("simulators/BRAHMS/path").toString().compare("") == 0) {
+                settings.setValue("simulators/BRAHMS/path", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS/convert_script_s2b"));
+            }
+            if (settings.value("simulators/BRAHMS/working_dir").toString().compare("") == 0) {
+                settings.setValue("simulators/BRAHMS/working_dir", QDir::toNativeSeparators(qgetenv("HOME") + "/SpineML_2_BRAHMS"));
+            }
         }
 
         // set to use binaries
         settings.setValue("simulators/BRAHMS/binary", true);
 
-        // Check if we have the pre-compiled/packaged Namespace.
+        // Check if we have the pre-compiled/packaged *SpineML* Namespace.
         QFile spineml_2_brahms_precompiled_namespace("/usr/lib/spineml-2-brahms/dev/SpineML/tools/allToAll/brahms/0/component.so");
         if (spineml_2_brahms_precompiled_namespace.exists()) {
             settings.setValue("simulators/BRAHMS/envVar/BRAHMS_NS", "/usr/lib/spineml-2-brahms/");
@@ -183,7 +173,7 @@ MainWindow(QWidget *parent) :
 #else
         // BRAHMS should be packaged with the app by default
 
-        // add BRAHMS (assumes it's present)
+        // assume SpineML_2_BRAHMS is present
         settings.setValue("simulators/BRAHMS/present", true);
 
         // Is this used? Yes, in viewELexptpanelhandler.cpp
