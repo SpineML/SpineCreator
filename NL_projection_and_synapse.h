@@ -123,7 +123,7 @@ public:
     void drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style);
     void drawHandles(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height);
     void moveEdge(int, float, float);
-    virtual void write_model_meta_xml(QDomDocument &meta, QDomElement &root);
+    virtual void write_model_meta_xml(QXmlStreamWriter* xmlOut);
     void read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
     void print();
     QPointF findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL);

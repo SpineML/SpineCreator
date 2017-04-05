@@ -576,6 +576,23 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
         xmlOut.writeAttribute("minimum_distance", QString::number(lay->minimumDistance));
     }
 
+    // annotations
+    if (!this->annotation.isEmpty()) {
+        xmlOut.writeStartElement("LL:Annotation");
+        // old annotations
+        this->annotation.replace("\n", "");
+        this->annotation.replace("<LL:Annotation>", "");
+        this->annotation.replace("</LL:Annotation>", "");
+        QXmlStreamReader reader(this->annotation);
+        while (!reader.atEnd()) {
+            if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
+                xmlOut.writeCurrentToken(reader);
+            }
+            reader.readNext();
+        }
+        xmlOut.writeEndElement();//"LL:Annotation"
+    }
+
     if (this->type == NineMLComponentType) {
         ComponentInstance * ptr = static_cast <ComponentInstance *> (this);
         for (int i = 0; i < ptr->inputs.size(); ++i) {
@@ -775,6 +792,10 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                   xmlOut.writeAttribute("src", ptr->inputs[i]->srcCmpt->getXMLName());
                   xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
                   xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
+
+                  // write annotations
+                  ptr->inputs[i]->write_model_meta_xml (&xmlOut);
+
                   if (ptr->inputs[i]->conn->type == Python) {
                       ((pythonscript_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
                       ((pythonscript_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
@@ -3162,6 +3183,13 @@ QStringList Component::validateComponent()
 
 void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 {
+    // fetch annotations
+    QDomNodeList nListAnn = n.toElement().elementsByTagName("LL:Annotation");
+    if (nListAnn.size() == 1) {
+        QTextStream temp(&this->annotation);
+        nListAnn.at(0).save(temp,1);
+    }
+
     type = NineMLComponentType;
     QDomNodeList nList = n.toElement().elementsByTagName("Property");
 

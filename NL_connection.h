@@ -54,7 +54,7 @@ public:
 
     virtual void write_node_xml(QXmlStreamWriter &){}
     virtual void import_parameters_from_xml(QDomNode &){}
-    virtual void write_metadata_xml(QDomDocument &, QDomNode &) {}
+    virtual void write_metadata_xml(QXmlStreamWriter*) {}
     virtual void read_metadata_xml(QDomNode &) {}
     virtual void writeDelay(QXmlStreamWriter &xmlOut);
     virtual QLayout * drawLayout(nl_rootdata * , viewVZLayoutEditHandler * , nl_rootlayout * ) {return new QHBoxLayout();}
@@ -123,6 +123,12 @@ public:
      * exists.
      */
     void setSynapseIndex(int synidx);
+
+    /*!
+     * A place for the modeller to store information about this
+     * connection.
+     */
+    QString annotation;
 
 private:
     QString filename;
@@ -296,7 +302,6 @@ public:
      * list.
      */
     void write_node_xml (QXmlStreamWriter& xmlOut);
-    void write_metadata_xml (QDomDocument&, QDomNode&);
     void import_parameters_from_xml (QDomNode&);
     void read_metadata_xml (QDomNode&);
     void setFileName (QString name);
@@ -418,7 +423,7 @@ public:
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
-    void write_metadata_xml(QDomDocument &, QDomNode &);
+    void write_metadata_xml(QXmlStreamWriter* xmlOut);
     void read_metadata_xml(QDomNode &);
     int getIndex();
     QString getTypeStr(void);

@@ -121,6 +121,10 @@ public:
     // Getter for currentCursorPos
     cursorType getCursorPos (void);
 
+    // A string annotation for the modeller to write something useful
+    // about this object.
+    QString annotation;
+
 private:
 
     cursorType currentCursorPos;
