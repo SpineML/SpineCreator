@@ -54,7 +54,7 @@ public:
 
     virtual void write_node_xml(QXmlStreamWriter &){}
     virtual void import_parameters_from_xml(QDomNode &){}
-    virtual void write_metadata_xml(QXmlStreamWriter*) {}
+    virtual void write_metadata_xml(QXmlStreamWriter*) { DBG() << "connection implementation of write_metadata_xml called"; }
     virtual void read_metadata_xml(QDomNode &) {}
     virtual void writeDelay(QXmlStreamWriter &xmlOut);
     virtual QLayout * drawLayout(nl_rootdata * , viewVZLayoutEditHandler * , nl_rootlayout * ) {return new QHBoxLayout();}
@@ -423,7 +423,7 @@ public:
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
-    void write_metadata_xml(QXmlStreamWriter* xmlOut);
+    virtual void write_metadata_xml(QXmlStreamWriter* xmlOut);
     void read_metadata_xml(QDomNode &);
     int getIndex();
     QString getTypeStr(void);

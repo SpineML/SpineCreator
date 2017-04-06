@@ -845,10 +845,13 @@ void csv_connection::read_metadata_xml(QDomNode &e)
 
 void csv_connection::import_parameters_from_xml(QDomNode &e)
 {
+    DBG() << "csv_connection::import_parameters_from_xml(QDomNode &e) called";
+
     // check for annotations
     QDomNodeList anns = e.toElement().elementsByTagName("LL:Annotation");
 
     if (anns.size() == 1) {
+        DBG() << "Have annotations...";
         // annotations found - do we have a generator?
         QDomNode metaData;
         QDomNodeList scAnns = anns.at(0).toElement().elementsByTagName("SpineCreator");
@@ -856,11 +859,15 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
             metaData = scAnns.at(0).cloneNode();
             anns.at(0).removeChild(scAnns.at(0));
             // add generator
+            if (this->srcPop == NULL) {
+                DBG() << "Warning: srcPop is null and using it to create pythonscript_connection...";
+            }
             this->generator = new pythonscript_connection(this->srcPop, this->dstPop, this);
             pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (this->generator);
             CHECK_CAST(pyConn)
             // extract data for connection generator
-            pyConn->read_metadata_xml(metaData);
+            DBG() << "Calling pyConn->read_metadata_xml (metaData)";
+            pyConn->read_metadata_xml (metaData);
             // prevent regeneration
             //pyConn->setUnchanged(true);
         }
@@ -1698,6 +1705,7 @@ pythonscript_connection::pythonscript_connection(QSharedPointer <population> src
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;
+    DBG() << "Settings src and dst for this pythonscript_connection...";
     this->srcPop = src;
     this->dstPop = dst;
     this->connection_target = conn_targ;
@@ -2060,15 +2068,27 @@ bool pythonscript_connection::changed()
 void pythonscript_connection::setUnchanged(bool state)
 {
     if (state) {
-        srcSize = srcPop->numNeurons;
-        dstSize = dstPop->numNeurons;
-        for (int i = 0; i <this->lastGeneratedParValues.size(); ++i) {
+        if (this->srcPop != NULL) {
+            this->srcSize = srcPop->numNeurons;
+        } else {
+            DBG() << "pythonscript_connection::setUnchanged: No srcPop!?";
+        }
+        if (this->dstPop != NULL) {
+            this->dstSize = dstPop->numNeurons;
+        } else {
+            DBG() << "pythonscript_connection::setUnchanged: No dstPop!?";
+        }
+        for (int i = 0; i < this->lastGeneratedParValues.size(); ++i) {
             this->lastGeneratedParValues[i] = this->parValues[i];
         }
         this->lastGeneratedWeightProp = this->weightProp;
         this->lastGeneratedScriptText = scriptText;
+
+        this->hasChanged = false;
+
+    } else {
+        this->hasChanged = true;
     }
-    hasChanged = !state;
 }
 
 void pythonscript_connection::configureFromScript(QString script)
@@ -2171,11 +2191,13 @@ void pythonscript_connection::regenerateConnections()
 
 void pythonscript_connection::write_node_xml(QXmlStreamWriter &)
 {
-    // this should never be called
+    DBG() << "pythonscript_connection::write_node_xml(QXmlStreamWriter &) called (that's an error)";
 }
 
 void pythonscript_connection::write_metadata_xml(QXmlStreamWriter* xmlOut)
 {
+    DBG() << "pythonscript_connection::write_metadata_xml(QXmlStreamWriter* xmlOut) Called";
+
     // write out the settings for this generator
     xmlOut->writeStartElement("SpineCreator");
 

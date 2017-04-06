@@ -1625,7 +1625,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
     this->currTarg = 0;
 
-    // load annotations
+    // load annotation metadata for the *projection*
     QDomNode annInst = e.firstChild();
     while (!(annInst.toElement().tagName() == "LL:Annotation") && !annInst.isNull()) {
         annInst = annInst.nextSibling();
@@ -1644,7 +1644,6 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
         // load metaData
         if (!metaNode.isNull()) {
-
 
             QDomNode metaData = metaNode.firstChild();
             while (!metaData.isNull()) {
@@ -1688,10 +1687,9 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 metaData = metaData.nextSibling();
             }
         }
-    }
+    } // end of "if we have LL:Annotation"
 
-    // load the synapses:
-
+    // load the synapses in this projection now:
     QDomNodeList colList = e.elementsByTagName("LL:Synapse");
 
     if (colList.count() == 0) {
@@ -1752,9 +1750,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 newSynapse->connectionType->import_parameters_from_xml(n);
             }
             else if (n.toElement().tagName() == "PythonScriptConnection") {
-
+                DBG() << "Do we have PythonScriptConnections? I think they're usually ConnectionLists with a generator Script in the Annotations...";
             }
-
             else if (n.toElement().tagName() == "LL:PostSynapse") {
 
                 // get postsynapse component name
@@ -1861,60 +1858,39 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         }
         // add the synapse
         this->synapses.push_back(newSynapse);
-    }
 
-    // now load the metadata for the projection:
-    QDomNode metaNode = meta->documentElement().firstChild();
+    } // end of "for each synapse" for loop
 
-    // The current cursor position, for offsetting position -
-    // important when importing a network.
-    cursorType curs = data->getCursorPos();
+#ifdef __NEED_TO_LOAD_ANNOTATIONS_HERE__ // but I think Script stuff is loaded by csv_connection::import_paramters_from_xml()
+    // Now load annotations for the *synapse* element(s)
+    if (annInst.toElement().tagName() == "LL:Annotation") {
+        // The current cursor position, for offsetting position -
+        // important when importing a network.
+        cursorType curs = data->getCursorPos();
 
-    while(!metaNode.isNull()) {
+        QDomNode metaNode;
+        QDomNode n = annInst;
+        QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
+        if (scAnns.length() == 1) {
+            metaNode = scAnns.at(0).cloneNode();
+            n.removeChild(scAnns.at(0));
+        }
+        QTextStream temp(&this->annotation);
+        n.save(temp,1);
 
-        if (metaNode.toElement().attribute("source", "") == this->source->name
-            && metaNode.toElement().attribute("destination", "") == this->destination->name) {
-
-            this->projDrawStyle = (drawStyle) metaNode.toElement().attribute("style", QString::number(standardDrawStyleExcitatory)).toUInt();
-            this->showLabel = (bool) metaNode.toElement().attribute("showlabel", 0).toUInt();
-
-            QDomNode metaData = metaNode.toElement().firstChild();
+        if (!metaNode.isNull()) {
+            QDomNode metaData = metaNode.firstChild();
             while (!metaData.isNull()) {
 
                 if (metaData.toElement().tagName() == "start") {
-                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat()+curs.x,
-                                          metaData.toElement().attribute("y","").toFloat()+curs.y);
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
                 }
 
-                // find the curves tag
-                if (metaData.toElement().tagName() == "curves") {
+                /////////////
 
-                    // add each curve
-                    QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
-                    for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
-                        QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
-                        bezierCurve newCurve;
-                        while (!vals.isNull()) {
-                            if (vals.toElement().tagName() == "C1") {
-                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
-                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
-                            }
-                            if (vals.toElement().tagName() == "C2") {
-                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
-                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
-                            }
-                            if (vals.toElement().tagName() == "end") {
-                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
-                                                       vals.toElement().attribute("ypos").toFloat()+curs.y);
-                            }
-                            vals = vals.nextSibling();
-                        }
-                        // add the filled out curve to the list
-                        this->curves.push_back(newCurve);
-                    }
-                }
 
                 // find tags for connection generators
+                // Ah - this only works for old style metadata!
                 if (metaData.toElement().tagName() == "synapseConnection") {
 
                     // extract the name from the tag
@@ -1940,22 +1916,31 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                                     conn->generator = new pythonscript_connection(this->source, this->destination, conn);
                                     // extract data for connection generator
                                     ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
-                                    // prevent regeneration
-                                    ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+
                                     // Set source/dest population names in the connection (used when saving)
                                     conn->setSrcName (this->source->name);
                                     conn->setDstName (this->destination->name);
                                     conn->setSynapseIndex (i);
+
+                                    // prevent regeneration
+                                    ((pythonscript_connection *) conn->generator)->setUnchanged(true);
+                                } else {
+                                    DBG() << "NOT CSV connection type";
                                 }
                             }
                         }
                     }
                 }
+
+
+                //////////////
+
+
                 metaData = metaData.nextSibling();
             }
         }
-        metaNode = metaNode.nextSibling();
     }
+#endif // __NEED_TO_LOAD_ANNOTATIONS_HERE__
 
 #ifdef __DEBUG_PROJECTION_READXML
     this->print();
@@ -2025,7 +2010,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
         DBG() << ".*.";
 #endif
         // Is there really not a generic "application failed" scheme
-        // to access taht would give a popup and return the
+        // to access that would give a popup and return the
         // application to the state it was in before starting the
         // feature?
     }
@@ -2035,21 +2020,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
     // t iterates through the LL:Synapses in colList
     for (int t = 0; t < (int) colList.count(); ++t) {
-
-        // first we should patch up the pythonscripts now the whole system is loaded
-        if (this->synapses[t]->connectionType->type == CSV) {
-            csv_connection * conn = dynamic_cast<csv_connection *> (this->synapses[t]->connectionType);
-            CHECK_CAST(conn)
-            if (conn->generator) {
-                conn->generator->srcPop = this->source;
-                conn->generator->dstPop = this->destination;
-                if (conn->generator->type == Python) {
-                    pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
-                    CHECK_CAST(pyConn)
-                    pyConn->setUnchanged(true);
-                }
-            }
-        }
 
 #ifdef __DEBUG_READ_INPUTS
         if (t < this->synapses.size()) {
@@ -2139,10 +2109,19 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         delete newInput->conn;
                         newInput->conn = new csv_connection;
                         newInput->conn->setParent(newInput);
+                        if (this->source == NULL) {
+                            DBG() << "WARNING: About to set srcPop to null in a new csv_connection...";
+                        } else {
+                            DBG() << "INFO: setting srcPop to non-null in new csv_connection...";
+                        }
+                        newInput->conn->srcPop = this->source;
+                        newInput->conn->dstPop = this->destination;
                         QDomNode cNode = type.item(0);
                         // csv connection needs a synapse index set up.
                         newInput->conn->setSynapseIndex(t);
                         newInput->conn->import_parameters_from_xml(cNode);
+                    } else {
+                        DBG() << "type.count() is " << type.count();
                     }
 
                     if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {
@@ -2318,6 +2297,35 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
             }
             n = n.nextSibling();
+        }
+
+        // LAST (or first?) we should patch up the pythonscripts now the whole system is loaded
+        DBG() << "Patching up pythonscripts...";
+        if (this->synapses[t]->connectionType->type == CSV) {
+            csv_connection * conn = dynamic_cast<csv_connection *> (this->synapses[t]->connectionType);
+            CHECK_CAST(conn)
+            if (conn->generator) {
+                DBG() << "Have generator";
+                conn->generator->srcPop = this->source;
+                conn->generator->dstPop = this->destination;
+                if (conn->generator->type == Python) {
+                    DBG() << "Python generator...";
+                    pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
+                    CHECK_CAST(pyConn)
+                    // DUH! We haven;t read in the postsynapse yet to get the source/dest, right?
+                    pyConn->srcPop = this->source;
+                    pyConn->dstPop = this->destination;
+                    if (pyConn->srcPop == NULL) {
+                        DBG() << "this->source is null in projection::read_inputs_from_xml()";
+                    }
+                    pyConn->setUnchanged(true);
+                }
+            } else {
+                DBG() << "Have NO generator";
+            }
+
+        } else {
+            DBG() << "Not connectionType CSV...";
         }
 
         // do matchPorts()
