@@ -1648,36 +1648,62 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     // Now read the XML for each synapse in the projection.
     this->readSynapsesXML (e, data, thisSharedPointer);
 
-#ifdef __NEED_TO_LOAD_ANNOTATIONS_HERE__ // but I think Script stuff is loaded by csv_connection::import_paramters_from_xml()
-    // Now load annotations for the *synapse* element(s)
-    if (annInst.toElement().tagName() == "LL:Annotation") {
-        // The current cursor position, for offsetting position -
-        // important when importing a network.
-        cursorType curs = data->getCursorPos();
+#define __KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY__ 1
+#ifdef __KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY__
+#endif // __KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY__
 
-        QDomNode metaNode;
-        QDomNode n = annInst;
-        QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
-        if (scAnns.length() == 1) {
-            metaNode = scAnns.at(0).cloneNode();
-            n.removeChild(scAnns.at(0));
-        }
-        QTextStream temp(&this->annotation);
-        n.save(temp,1);
+    // load the metadata for the projection from the metadata.xml file:
+    QDomNode metaNode = meta->documentElement().firstChild();
 
-        if (!metaNode.isNull()) {
-            QDomNode metaData = metaNode.firstChild();
+    // The current cursor position, for offsetting position -
+    // important when importing a network.
+    cursorType curs = data->getCursorPos();
+
+    while(!metaNode.isNull()) {
+
+        if (metaNode.toElement().attribute("source", "") == this->source->name
+            && metaNode.toElement().attribute("destination", "") == this->destination->name) {
+
+            this->projDrawStyle = (drawStyle) metaNode.toElement().attribute("style", QString::number(standardDrawStyleExcitatory)).toUInt();
+            this->showLabel = (bool) metaNode.toElement().attribute("showlabel", 0).toUInt();
+
+            QDomNode metaData = metaNode.toElement().firstChild();
             while (!metaData.isNull()) {
 
                 if (metaData.toElement().tagName() == "start") {
-                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat()+curs.x,
+                                          metaData.toElement().attribute("y","").toFloat()+curs.y);
                 }
 
-                /////////////
+                // find the curves tag
+                if (metaData.toElement().tagName() == "curves") {
 
+                    // add each curve
+                    QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
+                    for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
+                        QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
+                        bezierCurve newCurve;
+                        while (!vals.isNull()) {
+                            if (vals.toElement().tagName() == "C1") {
+                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
+                            }
+                            if (vals.toElement().tagName() == "C2") {
+                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
+                            }
+                            if (vals.toElement().tagName() == "end") {
+                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                       vals.toElement().attribute("ypos").toFloat()+curs.y);
+                            }
+                            vals = vals.nextSibling();
+                        }
+                        // add the filled out curve to the list
+                        this->curves.push_back(newCurve);
+                    }
+                }
 
                 // find tags for connection generators
-                // Ah - this only works for old style metadata!
                 if (metaData.toElement().tagName() == "synapseConnection") {
 
                     // extract the name from the tag
@@ -1703,32 +1729,22 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                                     conn->generator = new pythonscript_connection(this->source, this->destination, conn);
                                     // extract data for connection generator
                                     ((pythonscript_connection *) conn->generator)->read_metadata_xml(metaData);
-
+                                    // prevent regeneration
+                                    ((pythonscript_connection *) conn->generator)->setUnchanged(true);
                                     // Set source/dest population names in the connection (used when saving)
                                     conn->setSrcName (this->source->name);
                                     conn->setDstName (this->destination->name);
                                     conn->setSynapseIndex (i);
-
-                                    // prevent regeneration
-                                    ((pythonscript_connection *) conn->generator)->setUnchanged(true);
-                                } else {
-                                    DBG() << "NOT CSV connection type";
                                 }
                             }
                         }
                     }
                 }
-
-
-                //////////////
-
-
                 metaData = metaData.nextSibling();
             }
         }
+        metaNode = metaNode.nextSibling();
     }
-#endif // __NEED_TO_LOAD_ANNOTATIONS_HERE__
-
 #ifdef __DEBUG_PROJECTION_READXML
     this->print();
 #endif
