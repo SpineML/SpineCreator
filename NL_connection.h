@@ -65,6 +65,32 @@ public:
     virtual QString getTypeStr(void);
 
     /*!
+     * Is there a generator associated with this connection? If
+     * so, this is a pointer to the object.
+     */
+    connection* generator;
+
+    /*!
+     * A script, in some language, used to generate connections.
+     */
+    QString scriptText;
+
+    /*!
+     * Does this connection have a generator?
+     */
+    virtual bool hasGenerator (void) { return (this->generator == NULL ? false : true); }
+
+    /*!
+     * IS this connection a generator?
+     */
+    virtual bool isGenerator (void) { return false; }
+
+    /*!
+     * Return generator script of enclosing generator:
+     */
+    QString getGeneratorScript (void) { if (this->hasGenerator()) { return generator->getGeneratorScript(); } else if (this->isGenerator()) { return this->scriptText; } }
+
+    /*!
      * The parent object which contains this connection. Will be
      * either a GenericInput or a Synapse. The introduction of this
      * makes this->synapseIndex possibly unnecessary. This was
@@ -125,7 +151,7 @@ public:
     void setSynapseIndex(int synidx);
 
     /*!
-     * A place for the modeller to store information about this
+     * A place for SpineCreator to store meta-information about this
      * connection.
      */
     QString annotation;
@@ -230,8 +256,6 @@ public:
      * Column headers really. A list of 2 or 3 strings as headers.
      */
     QStringList values;
-
-    connection* generator;
 
     /*!
      * \brief import_csv
@@ -441,7 +465,7 @@ public:
 
     QVector <conn> connections;
 
-    QString scriptText;
+    // scriptText is inherited from the connection parent class
     QString lastGeneratedScriptText;
     QString scriptName;
     QStringList parNames;
@@ -467,6 +491,8 @@ public:
     csv_connection * connection_target;
 
     connection * newFromExisting();
+
+
 
 private:
 

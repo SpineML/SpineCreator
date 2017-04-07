@@ -49,6 +49,8 @@ connection::connection()
     this->srcName = "";
     this->dstName = "";
     this->synapseIndex = -1;
+    this->generator = NULL;
+    this->scriptText = "";
 }
 
 connection::~connection()

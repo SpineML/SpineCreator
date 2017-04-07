@@ -481,16 +481,21 @@ drawStyle projection::style()
 #define QCOL_BLUE1      QColor(0x00,0x09,0xd3,0xff)
 #define QCOL_BLUE2      QColor(0x00,0x81,0xd3,0xff)
 #define QCOL_CYAN1      QColor(0x00,0xc8,0xd3,0xff)
+
 #define QCOL_GREEN1     QColor(0x00,0xd3,0x50,0xff)
 #define QCOL_GREEN2     QColor(0x07,0xd3,0x00,0xff)
 #define QCOL_GREEN3     QColor(0x7a,0xd3,0x00,0xff)
+#define QCOL_GREEN4     QColor(0x00,0xff,0x00,0xff)
 #define QCOL_ORANGE1    QColor(0xd3,0x83,0x00,0xff)
 #define QCOL_RED1       QColor(0xd3,0x26,0x00,0xff)
 #define QCOL_RED2       QColor(0xd3,0x00,0x00,0xff)
+#define QCOL_RED3       QColor(0xff,0x00,0x00,0x64)
 
 #define QCOL_GREY1      QColor(0xc8,0xc8,0xc8,0xff)
 #define QCOL_GREY2      QColor(0x3e,0x3e,0x3e,0xff)
-#define QCOL_BLACK      QColor(0xff,0xff,0xff,0xff)
+#define QCOL_BLACK      QColor(0x00,0x00,0x00,0xff)
+
+
 //@}
 
 /*!
@@ -551,8 +556,14 @@ void projection::draw(QPainter *painter, float GLscale,
             QString ctype("");
             if (!this->synapses.isEmpty() && !this->synapses[0]->connectionTypeStr.isEmpty()) {
 
-                // Make colour vary based on md5sum of the text in ctype:
-                ctype += this->synapses[0]->connectionTypeStr;
+
+                if (this->synapses[0]->connectionType->hasGenerator()) {
+                    csv_connection* cn = (csv_connection*)this->synapses[0]->connectionType;
+                    ctype += cn->generator->scriptText;
+                } else {
+                    // Make colour vary based on md5sum of the text in ctype:
+                    ctype += this->synapses[0]->connectionTypeStr;
+                }
 
                 QString result(QCryptographicHash::hash(ctype.toStdString().c_str(),
                                                         QCryptographicHash::Md5).toHex());
@@ -579,8 +590,25 @@ void projection::draw(QPainter *painter, float GLscale,
                     connTypeWidthFactor = WIDTHFACTOR_FIXEDPROB;
                     break;
                 case CSV:
-                    colour = QCOL_GREEN3;
-                    connTypeWidthFactor = WIDTHFACTOR_CSV;
+                    // if it has a Script Annotation, then need to colour it later based on this information:
+                    if (this->synapses[0]->connectionType->hasGenerator()) {
+
+                        // Make colour vary based on md5sum of the text in ctype:
+                        csv_connection* cn = (csv_connection*)this->synapses[0]->connectionType;
+                        ctype += cn->generator->scriptText;
+
+                        QString result(QCryptographicHash::hash(ctype.toStdString().c_str(),
+                                                                QCryptographicHash::Md5).toHex());
+                        QByteArray r2(result.toStdString().c_str(),2);
+                        bool ok = false;
+                        // Vary the hue in the colour
+                        colour.setHsl(r2.toInt(&ok, 16),0xff,0x40);
+                        connTypeWidthFactor = WIDTHFACTOR_PYTHONCONN;
+
+                    } else {
+                        colour = QCOL_GREEN3;
+                        connTypeWidthFactor = WIDTHFACTOR_CSV;
+                    }
                     break;
                 case Python:
                 case CSA:
@@ -602,9 +630,9 @@ void projection::draw(QPainter *painter, float GLscale,
         // have to set the linePen colour to the passed in pen colour.
         QPen oldPen = painter->pen();
         if (saveNetworkImage == true || oldPen.color() == QCOL_BASICBLUE) {
-            // We can override colours
+            //DBG() << "We can override colours";
         } else {
-            // We've been passed in a specified colour, set linePen to this colour
+            //DBG() << "We've been passed in a specified colour, set linePen to this colour";
             colour = oldPen.color();
         }
 
@@ -631,8 +659,9 @@ void projection::draw(QPainter *painter, float GLscale,
                 temp.setLength(0.501);
                 end = temp.p2();
             }
-            else
+            else {
                 end = this->curves.back().end;
+            }
 
             // set pen width
             QPen pen2 = painter->pen();
@@ -1086,14 +1115,14 @@ void projection::drawHandles(QPainter *painter, float GLscale,
         painter->drawPath(lines);
         path.addEllipse(this->transformPoint(this->curves.back().end),4*dpi_ratio,4*dpi_ratio);
         painter->drawPath(path);
-        painter->fillPath(path,QColor(255,0,0,100));
+        painter->fillPath(path,QCOL_RED3);
 
         // redraw selected handle:
         if (this->selectedControlPoint.start) {
             QPainterPath sel;
             sel.addEllipse(this->transformPoint(this->start), 4*dpi_ratio, 4*dpi_ratio);
             painter->drawPath(sel);
-            painter->fillPath(sel,QColor(0,255,0,255));
+            painter->fillPath(sel, QCOL_GREEN4);
         } else if (this->selectedControlPoint.ind != -1) {
             QPainterPath sel;
             QPointF Transformed;
@@ -1116,7 +1145,7 @@ void projection::drawHandles(QPainter *painter, float GLscale,
 
             }
             painter->drawPath(sel);
-            painter->fillPath(sel,QColor(0,255,0,255));
+            painter->fillPath(sel, QCOL_GREEN4);
         }
     }
 }
