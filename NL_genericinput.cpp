@@ -567,7 +567,10 @@ void genericInput::moveSelectedControlPoint(float xGL, float yGL)
 void genericInput::write_model_meta_xml(QXmlStreamWriter* xmlOut)
 {
     // if we are a projection specific input, skip this
-    if (this->projInput) { return; }
+    if (this->projInput) {
+        DBG() << "genericInput::write_model_meta_xml: projection specific; skip";
+        return;
+    }
 
 #ifdef __OLD_CODE__ // for later removal.
     // write a new element for this projection:
@@ -636,7 +639,10 @@ void genericInput::write_model_meta_xml(QXmlStreamWriter* xmlOut)
 void genericInput::read_meta_data (QDomNode meta, cursorType cursorPos)
 {
     // skip if a special input for a projection
-    if (this->projInput) return;
+    if (this->projInput) {
+        DBG() << "Special input for projection, skipping.";
+        return;
+    }
 
     // now load the metadata for the projection:
     QDomNode metaNode;
@@ -710,6 +716,7 @@ void genericInput::read_meta_data (QDomNode meta, cursorType cursorPos)
 #define __DEBUG_READ_META 1
 void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 {
+    DBG() << "Called to read meta data from metadata.xml file.";
     // skip if a special input for a projection
     if (this->projInput) {
 #ifdef __DEBUG_READ_META

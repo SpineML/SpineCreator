@@ -851,7 +851,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
     QDomNodeList anns = e.toElement().elementsByTagName("LL:Annotation");
 
     if (anns.size() == 1) {
-        DBG() << "Have annotations...";
         // annotations found - do we have a generator?
         QDomNode metaData;
         QDomNodeList scAnns = anns.at(0).toElement().elementsByTagName("SpineCreator");
@@ -1695,7 +1694,7 @@ connection * csv_connection::newFromExisting()
     return c;
 }
 
-pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *  conn_targ)
+pythonscript_connection::pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection* conn_targ)
 {
     this->type = Python;
     this->isAList = false;
@@ -1705,7 +1704,7 @@ pythonscript_connection::pythonscript_connection(QSharedPointer <population> src
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;
-    DBG() << "Settings src and dst for this pythonscript_connection...";
+    DBG() << "Setting src and dst for this pythonscript_connection...";
     this->srcPop = src;
     this->dstPop = dst;
     this->connection_target = conn_targ;

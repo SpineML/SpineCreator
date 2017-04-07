@@ -258,6 +258,21 @@ void synapse::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemOb
     }
 }
 
+void
+synapse::passDownSrcAndDst (void)
+{
+    if (this->connectionType != NULL && !this->proj.isNull()) {
+        this->connectionType->srcPop = this->proj->source;
+        this->connectionType->dstPop = this->proj->destination;
+        if (!this->proj->source.isNull()) {
+            this->connectionType->setSrcName (this->proj->source->name);
+        }
+        if (!this->proj->destination.isNull()) {
+            this->connectionType->setDstName (this->proj->destination->name);
+        }
+    }
+}
+
 projection::projection()
 {
     this->type = projectionObject;
@@ -265,7 +280,7 @@ projection::projection()
     this->destination.clear();
     this->source.clear();
 
-    currTarg = 0; // Unused; remove.
+    this->currTarg = 0;
     this->start = QPointF(0,0);
 
     this->tempTrans.GLscale = 100;
@@ -1555,17 +1570,17 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     this->selectedControlPoint.start = false;
 
     // take the given node element and begin extracting the data:
-
     QString srcName;
     QString destName;
     QDomNodeList nrn = e.parentNode().toElement().elementsByTagName("LL:Neuron");
 
-    // get src name
+    // Get the source population name
     if (nrn.size() == 1) {
         srcName = nrn.item(0).toElement().attribute("name");
         // this must exist as the population has been loaded successfully by this point so no error check
     }
 
+    // Get the destination population
     if (nrn.size() == 1) {
         destName = e.attribute("dst_population");
         if (destName == "") {
@@ -1625,241 +1640,13 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
     this->currTarg = 0;
 
-    // load annotation metadata for the *projection*
-    QDomNode annInst = e.firstChild();
-    while (!(annInst.toElement().tagName() == "LL:Annotation") && !annInst.isNull()) {
-        annInst = annInst.nextSibling();
-    }
+    // load annotation metadata for the *projection* (a projection may
+    // also incorporate an InputType (with annotation) and a Synapse
+    // containing a ConnectionList (with annotation).
+    this->readAnnotationXML (e);
 
-    if (annInst.toElement().tagName() == "LL:Annotation") {
-        QDomNode metaNode;
-        QDomNode n = annInst;
-        QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
-        if (scAnns.length() == 1) {
-            metaNode = scAnns.at(0).cloneNode();
-            n.removeChild(scAnns.at(0));
-        }
-        QTextStream temp(&this->annotation);
-        n.save(temp,1);
-
-        // load metaData
-        if (!metaNode.isNull()) {
-
-            QDomNode metaData = metaNode.firstChild();
-            while (!metaData.isNull()) {
-
-                if (metaData.toElement().tagName() == "DrawOptions") {
-                    this->projDrawStyle = (drawStyle) metaData.toElement().attribute("style","4").toUInt();
-                    this->showLabel = (bool) metaData.toElement().attribute("showlabel","0").toInt();
-                }
-
-                if (metaData.toElement().tagName() == "start") {
-                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
-                }
-
-                // find the curves tag
-                if (metaData.toElement().tagName() == "curves") {
-
-                    // add each curve
-                    QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
-                    for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
-                        QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
-                        bezierCurve newCurve;
-                        while (!vals.isNull()) {
-                            if (vals.toElement().tagName() == "C1") {
-                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
-                            }
-                            if (vals.toElement().tagName() == "C2") {
-                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
-                            }
-                            if (vals.toElement().tagName() == "end") {
-                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
-                            }
-
-                            vals = vals.nextSibling();
-                        }
-                        // add the filled out curve to the list
-                        this->curves.push_back(newCurve);
-                    }
-
-                }
-
-                metaData = metaData.nextSibling();
-            }
-        }
-    } // end of "if we have LL:Annotation"
-
-    // load the synapses in this projection now:
-    QDomNodeList colList = e.elementsByTagName("LL:Synapse");
-
-    if (colList.count() == 0) {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-        settings.setArrayIndex(num_errs + 1);
-        settings.setValue("errorText",  "XML error: Projection contains no Synapse tags");
-        settings.endArray();
-        return;
-    }
-
-    for (int i = 0; i < (int) colList.count(); ++i) {
-        // create a new Synapse on the projection
-        // add bool to avoid adding the projInputs - we need to do that later:
-        QSharedPointer <synapse> newSynapse = QSharedPointer<synapse>(new synapse(thisSharedPointer, data, true));
-        QString pspName;
-        QString synName;
-        QDomNode n = colList.item(i).toElement().firstChild();
-        while (!n.isNull()) {
-
-            if (n.isComment()) {
-                n = n.nextSibling();
-                continue;
-            }
-
-            // get connectivity
-
-            if (n.toElement().tagName() == "AllToAllConnection") {
-                delete newSynapse->connectionType;
-                newSynapse->connectionType = new alltoAll_connection;
-                newSynapse->connectionType->setParent (newSynapse);
-                newSynapse->connectionType->setSynapseIndex (i);
-                newSynapse->connectionType->import_parameters_from_xml(n);
-            }
-            else if (n.toElement().tagName() == "OneToOneConnection") {
-                delete newSynapse->connectionType;
-                newSynapse->connectionType = new onetoOne_connection;
-                newSynapse->connectionType->setParent(newSynapse);
-                newSynapse->connectionType->setSynapseIndex (i);
-                newSynapse->connectionType->import_parameters_from_xml(n);
-            }
-            else if (n.toElement().tagName() == "FixedProbabilityConnection") {
-                delete newSynapse->connectionType;
-                newSynapse->connectionType = new fixedProb_connection;
-                newSynapse->connectionType->setParent (newSynapse);
-                newSynapse->connectionType->setSynapseIndex (i);
-                newSynapse->connectionType->import_parameters_from_xml(n);
-            }
-            else if (n.toElement().tagName() == "ConnectionList") {
-                delete newSynapse->connectionType;
-                newSynapse->connectionType = new csv_connection;
-                newSynapse->connectionType->setParent (newSynapse);
-                newSynapse->connectionType->setSrcName (srcName);
-                newSynapse->connectionType->setDstName (destName);
-                newSynapse->connectionType->setSynapseIndex (i);
-                newSynapse->connectionType->import_parameters_from_xml(n);
-            }
-            else if (n.toElement().tagName() == "PythonScriptConnection") {
-                DBG() << "Do we have PythonScriptConnections? I think they're usually ConnectionLists with a generator Script in the Annotations...";
-            }
-            else if (n.toElement().tagName() == "LL:PostSynapse") {
-
-                // get postsynapse component name
-                pspName = n.toElement().attribute("url");
-                QString real_url = pspName;
-                if (pspName == "") {
-                    QSettings settings;
-                    int num_errs = settings.beginReadArray("errors");
-                    settings.endArray();
-                    settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: Missing PostSynapse 'url' attribute");
-                    settings.endArray();
-                    return;
-                }
-                QStringList tempName = pspName.split('.');
-                // first section will hold the name
-                if (tempName.size() > 0)
-                    pspName = tempName[0];
-                pspName.replace("_", " ");
-
-                newSynapse->postSynapseCmpt.clear();
-
-                // see if PS is loaded
-                for (int u = 0; u < data->catalogPS.size(); ++u) {
-                    if (data->catalogPS[u]->name == pspName) {
-                        newSynapse->postSynapseCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[u]));
-                        newSynapse->postSynapseCmpt->owner = thisSharedPointer;
-                        newSynapse->postSynapseCmpt->import_parameters_from_xml(n);
-                        break;
-                    }
-                }
-
-                // if still missing then we have an issue
-                if (newSynapse->postSynapseCmpt.isNull()) {
-                    newSynapse->postSynapseCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[0]));
-                    newSynapse->postSynapseCmpt->owner = thisSharedPointer;
-                    QSettings settings;
-                    int num_errs = settings.beginReadArray("warnings");
-                    settings.endArray();
-                    settings.beginWriteArray("warnings");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("warnText",  "Network references missing Component '" + pspName + "'");
-                    settings.endArray();
-                }
-
-            } else if (n.toElement().tagName() == "LL:WeightUpdate") {
-
-                // get postsynapse component name
-                synName = n.toElement().attribute("url");
-                QString real_url = synName;
-                if (synName == "") {
-                    QSettings settings;
-                    int num_errs = settings.beginReadArray("errors");
-                    settings.endArray();
-                    settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: Missing WeightUpdate 'url' attribute");
-                    settings.endArray();
-                    return;
-                }
-                QStringList tempName = synName.split('.');
-                // first section will hold the name
-                if (tempName.size() > 0) {
-                    synName = tempName[0];
-                }
-                synName.replace("_", " ");
-
-                newSynapse->weightUpdateCmpt.clear();
-
-                // see if WU loaded
-                for (int u = 0; u < data->catalogWU.size(); ++u) {
-                    if (data->catalogWU[u]->name == synName) {
-                        newSynapse->weightUpdateCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogWU[u]));
-                        newSynapse->weightUpdateCmpt->owner = thisSharedPointer;
-                        newSynapse->weightUpdateCmpt->import_parameters_from_xml(n);
-                        break;
-                    }
-                }
-
-                // if still missing then we have a load error
-                if (newSynapse->weightUpdateCmpt.isNull()) {
-                    newSynapse->weightUpdateCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogWU[0]));
-                    newSynapse->weightUpdateCmpt->owner = thisSharedPointer;
-                    QSettings settings;
-                    int num_errs = settings.beginReadArray("warnings");
-                    settings.endArray();
-                    settings.beginWriteArray("warnings");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("warnText",  "Network references missing Component '" + synName + "'");
-                    settings.endArray();
-                }
-
-            } else {
-                QSettings settings;
-                int num_errs = settings.beginReadArray("errors");
-                settings.endArray();
-                settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
-                settings.endArray();
-            }
-            n = n.nextSibling();
-        }
-        // add the synapse
-        this->synapses.push_back(newSynapse);
-
-    } // end of "for each synapse" for loop
+    // Now read the XML for each synapse in the projection.
+    this->readSynapsesXML (e, data, thisSharedPointer);
 
 #ifdef __NEED_TO_LOAD_ANNOTATIONS_HERE__ // but I think Script stuff is loaded by csv_connection::import_paramters_from_xml()
     // Now load annotations for the *synapse* element(s)
@@ -1947,6 +1734,271 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 #endif
 }
 
+void projection::readAnnotationXML (QDomElement& e)
+{
+    QDomNode annInst = e.firstChild();
+    while (!(annInst.toElement().tagName() == "LL:Annotation") && !annInst.isNull()) {
+        annInst = annInst.nextSibling();
+    }
+
+    if (annInst.toElement().tagName() == "LL:Annotation") {
+        QDomNode metaNode;
+        QDomNode n = annInst;
+        QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
+        if (scAnns.length() == 1) {
+            metaNode = scAnns.at(0).cloneNode();
+            n.removeChild(scAnns.at(0));
+        }
+        QTextStream temp(&this->annotation);
+        n.save(temp,1);
+
+        // load metaData
+        if (!metaNode.isNull()) {
+
+            QDomNode metaData = metaNode.firstChild();
+            while (!metaData.isNull()) {
+
+                if (metaData.toElement().tagName() == "DrawOptions") {
+                    this->projDrawStyle = (drawStyle) metaData.toElement().attribute("style","4").toUInt();
+                    this->showLabel = (bool) metaData.toElement().attribute("showlabel","0").toInt();
+                }
+
+                if (metaData.toElement().tagName() == "start") {
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
+                }
+
+                // find the curves tag
+                if (metaData.toElement().tagName() == "curves") {
+
+                    // add each curve
+                    QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
+                    for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
+                        QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
+                        bezierCurve newCurve;
+                        while (!vals.isNull()) {
+                            if (vals.toElement().tagName() == "C1") {
+                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                            }
+                            if (vals.toElement().tagName() == "C2") {
+                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                            }
+                            if (vals.toElement().tagName() == "end") {
+                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                            }
+
+                            vals = vals.nextSibling();
+                        }
+                        // add the filled out curve to the list
+                        this->curves.push_back(newCurve);
+                    }
+
+                }
+
+                metaData = metaData.nextSibling();
+            }
+        }
+    } // end of "if we have LL:Annotation"
+}
+
+void projection::readSynapsesXML (QDomElement& e, projectObject * data,
+                                 QSharedPointer<projection> thisSharedPointer)
+{
+    // load the synapses in this projection now:
+    QDomNodeList synList = e.elementsByTagName("LL:Synapse");
+
+    if (synList.count() == 0) {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: Projection contains no Synapse tags");
+        settings.endArray();
+        return;
+    }
+
+    // for each synapse:
+    for (int i = 0; i < (int) synList.count(); ++i) {
+        QSharedPointer <synapse> newSynapse = this->readSingleSynapseXML (data, thisSharedPointer, synList, i);
+        if (newSynapse.isNull()) {
+            break;
+        }
+        // add the synapse
+        this->synapses.push_back(newSynapse);
+    } // end of "for each synapse" for loop
+}
+
+QSharedPointer<synapse>
+projection::readSingleSynapseXML (projectObject* data,
+                                  QSharedPointer<projection> thisSharedPointer,
+                                  QDomNodeList& synList, int synNum)
+{
+    // create a new Synapse on the projection
+    // add bool to avoid adding the projInputs - we need to do that later:
+    QSharedPointer <synapse> newSynapse = QSharedPointer<synapse>(new synapse(thisSharedPointer, data, true));
+    QString pspName("");
+    QString synName("");
+    QDomNode n = synList.item(synNum).toElement().firstChild();
+    while (!n.isNull()) {
+
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
+        // get Synapse connectivity
+        if (n.toElement().tagName() == "AllToAllConnection") {
+            delete newSynapse->connectionType;
+            newSynapse->connectionType = new alltoAll_connection;
+            newSynapse->connectionType->setParent (newSynapse);
+            newSynapse->connectionType->setSynapseIndex (synNum);
+            newSynapse->connectionType->import_parameters_from_xml(n);
+        }
+        else if (n.toElement().tagName() == "OneToOneConnection") {
+            delete newSynapse->connectionType;
+            newSynapse->connectionType = new onetoOne_connection;
+            newSynapse->connectionType->setParent(newSynapse);
+            newSynapse->connectionType->setSynapseIndex (synNum);
+            newSynapse->connectionType->import_parameters_from_xml(n);
+        }
+        else if (n.toElement().tagName() == "FixedProbabilityConnection") {
+            delete newSynapse->connectionType;
+            newSynapse->connectionType = new fixedProb_connection;
+            newSynapse->connectionType->setParent (newSynapse);
+            newSynapse->connectionType->setSynapseIndex (synNum);
+            newSynapse->connectionType->import_parameters_from_xml(n);
+        }
+        else if (n.toElement().tagName() == "ConnectionList") {
+            DBG() << "Have a ConnectionList in this Synapse.";
+            delete newSynapse->connectionType;
+            newSynapse->connectionType = new csv_connection;
+            newSynapse->connectionType->setParent (newSynapse);
+            // Note that while we've set srcName and destName in the
+            // newSynapse, we've not yet set src & dest populations
+            // (this->source and this->destination). However,
+            // newSynapse contains proj which is apointer to the
+            // parent projection which does have source and
+            // destination. So pass that down with this call:
+            newSynapse->passDownSrcAndDst();
+
+            newSynapse->connectionType->setSynapseIndex (synNum);
+            DBG() << "Importing csv_connection parameters from xml...";
+            newSynapse->connectionType->import_parameters_from_xml(n);
+        }
+        else if (n.toElement().tagName() == "PythonScriptConnection") {
+            DBG() << "Do we have PythonScriptConnections? I think they're usually ConnectionLists with a generator Script in the Annotations...";
+        }
+        else if (n.toElement().tagName() == "LL:PostSynapse") {
+
+            // get postsynapse component name
+            pspName = n.toElement().attribute("url");
+            QString real_url = pspName;
+            if (pspName == "") {
+                QSettings settings;
+                int num_errs = settings.beginReadArray("errors");
+                settings.endArray();
+                settings.beginWriteArray("errors");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: Missing PostSynapse 'url' attribute");
+                settings.endArray();
+                newSynapse.clear();
+                return newSynapse;
+            }
+            QStringList tempName = pspName.split('.');
+            // first section will hold the name
+            if (tempName.size() > 0) {
+                pspName = tempName[0];
+            }
+            pspName.replace("_", " ");
+
+            newSynapse->postSynapseCmpt.clear();
+
+            // see if PS is loaded
+            for (int u = 0; u < data->catalogPS.size(); ++u) {
+                if (data->catalogPS[u]->name == pspName) {
+                    newSynapse->postSynapseCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[u]));
+                    newSynapse->postSynapseCmpt->owner = thisSharedPointer;
+                    newSynapse->postSynapseCmpt->import_parameters_from_xml(n);
+                    break;
+                }
+            }
+
+            // if still missing then we have an issue
+            if (newSynapse->postSynapseCmpt.isNull()) {
+                newSynapse->postSynapseCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[0]));
+                newSynapse->postSynapseCmpt->owner = thisSharedPointer;
+                QSettings settings;
+                int num_errs = settings.beginReadArray("warnings");
+                settings.endArray();
+                settings.beginWriteArray("warnings");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("warnText",  "Network references missing Component '" + pspName + "'");
+                settings.endArray();
+            }
+
+        } else if (n.toElement().tagName() == "LL:WeightUpdate") {
+
+            // get postsynapse component name
+            synName = n.toElement().attribute("url");
+            QString real_url = synName;
+            if (synName == "") {
+                QSettings settings;
+                int num_errs = settings.beginReadArray("errors");
+                settings.endArray();
+                settings.beginWriteArray("errors");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: Missing WeightUpdate 'url' attribute");
+                settings.endArray();
+                newSynapse.clear();
+                return newSynapse;
+            }
+            QStringList tempName = synName.split('.');
+            // first section will hold the name
+            if (tempName.size() > 0) {
+                synName = tempName[0];
+            }
+            synName.replace("_", " ");
+
+            newSynapse->weightUpdateCmpt.clear();
+
+            // see if WU loaded
+            for (int u = 0; u < data->catalogWU.size(); ++u) {
+                if (data->catalogWU[u]->name == synName) {
+                    newSynapse->weightUpdateCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogWU[u]));
+                    newSynapse->weightUpdateCmpt->owner = thisSharedPointer;
+                    newSynapse->weightUpdateCmpt->import_parameters_from_xml(n);
+                    break;
+                }
+            }
+
+            // if still missing then we have a load error
+            if (newSynapse->weightUpdateCmpt.isNull()) {
+                newSynapse->weightUpdateCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogWU[0]));
+                newSynapse->weightUpdateCmpt->owner = thisSharedPointer;
+                QSettings settings;
+                int num_errs = settings.beginReadArray("warnings");
+                settings.endArray();
+                settings.beginWriteArray("warnings");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("warnText",  "Network references missing Component '" + synName + "'");
+                settings.endArray();
+            }
+
+        } else {
+            QSettings settings;
+            int num_errs = settings.beginReadArray("errors");
+            settings.endArray();
+            settings.beginWriteArray("errors");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
+            settings.endArray();
+        }
+        n = n.nextSibling();
+    }
+
+    return newSynapse;
+}
+
 void projection::add_curves()
 {
     if (this->destination.isNull() || this->source.isNull()) {
@@ -2001,7 +2053,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     if (colList.count() != this->synapses.size()) {
         // oh dear, something has gone badly wrong
 #ifdef __DEBUG_READ_INPUTS
-        DBG() << "Size mismatch " << colList.count() << " != " << this->synapses.size() << " for element:" << e.tagName();
+        DBG() << "Size mismatch " << colList.count() << " (number of Synapse elements in XML) != " << this->synapses.size() << " (number of synapses in projection) for element:" << e.tagName();
         if (e.hasAttribute("name")) {
             DBG() << e.attribute("name", "");
         }
@@ -2138,8 +2190,10 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
                     if (annInst.toElement().tagName() == "LL:Annotation") {
                         QDomNode n = annInst;
+                        DBG() << "Reading LL:Annotation with newInput->read_meta_data(n, cpos) (new style)";
                         newInput->read_meta_data (n, data->getCursorPos());
                     } else {
+                        DBG() << "Reading LL:Annotation with newInput->read_meta_data(meta, cpos) (old style)";
                         newInput->read_meta_data (meta, data->getCursorPos());
                     }
                 }
@@ -2360,7 +2414,7 @@ QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *
     newProj->destination = this->destination;
     newProj->source = this->source;
 
-    newProj->currTarg =  this->currTarg;
+    newProj->currTarg = this->currTarg;
     newProj->start = this->start;
     newProj->curves = this->curves;
 
@@ -2413,7 +2467,7 @@ void projection::print()
     DBG() << "Projection printout:";
     DBG() << "---------------------------------";
     DBG() << "   " << this->getName() << " ####";
-    //DBG() << "   " <<  float(this->currTarg);
+    DBG() << "   " << this->currTarg;
     DBG() << "   Dest:" <<  this->destination->name;
     DBG() << "   Src: " <<  this->source->name;
     DBG() << "   Synapses:";

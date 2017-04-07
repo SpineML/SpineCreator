@@ -1116,7 +1116,7 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
 
             // add inputs
 #ifdef __DEBUG_LOAD_NETWORK
-            DBG() << "Adding inputs from LL:Population element with network->read_inputs_from_xml... " << e.text();
+            DBG() << "Adding inputs from LL:Population element with network->read_inputs_from_xml. e.text(): " << e.text();
             DBG() << "this->network[counter]->neuronType->getName():" << this->network[counter]->neuronType->getXMLName();
             // neuronType is a ComponentInstance, owner is a systemObject.
             DBG() << "this->network[counter]->neuronType->owner->getName():" << this->network[counter]->neuronType->owner->getName();
@@ -1139,11 +1139,12 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
             DBG() << "Now read inputs for each of " << n2.size() << " projections in the population in network["<<counter<<"]...";
 #endif
             for (int i = 0; i < (int) n2.size(); ++i) {
-                QDomElement e = n2.item(i).toElement();
+                QDomElement proj_e = n2.item(i).toElement();
 #ifdef __DEBUG_LOAD_NETWORK
                 DBG() << "Calling projections->read_inputs_from_xml...";
 #endif
-                this->network[counter]->projections[projCount]->read_inputs_from_xml(e, &this->meta, this, this->network[counter]->projections[projCount]);
+                // The problem is that this->network[counter]->projections[projCount] has NO synapses.
+                this->network[counter]->projections[projCount]->read_inputs_from_xml(proj_e, &this->meta, this, this->network[counter]->projections[projCount]);
                 ++projCount;
             }
             ++counter;

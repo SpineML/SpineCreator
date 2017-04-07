@@ -555,7 +555,9 @@ void Component::write(QDomDocument *doc)
 
 }
 
-void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
+void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
+{
+    DBG() << "ComponentRootInstance::write_node_xml called...";
 
     // definition
     QString simpleName;
@@ -569,28 +571,11 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
     simpleName.replace( " ", "_" );
     xmlOut.writeAttribute("url", simpleName + ".xml");
 
-    // wriet the seed and minumum distance for the Layout
+    // write the seed and minumum distance for the Layout
     if (this->type == NineMLLayoutType) {
         NineMLLayoutData * lay = static_cast<NineMLLayoutData *> (this);
         xmlOut.writeAttribute("seed", QString::number(lay->seed));
         xmlOut.writeAttribute("minimum_distance", QString::number(lay->minimumDistance));
-    }
-
-    // annotations
-    if (!this->annotation.isEmpty()) {
-        xmlOut.writeStartElement("LL:Annotation");
-        // old annotations
-        this->annotation.replace("\n", "");
-        this->annotation.replace("<LL:Annotation>", "");
-        this->annotation.replace("</LL:Annotation>", "");
-        QXmlStreamReader reader(this->annotation);
-        while (!reader.atEnd()) {
-            if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
-                xmlOut.writeCurrentToken(reader);
-            }
-            reader.readNext();
-        }
-        xmlOut.writeEndElement();//"LL:Annotation"
     }
 
     if (this->type == NineMLComponentType) {
@@ -607,14 +592,13 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
 
                     xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
                     xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
-
                 }
 
                 // add the special input for the postsynapse
@@ -626,17 +610,14 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" +ptr->inputs[i]->dstCmpt->getXMLName() + "'");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" +ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
 
-
                     xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
                     xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
-
                 }
-
             }
         }
 
@@ -668,8 +649,31 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
 
         }
     }
+    // Have now finished writing attributes into the PostSynapse/WeightUpdate
 
-    // Do we have any parameter or state variable properties to write out?
+#ifdef COMPONENT_ROOT_INSTANCE_NEEDS_TO_OUTPUT_ANNOTATION
+    // Add Annotations element
+    if (!this->annotation.isEmpty()) {
+        // old annotations
+        this->annotation.replace("\n", "");
+        this->annotation.replace("<LL:Annotation>", "");
+        this->annotation.replace("</LL:Annotation>", "");
+        if (!this->annotation.isEmpty()) {
+            xmlOut.writeStartElement("LL:Annotation");
+            xmlOut.writeAttribute("codesource","ComponentRootInstance write_node_xml");
+            QXmlStreamReader reader(this->annotation);
+            while (!reader.atEnd()) {
+                if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
+                    xmlOut.writeCurrentToken(reader);
+                }
+                reader.readNext();
+            }
+            xmlOut.writeEndElement();//"LL:Annotation"
+        }
+    }
+#endif
+
+    // Add any parameter or state variable properties that exist
     if (this->ParameterList.size()+this->StateVariableList.size() > 0) {
 
         // Output parameter properties
