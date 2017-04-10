@@ -138,7 +138,6 @@ private:
     void saveLayout(QString, QDir, QSharedPointer<NineMLLayout>);
     void loadNetwork(QString, QDir, bool isProject = true);
     void saveNetwork(QString, QDir);
-    void saveMetaData(QString, QDir);
     void loadExperiment(QString, QDir, bool skipFileError = false);
     void saveExperiment(QString, QDir, experiment *);
 

@@ -232,9 +232,6 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
     // write network
     saveNetwork(this->networkFile, project_dir);
 
-    // saveMetaData
-    saveMetaData(this->metaFile, project_dir);
-
     // write experiments
     for (int i = 0; i < this->experimentList.size(); ++i) {
         saveExperiment("experiment" + QString::number(i) + ".xml", project_dir, this->experimentList[i]);
@@ -1258,38 +1255,6 @@ void projectObject::cleanUpStaleExplicitData(QString& fileName, QDir& projectDir
             QFile::remove(projectDir.absoluteFilePath(files[i]));
         }
     }
-}
-
-void projectObject::saveMetaData(QString fileName, QDir projectDir)
-{
-    DBG() << "projectObject::saveMetaData(QString fileName, QDir projectDir) is redundant and may be removed.";
-
-#ifdef __NOW_REDUNDANT__
-    QFile fileMeta(projectDir.absoluteFilePath(fileName));
-    if (!fileMeta.open(QIODevice::WriteOnly)) {
-        addError("Error creating MetaData file - is there sufficient disk space?");
-        return;
-    }
-
-    this->meta.setContent(QString(""));
-
-    // create the root of the file:
-    QDomElement root = this->meta.createElement("modelMetaData");
-    this->meta.appendChild(root);
-
-    // iterate through the populations and get the xml
-    for (int i = 0; i < this->network.size(); ++i) {
-        this->network[i]->write_model_meta_xml(this->meta, root);
-    }
-
-    QTextStream tsFromFileMeta(&fileMeta);
-    tsFromFileMeta << this->meta.toString();
-
-    // add to version control
-    if (this->version.isModelUnderVersion()) {
-        this->version.addToVersion(fileMeta.fileName());
-    }
-#endif
 }
 
 void projectObject::loadExperiment(QString fileName, QDir project_dir, bool skipFileError)
