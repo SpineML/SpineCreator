@@ -1561,33 +1561,6 @@ void projection::write_model_meta_xml(QXmlStreamWriter* xmlOut)
     xmlOut->writeEndElement(); // SpineCreator
 
     xmlOut->writeEndElement(); // Annotation
-
-#ifdef __OLD_CODE__ // for removal
-    // write out connection metadata. Alex commented the for loop out here?!
-    for (int i = 0; i < synapses.size(); ++i) {
-
-        // write container (name after the weight update)
-        QDomElement c = meta.createElement( "synapseConnection" );
-        c.setAttribute( "name", synapses[i]->weightUpdateCmpt->getXMLName() );
-
-        // add the metadata description (if there is one)
-        synapses[i]->connectionType->setSynapseIndex(i);
-        synapses[i]->connectionType->write_metadata_xml(meta, c);
-
-        col.appendChild(c);
-    }
-
-    // write inputs out
-    for (int i = 0; i < synapses.size(); ++i) {
-
-        for (int j = 0; j < synapses[i]->weightUpdateCmpt->inputs.size(); ++j) {
-            synapses[i]->weightUpdateCmpt->inputs[j]->write_model_meta_xml(meta, root);
-        }
-        for (int j = 0; j < synapses[i]->postSynapseCmpt->inputs.size(); ++j) {
-            synapses[i]->postSynapseCmpt->inputs[j]->write_model_meta_xml(meta, root);
-        }
-    }
-#endif
 }
 
 void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta,

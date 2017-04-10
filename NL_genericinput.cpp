@@ -572,18 +572,6 @@ void genericInput::write_model_meta_xml(QXmlStreamWriter* xmlOut)
         return;
     }
 
-#ifdef __OLD_CODE__ // for later removal.
-    // write a new element for this projection:
-    QDomElement col = meta.createElement("genericInput");
-    root.appendChild(col);
-    // No need to uniquely identify the input; we're in the model.xml
-    // now, not in a separate metaData.xml file.
-    col.setAttribute("source", this->srcCmpt->getXMLName());
-    col.setAttribute("destination", this->dstCmpt->getXMLName());
-    col.setAttribute("srcPort", this->srcPort);
-    col.setAttribute("dstPort", this->dstPort);
-#endif
-
     xmlOut->writeStartElement("LL:Annotation");
 
     // old annotations
