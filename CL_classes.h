@@ -649,6 +649,11 @@ public:
     void write_node_xml(QXmlStreamWriter &);
     ComponentRootInstance(){}
     virtual ~ComponentRootInstance(){}
+    /*!
+     * The annotation. Read with
+     * ComponentInstance::import_parameters_from_xml, which may be
+     * passed an option NOT to read annotation information.
+     */
     QString annotation;
 };
 
@@ -674,13 +679,7 @@ public:
     QStringList getPortMatches(int index, bool isOutput);
     void removeReferences();
     QSharedPointer<systemObject> owner;
-    /*!
-     * This has an option to ignore annotations so that when a
-     * PostSynapse calls down to a component with annotations, then
-     * annotations for the two different objects don't get mixed up.
-     */
-#define IGNORE_ANNOTATIONS true
-    void import_parameters_from_xml(QDomNode &e, bool ignoreAnnotations=false);
+    void import_parameters_from_xml(QDomNode &e);
     void migrateComponent(QSharedPointer<Component> newComponent);
     void addInput(QSharedPointer <ComponentInstance>, bool = false);
     void copyParsFrom(QSharedPointer <ComponentInstance> data);

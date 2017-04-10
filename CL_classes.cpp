@@ -3183,17 +3183,15 @@ QStringList Component::validateComponent()
     return errs;
 }
 
-void ComponentInstance::import_parameters_from_xml(QDomNode &n, bool ignoreAnnotations)
+void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 {
-    // fetch annotations
-    if (!ignoreAnnotations) {
-        QDomNodeList nListAnn = n.toElement().elementsByTagName("LL:Annotation");
-        if (nListAnn.size() == 1) {
-            QTextStream temp(&this->annotation);
-            nListAnn.at(0).save(temp,1);
-        }
+    // fetch LL:Annotation, but only a direct child of this ComponentInstance.
+    QDomElement a = n.toElement().firstChildElement("LL:Annotation");
+    if (!a.isNull()) {
+        QTextStream temp(&this->annotation);
+        a.save(temp,1);
     } else {
-        DBG() << "Ignoring annotations in this ComponentInstance";
+        DBG() << "No LL:Annotation for this ComponentInstance";
     }
 
     type = NineMLComponentType;

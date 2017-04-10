@@ -1937,7 +1937,7 @@ projection::readSingleSynapseXML (projectObject* data,
                     DBG() << "Got a loaded PS!";
                     newSynapse->postSynapseCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[u]));
                     newSynapse->postSynapseCmpt->owner = thisSharedPointer;
-                    newSynapse->postSynapseCmpt->import_parameters_from_xml(n, IGNORE_ANNOTATIONS);
+                    newSynapse->postSynapseCmpt->import_parameters_from_xml(n);
                     break;
                 }
             }
@@ -1985,7 +1985,7 @@ projection::readSingleSynapseXML (projectObject* data,
                 if (data->catalogWU[u]->name == synName) {
                     newSynapse->weightUpdateCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogWU[u]));
                     newSynapse->weightUpdateCmpt->owner = thisSharedPointer;
-                    newSynapse->weightUpdateCmpt->import_parameters_from_xml(n, IGNORE_ANNOTATIONS);
+                    newSynapse->weightUpdateCmpt->import_parameters_from_xml(n);
                     break;
                 }
             }
