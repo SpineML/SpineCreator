@@ -2289,6 +2289,8 @@ Component::Component(QSharedPointer<Component>data)
     this->path = data->path;
     this->filePath = data->filePath;
     this->initial_regime_name = data->initial_regime_name;
+    this->annotation = data->annotation;
+    this->annotationTexts = data->annotationTexts;
     RegimeList = QVector <Regime*>(data->RegimeList.size());
     StateVariableList = QVector <StateVariable*>(data->StateVariableList.size());
     ParameterList = QVector <Parameter*>(data->ParameterList.size());
@@ -2437,6 +2439,8 @@ Component& Component::operator=(const Component& data)
     AnalogPortList = QVector <AnalogPort*>(data.AnalogPortList.size());
     EventPortList = QVector <EventPort*>(data.EventPortList.size());
     ImpulsePortList = QVector <ImpulsePort*>(data.ImpulsePortList.size());
+    annotation = data.annotation;
+    annotationTexts = data.annotationTexts;
     initial_regime_name = data.initial_regime_name;
     for (int i=0; i<data.RegimeList.size(); i++)
     {
@@ -2559,6 +2563,9 @@ void Component::updateFrom(QSharedPointer<Component>  data)
     if (!editedVersion.isNull()) {
         editedVersion.clear();
     }
+
+    annotation = data->annotation;
+    annotationTexts = data->annotationTexts;
 
     name = data->name;
     type = data->type;
