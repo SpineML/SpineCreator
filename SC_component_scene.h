@@ -99,6 +99,7 @@ public: //TODO: private these up
     QVector <OnImpulseGraphicsItem*> oi_items;
     ParameterListGraphicsItem *pl_item;
     PortListGraphicsItem *portl_item;
+    AnnotationListGraphicsItem *annotl_item;
 
 private:
     ALSceneMode mode;

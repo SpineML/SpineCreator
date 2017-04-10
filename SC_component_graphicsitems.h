@@ -350,6 +350,48 @@ private :
 };
 
 
+class AnnotationListGraphicsItem : public NineMLNodeItem
+{
+    Q_OBJECT
+public:
+    AnnotationListGraphicsItem(RootComponentItem *root);
+    void addAnnotationTextItem(QString key, QString value);
+public:
+    enum { Type = UserType + 20 };
+    int type() const { return Type; }
+    static const int padding = 5;
+protected:
+    virtual void handleSelection();
+private :
+    RootComponentItem *root;
+};
+
+
+class AnnotationTextItem: public NineMLTextItem
+{
+    Q_OBJECT
+public:
+    AnnotationTextItem(AnnotationListGraphicsItem *parent, QString ky, QString txt, RootComponentItem *root);
+    enum { Type = UserType + 21 };
+    int type() const { return Type; }
+    QString getKey();
+    QString getText();
+
+public slots:
+    virtual void updateContent();
+    //void setKey(QString);
+    //void setText(QString);
+
+protected:
+    virtual void handleSelection();
+
+private :
+    RootComponentItem *root;
+    QString key;
+    QString text;
+};
+
+
 class PortListGraphicsItem : public NineMLNodeItem
 {
     Q_OBJECT
