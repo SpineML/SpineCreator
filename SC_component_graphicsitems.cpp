@@ -150,6 +150,15 @@ void NineMLNodeItem::updateGVData()
     layout->updateLayout();
 }
 
+QString NineMLNodeItem::getAnnotationText(void)
+{
+    QString rtn("");
+    if (this->getName() != "__unknown_name") {
+        rtn = this->root->al->annotationTexts[this->getName()];
+    }
+    return rtn;
+}
+
 
 NineMLTransitionItem::NineMLTransitionItem(GVLayout *layout, Agnode_t *src, Agnode_t *dst, QGraphicsScene *scene)
     : TextItemGroup(), GVEdge(layout, src, dst)
@@ -229,6 +238,14 @@ void NineMLTransitionItem::removeMember(GroupedTextItem *item)
     updateGVData();
 }
 
+QString NineMLTransitionItem::getAnnotationText(void)
+{
+    QString rtn("");
+    if (this->getName() != "__unknown_name") {
+        rtn = this->root->al->annotationTexts[this->getName()];
+    }
+    return rtn;
+}
 
 /* NineMLTextItem */
 NineMLTextItem::NineMLTextItem(GVItem *gv_item, TextItemGroup *parent)
@@ -329,6 +346,11 @@ void RegimeGraphicsItem::updateContent()
 }
 
 QString RegimeGraphicsItem::getRegimeName()
+{
+    return regime->name;
+}
+
+QString RegimeGraphicsItem::getName()
 {
     return regime->name;
 }

@@ -83,6 +83,18 @@ public:
     void addMember(GroupedTextItem *item);            //overwrite TextItemGroup addMember
     void addMemberAtIndex(GroupedTextItem *item, int index);
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
+    /*!
+     * Reach into the RootComponentItem's underlying Component object
+     * and obtain the annotation text corresponding to the
+     * name/key/identifier of this text item, as supplied by @see
+     * getKey.
+     */
+    QString getAnnotationText(void);
+
+    virtual QString getName(void) { return "__unknown_name"; }
+
+protected:
+    RootComponentItem *root;
 };
 
 
@@ -104,9 +116,21 @@ public:
     void addMember(GroupedTextItem * item);            //overwrite TextItemGroup addMember
     void addMemberAtIndex(GroupedTextItem *item, int index);
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
+
     virtual NineMLTransitionItemType transitionType() = 0;
+    /*!
+     * Reach into the RootComponentItem's underlying Component object
+     * and obtain the annotation text corresponding to the
+     * name/key/identifier of this text item, as supplied by @see
+     * getKey.
+     */
+    QString getAnnotationText(void);
+
+    virtual QString getName(void) { return "__unknown_name"; }
+
 protected:
     ArrowItem *arrow;
+    RootComponentItem *root;
 };
 
 
@@ -146,6 +170,7 @@ public:
     RegimeGraphicsItem(Regime *r, RootComponentItem *root);
     void addTimeDerivativeItem(TimeDerivative* td);
     QString getRegimeName();
+    virtual QString getName();
     bool isRegime(Regime *r);
     int type() const { return Type; }
 public slots:
@@ -158,8 +183,6 @@ public:
     Regime *regime;
     enum { Type = UserType + 1 };
     static const int padding = 10;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -209,7 +232,6 @@ public:
     Regime *src_regime;
 private :
     OnConditionTriggerTextItem *trigger_item;
-    RootComponentItem *root;
 };
 
 
@@ -284,8 +306,6 @@ public:
 
 protected:
     virtual void handleSelection();
-private :
-    RootComponentItem *root;
 };
 
 
@@ -361,8 +381,6 @@ public:
     static const int padding = 5;
 protected:
     virtual void handleSelection();
-private :
-    RootComponentItem *root;
 };
 
 
@@ -406,8 +424,6 @@ public:
     static const int padding = 5;
 protected:
     virtual void handleSelection();
-private :
-    RootComponentItem *root;
 };
 
 
@@ -492,7 +508,6 @@ public:
     Regime *src_regime;
 private :
     OnEventTriggerTextItem *trigger_item;
-    RootComponentItem *root;
 };
 
 
@@ -587,7 +602,6 @@ public:
     Regime *src_regime;
 private :
     OnImpulseTriggerTextItem *trigger_item;
-    RootComponentItem *root;
 };
 
 

@@ -86,14 +86,34 @@ void PropertiesManager::clearLayoutItems(QLayout *layout)
     }
 }
 
-void PropertiesManager::addNote (NineMLTextItem* ti)
+QTextEdit* PropertiesManager::addNoteCommon (void)
 {
     QTextEdit *note = new QTextEdit();
     note->setAcceptRichText (false);
     note->setReadOnly (true);
     note->installEventFilter(&eventFilterObject);
-    note->setPlainText(ti->getAnnotationText());
     //connect(name, SIGNAL(textChanged(QString)), svti, SLOT(setName(QString)));
+    return note;
+}
+
+void PropertiesManager::addNote (NineMLTextItem* ti)
+{
+    QTextEdit* note = this->addNoteCommon();
+    note->setPlainText(ti->getAnnotationText());
+    addRow(tr("&Note:"), note);
+}
+
+void PropertiesManager::addNote (NineMLTransitionItem* ti)
+{
+    QTextEdit* note = this->addNoteCommon();
+    note->setPlainText(ti->getAnnotationText());
+    addRow(tr("&Note:"), note);
+}
+
+void PropertiesManager::addNote (NineMLNodeItem* ni)
+{
+    QTextEdit* note = this->addNoteCommon();
+    note->setPlainText(ni->getAnnotationText());
     addRow(tr("&Note:"), note);
 }
 
@@ -257,6 +277,8 @@ void PropertiesManager::createRegimeProperties(RegimeGraphicsItem *i)
 
     root->addItemsToolbar->addAction(root->actionAddTimeDerivative);
     root->actionDeleteItems->setEnabled(true);
+
+    this->addNote ((NineMLNodeItem*)i);
 }
 
 void PropertiesManager::createTimeDerivativeProperties(TimeDerivativeTextItem *td)
