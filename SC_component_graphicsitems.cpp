@@ -247,6 +247,14 @@ void NineMLTextItem::setPlainText(const QString &text)
     gv_item->updateGVData();
 }
 
+QString NineMLTextItem::getAnnotationText(void)
+{
+    QString rtn("");
+    if (this->getName() != "__unknown_name") {
+        rtn = this->root->al->annotationTexts[this->getName()];
+    }
+    return rtn;
+}
 
 RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
     : NineMLNodeItem(root->gvlayout, r->name)
@@ -1053,8 +1061,9 @@ void StateVariableTextItem::updateContent()
             text.append(" ["+unit+"]");
         }
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select a State Variable");
+    }
 }
 
 QString StateVariableTextItem::getName()

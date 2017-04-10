@@ -78,6 +78,8 @@ private:
     QRegExpValidator *validator;
     QRegExpValidator *componentNameValidator;
 
+private:
+    void addNote (NineMLTextItem* ti);
 };
 
 #endif // PROPERTIESMANAGER_H

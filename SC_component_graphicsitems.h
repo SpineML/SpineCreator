@@ -117,6 +117,19 @@ public:
     NineMLTextItem(GVItem *gv_item, TextItemGroup *parent = 0);
     ~NineMLTextItem();
     void setPlainText(const QString &text);                             //overwite GroupTextItem (to ensure Call of updatedims)
+
+    /*!
+     * Reach into the RootComponentItem's underlying Component object
+     * and obtain the annotation text corresponding to the
+     * name/key/identifier of this text item, as supplied by @see
+     * getKey.
+     */
+    QString getAnnotationText(void);
+
+    virtual QString getName(void) { return "__unknown_name"; }
+
+protected:
+    RootComponentItem *root;
 private:
     GVItem *gv_item;
 };
@@ -168,8 +181,6 @@ protected:
 
 public:
     TimeDerivative *time_derivative;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -217,8 +228,6 @@ protected:
     virtual void handleSelection();
 public:
     Trigger *trigger;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -239,8 +248,6 @@ protected:
     virtual void handleSelection();
 public:
     StateAssignment *assignment;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -259,8 +266,6 @@ protected:
     virtual void handleSelection();
 public:
     EventOut *event_out;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -291,7 +296,7 @@ public:
     ParameterTextItem(ParameterListGraphicsItem *parent, Parameter* param, RootComponentItem *root);
     enum { Type = UserType + 8 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
 public slots:
     virtual void updateContent();
     void setName(QString m);
@@ -301,8 +306,6 @@ protected:
     virtual void handleSelection();
 public:
     Parameter *parameter;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -313,7 +316,7 @@ public:
     StateVariableTextItem(ParameterListGraphicsItem *parent, StateVariable* state_var, RootComponentItem *root);
     enum { Type = UserType + 9 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
 public slots:
     virtual void updateContent();
     void setName(QString m);
@@ -323,8 +326,6 @@ protected:
     virtual void handleSelection();
 public:
     StateVariable *state_variable;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -335,7 +336,7 @@ public:
     AliasTextItem(ParameterListGraphicsItem *parent, Alias* alias, RootComponentItem *root);
     enum { Type = UserType + 10 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     MathInLine* getMaths();
 public slots:
     virtual void updateContent();
@@ -345,8 +346,6 @@ protected:
     virtual void handleSelection();
 public:
     Alias *alias;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -374,6 +373,7 @@ public:
     AnnotationTextItem(AnnotationListGraphicsItem *parent, QString ky, QString txt, RootComponentItem *root);
     enum { Type = UserType + 21 };
     int type() const { return Type; }
+    virtual QString getName() { return this->getKey(); }
     QString getKey();
     QString getText();
 
@@ -386,7 +386,6 @@ protected:
     virtual void handleSelection();
 
 private :
-    RootComponentItem *root;
     QString key;
     QString text;
 };
@@ -419,7 +418,7 @@ public:
     AnalogPortTextItem(PortListGraphicsItem *parent, AnalogPort* p, RootComponentItem *root);
     enum { Type = UserType + 12 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     StateVariable* getVariable();
     AnalogPortMode getPortMode();
     ReduceOperation getPortReduceOp();
@@ -439,8 +438,6 @@ protected:
     virtual void handleSelection();
 public:
     AnalogPort *port;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -451,7 +448,7 @@ public:
     EventPortTextItem(PortListGraphicsItem *parent, EventPort* p, RootComponentItem *root);
     enum { Type = UserType + 13 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     EventPortMode getPortMode();
 
 public slots:
@@ -464,8 +461,6 @@ protected:
     virtual void handleSelection();
 public:
     EventPort *port;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -509,6 +504,7 @@ public:
     enum { Type = UserType + 15 };
     int type() const { return Type; }
     EventPort* getEventPort();
+    virtual QString getName (void) { return QString("EventTriggerTxt"); }
 public slots:
     void setEventPort(QString m);
     virtual void updateContent();
@@ -516,9 +512,6 @@ protected:
     virtual void handleSelection();
 public:
     OnEvent *on_event;//EventPort *event_port; //stored in OnEvent
-private :
-
-    RootComponentItem *root;
 };
 
 
@@ -529,7 +522,7 @@ public:
     ImpulsePortTextItem(PortListGraphicsItem *parent, ImpulsePort* p, RootComponentItem *root);
     enum { Type = UserType + 16 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     Parameter *getParameter();
     ImpulsePortMode getPortMode();
 
@@ -545,8 +538,6 @@ protected:
     virtual void handleSelection();
 public:
     ImpulsePort *port;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -565,8 +556,6 @@ protected:
     virtual void handleSelection();
 public:
     ImpulseOut *impulse_out;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -617,10 +606,6 @@ protected:
     virtual void handleSelection();
 public:
     OnImpulse *on_impulse;//ImpulsePort *impulse_port; //stored in OnImpulse
-private :
-
-    RootComponentItem *root;
 };
-
 
 #endif // NINEML_GRAPHICSITEMS_H

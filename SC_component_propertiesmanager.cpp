@@ -69,7 +69,6 @@ void PropertiesManager::clear()
     root->addItemsToolbar->clear();
 }
 
-
 void PropertiesManager::clearLayoutItems(QLayout *layout)
 {
     QLayoutItem *l = NULL;
@@ -85,6 +84,17 @@ void PropertiesManager::clearLayoutItems(QLayout *layout)
             PropertiesManager::clearLayoutItems(l->layout());
         }
     }
+}
+
+void PropertiesManager::addNote (NineMLTextItem* ti)
+{
+    QTextEdit *note = new QTextEdit();
+    note->setAcceptRichText (false);
+    note->setReadOnly (true);
+    note->installEventFilter(&eventFilterObject);
+    note->setPlainText(ti->getAnnotationText());
+    //connect(name, SIGNAL(textChanged(QString)), svti, SLOT(setName(QString)));
+    addRow(tr("&Note:"), note);
 }
 
 QComboBox *PropertiesManager::getPrefixCombo(Prefix selected)
@@ -138,7 +148,6 @@ void PropertiesManager::updateReorderingIcons(GroupedTextItem *item)
     else
         root->actionMove_Down->setEnabled(false);
 }
-
 
 void PropertiesManager::createEmptySelectionProperties()
 {
@@ -235,7 +244,6 @@ void PropertiesManager::createEmptySelectionProperties()
 
 }
 
-
 void PropertiesManager::createRegimeProperties(RegimeGraphicsItem *i)
 {
     QLabel *label = new QLabel("<b>Edit Regime</b>");
@@ -314,11 +322,6 @@ void PropertiesManager::createTimeDerivativeProperties(TimeDerivativeTextItem *t
     }
 }
 
-
-
-
-
-
 void PropertiesManager::createParameterListProperties()
 {
     root->addItemsToolbar->addAction(root->actionAddParameter);
@@ -350,8 +353,10 @@ void PropertiesManager::createParameterProperties(ParameterTextItem *pti)
     QComboBox *dims_unit = getUnitCombo(pti->parameter->dims->getUnit());
     connect(dims_unit, SIGNAL(currentIndexChanged(QString)), pti, SLOT(setDimsUnit(QString)));
     addRow(tr("Dimensionality &Unit:"),dims_unit);
-}
 
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)pti);
+}
 
 void PropertiesManager::createStateVariableProperties(StateVariableTextItem *svti)
 {
@@ -377,6 +382,9 @@ void PropertiesManager::createStateVariableProperties(StateVariableTextItem *svt
     QComboBox *dims_unit = getUnitCombo(svti->state_variable->dims->getUnit());
     connect(dims_unit, SIGNAL(currentIndexChanged(QString)), svti, SLOT(setDimsUnit(QString)));
     addRow(tr("Dimensionality &Unit:"),dims_unit);
+
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)svti);
 }
 
 void PropertiesManager::createAliasProperties(AliasTextItem *ati)
@@ -432,8 +440,10 @@ void PropertiesManager::createAliasProperties(AliasTextItem *ati)
         // clear errors
         settings.remove("warnings");
     }
-}
 
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ati);
+}
 
 void PropertiesManager::createPortListProperties()
 {
@@ -442,10 +452,6 @@ void PropertiesManager::createPortListProperties()
     root->addItemsToolbar->addAction(root->actionAddImpulsePort);
     root->actionDeleteItems->setEnabled(false);
 }
-
-
-
-
 
 void PropertiesManager::createOnConditionProperties(OnConditionGraphicsItem *oci)
 {
@@ -495,6 +501,9 @@ void PropertiesManager::createOnConditionProperties(OnConditionGraphicsItem *oci
     root->addItemsToolbar->addAction(root->actionAddEventOut);
     root->addItemsToolbar->addAction(root->actionAddImpulseOut);
     root->actionDeleteItems->setEnabled(true);
+
+    // Add annotation view:
+    // this->addNote ((NineMLTransitionItem*)oci);
 }
 
 void PropertiesManager::createOnEventProperties(OnEventGraphicsItem *oei)
@@ -560,8 +569,6 @@ void PropertiesManager::createOnImpulseProperties(OnImpulseGraphicsItem *oii)
     root->addItemsToolbar->addAction(root->actionAddImpulseOut);
     root->actionDeleteItems->setEnabled(true);
 }
-
-
 
 void PropertiesManager::createStateAssignmentProperties(StateAssignmentTextItem *sa)
 {
@@ -786,6 +793,9 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
         connect(dims_unit, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setDimsUnit(QString)));
         addRow(tr("Dimensionality &Unit:"),dims_unit);
     }
+
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ap);
 }
 
 void PropertiesManager::createEventPortProperties(EventPortTextItem *ep)
@@ -832,6 +842,9 @@ void PropertiesManager::createEventPortProperties(EventPortTextItem *ep)
         connect(ispost, SIGNAL(toggled(bool)), ep, SLOT(setIsPostState(bool)));
         addRow(tr("&Is postsynaptic:"), ispost);
     }
+
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ep);
 }
 
 void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
@@ -913,4 +926,6 @@ void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
         addRow(tr("Dimensionality &Unit:"),dims_unit);
     }
 
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ip);
 }
