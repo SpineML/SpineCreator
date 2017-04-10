@@ -651,8 +651,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
     }
     // Have now finished writing attributes into the PostSynapse/WeightUpdate
 
-#ifdef COMPONENT_ROOT_INSTANCE_NEEDS_TO_OUTPUT_ANNOTATION
-    // Add Annotations element
+    // Add Annotations element:
     if (!this->annotation.isEmpty()) {
         // old annotations
         this->annotation.replace("\n", "");
@@ -660,18 +659,17 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
         this->annotation.replace("</LL:Annotation>", "");
         if (!this->annotation.isEmpty()) {
             xmlOut.writeStartElement("LL:Annotation");
-            xmlOut.writeAttribute("codesource","ComponentRootInstance write_node_xml");
             QXmlStreamReader reader(this->annotation);
             while (!reader.atEnd()) {
-                if (reader.tokenType() != QXmlStreamReader::StartDocument && reader.tokenType() != QXmlStreamReader::EndDocument) {
+                if (reader.tokenType() != QXmlStreamReader::StartDocument
+                    && reader.tokenType() != QXmlStreamReader::EndDocument) {
                     xmlOut.writeCurrentToken(reader);
                 }
                 reader.readNext();
             }
-            xmlOut.writeEndElement();//"LL:Annotation"
+            xmlOut.writeEndElement(); // "LL:Annotation"
         }
     }
-#endif
 
     // Add any parameter or state variable properties that exist
     if (this->ParameterList.size()+this->StateVariableList.size() > 0) {
@@ -3185,13 +3183,17 @@ QStringList Component::validateComponent()
     return errs;
 }
 
-void ComponentInstance::import_parameters_from_xml(QDomNode &n)
+void ComponentInstance::import_parameters_from_xml(QDomNode &n, bool ignoreAnnotations)
 {
     // fetch annotations
-    QDomNodeList nListAnn = n.toElement().elementsByTagName("LL:Annotation");
-    if (nListAnn.size() == 1) {
-        QTextStream temp(&this->annotation);
-        nListAnn.at(0).save(temp,1);
+    if (!ignoreAnnotations) {
+        QDomNodeList nListAnn = n.toElement().elementsByTagName("LL:Annotation");
+        if (nListAnn.size() == 1) {
+            QTextStream temp(&this->annotation);
+            nListAnn.at(0).save(temp,1);
+        }
+    } else {
+        DBG() << "Ignoring annotations in this ComponentInstance";
     }
 
     type = NineMLComponentType;

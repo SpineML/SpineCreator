@@ -674,11 +674,16 @@ public:
     QStringList getPortMatches(int index, bool isOutput);
     void removeReferences();
     QSharedPointer<systemObject> owner;
-    void import_parameters_from_xml(QDomNode &e);
+    /*!
+     * This has an option to ignore annotations so that when a
+     * PostSynapse calls down to a component with annotations, then
+     * annotations for the two different objects don't get mixed up.
+     */
+#define IGNORE_ANNOTATIONS true
+    void import_parameters_from_xml(QDomNode &e, bool ignoreAnnotations=false);
     void migrateComponent(QSharedPointer<Component> newComponent);
     void addInput(QSharedPointer <ComponentInstance>, bool = false);
     void copyParsFrom(QSharedPointer <ComponentInstance> data);
 };
-
 
 #endif // NINEML_STRUCTS_H
