@@ -323,8 +323,8 @@ void Component::load(QDomDocument *doc)
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: expected 'name' attribute'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: expected 'name' attribute'");
                 settings.endArray();
             }
 
@@ -378,8 +378,8 @@ void Component::load(QDomDocument *doc)
                             int num_errs = settings.beginReadArray("errors");
                             settings.endArray();
                             settings.beginWriteArray("errors");
-                                settings.setArrayIndex(num_errs + 1);
-                                settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e3.tagName() + "'");
+                            settings.setArrayIndex(num_errs + 1);
+                            settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e3.tagName() + "'");
                             settings.endArray();
                         }
 
@@ -405,13 +405,49 @@ void Component::load(QDomDocument *doc)
                     tempIP->readIn(e2);
                     this->ImpulsePortList.push_back(tempIP);
 
+                }
+                else if( e2.tagName() == "Annotation" )
+                {
+                    DBG() << "Read Component Annotation";
+                    // Any user-provided bits have to be stored.
+                    QDomNode scNode;
+                    QDomNodeList scAnns = e2.toElement().elementsByTagName("SpineCreator");
+
+                    if (scAnns.length() == 1) { // There are SpineCreator-specific annotations
+
+                        scNode = scAnns.at(0).cloneNode(); // Make a copy of the SpineCreator-specific annotations
+                        e2.toElement().removeChild(scAnns.at(0)); // Remove the SpineCreator-specific annotations
+
+                        // Now read the SpineCreator-specific parts that we just copied.
+                        DBG() << "scAnns is not empty.";
+                        this->annotationTexts.clear();
+                        // Find <Text key="something">Value</Text> nodes and populate annotationTexts
+                        QDomNode sct = scNode.firstChild();
+                        while (!sct.isNull()) {
+                            if (sct.isElement()) {
+                                QDomElement e = sct.toElement();
+                                if (e.tagName() == "Text") {
+                                    QString key = e.attribute("key");
+                                    QString val = e.text();
+                                    this->annotationTexts[key] = val;
+                                    DBG() << "Added Text key=" << key << ", val=" << val << " to annotationTexts.";
+                                }
+                            }
+                            sct = sct.nextSibling();
+                        }
+                    }
+
+                    // Save any remaining non-SpineCreator specific annotations into this->annotations.
+                    QTextStream temp(&this->annotation);
+                    e2.save(temp,1);
+
                 } else {
                     QSettings settings;
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e2.tagName() + "'");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e2.tagName() + "'");
                     settings.endArray();
                 }
                 n2 = n2.nextSibling();
@@ -422,8 +458,8 @@ void Component::load(QDomDocument *doc)
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: expected 'ComponentClass' tag'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: expected 'ComponentClass' tag'");
             settings.endArray();
         }
         n = n.nextSibling();
@@ -448,8 +484,6 @@ void Component::load(QDomDocument *doc)
         msgBox.exec();*/
     }
 }
-
-
 
 void Component::write(QDomDocument *doc)
 {
@@ -521,7 +555,38 @@ void Component::write(QDomDocument *doc)
     }
     root.appendChild(CClass);
 
-    QDomElement dynamics = doc->createElement( "Dynamics" );
+    // Create component annotation element
+    QDomElement annot = doc->createElement("Annotation");
+
+    // Add non-SpineCreator annotations
+    QDomDocument userannot("Userannotations");
+    if (userannot.setContent(this->annotation, false)) {
+        QDomElement uaroot = userannot.documentElement();
+        QDomElement n = uaroot.firstChildElement();
+        while (!n.isNull()) {
+            QDomElement nxt = n.nextSiblingElement();
+            annot.appendChild (n);
+            n = nxt;
+        }
+    }
+
+    // Add SpineCreator-specific annotations
+    QDomElement spinecreator = doc->createElement("SpineCreator");
+    QMap<QString, QString>::const_iterator t = this->annotationTexts.constBegin();
+    while (t != this->annotationTexts.constEnd()) {
+        QDomElement txte = doc->createElement("Text");
+        txte.setAttribute("key", t.key());
+        QDomText text = doc->createTextNode(t.value());
+        txte.appendChild(text);
+        spinecreator.appendChild(txte);
+        ++t;
+    }
+    annot.appendChild(spinecreator);
+
+    // Append the component annotations onto the component class:
+    CClass.appendChild(annot);
+
+    QDomElement dynamics = doc->createElement("Dynamics");
     if (this->initial_regime != NULL)
         dynamics.setAttribute("initial_regime", this->initial_regime->name);
     else
@@ -552,7 +617,6 @@ void Component::write(QDomDocument *doc)
     for (int i = 0; i < this->StateVariableList.size(); ++i) {
         StateVariableList[i]->writeOut(doc, dynamics);
     }
-
 }
 
 void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
@@ -3190,9 +3254,7 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
     if (!a.isNull()) {
         QTextStream temp(&this->annotation);
         a.save(temp,1);
-    } else {
-        DBG() << "No LL:Annotation for this ComponentInstance";
-    }
+    } // else no LL:Annotation for this ComponentInstance
 
     type = NineMLComponentType;
     QDomNodeList nList = n.toElement().elementsByTagName("Property");

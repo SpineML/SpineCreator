@@ -165,6 +165,19 @@ public:
     ComponentModelObject(){}
     ~ComponentModelObject(){}
     virtual ComponentObjectType Type() = 0;
+
+    /*!
+     * A user-provided annotation about the Component.
+     */
+    QString annotation;
+
+    /*!
+     * A dictionary of SpineCreator annotation texts, which live
+     * inside the Annotation element. The key refers to the parameter
+     * or state variable to which the annotation refers, the value is
+     * the annotation text itself.
+     */
+    QMap<QString, QString> annotationTexts;
 };
 
 /*!
