@@ -159,13 +159,15 @@ QString NineMLNodeItem::getAnnotationText(void)
 
 void NineMLNodeItem::updateAnnotationText(void)
 {
-    QString t("");
-    QTextEdit* te = qobject_cast<QTextEdit*>(sender());
-    if (te) {
-        t = te->toPlainText();
-    }
-    if (this->getName() != "__unknown_name") {
-        this->root->al->annotationTexts[this->getName()] = t;
+    if (this->getName() != "__unknown_name" && this->root->alPtr) {
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
+        QTextEdit* te = qobject_cast<QTextEdit*>(sender());
+        if (te) {
+            root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Update annotation text"));
+            this->root->alPtr->annotationTexts[this->getName()] = te->toPlainText();
+        } else {
+            oldComponent.clear();
+        }
     }
 }
 
@@ -258,14 +260,16 @@ QString NineMLTransitionItem::getAnnotationText(void)
 
 void NineMLTransitionItem::updateAnnotationText(void)
 {
-    QString t("");
-    QTextEdit* te = qobject_cast<QTextEdit*>(sender());
-    if (te) {
-        t = te->toPlainText();
-    }
-
-    if (this->getName() != "__unknown_name") {
-        this->root->al->annotationTexts[this->getName()] = t;
+    if (this->getName() != "__unknown_name" && this->root->alPtr) {
+        // Use root->al here, rather than root->alPtr, as if we use root->alPtr we'll only undo each character change in the TextEdit, which ain't so useful.
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
+        QTextEdit* te = qobject_cast<QTextEdit*>(sender());
+        if (te) {
+            root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Update annotation text"));
+            this->root->alPtr->annotationTexts[this->getName()] = te->toPlainText();
+        } else {
+            oldComponent.clear();
+        }
     }
 }
 
@@ -297,25 +301,15 @@ QString NineMLTextItem::getAnnotationText(void)
 
 void NineMLTextItem::updateAnnotationText()
 {
-    QString t("");
-    QTextEdit* te = qobject_cast<QTextEdit*>(sender());
-    if (te) {
-        t = te->toPlainText();
-    }
-
-    if (this->getName() != "__unknown_name") {
-        DBG() << "Updating annotationTexts["<<this->getName()<<"] to " << t;
-        this->root->al->annotationTexts[this->getName()] = t;
-    } else {
-        DBG() << "NOT updating annotationTexts["<<this->getName()<<"]";
-    }
-
-    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
-
-    if (qobject_cast < QTextEdit *> (sender())) {
-        root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Update annotation text"));
-    } else {
-        oldComponent.clear();
+    if (this->getName() != "__unknown_name" && this->root->alPtr) {
+        QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
+        QTextEdit* te = qobject_cast<QTextEdit*>(sender());
+        if (te) {
+            root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Update annotation text"));
+            this->root->alPtr->annotationTexts[this->getName()] = te->toPlainText();
+        } else {
+            oldComponent.clear();
+        }
     }
 }
 
@@ -1042,17 +1036,17 @@ ParameterTextItem::ParameterTextItem(ParameterListGraphicsItem *parent, Paramete
 
 void ParameterTextItem::updateContent()
 {
-    if (parameter != NULL)
-    {
+    if (this->parameter != NULL) {
         QString text = "Parameter: ";
-        text.append(parameter->getName());
-        QString unit = parameter->dims->toString();
-        if (unit != "?"){
+        text.append(this->parameter->getName());
+        QString unit = this->parameter->dims->toString();
+        if (unit != "?") {
             text.append(" ["+unit+"]");
         }
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select a Parameter");
+    }
 }
 
 QString ParameterTextItem::getName()
@@ -1063,12 +1057,13 @@ QString ParameterTextItem::getName()
 void ParameterTextItem::setName(QString n)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
-    parameter->setName(n);
+    this->parameter->setName(n);
     updateContent();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Parameter name"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void ParameterTextItem::setDimsPrefix(QString p)
@@ -1078,12 +1073,13 @@ void ParameterTextItem::setDimsPrefix(QString p)
     if (list.size() == 0) {
         return;
     }
-    parameter->dims->setPrefix(list[0]);
+    this->parameter->dims->setPrefix(list[0]);
     updateContent();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Par dims prefix"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void ParameterTextItem::setDimsUnit(QString u)
