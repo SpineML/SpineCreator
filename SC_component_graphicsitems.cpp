@@ -22,21 +22,13 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-
 #include <algorithm>
 #include <typeinfo>
-
 #include "SC_component_graphicsitems.h"
 #include "SC_component_scene.h"
 #include "SC_component_propertiesmanager.h"
 #include "SC_undocommands.h"
 
-
-
-
-/**************************************************************************************************************************/
-
-/* Arrow item*/
 ArrowItem::ArrowItem()
     : QGraphicsItem()
 {
@@ -94,7 +86,6 @@ void ArrowItem::setLineWidth(int w)
     width = w;
 }
 
-/* NineMLNodeItem */
 NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name)
     : TextItemGroup(), GVNode(layout, name)
 {
@@ -175,20 +166,17 @@ NineMLTransitionItem::NineMLTransitionItem(GVLayout *layout, Agnode_t *src, Agno
     : TextItemGroup(), GVEdge(layout, src, dst)
 {
     arrow = new ArrowItem();
-    //add direct to scene if possible for correct z ordering
+    // add direct to scene if possible for correct z ordering
     if (scene){
         scene->addItem(arrow);
     }
-    //else
-    //    arrow->setParentItem(this);
     this->setZValue(1);
 }
 
 NineMLTransitionItem::~NineMLTransitionItem()
 {
-    //arrow is a member of the scene (no parent) so remove and then delete
+    // arrow is a member of the scene (no parent) so remove and then delete
     arrow->scene()->removeItem(arrow);
-    //arrow->deleteLater();
     delete arrow;
     arrow = NULL;
 }
@@ -207,8 +195,7 @@ void NineMLTransitionItem::updateLayout()
     QPainterPath path = QPainterPath();
     QPointF spline_start = GVEdge::getGVEdgeSplinesPoint(0);
     path.moveTo(spline_start.x(), spline_start.y());
-    for(int i=1; i<GVEdge::getGVEdgeSplinesCount(); i+=3)
-    {
+    for(int i=1; i<GVEdge::getGVEdgeSplinesCount(); i+=3) {
         QPointF p1 = GVEdge::getGVEdgeSplinesPoint(i+0);
         QPointF p2 = GVEdge::getGVEdgeSplinesPoint(i+1);
         QPointF p3 = GVEdge::getGVEdgeSplinesPoint(i+2);
@@ -273,7 +260,6 @@ void NineMLTransitionItem::updateAnnotationText(void)
     }
 }
 
-/* NineMLTextItem */
 NineMLTextItem::NineMLTextItem(GVItem *gv_item, TextItemGroup *parent)
     :GroupedTextItem(parent)
 {
@@ -348,20 +334,19 @@ void RegimeGraphicsItem::setRegimeName(QString n)
 #endif
 
     //update the dst regime name in any onconditions
-    for (int i=0;i<root->al->RegimeList.size();i++)
-    {
+    for (int i=0; i < root->al->RegimeList.size(); i++) {
         Regime *r = root->al->RegimeList[i];
-        for (int c=0;c<r->OnConditionList.size();c++)
-        {
+        for (int c=0; c < r->OnConditionList.size(); c++) {
             OnCondition *oc = r->OnConditionList[c];
-            if (oc->target_regime == this->regime)
+            if (oc->target_regime == this->regime) {
                 oc->target_regime_name = n;
+            }
         }
-        for (int e=0;e<r->OnEventList.size();e++)
-        {
+        for (int e=0; e < r->OnEventList.size(); e++) {
             OnEvent *oe = r->OnEventList[e];
-            if (oe->target_regime == this->regime)
+            if (oe->target_regime == this->regime) {
                 oe->target_regime_name = n;
+            }
         }
     }
 
@@ -414,8 +399,9 @@ TimeDerivativeTextItem::TimeDerivativeTextItem(RegimeGraphicsItem *parent, TimeD
     time_derivative = td;
     root = r;
     updateContent();
-    if (time_derivative->variable)
+    if (time_derivative->variable) {
         connect(time_derivative->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+    }
 }
 
 void TimeDerivativeTextItem::handleSelection()
@@ -437,13 +423,11 @@ void TimeDerivativeTextItem::setVariable(QString p)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     time_derivative->variable_name = p;
-    if (time_derivative->variable != NULL)
-    {
+    if (time_derivative->variable != NULL) {
         disconnect(time_derivative->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
     }
-    for (int i=0;i<root->al->StateVariableList.size();i++)
-    {
-        if (root->al->StateVariableList[i]->getName().compare(p)==0){
+    for (int i=0;i<root->al->StateVariableList.size();i++) {
+        if (root->al->StateVariableList[i]->getName().compare(p)==0) {
             time_derivative->variable = root->al->StateVariableList[i];
             connect(root->al->StateVariableList[i], SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
@@ -473,23 +457,19 @@ void TimeDerivativeTextItem::setMaths(QString m)
     settings.endArray();
 
     if (num_errs != 0 && source) {
-
         // show errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("warnings");
-
     }
-    if (num_errs == 0 && source) {
 
+    if (num_errs == 0 && source) {
         // show no errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 255, 255) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("errors");
     }
@@ -505,20 +485,18 @@ void TimeDerivativeTextItem::setMaths(QString m)
 
 void TimeDerivativeTextItem::updateContent()
 {
-    if (time_derivative->variable != NULL)
-    {
+    if (time_derivative->variable != NULL) {
         time_derivative->variable_name = time_derivative->variable->name;
         QString text = "d";
         text.append(time_derivative->variable->getName());
         text.append("/dt = ");
         text.append(time_derivative->maths->equation);
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select a State Variable");
+    }
 }
 
-
-/* OnConditionGraphicsItem */
 OnConditionGraphicsItem::OnConditionGraphicsItem(Regime *src_r, OnCondition *c, RootComponentItem *root)
     : NineMLTransitionItem(root->gvlayout, root->scene->getRegimeGVNode(src_r), root->scene->getRegimeGVNode(c->target_regime), root->scene)
 {
@@ -528,7 +506,6 @@ OnConditionGraphicsItem::OnConditionGraphicsItem(Regime *src_r, OnCondition *c, 
 
     //get src regime
     //gv_edge = agedge(gv_graph, root->getRegimeGVNode(src_regime), root->getRegimeGVNode(c->target_regime));
-
 
     setRounded(false);
     setPadding(3);
@@ -545,20 +522,17 @@ OnConditionGraphicsItem::OnConditionGraphicsItem(Regime *src_r, OnCondition *c, 
     addMember(trigger_item);
 
     //create state assigments equations
-    for(int i=0; i<on_condition->StateAssignList.size(); i++)
-    {
+    for(int i=0; i<on_condition->StateAssignList.size(); i++) {
         addStateAssignment(on_condition->StateAssignList[i]);
     }
 
     //create event outputs
-    for(int i=0; i<on_condition->eventOutList.size(); i++)
-    {
+    for(int i=0; i<on_condition->eventOutList.size(); i++) {
        addEventOut(on_condition->eventOutList[i]);
     }
 
     //create impulse outputs
-    for(int i=0; i<on_condition->impulseOutList.size(); i++)
-    {
+    for(int i=0; i<on_condition->impulseOutList.size(); i++) {
        addImpulseOut(on_condition->impulseOutList[i]);
     }
 }
@@ -587,26 +561,23 @@ void OnConditionGraphicsItem::setTriggerMaths(QString m)
     settings.endArray();
 
     if (num_errs != 0 && source) {
-
         // show errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("warnings");
-
     }
-    if (num_errs == 0 && source) {
 
+    if (num_errs == 0 && source) {
         // show no errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 255, 255) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("errors");
     }
+
     root->notifyDataChange();
     if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set OC trigger"));
@@ -627,27 +598,24 @@ Regime * OnConditionGraphicsItem::getSourceRegime()
 
 void OnConditionGraphicsItem::setSynapseRegime(QString r)
 {
-    //QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_condition->target_regime_name = r;
     for (int i=0;i<root->al->RegimeList.size();i++) {
-        if (root->al->RegimeList[i]->name.compare(r)==0)
+        if (root->al->RegimeList[i]->name.compare(r)==0) {
             on_condition->target_regime = root->al->RegimeList[i];
+        }
     }
-    //Dont need to redraw!!
-    //if (qobject_cast < QComboBox *> (sender()))
-    //    root->alPtr->undoStack.push(new changeComponent(root, oldComponent));
-    //else
-    //    oldComponent.clear();
+    // Dont need to redraw!!
 }
 
 void OnConditionGraphicsItem::addStateAssignment(StateAssignment *sa)
 {
     StateAssignmentTextItem *s = new StateAssignmentTextItem(this, sa, root);
     int index;
-    for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
+    for (index=1; index < members.size(); index++) { // INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
         int type = members[index]->type();
-        if (type != StateAssignmentTextItem::Type)
+        if (type != StateAssignmentTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(s, index);
 }
@@ -656,10 +624,11 @@ void OnConditionGraphicsItem::addEventOut(EventOut *eo)
 {
     EventOutTextItem *e = new EventOutTextItem(this, eo, root);
     int index;
-    for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
+    for (index=1; index < members.size(); index++) {    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
         int type = members[index]->type();
-        if (type == ImpulseOutTextItem::Type)
+        if (type == ImpulseOutTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(e, index);
 }
@@ -698,14 +667,14 @@ void OnConditionTriggerTextItem::setMaths(QString m)
 
 void OnConditionTriggerTextItem::updateContent()
 {
-    if (trigger != NULL)
-    {
+    if (trigger != NULL) {
         QString text = "@ OnCondition( ";
         text.append(trigger->maths->equation);
         text.append(" )");
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select an OnCondition");
+    }
 }
 
 void OnConditionTriggerTextItem::handleSelection()
@@ -713,8 +682,6 @@ void OnConditionTriggerTextItem::handleSelection()
     //yeahhhhhhh
 }
 
-
-/* StateAssignmentTextItem */
 StateAssignmentTextItem::StateAssignmentTextItem(NineMLTransitionItem *parent, StateAssignment* a,  RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -722,8 +689,9 @@ StateAssignmentTextItem::StateAssignmentTextItem(NineMLTransitionItem *parent, S
     root = r;
     setColour(Qt::lightGray);
     updateContent();
-    if (assignment->variable != NULL)
+    if (assignment->variable != NULL) {
         connect(assignment->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+    }
 }
 
 void StateAssignmentTextItem::handleSelection()
@@ -745,13 +713,12 @@ void StateAssignmentTextItem::setVariable(QString p)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     assignment->name = p;
-    if (assignment->variable != NULL)
+    if (assignment->variable != NULL) {
         disconnect(assignment->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (int i=0;i<root->al->StateVariableList.size();i++)
-    {
-        if (root->al->StateVariableList[i]->getName().compare(p)==0)
-        {
-           assignment->variable = root->al->StateVariableList[i];
+    }
+    for (int i=0; i < root->al->StateVariableList.size(); i++) {
+        if (root->al->StateVariableList[i]->getName().compare(p)==0) {
+            assignment->variable = root->al->StateVariableList[i];
            connect(assignment->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
@@ -780,51 +747,47 @@ void StateAssignmentTextItem::setMaths(QString m)
     settings.endArray();
 
     if (num_errs != 0 && source) {
-
         // show errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("warnings");
-
     }
-    if (num_errs == 0 && source) {
 
+    if (num_errs == 0 && source) {
         // show no errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 255, 255) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("errors");
     }
 
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SA maths"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void StateAssignmentTextItem::updateContent()
 {
-    if (assignment->variable != NULL)
-    {
+    if (assignment->variable != NULL) {
         assignment->name = assignment->variable->name;
         QString text = "Assign: ";
         text.append(assignment->variable->getName());
         text.append(" := ");
         text.append(assignment->maths->equation);
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select a Variable");
+    }
 }
 
 
-/* EventOutTextItem */
 EventOutTextItem::EventOutTextItem(NineMLTransitionItem *parent, EventOut *e, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -832,8 +795,9 @@ EventOutTextItem::EventOutTextItem(NineMLTransitionItem *parent, EventOut *e, Ro
     root = r;
     setColour(Qt::lightGray);
     updateContent();
-    if (event_out->port)
+    if (event_out->port) {
         connect(event_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+    }
 }
 
 EventPort * EventOutTextItem::getEventPort()
@@ -845,33 +809,33 @@ void EventOutTextItem::setEventPort(QString m)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     event_out->port_name = m;
-    if (event_out->port != NULL)
+    if (event_out->port != NULL) {
         disconnect(event_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (int i=0;i<root->al->EventPortList.size();i++)
-    {
-        if (root->al->EventPortList[i]->getName().compare(m)==0)
-        {
+    }
+    for (int i=0; i < root->al->EventPortList.size(); i++) {
+        if (root->al->EventPortList[i]->getName().compare(m)==0) {
             event_out->port = root->al->EventPortList[i];
             connect(event_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set EventOut port"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void EventOutTextItem::updateContent()
 {
-    if (event_out->port != NULL)
-    {
+    if (event_out->port != NULL) {
         QString text = "Emit Event: ";
         text.append(event_out->port->getName());
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select an Event Port");
+    }
 }
 
 void EventOutTextItem::handleSelection()
@@ -879,8 +843,6 @@ void EventOutTextItem::handleSelection()
     root->properties->createEventOutProperties(this);
 }
 
-
-/* ImpulseOutTextItem */
 ImpulseOutTextItem::ImpulseOutTextItem(NineMLTransitionItem *parent, ImpulseOut *i, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -888,10 +850,11 @@ ImpulseOutTextItem::ImpulseOutTextItem(NineMLTransitionItem *parent, ImpulseOut 
     root = r;
     setColour(Qt::lightGray);
     updateContent();
-    if (impulse_out->port){
+    if (impulse_out->port) {
         connect(impulse_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-        if (impulse_out->port->parameter != NULL)
+        if (impulse_out->port->parameter != NULL) {
             connect(impulse_out->port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+        }
     }
 }
 
@@ -904,18 +867,16 @@ void ImpulseOutTextItem::setImpulsePort(QString m)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
     impulse_out->port_name = m;
-    if (impulse_out->port != NULL){
+    if (impulse_out->port != NULL) {
         disconnect(impulse_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         if (impulse_out->port->parameter !=NULL){
             disconnect(impulse_out->port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
 
     }
-    for (int i=0;i<root->al->ImpulsePortList.size();i++)
-    {
-        if (root->al->ImpulsePortList[i]->parameter != NULL){
-            if (root->al->ImpulsePortList[i]->parameter->getName().compare(m)==0)
-            {
+    for (int i=0;i<root->al->ImpulsePortList.size();i++) {
+        if (root->al->ImpulsePortList[i]->parameter != NULL) {
+            if (root->al->ImpulsePortList[i]->parameter->getName().compare(m)==0) {
                 impulse_out->port = root->al->ImpulsePortList[i];
                 connect(impulse_out->port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
                 connect(impulse_out->port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
@@ -929,17 +890,18 @@ void ImpulseOutTextItem::setImpulsePort(QString m)
 
 void ImpulseOutTextItem::updateContent()
 {
-    if (impulse_out->port != NULL)
-    {
+    if (impulse_out->port != NULL) {
         QString text = "Emit Impulse: ";
-        if (impulse_out->port->parameter != NULL){
+        if (impulse_out->port->parameter != NULL) {
             impulse_out->port_name = impulse_out->port->parameter->name;
             text.append(impulse_out->port->parameter->getName());
             setPlainText(text);
-        }else
+        } else {
             setPlainText("Warning: Configure selected Impulse Port");
-    }else
+        }
+    } else {
         setPlainText("Warning: Select an Impulse Port");
+    }
 }
 
 void ImpulseOutTextItem::handleSelection()
@@ -947,8 +909,6 @@ void ImpulseOutTextItem::handleSelection()
     root->properties->createImpulseOutProperties(this);
 }
 
-
-/* ParameterListGraphicsItem */
 ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     :NineMLNodeItem(r->gvlayout, "Parameters")
 {
@@ -967,20 +927,17 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
     updateGVData();
 
     //create parameter items
-    for (int i=0;i< r->al->ParameterList.size(); i++)
-    {
+    for (int i=0; i < r->al->ParameterList.size(); i++) {
         addParameterItem(r->al->ParameterList[i]);
     }
 
     //create state variable items
-    for (int i=0;i< r->al->StateVariableList.size(); i++)
-    {
+    for (int i=0; i < r->al->StateVariableList.size(); i++) {
         addStateVariableItem(r->al->StateVariableList[i]);
     }
 
     //create alias items
-    for (int i=0;i< r->al->AliasList.size(); i++)
-    {
+    for (int i=0; i < r->al->AliasList.size(); i++) {
         addAliasItem(r->al->AliasList[i]);
     }
 }
@@ -988,12 +945,13 @@ ParameterListGraphicsItem::ParameterListGraphicsItem(RootComponentItem *r)
 void ParameterListGraphicsItem::addParameterItem(Parameter *p)
 {
     ParameterTextItem *pt = new ParameterTextItem(this, p, root);
-    //index is first member whihc is not a paramenter
+    // index is first member which is not a paramenter
     int index = 0;
-    for(index=0; index< members.size();index++){
+    for (index=0; index < members.size(); index++) {
         int type = members[index]->type();
-        if (type != ParameterTextItem::Type)
+        if (type != ParameterTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(pt, index);
 }
@@ -1003,10 +961,11 @@ void ParameterListGraphicsItem::addStateVariableItem(StateVariable *sv)
     StateVariableTextItem *svti = new StateVariableTextItem(this, sv, root);
     //index is before first occourance of alias
     int index = 0;
-    for(index=0; index< members.size();index++){
+    for (index=0; index < members.size();index++) {
         int type = members[index]->type();
-        if (type == AliasTextItem::Type)
+        if (type == AliasTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(svti, index);
 }
@@ -1022,8 +981,6 @@ void ParameterListGraphicsItem::handleSelection()
     root->properties->createParameterListProperties();
 }
 
-
-/* ParameterTextItem */
 ParameterTextItem::ParameterTextItem(ParameterListGraphicsItem *parent, Parameter *param, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -1091,10 +1048,11 @@ void ParameterTextItem::setDimsUnit(QString u)
     }
     parameter->dims->setUnit(list[0]);
     updateContent();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Par dims suffix"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void ParameterTextItem::handleSelection()
@@ -1116,8 +1074,7 @@ StateVariableTextItem::StateVariableTextItem(ParameterListGraphicsItem *parent, 
 
 void StateVariableTextItem::updateContent()
 {
-    if (state_variable != NULL)
-    {
+    if (state_variable != NULL) {
         QString text = "State Variable: ";
         text.append(state_variable->getName());
         QString unit = state_variable->dims->toString();
@@ -1141,10 +1098,11 @@ void StateVariableTextItem::setName(QString n)
     state_variable->setName(n);
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV name"));
-    else
+    } else {
          oldComponent.clear();
+    }
 }
 
 void StateVariableTextItem::setDimsPrefix(QString p)
@@ -1156,10 +1114,11 @@ void StateVariableTextItem::setDimsPrefix(QString p)
     }
     state_variable->dims->setPrefix(list[0]);
     updateContent();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV dims prefix"));
-    else
+    } else {
          oldComponent.clear();
+    }
 }
 
 void StateVariableTextItem::setDimsUnit(QString u)
@@ -1171,19 +1130,17 @@ void StateVariableTextItem::setDimsUnit(QString u)
     }
     state_variable->dims->setUnit(list[0]);
     updateContent();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set SV dims suffix"));
-    else
+    } else {
          oldComponent.clear();
+    }
 }
 
 void StateVariableTextItem::handleSelection()
 {
     root->properties->createStateVariableProperties(this);
 }
-
-/************************************************************/
-
 
 AliasTextItem::AliasTextItem(ParameterListGraphicsItem *parent, Alias *a, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
@@ -1198,15 +1155,15 @@ AliasTextItem::AliasTextItem(ParameterListGraphicsItem *parent, Alias *a, RootCo
 
 void AliasTextItem::updateContent()
 {
-    if (alias != NULL)
-    {
+    if (alias != NULL) {
         QString text = "Alias: ";
         text.append(alias->getName());
         text.append(" = ");
         text.append(alias->maths->equation);
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select a State Variable");
+    }
 }
 
 QString AliasTextItem::getName()
@@ -1220,10 +1177,11 @@ void AliasTextItem::setName(QString n)
     alias->setName(n);
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Alias name"));
-    else
+    } else {
          oldComponent.clear();
+    }
 }
 
 MathInLine * AliasTextItem::getMaths()
@@ -1247,34 +1205,30 @@ void AliasTextItem::setMaths(QString m)
     settings.endArray();
 
     if (num_errs != 0 && source) {
-
         // show errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("warnings");
-
     }
-    if (num_errs == 0 && source) {
 
+    if (num_errs == 0 && source) {
         // show no errors by changing lineedit colour
         QPalette p = source->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 255, 255) );
         source->setPalette(p);
-
         // clear errors
         settings.remove("errors");
     }
 
-
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Alias maths"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void AliasTextItem::handleSelection()
@@ -1282,8 +1236,6 @@ void AliasTextItem::handleSelection()
     root->properties->createAliasProperties(this);
 }
 
-
-/************************************************************/
 AnnotationListGraphicsItem::AnnotationListGraphicsItem(RootComponentItem *r)
     :NineMLNodeItem(r->gvlayout, "Notes")
 {
@@ -1316,18 +1268,16 @@ void AnnotationListGraphicsItem::addAnnotationTextItem (QString key, QString val
     int index = 0;
     for (index = 0; index < members.size(); ++index) {
         int type = members[index]->type();
-        if (type != AnnotationTextItem::Type)
+        if (type != AnnotationTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(ati, index);
 }
 
 void AnnotationListGraphicsItem::handleSelection()
 {
-    DBG() << "AnnotationListGraphicsItem::handleSelection called...";
 }
-
-/************************************************************/
 
 AnnotationTextItem::AnnotationTextItem(AnnotationListGraphicsItem *parent, QString ky, QString txt, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
@@ -1338,19 +1288,14 @@ AnnotationTextItem::AnnotationTextItem(AnnotationListGraphicsItem *parent, QStri
     updateContent();
 }
 
-
 void AnnotationTextItem::updateContent()
 {
-    DBG() << "AnnotationTextItem::updateContent() called";
     QString text = this->key + ": " + this->text;
     setPlainText (text);
 }
 
-
 void AnnotationTextItem::handleSelection()
 {
-    DBG() << "AnnotationTextItem::handleSelection() called";
-//    root->properties->createAnnotationProperties(this);
 }
 
 QString AnnotationTextItem::getKey()
@@ -1362,8 +1307,6 @@ QString AnnotationTextItem::getText()
 {
     return this->text;
 }
-
-/************************************************************/
 
 PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
     :NineMLNodeItem(r->gvlayout, "Ports")
@@ -1383,23 +1326,19 @@ PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
     updateGVData();
 
     //create analog port items
-    for (int i=0;i< r->al->AnalogPortList.size(); i++)
-    {
+    for (int i=0;i< r->al->AnalogPortList.size(); i++) {
         addAnalogePortItem(r->al->AnalogPortList[i]);
     }
 
     //create event port items
-    for (int i=0;i< r->al->EventPortList.size(); i++)
-    {
+    for (int i=0;i< r->al->EventPortList.size(); i++) {
         addEventPortItem(r->al->EventPortList[i]);
     }
 
     //create event port items
-    for (int i=0;i< r->al->ImpulsePortList.size(); i++)
-    {
+    for (int i=0;i< r->al->ImpulsePortList.size(); i++) {
         addImpulsePortItem(r->al->ImpulsePortList[i]);
     }
-
 }
 
 void PortListGraphicsItem::addAnalogePortItem(AnalogPort *ap)
@@ -1407,10 +1346,11 @@ void PortListGraphicsItem::addAnalogePortItem(AnalogPort *ap)
     AnalogPortTextItem *api = new AnalogPortTextItem(this, ap, root);
     //add at index after last analog port item
     int index = 0;
-    for(index=0; index< members.size();index++){
+    for (index=0; index < members.size(); index++) {
         int type = members[index]->type();
-        if (type != AnalogPortTextItem::Type)
+        if (type != AnalogPortTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(api, index);
 }
@@ -1419,10 +1359,11 @@ void PortListGraphicsItem::addEventPortItem(EventPort *ep)
 {
     EventPortTextItem *epi = new EventPortTextItem(this, ep, root);
     int index = 0;
-    for(index=0; index< members.size();index++){
+    for (index=0; index < members.size(); index++) {
         int type = members[index]->type();
-        if (type == ImpulsePortTextItem::Type)
+        if (type == ImpulsePortTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(epi, index);
 }
@@ -1438,18 +1379,13 @@ void PortListGraphicsItem::handleSelection()
     root->properties->createPortListProperties();
 }
 
-/************************************************************/
-
-
 AnalogPortTextItem::AnalogPortTextItem(PortListGraphicsItem *parent, AnalogPort *p, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
     port = p;
     root = r;
     updateContent();
-
 }
-
 
 void AnalogPortTextItem::updateContent()
 {
@@ -1457,14 +1393,11 @@ void AnalogPortTextItem::updateContent()
     switch (port->mode){
         case(AnalogSendPort):
         {
-            if (port->variable != NULL)
-            {
+            if (port->variable != NULL) {
                 port->name = port->variable->name;
                 text.append("Send: ");
                 text.append(port->variable->getName());
-            }
-            else
-            {
+            } else {
                 text = "Warning: Select a Port Variable";
             }
             break;
@@ -1473,28 +1406,30 @@ void AnalogPortTextItem::updateContent()
         {
             text.append("Rcv: " + port->getName());
             QString unit = port->dims->toString();
-            if (unit != "?")
+            if (unit != "?") {
                 text.append(" ["+unit+"]");
+            }
             break;
         }
         case(AnalogReducePort):
         {
             text.append("Reduce (");
-            if (port->op == ReduceOperationAddition)
+            if (port->op == ReduceOperationAddition) {
                 text.append("+");
-            else
+            } else {
                 text.append("None");
+            }
             text.append("): ");
             text.append(port->getName());
             QString unit = port->dims->toString();
-            if (unit != "?")
+            if (unit != "?") {
                 text.append(" ["+unit+"]");
+            }
             break;
         }
     }
     setPlainText(text);
 }
-
 
 void AnalogPortTextItem::handleSelection()
 {
@@ -1512,13 +1447,15 @@ void AnalogPortTextItem::setName(QString n)
     port->setName(n);
     updateContent();
     root->notifyDataChange();
-    if (port->variable != NULL)
+    if (port->variable != NULL) {
         disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+    }
     port->variable = NULL;
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port name"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 AnalogPortMode AnalogPortTextItem::getPortMode()
@@ -1541,60 +1478,59 @@ void AnalogPortTextItem::setVariable(QString v)
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     port->name = v;
     //could be either an analog port
-    if (port->variable != NULL)
+    if (port->variable != NULL) {
         disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (int i=0;i<root->al->StateVariableList.size();i++)
-    {
-        if (root->al->StateVariableList[i]->getName().compare(v)==0)
-        {
+    }
+
+    for (int i=0;i<root->al->StateVariableList.size();i++) {
+        if (root->al->StateVariableList[i]->getName().compare(v)==0) {
             port->variable = root->al->StateVariableList[i];
             connect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
-    for (int i=0;i<root->al->AliasList.size();i++)
-    {
-        if (root->al->AliasList[i]->getName().compare(v)==0)
-        {
+    for (int i=0;i<root->al->AliasList.size();i++) {
+        if (root->al->AliasList[i]->getName().compare(v)==0) {
             port->variable = root->al->AliasList[i];
             connect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port variable"));
-    else
+    } else {
         oldComponent.clear();
-
+    }
 }
 
 void AnalogPortTextItem::setPortMode(QString p)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     if (p.compare("Send") == 0){
-        if (port->variable != NULL)
+        if (port->variable != NULL) {
             disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+        }
         port->mode = AnalogSendPort;
         port->setName("");
         port->dims->reset();
-    }
-    else if (p.compare("Receive") == 0)
-    {
-        if (port->mode == AnalogSendPort){  //only reset name and dims if changing from a send
+
+    } else if (p.compare("Receive") == 0) {
+        if (port->mode == AnalogSendPort) {  //only reset name and dims if changing from a send
             port->setName("");
-            if (port->variable != NULL)
+            if (port->variable != NULL) {
                 disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+            }
             port->variable = NULL;
             port->dims->reset();
         }
         port->mode = AnalogRecvPort;
-    }
-    else if (p.compare("Reduce") == 0)
-    {
-        if (port->mode == AnalogSendPort){  //only reset name and dims if changing from a send
+
+    } else if (p.compare("Reduce") == 0) {
+        if (port->mode == AnalogSendPort) {  //only reset name and dims if changing from a send
             port->setName("");
-            if (port->variable != NULL)
+            if (port->variable != NULL) {
                 disconnect(port->variable, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+            }
             port->variable = NULL;
             port->dims->reset();
         }
@@ -1605,32 +1541,34 @@ void AnalogPortTextItem::setPortMode(QString p)
     root->properties->clear();
     root->properties->createAnalogPortProperties(this);
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port mode"));
-    else
+    } else {
         oldComponent.clear();
-
+    }
 }
 
 void AnalogPortTextItem::setPortReduceOp(QString p)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
-    if (p.compare("None") == 0)
+    if (p.compare("None") == 0) {
         port->op = ReduceOperationNone;
-    else if (p.compare("Addition") == 0)
+    } else if (p.compare("Addition") == 0) {
         port->op = ReduceOperationAddition;
+    }
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Analog Port reduce op"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void AnalogPortTextItem::setDimsPrefix(QString p)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
-    if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)){
+    if ((port->mode == AnalogRecvPort)||(port->mode == AnalogReducePort)) {
         QStringList list = p.split(" ");
         if (list.size() == 0) {
             return;
@@ -1638,10 +1576,11 @@ void AnalogPortTextItem::setDimsPrefix(QString p)
         port->dims->setPrefix(list[0]);
         updateContent();
     }
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set AP dims prefix"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void AnalogPortTextItem::setDimsUnit(QString u)
@@ -1655,10 +1594,11 @@ void AnalogPortTextItem::setDimsUnit(QString u)
         port->dims->setUnit(list[0]);
         updateContent();
     }
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set AP dims suffix"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void AnalogPortTextItem::setIsPostState(bool b)
@@ -1671,9 +1611,6 @@ void AnalogPortTextItem::setIsPerConnState(bool b)
     this->port->isPerConn = b;
 }
 
-/************************************************************/
-
-
 EventPortTextItem::EventPortTextItem(PortListGraphicsItem *parent, EventPort *p, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -1685,7 +1622,7 @@ EventPortTextItem::EventPortTextItem(PortListGraphicsItem *parent, EventPort *p,
 void EventPortTextItem::updateContent()
 {
     QString text = "Event ";
-    switch (port->mode){
+    switch (port->mode) {
         case(EventSendPort):
         {
             text.append("Send: ");
@@ -1724,35 +1661,34 @@ void EventPortTextItem::setName(QString n)
     port->setName(n);
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set Event Port name"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void EventPortTextItem::setPortMode(QString p)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
-    if (p.compare("Send") == 0)
+    if (p.compare("Send") == 0) {
         port->mode = EventSendPort;
-    else if (p.compare("Receive") == 0)
+    } else if (p.compare("Receive") == 0) {
         port->mode = EventRecvPort;
+    }
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set EventPort mode"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void EventPortTextItem::setIsPostState(bool b)
 {
     this->port->isPost = b;
 }
-
-/************************************************************/
-
-
 
 ImpulsePortTextItem::ImpulsePortTextItem(PortListGraphicsItem *parent, ImpulsePort *p, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
@@ -1761,8 +1697,9 @@ ImpulsePortTextItem::ImpulsePortTextItem(PortListGraphicsItem *parent, ImpulsePo
     root = r;
     updateContent();
 
-    if (port->parameter)
+    if (port->parameter) {
         connect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+    }
 }
 
 void ImpulsePortTextItem::updateContent()
@@ -1771,13 +1708,10 @@ void ImpulsePortTextItem::updateContent()
     switch (port->mode){
         case(ImpulseSendPort):
         {
-            if (port->parameter != NULL)
-            {
+            if (port->parameter != NULL) {
                 port->name = port->parameter->name;
                 text.append("Send: "+port->parameter->getName());
-            }
-            else
-            {
+            } else {
                 text = "Warning: Select a Parameter";
             }
             break;
@@ -1786,14 +1720,14 @@ void ImpulsePortTextItem::updateContent()
         {
             text.append("Rcv: "+port->getName());
             QString unit = port->dims->toString();
-            if (unit != "?")
+            if (unit != "?") {
                 text.append( "["+unit+"]");
+            }
             break;
         }
     }
     setPlainText(text);
 }
-
 
 void ImpulsePortTextItem::handleSelection()
 {
@@ -1812,10 +1746,11 @@ void ImpulsePortTextItem::setName(QString n)
     port->parameter = NULL;
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QLineEdit *> (sender()))
+    if (qobject_cast < QLineEdit *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP name"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 Parameter *ImpulsePortTextItem::getParameter()
@@ -1828,33 +1763,28 @@ ImpulsePortMode ImpulsePortTextItem::getPortMode()
     return port->mode;
 }
 
-
 void ImpulsePortTextItem::setParameter(QString n)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
     //could be either an analog port
-    if (port->parameter != NULL)
+    if (port->parameter != NULL) {
         disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (int i=0;i<root->al->StateVariableList.size();i++)
-    {
-        if (root->al->StateVariableList[i]->getName().compare(n)==0)
-        {
+    }
+
+    for (int i=0; i < root->al->StateVariableList.size(); i++) {
+        if (root->al->StateVariableList[i]->getName().compare(n) == 0) {
             port->parameter = root->al->StateVariableList[i];
             connect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
-    for (int i=0;i<root->al->ParameterList.size();i++)
-    {
-        if (root->al->ParameterList[i]->getName().compare(n)==0)
-        {
+    for (int i=0; i < root->al->ParameterList.size(); i++) {
+        if (root->al->ParameterList[i]->getName().compare(n)==0) {
             port->parameter = root->al->ParameterList[i];
             connect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
     }
-    for (int i=0;i<root->al->AliasList.size();i++)
-    {
-        if (root->al->AliasList[i]->getName().compare(n)==0)
-        {
+    for (int i=0; i < root->al->AliasList.size(); i++) {
+        if (root->al->AliasList[i]->getName().compare(n)==0) {
             port->parameter = root->al->AliasList[i];
             connect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
         }
@@ -1862,26 +1792,28 @@ void ImpulsePortTextItem::setParameter(QString n)
     port->name = port->parameter->name;
     updateContent();
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP Parameter"));
-    else
+    } else {
         oldComponent.clear();
-
+    }
 }
 
 void ImpulsePortTextItem::setPortMode(QString p)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component>(new Component(root->al));
-    if (p.compare("Send") == 0){
-        if (port->parameter != NULL)
+    if (p.compare("Send") == 0) {
+        if (port->parameter != NULL) {
             disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+        }
         port->mode = ImpulseSendPort;
         port->setName("");
-    }
-    else if (p.compare("Receive") == 0){
+
+    } else if (p.compare("Receive") == 0) {
         port->mode = ImpulseRecvPort;
-        if (port->parameter != NULL)
+        if (port->parameter != NULL) {
             disconnect(port->parameter, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+        }
         port->parameter = NULL;
         port->setName("");
     }
@@ -1890,10 +1822,11 @@ void ImpulsePortTextItem::setPortMode(QString p)
     root->properties->clear();
     root->properties->createImpulsePortProperties(this);
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP mode"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void ImpulsePortTextItem::setDimsPrefix(QString p)
@@ -1905,10 +1838,11 @@ void ImpulsePortTextItem::setDimsPrefix(QString p)
     }
     port->dims->setPrefix(list[0]);
     updateContent();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP dims prefix"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 void ImpulsePortTextItem::setDimsUnit(QString u)
@@ -1920,15 +1854,13 @@ void ImpulsePortTextItem::setDimsUnit(QString u)
     }
     port->dims->setUnit(list[0]);
     updateContent();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set IP dims suffix"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
-/************************************************************/
-
-/************************************************************/
 OnEventGraphicsItem::OnEventGraphicsItem(Regime *src_r, OnEvent *e, RootComponentItem *root)
     : NineMLTransitionItem(root->gvlayout, root->scene->getRegimeGVNode(src_r), root->scene->getRegimeGVNode(e->target_regime), root->scene)
 {
@@ -1951,20 +1883,17 @@ OnEventGraphicsItem::OnEventGraphicsItem(Regime *src_r, OnEvent *e, RootComponen
     addMember(trigger_item);
 
     //create state assigments equations
-    for(int i=0; i<on_event->StateAssignList.size(); i++)
-    {
+    for(int i=0; i<on_event->StateAssignList.size(); i++) {
         addStateAssignment(on_event->StateAssignList[i]);
     }
 
     //create event outputs
-    for(int i=0; i<on_event->eventOutList.size(); i++)
-    {
+    for(int i=0; i<on_event->eventOutList.size(); i++) {
        addEventOut(on_event->eventOutList[i]);
     }
 
     //create impulse outputs
-    for(int i=0; i<on_event->impulseOutList.size(); i++)
-    {
+    for(int i=0; i<on_event->impulseOutList.size(); i++) {
        addImpulseOut(on_event->impulseOutList[i]);
     }
 }
@@ -1985,10 +1914,11 @@ void OnEventGraphicsItem::setEventPort(QString m)
     on_event->src_port_name = m;
     trigger_item->setEventPort(m);
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set OE Event Port"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 Regime * OnEventGraphicsItem::getSynapseRegime()
@@ -2003,24 +1933,23 @@ Regime * OnEventGraphicsItem::getSourceRegime()
 
 void OnEventGraphicsItem::setSynapseRegime(QString r)
 {
-   // QSharedPointer<NineMLComponent> oldComponent = QSharedPointer<NineMLComponent>(new NineMLComponent(root->al));
     on_event->target_regime_name = r;
-    for (int i=0;i<root->al->RegimeList.size();i++)
-    {
-        if (root->al->RegimeList[i]->name.compare(r)==0)
-                on_event->target_regime = root->al->RegimeList[i];
+    for (int i=0; i < root->al->RegimeList.size(); i++) {
+        if (root->al->RegimeList[i]->name.compare(r)==0) {
+            on_event->target_regime = root->al->RegimeList[i];
+        }
     }
-    //root->alPtr->undoStack.push(new changeComponent(root, oldComponent));
 }
 
 void OnEventGraphicsItem::addStateAssignment(StateAssignment *sa)
 {
     StateAssignmentTextItem *s = new StateAssignmentTextItem(this, sa, root);
     int index;
-    for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
+    for (index=1; index< members.size();index++) { //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
         int type = members[index]->type();
-        if (type != StateAssignmentTextItem::Type)
+        if (type != StateAssignmentTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(s, index);
 }
@@ -2029,10 +1958,11 @@ void OnEventGraphicsItem::addEventOut(EventOut *eo)
 {
     EventOutTextItem *e = new EventOutTextItem(this, eo, root);
     int index;
-    for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
+    for(index=1; index < members.size(); index++) { // INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
         int type = members[index]->type();
-        if (type == ImpulseOutTextItem::Type)
+        if (type == ImpulseOutTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(e, index);
 }
@@ -2043,9 +1973,6 @@ void OnEventGraphicsItem::addImpulseOut(ImpulseOut *io)
     addMember(e);
 }
 
-/************************************************************/
-
-
 OnEventTriggerTextItem::OnEventTriggerTextItem(OnEventGraphicsItem *parent, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -2054,8 +1981,9 @@ OnEventTriggerTextItem::OnEventTriggerTextItem(OnEventGraphicsItem *parent, Root
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setColour(Qt::green);
     updateContent();
-    if (on_event->src_port)
+    if (on_event->src_port) {
         connect(on_event->src_port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+    }
 }
 
 EventPort *OnEventTriggerTextItem::getEventPort()
@@ -2066,12 +1994,11 @@ EventPort *OnEventTriggerTextItem::getEventPort()
 void OnEventTriggerTextItem::setEventPort(QString m)
 {
     on_event->src_port_name = m;
-    if (on_event->src_port != NULL)
+    if (on_event->src_port != NULL) {
         disconnect(on_event->src_port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (int i=0;i<root->al->EventPortList.size();i++)
-    {
-        if (root->al->EventPortList[i]->getName().compare(m) == 0)
-        {
+    }
+    for (int i=0;i<root->al->EventPortList.size();i++) {
+        if (root->al->EventPortList[i]->getName().compare(m) == 0) {
             on_event->src_port = root->al->EventPortList[i];
             connect(root->al->EventPortList[i], SIGNAL(nameChanged()), this, SLOT(updateContent()));
             qDebug() << "Set Event Port" << on_event->src_port->getName();
@@ -2083,15 +2010,15 @@ void OnEventTriggerTextItem::setEventPort(QString m)
 
 void OnEventTriggerTextItem::updateContent()
 {
-    if (on_event->src_port != NULL)
-    {
+    if (on_event->src_port != NULL) {
         on_event->src_port_name = on_event->src_port->name;
         QString text = "@ OnEvent( ";
         text.append(on_event->src_port->getName());
         text.append(" )");
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select an OnEvent source Port");
+    }
 }
 
 void OnEventTriggerTextItem::handleSelection()
@@ -2099,10 +2026,6 @@ void OnEventTriggerTextItem::handleSelection()
     //yeahhhhhhh
 }
 
-/************************************************************/
-
-
-/************************************************************/
 OnImpulseGraphicsItem::OnImpulseGraphicsItem(Regime *src_r, OnImpulse *e, RootComponentItem *root)
     : NineMLTransitionItem(root->gvlayout, root->scene->getRegimeGVNode(src_r), root->scene->getRegimeGVNode(e->target_regime), root->scene)
 {
@@ -2125,20 +2048,17 @@ OnImpulseGraphicsItem::OnImpulseGraphicsItem(Regime *src_r, OnImpulse *e, RootCo
     addMember(trigger_item);
 
     //create state assigments equations
-    for(int i=0; i<on_impulse->StateAssignList.size(); i++)
-    {
+    for(int i=0; i<on_impulse->StateAssignList.size(); i++) {
         addStateAssignment(on_impulse->StateAssignList[i]);
     }
 
     //create event outputs
-    for(int i=0; i<on_impulse->eventOutList.size(); i++)
-    {
+    for(int i=0; i<on_impulse->eventOutList.size(); i++) {
        addEventOut(on_impulse->eventOutList[i]);
     }
 
     //create impulse outputs
-    for(int i=0; i<on_impulse->impulseOutList.size(); i++)
-    {
+    for(int i=0; i<on_impulse->impulseOutList.size(); i++) {
        addImpulseOut(on_impulse->impulseOutList[i]);
     }
 }
@@ -2159,10 +2079,11 @@ void OnImpulseGraphicsItem::setImpulsePort(QString m)
     on_impulse->src_port_name = m;
     trigger_item->setImpulsePort(m);
     root->notifyDataChange();
-    if (qobject_cast < QComboBox *> (sender()))
+    if (qobject_cast < QComboBox *> (sender())) {
         root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Set OI Impulse Port"));
-    else
+    } else {
         oldComponent.clear();
+    }
 }
 
 Regime * OnImpulseGraphicsItem::getSynapseRegime()
@@ -2178,10 +2099,10 @@ Regime * OnImpulseGraphicsItem::getSourceRegime()
 void OnImpulseGraphicsItem::setSynapseRegime(QString r)
 {
     on_impulse->target_regime_name = r;
-    for (int i=0;i<root->al->RegimeList.size();i++)
-    {
-        if (root->al->RegimeList[i]->name.compare(r)==0)
-                on_impulse->target_regime = root->al->RegimeList[i];
+    for (int i=0; i < root->al->RegimeList.size(); i++) {
+        if (root->al->RegimeList[i]->name.compare(r)==0) {
+            on_impulse->target_regime = root->al->RegimeList[i];
+        }
     }
 }
 
@@ -2189,10 +2110,11 @@ void OnImpulseGraphicsItem::addStateAssignment(StateAssignment *sa)
 {
     StateAssignmentTextItem *s = new StateAssignmentTextItem(this, sa, root);
     int index;
-    for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
+    for (index=1; index < members.size(); index++) {    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
         int type = members[index]->type();
-        if (type != StateAssignmentTextItem::Type)
+        if (type != StateAssignmentTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(s, index);
 }
@@ -2201,10 +2123,11 @@ void OnImpulseGraphicsItem::addEventOut(EventOut *eo)
 {
     EventOutTextItem *e = new EventOutTextItem(this, eo, root);
     int index;
-    for(index=1; index< members.size();index++){    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
+    for(index=1; index < members.size(); index++) {    //INDEX STARTS AT 1 (NOT 0) DUE TO TRIGGER ITEM
         int type = members[index]->type();
-        if (type == ImpulseOutTextItem::Type)
+        if (type == ImpulseOutTextItem::Type) {
             break;
+        }
     }
     addMemberAtIndex(e, index);
 }
@@ -2215,9 +2138,6 @@ void OnImpulseGraphicsItem::addImpulseOut(ImpulseOut *io)
     addMember(e);
 }
 
-/************************************************************/
-
-
 OnImpulseTriggerTextItem::OnImpulseTriggerTextItem(OnImpulseGraphicsItem *parent, RootComponentItem *r)
     : NineMLTextItem(parent, parent)
 {
@@ -2226,8 +2146,9 @@ OnImpulseTriggerTextItem::OnImpulseTriggerTextItem(OnImpulseGraphicsItem *parent
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setColour(Qt::green);
     updateContent();
-    if (on_impulse->src_port)
+    if (on_impulse->src_port) {
         connect(on_impulse->src_port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
+    }
 }
 
 ImpulsePort *OnImpulseTriggerTextItem::getImpulsePort()
@@ -2238,15 +2159,13 @@ ImpulsePort *OnImpulseTriggerTextItem::getImpulsePort()
 void OnImpulseTriggerTextItem::setImpulsePort(QString m)
 {
     on_impulse->src_port_name = m;
-    if (on_impulse->src_port != NULL)
+    if (on_impulse->src_port != NULL) {
         disconnect(on_impulse->src_port, SIGNAL(nameChanged()), this, SLOT(updateContent()));
-    for (int i=0;i<root->al->ImpulsePortList.size();i++)
-    {
-        if (root->al->ImpulsePortList[i]->getName().compare(m) == 0)
-        {
+    }
+    for (int i=0; i < root->al->ImpulsePortList.size(); i++) {
+        if (root->al->ImpulsePortList[i]->getName().compare(m) == 0) {
             on_impulse->src_port = root->al->ImpulsePortList[i];
             connect(root->al->ImpulsePortList[i], SIGNAL(nameChanged()), this, SLOT(updateContent()));
-            qDebug() << "Set Impulse Port" << on_impulse->src_port->getName();
         }
     }
     updateContent();
@@ -2255,20 +2174,18 @@ void OnImpulseTriggerTextItem::setImpulsePort(QString m)
 
 void OnImpulseTriggerTextItem::updateContent()
 {
-    if (on_impulse->src_port != NULL)
-    {
+    if (on_impulse->src_port != NULL) {
         on_impulse->src_port_name = on_impulse->src_port->name;
         QString text = "@ OnImpulse( ";
         text.append(on_impulse->src_port->getName());
         text.append(" )");
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select an OnImpulse source Port");
+    }
 }
 
 void OnImpulseTriggerTextItem::handleSelection()
 {
     //yeahhhhhhh
 }
-
-/************************************************************/
