@@ -165,6 +165,19 @@ public:
     ComponentModelObject(){}
     ~ComponentModelObject(){}
     virtual ComponentObjectType Type() = 0;
+
+    /*!
+     * A user-provided annotation about the Component.
+     */
+    QString annotation;
+
+    /*!
+     * A dictionary of SpineCreator annotation texts, which live
+     * inside the Annotation element. The key refers to the parameter
+     * or state variable to which the annotation refers, the value is
+     * the annotation text itself.
+     */
+    QMap<QString, QString> annotationTexts;
 };
 
 /*!
@@ -649,6 +662,12 @@ public:
     void write_node_xml(QXmlStreamWriter &);
     ComponentRootInstance(){}
     virtual ~ComponentRootInstance(){}
+    /*!
+     * The annotation. Read with
+     * ComponentInstance::import_parameters_from_xml, which may be
+     * passed an option NOT to read annotation information.
+     */
+    QString annotation;
 };
 
 /*!
@@ -678,6 +697,5 @@ public:
     void addInput(QSharedPointer <ComponentInstance>, bool = false);
     void copyParsFrom(QSharedPointer <ComponentInstance> data);
 };
-
 
 #endif // NINEML_STRUCTS_H

@@ -323,8 +323,8 @@ void Component::load(QDomDocument *doc)
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: expected 'name' attribute'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: expected 'name' attribute'");
                 settings.endArray();
             }
 
@@ -378,8 +378,8 @@ void Component::load(QDomDocument *doc)
                             int num_errs = settings.beginReadArray("errors");
                             settings.endArray();
                             settings.beginWriteArray("errors");
-                                settings.setArrayIndex(num_errs + 1);
-                                settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e3.tagName() + "'");
+                            settings.setArrayIndex(num_errs + 1);
+                            settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e3.tagName() + "'");
                             settings.endArray();
                         }
 
@@ -405,13 +405,49 @@ void Component::load(QDomDocument *doc)
                     tempIP->readIn(e2);
                     this->ImpulsePortList.push_back(tempIP);
 
+                }
+                else if( e2.tagName() == "Annotation" )
+                {
+                    DBG() << "Read Component Annotation";
+                    // Any user-provided bits have to be stored.
+                    QDomNode scNode;
+                    QDomNodeList scAnns = e2.toElement().elementsByTagName("SpineCreator");
+
+                    if (scAnns.length() == 1) { // There are SpineCreator-specific annotations
+
+                        scNode = scAnns.at(0).cloneNode(); // Make a copy of the SpineCreator-specific annotations
+                        e2.toElement().removeChild(scAnns.at(0)); // Remove the SpineCreator-specific annotations
+
+                        // Now read the SpineCreator-specific parts that we just copied.
+                        DBG() << "scAnns is not empty.";
+                        this->annotationTexts.clear();
+                        // Find <Text key="something">Value</Text> nodes and populate annotationTexts
+                        QDomNode sct = scNode.firstChild();
+                        while (!sct.isNull()) {
+                            if (sct.isElement()) {
+                                QDomElement e = sct.toElement();
+                                if (e.tagName() == "Text") {
+                                    QString key = e.attribute("key");
+                                    QString val = e.text();
+                                    this->annotationTexts[key] = val;
+                                    DBG() << "Added Text key=" << key << ", val=" << val << " to annotationTexts.";
+                                }
+                            }
+                            sct = sct.nextSibling();
+                        }
+                    }
+
+                    // Save any remaining non-SpineCreator specific annotations into this->annotations.
+                    QTextStream temp(&this->annotation);
+                    e2.save(temp,1);
+
                 } else {
                     QSettings settings;
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e2.tagName() + "'");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + e2.tagName() + "'");
                     settings.endArray();
                 }
                 n2 = n2.nextSibling();
@@ -422,8 +458,8 @@ void Component::load(QDomDocument *doc)
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: expected 'ComponentClass' tag'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: expected 'ComponentClass' tag'");
             settings.endArray();
         }
         n = n.nextSibling();
@@ -448,8 +484,6 @@ void Component::load(QDomDocument *doc)
         msgBox.exec();*/
     }
 }
-
-
 
 void Component::write(QDomDocument *doc)
 {
@@ -521,7 +555,38 @@ void Component::write(QDomDocument *doc)
     }
     root.appendChild(CClass);
 
-    QDomElement dynamics = doc->createElement( "Dynamics" );
+    // Create component annotation element
+    QDomElement annot = doc->createElement("Annotation");
+
+    // Add non-SpineCreator annotations
+    QDomDocument userannot("Userannotations");
+    if (userannot.setContent(this->annotation, false)) {
+        QDomElement uaroot = userannot.documentElement();
+        QDomElement n = uaroot.firstChildElement();
+        while (!n.isNull()) {
+            QDomElement nxt = n.nextSiblingElement();
+            annot.appendChild (n);
+            n = nxt;
+        }
+    }
+
+    // Add SpineCreator-specific annotations
+    QDomElement spinecreator = doc->createElement("SpineCreator");
+    QMap<QString, QString>::const_iterator t = this->annotationTexts.constBegin();
+    while (t != this->annotationTexts.constEnd()) {
+        QDomElement txte = doc->createElement("Text");
+        txte.setAttribute("key", t.key());
+        QDomText text = doc->createTextNode(t.value());
+        txte.appendChild(text);
+        spinecreator.appendChild(txte);
+        ++t;
+    }
+    annot.appendChild(spinecreator);
+
+    // Append the component annotations onto the component class:
+    CClass.appendChild(annot);
+
+    QDomElement dynamics = doc->createElement("Dynamics");
     if (this->initial_regime != NULL)
         dynamics.setAttribute("initial_regime", this->initial_regime->name);
     else
@@ -552,10 +617,11 @@ void Component::write(QDomDocument *doc)
     for (int i = 0; i < this->StateVariableList.size(); ++i) {
         StateVariableList[i]->writeOut(doc, dynamics);
     }
-
 }
 
-void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
+void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
+{
+    DBG() << "ComponentRootInstance::write_node_xml called...";
 
     // definition
     QString simpleName;
@@ -569,7 +635,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
     simpleName.replace( " ", "_" );
     xmlOut.writeAttribute("url", simpleName + ".xml");
 
-    // wriet the seed and minumum distance for the Layout
+    // write the seed and minumum distance for the Layout
     if (this->type == NineMLLayoutType) {
         NineMLLayoutData * lay = static_cast<NineMLLayoutData *> (this);
         xmlOut.writeAttribute("seed", QString::number(lay->seed));
@@ -590,14 +656,13 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
 
                     xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
                     xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
-
                 }
 
                 // add the special input for the postsynapse
@@ -609,17 +674,14 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" +ptr->inputs[i]->dstCmpt->getXMLName() + "'");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" +ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
 
-
                     xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
                     xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
-
                 }
-
             }
         }
 
@@ -651,8 +713,29 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
 
         }
     }
+    // Have now finished writing attributes into the PostSynapse/WeightUpdate
 
-    // Do we have any parameter or state variable properties to write out?
+    // Add Annotations element:
+    if (!this->annotation.isEmpty()) {
+        // old annotations
+        this->annotation.replace("\n", "");
+        this->annotation.replace("<LL:Annotation>", "");
+        this->annotation.replace("</LL:Annotation>", "");
+        if (!this->annotation.isEmpty()) {
+            xmlOut.writeStartElement("LL:Annotation");
+            QXmlStreamReader reader(this->annotation);
+            while (!reader.atEnd()) {
+                if (reader.tokenType() != QXmlStreamReader::StartDocument
+                    && reader.tokenType() != QXmlStreamReader::EndDocument) {
+                    xmlOut.writeCurrentToken(reader);
+                }
+                reader.readNext();
+            }
+            xmlOut.writeEndElement(); // "LL:Annotation"
+        }
+    }
+
+    // Add any parameter or state variable properties that exist
     if (this->ParameterList.size()+this->StateVariableList.size() > 0) {
 
         // Output parameter properties
@@ -775,6 +858,10 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut) {
                   xmlOut.writeAttribute("src", ptr->inputs[i]->srcCmpt->getXMLName());
                   xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
                   xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
+
+                  // write annotations
+                  ptr->inputs[i]->write_model_meta_xml (&xmlOut);
+
                   if (ptr->inputs[i]->conn->type == Python) {
                       ((pythonscript_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
                       ((pythonscript_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
@@ -1354,6 +1441,12 @@ void AnalogPort::readIn(QDomElement e) {
         this->dims->fromString(e.attribute("dimension",""));
     } else if (e.tagName()=="AnalogSendPort") {
         this->mode=AnalogSendPort;
+#define LEGACY_FOR_ALEX_BRANCH
+#ifdef LEGACY_FOR_ALEX_BRANCH
+        if (!this->isPerConn) {
+            this->isPerConn = !(e.attribute("post","").isEmpty());
+        }
+#endif
     } else if (e.tagName()=="AnalogReducePort") {
         this->mode=AnalogReducePort;
         this->op = ReduceOperationAddition;
@@ -2202,6 +2295,8 @@ Component::Component(QSharedPointer<Component>data)
     this->path = data->path;
     this->filePath = data->filePath;
     this->initial_regime_name = data->initial_regime_name;
+    this->annotation = data->annotation;
+    this->annotationTexts = data->annotationTexts;
     RegimeList = QVector <Regime*>(data->RegimeList.size());
     StateVariableList = QVector <StateVariable*>(data->StateVariableList.size());
     ParameterList = QVector <Parameter*>(data->ParameterList.size());
@@ -2350,6 +2445,8 @@ Component& Component::operator=(const Component& data)
     AnalogPortList = QVector <AnalogPort*>(data.AnalogPortList.size());
     EventPortList = QVector <EventPort*>(data.EventPortList.size());
     ImpulsePortList = QVector <ImpulsePort*>(data.ImpulsePortList.size());
+    annotation = data.annotation;
+    annotationTexts = data.annotationTexts;
     initial_regime_name = data.initial_regime_name;
     for (int i=0; i<data.RegimeList.size(); i++)
     {
@@ -2472,6 +2569,9 @@ void Component::updateFrom(QSharedPointer<Component>  data)
     if (!editedVersion.isNull()) {
         editedVersion.clear();
     }
+
+    annotation = data->annotation;
+    annotationTexts = data->annotationTexts;
 
     name = data->name;
     type = data->type;
@@ -3162,6 +3262,13 @@ QStringList Component::validateComponent()
 
 void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 {
+    // fetch LL:Annotation, but only a direct child of this ComponentInstance.
+    QDomElement a = n.toElement().firstChildElement("LL:Annotation");
+    if (!a.isNull()) {
+        QTextStream temp(&this->annotation);
+        a.save(temp,1);
+    } // else no LL:Annotation for this ComponentInstance
+
     type = NineMLComponentType;
     QDomNodeList nList = n.toElement().elementsByTagName("Property");
 

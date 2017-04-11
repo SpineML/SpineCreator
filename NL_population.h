@@ -72,7 +72,6 @@ public:
     float getSide(int, int);
     void write_prototype_xml(QDomElement &root, QDomDocument &doc);
     void write_population_xml(QXmlStreamWriter &);
-    void write_model_meta_xml(QDomDocument &meta, QDomElement &root);
     void load_projections_from_xml(QDomElement  &e, QDomDocument * doc, QDomDocument * meta, projectObject *data);
     void read_inputs_from_xml(QDomElement  &e, QDomDocument *meta, projectObject *data);
     QPainterPath * addToPath(QPainterPath * path);

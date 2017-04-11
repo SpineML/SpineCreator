@@ -564,65 +564,151 @@ void genericInput::moveSelectedControlPoint(float xGL, float yGL)
     }
 }
 
-void genericInput::write_model_meta_xml(QDomDocument &meta, QDomElement &root)
+void genericInput::write_model_meta_xml(QXmlStreamWriter* xmlOut)
 {
     // if we are a projection specific input, skip this
-    if (this->projInput) return;
-
-    // write a new element for this projection:
-    QDomElement col = meta.createElement( "genericInput" );
-    root.appendChild(col);
-
-    // uniquely identify the input
-    col.setAttribute("source", this->srcCmpt->getXMLName());
-    col.setAttribute("destination", this->dstCmpt->getXMLName());
-    col.setAttribute("srcPort", this->srcPort);
-    col.setAttribute("dstPort", this->dstPort);
-
-    // start position
-    QDomElement start = meta.createElement( "start" );
-    col.appendChild(start);
-    start.setAttribute("x", this->start.x());
-    start.setAttribute("y", this->start.y());
-
-    // bezierCurves
-    QDomElement bcurves = meta.createElement( "curves" );
-    col.appendChild(bcurves);
-
-    for (int i = 0; i < this->curves.size(); ++i) {
-
-        QDomElement curve = meta.createElement( "curve" );
-        QDomElement C1 = meta.createElement( "C1" );
-        C1.setAttribute("xpos", this->curves[i].C1.x());
-        C1.setAttribute("ypos", this->curves[i].C1.y());
-        curve.appendChild(C1);
-
-        QDomElement C2 = meta.createElement( "C2" );
-        C2.setAttribute("xpos", this->curves[i].C2.x());
-        C2.setAttribute("ypos", this->curves[i].C2.y());
-        curve.appendChild(C2);
-
-        QDomElement end = meta.createElement( "end" );
-        end.setAttribute("xpos", this->curves[i].end.x());
-        end.setAttribute("ypos", this->curves[i].end.y());
-        curve.appendChild(end);
-
-        bcurves.appendChild(curve);
+    if (this->projInput) {
+        DBG() << "genericInput::write_model_meta_xml: projection specific; skip";
+        return;
     }
 
-    // write out connection metadata:
-    // write container (name after the weight update)
-    QDomElement c = meta.createElement( "connection" );
+    xmlOut->writeStartElement("LL:Annotation");
 
-    // add the metadata description (if there is one)
-    this->conn->write_metadata_xml(meta, c);
+    // old annotations
+    this->annotation.replace("\n", "");
+    this->annotation.replace("<LL:Annotation>", "");
+    this->annotation.replace("</LL:Annotation>", "");
+    QXmlStreamReader reader(this->annotation);
+    while (!reader.atEnd()) {
+        if (reader.tokenType() != QXmlStreamReader::StartDocument
+            && reader.tokenType() != QXmlStreamReader::EndDocument) {
+            xmlOut->writeCurrentToken(reader);
+        }
+        reader.readNext();
+    }
 
-    col.appendChild(c);
+    xmlOut->writeStartElement("SpineCreator");
+
+    // start position
+    xmlOut->writeEmptyElement("start");
+    xmlOut->writeAttribute("x", QString::number(this->start.x()));
+    xmlOut->writeAttribute("y", QString::number(this->start.y()));
+
+    // bezierCurves
+    xmlOut->writeStartElement("curves");
+    for (int i = 0; i < this->curves.size(); ++i) {
+
+        xmlOut->writeStartElement("curve");
+
+        xmlOut->writeEmptyElement("C1");
+        xmlOut->writeAttribute("xpos", QString::number(this->curves[i].C1.x()));
+        xmlOut->writeAttribute("ypos", QString::number(this->curves[i].C1.y()));
+
+        xmlOut->writeEmptyElement("C2");
+        xmlOut->writeAttribute("xpos", QString::number(this->curves[i].C2.x()));
+        xmlOut->writeAttribute("ypos", QString::number(this->curves[i].C2.y()));
+
+        xmlOut->writeEmptyElement("end");
+        xmlOut->writeAttribute("xpos", QString::number(this->curves[i].end.x()));
+        xmlOut->writeAttribute("ypos", QString::number(this->curves[i].end.y()));
+
+        xmlOut->writeEndElement(); // curve
+    }
+    xmlOut->writeEndElement(); // curves
+
+    // add connection metadata
+    this->conn->write_metadata_xml (xmlOut);
+
+    xmlOut->writeEndElement(); // SpineCreator
+    xmlOut->writeEndElement(); // Annotation
 }
 
+// Reads metadata in new, in-"model.xml" format.
+void genericInput::read_meta_data (QDomNode meta, cursorType cursorPos)
+{
+    // skip if a special input for a projection
+    if (this->projInput) {
+        DBG() << "Special input for projection, skipping.";
+        return;
+    }
+
+    // now load the metadata for the projection:
+    QDomNode metaNode;
+    QDomNodeList scAnns = meta.toElement().elementsByTagName("SpineCreator");
+    if (scAnns.length() == 1) {
+        metaNode = scAnns.at(0).cloneNode();
+        meta.removeChild(scAnns.at(0));
+    }
+    QTextStream temp(&this->annotation);
+    meta.save(temp,1);
+
+    QDomNode metaData = metaNode.toElement().firstChild();
+    while (!metaData.isNull()) {
+
+        if (metaData.toElement().tagName() == "start") {
+            this->start = QPointF(metaData.toElement().attribute("x","").toFloat()+cursorPos.x,
+                                  metaData.toElement().attribute("y","").toFloat()+cursorPos.y);
+        }
+
+        // find the curves tag
+        if (metaData.toElement().tagName() == "curves") {
+            // add each curve
+            QDomNodeList edgeNodeList = metaData.toElement().elementsByTagName("curve");
+            for (int i = 0; i < (int) edgeNodeList.count(); ++i) {
+                QDomNode vals = edgeNodeList.item(i).toElement().firstChild();
+                bezierCurve newCurve;
+                while (!vals.isNull()) {
+                    if (vals.toElement().tagName() == "C1") {
+                        newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat()+cursorPos.x,
+                                              vals.toElement().attribute("ypos").toFloat()+cursorPos.y);
+                    }
+                    if (vals.toElement().tagName() == "C2") {
+                        newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat()+cursorPos.x,
+                                              vals.toElement().attribute("ypos").toFloat()+cursorPos.y);
+                    }
+                    if (vals.toElement().tagName() == "end") {
+                        newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat()+cursorPos.x,
+                                               vals.toElement().attribute("ypos").toFloat()+cursorPos.y);
+                    }
+                    vals = vals.nextSibling();
+                }
+                // add the filled out curve to the list
+                this->curves.push_back(newCurve);
+            }
+        }
+
+        // do we have a generator
+        if (this->conn->type == CSV) {
+            csv_connection * conn = dynamic_cast<csv_connection *> (this->conn);
+            CHECK_CAST(conn)
+            QSharedPointer <population> popsrc = qSharedPointerDynamicCast <population>(this->source);
+            //CHECK_CAST(popsrc)
+            QSharedPointer <population> popdst = qSharedPointerDynamicCast <population>(this->destination);
+            //CHECK_CAST(popdst)
+            if (conn->generator) {
+                if (popsrc) {
+                    conn->generator->srcPop = popsrc;
+                }
+                if (popdst) {
+                    conn->generator->dstPop = popdst;
+                }
+                if (conn->generator->type == Python) {
+                    pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
+                    CHECK_CAST(pyConn)
+                    pyConn->setUnchanged(true);
+                }
+            }
+        }
+
+        metaData = metaData.nextSibling();
+    }
+}
+
+// Reads metadata in the old format, reading from a separate metadata.xml file.
 #define __DEBUG_READ_META 1
 void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 {
+    DBG() << "Called to read meta data from metadata.xml file.";
     // skip if a special input for a projection
     if (this->projInput) {
 #ifdef __DEBUG_READ_META

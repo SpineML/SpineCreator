@@ -469,15 +469,16 @@ addSynapse::addSynapse(nl_rootdata * data, QSharedPointer <projection> proj, QUn
     this->syn.clear();
     this->proj = proj;
     this->data = data;
-    this->setText("add synapse to " + this->proj->getName());
-    syn = QSharedPointer<synapse>(new synapse(proj, data, true));
-    syn->connectionType->setSynapseIndex(proj->synapses.size());
-    proj->synapses.push_back(syn);
+    this->setText("add synapse to " + proj->getName());
+    this->syn = QSharedPointer<synapse>(new synapse(proj, data, true));
+    this->syn->connectionType->setSynapseIndex (proj->synapses.size());
+    this->syn->connectionType->setParent (proj); // proj as a QSharedPointer<systemObject>
+    proj->synapses.push_back (this->syn);
     // spawn children for projInputs
     new addInput(data, proj->source->neuronType, this->syn->weightUpdateCmpt, this);
     new addInput(data, this->syn->weightUpdateCmpt, this->syn->postSynapseCmpt, this);
-    new addInput(data, this->syn->postSynapseCmpt, this->proj->destination->neuronType, this);
-    isDeleted = false;
+    new addInput(data, this->syn->postSynapseCmpt, proj->destination->neuronType, this);
+    this->isDeleted = false;
 }
 
 void addSynapse::undo()

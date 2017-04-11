@@ -63,6 +63,9 @@ NineMLALScene::~NineMLALScene()
 #define NINEMLALSCENE_SIZE 5000
 void NineMLALScene::initialiseScene(QSharedPointer<Component>al)
 {
+    annotl_item = new AnnotationListGraphicsItem(root);
+    addItem(annotl_item);
+
     pl_item = new ParameterListGraphicsItem(root);
     addItem(pl_item);
 
@@ -1228,7 +1231,3 @@ void NineMLALScene::setMode(ALSceneMode m)
 {
     mode = m;
 }
-
-
-
-

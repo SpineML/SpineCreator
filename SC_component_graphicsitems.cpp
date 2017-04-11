@@ -150,6 +150,15 @@ void NineMLNodeItem::updateGVData()
     layout->updateLayout();
 }
 
+QString NineMLNodeItem::getAnnotationText(void)
+{
+    QString rtn("");
+    if (this->getName() != "__unknown_name") {
+        rtn = this->root->al->annotationTexts[this->getName()];
+    }
+    return rtn;
+}
+
 
 NineMLTransitionItem::NineMLTransitionItem(GVLayout *layout, Agnode_t *src, Agnode_t *dst, QGraphicsScene *scene)
     : TextItemGroup(), GVEdge(layout, src, dst)
@@ -229,6 +238,14 @@ void NineMLTransitionItem::removeMember(GroupedTextItem *item)
     updateGVData();
 }
 
+QString NineMLTransitionItem::getAnnotationText(void)
+{
+    QString rtn("");
+    if (this->getName() != "__unknown_name") {
+        rtn = this->root->al->annotationTexts[this->getName()];
+    }
+    return rtn;
+}
 
 /* NineMLTextItem */
 NineMLTextItem::NineMLTextItem(GVItem *gv_item, TextItemGroup *parent)
@@ -247,6 +264,14 @@ void NineMLTextItem::setPlainText(const QString &text)
     gv_item->updateGVData();
 }
 
+QString NineMLTextItem::getAnnotationText(void)
+{
+    QString rtn("");
+    if (this->getName() != "__unknown_name") {
+        rtn = this->root->al->annotationTexts[this->getName()];
+    }
+    return rtn;
+}
 
 RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
     : NineMLNodeItem(root->gvlayout, r->name)
@@ -321,6 +346,11 @@ void RegimeGraphicsItem::updateContent()
 }
 
 QString RegimeGraphicsItem::getRegimeName()
+{
+    return regime->name;
+}
+
+QString RegimeGraphicsItem::getName()
 {
     return regime->name;
 }
@@ -1053,8 +1083,9 @@ void StateVariableTextItem::updateContent()
             text.append(" ["+unit+"]");
         }
         setPlainText(text);
-    }else
+    } else {
         setPlainText("Warning: Select a State Variable");
+    }
 }
 
 QString StateVariableTextItem::getName()
@@ -1211,6 +1242,86 @@ void AliasTextItem::handleSelection()
 
 
 /************************************************************/
+AnnotationListGraphicsItem::AnnotationListGraphicsItem(RootComponentItem *r)
+    :NineMLNodeItem(r->gvlayout, "Notes")
+{
+    root = r;
+
+    setRounded(false);
+    setPadding(5);
+    setColour(Qt::white);
+    setBorderColour(Qt::black);
+
+    //create name
+    title->setColour(Qt::magenta);
+    title->setDefaultTextColor(Qt::white);
+    title->setPlainText("Notes");
+
+    updateGVData();
+
+    // create annotation texts
+    QMap<QString, QString>::const_iterator t = r->al->annotationTexts.constBegin();
+    while (t != r->al->annotationTexts.constEnd()) {
+        this->addAnnotationTextItem(t.key(), t.value());
+        ++t;
+    }
+}
+
+void AnnotationListGraphicsItem::addAnnotationTextItem (QString key, QString value)
+{
+    AnnotationTextItem *ati = new AnnotationTextItem(this, key, value, root);
+    // add at index after last annotation text item
+    int index = 0;
+    for (index = 0; index < members.size(); ++index) {
+        int type = members[index]->type();
+        if (type != AnnotationTextItem::Type)
+            break;
+    }
+    addMemberAtIndex(ati, index);
+}
+
+void AnnotationListGraphicsItem::handleSelection()
+{
+    DBG() << "AnnotationListGraphicsItem::handleSelection called...";
+}
+
+/************************************************************/
+
+AnnotationTextItem::AnnotationTextItem(AnnotationListGraphicsItem *parent, QString ky, QString txt, RootComponentItem *r)
+    : NineMLTextItem(parent, parent)
+{
+    key = ky;
+    text = txt;
+    root = r;
+    updateContent();
+}
+
+
+void AnnotationTextItem::updateContent()
+{
+    DBG() << "AnnotationTextItem::updateContent() called";
+    QString text = this->key + ": " + this->text;
+    setPlainText (text);
+}
+
+
+void AnnotationTextItem::handleSelection()
+{
+    DBG() << "AnnotationTextItem::handleSelection() called";
+//    root->properties->createAnnotationProperties(this);
+}
+
+QString AnnotationTextItem::getKey()
+{
+    return this->key;
+}
+
+QString AnnotationTextItem::getText()
+{
+    return this->text;
+}
+
+/************************************************************/
 
 PortListGraphicsItem::PortListGraphicsItem(RootComponentItem *r)
     :NineMLNodeItem(r->gvlayout, "Ports")
@@ -1262,7 +1373,6 @@ void PortListGraphicsItem::addAnalogePortItem(AnalogPort *ap)
     addMemberAtIndex(api, index);
 }
 
-
 void PortListGraphicsItem::addEventPortItem(EventPort *ep)
 {
     EventPortTextItem *epi = new EventPortTextItem(this, ep, root);
@@ -1280,10 +1390,6 @@ void PortListGraphicsItem::addImpulsePortItem(ImpulsePort *ip)
     ImpulsePortTextItem *ipi = new ImpulsePortTextItem(this, ip, root);
     addMember(ipi);
 }
-
-
-
-
 
 void PortListGraphicsItem::handleSelection()
 {
@@ -2124,4 +2230,3 @@ void OnImpulseTriggerTextItem::handleSelection()
 }
 
 /************************************************************/
-

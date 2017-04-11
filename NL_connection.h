@@ -54,7 +54,7 @@ public:
 
     virtual void write_node_xml(QXmlStreamWriter &){}
     virtual void import_parameters_from_xml(QDomNode &){}
-    virtual void write_metadata_xml(QDomDocument &, QDomNode &) {}
+    virtual void write_metadata_xml(QXmlStreamWriter*) { DBG() << "connection implementation of write_metadata_xml called"; }
     virtual void read_metadata_xml(QDomNode &) {}
     virtual void writeDelay(QXmlStreamWriter &xmlOut);
     virtual QLayout * drawLayout(nl_rootdata * , viewVZLayoutEditHandler * , nl_rootlayout * ) {return new QHBoxLayout();}
@@ -63,6 +63,32 @@ public:
     virtual int getIndex();
 
     virtual QString getTypeStr(void);
+
+    /*!
+     * Is there a generator associated with this connection? If
+     * so, this is a pointer to the object.
+     */
+    connection* generator;
+
+    /*!
+     * A script, in some language, used to generate connections.
+     */
+    QString scriptText;
+
+    /*!
+     * Does this connection have a generator?
+     */
+    virtual bool hasGenerator (void) { return (this->generator == NULL ? false : true); }
+
+    /*!
+     * IS this connection a generator?
+     */
+    virtual bool isGenerator (void) { return false; }
+
+    /*!
+     * Return generator script of enclosing generator:
+     */
+    QString getGeneratorScript (void) { if (this->hasGenerator()) { return generator->getGeneratorScript(); } else if (this->isGenerator()) { return this->scriptText; } }
 
     /*!
      * The parent object which contains this connection. Will be
@@ -123,6 +149,12 @@ public:
      * exists.
      */
     void setSynapseIndex(int synidx);
+
+    /*!
+     * A place for SpineCreator to store meta-information about this
+     * connection.
+     */
+    QString annotation;
 
 private:
     QString filename;
@@ -225,8 +257,6 @@ public:
      */
     QStringList values;
 
-    connection* generator;
-
     /*!
      * \brief import_csv
      * \param filename
@@ -296,7 +326,6 @@ public:
      * list.
      */
     void write_node_xml (QXmlStreamWriter& xmlOut);
-    void write_metadata_xml (QDomDocument&, QDomNode&);
     void import_parameters_from_xml (QDomNode&);
     void read_metadata_xml (QDomNode&);
     void setFileName (QString name);
@@ -418,7 +447,7 @@ public:
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
-    void write_metadata_xml(QDomDocument &, QDomNode &);
+    virtual void write_metadata_xml(QXmlStreamWriter* xmlOut);
     void read_metadata_xml(QDomNode &);
     int getIndex();
     QString getTypeStr(void);
@@ -436,7 +465,7 @@ public:
 
     QVector <conn> connections;
 
-    QString scriptText;
+    // scriptText is inherited from the connection parent class
     QString lastGeneratedScriptText;
     QString scriptName;
     QStringList parNames;
@@ -462,6 +491,8 @@ public:
     csv_connection * connection_target;
 
     connection * newFromExisting();
+
+
 
 private:
 

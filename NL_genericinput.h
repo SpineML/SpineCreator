@@ -62,7 +62,13 @@ public:
 
     void animate(QSharedPointer<systemObject>movingObj, QPointF delta);
     void moveSelectedControlPoint(float xGL, float yGL);
-    void write_model_meta_xml(QDomDocument &meta, QDomElement &root) ;
+    void write_model_meta_xml(QXmlStreamWriter* xmlOut) ;
+
+    /*!
+     * Read meta-data information from a QDomNode. Intended to replace
+     * read_meta_data(QDomDocument * meta, cursorType cursorPos);
+     */
+    void read_meta_data (QDomNode meta, cursorType cursorPos);
 
     /*!
      * Read the meta-data information in the QDomDocument* meta. Use
