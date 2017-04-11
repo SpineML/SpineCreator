@@ -745,10 +745,10 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
         addRow(tr("&Variable:"),var);
         if (root->al->islearning) {
             // add checkbox for postsynaptic input
-            QCheckBox * ispost = new QCheckBox();
-            ispost->setChecked(ap->port->isPost);
-            connect(ispost, SIGNAL(toggled(bool)), ap, SLOT(setIsPostState(bool)));
-            addRow(tr("&Is postsynaptic:"), ispost);
+            QCheckBox * isper = new QCheckBox();
+            isper->setChecked(ap->port->isPerConn);
+            connect(isper, SIGNAL(toggled(bool)), ap, SLOT(setIsPerConnState(bool)));
+            addRow(tr("&Is per connection:"), isper);
         }
     }
     //otherwise
@@ -799,10 +799,10 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
         addRow(tr("&Reduce Operation:"), reduce);
         if (root->al->islearning) {
             // add checkbox for perConn output
-            QCheckBox * isper = new QCheckBox();
-            isper->setChecked(ap->port->isPerConn);
-            connect(isper, SIGNAL(toggled(bool)), ap, SLOT(setIsPerConnState(bool)));
-            addRow(tr("&Is per connection:"), isper);
+            QCheckBox * ispost = new QCheckBox();
+            ispost->setChecked(ap->port->isPost);
+            connect(ispost, SIGNAL(toggled(bool)), ap, SLOT(setIsPostState(bool)));
+            addRow(tr("&Is postsynaptic:"), ispost);
         }
     }
 

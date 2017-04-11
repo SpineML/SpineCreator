@@ -1441,6 +1441,12 @@ void AnalogPort::readIn(QDomElement e) {
         this->dims->fromString(e.attribute("dimension",""));
     } else if (e.tagName()=="AnalogSendPort") {
         this->mode=AnalogSendPort;
+#define LEGACY_FOR_ALEX_BRANCH
+#ifdef LEGACY_FOR_ALEX_BRANCH
+        if (!this->isPerConn) {
+            this->isPerConn = !(e.attribute("post","").isEmpty());
+        }
+#endif
     } else if (e.tagName()=="AnalogReducePort") {
         this->mode=AnalogReducePort;
         this->op = ReduceOperationAddition;
