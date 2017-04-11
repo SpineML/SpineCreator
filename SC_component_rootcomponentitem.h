@@ -42,8 +42,8 @@ class RootComponentItem: public QObject
 {
     Q_OBJECT
 public:
-    RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QFile *file=0);
-    RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QSharedPointer<Component>);
+    RootComponentItem(MainWindow *main, Ui::MainWindow *ui, QFile *file=0);
+    RootComponentItem(MainWindow *main, Ui::MainWindow *ui, QSharedPointer<Component>);
     ~RootComponentItem();
 
     void setSelectionMode(ALSceneMode mode);
@@ -107,6 +107,11 @@ public:
     Ui::MainWindow *ui;
     MainWindow *main;
     GVLayout *gvlayout;
+
+    /*!
+     * The annotation box.
+     */
+    QTextEdit* currentAnnotation;
 
 private:
     void init();

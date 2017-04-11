@@ -34,7 +34,6 @@
 class FilterObject : public QObject
 {
     Q_OBJECT
-
 protected:
     bool eventFilter(QObject *, QEvent *event);
 };
@@ -66,12 +65,10 @@ public:
     void createImpulseOutProperties(ImpulseOutTextItem *i);
     void updateReorderingIcons(GroupedTextItem *item);
 
-
 protected:
     static void clearLayoutItems(QLayout *layout);
     QComboBox* getPrefixCombo(Prefix selected);
     QComboBox* getUnitCombo(Unit selected);
-
 
 private:
     RootComponentItem *root;

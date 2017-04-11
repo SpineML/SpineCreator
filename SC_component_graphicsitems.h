@@ -83,6 +83,7 @@ public:
     void addMember(GroupedTextItem *item);            //overwrite TextItemGroup addMember
     void addMemberAtIndex(GroupedTextItem *item, int index);
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
+
     /*!
      * Reach into the RootComponentItem's underlying Component object
      * and obtain the annotation text corresponding to the
@@ -92,6 +93,12 @@ public:
     QString getAnnotationText(void);
 
     virtual QString getName(void) { return "__unknown_name"; }
+
+public slots:
+    /*!
+     * Called to update the annotation
+     */
+    void updateAnnotationText(void);
 
 protected:
     RootComponentItem *root;
@@ -103,7 +110,6 @@ typedef enum {
     TRANSITION_TYPE_ON_CONDITION,
     TRANSITION_TYPE_ON_IMPULSE
 } NineMLTransitionItemType;
-
 
 class NineMLTransitionItem: public TextItemGroup, public GVEdge
 {
@@ -118,6 +124,7 @@ public:
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
 
     virtual NineMLTransitionItemType transitionType() = 0;
+
     /*!
      * Reach into the RootComponentItem's underlying Component object
      * and obtain the annotation text corresponding to the
@@ -127,6 +134,12 @@ public:
     QString getAnnotationText(void);
 
     virtual QString getName(void) { return "__unknown_name"; }
+
+public slots:
+    /*!
+     * Called to update the annotation
+     */
+    void updateAnnotationText(void);
 
 protected:
     ArrowItem *arrow;
@@ -152,8 +165,15 @@ public:
 
     virtual QString getName(void) { return "__unknown_name"; }
 
+public slots:
+    /*!
+     * Called to update the annotation
+     */
+    void updateAnnotationText(void);
+
 protected:
     RootComponentItem *root;
+
 private:
     GVItem *gv_item;
 };

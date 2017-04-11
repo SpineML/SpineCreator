@@ -94,9 +94,7 @@ void ArrowItem::setLineWidth(int w)
     width = w;
 }
 
-
 /* NineMLNodeItem */
-
 NineMLNodeItem::NineMLNodeItem(GVLayout *layout, QString name)
     : TextItemGroup(), GVNode(layout, name)
 {
@@ -159,6 +157,17 @@ QString NineMLNodeItem::getAnnotationText(void)
     return rtn;
 }
 
+void NineMLNodeItem::updateAnnotationText(void)
+{
+    QString t("");
+    QTextEdit* te = qobject_cast<QTextEdit*>(sender());
+    if (te) {
+        t = te->toPlainText();
+    }
+    if (this->getName() != "__unknown_name") {
+        this->root->al->annotationTexts[this->getName()] = t;
+    }
+}
 
 NineMLTransitionItem::NineMLTransitionItem(GVLayout *layout, Agnode_t *src, Agnode_t *dst, QGraphicsScene *scene)
     : TextItemGroup(), GVEdge(layout, src, dst)
@@ -247,6 +256,19 @@ QString NineMLTransitionItem::getAnnotationText(void)
     return rtn;
 }
 
+void NineMLTransitionItem::updateAnnotationText(void)
+{
+    QString t("");
+    QTextEdit* te = qobject_cast<QTextEdit*>(sender());
+    if (te) {
+        t = te->toPlainText();
+    }
+
+    if (this->getName() != "__unknown_name") {
+        this->root->al->annotationTexts[this->getName()] = t;
+    }
+}
+
 /* NineMLTextItem */
 NineMLTextItem::NineMLTextItem(GVItem *gv_item, TextItemGroup *parent)
     :GroupedTextItem(parent)
@@ -271,6 +293,30 @@ QString NineMLTextItem::getAnnotationText(void)
         rtn = this->root->al->annotationTexts[this->getName()];
     }
     return rtn;
+}
+
+void NineMLTextItem::updateAnnotationText()
+{
+    QString t("");
+    QTextEdit* te = qobject_cast<QTextEdit*>(sender());
+    if (te) {
+        t = te->toPlainText();
+    }
+
+    if (this->getName() != "__unknown_name") {
+        DBG() << "Updating annotationTexts["<<this->getName()<<"] to " << t;
+        this->root->al->annotationTexts[this->getName()] = t;
+    } else {
+        DBG() << "NOT updating annotationTexts["<<this->getName()<<"]";
+    }
+
+    QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(root->al));
+
+    if (qobject_cast < QTextEdit *> (sender())) {
+        root->alPtr->undoStack.push(new changeComponent(root, oldComponent, "Update annotation text"));
+    } else {
+        oldComponent.clear();
+    }
 }
 
 RegimeGraphicsItem::RegimeGraphicsItem(Regime* r, RootComponentItem *root)
