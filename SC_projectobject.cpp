@@ -22,7 +22,10 @@ projectObject::projectObject(QObject *parent) :
 
     // default fileNames
     this->networkFile = "model.xml";
-    this->metaFile = "metaData.xml";
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+    // On loading an old-style project, this->metaFile is set up from the project XML file.
+    this->metaFile = "";
+#endif
 
     // create the catalog blank entries:
     this->catalogGC.push_back(QSharedPointer<Component> (new Component()));
@@ -256,10 +259,14 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
 {
     DBG() << "projectObject::import_network(" << fileName << ")";
 
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+    // In case there is a metaFile set, make a copy of it.
+    QString metaFileCopy(this->metaFile);
+#endif
+
     // Compute the extent of the existing network:
     std::pair<QPointF, QPointF> ext = this->getNetworkExtent (this->network);
     DBG() << "Network extent: TL:" << ext.first << " BR: " << ext.second;
-
 
     QDir project_dir(fileName);
 
@@ -301,10 +308,12 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
 
     // set up metaData if not loaded. That's _this_ metaFile. We need
     // to load the network making use of the metadata that comes
-    // alongside the model.xml file.
+    // alongside (old format) or inside (new format) the model.xml
+    // file. loadNetwork() can set this->metaFile to "not found".
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
     if (this->metaFile == "not found") {
-        this->metaFile = "metaData.xml";
-
+        this->metaFile = metaFileCopy;
+#endif
         // place the new populations in a diagonal line:
         for (int i = firstNewPop; i < this->network.size(); ++i) {
             QSharedPointer <population> p = this->network[i];
@@ -338,7 +347,9 @@ bool projectObject::import_network(QString fileName, cursorType cursorPos)
                 this->network[i]->neuronType->inputs[j]->add_curves();
             }
         }
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
     }
+#endif
 
     // finally load the experiments. This will load ALL experiment
     // files in the directory, which may include some stale ones,
@@ -406,17 +417,11 @@ bool projectObject::load_project_file(QString fileName)
                                 settings.setValue("errorText", "XML Error in Project File - missing attribute 'name'");
                                 settings.endArray();
                             }
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
                             if (reader->attributes().hasAttribute("metaFile")) {
                                 this->metaFile = reader->attributes().value("metaFile").toString();
-                            } else {
-                                QSettings settings;
-                                int num_errs = settings.beginReadArray("errors");
-                                settings.endArray();
-                                settings.beginWriteArray("errors");
-                                settings.setArrayIndex(num_errs + 1);
-                                settings.setValue("errorText", "XML Error in Project File - missing attribute 'metaFile'");
-                                settings.endArray();
-                            }
+                            } // else expect to be using new in-model LL:Annotation format
+#endif
                             reader->skipCurrentElement();
 
                         } else {
@@ -580,7 +585,10 @@ bool projectObject::save_project_file(QString fileName)
 
     writer->writeEmptyElement("File");
     writer->writeAttribute("name", this->networkFile);
+
+#if 0 // In new format, metadata is stored in model.xml (and component.xml files too)
     writer->writeAttribute("metaFile", this->metaFile);
+#endif
 
     writer->writeEndElement(); // Network
 
@@ -955,40 +963,42 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
     // get the model name
     this->name = root.toElement().attribute("name", "Untitled project");
 
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
     // Cursor offset is applied when loading metadata. Should be 0 when opening a new project.
     //DBG() << "Cursor position is " << this->currentCursorPos.x << "," << this->currentCursorPos.y;
 
-    // only load metadata for projects
-    QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
-    //DBG() << "metaFilePath:" << metaFilePath;
-    QFile fileMeta(metaFilePath);
+    // only load metadata for projects which have a metaFile path
+    if (!this->metaFile.isEmpty()) {
+        QString metaFilePath = project_dir.absoluteFilePath(this->metaFile);
+        QFile fileMeta(metaFilePath);
 
-    if (!fileMeta.open(QIODevice::ReadOnly)) {
-        // if is not a project we don't expect a metaData file
-        if (isProject) {
-            // It is no longer an error not to find a metadata
-            // file. (Since addition of annotations code written by
-            // Alex 2016-ish and merged by Seb, April 2017.
+        if (!fileMeta.open(QIODevice::ReadOnly)) {
+            // if is not a project we don't expect a metaData file
+            if (isProject) {
+                // It is no longer an error not to find a metadata
+                // file. (Since addition of annotations code written by
+                // Alex 2016-ish and merged by Seb, April 2017.
+            } else {
+                this->metaFile = "not found";
+            }
         } else {
-            this->metaFile = "not found";
-        }
-    } else {
-        if (!this->meta.setContent(&fileMeta)) {
-            addError("Could not parse the MetaData file XML - is the selected file correctly formed XML?");
-            return;
-        }
+            if (!this->meta.setContent(&fileMeta)) {
+                addError("Could not parse the MetaData file XML - is the selected file correctly formed XML?");
+                return;
+            }
 
-        // we have loaded the XML file - discard the file handle
-        fileMeta.close();
+            // we have loaded the XML file - discard the file handle
+            fileMeta.close();
 
-        // confirm root tag is correct
-        root = this->meta.documentElement();
-        if (root.tagName() != "modelMetaData") {
-            addError("MetaData file is not valid");
-            return;
+            // confirm root tag is correct
+            root = this->meta.documentElement();
+            if (root.tagName() != "modelMetaData") {
+                addError("MetaData file is not valid");
+                return;
+            }
         }
-        //DBG() << "Successfully loaded meta data for the network.";
     }
+#endif
 
     // This is the starting point in this->network from which to count
     // when counting through newly added populations.
@@ -1009,8 +1019,6 @@ void projectObject::loadNetwork(QString fileName, QDir project_dir, bool isProje
         if (e.tagName() == "LL:Annotation") {
             QTextStream temp(&this->annotation);
             n.save(temp,1);
-            DBG() << "found annotations in project";
-            DBG() << this->annotation;
         }
 
         if (e.tagName() == "LL:Population") {

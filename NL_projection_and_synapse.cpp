@@ -1650,9 +1650,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     // Now read the XML for each synapse in the projection.
     this->readSynapsesXML (e, data, thisSharedPointer);
 
-#define __KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY__ 1
-#ifdef __KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY__
-#endif // __KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY__
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
 
     // load the metadata for the projection from the metadata.xml file:
     QDomNode metaNode = meta->documentElement().firstChild();
@@ -1747,6 +1745,8 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
         }
         metaNode = metaNode.nextSibling();
     }
+#endif // KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+
 #ifdef __DEBUG_PROJECTION_READXML
     this->print();
 #endif
@@ -2209,11 +2209,11 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
                     if (annInst.toElement().tagName() == "LL:Annotation") {
                         QDomNode n = annInst;
-                        DBG() << "Reading LL:Annotation with newInput->read_meta_data(n, cpos) (new style)";
                         newInput->read_meta_data (n, data->getCursorPos());
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
                     } else {
-                        DBG() << "Reading LL:Annotation with newInput->read_meta_data(meta, cpos) (old style)";
                         newInput->read_meta_data (meta, data->getCursorPos());
+#endif
                     }
                 }
 

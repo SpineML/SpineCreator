@@ -298,6 +298,7 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
     }
 
     // //////////////////  fetch in the metadata ///////////////////////
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
     if (meta != NULL) {
         QDomNode findN = meta->documentElement().firstChild();
         QDomElement metaE;
@@ -315,6 +316,7 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
 
         n = metaE.firstChild();
     }
+#endif
 
     if (!metaData.isNull()) {
         n = metaData.firstChild();
@@ -513,8 +515,10 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             if (annInst.toElement().tagName() == "LL:Annotation") {
                 QDomNode n = annInst;
                 this->neuronType->inputs.back()->read_meta_data(n, data->getCursorPos());
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
             } else {
                 this->neuronType->inputs.back()->read_meta_data(meta, data->getCursorPos());
+#endif
             }
         }
     }
@@ -930,7 +934,7 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut)
 
     // x position
     xmlOut.writeEmptyElement("xPos");
-    // To avoid metaData.xml changing arbitrarily, impose a
+    // To avoid metaData changing arbitrarily, impose a
     // granularity limit on float x.
     stringstream xx;
     xx << std::setprecision(METADATA_FLOAT_PRECISION) << this->x;
@@ -938,7 +942,7 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut)
 
     // y position
     xmlOut.writeEmptyElement("yPos");
-    // To avoid metaData.xml changing arbitrarily, impose a
+    // To avoid metaData changing arbitrarily, impose a
     // granularity limit on float y.
     stringstream yy;
     yy << std::setprecision(METADATA_FLOAT_PRECISION) << this->y;

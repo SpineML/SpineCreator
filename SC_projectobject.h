@@ -5,6 +5,11 @@
 #include "globalHeader.h"
 #include "SC_versioncontrol.h"
 
+// A marker for code that is associated with loading the old-style
+// metaData.xml. In the new style, the metaData annotations are
+// recorded inside the model.xml file in <LL:Annotation> tags.
+#define KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY 1
+
 // Limit the precision of floating point numbers in metaData.xml to
 // avoid the metaData.xml file changing arbitrarily.
 #define METADATA_FLOAT_PRECISION 6
@@ -95,7 +100,18 @@ public:
     QString filePath;
 
     QString networkFile;
+
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+    /*!
+     * The name of hte old-style standalone metadata file (was
+     * usually/always metaData.xml).
+     *
+     * This now defaults to being empty. If a metaFile is specified in
+     * the SpineCreator project file, then that value is filled in here.
+     */
     QString metaFile;
+#endif
+
     QStringList components;
     QStringList experiments;
     QStringList layouts;
@@ -158,8 +174,14 @@ private:
     void cleanUpStaleExplicitData(QString& fileName, QDir& projectDir);
 
     QDomDocument doc;
-    QDomDocument meta;
 
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+    /*!
+     * A QDomDocument into the metaData.xml file. Required only for
+     * loading old-style projects.
+     */
+    QDomDocument meta;
+#endif
 
 signals:
 
