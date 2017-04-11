@@ -99,7 +99,11 @@ public:
      * This is a pointer to a local component instance.
      *
      * TODO: Use only alPtr, which points to the instance of the
-     * component in the rootdata component library.
+     * component in the rootdata component library. [Well, possibly,
+     * but careful, as the existence of al as well as alPtr IS
+     * important when undoing text in the component interface, because
+     * with text entries, you get a textChanged signal on every
+     * character change.]
      */
     QSharedPointer<Component>al;
     PropertiesManager *properties;
