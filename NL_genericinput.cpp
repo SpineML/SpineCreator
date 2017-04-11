@@ -682,12 +682,16 @@ void genericInput::read_meta_data (QDomNode meta, cursorType cursorPos)
             csv_connection * conn = dynamic_cast<csv_connection *> (this->conn);
             CHECK_CAST(conn)
             QSharedPointer <population> popsrc = qSharedPointerDynamicCast <population>(this->source);
-            CHECK_CAST(popsrc)
+            //CHECK_CAST(popsrc)
             QSharedPointer <population> popdst = qSharedPointerDynamicCast <population>(this->destination);
-            CHECK_CAST(popdst)
+            //CHECK_CAST(popdst)
             if (conn->generator) {
-                conn->generator->srcPop = popsrc;
-                conn->generator->dstPop = popdst;
+                if (popsrc) {
+                    conn->generator->srcPop = popsrc;
+                }
+                if (popdst) {
+                    conn->generator->dstPop = popdst;
+                }
                 if (conn->generator->type == Python) {
                     pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
                     CHECK_CAST(pyConn)
