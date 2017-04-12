@@ -1238,10 +1238,12 @@ void csv_connection::setNumCols(int num)
 
 void csv_connection::sortData (void)
 {
-    QVector<conn> clist;
+    // AJC 12/04/2017 - Disabled as conflicts with Python scripts that generate weights - this
+    // function causes the weights to not line up with the associated connection...
+    /*QVector<conn> clist;
     this->getAllData (clist);
     std::sort (clist.begin(), clist.end(), csv_connection::sorttwo);
-    this->setAllData (clist);
+    this->setAllData (clist);*/
 }
 
 bool csv_connection::sorttwo (conn a, conn b) {
