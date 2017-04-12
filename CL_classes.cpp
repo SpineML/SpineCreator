@@ -22,156 +22,178 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-
 #include "CL_classes.h"
 #include "NL_projection_and_synapse.h"
 #include "CL_layout_classes.h"
 #include "NL_genericinput.h"
 #include "NL_population.h"
 
-QString dim::toString() {
-    // do stuff
-
+QString dim::toString()
+{
     QString unit;
     QString prefix;
-
     unit = getUnitString();
     prefix = getPrefixString();
-    unit = prefix+unit;
-
+    unit = prefix + unit;
     return unit;
 }
 
-void dim::fromString(QString in) {
-    // do stuff
+void dim::fromString(QString in)
+{
+    if (in.size() == 0) {
+        return;
+    }
 
-    if (in.size() == 0) return;
-
-    if (in.size() > 1 && in.startsWith("G"))
-        {scale = 9; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("M"))
-        {scale = 6; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("k"))
-        {scale = 3; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("c") && in != "cd")
-        {scale = 2; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("m") && in != "mol")
-        {scale = -3; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("u"))
-        {scale = -6; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("n"))
-        {scale = -9; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("p"))
-        {scale = -12; in.remove(0,1);}
-    if (in.size() > 1 && in.startsWith("f"))
-        {scale = -15; in.remove(0,1);}
+    if (in.size() > 1 && in.startsWith("G")) {
+        scale = 9; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("M")) {
+        scale = 6; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("k")) {
+        scale = 3; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("c") && in != "cd") {
+        scale = 2; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("m") && in != "mol") {
+        scale = -3; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("u")) {
+        scale = -6; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("n")) {
+        scale = -9; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("p")) {
+        scale = -12; in.remove(0,1);
+    }
+    if (in.size() > 1 && in.startsWith("f")) {
+        scale = -15; in.remove(0,1);
+    }
 
     if (in == "V") {
-        m=1; l=2; t=-3; I=-1; Cd = 0; mol = 0; temp = 0;}
+        m=1; l=2; t=-3; I=-1; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "Ohm") {
-        m=1; l=2; t=-3; I=-2; Cd = 0; mol = 0; temp = 0;}
+        m=1; l=2; t=-3; I=-2; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "g") {
-        m=1; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;}
+        m=1; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "m") {
-        m=0; l=1; t=0; I=0; Cd = 0; mol = 0; temp = 0;}
+        m=0; l=1; t=0; I=0; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "s") {
-        m=0; l=0; t=1; I=0; Cd = 0; mol = 0; temp = 0;}
+        m=0; l=0; t=1; I=0; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "A") {
-        m=0; l=0; t=0; I=1; Cd = 0; mol = 0; temp = 0;}
+        m=0; l=0; t=0; I=1; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "cd") {
-        m=0; l=0; t=0; I=0; Cd = 1; mol = 0; temp = 0;}
+        m=0; l=0; t=0; I=0; Cd = 1; mol = 0; temp = 0;
+    }
     if (in == "mol") {
-        m=0; l=0; t=0; I=0; Cd = 0; mol = 1; temp = 0;}
+        m=0; l=0; t=0; I=0; Cd = 0; mol = 1; temp = 0;
+    }
     if (in == "degC") {
-        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 1;}
+        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 1;
+    }
     if (in == "S") {
-        m=-1; l=-2; t=3; I=2; Cd = 0; mol = 0; temp = 0;}
+        m=-1; l=-2; t=3; I=2; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "F") {
-        m=-1; l=-2; t=4; I=2; Cd = 0; mol = 0; temp = 0;}
+        m=-1; l=-2; t=4; I=2; Cd = 0; mol = 0; temp = 0;
+    }
     if (in == "Hz") {
-        m=0; l=0; t=-1; I=0; Cd = 0; mol = 0; temp = 0;}
+        m=0; l=0; t=-1; I=0; Cd = 0; mol = 0; temp = 0;
+    }
     if ((in == "?")||(in == "")) {
-        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;}
+        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;
+    }
 }
 
 void dim::setPrefix(QString p)
 {
-    if (p == "")
+    if (p == "") {
         scale = 0;
-    else if (p == "G")
+    } else if (p == "G") {
         scale = 9;
-    else if (p == "M")
+    } else if (p == "M") {
         scale = 6;
-    else if (p == "k")
+    } else if (p == "k") {
         scale = 3;
-    else if (p == "c")
+    } else if (p == "c") {
         scale = 2;
-    else if (p == "m")
+    } else if (p == "m") {
         scale = -3;
-    else if (p == "u")
+    } else if (p == "u") {
         scale = -6;
-    else if (p == "n")
+    } else if (p == "n") {
         scale = -9;
-    else if (p == "p")
+    } else if (p == "p") {
         scale = -12;
-    else if (p == "f")
+    } else if (p == "f") {
         scale = -15;
+    }
 }
 
 void dim::setUnit(QString u)
 {
     if (u == "V") {
-        m=1; l=2; t=-3; I=-1; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "Ohm") {
-        m=1; l=2; t=-3; I=-2; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "g") {
-        m=1; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "m") {
-        m=0; l=1; t=0; I=0; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "s") {
-        m=0; l=0; t=1; I=0; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "A") {
-        m=0; l=0; t=0; I=1; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "cd") {
-        m=0; l=0; t=0; I=0; Cd = 1; mol = 0; temp = 0;}
-    else if (u == "mol") {
-        m=0; l=0; t=0; I=0; Cd = 0; mol = 1; temp = 0;}
-    else if (u == "degC") {
-        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 1;}
-    else if (u == "S") {
-        m=-1; l=-2; t=3; I=2; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "F") {
-        m=-1; l=-2; t=4; I=2; Cd = 0; mol = 0; temp = 0;}
-    else if (u == "Hz") {
-        m=0; l=0; t=-1; I=0; Cd = 0; mol = 0; temp = 0;}
-    else{
-        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;}
+        m=1; l=2; t=-3; I=-1; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "Ohm") {
+        m=1; l=2; t=-3; I=-2; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "g") {
+        m=1; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "m") {
+        m=0; l=1; t=0; I=0; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "s") {
+        m=0; l=0; t=1; I=0; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "A") {
+        m=0; l=0; t=0; I=1; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "cd") {
+        m=0; l=0; t=0; I=0; Cd = 1; mol = 0; temp = 0;
+    } else if (u == "mol") {
+        m=0; l=0; t=0; I=0; Cd = 0; mol = 1; temp = 0;
+    } else if (u == "degC") {
+        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 1;
+    } else if (u == "S") {
+        m=-1; l=-2; t=3; I=2; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "F") {
+        m=-1; l=-2; t=4; I=2; Cd = 0; mol = 0; temp = 0;
+    } else if (u == "Hz") {
+        m=0; l=0; t=-1; I=0; Cd = 0; mol = 0; temp = 0;
+    } else{
+        m=0; l=0; t=0; I=0; Cd = 0; mol = 0; temp = 0;
+    }
 }
 
 QString dim::getPrefixString()
 {
     QString prefix;
 
-    if (scale==9)
+    if (scale==9) {
         prefix = "G";
-    else if (scale==6)
+    } else if (scale==6) {
         prefix = "M";
-    else if (scale==3)
+    } else if (scale==3) {
         prefix = "k";
-    else if (scale==2)
+    } else if (scale==2) {
         prefix = "c";
-    else if (scale==-3)
+    } else if (scale==-3) {
         prefix = "m";
-    else if (scale==-6)
+    } else if (scale==-6) {
         prefix = "u";
-    else if (scale==-9)
+    } else if (scale==-9) {
         prefix = "n";
-    else if (scale==-12)
+    } else if (scale==-12) {
         prefix = "p";
-    else if (scale==-15)
+    } else if (scale==-15) {
         prefix = "f";
-    else
+    } else {
         prefix = "";
+    }
 
     return prefix;
 }
@@ -180,93 +202,95 @@ QString dim::getUnitString()
 {
     QString unit;
 
-    if (m==1 && l==2 && t==-3 && I==-1 && Cd == 0 && mol == 0 && temp == 0)
+    if (m==1 && l==2 && t==-3 && I==-1 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "V";
-    else if (m==1 && l==2 && t==-3 && I==-2 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==1 && l==2 && t==-3 && I==-2 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "Ohm";
-    else if (m==1 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==1 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "g";
-    else if (m==0 && l==1 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==1 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "m";
-    else if (m==0 && l==0 && t==1 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==1 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "s";
-    else if (m==0 && l==0 && t==0 && I==1 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==0 && I==1 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "A";
-    else if (m==0 && l==0 && t==0 && I==0 && Cd == 1 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==0 && I==0 && Cd == 1 && mol == 0 && temp == 0) {
         unit = "cd";
-    else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 1 && temp == 0)
+    } else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 1 && temp == 0) {
         unit = "mol";
-    else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 1)
+    } else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 1) {
         unit = "degC";
-    else if (m==-1 && l==-2 && t==3 && I==2 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==-1 && l==-2 && t==3 && I==2 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "S";
-    else if (m==-1 && l==-2 && t==4 && I==2 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==-1 && l==-2 && t==4 && I==2 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "F";
-    else if (m==0 && l==0 && t==-1 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==-1 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         unit = "Hz";
     // default for dimensionless
     //if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0)
-    else
+    } else {
         unit = "?";
+    }
 
     return unit;
-
 }
 
 Prefix dim::getPrefix()
 {
-    if (scale==9)
+    if (scale==9) {
         return PREFIX_G;
-    else if (scale==6)
+    } else if (scale==6) {
         return PREFIX_M;
-    else if (scale==3)
+    } else if (scale==3) {
         return PREFIX_k;
-    else if (scale==2)
+    } else if (scale==2) {
         return PREFIX_c;
-    else if (scale==-3)
+    } else if (scale==-3) {
         return PREFIX_m;
-    else if (scale==-6)
+    } else if (scale==-6) {
         return PREFIX_u;
-    else if (scale==-9)
+    } else if (scale==-9) {
         return PREFIX_n;
-    else if (scale==-12)
+    } else if (scale==-12) {
         return PREFIX_p;
-    else if (scale==-15)
+    } else if (scale==-15) {
         return PREFIX_f;
-    else
+    } else {
         return PREFIX_NONE;
+    }
 }
 
 Unit dim::getUnit()
 {
-    if (m==1 && l==2 && t==-3 && I==-1 && Cd == 0 && mol == 0 && temp == 0)
+    if (m==1 && l==2 && t==-3 && I==-1 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_V;
-    else if (m==1 && l==2 && t==-3 && I==-2 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==1 && l==2 && t==-3 && I==-2 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_Ohm;
-    else if (m==1 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==1 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_g;
-    else if (m==0 && l==1 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==1 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_m;
-    else if (m==0 && l==0 && t==1 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==1 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_s;
-    else if (m==0 && l==0 && t==0 && I==1 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==0 && I==1 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_A;
-    else if (m==0 && l==0 && t==0 && I==0 && Cd == 1 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==0 && I==0 && Cd == 1 && mol == 0 && temp == 0) {
         return UNIT_cd;
-    else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 1 && temp == 0)
+    } else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 1 && temp == 0) {
         return UNIT_mol;
-    else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 1)
+    } else if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 1) {
         return UNIT_degC;
-    else if (m==-1 && l==-2 && t==3 && I==2 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==-1 && l==-2 && t==3 && I==2 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_S;
-    else if (m==-1 && l==-2 && t==4 && I==2 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==-1 && l==-2 && t==4 && I==2 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_F;
-    else if (m==0 && l==0 && t==-1 && I==0 && Cd == 0 && mol == 0 && temp == 0)
+    } else if (m==0 && l==0 && t==-1 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
         return UNIT_Hz;
     // default for dimensionless
-    //if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0)
-    else
+    //if (m==0 && l==0 && t==0 && I==0 && Cd == 0 && mol == 0 && temp == 0) {
+    } else {
         return UNIT_NONE;
+    }
 }
 
 void dim::reset()
@@ -286,8 +310,8 @@ bool operator==(dim &dim1, dim &dim2)
     return ((dim1.I==dim2.I)&&(dim1.l==dim2.l)&&(dim1.m==dim2.m)&&(dim1.mol==dim2.mol)&&(dim1.scale==dim2.scale)&&(dim1.t==dim2.t)&&(dim1.temp==dim2.temp));
 }
 
-dim::dim(QString str) {
-
+dim::dim(QString str)
+{
     m = 0;
     l = 0;
     t = 0;
@@ -297,24 +321,22 @@ dim::dim(QString str) {
     temp = 0;
     scale = 1;
 
-    if (str != "")
+    if (str != "") {
         this->fromString(str);
-
+    }
 }
-
 
 void Component::load(QDomDocument *doc)
 {
     QDomNode n = doc->documentElement().firstChild();
-    while( !n.isNull() )
-    {
+    while (!n.isNull()) {
         if (n.isComment()) {
             n = n.nextSibling();
             continue;
         }
         QDomElement e = n.toElement();
-        if( e.tagName() == "ComponentClass" )
-        {
+        if (e.tagName() == "ComponentClass") {
+
             this->name = e.attribute("name","");
             this->islearning = !(e.attribute("islearning","").isEmpty());
 
@@ -331,49 +353,43 @@ void Component::load(QDomDocument *doc)
             // default to unsorted if no type found
             this->type = e.attribute("type", "");
             QDomNode n2 = e.firstChild();
-            while( !n2.isNull() )
-            {
+            while (!n2.isNull()) {
                 if (n2.isComment()) {
                     n2 = n2.nextSibling();
                     continue;
                 }
                 QDomElement e2 = n2.toElement();
-                if( e2.tagName() == "Parameter" )
-                {
+                if (e2.tagName() == "Parameter") {
                     Parameter *tempPar = new Parameter;
                     tempPar->readIn(e2);
                     this->ParameterList.push_back(tempPar);
-                }
-                else if( e2.tagName() == "Dynamics" )
-                {
+
+                } else if (e2.tagName() == "Dynamics") {
                     this->initial_regime_name = e2.attribute("initial_regime");
                     QDomNode n3 = e2.firstChild();
-                    while( !n3.isNull() )
-                    {
+                    while (!n3.isNull()) {
                         if (n3.isComment()) {
                             // Ignore XML comments
                             n3 = n3.nextSibling();
                             continue;
                         }
                         QDomElement e3 = n3.toElement();
-                        if( e3.tagName() == "Regime" )
-                        {
+                        if (e3.tagName() == "Regime") {
                             Regime *tempRegime  = new Regime;
                             tempRegime->readIn(e3);
                             this->RegimeList.push_back(tempRegime);
-                        }
-                        else if( e3.tagName() == "StateVariable" )
-                        {
+
+                        } else if (e3.tagName() == "StateVariable") {
                             StateVariable *tempSV  = new StateVariable;
                             tempSV->readIn(e3);
                             this->StateVariableList.push_back(tempSV);
-                        }
-                        else if( e3.tagName() == "Alias" )
-                        {
+
+                        } else if (e3.tagName() == "Alias") {
                             Alias *tempAlias  = new Alias;
                             tempAlias->readIn(e3);
                             this->AliasList.push_back(tempAlias);
-                        }  else {
+
+                        } else {
                             QSettings settings;
                             int num_errs = settings.beginReadArray("errors");
                             settings.endArray();
@@ -385,29 +401,24 @@ void Component::load(QDomDocument *doc)
 
                         n3 = n3.nextSibling();
                     }
-                }
-                else if( e2.tagName() == "AnalogSendPort" || e2.tagName() == "AnalogReceivePort" || e2.tagName() == "AnalogReducePort")
-                {
+
+                } else if (e2.tagName() == "AnalogSendPort"
+                           || e2.tagName() == "AnalogReceivePort" || e2.tagName() == "AnalogReducePort") {
                     AnalogPort *tempAP = new AnalogPort;
                     tempAP->readIn(e2);
                     this->AnalogPortList.push_back(tempAP);
-                }
-                else if( e2.tagName() == "EventSendPort" || e2.tagName() == "EventReceivePort")
-                {
+
+                } else if (e2.tagName() == "EventSendPort" || e2.tagName() == "EventReceivePort") {
                     EventPort *tempEP = new EventPort;
                     tempEP->readIn(e2);
                     this->EventPortList.push_back(tempEP);
 
-                }
-                else if( e2.tagName() == "ImpulseSendPort" || e2.tagName() == "ImpulseReceivePort")
-                {
+                } else if (e2.tagName() == "ImpulseSendPort" || e2.tagName() == "ImpulseReceivePort") {
                     ImpulsePort *tempIP = new ImpulsePort;
                     tempIP->readIn(e2);
                     this->ImpulsePortList.push_back(tempIP);
 
-                }
-                else if( e2.tagName() == "Annotation" )
-                {
+                } else if (e2.tagName() == "Annotation") {
                     DBG() << "Read Component Annotation";
                     // Any user-provided bits have to be stored.
                     QDomNode scNode;
@@ -469,20 +480,23 @@ void Component::load(QDomDocument *doc)
     QSettings settings;
     int num_errs = settings.beginReadArray("errors");
     settings.endArray();
-    if (num_errs > 0)
+    if (num_errs > 0) {
         return;
+    }
 
     // no XML errors - so validate this!
     QStringList validated = validateComponent();
+#ifdef _OUTPUT_A_MESSAGE_ABOUT_VALIDATION_
     if (validated.size() > 1) {
-       /* QMessageBox msgBox;
+        QMessageBox msgBox;
         QString message;
         for (int i = 0; i < (int) validated.size(); ++i) {
             message += validated[i] + "\n";
         }
         msgBox.setText(message);
-        msgBox.exec();*/
+        msgBox.exec();
     }
+#endif
 }
 
 void Component::write(QDomDocument *doc)
@@ -540,14 +554,14 @@ void Component::write(QDomDocument *doc)
     // write out:
 
     // create the root of the file:
-    QDomElement root = doc->createElement( "SpineML" );
+    QDomElement root = doc->createElement ("SpineML");
     QDomProcessingInstruction xmlDeclaration = doc->createProcessingInstruction("xml", "version=\"1.0\"");
     doc->appendChild(xmlDeclaration);
     doc->appendChild( root );
     root.setAttribute("xmlns", "http://www.shef.ac.uk/SpineMLComponentLayer");
     root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
     root.setAttribute("xsi:schemaLocation", "http://www.shef.ac.uk/SpineMLComponentLayer SpineMLComponentLayer.xsd");
-    QDomElement CClass = doc->createElement( "ComponentClass" );
+    QDomElement CClass = doc->createElement ("ComponentClass");
     CClass.setAttribute("name", this->name);
     CClass.setAttribute("type", this->type);
     if (this->islearning) {
@@ -587,10 +601,11 @@ void Component::write(QDomDocument *doc)
     CClass.appendChild(annot);
 
     QDomElement dynamics = doc->createElement("Dynamics");
-    if (this->initial_regime != NULL)
+    if (this->initial_regime != NULL) {
         dynamics.setAttribute("initial_regime", this->initial_regime->name);
-    else
+    } else {
         dynamics.setAttribute("initial_regime", "Error: No initial regime!");
+    }
     CClass.appendChild(dynamics);
 
     // declarations
@@ -632,7 +647,7 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
         ComponentInstance * ptr = static_cast <ComponentInstance *> (this);
         simpleName = ptr->component->name.simplified();
     }
-    simpleName.replace( " ", "_" );
+    simpleName.replace (" ", "_");
     xmlOut.writeAttribute("url", simpleName + ".xml");
 
     // write the seed and minumum distance for the Layout
@@ -649,7 +664,6 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
 
                 // add the special input for the synapse
                 if (ptr->component->type == "weight_update") {
-
                     // check we have ports
                     if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
@@ -660,14 +674,12 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
                         settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
-
                     xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
                     xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
                 }
 
                 // add the special input for the postsynapse
                 if (ptr->component->type == "postsynapse") {
-
                     // check we have ports
                     if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
                         QSettings settings;
@@ -678,16 +690,13 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
                         settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" +ptr->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
-
                     xmlOut.writeAttribute("input_src_port", ptr->inputs[i]->srcPort);
                     xmlOut.writeAttribute("input_dst_port", ptr->inputs[i]->dstPort);
                 }
             }
         }
 
-
         if (ptr->component->type == "postsynapse") {
-
             // search out the Synapse population and add the postsynapticMapping
             for (int i = 0; i < (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs.size(); ++i) {
                 if ((qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcCmpt == this && \
@@ -699,19 +708,17 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
                         int num_errs = settings.beginReadArray("warnings");
                         settings.endArray();
                         settings.beginWriteArray("warnings");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("warnText",  "No matched ports between '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcCmpt->getXMLName() + "' and '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstCmpt->getXMLName() + "'");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("warnText",  "No matched ports between '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcCmpt->getXMLName() + "' and '" + (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstCmpt->getXMLName() + "'");
                         settings.endArray();
                     }
-
 
                     xmlOut.writeAttribute("output_src_port", (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->srcPort);
                     xmlOut.writeAttribute("output_dst_port", (qSharedPointerDynamicCast<projection> (ptr->owner))->destination->neuronType->inputs[i]->dstPort);
 
                 }
             }
-
-        }
+        } // if component type is postsynapse
     }
     // Have now finished writing attributes into the PostSynapse/WeightUpdate
 
@@ -745,82 +752,85 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
             xmlOut.writeAttribute("name",this->ParameterList[i]->name);
             xmlOut.writeAttribute("dimension", this->ParameterList[i]->dims->toString());
 
-              if (this->ParameterList[i]->currType == FixedValue) {
-                  xmlOut.writeEmptyElement("FixedValue");
-                  xmlOut.writeAttribute("value", QString::number(this->ParameterList[i]->value[0]));
-              }
-              if (this->ParameterList[i]->currType == Statistical) {
+            if (this->ParameterList[i]->currType == FixedValue) {
+                xmlOut.writeEmptyElement("FixedValue");
+                xmlOut.writeAttribute("value", QString::number(this->ParameterList[i]->value[0]));
+            }
 
-                  switch (int(round(this->ParameterList[i]->value[0]))) {
-                  case 0:
-                      break;
-                  case 1:
-                  {
-                      xmlOut.writeEmptyElement("UniformDistribution");
-                      xmlOut.writeAttribute("minimum", QString::number(this->ParameterList[i]->value[1]));
-                      xmlOut.writeAttribute("maximum", QString::number(this->ParameterList[i]->value[2]));
-                      xmlOut.writeAttribute("seed", QString::number(this->ParameterList[i]->value[3]));
-                  }
-                      break;
-                  case 2:
-                  {
-                      xmlOut.writeEmptyElement("NormalDistribution");
-                      xmlOut.writeAttribute("mean", QString::number(this->ParameterList[i]->value[1]));
-                      xmlOut.writeAttribute("variance", QString::number(this->ParameterList[i]->value[2]));
-                      xmlOut.writeAttribute("seed", QString::number(this->ParameterList[i]->value[3]));
-                   }
-                      break;
-                  }
+            if (this->ParameterList[i]->currType == Statistical) {
+                switch (int(round(this->ParameterList[i]->value[0]))) {
+                case 0:
+                {
+                    break;
+                }
+                case 1:
+                {
+                    xmlOut.writeEmptyElement("UniformDistribution");
+                    xmlOut.writeAttribute("minimum", QString::number(this->ParameterList[i]->value[1]));
+                    xmlOut.writeAttribute("maximum", QString::number(this->ParameterList[i]->value[2]));
+                    xmlOut.writeAttribute("seed", QString::number(this->ParameterList[i]->value[3]));
+                    break;
+                }
+                case 2:
+                {
+                    xmlOut.writeEmptyElement("NormalDistribution");
+                    xmlOut.writeAttribute("mean", QString::number(this->ParameterList[i]->value[1]));
+                    xmlOut.writeAttribute("variance", QString::number(this->ParameterList[i]->value[2]));
+                    xmlOut.writeAttribute("seed", QString::number(this->ParameterList[i]->value[3]));
+                    break;
+                }
+                }
+            }
+            if (this->ParameterList[i]->currType == ExplicitList) {
+                // Write out the explicit list either to XML or to binary by calling a built in function
+                this->ParameterList[i]->writeExplicitListNodeData(xmlOut);
+            }
 
-              }
-              if (this->ParameterList[i]->currType == ExplicitList) {
-                  // Write out the explicit list either to XML or to binary by calling a built in function
-                  this->ParameterList[i]->writeExplicitListNodeData(xmlOut);
-              }
-
-              xmlOut.writeEndElement(); // property
+            xmlOut.writeEndElement(); // property
 
         } // done with parameter properties
 
         // Output state variable properties
         for (int i = 0; i < this->StateVariableList.size(); ++i) {
             xmlOut.writeStartElement("Property");
-
             xmlOut.writeAttribute("name",this->StateVariableList[i]->name);
             xmlOut.writeAttribute("dimension", this->StateVariableList[i]->dims->toString());
 
-              if (this->StateVariableList[i]->currType == FixedValue) {
-                  xmlOut.writeEmptyElement("FixedValue");
-                  xmlOut.writeAttribute("value", QString::number(this->StateVariableList[i]->value[0]));
-              }
-              if (this->StateVariableList[i]->currType == Statistical) {
+            if (this->StateVariableList[i]->currType == FixedValue) {
+                xmlOut.writeEmptyElement("FixedValue");
+                xmlOut.writeAttribute("value", QString::number(this->StateVariableList[i]->value[0]));
+            }
 
-                  switch (int(round(this->StateVariableList[i]->value[0]))) {
-                  case 0:
-                      break;
-                  case 1:
-                  {
-                      xmlOut.writeEmptyElement("UniformDistribution");
-                      xmlOut.writeAttribute("minimum", QString::number(this->StateVariableList[i]->value[1]));
-                      xmlOut.writeAttribute("maximum", QString::number(this->StateVariableList[i]->value[2]));
-                      xmlOut.writeAttribute("seed", QString::number(this->StateVariableList[i]->value[3]));
-                  }
-                      break;
-                  case 2:
-                  {
-                      xmlOut.writeEmptyElement("NormalDistribution");
-                      xmlOut.writeAttribute("mean", QString::number(this->StateVariableList[i]->value[1]));
-                      xmlOut.writeAttribute("variance", QString::number(this->StateVariableList[i]->value[2]));
-                      xmlOut.writeAttribute("seed", QString::number(this->StateVariableList[i]->value[3]));
-                   }
-                      break;
-                  }
-              }
-              if (this->StateVariableList[i]->currType == ExplicitList) {
-                  this->StateVariableList[i]->writeExplicitListNodeData(xmlOut);
-              }
+            if (this->StateVariableList[i]->currType == Statistical) {
 
-              xmlOut.writeEndElement(); // property
+                switch (int(round(this->StateVariableList[i]->value[0]))) {
+                case 0:
+                {
+                    break;
+                }
+                case 1:
+                {
+                    xmlOut.writeEmptyElement("UniformDistribution");
+                    xmlOut.writeAttribute("minimum", QString::number(this->StateVariableList[i]->value[1]));
+                    xmlOut.writeAttribute("maximum", QString::number(this->StateVariableList[i]->value[2]));
+                    xmlOut.writeAttribute("seed", QString::number(this->StateVariableList[i]->value[3]));
+                    break;
+                }
+                case 2:
+                {
+                    xmlOut.writeEmptyElement("NormalDistribution");
+                    xmlOut.writeAttribute("mean", QString::number(this->StateVariableList[i]->value[1]));
+                    xmlOut.writeAttribute("variance", QString::number(this->StateVariableList[i]->value[2]));
+                    xmlOut.writeAttribute("seed", QString::number(this->StateVariableList[i]->value[3]));
+                    break;
+                }
+                }
+            }
+            if (this->StateVariableList[i]->currType == ExplicitList) {
+                this->StateVariableList[i]->writeExplicitListNodeData(xmlOut);
+            }
+
+            xmlOut.writeEndElement(); // property
 
         } // Done with state variable properties
 
@@ -833,51 +843,47 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
         bool inputsTag = false;
 
         for (int i = 0; i < ptr->inputs.size(); ++i) {
-           if (ptr->inputs[i]->projInput == false) {
-               inputsTag = true;
-           }
+            if (ptr->inputs[i]->projInput == false) {
+                inputsTag = true;
+            }
         }
 
         if (inputsTag) {
             // inputs
             for (int i = 0; i < ptr->inputs.size(); ++i) {
-               if (ptr->inputs[i]->projInput == false) {
+                if (ptr->inputs[i]->projInput == false) {
 
-                   // check we have ports
-                   if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
-                       QSettings settings;
-                       int num_errs = settings.beginReadArray("warnings");
-                       settings.endArray();
-                       settings.beginWriteArray("warnings");
-                           settings.setArrayIndex(num_errs + 1);
-                           settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
-                       settings.endArray();
-                   }
+                    // check we have ports
+                    if (ptr->inputs[i]->srcPort.size() == 0 || ptr->inputs[i]->dstPort.size() == 0) {
+                        QSettings settings;
+                        int num_errs = settings.beginReadArray("warnings");
+                        settings.endArray();
+                        settings.beginWriteArray("warnings");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("warnText",  "No matched ports between '" + ptr->inputs[i]->srcCmpt->getXMLName() + "' and '" + ptr->inputs[i]->dstCmpt->getXMLName() + "'");
+                        settings.endArray();
+                    }
 
-                  xmlOut.writeStartElement("LL:Input");
-                  xmlOut.writeAttribute("src", ptr->inputs[i]->srcCmpt->getXMLName());
-                  xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
-                  xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
+                    xmlOut.writeStartElement("LL:Input");
+                    xmlOut.writeAttribute("src", ptr->inputs[i]->srcCmpt->getXMLName());
+                    xmlOut.writeAttribute("src_port", ptr->inputs[i]->srcPort);
+                    xmlOut.writeAttribute("dst_port", ptr->inputs[i]->dstPort);
 
-                  // write annotations
-                  ptr->inputs[i]->write_model_meta_xml (&xmlOut);
+                    // write annotations
+                    ptr->inputs[i]->write_model_meta_xml (&xmlOut);
 
-                  if (ptr->inputs[i]->conn->type == Python) {
-                      ((pythonscript_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
-                      ((pythonscript_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
-                  } else if (ptr->inputs[i]->conn->type == CSV) {
-                      ((csv_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
-                      ((csv_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
-                  }
-                  ptr->inputs[i]->conn->write_node_xml(xmlOut);
-                  xmlOut.writeEndElement(); // input
-              }
-
+                    if (ptr->inputs[i]->conn->type == Python) {
+                        ((pythonscript_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                        ((pythonscript_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
+                    } else if (ptr->inputs[i]->conn->type == CSV) {
+                        ((csv_connection *) ptr->inputs[i]->conn)->srcPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->source);
+                        ((csv_connection *) ptr->inputs[i]->conn)->dstPop = qSharedPointerDynamicCast <population> (ptr->inputs[i]->destination);
+                    }
+                    ptr->inputs[i]->conn->write_node_xml(xmlOut);
+                    xmlOut.writeEndElement(); // input
+                }
             }
         }
-
-
-
     }
 }
 
@@ -885,27 +891,25 @@ void Parameter::readIn(QDomElement e)
 {
     this->name = e.attribute("name","");
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing Parameter attribute 'name'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing Parameter attribute 'name'");
+        settings.endArray();
     }
     // we need dims in here too eventually
     //delete dims;
     this->dims->fromString(e.attribute("dimension",""));
-
 }
 
 void Parameter::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement parameter = doc->createElement( "Parameter" );
+    QDomElement parameter = doc->createElement ("Parameter");
     parameter.setAttribute("name", this->name);
     parameter.setAttribute("dimension", this->dims->toString());
     parent.appendChild(parameter);
-
 }
 
 QString Parameter::getName()
@@ -919,101 +923,94 @@ void Parameter::setName(QString name)
     emit nameChanged();
 }
 
-
-void StateAssignment::readIn(QDomElement e) {
-
+void StateAssignment::readIn(QDomElement e)
+{
     // we need to handle the statevariable stuff here... how?
     this->name = e.attribute("variable","");
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing StateAssignment attribute 'variable'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing StateAssignment attribute 'variable'");
+        settings.endArray();
     }
     QDomNode n = e.firstChild();
     QDomElement e2 = n.toElement();
-    if( e2.tagName() == "MathInline" )
-    {
+    if (e2.tagName() == "MathInline") {
         this->maths = new MathInLine;
         this->maths->readIn(e2);
     } else {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing StateAssignment 'MathInLine' tag'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing StateAssignment 'MathInLine' tag'");
+        settings.endArray();
     }
 }
 
 void StateAssignment::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement StateAssignment = doc->createElement( "StateAssignment" );
+    QDomElement StateAssignment = doc->createElement ("StateAssignment");
     StateAssignment.setAttribute("variable", this->name);
     parent.appendChild(StateAssignment);
-
     this->maths->writeOut(doc, StateAssignment);
-
 }
 
-
-void OnEvent::readIn(QDomElement e) {
+void OnEvent::readIn(QDomElement e)
+{
     this->target_regime_name = e.attribute("target_regime","");
     if (this->target_regime_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing OnEvent 'target_regime' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing OnEvent 'target_regime' attribute'");
+        settings.endArray();
     }
     this->src_port_name = e.attribute("src_port","");
     if (this->target_regime_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing OnEvent 'src_port' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing OnEvent 'src_port' attribute'");
+        settings.endArray();
     }
     QDomNode n = e.firstChild();
-    while( !n.isNull() )
-    {
+    while (!n.isNull()) {
         if (n.isComment()) {
             n = n.nextSibling();
             continue;
         }
         QDomElement e2 = n.toElement();
-        if( e2.tagName() == "StateAssignment" )
-        {
+        if (e2.tagName() == "StateAssignment") {
             StateAssignment *tempSA = new StateAssignment;
             tempSA->readIn(e2);
             this->StateAssignList.push_back(tempSA);
-        }
-        else if( e2.tagName() == "EventOut" )
-        {
+
+        } else if (e2.tagName() == "EventOut") {
             EventOut *tempEO = new EventOut;
             tempEO->readIn(e2);
             this->eventOutList.push_back(tempEO);
-        }
-        else if( e2.tagName() == "ImpulseOut" )
-        {
+
+        } else if (e2.tagName() == "ImpulseOut") {
             ImpulseOut *tempIO = new ImpulseOut;
             tempIO->readIn(e2);
             this->impulseOutList.push_back(tempIO);
+
         } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e2.tagName() + "'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e2.tagName() + "'");
             settings.endArray();
         }
         n = n.nextSibling();
@@ -1022,17 +1019,19 @@ void OnEvent::readIn(QDomElement e) {
 
 void OnEvent::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement OnEvent = doc->createElement( "OnEvent" );
+    QDomElement OnEvent = doc->createElement ("OnEvent");
     parent.appendChild(OnEvent);
-    if (target_regime != NULL)
+    if (target_regime != NULL) {
         OnEvent.setAttribute("target_regime", this->target_regime->name);
-    else
+    } else {
         OnEvent.setAttribute("target_regime", "Error: No Synapse Regime!");
+    }
 
-    if (src_port != NULL)
+    if (src_port != NULL) {
         OnEvent.setAttribute("src_port", this->src_port->getName());
-    else
+    } else {
         OnEvent.setAttribute("src_port", "Error: No Source Event Port!");
+    }
 
     for (int i = 0; i < this->StateAssignList.size(); ++i) {
         this->StateAssignList[i]->writeOut(doc, OnEvent);
@@ -1045,60 +1044,57 @@ void OnEvent::writeOut(QDomDocument * doc, QDomElement &parent)
     }
 }
 
-
-void OnImpulse::readIn(QDomElement e) {
+void OnImpulse::readIn(QDomElement e)
+{
     this->target_regime_name = e.attribute("target_regime","");
     if (this->target_regime_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing OnImpulse 'target_regime' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing OnImpulse 'target_regime' attribute'");
+        settings.endArray();
     }
     this->src_port_name = e.attribute("src_port","");
     if (this->target_regime_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing OnImpulse 'src_port' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing OnImpulse 'src_port' attribute'");
+        settings.endArray();
     }
     QDomNode n = e.firstChild();
-    while( !n.isNull() )
-    {
+    while (!n.isNull()) {
         if (n.isComment()) {
             n = n.nextSibling();
             continue;
         }
         QDomElement e2 = n.toElement();
-        if( e2.tagName() == "StateAssignment" )
-        {
+        if (e2.tagName() == "StateAssignment") {
             StateAssignment *tempSA = new StateAssignment;
             tempSA->readIn(e2);
             this->StateAssignList.push_back(tempSA);
-        }
-        else if( e2.tagName() == "EventOut" )
-        {
+
+        } else if (e2.tagName() == "EventOut") {
             EventOut *tempEO = new EventOut;
             tempEO->readIn(e2);
             this->eventOutList.push_back(tempEO);
-        }
-        else if( e2.tagName() == "ImpulseOut" )
-        {
+
+        } else if (e2.tagName() == "ImpulseOut") {
             ImpulseOut *tempIO = new ImpulseOut;
             tempIO->readIn(e2);
             this->impulseOutList.push_back(tempIO);
+
         } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e2.tagName() + "'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e2.tagName() + "'");
             settings.endArray();
         }
         n = n.nextSibling();
@@ -1107,17 +1103,19 @@ void OnImpulse::readIn(QDomElement e) {
 
 void OnImpulse::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement OnImpulse = doc->createElement( "OnImpulse" );
+    QDomElement OnImpulse = doc->createElement ("OnImpulse");
     parent.appendChild(OnImpulse);
-    if (target_regime != NULL)
+    if (target_regime != NULL) {
         OnImpulse.setAttribute("target_regime", this->target_regime->name);
-    else
+    } else {
         OnImpulse.setAttribute("target_regime", "");
+    }
 
-    if (src_port != NULL)
+    if (src_port != NULL) {
         OnImpulse.setAttribute("src_port", this->src_port->getName());
-    else
+    } else {
         OnImpulse.setAttribute("src_port", "");
+    }
 
     for (int i = 0; i < this->StateAssignList.size(); ++i) {
         this->StateAssignList[i]->writeOut(doc, OnImpulse);
@@ -1130,12 +1128,11 @@ void OnImpulse::writeOut(QDomDocument * doc, QDomElement &parent)
     }
 }
 
-
-void Trigger::readIn(QDomElement e) {
+void Trigger::readIn(QDomElement e)
+{
     QDomNode n = e.firstChild();
     QDomElement e2 = n.toElement();
-    if( e2.tagName() == "MathInline" )
-    {
+    if (e2.tagName() == "MathInline") {
         this->maths = new MathInLine;
         this->maths->readIn(e2);
     } else {
@@ -1143,69 +1140,64 @@ void Trigger::readIn(QDomElement e) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "XML error: missing Trigger 'MathInLine' tag'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing Trigger 'MathInLine' tag'");
         settings.endArray();
-      }
+    }
 }
 
 void Trigger::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement Trigger = doc->createElement( "Trigger" );
+    QDomElement Trigger = doc->createElement ("Trigger");
     parent.appendChild(Trigger);
-
     this->maths->writeOut(doc, Trigger);
-
 }
 
-void OnCondition::readIn(QDomElement e) {
+void OnCondition::readIn(QDomElement e)
+{
     this->target_regime_name = e.attribute("target_regime","");
     if (this->target_regime_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing OnCondition 'target_regime' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing OnCondition 'target_regime' attribute'");
+        settings.endArray();
     }
     QDomNode n = e.firstChild();
-    while( !n.isNull() )
-    {
+    while (!n.isNull()) {
         if (n.isComment()) {
             n = n.nextSibling();
             continue;
         }
         QDomElement e2 = n.toElement();
-        if( e2.tagName() == "StateAssignment" )
-        {
+        if (e2.tagName() == "StateAssignment") {
             StateAssignment *tempSA = new StateAssignment;
             tempSA->readIn(e2);
             this->StateAssignList.push_back(tempSA);
-        }
-        else if( e2.tagName() == "Trigger" )
-        {
+
+        } else if (e2.tagName() == "Trigger") {
             this->trigger = new Trigger;
             this->trigger->readIn(e2);
-        }
-        else if( e2.tagName() == "EventOut" )
-        {
+
+        } else if (e2.tagName() == "EventOut") {
             EventOut *tempEO = new EventOut;
             tempEO->readIn(e2);
             this->eventOutList.push_back(tempEO);
-        }
-        else if( e2.tagName() == "ImpulseOut" )
-        {
+
+        } else if (e2.tagName() == "ImpulseOut") {
             ImpulseOut *tempIO = new ImpulseOut;
             tempIO->readIn(e2);
             this->impulseOutList.push_back(tempIO);
+
         } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e2.tagName() + "'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e2.tagName() + "'");
             settings.endArray();
         }
         n = n.nextSibling();
@@ -1214,12 +1206,13 @@ void OnCondition::readIn(QDomElement e) {
 
 void OnCondition::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement OnCondition = doc->createElement( "OnCondition" );
+    QDomElement OnCondition = doc->createElement ("OnCondition");
     parent.appendChild(OnCondition);
-    if (this->target_regime != NULL)
+    if (this->target_regime != NULL) {
         OnCondition.setAttribute("target_regime", this->target_regime->name);
-    else
+    } else {
         OnCondition.setAttribute("target_regime", "Error: No Synapse Regime!");
+    }
 
     for (int i = 0; i < this->StateAssignList.size(); ++i) {
         this->StateAssignList[i]->writeOut(doc, OnCondition);
@@ -1232,23 +1225,23 @@ void OnCondition::writeOut(QDomDocument * doc, QDomElement &parent)
     }
 
     this->trigger->writeOut(doc, OnCondition);
-
 }
 
-void Alias::readIn(QDomElement e) {
+void Alias::readIn(QDomElement e)
+{
     this->name = e.attribute("name","");
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing Alias 'name' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing Alias 'name' attribute'");
+        settings.endArray();
     }
     QDomNode n = e.firstChild();
     QDomElement e2 = n.toElement();
-    if( e2.tagName() == "MathInline" )
+    if (e2.tagName() == "MathInline")
     {
         this->maths = new MathInLine;
         this->maths->readIn(e2);
@@ -1257,8 +1250,8 @@ void Alias::readIn(QDomElement e) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "XML error: missing Alias 'MathInLine' tag'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing Alias 'MathInLine' tag'");
         settings.endArray();
     }
     //delete dims;
@@ -1267,24 +1260,24 @@ void Alias::readIn(QDomElement e) {
 
 void Alias::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement Alias = doc->createElement( "Alias" );
+    QDomElement Alias = doc->createElement ("Alias");
     parent.appendChild(Alias);
     Alias.setAttribute("name", this->name);
     Alias.setAttribute("dimension", this->dims->toString());
     this->maths->writeOut(doc, Alias);
-
 }
 
-void StateVariable::readIn(QDomElement e) {
+void StateVariable::readIn(QDomElement e)
+{
     this->name = e.attribute("name","");
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing StateVariable 'name' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing StateVariable 'name' attribute'");
+        settings.endArray();
     }
     //delete dims;
     this->dims->fromString(e.attribute("dimension",""));
@@ -1292,28 +1285,27 @@ void StateVariable::readIn(QDomElement e) {
 
 void StateVariable::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement StateVariable = doc->createElement( "StateVariable" );
+    QDomElement StateVariable = doc->createElement ("StateVariable");
     parent.appendChild(StateVariable);
     StateVariable.setAttribute("name", this->name);
     StateVariable.setAttribute("dimension", this->dims->toString());
-
 }
 
-void TimeDerivative::readIn(QDomElement e) {
+void TimeDerivative::readIn(QDomElement e)
+{
     this->variable_name = e.attribute("variable","");
     if (this->variable_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing TimeDerivative 'variable' attribute'");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing TimeDerivative 'variable' attribute'");
+        settings.endArray();
     }
     QDomNode n = e.firstChild();
     QDomElement e2 = n.toElement();
-    if( e2.tagName() == "MathInline" )
-    {
+    if (e2.tagName() == "MathInline") {
         this->maths = new MathInLine;
         this->maths->readIn(e2);
     } else {
@@ -1321,41 +1313,44 @@ void TimeDerivative::readIn(QDomElement e) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "XML error: missing TimeDerivative 'MathInLine' tag'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing TimeDerivative 'MathInLine' tag'");
         settings.endArray();
     }
 }
 
 void TimeDerivative::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement TimeDerivative = doc->createElement( "TimeDerivative" );
-    if (this->variable != NULL)
+    QDomElement TimeDerivative = doc->createElement ("TimeDerivative");
+    if (this->variable != NULL) {
         TimeDerivative.setAttribute("variable", this->variable->getName());
-    else
+    } else {
         TimeDerivative.setAttribute("variable", "Error: No variable!");
+    }
     parent.appendChild(TimeDerivative);
     this->maths->writeOut(doc, TimeDerivative);
-
 }
 
-void MathInLine::readIn(QDomElement e) {
+void MathInLine::readIn(QDomElement e)
+{
     this->equation = e.text();
+#ifdef THROW_ERROR_ON_BLANK_EQUATION
     // it is not fatal if equation is blank - but validation should flag it up
-    /*if (this->equation == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing MathInLine equation'");
-      settings.endArray();
-    }*/
+    if (this->equation == "") {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing MathInLine equation'");
+        settings.endArray();
+    }
+#endif
 }
 
 void MathInLine::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement MathInLine = doc->createElement( "MathInline" );
+    QDomElement MathInLine = doc->createElement ("MathInline");
     parent.appendChild(MathInLine);
     QString out = this->equation;
     out.replace("&gt;", ">");
@@ -1365,76 +1360,77 @@ void MathInLine::writeOut(QDomDocument * doc, QDomElement &parent)
 }
 
 
-void EventOut::readIn(QDomElement e) {
+void EventOut::readIn(QDomElement e)
+{
     this->port_name = e.attribute("port","");
     if (this->port_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing EventOut 'port' attribute");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing EventOut 'port' attribute");
+        settings.endArray();
     }
 }
 
 void EventOut::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement EventOut = doc->createElement( "EventOut" );
+    QDomElement EventOut = doc->createElement ("EventOut");
     parent.appendChild(EventOut);
-    if (this->port != NULL)
+    if (this->port != NULL) {
         EventOut.setAttribute("port", this->port->getName());
-    else
+    } else {
         EventOut.setAttribute("port", "Error: No Event Port!");
-
+    }
 }
 
-void ImpulseOut::readIn(QDomElement e) {
-    this->port_name = e.attribute("port","");
+void ImpulseOut::readIn(QDomElement e)
+{
+    this->port_name = e.attribute("port", "");
     if (this->port_name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing ImpulseOut 'port' attribute");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "XML error: missing ImpulseOut 'port' attribute");
+        settings.endArray();
     }
 }
 
 void ImpulseOut::writeOut(QDomDocument * doc, QDomElement &parent)
 {
-    QDomElement ImpulseOut = doc->createElement( "ImpulseOut" );
+    QDomElement ImpulseOut = doc->createElement ("ImpulseOut");
     parent.appendChild(ImpulseOut);
-    if (this->port != NULL){
-        if (this->port->mode == ImpulseSendPort){
-            if (this->port->parameter != NULL){
+    if (this->port != NULL) {
+        if (this->port->mode == ImpulseSendPort) {
+            if (this->port->parameter != NULL) {
                 ImpulseOut.setAttribute("port", this->port->parameter->getName());
-            }else{
-                ImpulseOut.setAttribute("port", "Error: No Paramter in Impulse Send Port!");
+            } else {
+                ImpulseOut.setAttribute("port", "Error: No Parameter in Impulse Send Port!");
             }
-        }else{
+        } else {
             ImpulseOut.setAttribute("port", this->port->getName());
         }
-    }else{
+    } else {
         ImpulseOut.setAttribute("port", "Error: No Impulse Port!");
     }
-
 }
 
-
-void AnalogPort::readIn(QDomElement e) {
+void AnalogPort::readIn(QDomElement e)
+{
     this->name = e.attribute("name","");
     this->isPost = !(e.attribute("post","").isEmpty());
     this->isPerConn = !(e.attribute("perConn","").isEmpty());
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing AnalogPort 'name' attribute");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing AnalogPort 'name' attribute");
+        settings.endArray();
     }
     if (e.tagName()=="AnalogReceivePort") {
         this->mode=AnalogRecvPort;
@@ -1447,8 +1443,8 @@ void AnalogPort::readIn(QDomElement e) {
             this->isPerConn = !(e.attribute("post","").isEmpty());
         }
 #endif
-    } else if (e.tagName()=="AnalogReducePort") {
-        this->mode=AnalogReducePort;
+    } else if (e.tagName() == "AnalogReducePort") {
+        this->mode = AnalogReducePort;
         this->op = ReduceOperationAddition;
         this->dims->fromString(e.attribute("dimension",""));
         QString reduce_op = e.attribute("reduce_op","");
@@ -1460,8 +1456,8 @@ void AnalogPort::readIn(QDomElement e) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e.tagName() + "'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e.tagName() + "'");
         settings.endArray();
     }
 }
@@ -1470,20 +1466,20 @@ void AnalogPort::writeOut(QDomDocument * doc, QDomElement &parent)
 {
     QDomElement AnalogPort;
 
-    if (this->mode==AnalogSendPort) {
-        AnalogPort = doc->createElement( "AnalogSendPort" );
+    if (this->mode == AnalogSendPort) {
+        AnalogPort = doc->createElement ("AnalogSendPort");
         AnalogPort.setAttribute("name", this->getName());
         if (this->isPerConn) {
             AnalogPort.setAttribute("perConn",true);
         }
     }
-    if (this->mode==AnalogRecvPort) {
-        AnalogPort = doc->createElement( "AnalogReceivePort" );
+    if (this->mode == AnalogRecvPort) {
+        AnalogPort = doc->createElement ("AnalogReceivePort");
         AnalogPort.setAttribute("name", this->getName());
         AnalogPort.setAttribute("dimension", this->dims->toString());
     }
-    if (this->mode==AnalogReducePort) {
-        AnalogPort = doc->createElement( "AnalogReducePort" );
+    if (this->mode == AnalogReducePort) {
+        AnalogPort = doc->createElement ("AnalogReducePort");
         AnalogPort.setAttribute("name", this->getName());
         if (this->op == ReduceOperationNone) {
             //AnalogPort.setAttribute("reduce_op", "");
@@ -1500,29 +1496,30 @@ void AnalogPort::writeOut(QDomDocument * doc, QDomElement &parent)
 
 }
 
-void EventPort::readIn(QDomElement e) {
+void EventPort::readIn(QDomElement e)
+{
     this->name = e.attribute("name","");
     this->isPost = !(e.attribute("post","").isEmpty());
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing EventPort 'name' attribute");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing EventPort 'name' attribute");
+        settings.endArray();
     }
     if (e.tagName()=="EventReceivePort") {
         this->mode=EventRecvPort;
     } else if (e.tagName()=="EventSendPort") {
         this->mode=EventSendPort;
-    }  else {
+    } else {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e.tagName() + "'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e.tagName() + "'");
         settings.endArray();
     }
 }
@@ -1531,46 +1528,46 @@ void EventPort::writeOut(QDomDocument * doc, QDomElement &parent)
 {
     QDomElement EventPort;
 
-    if (this->mode==EventSendPort) {
-        EventPort = doc->createElement( "EventSendPort" );
-        EventPort.setAttribute("name", this->getName());
+    if (this->mode == EventSendPort) {
+        EventPort = doc->createElement ("EventSendPort");
+        EventPort.setAttribute ("name", this->getName());
     }
-    if (this->mode==EventRecvPort) {
-        EventPort = doc->createElement( "EventReceivePort" );
-        EventPort.setAttribute("name", this->getName());
+    if (this->mode == EventRecvPort) {
+        EventPort = doc->createElement ("EventReceivePort");
+        EventPort.setAttribute ("name", this->getName());
         if (this->isPost) {
-            EventPort.setAttribute("post",true);
+            EventPort.setAttribute ("post", true);
         }
     }
 
     parent.appendChild(EventPort);
-
 }
 
-void ImpulsePort::readIn(QDomElement e) {
+void ImpulsePort::readIn(QDomElement e)
+{
     this->name = e.attribute("name","");
     this->isPost = !(e.attribute("post","").isEmpty());
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing ImpulsePort 'name' attribute");
-      settings.endArray();
-    }
-    if (e.tagName()=="ImpulseReceivePort") {
-        this->mode=ImpulseRecvPort;
-        this->dims->fromString(e.attribute("dimension",""));
-    } else if (e.tagName()=="ImpulseSendPort") {
-        this->mode=ImpulseSendPort;
-    }  else {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e.tagName() + "'");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing ImpulsePort 'name' attribute");
+        settings.endArray();
+    }
+    if (e.tagName() == "ImpulseReceivePort") {
+        this->mode = ImpulseRecvPort;
+        this->dims->fromString(e.attribute("dimension",""));
+    } else if (e.tagName()=="ImpulseSendPort") {
+        this->mode = ImpulseSendPort;
+    } else {
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: misplaced or unknown tag - '" + e.tagName() + "'");
         settings.endArray();
     }
 }
@@ -1579,15 +1576,16 @@ void ImpulsePort::writeOut(QDomDocument * doc, QDomElement &parent)
 {
     QDomElement ImpulsePort;
 
-    if (this->mode==ImpulseSendPort) {
-        ImpulsePort = doc->createElement( "ImpulseSendPort" );
-        if (this->parameter != NULL)
+    if (this->mode == ImpulseSendPort) {
+        ImpulsePort = doc->createElement ("ImpulseSendPort");
+        if (this->parameter != NULL) {
             ImpulsePort.setAttribute("name", this->parameter->getName());
-        else
+        } else {
             ImpulsePort.setAttribute("name", "Error: No paramater named!");
+        }
     }
-    if (this->mode==ImpulseRecvPort) {
-        ImpulsePort = doc->createElement( "ImpulseReceivePort" );
+    if (this->mode == ImpulseRecvPort) {
+        ImpulsePort = doc->createElement ("ImpulseReceivePort");
         ImpulsePort.setAttribute("name", this->getName());
         ImpulsePort.setAttribute("dimension", this->dims->toString());
         if (this->isPost) {
@@ -1596,63 +1594,54 @@ void ImpulsePort::writeOut(QDomDocument * doc, QDomElement &parent)
     }
 
     parent.appendChild(ImpulsePort);
-
 }
 
 void Regime::readIn(QDomElement e)
 {
-
     this->name = e.attribute("name","");
     if (this->name == "") {
-      QSettings settings;
-      int num_errs = settings.beginReadArray("errors");
-      settings.endArray();
-      settings.beginWriteArray("errors");
-          settings.setArrayIndex(num_errs + 1);
-          settings.setValue("errorText",  "XML error: missing Regime 'name' attribute");
-      settings.endArray();
+        QSettings settings;
+        int num_errs = settings.beginReadArray("errors");
+        settings.endArray();
+        settings.beginWriteArray("errors");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText",  "XML error: missing Regime 'name' attribute");
+        settings.endArray();
     }
     QDomNode n = e.firstChild();
-    while( !n.isNull() )
-    {
+    while (!n.isNull()) {
         if (n.isComment()) {
             n = n.nextSibling();
             continue;
         }
         QDomElement e2 = n.toElement();
-        if( e2.tagName() == "TimeDerivative" )
-        {
+        if (e2.tagName() == "TimeDerivative") {
             TimeDerivative *tempTD = new TimeDerivative;
             tempTD->readIn(e2);
             this->TimeDerivativeList.push_back(tempTD);
         }
-        if( e2.tagName() == "OnEvent" )
-        {
+        if (e2.tagName() == "OnEvent") {
             OnEvent *tempOE = new OnEvent;
             tempOE->readIn(e2);
             this->OnEventList.push_back(tempOE);
         }
-        if( e2.tagName() == "OnCondition" )
-        {
+        if(e2.tagName() == "OnCondition") {
             OnCondition *tempOC = new OnCondition;
             tempOC->readIn(e2);
             this->OnConditionList.push_back(tempOC);
         }
-        if( e2.tagName() == "OnImpulse" )
-        {
+        if (e2.tagName() == "OnImpulse") {
             OnImpulse *tempOI = new OnImpulse;
             tempOI->readIn(e2);
             this->OnImpulseList.push_back(tempOI);
         }
         n = n.nextSibling();
     }
-
 }
 
 void Regime::writeOut(QDomDocument *doc, QDomElement &parent)
 {
-
-    QDomElement regime = doc->createElement( "Regime" );
+    QDomElement regime = doc->createElement("Regime");
     regime.setAttribute("name", this->name);
     parent.appendChild(regime);
 
@@ -1669,7 +1658,6 @@ void Regime::writeOut(QDomDocument *doc, QDomElement &parent)
     for (int i = 0; i < this->OnImpulseList.size(); ++i) {
         this->OnImpulseList[i]->writeOut(doc, regime);
     }
-
 }
 
 Parameter::Parameter(Parameter *data)
@@ -1712,7 +1700,7 @@ void ParameterInstance::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
             xmlOut.writeAttribute("index", QString::number(this->indices[ind]));
             xmlOut.writeAttribute("value", QString::number(double(this->value[ind])));
         }
-       xmlOut.writeEndElement(); // valueList
+        xmlOut.writeEndElement(); // valueList
 
     } else {
 
@@ -1746,7 +1734,7 @@ void ParameterInstance::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
             QString baseName = "explicitDataBinaryFile";
             bool unique = false;
             int index = 0;
-            while(!unique) {
+            while (!unique) {
                 uniqueName = baseName + QString::number(float(index)) + ".bin";
                 unique = true;
                 for (int i = 0; i < (int)files.count(); ++i) {
@@ -1794,8 +1782,8 @@ void ParameterInstance::writeExplicitListNodeData(QXmlStreamWriter &xmlOut)
     }
 }
 
-void ParameterInstance::readExplicitListNodeData(QDomNode &n) {
-
+void ParameterInstance::readExplicitListNodeData(QDomNode &n)
+{
     // read in an XML list
     QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
     for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
@@ -1817,7 +1805,8 @@ void ParameterInstance::readExplicitListNodeData(QDomNode &n) {
 
         if (filePathString == "error") {
             qDebug() << "Error getting current project path - THIS SHOULD NEVER HAPPEN!";
-            return;}
+            return;
+        }
 
         QDir filePath(filePathString);
 
@@ -1846,14 +1835,11 @@ void ParameterInstance::readExplicitListNodeData(QDomNode &n) {
 
         // load in the binary packed data
         while (!(fileIn.atEnd())) {
-
             // read in the required values:
             int index;
             double value;
-
             fileIn.read((char *) &index,sizeof(int));
             fileIn.read((char *) &value,sizeof(double));
-
             this->indices.push_back(index);
             this->value.push_back(value);
             ++count;
@@ -1862,7 +1848,6 @@ void ParameterInstance::readExplicitListNodeData(QDomNode &n) {
         if (count != num_elements) {
             qDebug() << "Mismatch between the number of rows in the XML and in the binary";
         }
-
     }
 }
 
@@ -1872,7 +1857,10 @@ Port::Port(Port *data)
     dims = new dim(data->dims->toString());
 }
 
-bool Port::isAnalog() {return true;}
+bool Port::isAnalog()
+{
+    return true;
+}
 
 QString Port::getName()
 {
@@ -1894,48 +1882,42 @@ AnalogPort::AnalogPort(AnalogPort *data): Port(data)
     isPerConn = data->isPerConn;
 }
 
-bool AnalogPort::isAnalog() {return true;}
+bool AnalogPort::isAnalog()
+{
+    return true;
+}
 
 int AnalogPort::validateAnalogPort(Component * component, QStringList * )
 {
     //if mode is send then validate
     int failures = 0;
 
-    if (mode == AnalogSendPort)
-    {
+    if (mode == AnalogSendPort) {
         bool match = false;
-        for(int i=0;i<component->StateVariableList.size();i++)
-        {
-            if (component->StateVariableList[i]->getName() == name)
-            {
+        for(int i=0;i<component->StateVariableList.size();i++) {
+            if (component->StateVariableList[i]->getName() == name) {
                 variable = component->StateVariableList[i];
                 match = true;
             }
         }
-        if (!match)
-        {
-            for(int i=0;i<component->AliasList.size();i++)
-            {
-                if (component->AliasList[i]->getName() == name)
-                {
+        if (!match) {
+            for(int i=0;i<component->AliasList.size();i++) {
+                if (component->AliasList[i]->getName() == name) {
                     variable = component->AliasList[i];
                     match = true;
                 }
             }
         }
-        if (!match)
-        {
+        if (!match) {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",   "Error: AnalogPort references missing StateVariable or Alias " + name);
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",   "Error: AnalogPort references missing StateVariable or Alias " + name);
             settings.endArray();
         }
-    }
-    else
-    {
+    } else {
         variable = NULL;
     }
     return failures;
@@ -1947,7 +1929,10 @@ EventPort::EventPort(EventPort *data): Port(data)
     isPost = data->isPost;
 }
 
-bool EventPort::isAnalog() {return false;}
+bool EventPort::isAnalog()
+{
+    return false;
+}
 
 
 ImpulsePort::ImpulsePort(ImpulsePort *data): Port(data)
@@ -1957,7 +1942,10 @@ ImpulsePort::ImpulsePort(ImpulsePort *data): Port(data)
     isPost = data->isPost;
 }
 
-bool ImpulsePort::isAnalog() {return false;}
+bool ImpulsePort::isAnalog()
+{
+    return false;
+}
 
 int ImpulsePort::validateImpulsePort(Component * component, QStringList * )
 {
@@ -1967,44 +1955,34 @@ int ImpulsePort::validateImpulsePort(Component * component, QStringList * )
     if (mode == ImpulseSendPort)
     {
         bool match = false;
-        for(int i=0;i<component->ParameterList.size();i++)
-        {
-            if (component->ParameterList[i]->getName() == name)
-            {
+        for(int i=0;i<component->ParameterList.size();i++) {
+            if (component->ParameterList[i]->getName() == name) {
                 parameter = component->ParameterList[i];
                 match = true;
             }
         }
-        for(int i=0;i<component->StateVariableList.size();i++)
-        {
-            if (component->StateVariableList[i]->getName() == name)
-            {
+        for (int i=0;i<component->StateVariableList.size();i++) {
+            if (component->StateVariableList[i]->getName() == name) {
                 parameter = component->StateVariableList[i];
                 match = true;
             }
         }
-        for(int i=0;i<component->AliasList.size();i++)
-        {
-            if (component->AliasList[i]->getName() == name)
-            {
+        for (int i=0;i<component->AliasList.size();i++) {
+            if (component->AliasList[i]->getName() == name) {
                 parameter = component->AliasList[i];
                 match = true;
             }
         }
-
-        if (!match)
-        {
+        if (!match) {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",   "Error: ImpulsePort references missing StateVariable or Alias " + name);
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",   "Error: ImpulsePort references missing StateVariable or Alias " + name);
             settings.endArray();
         }
-    }
-    else
-    {
+    } else {
         parameter = NULL;
     }
     return failures;
@@ -2956,9 +2934,10 @@ int TimeDerivative::validateTimeDerivative(Component * component, QStringList * 
     bool match = false;
     for(int i=0; i<component->StateVariableList.size(); i++)
     {
-        if (component->StateVariableList[i]->getName() == variable_name)
-        {variable = component->StateVariableList[i];
-            match = true;}
+        if (component->StateVariableList[i]->getName() == variable_name) {
+variable = component->StateVariableList[i];
+            match = true;
+    }
 
     }
     if (!match) {
@@ -2992,9 +2971,10 @@ int StateAssignment::validateStateAssignment(Component * component, QStringList 
     bool match = false;
     for(int i=0; i<component->StateVariableList.size(); i++)
     {
-        if (component->StateVariableList[i]->name.compare(name) == 0)
-        {variable = component->StateVariableList[i];
-            match = true;}
+        if (component->StateVariableList[i]->name.compare(name) == 0) {
+variable = component->StateVariableList[i];
+            match = true;
+    }
 
     }
     if (!match) {
@@ -3015,9 +2995,10 @@ int EventOut::validateEventOut(Component * component, QStringList * )
     bool match = false;
     for(int i=0; i<component->EventPortList.size(); i++)
     {
-        if (component->EventPortList[i]->name.compare(port_name) == 0)
-        {port = component->EventPortList[i];
-            match = true;}
+        if (component->EventPortList[i]->name.compare(port_name) == 0) {
+port = component->EventPortList[i];
+            match = true;
+    }
     }
     if (!match) {
         QSettings settings;
@@ -3038,8 +3019,8 @@ int ImpulseOut::validateImpulseOut(Component * component, QStringList * )
     bool match = false;
     for(int i=0; i<component->ImpulsePortList.size(); i++)
     {
-        if (component->ImpulsePortList[i]->name.compare(port_name) == 0)
-        {
+        if (component->ImpulsePortList[i]->name.compare(port_name) == 0) {
+
             if (component->ImpulsePortList[i]->mode == ImpulseSendPort){
                 port = component->ImpulsePortList[i];
                 match = true;
@@ -3065,9 +3046,10 @@ int OnCondition::validateOnCondition(Component * component, QStringList * errs)
     bool match = false;
     for(int i=0;i<component->RegimeList.size();i++)
     {
-        if (component->RegimeList[i]->name.compare(target_regime_name) == 0)
-        {target_regime = component->RegimeList[i];
-            match = true;}
+        if (component->RegimeList[i]->name.compare(target_regime_name) == 0) {
+target_regime = component->RegimeList[i];
+            match = true;
+    }
     }
     if (!match) {
         QSettings settings;
@@ -3100,9 +3082,10 @@ int OnEvent::validateOnEvent(Component * component, QStringList * errs)
     bool match = false;
     for(int i=0;i<component->RegimeList.size();i++)
     {
-        if (component->RegimeList[i]->name.compare(target_regime_name) == 0)
-        {target_regime = component->RegimeList[i];
-            match = true;}
+        if (component->RegimeList[i]->name.compare(target_regime_name) == 0) {
+target_regime = component->RegimeList[i];
+            match = true;
+    }
     }
     if (!match) {
         QSettings settings;
@@ -3117,9 +3100,10 @@ int OnEvent::validateOnEvent(Component * component, QStringList * errs)
     match = false;
     for(int i=0; i<component->EventPortList.size(); i++)
     {
-        if (component->EventPortList[i]->name.compare(src_port_name) == 0)
-        {src_port = component->EventPortList[i];
-            match = true;}
+        if (component->EventPortList[i]->name.compare(src_port_name) == 0) {
+src_port = component->EventPortList[i];
+            match = true;
+    }
     }
     if (!match) {
         QSettings settings;
@@ -3153,9 +3137,10 @@ int OnImpulse::validateOnImpulse(Component * component, QStringList * errs)
     bool match = false;
     for(int i=0;i<component->RegimeList.size();i++)
     {
-        if (component->RegimeList[i]->name.compare(target_regime_name) == 0)
-        {target_regime = component->RegimeList[i];
-            match = true;}
+        if (component->RegimeList[i]->name.compare(target_regime_name) == 0) {
+target_regime = component->RegimeList[i];
+            match = true;
+    }
     }
     if (!match) {
         QSettings settings;
@@ -3170,9 +3155,10 @@ int OnImpulse::validateOnImpulse(Component * component, QStringList * errs)
     match = false;
     for(int i=0; i<component->ImpulsePortList.size(); i++)
     {
-        if (component->ImpulsePortList[i]->name.compare(src_port_name) == 0)
-        {src_port = component->ImpulsePortList[i];
-            match = true;}
+        if (component->ImpulsePortList[i]->name.compare(src_port_name) == 0) {
+src_port = component->ImpulsePortList[i];
+            match = true;
+    }
     }
     if (!match) {
         QSettings settings;

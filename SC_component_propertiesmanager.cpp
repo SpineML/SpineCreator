@@ -90,9 +90,8 @@ QTextEdit* PropertiesManager::addNoteCommon (void)
 {
     QTextEdit *note = new QTextEdit();
     note->setAcceptRichText (false);
-    note->setReadOnly (true);
+    note->setReadOnly (false);
     note->installEventFilter(&eventFilterObject);
-    //connect(name, SIGNAL(textChanged(QString)), svti, SLOT(setName(QString)));
     return note;
 }
 
@@ -100,6 +99,7 @@ void PropertiesManager::addNote (NineMLTextItem* ti)
 {
     QTextEdit* note = this->addNoteCommon();
     note->setPlainText(ti->getAnnotationText());
+    connect(note, SIGNAL(textChanged()), ti, SLOT(updateAnnotationText()));
     addRow(tr("&Note:"), note);
 }
 
@@ -107,6 +107,7 @@ void PropertiesManager::addNote (NineMLTransitionItem* ti)
 {
     QTextEdit* note = this->addNoteCommon();
     note->setPlainText(ti->getAnnotationText());
+    connect(note, SIGNAL(textChanged()), ti, SLOT(updateAnnotationText()));
     addRow(tr("&Note:"), note);
 }
 
@@ -114,6 +115,7 @@ void PropertiesManager::addNote (NineMLNodeItem* ni)
 {
     QTextEdit* note = this->addNoteCommon();
     note->setPlainText(ni->getAnnotationText());
+    connect(note, SIGNAL(textChanged()), ni, SLOT(updateAnnotationText()));
     addRow(tr("&Note:"), note);
 }
 
@@ -525,7 +527,7 @@ void PropertiesManager::createOnConditionProperties(OnConditionGraphicsItem *oci
     root->actionDeleteItems->setEnabled(true);
 
     // Add annotation view:
-    // this->addNote ((NineMLTransitionItem*)oci);
+    // this->addNote ((NineMLTextItem*)oci);
 }
 
 void PropertiesManager::createOnEventProperties(OnEventGraphicsItem *oei)
