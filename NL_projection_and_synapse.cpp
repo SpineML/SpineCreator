@@ -2328,6 +2328,23 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                         QDomNode cNode = type.item(0);
                         newInput->conn->import_parameters_from_xml(cNode);
                     }
+                    type = e2.elementsByTagName("ConnectionList");
+                    if (type.count() == 1) {
+                        delete newInput->conn;
+                        newInput->conn = new csv_connection;
+                        newInput->conn->setParent(newInput);
+                        if (this->source == NULL) {
+                            DBG() << "WARNING: About to set srcPop to null in a new csv_connection...";
+                        } else {
+                            DBG() << "INFO: setting srcPop to non-null in new csv_connection...";
+                        }
+                        newInput->conn->srcPop = this->source;
+                        newInput->conn->dstPop = this->destination;
+                        QDomNode cNode = type.item(0);
+                        // csv connection needs a synapse index set up.
+                        newInput->conn->setSynapseIndex(t);
+                        newInput->conn->import_parameters_from_xml(cNode);
+                    }
 
                     if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {
                         this->synapses[t]->weightUpdateCmpt->inputs.push_back(newInput);

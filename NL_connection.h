@@ -88,7 +88,7 @@ public:
     /*!
      * Return generator script of enclosing generator:
      */
-    QString getGeneratorScript (void) { if (this->hasGenerator()) { return generator->getGeneratorScript(); } else if (this->isGenerator()) { return this->scriptText; } }
+    QString getGeneratorScript (void) { if (this->hasGenerator()) { return generator->getGeneratorScript(); } else if (this->isGenerator()) { return this->scriptText; } else {return QString();} }
 
     /*!
      * The parent object which contains this connection. Will be
