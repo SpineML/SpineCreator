@@ -30,6 +30,8 @@
 #include "SC_network_layer_rootdata.h"
 #include "CL_classes.h"
 #include "NL_population.h"
+#include "NL_systemobject.h"
+
 
 #define NO_DELAY -1 // used to determine if Python Scripts have delay data
 
@@ -52,7 +54,7 @@ public:
 
     virtual void write_node_xml(QXmlStreamWriter &){}
     virtual void import_parameters_from_xml(QDomNode &){}
-    virtual void write_metadata_xml(QDomDocument &, QDomNode &) {}
+    virtual void write_metadata_xml(QXmlStreamWriter*) { DBG() << "connection implementation of write_metadata_xml called"; }
     virtual void read_metadata_xml(QDomNode &) {}
     virtual void writeDelay(QXmlStreamWriter &xmlOut);
     virtual QLayout * drawLayout(nl_rootdata * , viewVZLayoutEditHandler * , nl_rootlayout * ) {return new QHBoxLayout();}
@@ -62,17 +64,69 @@ public:
 
     virtual QString getTypeStr(void);
 
+    /*!
+     * Is there a generator associated with this connection? If
+     * so, this is a pointer to the object.
+     */
+    connection* generator;
+
+    /*!
+     * A script, in some language, used to generate connections.
+     */
+    QString scriptText;
+
+    /*!
+     * Does this connection have a generator?
+     */
+    virtual bool hasGenerator (void) { return (this->generator == NULL ? false : true); }
+
+    /*!
+     * IS this connection a generator?
+     */
+    virtual bool isGenerator (void) { return false; }
+
+    /*!
+     * Return generator script of enclosing generator:
+     */
+    QString getGeneratorScript (void) { if (this->hasGenerator()) { return generator->getGeneratorScript(); } else if (this->isGenerator()) { return this->scriptText; } else {return QString();} }
+
+    /*!
+     * The parent object which contains this connection. Will be
+     * either a GenericInput or a Synapse. The introduction of this
+     * makes this->synapseIndex possibly unnecessary. This was
+     * introduced so that csv_connections could contain the parent
+     * that they relate to, so that a checkbox in the panel could be
+     * used to change the connection features.
+     */
+    QSharedPointer<systemObject> parent;
+
+    /*!
+     * Setter for @see parent.
+     */
+    void setParent (QSharedPointer<systemObject> ptr);
+
+    /*!
+     * A ParameterInstance is all about a list of parameter values,
+     * but can also be FixedValue.
+     *
+     * A csv_connection or fixedprob_connection in a generic input
+     * needs a fixedvalue delay for our canonical simulator,
+     * SpineML_2_BRAHMS. It's necessary to be able to define a
+     * fixedvalue delay for a connection list in a generic input.
+     */
     ParameterInstance * delay;
 
     /*!
-     * The source population for this connection.
+     * The source population for this connection, if there is one (the
+     * source may be a WU or PS component).
      */
-    QSharedPointer <population> src;
+    QSharedPointer <population> srcPop;
 
     /*!
-     * The destination population for this connection.
+     * The destination population for this connection, if there is one
+     * (the dest may be a WU or PS component).
      */
-    QSharedPointer <population> dst;
+    QSharedPointer <population> dstPop;
 
     /*!
      * Setter for srcName.
@@ -95,6 +149,12 @@ public:
      * exists.
      */
     void setSynapseIndex(int synidx);
+
+    /*!
+     * A place for SpineCreator to store meta-information about this
+     * connection.
+     */
+    QString annotation;
 
 private:
     QString filename;
@@ -148,7 +208,7 @@ public:
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
     QLayout * drawLayout(nl_rootdata * data, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay);
-    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterInstance(this->delay); return c;}
+    connection * newFromExisting() {onetoOne_connection * c = new onetoOne_connection; c->delay = new ParameterInstance(this->delay); c->parent = this->parent; return c;}
 
 private:
 };
@@ -187,22 +247,27 @@ private:
  */
 class csv_connection : public connection
 {
-        Q_OBJECT
+    Q_OBJECT
 public:
-
-    csv_connection(QString fileName);
     csv_connection();
     ~csv_connection();
 
+    /*!
+     * Column headers really. A list of 2 or 3 strings as headers.
+     */
     QStringList values;
+
     /*!
      * \brief import_csv
      * \param filename
      * Import data into the connection from a file written in Comma Seperated Variable format.
      * This format consists of ASCII text data written as S,D,L/n where S is the source index,
      * D is the destination index and L (optional) is the delay.
+     *
+     * Returns false if the import failed for any reason, otherwise returns true.
      */
-    void import_csv(QString filename);
+    bool import_csv (QString filename);
+
     /*!
      * \brief import_packed_binary
      * \param fileIn The source file from which to import
@@ -211,53 +276,131 @@ public:
      * format consists of close packed binary data with the structure (int S)(int D)(opt float L)
      * where S is the source index, D is the dest index, and optionally L is the delay.
      */
-    void import_packed_binary(QFile &fileIn, QFile& fileOut);
-    QVector <float> fetchData(int index);
-    void getAllData(QVector < conn > &conns);
-    float getData(int, int);
-    float getData(QModelIndex &index);
-    QString getHeader(int section);
-    int getNumRows();
-    void setNumRows(int);
-    int getNumCols();
-    void setNumCols(int);
-    void setData(const QModelIndex & index, float value);
-    void setData(int, int, float);
-    void clearData();
-    void flushChangesToDisk();
-    void abortChanges();
-    void write_node_xml(QXmlStreamWriter &xmlOut);
-    void write_metadata_xml(QDomDocument &, QDomNode &);
-    void import_parameters_from_xml(QDomNode &);
-    void read_metadata_xml(QDomNode &);
-    void setFileName(QString name);
-    QString getFileName();
-    void fetch_headings();
-    connection * generator;
-    QLayout * drawLayout(nl_rootdata *, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay);
-    int getIndex();
-    connection * newFromExisting();
+    void import_packed_binary (QFile &fileIn, QFile& fileOut);
+
+    /*!
+     * Gets data from the file "backing store" in this->uuidFilename
+     * and puts it in the QVector<conn>& conns.
+     */
+    void getAllData (QVector<conn>& conns);
+
+    float getData (int, int) const;
+    float getData (QModelIndex &index) const;
+    QString getHeader (int section);
+    int getNumRows (void) const;
+    void setNumRows (int);
+
+    /*!
+     * Get the number of columns of data - the size of this->values.
+     */
+    int getNumCols (void) const;
+
+    /*!
+     * Set the number of cols required in values. Destructively
+     * resizes this->values.
+     */
+    void setNumCols (int n);
+
+    /*!
+     * Updates the data based on the current numcols, in case that has
+     * changed.
+     */
+    void updateDataForNumCols (int num);
+
+    void setData (const QModelIndex& index, float value);
+    void setData (int, int, float);
+
+    /*!
+     * Write out the connection data. If numCols is 3, then write out
+     * the fixedValue delay if it exists, other wise 0 for the delay
+     * column.
+     */
+    void setAllData (QVector<conn>& conns);
+
+    void clearData (void);
+    void flushChangesToDisk (void);
+    void abortChanges (void);
+    /*!
+     * Write out the node xml to the XML files, using the final
+     * version of the filename for any file-based explicit connection
+     * list.
+     */
+    void write_node_xml (QXmlStreamWriter& xmlOut);
+    void import_parameters_from_xml (QDomNode&);
+    void read_metadata_xml (QDomNode&);
+    void setFileName (QString name);
+    QString getFileName (void);
+    QString getUUIDFileName (void);
+    void fetch_headings (void);
+    QLayout* drawLayout (nl_rootdata*, viewVZLayoutEditHandler* viewVZhandler, nl_rootlayout* rootLay);
+    int getIndex (void);
+    connection* newFromExisting (void);
+
+    /*!
+     * Copy the values from other into this. If both values have same
+     * number of cols, then direct copy the data and values, otherwise
+     * only copy src/dst values.
+     */
+    void copyDataValues (const csv_connection* other);
 
 private:
+
+    /*!
+     * If the connection has explicit data which needs to be stored in
+     * a binary file, then it needs a filename into which that data is
+     * stored. This is the "final, human-readable" version of that
+     * file, which is written when a model is saved out of
+     * SpineCreator. While a model is being edited/created, the
+     * temporary, uuidFilename is used instead.
+     */
     QString filename;
+
+    /*!
+     * A temporary filename. This is used only if the connection has
+     * explicit data which needs to be stored in a binary file. It is
+     * used while the model is being worked on. It is generated by
+     * generateUUIDFilename(). When the model is written out,
+     * generateFilename() is used to generate the final, src & dst
+     * based filename which is then written out into the model
+     * directory.
+     */
+    QString uuidFilename;
+
     QXmlStreamWriter xmlOut;
     QXmlStreamReader xmlIn;
+
+    /*!
+     * The number of rows expected in the data file.
+     */
     int numRows;
-    QVector < change > changes;
+
+    /*!
+     * The number of columns in the values QStringList and in the data
+     * file. Should be 2 or 3.
+     */
+    int numCols;
+
+    QVector<change> changes;
+    csv_connection* copiedFrom;
 
     /*!
      * Generate a filename based on the source and destination
      * population names, throwing an exception if either of these is
      * not set.
      */
-    void generateFilename(void);
+    void generateFilename (void);
 
+    /*!
+     * Generate a unique filename for temporary use. This is used up
+     * until the point at which the network file is written out.
+     */
+    void generateUUIDFilename (void);
 
     /*!
      * Get the directory used for storage of the connection binary
      * files - i.e. the model directory.
      */
-    QDir getLibDir (void);
+    QDir getLibDir (void) const;
 
     /*!
      * Replace chars in str which are not in the string allowed with
@@ -266,13 +409,29 @@ private:
     void sanitizeReplace (QString& str,
                           const QString& allowed,
                           const char replaceChar);
+
+    /*!
+     * Sort connection data by src and dst indices.
+     */
+    void sortData (void);
+
+    /*!
+     * Function to be used with std::sort to sort connections.
+     */
+    static bool sorttwo (conn a, conn b);
+
+public slots:
+    /*!
+     * Called when the "Global delay" checkbox is changed.
+     */
+    void updateGlobalDelay (void);
 };
 
 class pythonscript_connection : public connection
 {
         Q_OBJECT
 public:
-    pythonscript_connection(QSharedPointer <population> src, QSharedPointer <population> dst, csv_connection *conn_targ);
+    pythonscript_connection(QSharedPointer <population> srcPop, QSharedPointer <population> dstPop, csv_connection *conn_targ);
     pythonscript_connection() {
         type = Python;
         this->isAList = false;
@@ -288,7 +447,7 @@ public:
 
     void write_node_xml(QXmlStreamWriter &xmlOut);
     void import_parameters_from_xml(QDomNode &);
-    void write_metadata_xml(QDomDocument &, QDomNode &);
+    virtual void write_metadata_xml(QXmlStreamWriter* xmlOut);
     void read_metadata_xml(QDomNode &);
     int getIndex();
     QString getTypeStr(void);
@@ -296,8 +455,8 @@ public:
     float rotation;
     QString errorLog;
 
-    QSharedPointer <population> src;
-    QSharedPointer <population> dst;
+    QSharedPointer <population> srcPop;
+    QSharedPointer <population> dstPop;
     QVector < conn > *conns;
     QMutex * mutex;
     bool isList();
@@ -306,7 +465,7 @@ public:
 
     QVector <conn> connections;
 
-    QString scriptText;
+    // scriptText is inherited from the connection parent class
     QString lastGeneratedScriptText;
     QString scriptName;
     QStringList parNames;
@@ -332,6 +491,8 @@ public:
     csv_connection * connection_target;
 
     connection * newFromExisting();
+
+
 
 private:
 

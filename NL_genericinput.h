@@ -32,39 +32,89 @@ class genericInput : public projection // inherit systemObject through projectio
 {
 public:
     genericInput();
-    genericInput(QSharedPointer <ComponentInstance> src, QSharedPointer <ComponentInstance> dst, bool projInput = false);
+    genericInput(QSharedPointer <ComponentInstance> srcCmpt, QSharedPointer <ComponentInstance> dstCmpt, bool projInput = false);
     ~genericInput();
 
+    /*!
+     * Returns an identifier for this genericInput connection.
+     */
     virtual QString getName();
+
+    /*!
+     * Get source and destination names for this generic input. Includes ports.
+     */
+    //@{
+    QString getSrcName();
+    QString getDestName();
+    //@}
+
+    /*!
+     * Get source and destination sizes for this generic input.
+     */
+    //@{
+    int getSrcSize();
+    int getDestSize();
+    //@}
+
     virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
-    /*virtual void move(float, float);
-    virtual void draw(QPainter, float, float, float, int, int, QImage);
-    virtual bool is_clicked(float, float, float);*/
-    void remove(nl_rootdata *);
+
     void delAll(nl_rootdata *);
 
     void animate(QSharedPointer<systemObject>movingObj, QPointF delta);
     void moveSelectedControlPoint(float xGL, float yGL);
-    void write_model_meta_xml(QDomDocument &meta, QDomElement &root) ;
+    void write_model_meta_xml(QXmlStreamWriter* xmlOut) ;
 
-    void read_meta_data(QDomDocument * meta);
+    /*!
+     * Read meta-data information from a QDomNode. Intended to replace
+     * read_meta_data(QDomDocument * meta, cursorType cursorPos);
+     */
+    void read_meta_data (QDomNode meta, cursorType cursorPos);
 
-    void addCurves();
+    /*!
+     * Read the meta-data information in the QDomDocument* meta. Use
+     * cursorPos to offset the positions so that imported networks
+     * will appear at the location on the screen of the cursor.
+     */
+    void read_meta_data(QDomDocument * meta, cursorType cursorPos);
+
+    // Override add_curves from projection.
+    void add_curves();
+
     void connect(QSharedPointer<genericInput> in);
     void disconnect();
 
+    /*!
+     * NB: Very confusing, source/destination attribute names clash
+     * with QSharedPointer<population> source/destination in the
+     * parent class (projection), which these override.
+     */
+    //@{
     QSharedPointer<systemObject> destination;
     QSharedPointer<systemObject> source;
+    //@}
 
-    QSharedPointer <ComponentInstance> src;
-    QSharedPointer <ComponentInstance> dst;
+    /*!
+     * These are required as the source and destination objects could
+     * be of type synapse and then you don't know if it's the enclosed
+     * weight update or postsynapse component that forms the end of
+     * the genericinput connection.
+     */
+    //@{
+    QSharedPointer <ComponentInstance> dstCmpt;
+    QSharedPointer <ComponentInstance> srcCmpt;
+    //@}
+
     QString srcPort;
     QString dstPort;
     bool projInput;
     int srcPos;
     int dstPos;
 
-    connection * connectionType;
+    /*!
+     * Pointer to the connection object associated with this
+     * genericInput.
+     */
+    connection* conn;
 
     bool isVisualised;
 

@@ -95,6 +95,7 @@ class projectObject;
 
 // Debugging defines
 #define DBG() qDebug() << __FUNCTION__ << ": "
+#define DBGBRK() qDebug() << "---";
 
 using namespace std;
 
@@ -129,6 +130,12 @@ struct conn {
     int src;
     int dst;
     float metric;
+};
+
+// Used to store the cursor position in the network view
+struct cursorType {
+    GLfloat x;
+    GLfloat y;
 };
 
 enum connectionType {

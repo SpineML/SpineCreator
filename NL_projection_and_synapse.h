@@ -60,9 +60,9 @@ public:
     synapse(QSharedPointer <projection> proj, projectObject * data, bool dontAddInputs = false);
     synapse(QSharedPointer <projection> proj, nl_rootdata * data, bool dontAddInputs = false);
     ~synapse();
-    QSharedPointer <ComponentInstance>postsynapseType;
-    QSharedPointer <ComponentInstance>weightUpdateType;
-    connection *connectionType;
+    QSharedPointer<ComponentInstance> postSynapseCmpt;
+    QSharedPointer<ComponentInstance> weightUpdateCmpt;
+    connection *connectionType; // refactor to conn
     /*!
      * A label for the connection type. Filled with the connection
      * generator, as read from the metadata.xml (For example, the
@@ -72,12 +72,28 @@ public:
      */
     QString connectionTypeStr;
     bool isVisualised;
+    /*!
+     * This is the parent projection.
+     */
     QSharedPointer <projection> proj;
     QString getName();
+    QString getWeightUpdateName();
+    QString getPostSynapseName();
     int getSynapseIndex();
     virtual void delAll(nl_rootdata *);
     QSharedPointer < systemObject > newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > &);
     void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
+
+    /*!
+     * This copies the pointers to source and destination populations
+     * in the parent project proj down into the connection.
+     */
+    void passDownSrcAndDst (void);
+private:
+    /*!
+     * Get the index of this synapse.
+     */
+    int getIndex (void);
 };
 
 // A projection contains synapses.
@@ -85,15 +101,24 @@ class projection : public systemObject
 {
 public:
     projection();
+
+    /*!
+     * This reads the projection from XML. Don't confuse it with
+     * read_inputs_from_xml, which is called AFTER readFromXML. Could
+     * be refactored to readSelfFromXML with read_inputs_from_xml
+     * being refactored to readMyInputsFromXML.
+     */
     void readFromXML(QDomElement  &e, QDomDocument * , QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
+
     virtual ~projection();
     QVector < bezierCurve > curves;
     QPointF start;
     bool is_clicked(float, float,float);
-    void add_curves();
+    virtual void add_curves();
 
-    QSharedPointer <population> source;
-    QSharedPointer <population> destination;
+    QSharedPointer <population> destination; // Refactor to dstPop to match other QSharedPointer<population> attributes in other classes.
+    QSharedPointer <population> source; // Refactor to srcPop.
+
     QVector <QSharedPointer <synapse> > synapses;
     int currTarg;
     QString getName();
@@ -112,8 +137,15 @@ public:
     void drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style);
     void drawHandles(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height);
     void moveEdge(int, float, float);
-    virtual void write_model_meta_xml(QDomDocument &meta, QDomElement &root);
+    virtual void write_model_meta_xml(QXmlStreamWriter* xmlOut);
+
+    /*!
+     * Reads the projection's inputs from xml. This is called (from
+     * within projectObject::loadNetwork) AFTER the projection itself
+     * has be read in using projection::readFromXML.
+     */
     void read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
+
     void print();
     QPointF findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL);
     void setAutoHandles(QSharedPointer <population> pop1, QSharedPointer <population>pop2, QPointF end);
@@ -147,6 +179,24 @@ protected:
     cPoint selectedControlPoint;
 
 private:
+
+    /*!
+     * Part of readFromXML.
+     */
+    void readAnnotationXML (QDomElement& e);
+
+    /*!
+     * Part of readFromXML.
+     */
+    void readSynapsesXML (QDomElement& e, projectObject* data,
+                          QSharedPointer<projection> thisSharedPointer);
+
+    /*!
+     * Sub-called by readSynapsesXML.
+     */
+    QSharedPointer<synapse> readSingleSynapseXML (projectObject* data,
+                                                  QSharedPointer<projection> thisSharedPointer,
+                                                  QDomNodeList& colList, int synNum);
 
     /*!
      * Return true if there is more than one synapse and the synapses

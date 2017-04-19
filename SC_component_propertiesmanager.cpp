@@ -69,7 +69,6 @@ void PropertiesManager::clear()
     root->addItemsToolbar->clear();
 }
 
-
 void PropertiesManager::clearLayoutItems(QLayout *layout)
 {
     QLayoutItem *l = NULL;
@@ -85,6 +84,39 @@ void PropertiesManager::clearLayoutItems(QLayout *layout)
             PropertiesManager::clearLayoutItems(l->layout());
         }
     }
+}
+
+QTextEdit* PropertiesManager::addNoteCommon (void)
+{
+    QTextEdit *note = new QTextEdit();
+    note->setAcceptRichText (false);
+    note->setReadOnly (false);
+    note->installEventFilter(&eventFilterObject);
+    return note;
+}
+
+void PropertiesManager::addNote (NineMLTextItem* ti)
+{
+    QTextEdit* note = this->addNoteCommon();
+    note->setPlainText(ti->getAnnotationText());
+    connect(note, SIGNAL(textChanged()), ti, SLOT(updateAnnotationText()));
+    addRow(tr("&Note:"), note);
+}
+
+void PropertiesManager::addNote (NineMLTransitionItem* ti)
+{
+    QTextEdit* note = this->addNoteCommon();
+    note->setPlainText(ti->getAnnotationText());
+    connect(note, SIGNAL(textChanged()), ti, SLOT(updateAnnotationText()));
+    addRow(tr("&Note:"), note);
+}
+
+void PropertiesManager::addNote (NineMLNodeItem* ni)
+{
+    QTextEdit* note = this->addNoteCommon();
+    note->setPlainText(ni->getAnnotationText());
+    connect(note, SIGNAL(textChanged()), ni, SLOT(updateAnnotationText()));
+    addRow(tr("&Note:"), note);
 }
 
 QComboBox *PropertiesManager::getPrefixCombo(Prefix selected)
@@ -139,7 +171,6 @@ void PropertiesManager::updateReorderingIcons(GroupedTextItem *item)
         root->actionMove_Down->setEnabled(false);
 }
 
-
 void PropertiesManager::createEmptySelectionProperties()
 {
     root->addItemsToolbar->addAction(root->actionAddRegime);
@@ -192,6 +223,14 @@ void PropertiesManager::createEmptySelectionProperties()
     connect(initial_regime, SIGNAL(currentIndexChanged(QString)), root, SLOT(setInitialRegime(QString)));
     addRow(tr("&Initial Regime:"),initial_regime);
 
+    // for WU add 'islearning' toggle
+    if (typeVal == 1) {
+        QCheckBox * islearn = new QCheckBox();
+        islearn->setChecked(root->al->islearning);
+        connect(islearn, SIGNAL(toggled(bool)), root, SLOT(setLearningState(bool)));
+        addRow(tr("&Learning:"),islearn);
+    }
+
     // add path combobox - NO LONGER USED
     /*QComboBox * path = new QComboBox;
     path->addItem("model");
@@ -227,7 +266,6 @@ void PropertiesManager::createEmptySelectionProperties()
 
 }
 
-
 void PropertiesManager::createRegimeProperties(RegimeGraphicsItem *i)
 {
     QLabel *label = new QLabel("<b>Edit Regime</b>");
@@ -241,6 +279,8 @@ void PropertiesManager::createRegimeProperties(RegimeGraphicsItem *i)
 
     root->addItemsToolbar->addAction(root->actionAddTimeDerivative);
     root->actionDeleteItems->setEnabled(true);
+
+    this->addNote ((NineMLNodeItem*)i);
 }
 
 void PropertiesManager::createTimeDerivativeProperties(TimeDerivativeTextItem *td)
@@ -306,11 +346,6 @@ void PropertiesManager::createTimeDerivativeProperties(TimeDerivativeTextItem *t
     }
 }
 
-
-
-
-
-
 void PropertiesManager::createParameterListProperties()
 {
     root->addItemsToolbar->addAction(root->actionAddParameter);
@@ -342,8 +377,10 @@ void PropertiesManager::createParameterProperties(ParameterTextItem *pti)
     QComboBox *dims_unit = getUnitCombo(pti->parameter->dims->getUnit());
     connect(dims_unit, SIGNAL(currentIndexChanged(QString)), pti, SLOT(setDimsUnit(QString)));
     addRow(tr("Dimensionality &Unit:"),dims_unit);
-}
 
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)pti);
+}
 
 void PropertiesManager::createStateVariableProperties(StateVariableTextItem *svti)
 {
@@ -369,6 +406,9 @@ void PropertiesManager::createStateVariableProperties(StateVariableTextItem *svt
     QComboBox *dims_unit = getUnitCombo(svti->state_variable->dims->getUnit());
     connect(dims_unit, SIGNAL(currentIndexChanged(QString)), svti, SLOT(setDimsUnit(QString)));
     addRow(tr("Dimensionality &Unit:"),dims_unit);
+
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)svti);
 }
 
 void PropertiesManager::createAliasProperties(AliasTextItem *ati)
@@ -424,8 +464,10 @@ void PropertiesManager::createAliasProperties(AliasTextItem *ati)
         // clear errors
         settings.remove("warnings");
     }
-}
 
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ati);
+}
 
 void PropertiesManager::createPortListProperties()
 {
@@ -434,10 +476,6 @@ void PropertiesManager::createPortListProperties()
     root->addItemsToolbar->addAction(root->actionAddImpulsePort);
     root->actionDeleteItems->setEnabled(false);
 }
-
-
-
-
 
 void PropertiesManager::createOnConditionProperties(OnConditionGraphicsItem *oci)
 {
@@ -487,6 +525,9 @@ void PropertiesManager::createOnConditionProperties(OnConditionGraphicsItem *oci
     root->addItemsToolbar->addAction(root->actionAddEventOut);
     root->addItemsToolbar->addAction(root->actionAddImpulseOut);
     root->actionDeleteItems->setEnabled(true);
+
+    // Add annotation view:
+    // this->addNote ((NineMLTextItem*)oci);
 }
 
 void PropertiesManager::createOnEventProperties(OnEventGraphicsItem *oei)
@@ -552,8 +593,6 @@ void PropertiesManager::createOnImpulseProperties(OnImpulseGraphicsItem *oii)
     root->addItemsToolbar->addAction(root->actionAddImpulseOut);
     root->actionDeleteItems->setEnabled(true);
 }
-
-
 
 void PropertiesManager::createStateAssignmentProperties(StateAssignmentTextItem *sa)
 {
@@ -706,6 +745,13 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
             var->setCurrentIndex(-1);
         connect(var, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setVariable(QString)));
         addRow(tr("&Variable:"),var);
+        if (root->al->islearning) {
+            // add checkbox for postsynaptic input
+            QCheckBox * isper = new QCheckBox();
+            isper->setChecked(ap->port->isPerConn);
+            connect(isper, SIGNAL(toggled(bool)), ap, SLOT(setIsPerConnState(bool)));
+            addRow(tr("&Is per connection:"), isper);
+        }
     }
     //otherwise
     else
@@ -753,6 +799,13 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
         }
         connect(reduce, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setPortReduceOp(QString)));
         addRow(tr("&Reduce Operation:"), reduce);
+        if (root->al->islearning) {
+            // add checkbox for perConn output
+            QCheckBox * ispost = new QCheckBox();
+            ispost->setChecked(ap->port->isPost);
+            connect(ispost, SIGNAL(toggled(bool)), ap, SLOT(setIsPostState(bool)));
+            addRow(tr("&Is postsynaptic:"), ispost);
+        }
     }
 
     if ((m == AnalogRecvPort)||(m == AnalogReducePort)){
@@ -764,6 +817,9 @@ void PropertiesManager::createAnalogPortProperties(AnalogPortTextItem *ap)
         connect(dims_unit, SIGNAL(currentIndexChanged(QString)), ap, SLOT(setDimsUnit(QString)));
         addRow(tr("Dimensionality &Unit:"),dims_unit);
     }
+
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ap);
 }
 
 void PropertiesManager::createEventPortProperties(EventPortTextItem *ep)
@@ -802,6 +858,17 @@ void PropertiesManager::createEventPortProperties(EventPortTextItem *ep)
     name->setValidator(validator);
     connect(name, SIGNAL(textEdited(QString)), ep, SLOT(setName(QString)));
     addRow(tr("&Name:"),name);
+
+    if (root->al->islearning) {
+        // add checkbox for postsynaptic input
+        QCheckBox * ispost = new QCheckBox();
+        ispost->setChecked(ep->port->isPost);
+        connect(ispost, SIGNAL(toggled(bool)), ep, SLOT(setIsPostState(bool)));
+        addRow(tr("&Is postsynaptic:"), ispost);
+    }
+
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ep);
 }
 
 void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
@@ -883,4 +950,6 @@ void PropertiesManager::createImpulsePortProperties(ImpulsePortTextItem *ip)
         addRow(tr("Dimensionality &Unit:"),dims_unit);
     }
 
+    // Add annotation view:
+    this->addNote ((NineMLTextItem*)ip);
 }

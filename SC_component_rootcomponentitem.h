@@ -42,8 +42,8 @@ class RootComponentItem: public QObject
 {
     Q_OBJECT
 public:
-    RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QFile *file=0);
-    RootComponentItem(MainWindow *main,Ui::MainWindow *ui, QSharedPointer<Component>);
+    RootComponentItem(MainWindow *main, Ui::MainWindow *ui, QFile *file=0);
+    RootComponentItem(MainWindow *main, Ui::MainWindow *ui, QSharedPointer<Component>);
     ~RootComponentItem();
 
     void setSelectionMode(ALSceneMode mode);
@@ -88,6 +88,7 @@ public slots:
     void requestLayoutUpdate();
     void setComponentClassName(QString name);
     void setComponentClassType(QString type);
+    void setLearningState(bool b);
     void setInitialRegime(QString regime);
     void setPath(QString component_path);
     void validateAndStore();
@@ -98,7 +99,11 @@ public:
      * This is a pointer to a local component instance.
      *
      * TODO: Use only alPtr, which points to the instance of the
-     * component in the rootdata component library.
+     * component in the rootdata component library. [Well, possibly,
+     * but careful, as the existence of al as well as alPtr IS
+     * important when undoing text in the component interface, because
+     * with text entries, you get a textChanged signal on every
+     * character change.]
      */
     QSharedPointer<Component>al;
     PropertiesManager *properties;
@@ -106,6 +111,11 @@ public:
     Ui::MainWindow *ui;
     MainWindow *main;
     GVLayout *gvlayout;
+
+    /*!
+     * The annotation box.
+     */
+    QTextEdit* currentAnnotation;
 
 private:
     void init();

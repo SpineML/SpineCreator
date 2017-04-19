@@ -297,6 +297,11 @@ void RootComponentItem::setComponentClassType(QString type)
         oldComponent.clear();
 }
 
+void RootComponentItem::setLearningState(bool b)
+{
+    al->islearning = b;
+}
+
 void RootComponentItem::setInitialRegime(QString regime)
 {
     QSharedPointer<Component> oldComponent = QSharedPointer<Component> (new Component(al));

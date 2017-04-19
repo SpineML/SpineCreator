@@ -37,6 +37,16 @@ settings_window::settings_window(QWidget *parent) :
 
     ui->buttonBox->setFocusPolicy(Qt::NoFocus);
 
+    // set name to 'options' on Linux
+#ifdef Q_OS_LINUX
+    this->setWindowTitle("Options");
+#else
+#ifndef Q_OS_OSX
+    this->setWindowTitle("Settings");
+#endif
+#endif
+
+
     connect(ui->addEnv, SIGNAL(clicked()), this, SLOT(addEnvVar()));
 
     // load existing simulators:
@@ -438,8 +448,8 @@ void settings_window::getScript()
 void settings_window::getWorkingDir()
 {
     QString wk_dir = QFileDialog::getExistingDirectory(this,
-                                                        tr("Choose the simulator's working directory"),
-                                                        qgetenv("HOME"));
+                                                       tr("Choose the simulator's working directory"),
+                                                       qgetenv("HOME"));
 
     if (!wk_dir.isEmpty()) {
         this->ui->scriptWDLineEdit->setText(wk_dir);

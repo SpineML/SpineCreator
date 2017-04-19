@@ -25,6 +25,8 @@
 #include "EL_experiment.h"
 #include "SC_network_layer_rootdata.h"
 #include "SC_projectobject.h"
+#include "SC_utilities.h"
+#include <QRegularExpression>
 
 experiment::experiment()
 {
@@ -42,14 +44,16 @@ experiment::experiment()
     subEdit = false;
     running = false;
 
+    //this->graphedLogs.resize(0*sizeof(logData*));
     this->progressBar = NULL;
-
     this->runButton = NULL;
 
+    this->menuAction = new QAction(this);
+    this->action(0);
 }
 
-experiment::~experiment() {
-
+experiment::~experiment()
+{
     for (int i = 0; i < ins.size(); ++i) {
         delete ins[i];
     }
@@ -59,19 +63,130 @@ experiment::~experiment() {
     for (int i = 0; i < lesions.size(); ++i) {
         delete lesions[i];
     }
+    for (int i = 0; i < gilesions.size(); ++i) {
+        delete gilesions[i];
+    }
     for (int i = 0; i < changes.size(); ++i) {
         delete changes[i];
     }
 
+    delete this->menuAction;
 }
 
-experiment::experiment(experiment * /*exptToCopy*/)
+/*!
+ * \brief experiment::experiment
+ * \param exptToCopy
+ * Construct a new experiment from an old one - used
+ * to copy an existing experiment.
+ */
+experiment::experiment(experiment * exptToCopy)
 {
-    // add copy constructor here
+    this->setup.dt = exptToCopy->setup.dt;
+    this->setup.duration = exptToCopy->setup.duration;
+    this->setup.exptProcedure = exptToCopy->setup.exptProcedure;
+    this->setup.simType = exptToCopy->setup.simType;
+    this->setup.solver = exptToCopy->setup.solver;
+    this->setup.solverOrder = exptToCopy->setup.solverOrder;
+
+    this->ins.resize(exptToCopy->ins.size());
+    this->outs.resize(exptToCopy->outs.size());
+    this->changes.resize(exptToCopy->changes.size());
+    this->lesions.resize(exptToCopy->lesions.size());
+    this->gilesions.resize(exptToCopy->gilesions.size());
+
+    for (int i = 0; i < exptToCopy->ins.size(); ++i) {
+        this->ins[i] = new exptInput(exptToCopy->ins[i]);
+    }
+    for (int i = 0; i < exptToCopy->outs.size(); ++i) {
+        this->outs[i] = new exptOutput(exptToCopy->outs[i]);
+    }
+    for (int i = 0; i < exptToCopy->changes.size(); ++i) {
+        this->changes[i] = new exptChangeProp(exptToCopy->changes[i]);
+    }
+    for (int i = 0; i < exptToCopy->lesions.size(); ++i) {
+        this->lesions[i] = new exptLesion(exptToCopy->lesions[i]);
+    }
+    for (int i = 0; i < exptToCopy->gilesions.size(); ++i) {
+        this->gilesions[i] = new exptGenericInputLesion(exptToCopy->gilesions[i]);
+    }
+
+    // append something to the name to distinguish new from old
+    this->name = exptToCopy->name + " (copy)";
+    this->description = exptToCopy->description;
+
+    this->selected = false;
+    this->editing = false;
+    this->runButton = NULL;
+    this->progressBar = NULL;
+
+    // Create a default menuAction.
+    this->menuAction = new QAction(this);
+    this->action(0);
 }
 
-exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
+QAction* experiment::action (int i)
+{
+    this->menuAction->setProperty ("number", QString::number(i));
+    this->menuAction->setText (this->name);
+    this->menuAction->setCheckable (true);
+    return this->menuAction;
+}
 
+/*!
+ * \brief exptInput::exptInput
+ * Create a new copy of an existing Input.
+ */
+exptInput::exptInput(exptInput * inToCopy)
+{
+    this->rate = inToCopy->rate;
+    this->currentIndex = inToCopy->currentIndex;
+
+    this->inType = inToCopy->inType;
+    this->params = inToCopy->params;
+    this->externalInput = inToCopy->externalInput;
+
+    this->target = inToCopy->target;
+    this->portName = inToCopy->portName;
+    this->portIsAnalog = inToCopy->portIsAnalog;
+    this->edit = false;
+    this->set = true;
+    this->name = inToCopy->name;
+    this->rateDistribution = inToCopy->rateDistribution;
+    this->rateSeed = inToCopy->rateSeed;
+}
+
+/*!
+ * \brief exptOutput::exptOutput
+ * Create a new copy of an existing Output.
+ */
+exptOutput::exptOutput(exptOutput * outToCopy)
+{
+    this->source = outToCopy->source;
+    this->portName = outToCopy->portName;
+    this->portIsAnalog = outToCopy->portIsAnalog;
+    this->edit = false;
+    this->set = true;
+    this->isExternal = outToCopy->isExternal;
+    this->name = outToCopy->name;
+    this->externalOutput = outToCopy->externalOutput;
+    this->indices = outToCopy->indices;
+}
+
+/*!
+ * \brief exptChangeProp::exptChangeProp
+ * Create a copy of an existing ChangeProp
+ */
+exptChangeProp::exptChangeProp(exptChangeProp * cpToCopy)
+{
+    this->par = cpToCopy->par;
+    this->component = cpToCopy->component;
+    this->edit = false;
+    this->set = true;
+    this->name = cpToCopy->name;
+}
+
+exptBox * experiment::getBox(viewELExptPanelHandler * panel)
+{
 #ifdef Q_OS_MAC
     QFont titleFont("Helvetica [Cronyx]", 16);
     QFont descFont("Helvetica [Cronyx]", 12);
@@ -79,7 +194,6 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
     QFont titleFont("Helvetica [Cronyx]", 14);
     QFont descFont("Helvetica [Cronyx]", 8);
 #endif
-
 
     exptBox * box = new exptBox();
     QGridLayout * layout = new QGridLayout;
@@ -91,13 +205,16 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
     int index = -1;
 
     for (int i = 0; i < panel->data->experiments.size(); ++i) {
-
-        if (panel->data->experiments[i] == this) index = i;
+        if (panel->data->experiments[i] == this) {
+            index = i;
+        }
     }
-    if (index == -1) {qDebug() << "experiments.cpp: big error"; exit(-1);}
+    if (index == -1) {
+        qDebug() << "experiments.cpp: big error";
+        exit(-1);
+    }
 
-    if (editing)
-    {
+    if (editing) {
 #ifdef Q_OS_MAC
         layout->setSpacing(6);
 #endif
@@ -134,8 +251,8 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
 
         return box;
     }
-    if (selected)
-    {
+
+    if (selected) {
         // set up a selected box
         currBoxPtr->setStyleSheet("background-color :rgba(0,0,0,40)");
         // title
@@ -214,12 +331,10 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
                 runButton->setIcon(style.standardIcon(QStyle::SP_MediaStop));
                 connect(runButton, SIGNAL(clicked()), panel, SLOT(cancelRun()));
             }
-
-
             QObject::connect(this->runButton, SIGNAL(destroyed()), this, SLOT(runDestroyed()));
         }
         QToolButton * run = this->runButton;
-        // if any subcomponents of the experiment asre being edited we should disable this
+        // if any subcomponents of the experiment are being edited we should disable this
         if (this->subEdit) {
             run->setText("Run (disabled while editing)");
             run->setEnabled(false);
@@ -243,9 +358,7 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
 
         layout->addWidget(this->progressBar,4,0,1,4);
 
-    }
-    else
-    {
+    } else {
         // set up an unselected box
         currBoxPtr->setStyleSheet("background-color :transparent");
         QLabel * nameLabel = new QLabel(name);
@@ -279,34 +392,28 @@ exptBox * experiment::getBox(viewELExptPanelHandler * panel) {
     }
 
     return box;
-
 }
 
 void experiment::runDestroyed()
 {
-
     this->runButton = NULL;
     this->progressBar = NULL;
-
 }
 
-void experiment::select(QVector < experiment * > * experiments) {
-
-    // deselect all
+void experiment::select(QVector < experiment * > * experiments)
+{
+    // first deselect all
     for (int i = 0; i < experiments->size(); ++i) {
         (*experiments)[i]->deselect();
         (*experiments)[i]->editing = false;
     }
-
-    // select this experiment
+    // then select this experiment
     this->selected = true;
 }
 
-void experiment::deselect() {
-
-    // select this experiment
+void experiment::deselect()
+{
     this->selected = false;
-
 }
 
 void experiment::purgeBadPointer(QSharedPointer <ComponentInstance> ptr)
@@ -355,8 +462,8 @@ void experiment::purgeBadPointer(QSharedPointer <ComponentInstance> ptr)
     }
 }
 
-void experiment::purgeBadPointer(QSharedPointer<Component> ptr, QSharedPointer<Component> newPtr) {
-
+void experiment::purgeBadPointer(QSharedPointer<Component> ptr, QSharedPointer<Component> newPtr)
+{
     // inputs
     for (int i = 0; i < ins.size(); ++i) {
 
@@ -444,8 +551,8 @@ void experiment::purgeBadPointer(QSharedPointer<Component> ptr, QSharedPointer<C
     }
 }
 
-void experiment::updateChanges(QSharedPointer <ComponentInstance> ptr) {
-
+void experiment::updateChanges(QSharedPointer <ComponentInstance> ptr)
+{
     // par changes
     for (int i = 0; i < changes.size(); ++i) {
 
@@ -460,16 +567,10 @@ void experiment::updateChanges(QSharedPointer <ComponentInstance> ptr) {
             for (int j = 0; j < ptr->ParameterList.size(); ++j)
                 if (ptr->ParameterList[j]->name == change->par->name) {
                     propFound = true;
-                    // This code is bad as there is no need to do this
-                    //delete change->par;
-                    //change->par = new ParameterData(ptr->ParameterList[j]);
                 }
             for (int j = 0; j < ptr->StateVariableList.size(); ++j)
                 if (ptr->StateVariableList[j]->name == change->par->name){
                     propFound = true;
-                    // This code is bad as there is no need to do this
-                    //delete change->par;
-                    //change->par = new StateVariableData(ptr->StateVariableList[j]);
                 }
 
             // if not found
@@ -481,12 +582,8 @@ void experiment::updateChanges(QSharedPointer <ComponentInstance> ptr) {
 
             // component
             change->component = ptr;
-
         }
-
-
     }
-
 }
 
 // ################################## exptBox
@@ -503,8 +600,8 @@ void exptBox::mouseReleaseEvent ( QMouseEvent * )
 
 // ################################### exptIn
 
-QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *handler) {
-
+QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *handler)
+{
     QVBoxLayout * layout = new QVBoxLayout;
 
     bool portsExist = false;
@@ -531,41 +628,28 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogRecvPort \
-                            || data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogReducePort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode== AnalogRecvPort \
+                            || data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode== AnalogReducePort) {
                         portsExist = true;
                         break;
                     }
                 }
-                /*if (!portsExist) {
-                    for (int p = 0; p < data->network[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList.size(); ++p) {
-                        if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList[p]->mode== EventRecvPort  && (data->network[i]->neuronType->component->name == "SpikeSource")) {
-                            portsExist = true;
-                            break;
-                        }
-                    }
-                }*/
+
                 if (portsExist)
-                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogRecvPort \
-                            || data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogReducePort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode== AnalogRecvPort \
+                            || data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode== AnalogReducePort) {
                         portsExist = true;
                         break;
                     }
                 }
-                /*if (!portsExist) {
-                    for (int p = 0; p < data->network[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList.size(); ++p) {
-                        if (data->network[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList[p]->mode== EventRecvPort  && (data->network[i]->neuronType->component->name == "SpikeSource")) {
-                            portsExist = true;
-                            break;
-                        }
-                    }
-                }*/
-                if (portsExist)
-                    elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+
+                if (portsExist) {
+                    elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
+                }
             }
         }
     }
@@ -580,7 +664,6 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
         layout->addWidget(frame);
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
-
 
         // new layout to contain name and port boxes
         QHBoxLayout * nameAndPort = new QHBoxLayout;
@@ -639,38 +722,23 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
             portBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
             ++currentRow;
              for (int i = 0; i < this->target->component->AnalogPortList.size(); ++i) {
-                if (this->target->component->AnalogPortList[i]->mode == AnalogRecvPort || this->target->component->AnalogPortList[i]->mode == AnalogReducePort) {
-                    portBox->addItem(this->target->component->AnalogPortList[i]->name, qVariantFromValue((void *) this->target->component->AnalogPortList[i]));
+                if (this->target->component->AnalogPortList[i]->mode == AnalogRecvPort
+                    || this->target->component->AnalogPortList[i]->mode == AnalogReducePort) {
+                    portBox->addItem(this->target->component->AnalogPortList[i]->name,
+                                     qVariantFromValue((void *) this->target->component->AnalogPortList[i]));
                     if (portName.size() == 0) {
                         portBox->setCurrentIndex(1);
                         this->portName = this->target->component->AnalogPortList[i]->name;
                         this->portIsAnalog = true;
                     } else {
-                        if (this->portName == this->target->component->AnalogPortList[i]->name)
+                        if (this->portName == this->target->component->AnalogPortList[i]->name) {
                            portBox->setCurrentIndex(currentRow);
-                    }
-                    ++currentRow;
-                }
-            }
-             // not needed with spike sources
-            /*portBox->addItem("EventPorts");
-            ind = portBox->model()->index(currentRow,0);
-            portBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
-            for (int i = 0; i < this->target->component->EventPortList.size(); ++i) {
-                if (this->target->component->EventPortList[i]->mode == EventRecvPort) {
-                    portBox->addItem(this->target->component->EventPortList[i]->name, qVariantFromValue((void *) this->target->component->EventPortList[i]));
-                    if (!(portBox->currentIndex() == 1)) {
-                        if (port==NULL) {
-                            portBox->setCurrentIndex(2);
-                            this->port = this->target->component->EventPortList[i];
-                        } else {
-                            if (this->port == this->target->component->EventPortList[i])
-                               portBox->setCurrentIndex(currentRow+1);
                         }
                     }
                     ++currentRow;
                 }
-            }*/
+            }
+
         } else {
             portBox->setDisabled(true);
         }
@@ -690,8 +758,13 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
             type->addItem(exptInLookup::toString(arrayTimevarying), (int) arrayTimevarying); if (this->inType == arrayTimevarying) type->setCurrentIndex(3);
             type->addItem(exptInLookup::toString(external), (int) external); if (this->inType == external) type->setCurrentIndex(4);
             // spike source only for explicit spike list
-            if (!this->portIsAnalog)
-                type->addItem(exptInLookup::toString(spikeList), (int) spikeList); if (this->inType == spikeList) type->setCurrentIndex(5);
+            if (!this->portIsAnalog) {
+                type->addItem(exptInLookup::toString(spikeList), (int) spikeList);
+            }
+            // Fixme - old code was ambiguous. This is what it really meant, but could have mean this to go inside if (!portIsAnalog), above.
+            if (this->inType == spikeList) {
+                type->setCurrentIndex(5);
+            }
             QObject ::connect(type, SIGNAL(currentIndexChanged(int)), handler, SLOT(setInputType(int)));
             frameLay->addWidget(type);
 
@@ -701,14 +774,28 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 QComboBox * dist = new QComboBox;
                 dist->addItem("Regular");
                 dist->addItem("Poisson");
-                if (rateDistribution == Regular)
+                if (rateDistribution == Regular) {
                     dist->setCurrentIndex(0);
-                if (rateDistribution == Poisson)
+                } else if (rateDistribution == Poisson) {
                     dist->setCurrentIndex(1);
+                } // else dist currentIndex at default value.
                 formLay->addRow("Rate distribution:", dist);
+
+                // A seed field
+                QSpinBox * seedspin = new QSpinBox;
+                seedspin->setMinimum(0);
+                seedspin->setMaximum(std::numeric_limits<int>::max());
+                seedspin->setValue ((int)this->rateSeed);
+                seedspin->setToolTip("An integer used to seed the random number generator for the given distribution. If set to 0, then the time is used to randomly seed the RNG.");
+                seedspin->setProperty("ptr", qVariantFromValue((void *) this));
+                formLay->addRow("Seed:", seedspin);
+
                 frameLay->addLayout(formLay);
+
                 dist->setProperty("ptr", qVariantFromValue((void *) this));
                 QObject ::connect(dist, SIGNAL(currentIndexChanged(int)), handler, SLOT(setInputRateDistributionType(int)));
+                QObject ::connect(seedspin, SIGNAL(valueChanged(int)), handler, SLOT(setInputRateSeed(int)));
+                QObject ::connect(seedspin, SIGNAL(editingFinished()), handler, SLOT(editingFinishedRateSeed()));
             }
 
             // extra type bits
@@ -722,10 +809,11 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                     spin->setValue(this->params[0]);
                 }
                 frameLay->addLayout(formLay);
-                if (this->portIsAnalog)
+                if (this->portIsAnalog) {
                     formLay->addRow(" Value:", spin);
-                else
+                } else {
                     formLay->addRow(" Rate:", spin);
+                }
                 spin->setProperty("ptr", qVariantFromValue((void *) this));
                 QObject ::connect(spin, SIGNAL(valueChanged(double)), handler, SLOT(setInputTypeData(double)));
             }
@@ -755,10 +843,11 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 // labels for header
                 QStringList headers;
                 headers.push_back("Time (ms)");
-                if (this->portIsAnalog)
+                if (this->portIsAnalog) {
                     headers.push_back("Value");
-                else
+                } else {
                     headers.push_back("Rate");
+                }
                 table->setHorizontalHeaderLabels(headers);
                 table->verticalHeader()->hide();
                 table->setMaximumWidth(220);
@@ -806,7 +895,6 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                     DBG() << "Warning: resizing this->params to 0 (exptInput::drawInput)";
                 }
                 this->params.resize(componentSize);
-                this->params.fill(0);
                 // add items from params
                 for (int i = 0; i < params.size(); ++i) {
                     QTableWidgetItem * item = new QTableWidgetItem;
@@ -834,7 +922,6 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 table->setMaximumWidth(220);
 
                 QObject::connect(table, SIGNAL(cellChanged(int,int)), handler, SLOT(setInputParams(int,int)));
-
             }
 
             if (this->inType == arrayTimevarying) {
@@ -855,8 +942,9 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                     if (params[i] == -1) {
                         index = params[i+1];
                         indexIndex = i;
-                        if (index == currentIndex)
+                        if (index == currentIndex) {
                             indexFound = true;
+                        }
                         continue;
                     }
                     if (index == currentIndex) {
@@ -867,9 +955,7 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                         item = new QTableWidgetItem;
                         item->setData(Qt::DisplayRole, params[i+1]);
                         table->setItem(qFloor((i+1-indexIndex-2.0)/2.0), (i+1-indexIndex-2)%2, item);
-
                     }
-
                 }
 
                 // if nothing found then add new
@@ -890,10 +976,11 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 // labels for header
                 QStringList headers;
                 headers.push_back("Time (ms)");
-                if (this->portIsAnalog)
+                if (this->portIsAnalog) {
                     headers.push_back("Value");
-                else
+                } else {
                     headers.push_back("Rate");
+                }
                 table->setHorizontalHeaderLabels(headers);
                 table->verticalHeader()->hide();
                 table->setMaximumWidth(220);
@@ -1000,9 +1087,7 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
                 size->setEnabled(false);
                 QObject ::connect(size, SIGNAL(valueChanged(int)), handler, SLOT(setInputExternalData()));
                 formlay->addRow("Size:", size);
-
             }
-
         }
 
         // accept all
@@ -1012,8 +1097,9 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
         accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
         accept->setProperty("ptr", qVariantFromValue((void *) this));
         nameAndPort->addWidget(accept);
-        if (!set)
+        if (!set) {
             accept->setDisabled(true);
+        }
         QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptInput()));
 
         // delete
@@ -1025,17 +1111,7 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
         nameAndPort->addWidget(del);
         QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delInput()));
 
-
-
     } else {
-
-        // check for badness NOT NEEDED ANYMORE
-        /*if (!data->isValidPointer(this->target)) {
-            qDebug() << "input refers to target that can't be found";
-            this->set = false;
-            this->edit = true;
-            return this->drawInput(data, handler);
-        }*/
 
         // new layout to contain name and port boxes
         QFrame * frame = new QFrame;
@@ -1064,33 +1140,28 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
             } else {
                 desc += "Spiking input with a constant spike rate of <b>" + QString::number(this->params[0]) + "</b>.";
             }
-        }
-        if (this->inType == timevarying) {
 
+        } else if (this->inType == timevarying) {
             TVGraph * drawable = new TVGraph(this->params);
             drawable->setMinimumWidth(200);
             drawable->setMinimumHeight(55);
-
             descAndEdit->addWidget(drawable,2,0,1,1);
 
-        }
-        if (this->inType == arrayTimevarying) {
+        } else if (this->inType == arrayTimevarying) {
             desc += "Up to the first 10 neuron inputs are shown.";
             TVGraph * drawable = new TVGraph(this->params);
             drawable->setMinimumWidth(200);
             drawable->setMinimumHeight(55);
-
             descAndEdit->addWidget(drawable,2,0,1,1);
-        }
 
-        if (this->inType == external) {
+        } else if (this->inType == external) {
 
             if (this->portIsAnalog)
                 desc += "External analog input from " + this->externalInput.host + " on port " + QString::number(this->externalInput.port) + " with timestep " + QString::number(this->externalInput.timestep);
             else
                 desc += "External spike rate input from"  + this->externalInput.host + " on port " + QString::number(this->externalInput.port) + " with timestep " + QString::number(this->externalInput.timestep);
 
-        }
+        } // else nothing happens?
 
         // description of input
         QLabel * description = new QLabel(desc);
@@ -1117,10 +1188,9 @@ QVBoxLayout * exptInput::drawInput(nl_rootdata * data, viewELExptPanelHandler *h
 
 // ################################### exptOut
 
-QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler *handler) {
-
+QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler *handler)
+{
     QVBoxLayout * layout = new QVBoxLayout;
-
     bool portsExist = false;
 
     QStringList elementList;
@@ -1145,39 +1215,41 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode== AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
-                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList.size(); ++p) {
-                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateType->component->EventPortList[p]->mode== EventSendPort) {
+                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->EventPortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->EventPortList[p]->mode== EventSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
-                if (portsExist)
-                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                if (portsExist) {
+                    elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
+                }
                 portsExist = false;
-                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList.size(); ++p) {
+                    if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode== AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
-                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList.size(); ++p) {
-                        if (data->populations[i]->projections[j]->synapses[k]->postsynapseType->component->EventPortList[p]->mode== EventSendPort) {
+                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->EventPortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->EventPortList[p]->mode== EventSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
-                if (portsExist)
-                    elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                if (portsExist) {
+                    elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
+                }
             }
         }
     }
@@ -1228,11 +1300,6 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
         QComboBox * portBox = new QComboBox;
         portBox->setMaximumWidth(90);
         if (set) {
-            // if broken NOT NEEDED ANYMORE
-            /*if (!data->isValidPointer(this->source)) {
-                set = false;
-                return this->drawOutput(data, handler);
-            }*/
             // add
             portBox->addItem("AnalogPorts");
             int currentRow = 0;
@@ -1241,7 +1308,8 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             ++currentRow;
              for (int i = 0; i < this->source->component->AnalogPortList.size(); ++i) {
                 if (this->source->component->AnalogPortList[i]->mode == AnalogSendPort) {
-                    portBox->addItem(this->source->component->AnalogPortList[i]->name, qVariantFromValue((void *) this->source->component->AnalogPortList[i]));
+                    portBox->addItem(this->source->component->AnalogPortList[i]->name,
+                                     qVariantFromValue((void *) this->source->component->AnalogPortList[i]));
                     if (portName.isEmpty()) {
                         portBox->setCurrentIndex(1);
                         this->portName = this->source->component->AnalogPortList[i]->name;
@@ -1258,7 +1326,8 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             portBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
             for (int i = 0; i < this->source->component->EventPortList.size(); ++i) {
                 if (this->source->component->EventPortList[i]->mode == EventSendPort) {
-                    portBox->addItem(this->source->component->EventPortList[i]->name, qVariantFromValue((void *) this->source->component->EventPortList[i]));
+                    portBox->addItem(this->source->component->EventPortList[i]->name,
+                                     qVariantFromValue((void *) this->source->component->EventPortList[i]));
                     if (!(portBox->currentIndex() == 1)) {
                         if (portName.isEmpty()) {
                             portBox->setCurrentIndex(2);
@@ -1322,8 +1391,9 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
         accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
         accept->setProperty("ptr", qVariantFromValue((void *) this));
         nameAndPort->addWidget(accept);
-        if (!set)
+        if (!set) {
             accept->setDisabled(true);
+        }
         QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptOutput()));
 
         // delete
@@ -1336,7 +1406,6 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
         QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delOutput()));
 
         if (set) {
-
             // isExternalCheckbox
             QCheckBox * externToggle = new QCheckBox;
             externToggle->setChecked(isExternal);
@@ -1356,8 +1425,9 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             command->setProperty("ptr", qVariantFromValue((void *) this));
             command->setProperty("type", "command");
             command->setText(externalOutput.commandline);
-            if (!isExternal)
+            if (!isExternal) {
                 command->setEnabled(false);
+            }
             QObject ::connect(command, SIGNAL(editingFinished()), handler, SLOT(setOutputExternalData()));
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), command, SLOT(setEnabled(bool)));
             formlay->addRow("Command:", command);
@@ -1367,8 +1437,9 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             host->setProperty("ptr", qVariantFromValue((void *) this));
             host->setProperty("type", "host");
             host->setText(externalOutput.host);
-            if (!isExternal)
+            if (!isExternal) {
                 host->setEnabled(false);
+            }
             host->setToolTip("The host computer IP address, or 127.0.0.1 if the external output is on the same computer as the experiment");
             QObject ::connect(host, SIGNAL(editingFinished()), handler, SLOT(setOutputExternalData()));
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), host, SLOT(setEnabled(bool)));
@@ -1381,8 +1452,9 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             port->setMinimum(49152);
             port->setMaximum(65535);
             port->setValue(externalOutput.port);
-            if (!isExternal)
+            if (!isExternal) {
                 port->setEnabled(false);
+            }
             QObject ::connect(port, SIGNAL(valueChanged(int)), handler, SLOT(setOutputExternalData()));
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), port, SLOT(setEnabled(bool)));
             formlay->addRow("Port:", port);
@@ -1395,26 +1467,15 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             timestep->setMaximum(1000);
             timestep->setToolTip("The timestep in ms of the external target (0.0 locks the timestep to the current experiment timestep)");
             timestep->setValue(externalOutput.timestep);
-            if (!isExternal)
+            if (!isExternal) {
                 timestep->setEnabled(false);
+            }
             QObject ::connect(timestep, SIGNAL(valueChanged(double)), handler, SLOT(setOutputExternalData()));
             QObject ::connect(externToggle, SIGNAL(toggled(bool)), timestep, SLOT(setEnabled(bool)));
             formlay->addRow("dt:", timestep);
-
         }
 
-
-
     } else {
-
-        // check for badness NOT NEEDED ANYMORE
-        /*
-        if (!data->isValidPointer(this->source)) {
-            qDebug() << "moo4";
-            this->set = false;
-            this->edit = true;
-            return this->drawOutput(data, handler);
-        }*/
 
         // new layout to contain name and port boxes
         QFrame * frame = new QFrame;
@@ -1433,21 +1494,23 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
         name->setFont(nameFont);
 
         QString inds;
-        if (indices == "all")
+        if (indices == "all") {
             inds = " logging all indices";
-        else if (indices.size() > 10)
+        } else if (indices.size() > 10) {
             inds = " logging selected indices";
-        else
+        } else {
             inds = " logging indices " + indices;
+        }
         QLabel * desc = new QLabel();
-        if (!isExternal)
+        if (!isExternal) {
             desc->setText("Output from component <b>" + this->source->getXMLName() + "</b> port <b>" + this->portName + "</b>" + inds);
-        else
-            desc->setText(QString("Output from component <b>") + this->source->getXMLName() + \
-                          QString("</b> port <b>") + this->portName + QString("</b>") + inds + \
-                          QString(" to external program at ") + this->externalOutput.host + \
-                          QString(" on port ") + QString::number(this->externalOutput.port) + \
-                    QString(" timestep ") + QString::number(externalOutput.timestep));
+        } else {
+            desc->setText(QString("Output from component <b>") + this->source->getXMLName() +
+                          QString("</b> port <b>") + this->portName + QString("</b>") + inds +
+                          QString(" to external program at ") + this->externalOutput.host +
+                          QString(" on port ") + QString::number(this->externalOutput.port) +
+                          QString(" timestep ") + QString::number(externalOutput.timestep));
+        }
         desc->setMaximumWidth(200);
         desc->setWordWrap(true);
         descAndEdit->addWidget(desc, 1,0,1,1);
@@ -1469,9 +1532,18 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
 
 // ################# LESIONS and CHANGES TO PARAMETERS
 
-QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler *handler) {
+exptLesion::exptLesion(exptLesion* lToCopy)
+{
+    this->proj = lToCopy->proj;
+    this->port = lToCopy->port;
+    this->exptParent = lToCopy->exptParent;
+    this->edit = false;
+    this->set = true;
+}
 
-    QVBoxLayout * layout = new QVBoxLayout;
+QVBoxLayout* exptLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* handler)
+{
+    QVBoxLayout* layout = new QVBoxLayout;
 
     QStringList elementList;
     for (int i = 0; i < data->populations.size(); ++i) {
@@ -1480,81 +1552,72 @@ QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler 
         }
     }
 
-     if (edit) {
+    if (edit) {
         // frame to add
-        QFrame * frame = new QFrame;
+        QFrame* frame = new QFrame;
         // setStyleSheet here if required.
         layout->addWidget(frame);
         frame->setMaximumWidth(380);
         frame->setContentsMargins(0,0,0,0);
 
-        frame->setLayout(new QHBoxLayout);
-        QHBoxLayout *frameLay = qobject_cast<QHBoxLayout *> (frame->layout());
+        frame->setLayout(new QVBoxLayout);
+        QVBoxLayout* frameLay = qobject_cast<QVBoxLayout*> (frame->layout());
         CHECK_CAST(frameLay)
 
         frameLay->setContentsMargins(0,0,0,0);
         frameLay->setSpacing(0);
 
         // add Component LineEdit
-        QLineEdit * lineEdit = new QLineEdit;
+        QLineEdit* lineEdit = new QLineEdit;
         if (set) {
-            // if broken NOT NEEDED ANYMORE
-            /*if (!data->isValidPointer(this->proj)) {
-                set = false;
-                return this->drawLesion(data, handler);
-            }*/
             lineEdit->setText(this->proj->getName());
         } else {
             lineEdit->setText("Type projection name");
         }
-        QCompleter *completer = new QCompleter(elementList, this);
+        QCompleter* completer = new QCompleter(elementList, this);
         completer->setCaseSensitivity(Qt::CaseInsensitive);
         lineEdit->setCompleter(completer);
-        lineEdit->setMaximumWidth(220);
-        lineEdit->setProperty("ptr", qVariantFromValue((void *) this));
+        lineEdit->setMaximumWidth(380);
+        lineEdit->setProperty("ptr", qVariantFromValue((void*)this));
         connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setLesionProjection()));
         frameLay->addWidget(lineEdit);
 
+        QHBoxLayout* buttonLayout = new QHBoxLayout;
+
         // accept all
-        QPushButton * accept = new QPushButton;
+        QPushButton* accept = new QPushButton;
         accept->setMaximumWidth(32);
         accept->setFlat(true);
         accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
-        accept->setProperty("ptr", qVariantFromValue((void *) this));
-        frameLay->addWidget(accept);
-        if (!set)
+        accept->setProperty("ptr", qVariantFromValue((void*)this));
+        buttonLayout->addWidget(accept);
+        if (!set) {
             accept->setDisabled(true);
+        }
         QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptLesion()));
 
         // delete
-        QPushButton * del = new QPushButton;
+        QPushButton* del = new QPushButton;
         del->setMaximumWidth(32);
         del->setFlat(true);
         del->setIcon(QIcon(":/icons/toolbar/delShad.png"));
-        del->setProperty("ptr", qVariantFromValue((void *) this));
-        frameLay->addWidget(del);
+        del->setProperty("ptr", qVariantFromValue((void*)this));
+        buttonLayout->addWidget(del);
         QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delLesion()));
 
+        frameLay->addLayout(buttonLayout);
 
     } else {
 
-         // check for badness NOT NEEDED ANYMORE
-         /*
-         if (!data->isValidPointer(this->proj)) {
-             this->set = false;
-             this->edit = true;
-             return this->drawLesion(data, handler);
-         }*/
-
         // new layout to contain name and port boxes
-        QFrame * frame = new QFrame;
+        QFrame* frame = new QFrame;
         frame->setStyleSheet("background-color :rgba(255,255,255,255)");
         layout->addWidget(frame);
 
-        QHBoxLayout * descAndEdit = new QHBoxLayout;
+        QHBoxLayout* descAndEdit = new QHBoxLayout;
         frame->setLayout(descAndEdit);
 
-        QLabel * name = new QLabel("Lesion projection from <b>" + this->proj->getName() + "</b>");
+        QLabel* name = new QLabel("Lesion projection from <b>" + this->proj->getName() + "</b>");
         name->setMaximumWidth(200);
         name->setWordWrap(true);
         descAndEdit->addWidget(name);
@@ -1562,11 +1625,11 @@ QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler 
         name->setFont(descFont);
 
         // edit button
-        QPushButton * edit = new QPushButton;
+        QPushButton* edit = new QPushButton;
         edit->setMaximumWidth(32);
         edit->setFlat(true);
         edit->setIcon(QIcon(":/icons/toolbar/edit.png"));
-        edit->setProperty("ptr", qVariantFromValue((void *) this));
+        edit->setProperty("ptr", qVariantFromValue((void*)this));
         descAndEdit->addWidget(edit);
         QObject::connect(edit, SIGNAL(clicked()), handler, SLOT(editLesion()));
     }
@@ -1574,8 +1637,400 @@ QVBoxLayout * exptLesion::drawLesion(nl_rootdata * data, viewELExptPanelHandler 
     return layout;
 }
 
-QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanelHandler *handler) {
+void exptLesion::readXML(QXmlStreamReader* reader, projectObject* data)
+{
+    QString srcName;
+    QString dstName;
 
+    this->proj.clear();
+
+    if (reader->attributes().hasAttribute("src_population")) {
+        srcName = reader->attributes().value("src_population").toString();
+    } else {
+        SCUtilities::storeError ("Error in Experiment Lesion - missing src_population tag");
+    }
+    if (reader->attributes().hasAttribute("dst_population")) {
+        dstName = reader->attributes().value("dst_population").toString();
+    } else {
+        SCUtilities::storeError ("Error in Experiment Lesion - missing dst_population tag");
+    }
+
+    // find projection
+    for (int i = 0; i < data->network.size(); ++i) {
+        for (int j = 0; j < data->network[i]->projections.size(); ++j) {
+            if (data->network[i]->projections[j]->source->neuronType->getXMLName() == srcName
+                && data->network[i]->projections[j]->destination->neuronType->getXMLName() == dstName) {
+                this->proj = data->network[i]->projections[j];
+            }
+        }
+    }
+
+    if (this->proj == NULL) {
+        SCUtilities::storeError ("Error in Experiment Lesion - references missing projection");
+    }
+
+    this->set = true;
+    this->edit = false;
+}
+
+void exptLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
+{
+    if (!this->set || this->edit) {
+        return;
+    }
+    xmlOut->writeEmptyElement("Lesion");
+    xmlOut->writeAttribute("src_population",this->proj->source->neuronType->getXMLName());
+    xmlOut->writeAttribute("dst_population",this->proj->destination->neuronType->getXMLName());
+}
+
+void
+exptLesion::setAssocGenericInputs (void)
+{
+    if (!this->set) {
+        DBG() << "proj not set, returning.";
+        return;
+    }
+
+    if (!this->assocGenericInputs.isEmpty()) {
+        DBG() << "Already got the generic inputs, returning.";
+        return;
+    }
+
+    QString srcPopName = this->proj->source->getName();
+    for (int k = 0; k < this->proj->synapses.size(); ++k) {
+
+        // Find inputs from the weight update and postsynapses on this synapse:
+        for (int l = 0; l < this->proj->synapses[k]->weightUpdateCmpt->inputs.size(); ++l) {
+
+            // If the generic input's name is like:
+            // srcPopName:(anything) TO synName weight_update:(anything)
+            // Then ignore it (it's internal to the projection). Use regexp for the matching:
+            QString giName = this->proj->synapses[k]->weightUpdateCmpt->inputs[l]->getName();
+            QString synWUName = this->proj->synapses[k]->getWeightUpdateName();
+            QString pat = "^" + srcPopName + ":.* TO " + synWUName + ":.*$";
+            QRegularExpression r(pat);
+            QRegularExpressionMatch match = r.match(giName);
+
+            if (!match.hasMatch()) {
+                DBG() << "Adding weightupdate assoc GI lesion " << giName
+                      << " for synapse WU name " << synWUName << " source " << srcPopName;
+                QSharedPointer<genericInput> gi = this->proj->synapses[k]->weightUpdateCmpt->inputs[l];
+                exptGenericInputLesion* gil = new exptGenericInputLesion(gi);
+                this->assocGenericInputs.push_back (gil);
+                this->exptParent->gilesions.push_back (gil);
+            }
+        }
+
+        for (int l = 0; l < this->proj->synapses[k]->postSynapseCmpt->inputs.size(); ++l) {
+
+            // If generic input's name is like:
+            // synName weight_update:(anything) TO synName postsynapse:(anything)
+            // Then ignore it,
+            QString giName = this->proj->synapses[k]->postSynapseCmpt->inputs[l]->getName();
+            QString synWUName = this->proj->synapses[k]->getWeightUpdateName();
+            QString synPSName = this->proj->synapses[k]->getPostSynapseName();
+            QString pat = "^" + synWUName + ":.* TO " + synPSName + ":.*$";
+            QRegularExpression r(pat);
+            QRegularExpressionMatch match = r.match(giName);
+
+            if (!match.hasMatch()) {
+                DBG() << "Adding postsynapse assoc GI lesion " << giName
+                      << " for synapsePS name " << synPSName << " source " << srcPopName;
+
+                QSharedPointer<genericInput> gi = this->proj->synapses[k]->postSynapseCmpt->inputs[l];
+                exptGenericInputLesion* gil = new exptGenericInputLesion(gi);
+                this->assocGenericInputs.push_back (gil);
+                this->exptParent->gilesions.push_back (gil);
+            }
+        }
+    }
+}
+
+// ############# Generic input lesion
+
+exptGenericInputLesion::exptGenericInputLesion (void)
+{
+    this->edit = true;
+    this->set = false;
+}
+
+exptGenericInputLesion::exptGenericInputLesion (exptGenericInputLesion* lToCopy)
+{
+    this->gi = lToCopy->gi;
+    this->edit = false;
+    this->set = true;
+}
+
+exptGenericInputLesion::exptGenericInputLesion (QSharedPointer<genericInput> g)
+{
+    this->gi = g;
+    this->edit = false;
+    this->set = true;
+}
+
+void
+exptGenericInputLesion::readXML (QXmlStreamReader* reader, projectObject* data)
+{
+    QString src("");
+    QString src_port("");
+    QString dst("");
+    QString dst_port("");
+
+    this->gi.clear();
+
+    if (reader->attributes().hasAttribute("src")) {
+        src = reader->attributes().value("src").toString();
+    } else {
+        SCUtilities::storeError ("Error in Experiment GenericInputLesion - missing src tag");
+    }
+
+    if (reader->attributes().hasAttribute("dst")) {
+        dst = reader->attributes().value("dst").toString();
+    } else {
+        SCUtilities::storeError ("Error in Experiment GenericInputLesion - missing dst tag");
+    }
+
+    if (reader->attributes().hasAttribute("src_port")) {
+        src_port = reader->attributes().value("src_port").toString();
+    } else {
+        SCUtilities::storeError ("Error in Experiment GenericInputLesion - missing src_port tag");
+    }
+
+    if (reader->attributes().hasAttribute("dst_port")) {
+        dst_port = reader->attributes().value("dst_port").toString();
+    } else {
+        SCUtilities::storeError ("Error in Experiment GenericInputLesion - missing dst_port tag");
+    }
+
+    // find generic input
+    bool found = false;
+
+    // This is each population
+    for (int i = 0; i < data->network.size() && !found; ++i) {
+
+        // Input could be in the neuron of this population.
+        QSharedPointer<population> pop = qSharedPointerDynamicCast<population>(data->network[i]);
+        if (pop->name == dst) { // pop->name is really the name of the Neuron element inside the Population. The Input is inside the Neuron.
+            // Correct destination for our genericInput, now search for an input in here.
+            for (int j = 0; j < pop->neuronType->inputs.size() && !found; ++j) {
+                if (pop->neuronType->inputs[j]->srcCmpt->getXMLName() == src
+                    && pop->neuronType->inputs[j]->srcPort == src_port
+                    && pop->neuronType->inputs[j]->dstPort == dst_port) {
+                    // Population (neuron) match
+                    this->gi = pop->neuronType->inputs[j];
+                    found = true;
+                }
+            }
+        }
+
+        // or it could be in one of the projections (i.e. within a synapse):
+        for (int j = 0; j < pop->projections.size() && !found; ++j) {
+            // For each synapse in projections, test for weightupdate and postsynapse matching name:
+            for (int k = 0; k < pop->projections[j]->synapses.size() && !found; ++k) {
+                // Check weight updates:
+                for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size() && !found; ++l) {
+                    if (pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->srcCmpt->getXMLName() == src
+                        && pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->srcPort == src_port
+                        && pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->dstPort == dst_port
+                        && pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->dstCmpt->getXMLName() == dst) {
+                        // Weightupdate match
+                        this->gi = pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l];
+                        found = true;
+                    }
+                }
+                // Check postsynapses:
+                for (int l = 0; l < pop->projections[j]->synapses[k]->postSynapseCmpt->inputs.size() && !found; ++l) {
+                    if (pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->srcCmpt->getXMLName() == src
+                        && pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->srcPort == src_port
+                        && pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->dstPort == dst_port
+                        && pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->dstCmpt->getXMLName() == dst) {
+                        // Postsynapse match
+                        this->gi = pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l];
+                        found = true;
+                    }
+                }
+            }
+        }
+    }
+
+    if (!found) {
+        SCUtilities::storeError ("Error in Experiment Lesion - references a non-existent genericinput");
+    }
+
+    this->set = true;
+    this->edit = false;
+}
+
+QVBoxLayout*
+exptGenericInputLesion::drawLesionEditMode (const QStringList& elementList,
+                                            QVBoxLayout* layout,
+                                            viewELExptPanelHandler* handler)
+{
+    // frame to add
+    QFrame* frame = new QFrame;
+    // setStyleSheet here if required.
+    layout->addWidget(frame);
+    frame->setMaximumWidth(380);
+    frame->setContentsMargins(0,0,0,0);
+
+    frame->setLayout(new QVBoxLayout);
+    QVBoxLayout* frameLay = qobject_cast<QVBoxLayout*> (frame->layout());
+    CHECK_CAST(frameLay);
+
+    frameLay->setContentsMargins(0,0,0,0);
+    frameLay->setSpacing(0);
+
+    // add Component LineEdit
+    QLineEdit* lineEdit = new QLineEdit;
+    if (set) {
+        lineEdit->setText(this->gi->getName());
+    } else {
+        lineEdit->setText("Type connection name");
+    }
+    QCompleter* completer = new QCompleter(elementList, this);
+    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    lineEdit->setCompleter(completer);
+    lineEdit->setMaximumWidth(380);
+    lineEdit->setProperty("ptr", qVariantFromValue((void*)this));
+    connect(lineEdit, SIGNAL(editingFinished()), handler, SLOT(setGILesion()));
+    frameLay->addWidget(lineEdit);
+
+    QHBoxLayout* buttonLayout = new QHBoxLayout;
+
+    // accept all
+    QPushButton* accept = new QPushButton;
+    accept->setMaximumWidth(32);
+    accept->setFlat(true);
+    accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
+    accept->setProperty("ptr", qVariantFromValue((void*)this));
+    buttonLayout->addWidget(accept);
+    if (!set) {
+        accept->setDisabled(true);
+    }
+    QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptGILesion()));
+
+    // delete
+    QPushButton* del = new QPushButton;
+    del->setMaximumWidth(32);
+    del->setFlat(true);
+    del->setIcon(QIcon(":/icons/toolbar/delShad.png"));
+    del->setProperty("ptr", qVariantFromValue((void*)this));
+    buttonLayout->addWidget(del);
+    QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delGILesion()));
+
+    frameLay->addLayout(buttonLayout);
+
+    return layout;
+}
+
+QVBoxLayout*
+exptGenericInputLesion::drawLesionViewMode (QVBoxLayout* layout, viewELExptPanelHandler* handler)
+{
+    // new layout to contain name and port boxes
+    QFrame* frame = new QFrame;
+    frame->setStyleSheet("background-color :rgba(255,255,255,255)");
+    layout->addWidget(frame);
+
+    QHBoxLayout* descAndEdit = new QHBoxLayout;
+    frame->setLayout(descAndEdit);
+
+    QLabel* name = new QLabel("Lesion genericinput from <b>" + this->gi->getName() + "</b>");
+    name->setMaximumWidth(200);
+    name->setWordWrap(true);
+    descAndEdit->addWidget(name);
+    QFont descFont("Helvetica [Cronyx]", 8);
+    name->setFont(descFont);
+
+    // edit button
+    QPushButton* edit = new QPushButton;
+    edit->setMaximumWidth(32);
+    edit->setFlat(true);
+    edit->setIcon(QIcon(":/icons/toolbar/edit.png"));
+    edit->setProperty("ptr", qVariantFromValue((void*)this));
+    descAndEdit->addWidget(edit);
+    QObject::connect(edit, SIGNAL(clicked()), handler, SLOT(editGILesion()));
+
+    return layout;
+}
+
+QVBoxLayout*
+exptGenericInputLesion::drawLesion(nl_rootdata* data, viewELExptPanelHandler* handler)
+{
+    QVBoxLayout* layout = new QVBoxLayout;
+
+    if (edit) {
+        // If in edit mode, build the elementList of available generic inputs.
+        QStringList elementList;
+        // data->populations is an instance of: QVector<QSharedPointer<population> >
+        for (int i = 0; i < data->populations.size(); ++i) {
+            // First extract dsts from populations themselves:
+            QSharedPointer<population> pop = data->populations[i];
+            for (int j = 0; j < pop->neuronType->inputs.size(); ++j) { // or ->outputs
+                DBG() << "Candidate genericInput, contained in Population dst=" << pop->name
+                      << " with src = " << pop->neuronType->inputs[j]->srcCmpt->component->name
+                      << ", src_port = " << pop->neuronType->inputs[j]->srcPort
+                      << ", dst_port = " << pop->neuronType->inputs[j]->dstPort;
+                elementList <<  pop->neuronType->inputs[j]->getName();
+            }
+
+            // Then go through the projections contained within:
+            for (int j = 0; j < pop->projections.size(); ++j) {
+                // For each synapse in projections, test for weightupdate and postsynapse containing inputs
+                for (int k = 0; k < pop->projections[j]->synapses.size(); ++k) {
+                    // Find inputs from the weight update and postsynapses on this synapse:
+                    for (int l = 0; l < pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs.size(); ++l) {
+                        DBG() << "Candidate weightupdate genericInput: "
+                              << pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->getName();
+                        elementList << pop->projections[j]->synapses[k]->weightUpdateCmpt->inputs[l]->getName();
+                    }
+                    for (int l = 0; l < pop->projections[j]->synapses[k]->postSynapseCmpt->inputs.size(); ++l) {
+                        DBG() << "Candidate postsynapse genericInput: "
+                              << pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->getName();
+                        elementList << pop->projections[j]->synapses[k]->postSynapseCmpt->inputs[l]->getName();
+                    }
+                }
+            }
+        }
+        layout = this->drawLesionEditMode (elementList, layout, handler);
+
+    } else { // !edit
+        layout = this->drawLesionViewMode (layout, handler);
+    }
+
+    return layout;
+}
+
+void
+exptGenericInputLesion::writeXML(QXmlStreamWriter* xmlOut, projectObject*)
+{
+    if (!this->set || this->edit) {
+        return;
+    }
+    xmlOut->writeEmptyElement("GenericInputLesion");
+
+    // Add src and src_port attributes:
+    QSharedPointer<systemObject> s = this->gi->source;
+    if (s->type == populationObject) {
+        // Input should be in the neuron of this population.
+        QSharedPointer <population> pop = qSharedPointerDynamicCast<population>(s);
+        xmlOut->writeAttribute("src", pop->name);
+    } else if (s->type == synapseObject) {
+        xmlOut->writeAttribute("src", qSharedPointerDynamicCast<genericInput>(s)->srcCmpt->component->name);
+    } else {
+        DBG() << "Unknown systemObject type " << s->type;
+        xmlOut->writeAttribute("src", "unknown");
+    }
+    xmlOut->writeAttribute("src_port", this->gi->srcPort);
+
+    // This shouyld be it for destination:
+    xmlOut->writeAttribute("dst", this->gi->dstCmpt->getXMLName());
+    xmlOut->writeAttribute("dst_port", this->gi->dstPort);
+}
+
+// ############## exptChangeProp
+
+QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanelHandler *handler)
+{
     QVBoxLayout * layout = new QVBoxLayout;
 
     QStringList elementList;
@@ -1583,13 +2038,13 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
         elementList << data->populations[i]->neuronType->getXMLName();
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
-                elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                elementList << data->populations[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
+                elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
             }
         }
     }
 
-     if (edit) {
+    if (this->edit) {
         // frame to add
         QFrame * frame = new QFrame;
         // Setting of stylesheet removed here.
@@ -1618,11 +2073,6 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
         // add Component LineEdit
         QLineEdit * lineEdit = new QLineEdit;
         if (set) {
-            // if broken NOT NEEDED ANYMORE
-            /*if (!data->isValidPointer(this->component)) {
-                set = false;
-                return this->drawChangeProp(data, handler);
-            }*/
             lineEdit->setText(this->component->getXMLName());
         } else {
             lineEdit->setText("Type component name");
@@ -1637,11 +2087,8 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
 
         // add drop down list for par selection
         if (set) {
-
             QComboBox * parList = new QComboBox;
-
             int counter = 0;
-
             for (int i = 0; i < component->ParameterList.size(); ++i) {
                 parList->addItem(component->ParameterList[i]->name, qVariantFromValue((void *) component->ParameterList[i]));
                 if (this->par->name == component->ParameterList[i]->name) {
@@ -1659,12 +2106,10 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
             frameLay->addWidget(parList);
             parList->setProperty("ptr", qVariantFromValue((void *) this));
             connect(parList, SIGNAL(currentIndexChanged(QString)), handler, SLOT(setChangeProp(QString)));
-
         }
 
         // par options:
         if (set) {
-
             QFormLayout * parLay = new QFormLayout;
             frameLay->addLayout(parLay);
 
@@ -1676,7 +2121,8 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
 
             switch (currPar->currType) {
             case Undefined:
-                {QHBoxLayout * buttons = new QHBoxLayout;
+            {
+                QHBoxLayout * buttons = new QHBoxLayout;
                 buttons->setSpacing(0);
 
                 buttons->addStretch();
@@ -1726,15 +2172,11 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                 connect(currButton, SIGNAL(clicked()), data, SLOT(updatePar()));
                 connect(currButton, SIGNAL(clicked()), handler, SLOT(redraw()));
 
-
                 parLay->addRow(name, buttons);
-                //parLay->itemAt(parLay->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type",type + parType);
-
-                }
                 break;
-
+            }
             case FixedValue:
-                {
+            {
                 QHBoxLayout * buttons = new QHBoxLayout;
                 buttons->setSpacing(0);
 
@@ -1767,17 +2209,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                 connect(goBack, SIGNAL(clicked()), handler, SLOT(redraw()));
 
                 parLay->addRow(name, buttons);
-                //parLay->itemAt(parLay->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type",type + parType);
 
                 connect(parSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
-                //connect(parSpin, SIGNAL(valueChanged(double)), handler, SLOT (redraw(double)));
-
-                }
                 break;
-
-
+            }
             case Statistical:
-                {
+            {
                 QHBoxLayout * buttons = new QHBoxLayout;
                 buttons->setSpacing(0);
 
@@ -1798,14 +2235,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
 
                 // now draw the spinboxes for the different types:
                 switch (int(round(currPar->value[0]))) {
-
                 case 0:
                     // no distribution, no spinboxes
                     break;
-
                 case 1:
-                    // uniform distribution - min and max spinboxes
                 {
+                    // uniform distribution - min and max spinboxes
                     buttons->addStretch();
                     buttons->addWidget(new QLabel(">"));
                     QDoubleSpinBox *parSpin = new QDoubleSpinBox;
@@ -1837,12 +2272,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                     parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
                     connect(parSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
                     //connect(parSpin, SIGNAL(valueChanged(double)), handler, SLOT (redraw(double)));
-                    buttons->addWidget(parSpin);}
+                    buttons->addWidget(parSpin);
                     break;
-
+                }
                 case 2:
-                    // normal distribution - mean and SD spinboxes
                 {
+                    // normal distribution - mean and SD spinboxes
                     buttons->addStretch();
                     QLabel * label = new QLabel("x");
                     label->setToolTip("mean value");
@@ -1877,9 +2312,10 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                     parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
                     connect(parSpin, SIGNAL(editingFinished()), data, SLOT (updatePar()));
                     //connect(parSpin, SIGNAL(valueChanged(double)), handler, SLOT (redraw(double)));
-                    buttons->addWidget(parSpin);}
+                    buttons->addWidget(parSpin);
                     break;
                 }
+                } // switch (int(round(currPar->value[0])))
 
                 // add seed box
                 QLabel * label = new QLabel("seed");
@@ -1912,14 +2348,11 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                 connect(goBack, SIGNAL(clicked()), data, SLOT(updatePar()));
                 connect(goBack, SIGNAL(clicked()), handler, SLOT (redraw()));
 
-
                 parLay->addRow(name, buttons);
-                //parLay->itemAt(parLay->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type",type + parType);
-                }
                 break;
-
+            }
             case ExplicitList:
-                {
+            {
                 QHBoxLayout * buttons = new QHBoxLayout;
                 buttons->setSpacing(0);
                 buttons->addStretch();
@@ -1953,15 +2386,11 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                 connect(goBack, SIGNAL(clicked()), data, SLOT(updatePar()));
                 connect(goBack, SIGNAL(clicked()), handler, SLOT (redraw()));
 
-
                 parLay->addRow(name, buttons);
-
-                //parLay->itemAt(parLay->rowCount()-1,QFormLayout::LabelRole)->widget()->setProperty("type",type + parType);
-                }
                 break;
             }
+            } // switch (currPar->currType)
         }
-
 
         // accept all
         QPushButton * accept = new QPushButton;
@@ -1970,8 +2399,9 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
         accept->setIcon(QIcon(":/icons/toolbar/acptShad.png"));
         accept->setProperty("ptr", qVariantFromValue((void *) this));
         componentLay->addWidget(accept);
-        if (!set)
+        if (!set) {
             accept->setDisabled(true);
+        }
         QObject::connect(accept, SIGNAL(clicked()), handler, SLOT(acceptChangedProp()));
 
         // delete
@@ -1983,15 +2413,7 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
         componentLay->addWidget(del);
         QObject::connect(del, SIGNAL(clicked()), handler, SLOT(delChangedProp()));
 
-
-    } else {
-
-         // check for badness NOT NEEDED ANYMORE
-         /*if (!data->isValidPointer(this->component)) {
-             this->set = false;
-             this->edit = true;
-             return this->drawChangeProp(data, handler);
-         }*/
+    } else { // !this->edit
 
         // new layout to contain name and port boxes
         QFrame * frame = new QFrame;
@@ -2033,12 +2455,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                     case 2:
                         labelText += "<b>Gaussian distributed random value with mean " + QString::number(origPar->value[1]) + " and standard deviation " + QString::number(origPar->value[2]) + "</b> to ";
                         break;
-                    }
+                    } // switch (qRound(origPar->value[0]))
                     break;
                 case ExplicitList:
                     labelText += "<b>explicit values</b> to ";
                     break;
-                }
+                } // switch (origPar->currType)
             }
         }
         for (int i = 0; i < component->StateVariableList.size(); ++i) {
@@ -2062,12 +2484,12 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
                     case 2:
                         labelText += "<b>Gaussian distributed random value with mean " + QString::number(origPar->value[1]) + " and standard deviation " + QString::number(origPar->value[2]) + "</b> to ";
                         break;
-                    }
+                    } // switch (qRound(origPar->value[0]))
                     break;
                 case ExplicitList:
                     labelText += "<b>explicit values</b> to ";
                     break;
-                }
+                } // switch (origPar->currType)
             }
         }
 
@@ -2118,8 +2540,8 @@ QVBoxLayout * exptChangeProp::drawChangeProp(nl_rootdata * data, viewELExptPanel
 
 // #################### WRITE OUT XML:
 
-void experiment::writeXML(QXmlStreamWriter * writer, projectObject *data) {
-
+void experiment::writeXML(QXmlStreamWriter * writer, projectObject *data)
+{
     // write out XML
     writer->writeStartDocument();
     writer->writeStartElement("SpineML");
@@ -2142,13 +2564,17 @@ void experiment::writeXML(QXmlStreamWriter * writer, projectObject *data) {
         lesions[i]->writeXML(writer, data);
     }
 
+    for (int i = 0; i < gilesions.size(); ++i) {
+        gilesions[i]->writeXML(writer, data);
+    }
+
     writer->writeEndElement(); // Model
 
     writer->writeStartElement("Simulation");
     writer->writeAttribute("duration", QString::number(this->setup.duration));
     writer->writeAttribute("preferred_simulator", this->setup.simType);
     switch (this->setup.solver) {
-     case ForwardEuler:
+    case ForwardEuler:
         writer->writeEmptyElement("EulerIntegration");
         writer->writeAttribute("dt", QString::number(this->setup.dt));
         break;
@@ -2175,13 +2601,15 @@ void experiment::writeXML(QXmlStreamWriter * writer, projectObject *data) {
 
 }
 
-void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
-
-    if (!data->isValidPointer(target))
+void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data)
+{
+    if (!data->isValidPointer(target)) {
         return;
+    }
 
-    if (!set || edit)
+    if (!set || edit) {
         return;
+    }
 
     switch (this->inType) {
     case constant:
@@ -2191,10 +2619,12 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("value", QString::number(float(this->params[0])));
         writer->writeAttribute("name", this->name);
         if (!this->portIsAnalog) {
-            if (this->rateDistribution == Regular)
+            if (this->rateDistribution == Regular) {
                 writer->writeAttribute("rate_based_input", "regular");
-            else if (this->rateDistribution == Poisson)
+            } else if (this->rateDistribution == Poisson) {
                 writer->writeAttribute("rate_based_input", "poisson");
+            }
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
         break;
     case timevarying:
@@ -2203,10 +2633,12 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("port", this->portName);
         writer->writeAttribute("name", this->name);
         if (!this->portIsAnalog) {
-            if (this->rateDistribution == Regular)
+            if (this->rateDistribution == Regular) {
                 writer->writeAttribute("rate_based_input", "regular");
-            else if (this->rateDistribution == Poisson)
+            } else if (this->rateDistribution == Poisson) {
                 writer->writeAttribute("rate_based_input", "poisson");
+            }
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
         for (int i = 0; i < this->params.size(); i+=2) {
             writer->writeEmptyElement("TimePointValue");
@@ -2222,17 +2654,20 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("port", this->portName);
         // construct string for array_value:
         QString array = "";
-        for (int i = 0; i < params.size(); ++i)
+        for (int i = 0; i < params.size(); ++i) {
             array += QString::number(params[i]) + ",";
+        }
         array.chop(1);
         writer->writeAttribute("array_size",QString::number(float(params.size())));
         writer->writeAttribute("array_value", array);
         writer->writeAttribute("name", this->name);
         if (!this->portIsAnalog) {
-            if (this->rateDistribution == Regular)
+            if (this->rateDistribution == Regular) {
                 writer->writeAttribute("rate_based_input", "regular");
-            else if (this->rateDistribution == Poisson)
+            } else if (this->rateDistribution == Poisson) {
                 writer->writeAttribute("rate_based_input", "poisson");
+            }
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
     }
         break;
@@ -2243,10 +2678,12 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("port", this->portName);
         writer->writeAttribute("name", this->name);
         if (!this->portIsAnalog) {
-            if (this->rateDistribution == Regular)
+            if (this->rateDistribution == Regular) {
                 writer->writeAttribute("rate_based_input", "regular");
-            else if (this->rateDistribution == Poisson)
+            } else if (this->rateDistribution == Poisson) {
                 writer->writeAttribute("rate_based_input", "poisson");
+            }
+            writer->writeAttribute("rate_seed", QString::number(this->rateSeed));
         }
         int index = -1;
         QString arrayT = "";
@@ -2273,17 +2710,15 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
                     arrayT = "";
                     index = params[n+1];
                 }
-            }
-            else
-            {
+            } else {
                 // construct string for arrays:
                 arrayT += QString::number(params[n]) + ",";
                 arrayV += QString::number(params[n+1]) + ",";
             }
         }
         writer->writeEndElement(); // TimeVaryingArrayInput
-    }
         break;
+    }
     case external:
     {
         writer->writeEmptyElement("ExternalInput");
@@ -2292,8 +2727,9 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("name", this->name);
         // construct string for array_value:
         QString array = "";
-        for (int i = 0; i < params.size(); ++i)
+        for (int i = 0; i < params.size(); ++i) {
             array += QString::number(params[i]) + ",";
+        }
         array.chop(1);
         writer->writeAttribute("tcp_port",QString::number(this->externalInput.port));
         if (this->target->owner->type == populationObject) {
@@ -2316,23 +2752,22 @@ void exptInput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
             }
         }
         writer->writeAttribute("timestep", QString::number(this->externalInput.timestep));
-    }
         break;
+    }
     case spikeList:
-
         break;
     }
-
-
 }
 
-void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
-
-    if (!data->isValidPointer(source))
+void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data)
+{
+    if (!data->isValidPointer(source)) {
         return;
+    }
 
-    if (!set || edit)
+    if (!set || edit) {
         return;
+    }
 
     // check indices
     if (indices != "all") {
@@ -2371,7 +2806,6 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
     writer->writeAttribute("start_time", QString::number(this->startTime)); // add later
     writer->writeAttribute("end_time", QString::number(this->endTime)); // add later
 
-
     if (indices != "all") {
         writer->writeAttribute("indices",indices);
     }
@@ -2382,27 +2816,17 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data) {
         writer->writeAttribute("host", this->externalOutput.host);
         writer->writeAttribute("timestep", QString::number(this->externalOutput.timestep));
     }
-
-}
-
-void exptLesion::writeXML(QXmlStreamWriter * xmlOut, projectObject*)
-{
-    if (!set || edit) {
-        return;
-    }
-
-    xmlOut->writeEmptyElement("Lesion");
-    xmlOut->writeAttribute("src_population",this->proj->source->neuronType->getXMLName());
-    xmlOut->writeAttribute("dst_population",this->proj->destination->neuronType->getXMLName());
 }
 
 void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
 
-    if (!data->isValidPointer(component))
+    if (!data->isValidPointer(component)) {
         return;
+    }
 
-    if (!set || edit)
+    if (!set || edit) {
         return;
+    }
 
     xmlOut->writeStartElement("Configuration");
     xmlOut->writeAttribute("target", this->component->getXMLName());
@@ -2427,17 +2851,17 @@ void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
               xmlOut->writeAttribute("minimum", QString::number(this->par->value[1]));
               xmlOut->writeAttribute("maximum", QString::number(this->par->value[2]));
               xmlOut->writeAttribute("seed", QString::number(this->par->value[3]));
-          }
               break;
+          }
           case 2:
           {
               xmlOut->writeEmptyElement("UL:NormalDistribution");
               xmlOut->writeAttribute("mean", QString::number(this->par->value[1]));
               xmlOut->writeAttribute("variance", QString::number(this->par->value[2]));
               xmlOut->writeAttribute("seed", QString::number(this->par->value[3]));
-           }
               break;
           }
+          } // switch
 
       }
       if (this->par->currType == ExplicitList) {
@@ -2452,14 +2876,12 @@ void exptChangeProp::writeXML(QXmlStreamWriter * xmlOut, projectObject * data) {
 
       xmlOut->writeEndElement(); // Property
       xmlOut->writeEndElement(); // Configuration
-
-
 }
 
 // ###################### READ IN XML:
 
-QSharedPointer <ComponentInstance> getTargetFromData(QString TargetName, projectObject * data) {
-
+QSharedPointer <ComponentInstance> getTargetFromData(QString TargetName, projectObject * data)
+{
     // find Synapse in model
     for (int i = 0; i < data->network.size(); ++i) {
         if (data->network[i]->neuronType->getXMLName() == TargetName) {
@@ -2468,12 +2890,12 @@ QSharedPointer <ComponentInstance> getTargetFromData(QString TargetName, project
         }
         for (int j = 0; j < data->network[i]->projections.size(); ++j) {
             for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-                if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == TargetName) {
-                    return data->network[i]->projections[j]->synapses[k]->weightUpdateType;
+                if (data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == TargetName) {
+                    return data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt;
                     break;
                 }
-                if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == TargetName) {
-                    return data->network[i]->projections[j]->synapses[k]->postsynapseType;
+                if (data->network[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == TargetName) {
+                    return data->network[i]->projections[j]->synapses[k]->postSynapseCmpt;
                     break;
                 }
             }
@@ -2484,27 +2906,27 @@ QSharedPointer <ComponentInstance> getTargetFromData(QString TargetName, project
     return null;
 }
 
-Port * findPortInComponent(QString portName, QSharedPointer <ComponentInstance> target) {
-
+Port * findPortInComponent(QString portName, QSharedPointer <ComponentInstance> target)
+{
     // find port in Synapse:
     for (int i = 0; i < target->component->AnalogPortList.size(); ++i) {
-        if (target->component->AnalogPortList[i]->name == portName && \
-                (target->component->AnalogPortList[i]->mode == AnalogRecvPort || \
-                 target->component->AnalogPortList[i]->mode == AnalogReducePort)) {
+        if (target->component->AnalogPortList[i]->name == portName
+            && (target->component->AnalogPortList[i]->mode == AnalogRecvPort
+                || target->component->AnalogPortList[i]->mode == AnalogReducePort)) {
             return target->component->AnalogPortList[i];
         }
     }
     for (int i = 0; i < target->component->EventPortList.size(); ++i) {
-        if (target->component->EventPortList[i]->name == portName && \
-                target->component->EventPortList[i]->mode == EventRecvPort) {
+        if (target->component->EventPortList[i]->name == portName
+            && target->component->EventPortList[i]->mode == EventRecvPort) {
             return target->component->EventPortList[i];
         }
     }
     return NULL;
 }
 
-Port * findOutputPortInComponent(QString portName, QSharedPointer <ComponentInstance> Synapse) {
-
+Port * findOutputPortInComponent(QString portName, QSharedPointer <ComponentInstance> Synapse)
+{
     // find port in Synapse:
     for (int i = 0; i < Synapse->component->AnalogPortList.size(); ++i) {
         if (Synapse->component->AnalogPortList[i]->name == portName && \
@@ -2519,21 +2941,22 @@ Port * findOutputPortInComponent(QString portName, QSharedPointer <ComponentInst
         }
     }
     return NULL;
-
 }
 
-void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
-
+void experiment::readXML(QXmlStreamReader * reader, projectObject * data)
+{
     while (reader->readNextStartElement()) {
 
         if (reader->name() == "SpineML") {
             while(reader->readNextStartElement()) {
                 if (reader->name() == "Experiment") {
                     // get name and description
-                    if (reader->attributes().hasAttribute("name"))
+                    if (reader->attributes().hasAttribute("name")) {
                         this->name = reader->attributes().value("name").toString();
-                    if (reader->attributes().hasAttribute("description"))
+                    }
+                    if (reader->attributes().hasAttribute("description")) {
                         this->description = reader->attributes().value("description").toString();
+                    }
 
                     // fetch experiment
                     while (reader->readNextStartElement()) {
@@ -2548,36 +2971,32 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
 
                                     QSharedPointer <ComponentInstance> component;
                                     QString SynapseName;
-                                    if (reader->attributes().hasAttribute("target"))
+                                    if (reader->attributes().hasAttribute("target")) {
                                         SynapseName = reader->attributes().value("target").toString();
-                                    else
-                                        {
+                                    } else {
                                         QSettings settings;
                                         int num_errs = settings.beginReadArray("errors");
                                         settings.endArray();
                                         settings.beginWriteArray("errors");
-                                            settings.setArrayIndex(num_errs + 1);
-                                            settings.setValue("errorText", "Error in Experiment '" + this->name + "'' file - Target field missing");
+                                        settings.setArrayIndex(num_errs + 1);
+                                        settings.setValue("errorText", "Error in Experiment '" + this->name + "'' file - Target field missing");
                                         settings.endArray();
-                                        } // ERROR - no target
+                                    } // ERROR - no target
 
                                     component = getTargetFromData(SynapseName, data);
 
-                                    if (component.isNull())
-                                    {
+                                    if (component.isNull()) {
                                         QSettings settings;
                                         int num_errs = settings.beginReadArray("errors");
                                         settings.endArray();
                                         settings.beginWriteArray("errors");
-                                            settings.setArrayIndex(num_errs + 1);
-                                            settings.setValue("errorText", "Error in Experiment '" + this->name + "'' - Experiment references missing target");
+                                        settings.setArrayIndex(num_errs + 1);
+                                        settings.setValue("errorText", "Error in Experiment '" + this->name + "'' - Experiment references missing target");
                                         settings.endArray();
                                     }
 
                                     while(reader->readNextStartElement()) {
-
                                         //cerr << reader->name().toString().toStdString() << " ##PROP#####\n";
-
                                         if (reader->name() == "Property") {
                                             exptChangeProp * chge = new exptChangeProp;
                                             chge->component = component;
@@ -2586,33 +3005,37 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
                                         } else {
                                             reader->skipCurrentElement();
                                         }
-
                                     }
                                     //cerr << reader->name().toString().toStdString() << " ##AFTERPROP#####\n";
-                                }
-
-                                else if (reader->name() == "Lesion") {
-                                    exptLesion * lesion = new exptLesion;
+                                } else if (reader->name() == "Lesion") {
+                                    exptLesion * lesion = new exptLesion(this);
                                     lesion->readXML(reader, data);
                                     this->lesions.push_back(lesion);
+                                    reader->readNextStartElement();
+                                } else if (reader->name() == "GenericInputLesion") {
+                                    exptGenericInputLesion * gilesion = new exptGenericInputLesion;
+                                    gilesion->readXML(reader, data);
+                                    this->gilesions.push_back(gilesion);
                                     reader->readNextStartElement();
                                 } else {
                                     reader->skipCurrentElement();
                                 }
-
                             }
                             //cerr << reader->name().toString().toStdString() << " ##AFTERMODEL#####\n";
+
                         } else if (reader->name() == "Simulation") {
 
-                            if (reader->attributes().hasAttribute("duration"))
+                            if (reader->attributes().hasAttribute("duration")) {
                                 this->setup.duration = reader->attributes().value("duration").toString().toFloat();
-                            else
-                                this->setup.duration = 1.0;
-                                // ERROR - no duration
-                            if (reader->attributes().hasAttribute("preferred_simulator"))
+                            } else {
+                                this->setup.duration = 1.0; // ERROR - no duration
+                            }
+
+                            if (reader->attributes().hasAttribute("preferred_simulator")) {
                                 this->setup.simType = reader->attributes().value("preferred_simulator").toString();
-                            else
+                            } else {
                                 this->setup.simType = "BRAHMS";
+                            }
 
                             while (reader->readNextStartElement()) {
 
@@ -2620,33 +3043,35 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
 
                                 if (reader->name() == "EulerIntegration") {
                                     this->setup.solver = ForwardEuler;
-                                    if (reader->attributes().hasAttribute("dt"))
+                                    if (reader->attributes().hasAttribute("dt")) {
                                         this->setup.dt = reader->attributes().value("dt").toString().toFloat();
-                                    else
-                                        this->setup.dt = 0.1f;
-                                        // ERROR - no dt
+                                    } else {
+                                        this->setup.dt = 0.1f; // ERROR - no dt
+                                    }
                                     reader->skipCurrentElement();
-                                }
-                                else if (reader->name() == "RungeKuttaIntegration") {
+
+                                } else if (reader->name() == "RungeKuttaIntegration") {
                                     this->setup.solver = RungeKutta;
-                                    if (reader->attributes().hasAttribute("dt"))
+                                    if (reader->attributes().hasAttribute("dt")) {
                                         this->setup.dt = reader->attributes().value("dt").toString().toFloat();
-                                    else
+                                    } else {
                                         this->setup.dt = 0.1f;
                                         // ERROR - no dt
-                                    if (reader->attributes().hasAttribute("order"))
+                                    }
+                                    if (reader->attributes().hasAttribute("order")) {
                                         this->setup.solverOrder = reader->attributes().value("order").toString().toFloat();
-                                    else
+                                    } else {
                                         this->setup.solverOrder = 2;
                                         // ERROR - no order
+                                    }
                                     reader->skipCurrentElement();
+
                                 } else {
                                     reader->skipCurrentElement();
                                     this->setup.solver = ForwardEuler;
                                     this->setup.dt = 0.1f;
                                     // ERROR - unknown integration type
                                 }
-
                             }
 
                         } else if (reader->name() == "ConstantInput") {
@@ -2686,52 +3111,42 @@ void experiment::readXML(QXmlStreamReader * reader, projectObject * data) {
                             reader->skipCurrentElement();
                         }
                     }
-                }
-                else
-                {
-                    {
-                        QSettings settings;
-                        int num_errs = settings.beginReadArray("errors");
-                        settings.endArray();
-                        settings.beginWriteArray("errors");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("errorText", "Error in Experiment '" + this->name + "'' - Experiment file badly malformed");
-                        settings.endArray();
-                    }
-                }
-            }
-        }
-        else
-        {
-            {
-                QSettings settings;
-                int num_errs = settings.beginReadArray("errors");
-                settings.endArray();
-                settings.beginWriteArray("errors");
+                } else {
+                    QSettings settings;
+                    int num_errs = settings.beginReadArray("errors");
+                    settings.endArray();
+                    settings.beginWriteArray("errors");
                     settings.setArrayIndex(num_errs + 1);
                     settings.setValue("errorText", "Error in Experiment '" + this->name + "'' - Experiment file badly malformed");
-                settings.endArray();
+                    settings.endArray();
+                }
             }
-        }
 
+        } else {
+            QSettings settings;
+            int num_errs = settings.beginReadArray("errors");
+            settings.endArray();
+            settings.beginWriteArray("errors");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment '" + this->name + "'' - Experiment file badly malformed");
+            settings.endArray();
+        }
     }
     this->editing = false;
-
 }
 
-void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
-
+void exptInput::readXML(QXmlStreamReader * reader, projectObject * data)
+{
     // get name
-    if (reader->attributes().hasAttribute("name"))
+    if (reader->attributes().hasAttribute("name")) {
         this->name = reader->attributes().value("name").toString();
-    else
-    {
+    } else {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'name' attribute missing");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Input - 'name' attribute missing");
         settings.endArray();
     }
 
@@ -2739,24 +3154,28 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
     QString rateDistributionString;
     if (reader->attributes().hasAttribute("rate_based_input")) {
         rateDistributionString = reader->attributes().value("rate_based_input").toString();
-        if (rateDistributionString == "regular")
+        if (rateDistributionString == "regular") {
             this->rateDistribution = Regular;
-        else if (rateDistributionString == "poisson")
+        } else if (rateDistributionString == "poisson") {
             this->rateDistribution = Poisson;
+        }
     }
+
+    if (reader->attributes().hasAttribute("rate_seed")) {
+        this->rateSeed = reader->attributes().value("rate_seed").toString().toInt();
+    } // else rateSeed should be 123 as set in a constructor
 
     // get Synapse name
     QString TargetName;
-    if (reader->attributes().hasAttribute("target"))
+    if (reader->attributes().hasAttribute("target")) {
         TargetName = reader->attributes().value("target").toString();
-    else
-    {
+    } else {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'target' attribute missing");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Input - 'target' attribute missing");
         settings.endArray();
     }
 
@@ -2764,37 +3183,33 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
     target = getTargetFromData(TargetName, data);
 
     // handle if not found
-    if (target == NULL)
-    {
+    if (target == NULL) {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Input - references missing target " + TargetName);
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Input - references missing target " + TargetName);
         settings.endArray();
     }
 
     // get port name
-    if (reader->attributes().hasAttribute("port"))
+    if (reader->attributes().hasAttribute("port")) {
         portName = reader->attributes().value("port").toString();
-    else
-    {
+    } else {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "XML error in Experiment Input - 'port' attribute missing");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Input - 'port' attribute missing");
         settings.endArray();
     }
 
     // find port in Synapse
     if (target != NULL) {
 
-        Port * port = NULL;
-
-        port = findPortInComponent(portName, this->target);
+        Port* port = findPortInComponent(portName, this->target);
 
         // if spike source
         if (this->target->owner->type == populationObject) {
@@ -2806,14 +3221,13 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
         }
 
         // handle if not found
-        if (port == NULL)
-        {
+        if (port == NULL) {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - references missing port " + portName);
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input - references missing port " + portName);
             settings.endArray();
         } else {
             portName = port->name;
@@ -2827,16 +3241,15 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
 
         // get value
         params.clear();
-        if (reader->attributes().hasAttribute("value"))
+        if (reader->attributes().hasAttribute("value")) {
             this->params.push_back(reader->attributes().value("value").toString().toFloat());
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'value' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input - 'value' attribute missing");
             settings.endArray();
         }
 
@@ -2850,36 +3263,33 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             if (reader->name() == "TimePointValue") {
 
                 // get time
-                if (reader->attributes().hasAttribute("time"))
-                {this->params.push_back(reader->attributes().value("time").toString().toFloat());}
-                else
-                {
+                if (reader->attributes().hasAttribute("time")) {
+                    this->params.push_back(reader->attributes().value("time").toString().toFloat());
+                } else {
                     QSettings settings;
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'time' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "Error in Experiment Input - 'time' attribute missing");
                     settings.endArray();
                 }
 
                 // get value
-                if (reader->attributes().hasAttribute("value"))
-                {this->params.push_back(reader->attributes().value("value").toString().toFloat());}
-                else
-                {
+                if (reader->attributes().hasAttribute("value")) {
+                    this->params.push_back(reader->attributes().value("value").toString().toFloat());
+                } else {
                     QSettings settings;
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'value' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "Error in Experiment Input - 'value' attribute missing");
                     settings.endArray();
                 }
 
                 reader->readNextStartElement();
             }
-
         }
 
     } else if (reader->name() == "ConstantArrayInput") {
@@ -2890,30 +3300,28 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
         params.clear();
 
         int array_size = 0;
-        if (reader->attributes().hasAttribute("array_size"))
+        if (reader->attributes().hasAttribute("array_size")) {
             array_size = reader->attributes().value("array_size").toString().toInt();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'array_size' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input - 'array_size' attribute missing");
             settings.endArray();
         }
 
         QString array;
-        if (reader->attributes().hasAttribute("array_value"))
+        if (reader->attributes().hasAttribute("array_value")) {
             array = reader->attributes().value("array_value").toString();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input -  missing array_value tag");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input -  missing array_value tag");
             settings.endArray();
         }
 
@@ -2923,21 +3331,19 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             params.push_back(arrayValues[i].toFloat());
         }
 
-        if ((int) params.size() != array_size)
-        {
+        if ((int) params.size() != array_size) {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Input -  time and value arrays different sizes");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input -  time and value arrays different sizes");
             settings.endArray();
         }
 
     } else if (reader->name() == "TimeVaryingArrayInput") {
 
         this->inType = arrayTimevarying;
-
         params.clear();
 
         while (reader->readNextStartElement()) {
@@ -2945,54 +3351,48 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             if (reader->name() == "TimePointArrayValue") {
 
                 // get index
-                if (reader->attributes().hasAttribute("index"))
-                {this->params.push_back(-1);
-                    this->params.push_back(reader->attributes().value("index").toString().toFloat());}
-                else
-                {
+                if (reader->attributes().hasAttribute("index")) {
+                    this->params.push_back(-1);
+                    this->params.push_back(reader->attributes().value("index").toString().toFloat());
+                } else {
                     QSettings settings;
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'index' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "Error in Experiment Input - 'index' attribute missing");
                     settings.endArray();
                 }
 
                 // get array_time
                 QString array_time_string;
-                if (reader->attributes().hasAttribute("array_time"))
+                if (reader->attributes().hasAttribute("array_time")) {
                     array_time_string = reader->attributes().value("array_time").toString();
-                else
-                {
+                } else {
                     QSettings settings;
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'array_time' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "Error in Experiment Input - 'array_time' attribute missing");
                     settings.endArray();
                 }
 
-
-
                 // get array_value
                 QString array_value_string;
-                if (reader->attributes().hasAttribute("array_value"))
+                if (reader->attributes().hasAttribute("array_value")) {
                     array_value_string = reader->attributes().value("array_value").toString();
-                else
-                {
+                } else {
                     QSettings settings;
                     int num_errs = settings.beginReadArray("errors");
                     settings.endArray();
                     settings.beginWriteArray("errors");
-                        settings.setArrayIndex(num_errs + 1);
-                        settings.setValue("errorText", "XML error in Experiment Input - 'array_value' attribute missing");
+                    settings.setArrayIndex(num_errs + 1);
+                    settings.setValue("errorText", "Error in Experiment Input - 'array_value' attribute missing");
                     settings.endArray();
                 }
 
                 // unpack
-
                 QStringList arrayTimes = array_time_string.split(",");
                 QStringList arrayValues = array_value_string.split(",");
 
@@ -3001,28 +3401,24 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
                     params.push_back(arrayValues[i].toFloat());
                 }
 
-
                 reader->skipCurrentElement();
             }
-
         }
 
     } else if (reader->name() == "ExternalInput") {
 
         this->inType = external;
-
         params.clear();
 
-        if (reader->attributes().hasAttribute("tcp_port"))
+        if (reader->attributes().hasAttribute("tcp_port")) {
             externalInput.port = reader->attributes().value("tcp_port").toString().toInt();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'tcp_port' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input - 'tcp_port' attribute missing");
             settings.endArray();
         }
 
@@ -3036,53 +3432,48 @@ void exptInput::readXML(QXmlStreamReader * reader, projectObject * data) {
             externalInput.timestep = reader->attributes().value("timestep").toString().toDouble();
         }
 
-        if (reader->attributes().hasAttribute("size"))
+        if (reader->attributes().hasAttribute("size")) {
             externalInput.size = reader->attributes().value("size").toString().toInt();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'size' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input - 'size' attribute missing");
             settings.endArray();
         }
 
-        if (reader->attributes().hasAttribute("command"))
+        if (reader->attributes().hasAttribute("command")) {
             externalInput.commandline = reader->attributes().value("command").toString();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Input - 'command' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Input - 'command' attribute missing");
             settings.endArray();
         }
 
+    } // else if (reader->name() == "SpikeList") {}
 
-    } else if (reader->name() == "SpikeList") {
-
-    }
     this->edit = false;
     this->set = true;
 }
 
-void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
-
+void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data)
+{
     // get output name
-    if (reader->attributes().hasAttribute("name"))
+    if (reader->attributes().hasAttribute("name")) {
         this->name = reader->attributes().value("name").toString();
-    else
-    {
+    } else {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Input -  missing name tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Input -  missing name tag");
         settings.endArray();
     }
 
@@ -3096,37 +3487,35 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Output -  missing target tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Output -  missing target tag");
         settings.endArray();
     }
 
     // find Synapse in model
     source = getTargetFromData(SynapseName, data);
 
-    if (source == NULL)
-    {
+    if (source == NULL) {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Output -  references missing target: " + SynapseName);
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Output -  references missing target: " + SynapseName);
         settings.endArray();
     }
 
     // get port name
     if (source != NULL) {
-        if (reader->attributes().hasAttribute("port"))
+        if (reader->attributes().hasAttribute("port")) {
             portName = reader->attributes().value("port").toString();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Output -  missing port tag");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Output -  missing port tag");
             settings.endArray();
         }
 
@@ -3134,14 +3523,13 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
         Port * port = NULL;
         port = findOutputPortInComponent(portName, this->source);
 
-        if (port == NULL)
-        {
+        if (port == NULL) {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Output -  references missing port " + portName);
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Output -  references missing port " + portName);
             settings.endArray();
         }
         if (port != NULL) {
@@ -3180,40 +3568,37 @@ void exptOutput::readXML(QXmlStreamReader * reader, projectObject * data) {
             externalOutput.timestep = reader->attributes().value("timestep").toString().toDouble();
         }
 
-        if (reader->attributes().hasAttribute("size"))
+        if (reader->attributes().hasAttribute("size")) {
             externalOutput.size = reader->attributes().value("size").toString().toInt();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Output - 'size' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Output - 'size' attribute missing");
             settings.endArray();
         }
 
-        if (reader->attributes().hasAttribute("command"))
+        if (reader->attributes().hasAttribute("command")) {
             externalOutput.commandline = reader->attributes().value("command").toString();
-        else
-        {
+        } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "XML error in Experiment Output - 'command' attribute missing");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Output - 'command' attribute missing");
             settings.endArray();
         }
     }
 
     this->edit = false;
     this->set = true;
-
 }
 
-void exptChangeProp::readXML(QXmlStreamReader * reader) {
-
+void exptChangeProp::readXML(QXmlStreamReader * reader)
+{
     if (reader->attributes().hasAttribute("alias")) {
         this->name = reader->attributes().value("alias").toString();
     }
@@ -3223,23 +3608,23 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
 
         // find associated par on component
         for (int i = 0; i < this->component->ParameterList.size(); ++i) {
-            if (this->component->ParameterList[i]->name == tempName)
+            if (this->component->ParameterList[i]->name == tempName) {
                 this->par = new ParameterInstance(this->component->ParameterList[i]);
+            }
         }
         // find associated par on component
         for (int i = 0; i < this->component->StateVariableList.size(); ++i) {
-            if (this->component->StateVariableList[i]->name == tempName)
+            if (this->component->StateVariableList[i]->name == tempName) {
                 this->par = new StateVariableInstance(this->component->StateVariableList[i]);
+            }
         }
-    }
-    else
-    {
+    } else {
         QSettings settings;
         int num_errs = settings.beginReadArray("errors");
         settings.endArray();
         settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Property Change - missing name tag");
+        settings.setArrayIndex(num_errs + 1);
+        settings.setValue("errorText", "Error in Experiment Property Change - missing name tag");
         settings.endArray();
     }
 
@@ -3250,101 +3635,99 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
         if (reader->name() == "FixedValue") {
             this->par->currType = FixedValue;
             this->par->value.resize(1);
-            if (reader->attributes().hasAttribute("value"))
+            if (reader->attributes().hasAttribute("value")) {
                 this->par->value[0] = reader->attributes().value("value").toString().toFloat();
-            else
-            {
+            } else {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
                 settings.endArray();
             }
             reader->readNextStartElement();
+
         } else if (reader->name() == "UniformDistribution") {
             this->par->currType = Statistical;
             this->par->value.resize(3);
             this->par->value[0] = 1;
-            if (reader->attributes().hasAttribute("minimum"))
+
+            if (reader->attributes().hasAttribute("minimum")) {
                 this->par->value[1] = reader->attributes().value("minimum").toString().toFloat();
-            else
-            {
+            } else {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing minimum tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing minimum tag");
                 settings.endArray();
             }
-            if (reader->attributes().hasAttribute("maximum"))
+
+            if (reader->attributes().hasAttribute("maximum")) {
                 this->par->value[2] = reader->attributes().value("maximum").toString().toFloat();
-            else
-            {
+            } else {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing maximum tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing maximum tag");
                 settings.endArray();
             }
-            if (reader->attributes().hasAttribute("seed"))
+            if (reader->attributes().hasAttribute("seed")) {
                 this->par->value[3] = reader->attributes().value("seed").toString().toFloat();
-            else
-            {
+            } else {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
                 settings.endArray();
             }
             reader->readNextStartElement();
+
         } else if (reader->name() == "NormalDistribution") {
             this->par->currType = Statistical;
             this->par->value.resize(3);
             this->par->value[0] = 2;
-            if (reader->attributes().hasAttribute("mean"))
+            if (reader->attributes().hasAttribute("mean")) {
                 this->par->value[1] = reader->attributes().value("mean").toString().toFloat();
-            else
-            {
+            } else {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing mean tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing mean tag");
                 settings.endArray();
             }
-            if (reader->attributes().hasAttribute("variance"))
+            if (reader->attributes().hasAttribute("variance")) {
                 this->par->value[2] = reader->attributes().value("variance").toString().toFloat();
-            else
-            {
+            } else {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing variance tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing variance tag");
                 settings.endArray();
             }
-            if (reader->attributes().hasAttribute("seed"))
+            if (reader->attributes().hasAttribute("seed")) {
                 this->par->value[3] = reader->attributes().value("seed").toString().toFloat();
-            else
-            {
+            } else {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "Error in Experiment Property Change - missing seed tag");
                 settings.endArray();
             }
             reader->readNextStartElement();
+
         } else if (reader->name() == "ValueList") {
             this->par->currType = ExplicitList;
             // clear lists as they have inherited the values at startup
@@ -3355,28 +3738,26 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
                 //cerr << reader->name().toString().toStdString() << " ##VALINST#####\n";
 
                 if (reader->name() == "Value") {
-                    if (reader->attributes().hasAttribute("value"))
+                    if (reader->attributes().hasAttribute("value")) {
                         this->par->value.push_back(reader->attributes().value("value").toString().toFloat());
-                    else
-                    {
+                    } else {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("errors");
                         settings.endArray();
                         settings.beginWriteArray("errors");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("errorText", "Error in Experiment Property Change - missing value tag");
                         settings.endArray();
                     }
-                    if (reader->attributes().hasAttribute("index"))
+                    if (reader->attributes().hasAttribute("index")) {
                         this->par->indices.push_back(reader->attributes().value("index").toString().toFloat());
-                    else
-                    {
+                    } else {
                         QSettings settings;
                         int num_errs = settings.beginReadArray("errors");
                         settings.endArray();
                         settings.beginWriteArray("errors");
-                            settings.setArrayIndex(num_errs + 1);
-                            settings.setValue("errorText", "Error in Experiment Property Change - missing index tag");
+                        settings.setArrayIndex(num_errs + 1);
+                        settings.setValue("errorText", "Error in Experiment Property Change - missing index tag");
                         settings.endArray();
                     }
                 }
@@ -3384,78 +3765,17 @@ void exptChangeProp::readXML(QXmlStreamReader * reader) {
             }
 
         } else {
-            {
-                QSettings settings;
-                int num_errs = settings.beginReadArray("errors");
-                settings.endArray();
-                settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText", "Error in Experiment Property Change - type of change not recognised");
-                settings.endArray();
-            }
-        }
-
-    }
-    this->set = true;
-    this->edit = false;
-
-}
-
-void exptLesion::readXML(QXmlStreamReader * reader, projectObject * data) {
-
-    QString srcName;
-    QString dstName;
-
-    this->proj.clear();
-
-    if (reader->attributes().hasAttribute("src_population"))
-        srcName = reader->attributes().value("src_population").toString();
-    else
-    {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Lesion - missing src_population tag");
-        settings.endArray();
-    }
-    if (reader->attributes().hasAttribute("dst_population"))
-        dstName = reader->attributes().value("dst_population").toString();
-    else
-    {
-        QSettings settings;
-        int num_errs = settings.beginReadArray("errors");
-        settings.endArray();
-        settings.beginWriteArray("errors");
-            settings.setArrayIndex(num_errs + 1);
-            settings.setValue("errorText", "Error in Experiment Lesion - missing dst_population tag");
-        settings.endArray();
-    }
-
-    // find projection
-    for (int i = 0; i < data->network.size(); ++i) {
-        for (int j = 0; j < data->network[i]->projections.size(); ++j) {
-            if (data->network[i]->projections[j]->source->neuronType->getXMLName() == srcName && data->network[i]->projections[j]->destination->neuronType->getXMLName() == dstName) {
-                this->proj = data->network[i]->projections[j];
-            }
-        }
-    }
-
-    if (this->proj == NULL) {
-        {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText", "Error in Experiment Lesion - references missing projection");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText", "Error in Experiment Property Change - type of change not recognised");
             settings.endArray();
         }
     }
     this->set = true;
     this->edit = false;
-
 }
 
 // ################# table delegate allowing numbers only
@@ -3473,18 +3793,21 @@ QWidget* NTableDelegate::createEditor(QWidget* parent,const QStyleOptionViewItem
     editor->setValidator(val);
     return editor;
 }
+
 void NTableDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
 {
     double value = index.model()->data(index,Qt::EditRole).toDouble();
     QLineEdit* line = static_cast<QLineEdit*>(editor);
     line->setText(QString().setNum(value));
 }
+
 void NTableDelegate::setModelData(QWidget* editor,QAbstractItemModel* model,const QModelIndex &index) const
 {
     QLineEdit* line = static_cast<QLineEdit*>(editor);
     QString value = line->text();
     model->setData(index,value);
 }
+
 void NTableDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &) const
 {
     editor->setGeometry(option.rect);
@@ -3492,28 +3815,27 @@ void NTableDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionVie
 
 // #################################### DRAWING timevarying graph
 
-TVGraph::TVGraph() {
-
+TVGraph::TVGraph()
+{
     QPalette palette(TVGraph::palette());
     palette.setColor(backgroundRole(), Qt::white);
     setPalette(palette);
-
 }
 
-TVGraph::TVGraph(QVector <float> vals) {
-
+TVGraph::TVGraph(QVector <float> vals)
+{
     QPalette palette(TVGraph::palette());
     palette.setColor(backgroundRole(), Qt::white);
     setPalette(palette);
     this->vals = vals;
-
 }
 
-TVGraph::~TVGraph() {}
+TVGraph::~TVGraph()
+{
+}
 
-void TVGraph::paintEvent(QPaintEvent *) {
-
-
+void TVGraph::paintEvent(QPaintEvent *)
+{
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
@@ -3564,9 +3886,10 @@ void TVGraph::paintEvent(QPaintEvent *) {
                 bool copy = false;
                 // move current index to new vector
                 for (int i = 0; i < vals.size(); i+=2) {
-                    if (vals[i] == -1 && copy) break;
-                    if (copy)
-                    {
+                    if (vals[i] == -1 && copy) {
+                        break;
+                    }
+                    if (copy) {
                         curr.push_back(vals[i]);
                         curr.push_back(vals[i+1]);
                     }
@@ -3575,7 +3898,10 @@ void TVGraph::paintEvent(QPaintEvent *) {
                     }
                 }
 
-                if (curr.size() == 0) {--col; continue;}
+                if (curr.size() == 0) {
+                    --col;
+                    continue;
+                }
 
                 painter.setPen(cols[col]);
 
@@ -3597,7 +3923,6 @@ void TVGraph::paintEvent(QPaintEvent *) {
             painter.drawText(QRectF(190,45,50,10),QString::number(maxTime));
             painter.drawText(QRectF(0,45,10,10),"0,0");
             painter.drawText(QRectF(80,45,30,10),"t(ms)");
-
 
         } else {
             // find extent of the time and value
@@ -3626,7 +3951,5 @@ void TVGraph::paintEvent(QPaintEvent *) {
             painter.drawText(QRectF(0,45,10,10),"0,0");
             painter.drawText(QRectF(80,45,30,10),"t(ms)");
         }
-
     }
-
 }

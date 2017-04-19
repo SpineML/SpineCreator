@@ -74,7 +74,7 @@ function [ data, count, t ] = load_sc_data (varargin)
         if isOctave
             % User! You're using octave and you have asked for XML reading of the
             % SpineML log metadata, so need to javaaddpath.
-            gotXerces = 1; % User! Change this to 1 when you're done!
+            gotXerces = 0; % User! Change this to 1 when you're done!
             if gotXerces == 0
                 display (['Calling this function with 1 arguments means ' ...
                           'it needs to read XML. For XML support  you need ' ...
@@ -147,11 +147,10 @@ function [ data, count, t ] = load_sc_data (varargin)
         [ data, count ] = fread (fid, [num_neurons, Inf], 'double=>double');
 
         % Construct time series in milliseconds.
-        t = [0 : dt : (dt*count)-dt];
+        t = [0 : dt : (dt*count/num_neurons)-dt];
 
         % Finally, close the file.
-        %rtn = fclose (fid);
-        rtn = 0;
+        rtn = fclose (fid);
         if rtn == -1
             display (['Warning: failed to close file ', file_path]);
         end

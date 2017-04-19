@@ -836,7 +836,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
 
         // set index
         connectionComboBox->disconnect(data);
-        connectionComboBox->setCurrentIndex(input->connectionType->getIndex());
+        connectionComboBox->setCurrentIndex(input->conn->getIndex());
         connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 
     }
@@ -1238,7 +1238,7 @@ void viewVZLayoutEditHandler::drawDeletables() {
             currConn = currSyn->connectionType;
         } else {
             QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (this->viewVZ->currObject);
-            currConn = currIn->connectionType;
+            currConn = currIn->conn;
         }
 
         // change display options based on type of connection
@@ -1285,24 +1285,18 @@ void viewVZLayoutEditHandler::drawDeletables() {
         }
 
         if (currConn->type == FixedProb || currConn->type == AlltoAll || currConn->type == OnetoOne || currConn->type == CSV) {
-
             // draw up probability changer
+            DBG() << "draw up probability changer";
             QLayout * lay = currConn->drawLayout(this->data, this, NULL);
-            panelLayout->insertLayout(panelLayout->count() - 2, lay,2);
-
+            panelLayout->insertLayout(panelLayout->count() - 2, lay, 2);
         }
 
         if (currConn->type == Python) {
-
-
-            //}
             // add the text edit to the main layout
             //panelLayout->insertWidget(panelLayout->count() -2, scriptEdit, 2);
-
         }
 
         this->viewVZ->OpenGLWidget->setConnType(currConn->type);
-
     }
 
 }

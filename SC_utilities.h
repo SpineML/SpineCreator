@@ -2,7 +2,7 @@
 **                                                                        **
 **  This file is part of SpineCreator, an easy to use GUI for             **
 **  describing spiking neural network models.                             **
-**  Copyright (C) 2013-2014 Alex Cope, Paul Richmond, Seb James           **
+**  Copyright (C) 2016 Alex Cope, Paul Richmond, Seb James                **
 **                                                                        **
 **  This program is free software: you can redistribute it and/or modify  **
 **  it under the terms of the GNU General Public License as published by  **
@@ -18,10 +18,28 @@
 **  along with this program.  If not, see http://www.gnu.org/licenses/.   **
 **                                                                        **
 ****************************************************************************
-**           Author: Paul Richmond                                        **
-**  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
+**           Author: Seb James                                            **
+**  Website/Contact: http://spineml.github.io                             **
 ****************************************************************************/
 
+/*!
+ * This class provides a place to write useful static utility functions.
+ */
 
-#include "CL_regimegraphicsitem.h"
+#ifndef _SC_UTILITIES_H_
+#define _SC_UTILITIES_H_ 1
 
+#include <QString>
+
+class SCUtilities {
+public:
+    // No constructors are required for this class.
+
+    /*!
+     * Store the error @param emsg in a QSettings object called
+     * "errors".
+     */
+    static void storeError (QString emsg);
+};
+
+#endif // _SC_UTILITIES_H_

@@ -45,8 +45,8 @@ public:
     population(QSharedPointer <population> data, QSharedPointer<population> thisSharedPointer);
     void readFromXML(QDomElement &e, QDomDocument * doc, QDomDocument *meta, projectObject *data, QSharedPointer<population> thisSharedPointer);
     ~population();
-    QSharedPointer <ComponentInstance>neuronType;
-    QSharedPointer<NineMLLayoutData>layoutType;
+    QSharedPointer<ComponentInstance> neuronType;
+    QSharedPointer<NineMLLayoutData> layoutType;
     bool within_bounds(float x, float y);
     bool is_clicked(float, float, float );
     void animate(QSharedPointer<population> thisSharedPointer);
@@ -58,9 +58,9 @@ public:
     float topBound(float pos = 0);
     float bottomBound(float pos = 0);
     void move(float, float);
-    QString name;
+    QString name; // The name attribute of the <Neuron> inside the <Population>
     QString getName();
-    QString neuronTypeName;
+    QString neuronTypeName; // The url attribute of the <Neuron> inside the <Population>
     int numNeurons;
     QString layoutName;
     QVector < QSharedPointer <projection> > projections;
@@ -72,12 +72,10 @@ public:
     float getSide(int, int);
     void write_prototype_xml(QDomElement &root, QDomDocument &doc);
     void write_population_xml(QXmlStreamWriter &);
-    void write_model_meta_xml(QDomDocument &meta, QDomElement &root);
     void load_projections_from_xml(QDomElement  &e, QDomDocument * doc, QDomDocument * meta, projectObject *data);
     void read_inputs_from_xml(QDomElement  &e, QDomDocument *meta, projectObject *data);
     QPainterPath * addToPath(QPainterPath * path);
     bool connectsTo(QSharedPointer <population> pop);
-    void remove(nl_rootdata *data);
     void delAll(nl_rootdata *data);
     void delAll(projectObject *);
     QPointF currentLocation();

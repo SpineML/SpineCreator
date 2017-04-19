@@ -21,6 +21,7 @@ SOURCES += main.cpp \
     qcustomplot.cpp \
     filteroutundoredoevents.cpp \
     CL_classes.cpp \
+    SC_utilities.cpp \
     NL_population.cpp \
     SC_projectobject.cpp \
     SC_aboutdialog.cpp \
@@ -38,7 +39,6 @@ SOURCES += main.cpp \
     SC_versioncontrol.cpp \
     SC_network_layer_rootdata.cpp \
     SC_network_layer_rootlayout.cpp \
-    CL_regimegraphicsitem.cpp \
     SC_connectionlistdialog.cpp \
     SC_connectionmodel.cpp \
     SC_dotwriter.cpp \
@@ -70,6 +70,7 @@ HEADERS += mainwindow.h \
     filteroutundoredoevents.h \
     qmessageboxresizable.h \
     CL_classes.h \
+    SC_utilities.h \
     NL_population.h \
     SC_projectobject.h \
     SC_aboutdialog.h \
@@ -87,7 +88,6 @@ HEADERS += mainwindow.h \
     SC_versioncontrol.h \
     SC_network_layer_rootdata.h \
     SC_network_layer_rootlayout.h \
-    CL_regimegraphicsitem.h \
     SC_connectionlistdialog.h \
     SC_connectionmodel.h \
     SC_dotwriter.h \
@@ -161,9 +161,9 @@ linux-g++-64 {
     DEPENDPATH += /usr/lib/graphviz
 }
 macx {
-    QMAKE_MAC_SDK = macosx10.10
+    QMAKE_MAC_SDK = macosx
     QMAKE_CXXFLAGS += -O0 -g
-    LIBS +=  -L/opt/local/lib/graphviz/ -lpython2.7 #-L/opt/local/lib/
+    LIBS +=  -L/opt/local/lib/ -L/opt/local/lib/graphviz/ -lpython2.7 # -L/opt/local/lib/ # this causes libJPEG.dylib conflict and is not required.
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
     DEPENDPATH +=  /opt/local/lib/graphviz

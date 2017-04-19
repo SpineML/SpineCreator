@@ -43,10 +43,6 @@ struct selStruct {
     int colInd;
 };
 
-struct cursorType {
-    GLfloat x;
-    GLfloat y;
-};
 
 struct loadedComponent {
     QSharedPointer<Component> component;
@@ -62,8 +58,6 @@ public:
      */
     //@{
     explicit nl_rootdata(QObject *parent = 0);
-    void get_model_xml(QXmlStreamWriter &);
-    void get_model_meta_xml(QDomDocument &meta);
     QColor getColor(QColor);
     int getIndex();
     bool selectionMoved;
@@ -76,16 +70,28 @@ public:
     ComponentRootObject* import_component_xml_single(QString fileName);
     bool isComponentInUse(QSharedPointer<Component> oldComp);
     bool removeComponent(QSharedPointer<Component> oldComp);
-    //bool isValidPointer(systemObject *ptr);
     QSharedPointer<systemObject> isValidPointer(systemObject *ptr);
     QSharedPointer<ComponentInstance> isValidPointer(ComponentInstance *ptr);
     QSharedPointer<Component> isValidPointer(Component *ptr);
     void redrawViews();
 
     /*!
+     * Return true if the passed in experiment pointer is found in any
+     * of the experiments either in the current nl_rootdata instance,
+     * or in any of the project objects.
+     */
+    bool doesExperimentExist (experiment* e);
+
+    /*!
      * Find the object selected by the mouse (called by onLeftMouseDown)
      */
     void findSelection (float xGL, float yGL, float GLscale, QVector <QSharedPointer<systemObject> >& newlySelectedList);
+
+    /*!
+     * Function to be called when a GenericInput or Synapse's internal
+     * connection is changed.
+     */
+    void updateConnection (QSharedPointer<systemObject> newConnection, bool globalDelay);
     //@}
 
 public:
@@ -119,6 +125,11 @@ public:
     versionControl* version;
     MainWindow* main;
     QActionGroup* projectActions;
+    QActionGroup* experimentActions;
+    QAction* dupExpAction; // This duplicate button should go to the expt interface only.
+#if 0 // Leave only a run button in the expt list to reduce maintenance.
+    QAction* runExpAction;
+#endif
     QSharedPointer <projection> currentlySelectedProjection;
     //@}
 
@@ -153,7 +164,7 @@ public slots:
     void onRightMouseDown(float xGL, float yGL, float GLscale);
     void mouseMoveGL(float, float);
     void updatePortMap(QString);
-    void updateComponentType(int index);
+    void updateComponentType(int index); // index is the menu index, I think.
     void updatePar();
     void updatePar(int);
     void updateLayoutPar();
@@ -203,11 +214,22 @@ public slots:
      */
     void pasteSelectionFromClipboard();
     void selectProject(QAction *);
+
+    /*!
+     * Select an experiment based on the QAction calling the
+     * selection.
+     */
+    void selectExperiment(QAction*);
+
     void reDrawAll();
 
     void updateDrawStyle();
 
 private:
+
+    // A worker for the updateComponentType slot.
+    void updateComponentType(int index, QSharedPointer<systemObject> ptr, QString& type);
+
     /*!
      * \brief A population moved, so add it to the undostack
      *

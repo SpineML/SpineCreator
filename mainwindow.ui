@@ -851,6 +851,7 @@
      <string>E&amp;xperiment</string>
     </property>
     <addaction name="actionRun_experiment"/>
+    <addaction name="actionDuplicate_experiment"/>
    </widget>
    <widget class="QMenu" name="menuProject">
     <property name="title">
@@ -1092,6 +1093,11 @@
   <action name="actionPaste_objects">
    <property name="text">
     <string>Paste objects</string>
+   </property>
+  </action>
+  <action name="actionDuplicate_experiment">
+   <property name="text">
+    <string>Duplicate experiment</string>
    </property>
   </action>
  </widget>

@@ -36,33 +36,39 @@
 
 using namespace std;
 
-typedef enum{
+typedef enum
+{
     AnalogSendPort,
     AnalogRecvPort,
     AnalogReducePort
 } AnalogPortMode;
 
-typedef enum{
+typedef enum
+{
     EventSendPort,
     EventRecvPort
 } EventPortMode;
 
-typedef enum{
+typedef enum
+{
     ImpulseSendPort,
     ImpulseRecvPort
 } ImpulsePortMode;
 
-typedef enum{
+typedef enum
+{
     ReduceOperationAddition,
     ReduceOperationNone
 } ReduceOperation;
 
-typedef enum{
+typedef enum
+{
     NineMLComponentType,
     NineMLLayoutType
 } NineMLType;
 
-typedef enum{
+typedef enum
+{
     ComponentTypeNeuronBody,
     ComponentTypeSynapse,
     ComponentTypePostsynapse,
@@ -70,7 +76,8 @@ typedef enum{
 } ComponentType;
 
 
-typedef enum{
+typedef enum
+{
     PREFIX_NONE,
     PREFIX_G,
     PREFIX_M,
@@ -83,7 +90,8 @@ typedef enum{
     PREFIX_f
 } Prefix;
 
-typedef enum{
+typedef enum
+{
     UNIT_NONE,
     UNIT_V,
     UNIT_Ohm,
@@ -99,7 +107,8 @@ typedef enum{
     UNIT_Hz
 } Unit;
 
-class dim {
+class dim
+{
 public:
     dim(QString str);
     ~dim(){}
@@ -152,7 +161,7 @@ typedef enum
     COMPONENT_ON_IMPULSE,
     COMPONENT_REGIME,
     COMPONENT
-}ComponentObjectType;
+} ComponentObjectType;
 
 /*!
  * \brief The ComponentObject class is the top level object which all component type objects inherit. The type can be
@@ -165,6 +174,19 @@ public:
     ComponentModelObject(){}
     ~ComponentModelObject(){}
     virtual ComponentObjectType Type() = 0;
+
+    /*!
+     * A user-provided annotation about the Component.
+     */
+    QString annotation;
+
+    /*!
+     * A dictionary of SpineCreator annotation texts, which live
+     * inside the Annotation element. The key refers to the parameter
+     * or state variable to which the annotation refers, the value is
+     * the annotation text itself.
+     */
+    QMap<QString, QString> annotationTexts;
 };
 
 /*!
@@ -212,13 +234,14 @@ signals:
 };
 
 /*!
- * \brief The ParameterInstance class represents an instance of the data that is described by a paramater componenet.
+ * \brief The ParameterInstance class represents an instance of the data that is described by a parameter componenet.
  * Put another way when the properties of a parameter are read from the network layer this is the data that is used to
- * instanciate the instances which match the description of the underlying paramater object. Reading and writing functions
+ * instanciate the instances which match the description of the underlying parameter object. Reading and writing functions
  * are avilaable for XML and binary data formats.
  *
  */
-class ParameterInstance {
+class ParameterInstance
+{
 public:
     QString name;
     dim * dims;
@@ -255,14 +278,14 @@ public:
     void readExplicitListNodeData(QDomNode &n);
 };
 
-
 /*!
  * \brief The Port class represent a port model object in the compenent layer schema. Signals are availabel for
  * when the name changes so that any visual objects (graphics item type objects) can detect changes and update their
  * visual representation. Functions exist for reading and writing from component XML file.
  * TODO: This should probably be a virtual class as ports are either analogue, impule or event.
  */
-class Port: public QObject, public ComponentModelObject {
+class Port: public QObject, public ComponentModelObject
+{
     Q_OBJECT
 public:
     QString name;
@@ -270,11 +293,12 @@ public:
     Port(Port *data);
     QString getName();
     void setName(QString name);
-    Port(){dims = new dim("?");}
+    Port(){dims = new dim("?"); isPost = false;}
     virtual ~Port(){delete dims;}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual bool isAnalog();
+    bool isPost;
 signals:
     void nameChanged();
 };
@@ -282,25 +306,28 @@ signals:
 /*!
  * \brief The AnalogPort class represent an AnalogPort model object in the compenent layer schema.
  */
-class AnalogPort: public Port {
+class AnalogPort: public Port
+{
 public:
     AnalogPortMode mode;
     ReduceOperation op;
     StateVariable *variable;
     AnalogPort(AnalogPort *data);
-    AnalogPort() : Port() {variable=NULL; op = ReduceOperationAddition;}
+    AnalogPort() : Port() {variable=NULL; op = ReduceOperationAddition; isPerConn = false;}
     virtual ~AnalogPort(){}
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     bool isAnalog();
     virtual ComponentObjectType Type(){return COMPONENT_ANALOG_PORT;}
     int validateAnalogPort(Component *component, QStringList *);
+    bool isPerConn;
 };
 
 /*!
  * \brief The EventPort class represent an EventPort model object in the compenent layer schema.
  */
-class EventPort: public Port {
+class EventPort: public Port
+{
 public:
     EventPortMode mode;
     EventPort(EventPort *data);
@@ -315,7 +342,8 @@ public:
 /*!
  * \brief The ImpulsePort class represent an ImpulsePort model object in the compenent layer schema.
  */
-class ImpulsePort: public Port {
+class ImpulsePort: public Port
+{
 public:
     ImpulsePortMode mode;
     Parameter *parameter;
@@ -333,9 +361,9 @@ public:
  * \brief The MathInLine class is a mathematical expression using terms defined in the compenent layer. It is used to
  * represent the mathematics in in model objects such as Alias, OnCondition, TimeDerivative, etc.
  */
-class MathInLine: public ComponentModelObject {
+class MathInLine: public ComponentModelObject
+{
 public:
-
     QString equation;
     MathInLine(MathInLine *data);
     MathInLine(){}
@@ -360,7 +388,8 @@ private:
 /*!
  * \brief The Trigger class is used by OnConditions to hold some mathematic expressesions which evauluate to a conditional.
  */
-class Trigger: public ComponentModelObject {
+class Trigger: public ComponentModelObject
+{
 public:
     MathInLine *maths;
     Trigger(Trigger *data);
@@ -376,7 +405,8 @@ public:
  * \brief The StateVariable class represent a StateVariable model object in the compenent layer schema. It
  * is a type of parameter and can be used as such in mathmatic expressions.
  */
-class StateVariable: public Parameter {
+class StateVariable: public Parameter
+{
 public:
     StateVariable(StateVariable *data);
     StateVariable() : Parameter() {}
@@ -392,7 +422,8 @@ public:
  * instanciate the instances which match the description of the underlying state variable object. Reading and writing functions
  * are avilaable for XML and binary data formats.
  */
-class StateVariableInstance: public ParameterInstance {
+class StateVariableInstance: public ParameterInstance
+{
 public:
     StateVariableInstance(StateVariable *data);
     StateVariableInstance(StateVariableInstance *data);
@@ -406,7 +437,8 @@ public:
 /*!
  * \brief The Alias class represents an mathmatic expression which can then be used a state variable in expressions.
  */
-class Alias: public StateVariable {
+class Alias: public StateVariable
+{
 public:
     //QString name;
     //dim * dims;
@@ -419,14 +451,14 @@ public:
     void readIn(QDomElement e);
     void writeOut(QDomDocument *doc, QDomElement &parent);
     virtual ComponentObjectType Type(){return COMPONENT_ALIAS;}
-
 };
 
 /*!
  * \brief The TimeDerivative class is an object for holding data of a time derivative defined in the component layer schema.
  * Usual component layer functiosn exist for file reading/writing.
  */
-class TimeDerivative: public ComponentModelObject {
+class TimeDerivative: public ComponentModelObject
+{
 public:
     // temp name
     QString variable_name;
@@ -446,7 +478,8 @@ public:
  * \brief The StateAssignment class  is an object for holding data of a state assignment defined in the component layer schema.
  * Usual component layer functiosn exist for file reading/writing.
  */
-class StateAssignment: public ComponentModelObject {
+class StateAssignment: public ComponentModelObject
+{
 public:
     // temp name
     QString name;
@@ -467,7 +500,8 @@ public:
  * \brief The EventOut class  is an object for holding data of a EventOutt defined in the component layer schema.
  * Usual component layer functions exist for file reading/writing.
  */
-class EventOut: public ComponentModelObject {
+class EventOut: public ComponentModelObject
+{
 public:
     // temp name
     QString port_name;
@@ -485,7 +519,8 @@ public:
  * \brief The ImpulseOut class  is an object for holding data of a ImpulseOut defined in the component layer schema.
  * Usual component layer functions exist for file reading/writing.
  */
-class ImpulseOut: public ComponentModelObject {
+class ImpulseOut: public ComponentModelObject
+{
 public:
     // temp name
     QString port_name;
@@ -504,11 +539,11 @@ public:
  * transition between regimes. It therefore needs to have a target regime and will be owned by another regime.
  * Usual component layer functions exist for file reading/writing.
  */
-class OnCondition: public ComponentModelObject {
+class OnCondition: public ComponentModelObject
+{
 public:
     // temp name
     QString target_regime_name;
-
     Regime *target_regime;
     QVector <StateAssignment*> StateAssignList;
     Trigger *trigger;
@@ -528,12 +563,12 @@ public:
  * transition between regimes. It therefore needs to have a target regime and will be owned by another regime.
  * Usual component layer functions exist for file reading/writing.
  */
-class OnEvent: public ComponentModelObject {
+class OnEvent: public ComponentModelObject
+{
 public:
     // temp name
     QString target_regime_name;
     QString src_port_name;
-
     Regime *target_regime;
     EventPort *src_port;
     QVector <StateAssignment*> StateAssignList;
@@ -553,7 +588,8 @@ public:
  * transition between regimes. It therefore needs to have a target regime and will be owned by another regime.
  * Usual component layer functions exist for file reading/writing.
  */
-class OnImpulse: public ComponentModelObject {
+class OnImpulse: public ComponentModelObject
+{
 public:
     // temp name
     QString target_regime_name;
@@ -577,7 +613,8 @@ public:
 /*!
  * \brief The Regime class is an object for holding data of a Regime defined in the component layer schema.
  */
-class Regime: public ComponentModelObject {
+class Regime: public ComponentModelObject
+{
 public:
     QString name;
     QVector <TimeDerivative*> TimeDerivativeList;
@@ -601,12 +638,11 @@ public:
 class Component: public ComponentModelObject, public ComponentRootObject
 {
 public:
-
     //temp name
     QString initial_regime_name;
-
     QString name;
     QString type;
+    bool islearning;
     Regime *initial_regime;
     QVector <Regime*> RegimeList;
     QVector <StateVariable*> StateVariableList;
@@ -646,6 +682,12 @@ public:
     void write_node_xml(QXmlStreamWriter &);
     ComponentRootInstance(){}
     virtual ~ComponentRootInstance(){}
+    /*!
+     * The annotation. Read with
+     * ComponentInstance::import_parameters_from_xml, which may be
+     * passed an option NOT to read annotation information.
+     */
+    QString annotation;
 };
 
 /*!
@@ -665,6 +707,7 @@ public:
     ComponentInstance(){}
     virtual ~ComponentInstance();
     QString getXMLName();
+    int getSize();
     void matchPorts();
     QStringList getPortMatches(int index, bool isOutput);
     void removeReferences();
@@ -674,6 +717,5 @@ public:
     void addInput(QSharedPointer <ComponentInstance>, bool = false);
     void copyParsFrom(QSharedPointer <ComponentInstance> data);
 };
-
 
 #endif // NINEML_STRUCTS_H

@@ -26,7 +26,10 @@
 #define VIEWVISEXPTPANELHANDLER_H
 
 #include "globalHeader.h"
-#include <QTemporaryDir>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+  #include <QTemporaryDir>
+#endif
 
 struct viewELstruct;
 
@@ -40,6 +43,11 @@ public:
     nl_rootdata * data;
     //void redraw();
 
+    /*!
+     * pointer to the parent window.
+     */
+    MainWindow* main;
+
 private:
     viewELstruct * viewEL;
     void redrawExpt();
@@ -49,7 +57,11 @@ private:
      * A temporary directory into which the model is copied if the
      * simulation is in an unsaved state.
      */
-    QTemporaryDir tdir;
+    #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+          QTemporaryDir tdir;
+    #else
+         QDir tdir;
+    #endif
 
     QVBoxLayout * exptSetup;
     QVBoxLayout * exptInputs;
@@ -117,6 +129,8 @@ public slots:
     void setInputPort(int);
     void setInputType(int);
     void setInputRateDistributionType(int);
+    void setInputRateSeed(int);
+    void editingFinishedRateSeed(void);
     void acceptInput();
     void editInput();
     void setInputTypeData(double);
@@ -141,10 +155,15 @@ public slots:
     void toggleExternalOutput(bool);
     void setOutputExternalData();
     void addLesion();
+    void addGILesion();
+    void setGILesion();
     void setLesionProjection();
     void acceptLesion();
     void editLesion();
     void delLesion();
+    void acceptGILesion();
+    void editGILesion();
+    void delGILesion();
     void setChangeParComponent();
     void setChangeParName();
     void setChangeProp(QString name);

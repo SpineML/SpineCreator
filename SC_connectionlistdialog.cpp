@@ -27,81 +27,83 @@
 #include "SC_connectionmodel.h"
 #include "NL_connection.h"
 
-connectionListDialog::connectionListDialog(csv_connection * conn, QWidget *parent) :
+connectionListDialog::connectionListDialog (csv_connection* c, QWidget* parent) :
     QDialog(parent),
     ui(new Ui::connectionListDialog)
 {
-    ui->setupUi(this);
+    this->ui->setupUi (this);
 
-    this->conn = conn;
+    this->conn = c;
+    this->newConn = (csv_connection*)this->conn->newFromExisting();
+    // Copy data values in so that they appear in the dialog:
+    this->newConn->copyDataValues (this->conn);
 
-    ui->spinBox->setRange(0, INT_MAX); // set max from the component
-    ui->spinBox->setValue(conn->getNumRows());
+    ui->spinBox->setRange (0, INT_MAX); // set max from the component
+    ui->spinBox->setValue (this->conn->getNumRows());
 
-    connect(ui->spinBox,SIGNAL(valueChanged(int)), this, SLOT(updateValSize(int)));
+    connect (ui->spinBox, SIGNAL(valueChanged(int)), this, SLOT(updateValSize(int)));
 
     this->vModel = new csv_connectionModel();
-    this->vModel->setConnection(conn);
-    this->ui->tableView->setModel(this->vModel);
-    QHeaderView * header = this->ui->tableView->horizontalHeader();
-    header->setStretchLastSection(true);
-    //header->setResizeMode(0, QHeaderView::Fixed);
-    header->resizeSection(0, 80);
-    header->resizeSection(1, 80);
+    this->vModel->setConnection (this->newConn);
+    this->ui->tableView->setModel (this->vModel);
+    QHeaderView* header = this->ui->tableView->horizontalHeader();
+    header->setStretchLastSection (true);
+    header->resizeSection (0, 80);
+    header->resizeSection (1, 80);
 
     // hide import button if is a pythonscript
     if (this->conn->generator != NULL) {
-        this->ui->import_csv->setVisible(false);
-        this->ui->tableView->setMinimumWidth(240);
-        this->ui->spinBox->setEnabled(false);
+        this->ui->import_csv->setVisible (false);
+        this->ui->tableView->setMinimumWidth (240);
+        this->ui->spinBox->setEnabled (false);
     }
 
-    connect(this->ui->import_csv,SIGNAL(clicked()), this, SLOT(importCSV()));
-    connect(this->vModel,SIGNAL(setSpinBoxVal(int)), ui->spinBox, SLOT(setValue(int)));
+    connect (this->ui->import_csv, SIGNAL(clicked()), this, SLOT(importCSV()));
+    connect (this->vModel, SIGNAL(setSpinBoxVal(int)), this->ui->spinBox, SLOT(setValue(int)));
 }
 
-connectionListDialog::~connectionListDialog()
+connectionListDialog::~connectionListDialog (void)
 {
-    delete vModel;
-    delete ui;
+    delete this->vModel;
+    delete this->ui;
 }
 
-
-
-void connectionListDialog::accept() {
-
-    //this->conn->flushChangesToDisk();
-    // nothing to do
+void connectionListDialog::accept (void)
+{
+    // We only need to copy the data values from newConn, as that's
+    // all we've loaded in via this dialog.
+    this->conn->copyDataValues (this->newConn);
     emit completed();
+    delete this->newConn;
     delete this;
-
 }
 
-void connectionListDialog::reject() {
-
+void connectionListDialog::reject (void)
+{
     emit completed();
-    this->conn->abortChanges();
+    delete this->newConn;
     delete this;
-
 }
 
-void connectionListDialog::importCSV() {
+void connectionListDialog::importCSV (void)
+{
+    QString fileName = QFileDialog::getOpenFileName (this, tr("Open CSV file for import"),
+                                                     qgetenv("HOME"),
+                                                     tr("CSV files (*.csv *.txt);; All files (*.*)"));
 
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open CSV file for import"), qgetenv("HOME"), tr("CSV files (*.csv *.txt);; All files (*.*)"));
-    conn->import_csv(fileName);
-    this->vModel->deleteLater();
-    this->vModel = new csv_connectionModel();
-    this->vModel->setConnection(conn);
-    ui->tableView->setModel(this->vModel);
-    connect(this->vModel,SIGNAL(setSpinBoxVal(int)), ui->spinBox, SLOT(setValue(int)));
-    ui->spinBox->setValue(conn->getNumRows());
-    this->vModel->emitDataChanged();
-
+    if (this->newConn->import_csv (fileName) == true) {
+        // Import was successful
+        this->vModel->deleteLater();
+        this->vModel = new csv_connectionModel();
+        this->vModel->setConnection (newConn);
+        this->ui->tableView->setModel (this->vModel);
+        connect (this->vModel, SIGNAL(setSpinBoxVal(int)), this->ui->spinBox, SLOT(setValue(int)));
+        this->ui->spinBox->setValue (this->newConn->getNumRows());
+        this->vModel->emitDataChanged();
+    } // else import failed, nothing further to do.
 }
 
-void connectionListDialog::updateValSize(int val) {
-
-    /*bool returnVal;
-    returnVal = */this->vModel->insertConnRows(val);
-
+void connectionListDialog::updateValSize (int val)
+{
+    this->vModel->insertConnRows (val);
 }

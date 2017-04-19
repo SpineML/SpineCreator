@@ -59,7 +59,6 @@ population::population(float x, float y, float size, float aspect_ratio, QString
     loc3.z = 0;
 
     isSpikeSource = false;
-
 }
 
 population::population(QSharedPointer <population> data, QSharedPointer<population> thisSharedPointer)
@@ -89,10 +88,11 @@ population::population(QSharedPointer <population> data, QSharedPointer<populati
     this->neuronType->owner = thisSharedPointer;
 
     isSpikeSource = false;
-
 }
 
-void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * meta, projectObject * data, QSharedPointer<population> thisSharedPointer)
+void
+population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
+                         projectObject * data, QSharedPointer<population> thisSharedPointer)
 {
     // defaults
     this->x = 0;
@@ -130,9 +130,25 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 
     QDomNode n = e.firstChild();
 
+    QDomNode metaData;
+
     while(!n.isNull()) {
 
-        if (n.toElement().tagName() == "LL:Neuron") {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
+        if (n.toElement().tagName() == "LL:Annotation") {
+            QDomNodeList scAnns = n.toElement().elementsByTagName("SpineCreator");
+            if (scAnns.length() == 1) {
+                metaData = scAnns.at(0).cloneNode();
+                n.removeChild(scAnns.at(0));
+            }
+            QTextStream temp(&this->annotation);
+            n.save(temp,1);
+
+        } else if (n.toElement().tagName() == "LL:Neuron") {
 
             // get attributes
             this->name = n.toElement().attribute("name");
@@ -141,18 +157,19 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Neuron attribute 'name'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: missing Neuron attribute 'name'");
                 settings.endArray();
             }
+
             this->numNeurons = n.toElement().attribute("size").toInt();
             if (this->numNeurons == 0) {
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Neuron attribute 'size', or 'size' is zero");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: missing Neuron attribute 'size', or 'size' is zero");
                 settings.endArray();
             }
             this->neuronTypeName = n.toElement().attribute("url");
@@ -162,15 +179,16 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Neuron attribute 'url'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText",  "XML error: missing Neuron attribute 'url'");
                 settings.endArray();
             }
 
             QStringList tempName = this->neuronTypeName.split('.');
             // first section will hold the name
-            if (tempName.size() > 0)
+            if (tempName.size() > 0) {
                 this->neuronTypeName = tempName[0];
+            }
             this->neuronTypeName.replace("_", " ");
 
             // do we have errors - if so abort here
@@ -178,8 +196,10 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 QSettings settings;
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
-                if (num_errs > 0)
+                if (num_errs > 0) {
+                    DBG() << "Aborting on errors";
                     return;
+                }
             }
 
             ///////////// FIND AND LOAD NEURON
@@ -189,14 +209,12 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
             if (this->neuronTypeName == "SpikeSource") {
                 // make a spikes source
                 makeSpikeSource(thisSharedPointer);
-            }
-            else {
+            } else {
                 this->isSpikeSource = false;
             }
 
             // if not found then match
             if (!this->isSpikeSource) {
-
                 for (int i = 0; i < data->catalogNB.size(); ++i) {
                     if (neuronTypeName == data->catalogNB[i]->name) {
                         this->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance((QSharedPointer<Component>) data->catalogNB[i]));
@@ -204,7 +222,6 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                         this->neuronType->import_parameters_from_xml(n);
                     }
                 }
-
             }
 
             // if still missing then we have a problem
@@ -233,8 +250,8 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("errors");
                 settings.endArray();
                 settings.beginWriteArray("errors");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("errorText",  "XML error: missing Layout attribute 'url'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("errorText", "XML error: missing Layout attribute 'url'");
                 settings.endArray();
             }
             this->layoutName.chop(4);
@@ -262,56 +279,65 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
                 int num_errs = settings.beginReadArray("warnings");
                 settings.endArray();
                 settings.beginWriteArray("warnings");
-                    settings.setArrayIndex(num_errs + 1);
-                    settings.setValue("warnText",  "Network references missing Layout '" + layoutName + "'");
+                settings.setArrayIndex(num_errs + 1);
+                settings.setValue("warnText",  "Network references missing Layout '" + layoutName + "'");
                 settings.endArray();
             }
-
 
         } else {
             QSettings settings;
             int num_errs = settings.beginReadArray("errors");
             settings.endArray();
             settings.beginWriteArray("errors");
-                settings.setArrayIndex(num_errs + 1);
-                settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
+            settings.setArrayIndex(num_errs + 1);
+            settings.setValue("errorText",  "XML error: misplaced or unknown tag '" + n.toElement().tagName() + "'");
             settings.endArray();
         }
-
 
         n = n.nextSibling();
     }
 
-
-
     // //////////////////  fetch in the metadata ///////////////////////
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+    if (meta != NULL) {
+        QDomNode findN = meta->documentElement().firstChild();
+        QDomElement metaE;
 
-    QDomNode findN = meta->documentElement().firstChild();
-    QDomElement metaE;
-
-    // locate the matching metadata node
-    while( !findN.isNull() ) {
-        metaE = findN.toElement();
-        if (metaE.tagName() == "population") {
-            if (metaE.attribute("name","") == this->name) {
-                break;
+        // locate the matching metadata node
+        while( !findN.isNull() ) {
+            metaE = findN.toElement();
+            if (metaE.tagName() == "population") {
+                if (metaE.attribute("name","") == this->name) {
+                    break;
+                }
             }
+            findN = findN.nextSibling();
         }
-        findN = findN.nextSibling();
+
+        n = metaE.firstChild();
+    }
+#endif
+
+    if (!metaData.isNull()) {
+        n = metaData.firstChild();
     }
 
-    n = metaE.firstChild();
     while( !n.isNull() )
     {
+        if (n.isComment()) {
+            n = n.nextSibling();
+            continue;
+        }
+
         QDomElement e2 = n.toElement();
         if( e2.tagName() == "xPos" ) {
-            this->x = e2.attribute("value", "").toFloat();
-            this->targx = x;
+            this->x = e2.attribute("value", "").toFloat() + data->getCursorPos().x;
+            this->targx = this->x;
         }
 
         if( e2.tagName() == "yPos" ) {
-            this->y = e2.attribute("value", "").toFloat();
-            this->targy = y;
+            this->y = e2.attribute("value", "").toFloat() + data->getCursorPos().y;
+            this->targy = this->y;
         }
 
         if( e2.tagName() == "animSpeed" ) {
@@ -356,60 +382,72 @@ void population::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     }
 
     // calculate some values:
-
-    this->left = this->x-this->size/(2.0)*this->aspect_ratio;
-    this->right = this->x+this->size/(2.0)*this->aspect_ratio;
-    this->top = this->y+this->size/2.0;
-    this->bottom = this->y-this->size/2.0;
-
-}
-
-void population::setupBounds() {
     this->left = this->x-this->size/(2.0)*this->aspect_ratio;
     this->right = this->x+this->size/(2.0)*this->aspect_ratio;
     this->top = this->y+this->size/2.0;
     this->bottom = this->y-this->size/2.0;
 }
 
-void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data) {
+void population::setupBounds()
+{
+    this->left = this->x-this->size/(2.0)*this->aspect_ratio;
+    this->right = this->x+this->size/(2.0)*this->aspect_ratio;
+    this->top = this->y+this->size/2.0;
+    this->bottom = this->y-this->size/2.0;
+}
 
+#define DBGRI() qDebug() << __FUNCTION__ << ": "
+void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject * data)
+{
+    //DBGBRK();
+    // e starts out as a LL:Population
+    //DBGRI() << "population::read_inputs_from_xml called for element " << e.tagName();
     QDomNodeList nListNRN = e.elementsByTagName("LL:Neuron");
-
+    //DBGRI() << "LL:Neuron list has size " << nListNRN.size();
     if (nListNRN.size() == 1) {
-        e = nListNRN.item(0).toElement();
+        QDomElement e1 = nListNRN.item(0).toElement();
+        QString popname = e1.attribute("name", "unknown");
 
-        QDomNodeList nList = e.elementsByTagName("LL:Input");
+        // Population name and ComponentInstance name should be the same.
+        //DBGRI() << "Population name: " << popname << " neuronType (ComponentInstance) name:" << this->neuronType->getXMLName();
+
+        QDomNodeList nList = e1.elementsByTagName("LL:Input");
+        //DBGRI() << "LL:Input list has size " << nList.size();
         for (int nrni = 0; nrni < (int) nList.size(); ++nrni) {
 
             QDomElement e2 = nList.item(nrni).toElement();
 
             QSharedPointer<genericInput> newInput = QSharedPointer<genericInput>(new genericInput);
-            newInput->src.clear();
-            newInput->dst.clear();
+            newInput->srcCmpt.clear();
+            newInput->dstCmpt.clear();
+            //DBGRI() << "Setting destination to be neuronType->owner, with name: " << this->neuronType->owner->getName();
             newInput->destination = this->neuronType->owner;
             newInput->projInput = false;
 
-            // read in and locate src:
+            // read in src from XML and locate src in existing projectobject data:
             QString srcName = e2.attribute("src");
-
+            //DBGRI() << "srcName: " << srcName;
             for (int i = 0; i < data->network.size(); ++i) {
-                qDebug() << data->network[i]->neuronType->getXMLName();
+                //DBGRI() << "XML element type: " << data->network[i]->neuronType->getXMLName();
                 if (data->network[i]->neuronType->getXMLName() == srcName) {
-                    newInput->src = data->network[i]->neuronType;
+                    //DBGRI() << "Set newInput->src to the thing with name " << data->network[i]->neuronType->getXMLName();
+                    newInput->srcCmpt = data->network[i]->neuronType;
                     newInput->source = data->network[i];
                 }
                 for (int j = 0; j < data->network[i]->projections.size(); ++j) {
-                    qDebug() << "   " << data->network[i]->projections[j]->getName();
+                    //DBGRI() << "   Projection name: " << data->network[i]->projections[j]->getName();
                     for (int k = 0; k < data->network[i]->projections[j]->synapses.size(); ++k) {
-                        qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->getName();
-                        if (data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName() == srcName) {
-                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
-                            newInput->src  = data->network[i]->projections[j]->synapses[k]->weightUpdateType;
+                        //DBGRI() << "       Synapse: " << data->network[i]->projections[j]->synapses[k]->getName();
+                        if (data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName() == srcName) {
+                            //DBGRI() << "       WU: " << data->network[i]->projections[j]->synapses[k]->weightUpdateType->getXMLName();
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->weightUpdateCmpt;
+                            //DBGRI() << "(From WU) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
-                        if (data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName() == srcName) {
-                            qDebug() << "       " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
-                            newInput->src  = data->network[i]->projections[j]->synapses[k]->postsynapseType;
+                        if (data->network[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName() == srcName) {
+                            //DBGRI() << "       PS: " << data->network[i]->projections[j]->synapses[k]->postsynapseType->getXMLName();
+                            newInput->srcCmpt  = data->network[i]->projections[j]->synapses[k]->postSynapseCmpt;
+                            //DBGRI() << "(From PS) Set newInput->src to the thing with name " << newInput->srcCmpt->getXMLName();
                             newInput->source = data->network[i]->projections[j];
                         }
                     }
@@ -423,119 +461,114 @@ void population::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
             // get connectivity
             QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new alltoAll_connection;
+                delete newInput->conn;
+                newInput->conn = new alltoAll_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
             type = e2.elementsByTagName("OneToOneConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new onetoOne_connection;
+                delete newInput->conn;
+                newInput->conn = new onetoOne_connection;
+                newInput->conn->setParent(newInput);
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
             type = e2.elementsByTagName("FixedProbabilityConnection");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new fixedProb_connection;
+                delete newInput->conn;
+                newInput->conn = new fixedProb_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
             type = e2.elementsByTagName("ConnectionList");
             if (type.count() == 1) {
-                delete newInput->connectionType;
-                newInput->connectionType = new csv_connection;
+                delete newInput->conn;
+                newInput->conn = new csv_connection;
                 QDomNode cNode = type.item(0);
-                newInput->connectionType->src = qSharedPointerDynamicCast <population> (newInput->source);
-                newInput->connectionType->dst = qSharedPointerDynamicCast <population> (newInput->destination);
-                newInput->connectionType->import_parameters_from_xml(cNode);
+                newInput->conn->srcPop = qSharedPointerDynamicCast <population> (newInput->source);
+                newInput->conn->dstPop = qSharedPointerDynamicCast <population> (newInput->destination);
+                newInput->conn->setParent (newInput);
+                newInput->conn->import_parameters_from_xml(cNode);
             }
 
-
-            if (newInput->src != (QSharedPointer <ComponentInstance>)0) {
-                newInput->dst = this->neuronType;
+            if (newInput->srcCmpt != (QSharedPointer <ComponentInstance>)0) {
+                // neuronType is a ComponentInstance, owner is a systemObject. newInput->dst is a ComponentInstance.
+                newInput->dstCmpt = this->neuronType; // FIXME. This doesn't seem to be the right thing.
+                //DBGRI() << "For population with name " << this->name << ", set newInput->dst to the thing with name " << newInput->dstCmpt->getXMLName();
+                //DBGRI() << "Pushing back the newInput!";
                 this->neuronType->inputs.push_back(newInput);
-                newInput->src->outputs.push_back(newInput);
+                newInput->srcCmpt->outputs.push_back(newInput);
             } else {
                 // Error
+            }
+
+            // get annotations
+            QDomNode annInst = e2.firstChild();
+            while (!(annInst.toElement().tagName() == "LL:Annotation") && !(annInst.isNull())) {
+                annInst = annInst.nextSibling();
+            }
+
+            if (annInst.toElement().tagName() == "LL:Annotation") {
+                QDomNode n = annInst;
+                this->neuronType->inputs.back()->read_meta_data(n, data->getCursorPos());
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+            } else {
+                this->neuronType->inputs.back()->read_meta_data(meta, data->getCursorPos());
+#endif
             }
         }
     }
 
-    // read metadata
-    for (int i = 0; i < this->neuronType->inputs.size(); ++i)
-        this->neuronType->inputs[i]->read_meta_data(meta);
+#ifdef __GONE__
+    // read metadata. This should add the curves to the generic inputs.
+    for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
+        this->neuronType->inputs[i]->read_meta_data(meta, data->getCursorPos());
+    }
+#endif
 
     this->neuronType->matchPorts();
-}
-
-void population::remove(nl_rootdata * data)
-{
-    // remove from experiment
-    for (int j = 0; j < data->experiments.size(); ++j) {
-        //data->experiments[j]->purgeBadPointer(this);
-    }
-    //delete this;
+    //DBGRI() << "population::read_inputs_from_xml returning";
 }
 
 void population::delAll(nl_rootdata * data)
 {
-    // remove from experiment
-    for (int j = 0; j < data->experiments.size(); ++j) {
-        //data->experiments[j]->purgeBadPointer(this);
-    }
-
     // remove the projections (they'll take themselves off the vector)
     while ( this->projections.size()) {
-        // delete
         this->projections[0]->delAll(data);
     }
 
     // remove the reverse projections (they'll take themselves off the vector)
     while (this->reverseProjections.size()) {
-        // delete
         this->reverseProjections[0]->delAll(data);
     }
 
     neuronType->removeReferences();
-
-    //delete this;
 }
 
-void population::delAll(projectObject * data) {
-
-    // remove from experiment
-    for (int j = 0; j < data->experiments.size(); ++j) {
-        //data->experimentList[j]->purgeBadPointer(this); // But purgeBadPointer will delete this!?
-    }
-
+void population::delAll(projectObject * data)
+{
     // remove the projections (they'll take themselves off the vector)
     while ( this->projections.size()) {
-        // delete
         this->projections[0]->delAll(data);
     }
 
     // remove the reverse projections (they'll take themselves off the vector)
     while (this->reverseProjections.size()) {
-        // delete
         this->reverseProjections[0]->delAll(data);
     }
 
     neuronType->removeReferences();
-
-    //delete this;
 }
 
 population::~population()
 {
-    //qDebug() << "Population Deleted " << this->getName();
-    // remove componentData
-
     if (isSpikeSource) {
         this->neuronType->component.clear();
     }
-
     neuronType.clear();
 }
 
@@ -555,20 +588,19 @@ bool population::within_bounds(float x, float y)
     }
 }
 
-bool population::is_clicked(float x, float y, float) {
-
+bool population::is_clicked(float x, float y, float)
+{
     if (this->within_bounds(x, y)) {
         return 1;
     } else {
         return 0;
     }
-
 }
 
-void population::animate(QSharedPointer<population>thisSharedPointer) {
-
+void population::animate(QSharedPointer<population>thisSharedPointer)
+{
     // do animation:
-    //cout << "stuff " << float(this->targx) << " " << float(this->targy) << endl;
+    //DBG() << "stuff " << float(this->targx) << " " << float(this->targy) << endl;
     float delta[2];
     delta[HORIZ] = this->animspeed*(this->targx - this->x);
     delta[VERT] = this->animspeed*(this->targy - this->y);
@@ -599,26 +631,23 @@ void population::animate(QSharedPointer<population>thisSharedPointer) {
     for (int i = 0; i < this->neuronType->outputs.size(); ++i) {
         this->neuronType->outputs[i]->animate(thisSharedPointer, QPointF(delta[HORIZ], delta[VERT]));
     }
-
 }
 
-void population::setupTrans(float GLscale, float viewX, float viewY, int width, int height) {
-
+void population::setupTrans(float GLscale, float viewX, float viewY, int width, int height)
+{
     this->tempTrans.GLscale = GLscale;
     this->tempTrans.viewX = viewX;
     this->tempTrans.viewY = viewY;
     this->tempTrans.width = float(width);
     this->tempTrans.height = float(height);
-
 }
 
-QPointF population::transformPoint(QPointF point) {
-
+QPointF population::transformPoint(QPointF point)
+{
     point.setX(((point.x()+this->tempTrans.viewX)*this->tempTrans.GLscale+this->tempTrans.width)/2);
     point.setY(((-point.y()+this->tempTrans.viewY)*this->tempTrans.GLscale+this->tempTrans.height)/2);
     return point;
 }
-
 
 void population::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style)
 {
@@ -754,8 +783,8 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     painter->setFont(oldFont);
 }
 
-void population::drawSynapses(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style) {
-
+void population::drawSynapses(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
+{
     QPen oldPen = painter->pen();
     QPen pen(QColor(0,0,255,255));
     pen.setWidthF(1.5);
@@ -772,12 +801,10 @@ void population::drawSynapses(QPainter *painter, float GLscale, float viewX, flo
         this->projections[i]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
     }
     painter->setPen(oldPen);
-
-
 }
 
-void population::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style) {
-
+void population::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
+{
     painter->setPen(QColor(0,210,0,255));
 
     // so we could have an inherited class with this function
@@ -793,50 +820,56 @@ void population::drawInputs(QPainter *painter, float GLscale, float viewX, float
         this->projections[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, ignored, style);
     }
     painter->setPen(QColor(0,0,0,255));
-
-
 }
 
-QPainterPath * population::addToPath(QPainterPath * path) {
-
+QPainterPath * population::addToPath(QPainterPath * path)
+{
     path->addRect(this->getLeft(), this->getBottom(), this->size*this->aspect_ratio, this->size);
     return path;
-
 }
 
-float population::leftBound(float pos) {
+float population::leftBound(float pos)
+{
     return this->left + (pos-this->x);
 }
 
-float population::rightBound(float pos) {
+float population::rightBound(float pos)
+{
     return this->right + (pos-this->x);
 }
 
-float population::topBound(float pos) {
+float population::topBound(float pos)
+{
     return this->top + (pos-this->y);
 }
 
-float population::bottomBound(float pos) {
+float population::bottomBound(float pos)
+{
     return this->bottom + (pos-this->y);
 }
 
-float population::getLeft() {
+float population::getLeft()
+{
     return this->left;
 }
 
-float population::getRight() {
+float population::getRight()
+{
     return this->right;
 }
 
-float population::getTop() {
+float population::getTop()
+{
     return this->top;
 }
 
-float population::getBottom() {
+float population::getBottom()
+{
     return this->bottom;
 }
 
-float population::getSide(int dir, int which) {
+float population::getSide(int dir, int which)
+{
     if (dir == HORIZ && which == LOWER) {
         return this->left;
     }
@@ -852,15 +885,14 @@ float population::getSide(int dir, int which) {
     return -10000.0;
 }
 
-bool population::connectsTo(QSharedPointer <population> pop) {
-
+bool population::connectsTo(QSharedPointer <population> pop)
+{
     for (int i = 0; i < this->reverseProjections.size(); ++i) {
         if (this->reverseProjections[i]->source->name == pop->name) {
             return true;
         }
     }
     return false;
-
 }
 
 QPointF population::currentLocation()
@@ -874,10 +906,88 @@ void population::move(float x, float y)
     this->targy = y + this->locationOffset.y();
 }
 
-void population::write_population_xml(QXmlStreamWriter &xmlOut) {
-
+void population::write_population_xml(QXmlStreamWriter &xmlOut)
+{
     // population tag
     xmlOut.writeStartElement("LL:Population");
+
+    // Population annotations
+    xmlOut.writeStartElement("LL:Annotation");
+
+    // old annotations
+    this->annotation.replace("\n", "");
+    this->annotation.replace("<LL:Annotation>", "");
+    this->annotation.replace("</LL:Annotation>", "");
+    QXmlStreamReader reader(this->annotation);
+    while (!reader.atEnd()) {
+        if (reader.tokenType() != QXmlStreamReader::StartDocument
+            && reader.tokenType() != QXmlStreamReader::EndDocument) {
+            xmlOut.writeCurrentToken(reader);
+        }
+        reader.readNext();
+    }
+
+    // new annotations
+    xmlOut.writeStartElement("SpineCreator");
+
+    // add tags for each bit of metadata
+
+    // x position
+    xmlOut.writeEmptyElement("xPos");
+    // To avoid metaData changing arbitrarily, impose a
+    // granularity limit on float x.
+    stringstream xx;
+    xx << std::setprecision(METADATA_FLOAT_PRECISION) << this->x;
+    xmlOut.writeAttribute("value", xx.str().c_str());
+
+    // y position
+    xmlOut.writeEmptyElement("yPos");
+    // To avoid metaData changing arbitrarily, impose a
+    // granularity limit on float y.
+    stringstream yy;
+    yy << std::setprecision(METADATA_FLOAT_PRECISION) << this->y;
+    xmlOut.writeAttribute("value", yy.str().c_str());
+
+    // this->animspeed;
+    xmlOut.writeEmptyElement("animSpeed");
+    xmlOut.writeAttribute("value", QString::number(this->animspeed));
+
+    // this->aspect_ratio;
+    xmlOut.writeEmptyElement("aspectRatio");
+    xmlOut.writeAttribute("value", QString::number(this->aspect_ratio));
+
+    // this->colour;
+    xmlOut.writeEmptyElement("colour");
+    xmlOut.writeAttribute("red", QString::number(this->colour.red()));
+    xmlOut.writeAttribute("green", QString::number(this->colour.green()));
+    xmlOut.writeAttribute("blue", QString::number(this->colour.blue()));
+
+    // this->size;
+    xmlOut.writeEmptyElement("size");
+    xmlOut.writeAttribute("value", QString::number(this->size));
+
+    // this->tag;
+    xmlOut.writeEmptyElement("tag");
+    xmlOut.writeAttribute("value", QString::number(this->tag));
+
+    // 3d x position
+    xmlOut.writeEmptyElement("x3D");
+    xmlOut.writeAttribute("value", QString::number(this->loc3.x));
+    // 3d y position
+    xmlOut.writeEmptyElement("y3D");
+    xmlOut.writeAttribute("value", QString::number(this->loc3.y));
+    // 3d z position
+    xmlOut.writeEmptyElement("z3D");
+    xmlOut.writeAttribute("value", QString::number(this->loc3.z));
+
+    // isViz?
+    xmlOut.writeEmptyElement("is_visualised");
+    xmlOut.writeAttribute("value", QString::number(this->isVisualised));
+
+    xmlOut.writeEndElement(); // SpineCreator
+
+    // end annotations
+    xmlOut.writeEndElement(); // annotation
 
     // NEURON /////////////////
 
@@ -889,9 +999,9 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
 
     if (this->isSpikeSource) {
         xmlOut.writeAttribute("url", "SpikeSource");
-    } else
+    } else {
         this->neuronType->write_node_xml(xmlOut);
-
+    }
     xmlOut.writeEndElement(); // neuron
 
     // LAYOUT /////////////////
@@ -919,24 +1029,27 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
             xmlOut.writeStartElement("LL:Projection");
             xmlOut.writeAttribute("dst_population", dst->name);
 
+            // write annotations
+            projection->write_model_meta_xml(&xmlOut);
+
             for (int j = 0; j < projection->synapses.size(); ++j) {
 
                 // add each Synapse
                 xmlOut.writeStartElement("LL:Synapse");
 
-                projection->synapses[j]->connectionType->src = projection->source;
-                projection->synapses[j]->connectionType->dst = projection->destination;
+                projection->synapses[j]->connectionType->srcPop = projection->source;
+                projection->synapses[j]->connectionType->dstPop = projection->destination;
                 projection->synapses[j]->connectionType->write_node_xml(xmlOut);
 
                 xmlOut.writeStartElement("LL:WeightUpdate");
-                xmlOut.writeAttribute("name", projection->synapses[j]->weightUpdateType->getXMLName());
+                xmlOut.writeAttribute("name", projection->synapses[j]->weightUpdateCmpt->getXMLName());
 
-                projection->synapses[j]->weightUpdateType->write_node_xml(xmlOut);
+                projection->synapses[j]->weightUpdateCmpt->write_node_xml(xmlOut);
                 xmlOut.writeEndElement(); // synapse
 
                 xmlOut.writeStartElement("LL:PostSynapse");
-                xmlOut.writeAttribute("name", projection->synapses[j]->postsynapseType->getXMLName());
-                projection->synapses[j]->postsynapseType->write_node_xml(xmlOut);
+                xmlOut.writeAttribute("name", projection->synapses[j]->postSynapseCmpt->getXMLName());
+                projection->synapses[j]->postSynapseCmpt->write_node_xml(xmlOut);
                 xmlOut.writeEndElement(); // postsynapse
 
                 xmlOut.writeEndElement(); // Synapse
@@ -949,106 +1062,21 @@ void population::write_population_xml(QXmlStreamWriter &xmlOut) {
     xmlOut.writeEndElement(); // population
 }
 
-
-void population::write_model_meta_xml(QDomDocument &meta, QDomElement &root) {
-
-    // write a new element for this population:
-    QDomElement pop = meta.createElement( "population" );
-    root.appendChild(pop);
-    pop.setAttribute("name", this->name);
-
-    // add tags for each bit of metadata
-    // x position
-    QDomElement xPos = meta.createElement( "xPos" );
-    pop.appendChild(xPos);
-    // To avoid metaData.xml changing arbitrarily, impose a
-    // granularity limit on float x.
-    stringstream xx;
-    xx << std::setprecision(METADATA_FLOAT_PRECISION) << this->x;
-    xPos.setAttribute("value", xx.str().c_str());
-
-    // y position
-    QDomElement yPos = meta.createElement( "yPos" );
-    pop.appendChild(yPos);
-    stringstream yy;
-    yy << std::setprecision(METADATA_FLOAT_PRECISION) << this->y;
-    yPos.setAttribute("value", yy.str().c_str());
-
-    // this->animspeed;
-    QDomElement animSpeed = meta.createElement( "animSpeed" );
-    pop.appendChild(animSpeed);
-    animSpeed.setAttribute("value", this->animspeed);
-
-    // this->aspect_ratio;
-    QDomElement aspect_ratio = meta.createElement( "aspectRatio" );
-    pop.appendChild(aspect_ratio);
-    aspect_ratio.setAttribute("value", this->aspect_ratio);
-
-    // this->colour;
-    QDomElement colour = meta.createElement( "colour" );
-    pop.appendChild(colour);
-    colour.setAttribute("red", this->colour.red());
-    colour.setAttribute("green", this->colour.green());
-    colour.setAttribute("blue", this->colour.blue());
-
-    // this->size;
-    QDomElement size = meta.createElement( "size" );
-    pop.appendChild(size);
-    size.setAttribute("value", this->size);
-
-    // this->tag;
-    QDomElement tag = meta.createElement( "tag" );
-    pop.appendChild(tag);
-    tag.setAttribute("value", this->tag);
-
-    // this->neuronType->inputs;
-    for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
-        this->neuronType->inputs[i]->write_model_meta_xml(meta, root);
-    }
-
-    // this->projections;
-    for (int i = 0; i < this->projections.size(); ++i) {
-        this->projections[i]->write_model_meta_xml(meta, root);
-    }
-
-    // 3d x position
-    QDomElement x3D = meta.createElement( "x3D" );
-    pop.appendChild(x3D);
-    x3D.setAttribute("value", this->loc3.x);
-
-    // 3d y position
-    QDomElement y3D = meta.createElement( "y3D" );
-    pop.appendChild(y3D);
-    y3D.setAttribute("value", this->loc3.y);
-
-    // 3d z position
-    QDomElement z3D = meta.createElement( "z3D" );
-    pop.appendChild(z3D);
-    z3D.setAttribute("value", this->loc3.z);
-
-    // isvis?
-    QDomElement isvis = meta.createElement( "is_visualised" );
-    pop.appendChild(isvis);
-    isvis.setAttribute("value", this->isVisualised);
-
-}
-
-void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, QDomDocument * meta, projectObject * data) {
-
+void population::load_projections_from_xml(QDomElement  &e, QDomDocument * doc, QDomDocument * meta, projectObject * data)
+{
     ///// ADD Synapses:
     QDomNodeList cList = e.elementsByTagName("LL:Projection");
-
-    DBG() << "Reading projections from XML";
     for (int i = 0; i < (int) cList.count(); ++i) {
         QDomElement e2 = cList.item(i).toElement();
+        //DBG() << "Reading " << e2.tagName() << " dst_population: " << e2.attribute("dst_population", "no-dest-specified");
         this->projections.push_back(QSharedPointer<projection>(new projection()));
         this->projections.back()->readFromXML(e2, doc, meta, data, this->projections.back());
     }
-
+    //DBG() << "Read " << cList.count() << " projections from XML";
 }
 
-void population::getNeuronLocations(QVector <loc> *locations,QColor * cols) {
-
+void population::getNeuronLocations(QVector <loc> *locations,QColor * cols)
+{
     // find what has that name, and send back the details
 
     if (this->layoutType->component->name == "none") {
@@ -1069,9 +1097,8 @@ void population::getNeuronLocations(QVector <loc> *locations,QColor * cols) {
         }
         *cols = this->colour;
         return;
-    }
-    else
-    {
+
+    } else {
         locations->clear();
         *cols = this->colour;
         // generate the locations!
@@ -1079,15 +1106,12 @@ void population::getNeuronLocations(QVector <loc> *locations,QColor * cols) {
         this->layoutType->generateLayout(this->numNeurons, locations, err);
         //if (err != "") emit statusBarUpdate(err, 2000);
         return;
-
     }
-
 }
 
-void population::makeSpikeSource(QSharedPointer<population> thisSharedPointer) {
-
+void population::makeSpikeSource(QSharedPointer<population> thisSharedPointer)
+{
     this->isSpikeSource = true;
-
     // make component
     QSharedPointer<Component> ss = QSharedPointer<Component>(new Component());
     ss->name = "SpikeSource";
@@ -1128,8 +1152,6 @@ QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, 
 
     // neuron body...
     newPop->neuronType = QSharedPointer<ComponentInstance>(new ComponentInstance(this->neuronType, true/*copy inputs / outputs*/));
-    // fix owner
-    //newPop->neuronType->owner = newPop;
 
     // layout...
     newPop->layoutType = QSharedPointer<NineMLLayoutData>(new NineMLLayoutData(this->layoutType));
@@ -1143,7 +1165,6 @@ QSharedPointer <systemObject> population::newFromExisting(QMap <systemObject *, 
     objectMap.insert(this, newPop);
 
     return newPop;
-
 }
 
 void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemObject> > pointerMap)
@@ -1154,12 +1175,12 @@ void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemO
     // and update any projections:
     for (int i = 0; i < this->projections.size(); ++i) {
         // if the proj is in the pointermap...
-        qDebug() << pointerMap << this->projections[i].data();
+        DBG() << pointerMap << this->projections[i].data();
         if (pointerMap.contains(this->projections[i].data())) {
             // remap input
             this->projections[i] = qSharedPointerDynamicCast <projection> (pointerMap[this->projections[i].data()]);
             if (!this->projections[i]) {
-                qDebug() << "Error casting shared pointer to projection in population::remapSharedPointers";
+                DBG() << "Error casting shared pointer to projection in population::remapSharedPointers";
                 exit(-1);
             }
         } else {
@@ -1175,7 +1196,7 @@ void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemO
             // remap input
             this->reverseProjections[i] = qSharedPointerDynamicCast <projection> (pointerMap[this->reverseProjections[i].data()]);
             if (!this->reverseProjections[i]) {
-                qDebug() << "Error casting shared pointer to reverse projection in population::remapSharedPointers";
+                DBG() << "Error casting shared pointer to reverse projection in population::remapSharedPointers";
                 exit(-1);
             }
         } else {
@@ -1186,22 +1207,15 @@ void population::remapSharedPointers(QMap<systemObject *, QSharedPointer<systemO
     }
 }
 
-void population::print() {
-
-    cerr << this->name.toStdString() << "   ###########################\n\n";
-
-    cerr << "X = " << this->x << " Y = " << this->y << "\n";
-
-    cerr << "size = " << this->size << " aspect = " << this->aspect_ratio << "\n";
-
-    cerr << "numNeurons = " << this->numNeurons << "\n";
-
-    cerr << "Number of projections out = " << float(this->projections.size()) << "\n";
+void population::print()
+{
+    DBG() << this->name << "   ###########################";
+    DBG() << "X = " << this->x << " Y = " << this->y;
+    DBG() << "size = " << this->size << " aspect = " << this->aspect_ratio;
+    DBG() << "numNeurons = " << this->numNeurons;
+    DBG() << "Number of projections out = " << float(this->projections.size());
     for (int i = 0; i < this->projections.size(); ++i) {
         this->projections[i]->print();
     }
-
-    cerr << "Number of projections in  = " << float(this->reverseProjections.size()) << "\n";
-
-    cerr << "\n\n\n";
+    DBG() << "Number of projections in  = " << float(this->reverseProjections.size());
 }

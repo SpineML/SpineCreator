@@ -33,14 +33,13 @@
  * diagram". See saveNetworkImageDialog::drawOrderLessThan for the
  * reason why this is.
  */
-enum systemObjectType {
-
+enum systemObjectType
+{
     populationObject,
     projectionObject,
     synapseObject,
     inputObject,
     nullObject
-
 };
 
 class systemObject
@@ -120,6 +119,12 @@ public:
      * the object.
      */
     QPointF locationOffset;
+
+    /*!
+     * \brief annotation
+     * QString to hold the annotation data for this object
+     */
+    QString annotation;
 };
 
 #endif // SYSTEMOBJECT_H

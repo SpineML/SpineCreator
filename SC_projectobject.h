@@ -5,6 +5,11 @@
 #include "globalHeader.h"
 #include "SC_versioncontrol.h"
 
+// A marker for code that is associated with loading the old-style
+// metaData.xml. In the new style, the metaData annotations are
+// recorded inside the model.xml file in <LL:Annotation> tags.
+#define KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY 1
+
 // Limit the precision of floating point numbers in metaData.xml to
 // avoid the metaData.xml file changing arbitrarily.
 #define METADATA_FLOAT_PRECISION 6
@@ -30,7 +35,7 @@ public:
     bool open_project(QString);
     bool save_project(QString, nl_rootdata *);
 
-    bool import_network(QString);
+    bool import_network(QString, cursorType);
 
     void import_component(QString);
 
@@ -43,6 +48,21 @@ public:
     void copy_out_data(nl_rootdata *);
     void deselect_project(nl_rootdata *);
     void select_project(nl_rootdata *);
+
+    /*!
+     * Find the extent of the network - positions of a set of
+     * populations.  Returns a pair of QPointFs - the first is the top
+     * left extent, the second is the bottom right extent. So, the
+     * left most extent is given by rtn.first.x() and the top most
+     * extent by rtn.first.y(). The right extent is rtn.second.x() and
+     * the bottom extent is rtn.second.y().
+     */
+    std::pair<QPointF, QPointF> getNetworkExtent (QVector < QSharedPointer <population> >& pops);
+
+    // To finish the job of allowing an imported network to be
+    // auto-located, we would need a translateNetwork() method, which
+    // updates all the positions of the populations and connections in
+    // the network.
 
     // errors
     void printIssues(QString);
@@ -63,10 +83,35 @@ public:
 
     // info
     QString name;
+    /*!
+     * Return a filename-friendly version of @see name. This is used
+     * as the sub-directory in the working directory where the model
+     * is simulated. It means that we don't get a pollution of the
+     * "Loaded Logs" when working in the graph interface.
+     */
+    QString getFilenameFriendlyName (void);
+
+    /*!
+     * Does the given experiment pointer match one stored for this
+     * project?
+     */
+    bool doesExperimentExist (experiment* e);
+
     QString filePath;
 
     QString networkFile;
+
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+    /*!
+     * The name of hte old-style standalone metadata file (was
+     * usually/always metaData.xml).
+     *
+     * This now defaults to being empty. If a metaFile is specified in
+     * the SpineCreator project file, then that value is filled in here.
+     */
     QString metaFile;
+#endif
+
     QStringList components;
     QStringList experiments;
     QStringList layouts;
@@ -89,7 +134,16 @@ public:
     // state of the visualizer QTreeWidget
     QStringList treeWidgetState;
 
+    // Getter for currentCursorPos
+    cursorType getCursorPos (void);
+
+    // A string annotation for the modeller to write something useful
+    // about this object.
+    QString annotation;
+
 private:
+
+    cursorType currentCursorPos;
 
     // load helpers
     bool isComponent(QString);
@@ -100,7 +154,6 @@ private:
     void saveLayout(QString, QDir, QSharedPointer<NineMLLayout>);
     void loadNetwork(QString, QDir, bool isProject = true);
     void saveNetwork(QString, QDir);
-    void saveMetaData(QString, QDir);
     void loadExperiment(QString, QDir, bool skipFileError = false);
     void saveExperiment(QString, QDir, experiment *);
 
@@ -121,8 +174,14 @@ private:
     void cleanUpStaleExplicitData(QString& fileName, QDir& projectDir);
 
     QDomDocument doc;
-    QDomDocument meta;
 
+#ifdef KEEP_OLD_STYLE_METADATA_XML_FILE_LOADING_FOR_COMPATIBILITY
+    /*!
+     * A QDomDocument into the metaData.xml file. Required only for
+     * loading old-style projects.
+     */
+    QDomDocument meta;
+#endif
 
 signals:
 

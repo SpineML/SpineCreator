@@ -250,19 +250,44 @@ private:
 class changeConnection : public QUndoCommand
 {
 public:
-    changeConnection(nl_rootdata * data, QSharedPointer<systemObject> ptr, int index, QUndoCommand *parent = 0);
-    ~changeConnection() {if (!isUndone) delete oldConn;}
+    changeConnection(nl_rootdata * data, QSharedPointer<systemObject> pNewConn, int index, QUndoCommand *parent = 0);
+    ~changeConnection() {
+        if (!this->isUndone) {
+            delete this->oldConn;
+        }
+    }
     void undo();
     void redo();
 
 private:
     // these references are needed for the redo and undo
     nl_rootdata * data;
-    QSharedPointer<systemObject> ptr;
+    QSharedPointer<systemObject> newConn;
     int index;
     QString scriptName;
     connection * oldConn;
     bool isUndone;
+};
+
+class globalConnectionDelayChange : public QUndoCommand
+{
+public:
+    globalConnectionDelayChange(nl_rootdata * data, QSharedPointer<systemObject> pExistingConn, bool globalDelay, QUndoCommand *parent = 0);
+    ~globalConnectionDelayChange() {
+        if (!this->isUndone) {
+            delete this->oldConn;
+        }
+    }
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    nl_rootdata * data;
+    QSharedPointer<systemObject> connParent; // The connection's parent object. Contains the new connection details.
+    connection * oldConn;
+    bool isUndone;
+    bool globalDelay;
 };
 
 class setSizeUndo : public QUndoCommand
@@ -605,6 +630,22 @@ private:
     nl_rootdata * data;
     experiment * expt;
     exptLesion * lesion;
+    int location;
+};
+
+class deleteGILesionUndo: public QUndoCommand
+{
+public:
+    deleteGILesionUndo(nl_rootdata* data, experiment* expt, exptGenericInputLesion* l, QUndoCommand* parent = 0);
+    ~deleteGILesionUndo() {}
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    nl_rootdata * data;
+    experiment * expt;
+    exptGenericInputLesion * gilesion;
     int location;
 };
 

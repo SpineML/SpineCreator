@@ -32,7 +32,6 @@
 class ArrowItem;
 class NineMLNodeItem;
 class NineMLTransitionItem;
-
 class NineMLALScene;
 class RootComponentItem;
 class PropertiesManager;
@@ -47,12 +46,10 @@ class OnConditionTriggerTextItem;
 class OnEventTriggerTextItem;
 class OnImpulseTriggerTextItem;
 
-
-
-/******************************************/
-/* Abstract Items */
-
-
+/*!
+ * Abstract Items
+ */
+//@{
 class ArrowItem : public QObject, public QGraphicsItem
 {
     Q_OBJECT
@@ -64,6 +61,7 @@ public:
     void setPath(QPainterPath path);
     void setPenColour(QColor col);
     void setLineWidth(int w);
+
 private:
     int width;
     QColor colour;
@@ -83,15 +81,34 @@ public:
     void addMember(GroupedTextItem *item);            //overwrite TextItemGroup addMember
     void addMemberAtIndex(GroupedTextItem *item, int index);
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
+
+    /*!
+     * Reach into the RootComponentItem's underlying Component object
+     * and obtain the annotation text corresponding to the
+     * name/key/identifier of this text item, as supplied by @see
+     * getKey.
+     */
+    QString getAnnotationText(void);
+
+    virtual QString getName(void) { return "__unknown_name"; }
+
+public slots:
+    /*!
+     * Called to update the annotation
+     */
+    void updateAnnotationText(void);
+
+protected:
+    RootComponentItem *root;
 };
 
 
-typedef enum {
+typedef enum
+{
     TRANSITION_TYPE_ON_EVENT,
     TRANSITION_TYPE_ON_CONDITION,
     TRANSITION_TYPE_ON_IMPULSE
 } NineMLTransitionItemType;
-
 
 class NineMLTransitionItem: public TextItemGroup, public GVEdge
 {
@@ -104,11 +121,29 @@ public:
     void addMember(GroupedTextItem * item);            //overwrite TextItemGroup addMember
     void addMemberAtIndex(GroupedTextItem *item, int index);
     void removeMember(GroupedTextItem* item);          //overwrite TextItemGroup removeMember
+
     virtual NineMLTransitionItemType transitionType() = 0;
+
+    /*!
+     * Reach into the RootComponentItem's underlying Component object
+     * and obtain the annotation text corresponding to the
+     * name/key/identifier of this text item, as supplied by @see
+     * getKey.
+     */
+    QString getAnnotationText(void);
+
+    virtual QString getName(void) { return "__unknown_name"; }
+
+public slots:
+    /*!
+     * Called to update the annotation
+     */
+    void updateAnnotationText(void);
+
 protected:
     ArrowItem *arrow;
+    RootComponentItem *root;
 };
-
 
 class NineMLTextItem: public GroupedTextItem
 {
@@ -117,14 +152,35 @@ public:
     NineMLTextItem(GVItem *gv_item, TextItemGroup *parent = 0);
     ~NineMLTextItem();
     void setPlainText(const QString &text);                             //overwite GroupTextItem (to ensure Call of updatedims)
+
+    /*!
+     * Reach into the RootComponentItem's underlying Component object
+     * and obtain the annotation text corresponding to the
+     * name/key/identifier of this text item, as supplied by @see
+     * getKey.
+     */
+    QString getAnnotationText(void);
+
+    virtual QString getName(void) { return "__unknown_name"; }
+
+public slots:
+    /*!
+     * Called to update the annotation
+     */
+    void updateAnnotationText(void);
+
+protected:
+    RootComponentItem *root;
+
 private:
     GVItem *gv_item;
 };
+//@}
 
-
-/******************************************/
-/* Concrete items */
-
+/*!
+ * Concrete items
+ */
+//@{
 
 class RegimeGraphicsItem : public NineMLNodeItem
 {
@@ -133,11 +189,14 @@ public:
     RegimeGraphicsItem(Regime *r, RootComponentItem *root);
     void addTimeDerivativeItem(TimeDerivative* td);
     QString getRegimeName();
+    virtual QString getName();
     bool isRegime(Regime *r);
     int type() const { return Type; }
+
 public slots:
     void setRegimeName(QString n);
     void updateContent();
+
 protected:
     virtual void handleSelection();
 
@@ -145,10 +204,7 @@ public:
     Regime *regime;
     enum { Type = UserType + 1 };
     static const int padding = 10;
-private :
-    RootComponentItem *root;
 };
-
 
 class TimeDerivativeTextItem: public NineMLTextItem
 {
@@ -159,17 +215,17 @@ public:
     int type() const { return Type; }
     StateVariable* getVariable();
     MathInLine* getMaths();
+
 public slots:
     virtual void updateContent();
     void setVariable(QString p);
     void setMaths(QString m);
+
 protected:
     virtual void handleSelection();
 
 public:
     TimeDerivative *time_derivative;
-private :
-    RootComponentItem *root;
 };
 
 
@@ -188,19 +244,21 @@ public:
     Regime* getSourceRegime();
     static const int padding = 4;
     virtual NineMLTransitionItemType transitionType(){return TRANSITION_TYPE_ON_CONDITION;}
+
 public slots:
     void setTriggerMaths(QString m);
     void setSynapseRegime(QString m);
+
 protected:
     virtual void handleSelection();
+
 public:
     OnCondition *on_condition;
     Regime *src_regime;
-private :
-    OnConditionTriggerTextItem *trigger_item;
-    RootComponentItem *root;
-};
 
+private:
+    OnConditionTriggerTextItem *trigger_item;
+};
 
 class OnConditionTriggerTextItem: public NineMLTextItem
 {
@@ -210,17 +268,17 @@ public:
     enum { Type = UserType + 4 };
     int type() const { return Type; }
     MathInLine* getMaths();
+
 public slots:
     void setMaths(QString m);
     virtual void updateContent();
+
 protected:
     virtual void handleSelection();
+
 public:
     Trigger *trigger;
-private :
-    RootComponentItem *root;
 };
-
 
 class StateAssignmentTextItem: public NineMLTextItem
 {
@@ -231,18 +289,18 @@ public:
     int type() const { return Type; }
     StateVariable* getVariable();
     MathInLine* getMaths();
+
 public slots:
     virtual void updateContent();
     void setVariable(QString p);
     void setMaths(QString m);
+
 protected:
     virtual void handleSelection();
+
 public:
     StateAssignment *assignment;
-private :
-    RootComponentItem *root;
 };
-
 
 class EventOutTextItem: public NineMLTextItem
 {
@@ -252,17 +310,17 @@ public:
     enum { Type = UserType + 6 };
     int type() const { return Type; }
     EventPort* getEventPort();
+
 public slots:
     virtual void updateContent();
     void setEventPort(QString m);
+
 protected:
     virtual void handleSelection();
+
 public:
     EventOut *event_out;
-private :
-    RootComponentItem *root;
 };
-
 
 class ParameterListGraphicsItem : public NineMLNodeItem
 {
@@ -272,6 +330,7 @@ public:
     void addParameterItem(Parameter* p);
     void addStateVariableItem(StateVariable* p);
     void addAliasItem(Alias* p);
+
 public:
     enum { Type = UserType + 7 };
     int type() const { return Type; }
@@ -279,10 +338,7 @@ public:
 
 protected:
     virtual void handleSelection();
-private :
-    RootComponentItem *root;
 };
-
 
 class ParameterTextItem: public NineMLTextItem
 {
@@ -291,20 +347,20 @@ public:
     ParameterTextItem(ParameterListGraphicsItem *parent, Parameter* param, RootComponentItem *root);
     enum { Type = UserType + 8 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
+
 public slots:
     virtual void updateContent();
     void setName(QString m);
     void setDimsPrefix(QString p);
     void setDimsUnit(QString u);
+
 protected:
     virtual void handleSelection();
+
 public:
     Parameter *parameter;
-private :
-    RootComponentItem *root;
 };
-
 
 class StateVariableTextItem: public NineMLTextItem
 {
@@ -313,20 +369,20 @@ public:
     StateVariableTextItem(ParameterListGraphicsItem *parent, StateVariable* state_var, RootComponentItem *root);
     enum { Type = UserType + 9 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
+
 public slots:
     virtual void updateContent();
     void setName(QString m);
     void setDimsPrefix(QString p);
     void setDimsUnit(QString u);
+
 protected:
     virtual void handleSelection();
+
 public:
     StateVariable *state_variable;
-private :
-    RootComponentItem *root;
 };
-
 
 class AliasTextItem: public NineMLTextItem
 {
@@ -335,20 +391,58 @@ public:
     AliasTextItem(ParameterListGraphicsItem *parent, Alias* alias, RootComponentItem *root);
     enum { Type = UserType + 10 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     MathInLine* getMaths();
+
 public slots:
     virtual void updateContent();
     void setName(QString m);
     void setMaths(QString m);
+
 protected:
     virtual void handleSelection();
+
 public:
     Alias *alias;
-private :
-    RootComponentItem *root;
 };
 
+class AnnotationListGraphicsItem : public NineMLNodeItem
+{
+    Q_OBJECT
+public:
+    AnnotationListGraphicsItem(RootComponentItem *root);
+    void addAnnotationTextItem(QString key, QString value);
+
+public:
+    enum { Type = UserType + 20 };
+    int type() const { return Type; }
+    static const int padding = 5;
+
+protected:
+    virtual void handleSelection();
+};
+
+class AnnotationTextItem: public NineMLTextItem
+{
+    Q_OBJECT
+public:
+    AnnotationTextItem(AnnotationListGraphicsItem *parent, QString ky, QString txt, RootComponentItem *root);
+    enum { Type = UserType + 21 };
+    int type() const { return Type; }
+    virtual QString getName() { return this->getKey(); }
+    QString getKey();
+    QString getText();
+
+public slots:
+    virtual void updateContent();
+
+protected:
+    virtual void handleSelection();
+
+private :
+    QString key;
+    QString text;
+};
 
 class PortListGraphicsItem : public NineMLNodeItem
 {
@@ -363,12 +457,10 @@ public:
     enum { Type = UserType + 11 };
     int type() const { return Type; }
     static const int padding = 5;
+
 protected:
     virtual void handleSelection();
-private :
-    RootComponentItem *root;
 };
-
 
 class AnalogPortTextItem: public NineMLTextItem
 {
@@ -377,7 +469,7 @@ public:
     AnalogPortTextItem(PortListGraphicsItem *parent, AnalogPort* p, RootComponentItem *root);
     enum { Type = UserType + 12 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     StateVariable* getVariable();
     AnalogPortMode getPortMode();
     ReduceOperation getPortReduceOp();
@@ -390,15 +482,15 @@ public slots:
     void setPortReduceOp(QString p);
     void setDimsPrefix(QString p);
     void setDimsUnit(QString u);
+    void setIsPostState(bool b);
+    void setIsPerConnState(bool b);
 
 protected:
     virtual void handleSelection();
+
 public:
     AnalogPort *port;
-private :
-    RootComponentItem *root;
 };
-
 
 class EventPortTextItem: public NineMLTextItem
 {
@@ -407,22 +499,21 @@ public:
     EventPortTextItem(PortListGraphicsItem *parent, EventPort* p, RootComponentItem *root);
     enum { Type = UserType + 13 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     EventPortMode getPortMode();
 
 public slots:
     virtual void updateContent();
     void setName(QString n);
     void setPortMode(QString p);
+    void setIsPostState(bool b);
 
 protected:
     virtual void handleSelection();
+
 public:
     EventPort *port;
-private :
-    RootComponentItem *root;
 };
-
 
 class OnEventGraphicsItem : public NineMLTransitionItem
 {
@@ -431,30 +522,29 @@ public:
     OnEventGraphicsItem(Regime *src_regime, OnEvent *e, RootComponentItem *root);
     enum { Type = UserType + 14 };
     int type() const { return Type; }
-
     void addStateAssignment(StateAssignment *sa);
     void addEventOut(EventOut* eo);
     void addImpulseOut(ImpulseOut* io);
-
     EventPort* getEventPort();
     Regime* getSynapseRegime();
     Regime* getSourceRegime();
     virtual NineMLTransitionItemType transitionType(){return TRANSITION_TYPE_ON_EVENT;}
-
     static const int padding = 4;
+
 public slots:
     void setEventPort(QString m);
     void setSynapseRegime(QString m);
+
 protected:
     virtual void handleSelection();
+
 public:
     OnEvent *on_event;
     Regime *src_regime;
+
 private :
     OnEventTriggerTextItem *trigger_item;
-    RootComponentItem *root;
 };
-
 
 class OnEventTriggerTextItem: public NineMLTextItem
 {
@@ -464,18 +554,18 @@ public:
     enum { Type = UserType + 15 };
     int type() const { return Type; }
     EventPort* getEventPort();
+    virtual QString getName (void) { return QString("EventTriggerTxt"); }
+
 public slots:
     void setEventPort(QString m);
     virtual void updateContent();
+
 protected:
     virtual void handleSelection();
+
 public:
-    OnEvent *on_event;//EventPort *event_port; //stored in OnEvent
-private :
-
-    RootComponentItem *root;
+    OnEvent *on_event;
 };
-
 
 class ImpulsePortTextItem: public NineMLTextItem
 {
@@ -484,7 +574,7 @@ public:
     ImpulsePortTextItem(PortListGraphicsItem *parent, ImpulsePort* p, RootComponentItem *root);
     enum { Type = UserType + 16 };
     int type() const { return Type; }
-    QString getName();
+    virtual QString getName();
     Parameter *getParameter();
     ImpulsePortMode getPortMode();
 
@@ -498,12 +588,10 @@ public slots:
 
 protected:
     virtual void handleSelection();
+
 public:
     ImpulsePort *port;
-private :
-    RootComponentItem *root;
 };
-
 
 class ImpulseOutTextItem: public NineMLTextItem
 {
@@ -513,17 +601,17 @@ public:
     enum { Type = UserType + 17 };
     int type() const { return Type; }
     ImpulsePort* getImpulsePort();
+
 public slots:
     virtual void updateContent();
     void setImpulsePort(QString m);
+
 protected:
     virtual void handleSelection();
+
 public:
     ImpulseOut *impulse_out;
-private :
-    RootComponentItem *root;
 };
-
 
 class OnImpulseGraphicsItem : public NineMLTransitionItem
 {
@@ -532,30 +620,29 @@ public:
     OnImpulseGraphicsItem(Regime *src_regime, OnImpulse *e, RootComponentItem *root);
     enum { Type = UserType + 18 };
     int type() const { return Type; }
-
     void addStateAssignment(StateAssignment *sa);
     void addEventOut(EventOut* eo);
     void addImpulseOut(ImpulseOut* io);
-
     ImpulsePort* getImpulsePort();
     Regime* getSynapseRegime();
     Regime* getSourceRegime();
     virtual NineMLTransitionItemType transitionType(){return TRANSITION_TYPE_ON_IMPULSE;}
-
     static const int padding = 4;
+
 public slots:
     void setImpulsePort(QString m);
     void setSynapseRegime(QString m);
+
 protected:
     virtual void handleSelection();
+
 public:
     OnImpulse *on_impulse;
     Regime *src_regime;
+
 private :
     OnImpulseTriggerTextItem *trigger_item;
-    RootComponentItem *root;
 };
-
 
 class OnImpulseTriggerTextItem: public NineMLTextItem
 {
@@ -565,17 +652,17 @@ public:
     enum { Type = UserType + 19 };
     int type() const { return Type; }
     ImpulsePort* getImpulsePort();
+
 public slots:
     void setImpulsePort(QString m);
     virtual void updateContent();
+
 protected:
     virtual void handleSelection();
+
 public:
     OnImpulse *on_impulse;//ImpulsePort *impulse_port; //stored in OnImpulse
-private :
-
-    RootComponentItem *root;
 };
-
+//@}
 
 #endif // NINEML_GRAPHICSITEMS_H
