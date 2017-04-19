@@ -1867,6 +1867,7 @@ void viewELExptPanelHandler::run()
 #ifndef Q_OS_WIN
         simulator->start(path,al);
 #else
+        qDebug() << path;
         simulator->start(path);
 #endif
     }
