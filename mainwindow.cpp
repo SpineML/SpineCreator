@@ -22,14 +22,6 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-#ifdef _DEBUG
-  #undef _DEBUG
-  #include <Python.h>
-  #define _DEBUG
-#else
-  #include <Python.h>
-#endif
-
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "SC_settings.h"
@@ -49,6 +41,15 @@
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QStandardPaths>
 #endif
+
+#ifdef _DEBUG
+  #undef _DEBUG
+  #include <Python.h>
+  #define _DEBUG
+#else
+  #include <Python.h>
+#endif
+
 
 #include "qdebug.h"
 #include "SC_aboutdialog.h"

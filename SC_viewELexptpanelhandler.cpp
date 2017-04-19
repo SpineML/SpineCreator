@@ -1801,9 +1801,11 @@ void viewELExptPanelHandler::run()
 
     // load path
     settings.beginGroup("simulators/" + simName);
+    qDebug() << simName;
     QString path = settings.value("path").toString();
     // Check that path exists and is executable.
     QFile the_script(path);
+#ifndef Q_OS_WIN
     if (!the_script.exists()) {
         // Error - convert_script file doesn't exist
         this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' does not exist.");
@@ -1819,11 +1821,18 @@ void viewELExptPanelHandler::run()
             return;
         }
     }
+#endif
 
     // The convert_script takes the working directory as a script argument
     QString wk_dir_string = settings.value("working_dir").toString();
     settings.endGroup();
     wk_dir_string = QDir::toNativeSeparators(wk_dir_string);
+#ifdef Q_OS_WIN
+    // on windows using Ubuntu BASH we must convert the path
+    wk_dir_string = wk_dir_string.replace("\\","/");
+    wk_dir_string = wk_dir_string.replace("C:","/mnt/c");
+    wk_dir_string = wk_dir_string.replace("D:","/mnt/d");
+#endif
     QDir wk_dir(wk_dir_string);
 
     // clear error message lookup
@@ -1956,10 +1965,25 @@ void viewELExptPanelHandler::run()
     QString modelpath(projFileInfo.dir().path());
     {
         QStringList al;
+#ifdef Q_OS_WIN
+        out_dir_name = wk_dir.absolutePath() + "/temp";
+        // on windows using Ubuntu BASH we must convert the path
+        modelpath = modelpath.replace("\\","/");
+        modelpath = modelpath.replace("C:","/mnt/c");
+        modelpath = modelpath.replace("D:","/mnt/d");
+        path = QString("cmd.exe /R ") + QString('"') + QString("c:\\WINDOWS\\sysnative\\bash.exe -c '") + path + \
+                QString(" -m ") + modelpath + \
+                QString(" -w ") + wk_dir.absolutePath() + \
+                QString(" -o ") + out_dir_name +\
+                QString(" -e ") + QString("%1").arg(currentExptNum) + \
+                QString("'") + QString('"')\
+                ;
+#else
         al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
            << "-o" << out_dir_name//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
+#endif
 
         // In settings we set REBUILD - apparently to be an
         // environment variable. However, the way to set
@@ -1971,11 +1995,23 @@ void viewELExptPanelHandler::run()
             al << "-r"; // Add the -r option for rebuilding components
         } // else don't rebuild
 
-        simulator->start(path, al);
+       //qDebug() << QProcess::execute(path);
+
+       //path = "notepad.exe";
+
+        QProcess * simulator = new QProcess;
+        simulator->setProcessEnvironment(env);
+
+#ifndef Q_OS_WIN
+        simulator->start(path,al);
+#else
+        qDebug() << path;
+        simulator->start(path);
+#endif
     }
 
-
     // Wait a couple of seconds for the process to start
+#ifndef Q_OS_WIN
     if (!simulator->waitForStarted(1000)) {
         // Error - simulator failed to start
         this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
@@ -1983,6 +2019,14 @@ void viewELExptPanelHandler::run()
                             // - in which case deleting the simulator causes a crash later on... for this reason I have left it as a memory leak
         return;
     }
+#endif
+
+#ifdef Q_OS_WIN
+    settings.beginGroup("simulators/" + simName);
+    out_dir_name  = settings.value("working_dir").toString() + QDir::separator() + "temp";
+    settings.endGroup();
+    this->logpath = out_dir_name + QDir::separator() + "log";
+#endif
 
     connect(simulator, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(simulatorFinished(int, QProcess::ExitStatus)));
     connect(simulator, SIGNAL(readyReadStandardOutput()), this, SLOT(simulatorStandardOutput()));
@@ -1991,7 +2035,9 @@ void viewELExptPanelHandler::run()
     // now start a timer to check on the simulation progress
     connect(&simTimeChecker, SIGNAL(timeout()), this, SLOT(checkForSimTime()));
     this->simTimeMax = currentExperiment->setup.duration;
+
     this->simTimeFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "time.txt");
+    QFile::remove(simTimeFileName);
     this->simCancelFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "stop.txt");
     simTimeChecker.start(17);
 
@@ -2038,6 +2084,12 @@ void viewELExptPanelHandler::cancelRun() {
     QFile simCancelFile(simCancelFileName);
 
     simCancelFile.open(QFile::WriteOnly);
+    simCancelFile.close();
+
+#ifdef Q_OS_WIN
+    Sleep(2000);
+    this->simulatorFinished(0,QProcess::NormalExit);
+#endif
 
 }
 
@@ -2075,8 +2127,15 @@ void viewELExptPanelHandler::checkForSimTime() {
 
             }
         }
+#ifdef Q_OS_WIN
+    // check if we have finished...
+    if (simTimeCurr > this->simTimeMax*1000-0.2) {
+        Sleep(2000);
+        this->simulatorFinished(0,QProcess::NormalExit);
     }
-
+#endif
+        simTimeFile.close();
+    }
 }
 
 void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
@@ -2121,8 +2180,13 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
         }
     }
 
+    // collect logs
+#ifndef Q_OS_WIN
     // Update the view of the logfiles
     QDir logs(sender()->property("logpath").toString());
+#else
+    QDir logs(this->logpath);
+#endif
 
     QStringList filter;
     filter << "*.xml";
