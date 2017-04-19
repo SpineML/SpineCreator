@@ -23,6 +23,8 @@
 ****************************************************************************/
 
 
+#include <cmath>
+
 #ifdef _DEBUG
   #undef _DEBUG
   #include <Python.h>
@@ -30,6 +32,7 @@
 #else
   #include <Python.h>
 #endif
+
 
 #include <QUuid>
 
