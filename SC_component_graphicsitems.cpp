@@ -143,7 +143,11 @@ QString NineMLNodeItem::getAnnotationText(void)
 {
     QString rtn("");
     if (this->getName() != "__unknown_name") {
-        rtn = this->root->al->annotationTexts[this->getName()];
+        if (this->root->alPtr.isNull()) {
+            rtn = this->root->al->annotationTexts[this->getName()];
+        } else {
+            rtn = this->root->alPtr->annotationTexts[this->getName()];
+        }
     }
     return rtn;
 }
@@ -240,7 +244,11 @@ QString NineMLTransitionItem::getAnnotationText(void)
 {
     QString rtn("");
     if (this->getName() != "__unknown_name") {
-        rtn = this->root->al->annotationTexts[this->getName()];
+        if (this->root->alPtr.isNull()) {
+            rtn = this->root->al->annotationTexts[this->getName()];
+        } else {
+            rtn = this->root->alPtr->annotationTexts[this->getName()];
+        }
     }
     return rtn;
 }
@@ -280,7 +288,11 @@ QString NineMLTextItem::getAnnotationText(void)
 {
     QString rtn("");
     if (this->getName() != "__unknown_name") {
-        rtn = this->root->al->annotationTexts[this->getName()];
+        if (this->root->alPtr.isNull()) {
+            rtn = this->root->al->annotationTexts[this->getName()];
+        } else {
+            rtn = this->root->alPtr->annotationTexts[this->getName()];
+        }
     }
     return rtn;
 }
