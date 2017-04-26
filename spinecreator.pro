@@ -132,21 +132,24 @@ win32:
 
 win32:release {
     DEFINES += _MATH_DEFINES_DEFINED
-    LIBS += "-LD:\Graphviz\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
-    INCLUDEPATH += "D:\Graphviz\include"
+    LIBS += "-LC:\Program Files (x86)\Graphviz2.38\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
+    INCLUDEPATH += "C:\Program Files (x86)\Graphviz2.38\include"
     INCLUDEPATH += "C:\Python27\include"
-    DEPENDPATH += "C:\SDKs\Graphviz232\lib\release\lib"
+    DEPENDPATH += "C:\Program Files (x86)\Graphviz2.38\bin"
     DEPENDPATH += "C:\Python27\libs"
     DEPENDPATH += "C:\Python27"
 }
 win32:debug {
     DEFINES += _MATH_DEFINES_DEFINED
-    LIBS += "-LD:\Graphviz\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
-    INCLUDEPATH += "D:\Graphviz\include"
+    LIBS += "-LC:\Program Files (x86)\Graphviz2.38\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
+    INCLUDEPATH += "C:\Program Files (x86)\Graphviz2.38\include"
     INCLUDEPATH += "C:\Python27\include"
-    DEPENDPATH += "C:\SDKs\Graphviz232\lib\debug\lib"
+    DEPENDPATH += "C:\Program Files (x86)\Graphviz2.38\bin"
     DEPENDPATH += "C:\Python27\libs"
     DEPENDPATH += "C:\Python27"
+}
+win32 {
+    DEFINES += WIN_HIDPI_FIX
 }
 linux-g++ {
     LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7

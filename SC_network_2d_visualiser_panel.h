@@ -95,6 +95,8 @@ private:
     float GLscale;
     float targGLscale;
     bool connectMode;
+    // on some windows laptops we can't RMB drag, so this allows SHIFT-LMB dragging
+    bool LMB_drag;
 
     /*!
      * Is an item being dragged around the screen? Used in combination

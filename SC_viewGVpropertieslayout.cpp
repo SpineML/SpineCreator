@@ -27,6 +27,17 @@
 #include "qcustomplot.h"
 #include "globalHeader.h"
 
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+  #define RETINA_SUPPORT 1.0
+#else
+  #ifdef WIN_HIDPI_FIX
+  #define RETINA_SUPPORT WIN_DPI_SCALING
+  #else
+  #define RETINA_SUPPORT 1.0
+  #endif
+#endif
+
 viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget *parent) :
     QWidget(parent)
 {
@@ -48,7 +59,7 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
     // add widgets
     this->logList = new QListWidget;
     // set width to stop dock being resized too small
-    this->logList->setMinimumWidth(200);
+    this->logList->setMinimumWidth(200*RETINA_SUPPORT);
     this->logList->setSelectionMode(QAbstractItemView::SingleSelection);
     this->layout()->addWidget(new QLabel("Loaded logs"));
     this->layout()->addWidget(this->logList);
@@ -58,8 +69,8 @@ viewGVpropertieslayout::viewGVpropertieslayout(viewGVstruct * viewGVin, QWidget 
     this->layout()->addWidget(this->dataIndexList);
     this->typeList = new QListWidget;
     this->typeList->setSelectionMode(QAbstractItemView::SingleSelection);
-    this->typeList->setMinimumHeight(40);
-    this->typeList->setMaximumHeight(50);
+    this->typeList->setMinimumHeight(40*RETINA_SUPPORT);
+    this->typeList->setMaximumHeight(50*RETINA_SUPPORT);
     this->layout()->addWidget(new QLabel("Plot type"));
     this->layout()->addWidget(this->typeList);
     QPushButton * agb = new QPushButton("Add plot");
@@ -592,7 +603,7 @@ void viewGVpropertieslayout::createToolbar()
     this->viewGV->toolbar->addAction(this->actionRefreshLogData);
 
     // make the toolbar the right size
-    this->viewGV->toolbar->setFixedHeight(28);
+    this->viewGV->toolbar->setFixedHeight(28*RETINA_SUPPORT);
     this->viewGV->toolbar->layout()->setMargin(0);
 }
 

@@ -38,7 +38,7 @@
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   #define RETINA_SUPPORT 1.0
 #else
-  #ifdef Q_OS_MAC
+  #ifndef Q_OS_GLN
   #define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
   #else
   #define RETINA_SUPPORT 1.0
@@ -1566,8 +1566,13 @@ void glConnectionWidget::mouseReleaseEvent(QMouseEvent *)
 void glConnectionWidget::mouseMoveEvent(QMouseEvent *event)
 {
     if (button == Qt::LeftButton) {
-        pos.setX(-(origPos.x() - event->globalPos().x())*0.01*zoomFactor);
-        pos.setY((origPos.y() - event->globalPos().y())*0.01*zoomFactor);
+        if ((QApplication::keyboardModifiers() & Qt::ShiftModifier)) {
+            rot.setX(-(origRot.x() - event->globalPos().x())*0.5);
+            rot.setY(-(origRot.y() - event->globalPos().y())*0.5);
+        } else {
+            pos.setX(-(origPos.x() - event->globalPos().x())*0.01*zoomFactor);
+            pos.setY((origPos.y() - event->globalPos().y())*0.01*zoomFactor);
+        }
     }
     if (button == Qt::RightButton) {
         rot.setX(-(origRot.x() - event->globalPos().x())*0.5);

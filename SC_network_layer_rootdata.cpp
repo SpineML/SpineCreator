@@ -509,6 +509,8 @@ void destroyDom(QDomNode &node)
 
 void nl_rootdata::onRightMouseDown(float xGL, float yGL, float GLscale)
 {
+    qDebug() << "onRightMouseDown";
+
     // insert new point into projection
     if (selList.size() == 1) {
         if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {

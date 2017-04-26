@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
     w.show();
     // only available on 5.2+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 2, 0)
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling, true);
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps,true);
 #endif
 

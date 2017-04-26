@@ -50,6 +50,15 @@
   #include <Python.h>
 #endif
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+  #define RETINA_SUPPORT 1.0
+#else
+  #ifdef WIN_HIDPI_FIX
+  #define RETINA_SUPPORT WIN_DPI_SCALING
+  #else
+  #define RETINA_SUPPORT 1.0
+  #endif
+#endif
 
 #include "qdebug.h"
 #include "SC_aboutdialog.h"
@@ -279,6 +288,73 @@ MainWindow(QWidget *parent) :
     // add viewNL properties panel
     nl_rootlayout * layoutRoot = new nl_rootlayout(&data, ui->parsPanel);
     this->viewNL.layout = layoutRoot;
+
+#ifdef Q_OS_WIN
+    // apply additional HiDPI scaling to the main UI (as Windows has incomplete HiDPI support)
+    ui->viewSelector->setMinimumSize(ui->viewSelector->size()*RETINA_SUPPORT/2.0);
+    ui->viewSelector->move(ui->viewSelector->pos()*RETINA_SUPPORT);
+
+    ui->frame->setMinimumSize(ui->frame->size()*RETINA_SUPPORT);
+    ui->frame->move(ui->frame->pos()*RETINA_SUPPORT);
+
+    ui->frame_2->setMinimumSize(ui->frame_2->size()*RETINA_SUPPORT);
+    ui->frame_2->move(ui->frame_2->pos()*RETINA_SUPPORT);
+
+    ui->toolbar_3->setMinimumSize(ui->toolbar_3->size()*RETINA_SUPPORT);
+    ui->toolbar_3->move(ui->toolbar_3->pos()*RETINA_SUPPORT);
+
+    ui->topleft->setMinimumHeight(ui->topleft->height()*RETINA_SUPPORT);
+    ui->topleft->move(ui->topleft->pos()*RETINA_SUPPORT);
+
+    ui->butA->setMinimumWidth(ui->butA->width()*RETINA_SUPPORT);
+    ui->butA->setMinimumHeight(ui->butA->height()*RETINA_SUPPORT);
+    ui->butA->setIconSize(ui->butA->iconSize()*RETINA_SUPPORT);
+
+    ui->butB->setMinimumWidth(ui->butB->width()*RETINA_SUPPORT);
+    ui->butB->setMinimumHeight(ui->butB->height()*RETINA_SUPPORT);
+    ui->butB->move(ui->butB->pos()*RETINA_SUPPORT);
+    ui->butB->setIconSize(ui->butB->iconSize()*RETINA_SUPPORT);
+
+    ui->butSS->setMinimumWidth(ui->butSS->width()*RETINA_SUPPORT);
+    ui->butSS->setMinimumHeight(ui->butSS->height()*RETINA_SUPPORT);
+    ui->butSS->move(ui->butSS->pos()*RETINA_SUPPORT);
+    ui->butSS->setIconSize(ui->butSS->iconSize()*RETINA_SUPPORT);
+
+    ui->butC->setMinimumWidth(ui->butC->width()*RETINA_SUPPORT);
+    ui->butC->setMinimumHeight(ui->butC->height()*RETINA_SUPPORT);
+    ui->butC->move(ui->butC->pos()*RETINA_SUPPORT);
+    ui->butC->setIconSize(ui->butC->iconSize()*RETINA_SUPPORT);
+
+    ui->tab0->setMinimumWidth(ui->tab0->width()*RETINA_SUPPORT);
+    ui->tab0->setMinimumHeight(ui->tab0->height()*RETINA_SUPPORT);
+    ui->tab0->move(ui->tab0->pos()*RETINA_SUPPORT);
+    ui->tab0->setIconSize(ui->tab0->iconSize()*RETINA_SUPPORT);
+
+    ui->tab1->setMinimumWidth(ui->tab1->width()*RETINA_SUPPORT);
+    ui->tab1->setMinimumHeight(ui->tab1->height()*RETINA_SUPPORT);
+    ui->tab1->move(ui->tab1->pos()*RETINA_SUPPORT);
+    ui->tab1->setIconSize(ui->tab1->iconSize()*RETINA_SUPPORT);
+
+    ui->tab2->setMinimumWidth(ui->tab2->width()*RETINA_SUPPORT);
+    ui->tab2->setMinimumHeight(ui->tab2->height()*RETINA_SUPPORT);
+    ui->tab2->move(ui->tab2->pos()*RETINA_SUPPORT);
+    ui->tab2->setIconSize(ui->tab2->iconSize()*RETINA_SUPPORT);
+
+    ui->tab3->setMinimumWidth(ui->tab3->width()*RETINA_SUPPORT);
+    ui->tab3->setMinimumHeight(ui->tab3->height()*RETINA_SUPPORT);
+    ui->tab3->move(ui->tab3->pos()*RETINA_SUPPORT);
+    ui->tab3->setIconSize(ui->tab3->iconSize()*RETINA_SUPPORT);
+
+    ui->tab4->setMinimumWidth(ui->tab4->width()*RETINA_SUPPORT);
+    ui->tab4->setMinimumHeight(ui->tab4->height()*RETINA_SUPPORT);
+    ui->tab4->move(ui->tab4->pos()*RETINA_SUPPORT);
+    ui->tab4->setIconSize(ui->tab4->iconSize()*RETINA_SUPPORT);
+
+    ui->caption->setMinimumSize(ui->caption->size()*RETINA_SUPPORT);
+    ui->caption->move(ui->caption->pos()*RETINA_SUPPORT);
+
+
+#endif
 
     // join up the components of the program
     QObject::connect(ui->viewport, SIGNAL(reDraw(QPainter*, float, float, float, int, int, drawStyle)), &(data), SLOT(reDrawAll(QPainter*, float, float, float, int, int, drawStyle)));
@@ -906,8 +982,8 @@ void MainWindow::initViewEL()
     QWidget *selContent0 = new QWidget;
     selection->setWidget(selContent0);
     selection->setWidgetResizable(true);
-    selection->setMinimumWidth(300);
-    selection->setMaximumWidth(300);
+    selection->setMinimumWidth(300*RETINA_SUPPORT);
+    selection->setMaximumWidth(300*RETINA_SUPPORT);
 
     selContent0->setLayout(new QVBoxLayout());
 
@@ -923,8 +999,8 @@ void MainWindow::initViewEL()
     QFrame * toolbar0 = new QFrame(this->ui->toolbar_3);
     toolbar0->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     toolbar0->setMinimumSize(this->ui->topleft->size());
-    toolbar0->setMinimumHeight(27);
-    toolbar0->setMaximumHeight(27);
+    toolbar0->setMinimumHeight(27*RETINA_SUPPORT);
+    toolbar0->setMaximumHeight(27*RETINA_SUPPORT);
     toolbar0->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar0->layout())
         delete toolbar0->layout();
@@ -1014,7 +1090,7 @@ void MainWindow::initViewCL()
 
     // add button to hide / show the file box
     viewCL.toggleFileBox = new QPushButton;
-    viewCL.toggleFileBox->setMaximumWidth(10);
+    viewCL.toggleFileBox->setMaximumWidth(10*RETINA_SUPPORT);
     viewCL.toggleFileBox->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
     viewCL.toggleFileBox->setText("<");
     viewCL.toggleFileBox->setFlat(true);
@@ -1027,8 +1103,8 @@ void MainWindow::initViewCL()
 
     // add file box
     viewCL.fileList = new QListWidget;
-    viewCL.fileList->setMinimumWidth(250);
-    viewCL.fileList->setMaximumWidth(250);
+    viewCL.fileList->setMinimumWidth(250*RETINA_SUPPORT);
+    viewCL.fileList->setMaximumWidth(250*RETINA_SUPPORT);
     viewCL.fileList->setSortingEnabled(true);
     QListWidgetItem *newItem = new QListWidgetItem;
     newItem->setText("No components loaded...");
@@ -1038,10 +1114,10 @@ void MainWindow::initViewCL()
     // add and set up the file toolbar
     QFrame * toolbar0 = new QFrame(this->ui->toolbar_3);
     toolbar0->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    toolbar0->setMinimumWidth(250);
-    toolbar0->setMaximumWidth(250);
-    toolbar0->setMinimumHeight(27);
-    toolbar0->setMaximumHeight(27);
+    toolbar0->setMinimumWidth(250*RETINA_SUPPORT);
+    toolbar0->setMaximumWidth(250*RETINA_SUPPORT);
+    toolbar0->setMinimumHeight(27*RETINA_SUPPORT);
+    toolbar0->setMaximumHeight(27*RETINA_SUPPORT);
     toolbar0->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar0->layout())
         delete toolbar0->layout();
@@ -1151,7 +1227,7 @@ void MainWindow::initViewVZ()
     QWidget * panelContent = new QWidget;
     panel->setWidget(panelContent);
     panel->setWidgetResizable(true);
-    panel->setMaximumWidth(600);
+    panel->setMaximumWidth(600*RETINA_SUPPORT);
 
     panelContent->setLayout(new QVBoxLayout());
 
@@ -1174,8 +1250,8 @@ void MainWindow::initViewVZ()
     QFrame * toolbar = new QFrame(this->ui->toolbar_3);
     toolbar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     toolbar->setMinimumSize(this->ui->topleft->size());
-    toolbar->setMinimumHeight(27);
-    toolbar->setMaximumHeight(27);
+    toolbar->setMinimumHeight(27*RETINA_SUPPORT);
+    toolbar->setMaximumHeight(27*RETINA_SUPPORT);
     toolbar->setStyleSheet(this->toolbarStyleSheet);
     if (toolbar->layout())
         delete toolbar->layout();

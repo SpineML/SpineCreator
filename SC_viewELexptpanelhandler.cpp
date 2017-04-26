@@ -37,6 +37,17 @@
 #include "qmessageboxresizable.h"
 #include <QTimer>
 
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+  #define RETINA_SUPPORT 1.0
+#else
+  #ifdef WIN_HIDPI_FIX
+  #define RETINA_SUPPORT WIN_DPI_SCALING
+  #else
+  #define RETINA_SUPPORT 1.0
+  #endif
+#endif
+
 #define NEW_EXPERIMENT_VIEW11
 
 viewELExptPanelHandler::viewELExptPanelHandler(QObject *parent) :
@@ -75,17 +86,17 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, nl_rootdat
     timer->start(16);
 #endif
 
-    this->exptSetup->setContentsMargins(14,14,14,14);
-    this->exptInputs->setContentsMargins(4,4,4,4);
-    this->exptOutputs->setContentsMargins(4,4,4,4);
-    this->exptChanges->setContentsMargins(4,4,4,4);
+    this->exptSetup->setContentsMargins(14*RETINA_SUPPORT,14*RETINA_SUPPORT,14*RETINA_SUPPORT,14*RETINA_SUPPORT);
+    this->exptInputs->setContentsMargins(4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT);
+    this->exptOutputs->setContentsMargins(4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT);
+    this->exptChanges->setContentsMargins(4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT);
 
     // add panel to expts
     ((QHBoxLayout *) this->viewEL->expt->layout())->addLayout(this->exptSetup);
 #ifndef NEW_EXPERIMENT_VIEW
     // add divider
     QFrame* lineA = new QFrame();
-    lineA->setMaximumWidth(1);
+    lineA->setMaximumWidth(1*RETINA_SUPPORT);
     lineA->setFrameShape(QFrame::VLine);
     lineA->setFrameShadow(QFrame::Plain);
     ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(lineA);
@@ -95,7 +106,7 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, nl_rootdat
 
     // add divider
     QFrame* lineB = new QFrame();
-    lineB->setMaximumWidth(1);
+    lineB->setMaximumWidth(1*RETINA_SUPPORT);
     lineB->setFrameShape(QFrame::VLine);
     lineB->setFrameShadow(QFrame::Plain);
     ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(lineB);
@@ -105,7 +116,7 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, nl_rootdat
 
     // add divider
     QFrame* lineC = new QFrame();
-    lineC->setMaximumWidth(1);
+    lineC->setMaximumWidth(1*RETINA_SUPPORT);
     lineC->setFrameShape(QFrame::VLine);
     lineC->setFrameShadow(QFrame::Plain);
     ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(lineC);
@@ -1995,6 +2006,8 @@ void viewELExptPanelHandler::run()
             al << "-r"; // Add the -r option for rebuilding components
         } // else don't rebuild
 
+        //path = "C:\\windows\\sysnative\\bash.exe";
+
        //qDebug() << QProcess::execute(path);
 
        //path = "notepad.exe";
@@ -2005,8 +2018,10 @@ void viewELExptPanelHandler::run()
 #ifndef Q_OS_WIN
         simulator->start(path,al);
 #else
+        //path = "cmd.exe";
         qDebug() << path;
         simulator->start(path);
+
 #endif
     }
 

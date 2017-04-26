@@ -25,6 +25,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+// Special define for setting the dpi scaling on windows, as there
+// does not seem to be a working API interface for getting it yet...
+#define WIN_DPI_SCALING 1.75
+
 #include "globalHeader.h"
 
 #include "CL_classes.h"

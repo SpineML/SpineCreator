@@ -27,8 +27,9 @@
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   #define RETINA_SUPPORT 1.0
 #else
-  #ifdef Q_OS_MAC2
-  #define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
+  #ifdef Q_OS_WIN2
+  #define RETINA_SUPPORT 1.0
+  #define RETINA_SUPPORT2 1.75
   #else
   #define RETINA_SUPPORT 1.0
   #endif
@@ -56,6 +57,7 @@ GLWidget::GLWidget(QWidget *parent):QWidget(parent)
     gridSelect = false;
     gridScale = 0.5;
     this->button = Qt::NoButton;
+    this->LMB_drag = false;
 
     // accept both tab and click focus
     this->setFocusPolicy(Qt::StrongFocus);
@@ -117,6 +119,7 @@ void GLWidget::mousePressEvent(QMouseEvent* event)
         }
     }
     event->setAccepted(true);
+    LMB_drag = false;
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event)
@@ -140,6 +143,10 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
             // Item was released after moving.
             emit itemWasMoved();
             this->itemMoving = false;
+        }
+        if (event->button() == Qt::LeftButton && this->LMB_drag) {
+            emit endDragSelect();
+            LMB_drag = false;
         }
         if (event->button() == Qt::RightButton) {
             emit endDragSelect();
@@ -191,11 +198,24 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event)
     float yGL = -(float((event->y()*RETINA_SUPPORT)-(this->height()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewY);
 
     if (this->connectMode == false) {
-        if (this->button == Qt::LeftButton) {
-            this->itemMoving = true;
-            emit mouseMove(xGL, yGL);
+        if ((QApplication::keyboardModifiers() & Qt::ShiftModifier)) {
+            if (this->button == Qt::LeftButton) {
+
+                if (LMB_drag == false) {
+                    qDebug() << "Start LMB drag";
+                    emit onRightMouseDown(xGL, yGL, this->GLscale);
+                } else {
+                    emit dragSelect(xGL, yGL);
+                }
+                 LMB_drag = true;
+            }
         } else {
-            this->itemMoving = false;
+            if (this->button == Qt::LeftButton) {
+                this->itemMoving = true;
+                emit mouseMove(xGL, yGL);
+            } else {
+                this->itemMoving = false;
+            }
         }
 
         if (this->button == Qt::RightButton) {

@@ -28,6 +28,10 @@
 #include <sstream>
 #include <iomanip>
 
+#ifdef Q_OS_WIN
+    #define RETINA_SUPPORT 1.75
+#endif
+
 population::population(float x, float y, float size, float aspect_ratio, QString name)
 {
     this->x = x;
@@ -651,7 +655,7 @@ QPointF population::transformPoint(QPointF point)
 
 void population::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style)
 {
-    float scale = GLscale/200.0;
+    float scale = GLscale/(200.0*RETINA_SUPPORT);
 
     this->setupTrans(GLscale, viewX, viewY, width, height);
 
@@ -771,11 +775,11 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     QFont font = painter->font();
 
     QString text = displayed_name + "\n" + QString::number(this->numNeurons);// + "\n" + displayed_comp_name;
-    font.setPointSizeF(1.5*GLscale/20.0);
+    font.setPointSizeF(1.5*GLscale/(20.0*RETINA_SUPPORT));
     painter->setFont(font);
     painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignTop, text);
 
-    font.setPointSizeF(1.3*GLscale/20.0);
+    font.setPointSizeF(1.3*GLscale/(20.0*RETINA_SUPPORT));
     painter->setFont(font);
     painter->setPen(QColor(60,60,60,255));
     painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignBottom, displayed_comp_name);
