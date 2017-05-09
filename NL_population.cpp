@@ -30,6 +30,8 @@
 
 #ifdef Q_OS_WIN
     #define RETINA_SUPPORT 1.75
+#else
+    #define RETINA_SUPPORT 1
 #endif
 
 population::population(float x, float y, float size, float aspect_ratio, QString name)
