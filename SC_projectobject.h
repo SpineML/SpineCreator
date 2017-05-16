@@ -115,6 +115,11 @@ public:
     QStringList components;
     QStringList experiments;
     QStringList layouts;
+    // A list of additional files that should be copied/saved with the
+    // model. Specified in the proj file in <AdditionalFiles>. Should
+    // be expanded here at runtime into absolute paths so that these
+    // can be copied into the new directory with save_project.
+    QStringList additionalFiles;
 
     // storage for objects
     QVector < QSharedPointer <population> > network;

@@ -170,7 +170,6 @@ bool projectObject::open_project(QString fileName)
 
 bool projectObject::save_project(QString fileName, nl_rootdata * data)
 {
-
     if (!fileName.contains(".")) {
         QMessageBox msgBox;
         msgBox.setText("Project file needs .proj suffix.");
@@ -238,6 +237,13 @@ bool projectObject::save_project(QString fileName, nl_rootdata * data)
     // write experiments
     for (int i = 0; i < this->experimentList.size(); ++i) {
         saveExperiment("experiment" + QString::number(i) + ".xml", project_dir, this->experimentList[i]);
+    }
+
+    // copy additional files
+    for (int i = 0; i < this->additionalFiles.size(); ++i) {
+        // copy additionalFiles[i] to project_dir / additionalFiles[i].fileName()
+        QFileInfo fileInfo(this->additionalFiles[i]);
+        QFile::copy(additionalFiles[i], project_dir.absolutePath() + QDir::separator() + fileInfo.fileName());
     }
 
     // store the new file name
@@ -389,6 +395,10 @@ bool projectObject::load_project_file(QString fileName)
         return false;
     }
 
+    // Extract project_dir from project filename
+    QDir project_dir(fileName);
+    project_dir.cdUp();
+
     // get a streamreader
     QXmlStreamReader * reader = new QXmlStreamReader;
     reader->setDevice(&file);
@@ -528,6 +538,36 @@ bool projectObject::load_project_file(QString fileName)
                         }
 
                     }
+                } else if (reader->name() == "AdditionalFiles") {
+
+                    while (reader->readNextStartElement()) {
+
+                        if (reader->name() == "File") {
+
+                            if (reader->attributes().hasAttribute("name")) {
+                                // Note that we store the additional file as a full path.
+                                this->additionalFiles.push_back(project_dir.absolutePath() + QDir::separator() + reader->attributes().value("name").toString());
+                            } else {
+                                QSettings settings;
+                                int num_errs = settings.beginReadArray("errors");
+                                settings.endArray();
+                                settings.beginWriteArray("errors");
+                                settings.setArrayIndex(num_errs + 1);
+                                settings.setValue("errorText", "XML Error in Project File - missing attribute 'name'");
+                                settings.endArray();
+                            }
+                            reader->skipCurrentElement();
+
+                        } else {
+                            QSettings settings;
+                            int num_errs = settings.beginReadArray("errors");
+                            settings.endArray();
+                            settings.beginWriteArray("errors");
+                            settings.setArrayIndex(num_errs + 1);
+                            settings.setValue("errorText", "XML Error in Project File - unknown tag '" + reader->name().toString() + "'");
+                            settings.endArray();
+                        }
+                    }
 
                 }  else {
                     QSettings settings;
@@ -582,18 +622,14 @@ bool projectObject::save_project_file(QString fileName)
     writer->writeStartElement("SpineCreatorProject");
 
     writer->writeStartElement("Network");
-
     writer->writeEmptyElement("File");
     writer->writeAttribute("name", this->networkFile);
-
 #if 0 // In new format, metadata is stored in model.xml (and component.xml files too)
     writer->writeAttribute("metaFile", this->metaFile);
 #endif
-
     writer->writeEndElement(); // Network
 
     writer->writeStartElement("Components");
-
     for (int i = 1; i < this->catalogNB.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogNB[i]->getXMLName());
@@ -610,26 +646,31 @@ bool projectObject::save_project_file(QString fileName)
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogGC[i]->getXMLName());
     }
-
     writer->writeEndElement(); // Components
 
     writer->writeStartElement("Layouts");
-
     for (int i = 0; i < this->catalogLAY.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", this->catalogLAY[i]->getXMLName());
     }
-
     writer->writeEndElement(); // Layouts
 
     writer->writeStartElement("Experiments");
-
     for (int i = 0; i < this->experimentList.size(); ++i) {
         writer->writeEmptyElement("File");
         writer->writeAttribute("name", "experiment" + QString::number(i) + ".xml");
     }
-
     writer->writeEndElement(); // Experiments
+
+    if (!this->additionalFiles.isEmpty()) {
+        writer->writeStartElement("AdditionalFiles");
+        for (int i = 0; i < this->additionalFiles.size(); ++i) {
+            QFileInfo fileInfo(this->additionalFiles[i]);
+            writer->writeEmptyElement("File");
+            writer->writeAttribute("name", fileInfo.fileName());
+        }
+        writer->writeEndElement(); // AdditionalFiles
+    }
 
     writer->writeEndElement(); // SpineCreatorProject
 
