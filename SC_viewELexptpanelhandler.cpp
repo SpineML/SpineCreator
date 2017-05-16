@@ -298,7 +298,6 @@ void viewELExptPanelHandler::redrawExpt()
         // store the scroll location so we can replace it later
         horiz_scroll = scroll->horizontalScrollBar()->value();
         vert_scroll = scroll->verticalScrollBar()->value();
-        //qDebug() << horiz_scroll << vert_scroll;
     }
 
     emit this->deleteWidgets();
@@ -1311,7 +1310,6 @@ void viewELExptPanelHandler::setOutputComponent()
 
         redrawExpt();
     } else {
-        qDebug() << "moo2";
         out->set = false;
         QPalette p = ((QLineEdit *) sender())->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );
@@ -1812,7 +1810,7 @@ void viewELExptPanelHandler::run()
 
     // load path
     settings.beginGroup("simulators/" + simName);
-    qDebug() << simName;
+    DBG() << "Simulator name: " << simName;
     QString path = settings.value("path").toString();
     // Check that path exists and is executable.
     QFile the_script(path);
@@ -1903,21 +1901,21 @@ void viewELExptPanelHandler::run()
     if (this->data->currProject->isChanged (this->data)) {
 #endif
 
-        #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-        #else
-            this->tdir.setPath(QDir::home.absolutePath());
-            this-tdir.mkdir("sctmp");
-            this->tdir.cd("sctmp");
-        #endif
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#else
+        this->tdir.setPath(QDir::home.absolutePath());
+        this-tdir.mkdir("sctmp");
+        this->tdir.cd("sctmp");
+#endif
 
         // Check the temporary directory is valid for use:
 
-        #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-                if (!this->tdir.isValid()) {
-        #else
-                if (!this->tdir.isReadable()) {
-        #endif
-            qDebug() << "Can't use temporary simulator directory!";
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        if (!this->tdir.isValid()) {
+#else
+        if (!this->tdir.isReadable()) {
+#endif
+            DBG() << "Can't use temporary simulator directory!";
             runButton->setEnabled(true);
             return;
         }
@@ -1932,10 +1930,10 @@ void viewELExptPanelHandler::run()
         // Write the model into the temporary dir
         tFilePath = this->tdir.path()+ QDir::separator() + "temp.proj";
         settings.setValue("files/currentFileName", tFilePath);
-        qDebug() << "Saving project temporarily to: " << tFilePath;
+        DBG() << "Saving project temporarily to: " << tFilePath;
         // save_project changes the current project's filepath.
         if (!this->data->currProject->save_project(tFilePath, this->data)) {
-            qDebug() << "Failed to save the model into the temporary model directory";
+            DBG() << "Failed to save the model into the temporary model directory";
             this->cleanUpPostRun("Model save error", "The simulation could not be started");
             // Revert currProject->filePath here
             this->data->currProject->filePath = previousFilePath;
@@ -1985,14 +1983,14 @@ void viewELExptPanelHandler::run()
         path = QString("cmd.exe /R ") + QString('"') + QString("c:\\WINDOWS\\sysnative\\bash.exe -c '") + path + \
                 QString(" -m ") + modelpath + \
                 QString(" -w ") + wk_dir.absolutePath() + \
-                QString(" -o ") + out_dir_name +\
+                QString(" -o ") + out_dir_name + \
                 QString(" -e ") + QString("%1").arg(currentExptNum) + \
-                QString("'") + QString('"')\
+                QString("'") + QString('"') \
                 ;
 #else
         al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
-           << "-o" << out_dir_name//wk_dir.absolutePath() + QDir::separator() + "temp" // Output dir
+           << "-o" << out_dir_name                       // Output dir
            << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
 #endif
 
@@ -2006,32 +2004,32 @@ void viewELExptPanelHandler::run()
             al << "-r"; // Add the -r option for rebuilding components
         } // else don't rebuild
 
-        //path = "C:\\windows\\sysnative\\bash.exe";
-
-       //qDebug() << QProcess::execute(path);
-
-       //path = "notepad.exe";
-
         QProcess * simulator = new QProcess;
         simulator->setProcessEnvironment(env);
 
 #ifndef Q_OS_WIN
+        DBG() << "(Unix) Starting with path: " << path << " arg list: " << al;
         simulator->start(path,al);
 #else
-        //path = "cmd.exe";
-        qDebug() << path;
+        DBG() << "(Windows) Starting with path: " << path;
         simulator->start(path);
-
 #endif
     }
 
     // Wait a couple of seconds for the process to start
 #ifndef Q_OS_WIN
     if (!simulator->waitForStarted(1000)) {
-        // Error - simulator failed to start
+        // Error - simulator failed to start. It would be great to get
+        // the output to show in the window. It may exist in wk_dir.absolutePath() / temp/run/out.log and err.log
         this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
-        //delete simulator; // Alex: this appears to be dangerous - we can have the wait for started fail, without the simulator crashing
-                            // - in which case deleting the simulator causes a crash later on... for this reason I have left it as a memory leak
+# if 0
+        // This call to delete the simulator appears to be dangerous -
+        // it is possible for waitForStarted to fail without the
+        // simulator crashing - in which case deleting the simulator
+        // causes a crash later on... for this reason I have left it
+        // as a memory leak
+        delete simulator;
+# endif
         return;
     }
 #endif
@@ -2055,7 +2053,6 @@ void viewELExptPanelHandler::run()
     QFile::remove(simTimeFileName);
     this->simCancelFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "stop.txt");
     simTimeChecker.start(17);
-
 }
 
 /*!
