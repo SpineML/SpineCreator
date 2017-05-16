@@ -419,7 +419,6 @@ void Component::load(QDomDocument *doc)
                     this->ImpulsePortList.push_back(tempIP);
 
                 } else if (e2.tagName() == "Annotation") {
-                    DBG() << "Read Component Annotation";
                     // Any user-provided bits have to be stored.
                     QDomNode scNode;
                     QDomNodeList scAnns = e2.toElement().elementsByTagName("SpineCreator");
@@ -430,7 +429,6 @@ void Component::load(QDomDocument *doc)
                         e2.toElement().removeChild(scAnns.at(0)); // Remove the SpineCreator-specific annotations
 
                         // Now read the SpineCreator-specific parts that we just copied.
-                        DBG() << "scAnns is not empty.";
                         this->annotationTexts.clear();
                         // Find <Text key="something">Value</Text> nodes and populate annotationTexts
                         QDomNode sct = scNode.firstChild();
@@ -636,8 +634,6 @@ void Component::write(QDomDocument *doc)
 
 void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
 {
-    DBG() << "ComponentRootInstance::write_node_xml called...";
-
     // definition
     QString simpleName;
     if (this->type == NineMLLayoutType) {

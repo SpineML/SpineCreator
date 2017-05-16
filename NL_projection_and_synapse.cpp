@@ -1887,7 +1887,6 @@ projection::readSingleSynapseXML (projectObject* data,
             newSynapse->connectionType->import_parameters_from_xml(n);
         }
         else if (n.toElement().tagName() == "ConnectionList") {
-            DBG() << "Have a ConnectionList in this Synapse.";
             delete newSynapse->connectionType;
             newSynapse->connectionType = new csv_connection;
             newSynapse->connectionType->setParent (newSynapse);
@@ -1900,7 +1899,6 @@ projection::readSingleSynapseXML (projectObject* data,
             newSynapse->passDownSrcAndDst();
 
             newSynapse->connectionType->setSynapseIndex (synNum);
-            DBG() << "Importing csv_connection parameters from xml...";
             newSynapse->connectionType->import_parameters_from_xml(n);
         }
         else if (n.toElement().tagName() == "PythonScriptConnection") {
@@ -1934,7 +1932,6 @@ projection::readSingleSynapseXML (projectObject* data,
             // see if PS is loaded
             for (int u = 0; u < data->catalogPS.size(); ++u) {
                 if (data->catalogPS[u]->name == pspName) {
-                    DBG() << "Got a loaded PS!";
                     newSynapse->postSynapseCmpt = QSharedPointer<ComponentInstance> (new ComponentInstance(data->catalogPS[u]));
                     newSynapse->postSynapseCmpt->owner = thisSharedPointer;
                     newSynapse->postSynapseCmpt->import_parameters_from_xml(n);
@@ -2390,33 +2387,25 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
         }
 
         // LAST (or first?) we should patch up the pythonscripts now the whole system is loaded
-        DBG() << "Patching up pythonscripts...";
         if (this->synapses[t]->connectionType->type == CSV) {
             csv_connection * conn = dynamic_cast<csv_connection *> (this->synapses[t]->connectionType);
             CHECK_CAST(conn)
             if (conn->generator) {
-                DBG() << "Have generator";
                 conn->generator->srcPop = this->source;
                 conn->generator->dstPop = this->destination;
                 if (conn->generator->type == Python) {
-                    DBG() << "Python generator...";
                     pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (conn->generator);
                     CHECK_CAST(pyConn)
-                    // DUH! We haven;t read in the postsynapse yet to get the source/dest, right?
+                    // DUH! We haven't read in the postsynapse yet to get the source/dest, right?
                     pyConn->srcPop = this->source;
                     pyConn->dstPop = this->destination;
                     if (pyConn->srcPop == NULL) {
                         DBG() << "this->source is null in projection::read_inputs_from_xml()";
                     }
                     pyConn->setUnchanged(true);
-                }
-            } else {
-                DBG() << "Have NO generator";
-            }
-
-        } else {
-            DBG() << "Not connectionType CSV...";
-        }
+                } // else generator is not python
+            } // else have NO generator
+        } // else not connectionType CSV
 
         // do matchPorts()
         this->synapses[t]->weightUpdateCmpt->matchPorts();
@@ -2440,9 +2429,7 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
 QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > &objectMap)
 {
-
     // create a new, identical, projection
-
     QSharedPointer <projection> newProj = QSharedPointer <projection>(new projection());
 
     newProj->type = projectionObject;

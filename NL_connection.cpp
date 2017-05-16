@@ -276,7 +276,6 @@ void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut)
         case synapseObject:
         {
             // This is the usual
-            DBG() << "onetoOne_connection parent is a synapseObject";
             // Test this->src and this->dst first
             if (!this->srcPop.isNull()) {
                 srcSize = this->srcPop->numNeurons;
@@ -300,7 +299,6 @@ void onetoOne_connection::write_node_xml(QXmlStreamWriter &xmlOut)
         }
         case inputObject:
         {
-            DBG() << "onetoOne_connection parent is an inputObject (genericInput)";
             QSharedPointer<genericInput> par = qSharedPointerCast <genericInput> (this->parent);
             srcSize = par->getSrcSize();
             srcName = par->getSrcName();
@@ -851,8 +849,6 @@ void csv_connection::read_metadata_xml(QDomNode &e)
 
 void csv_connection::import_parameters_from_xml(QDomNode &e)
 {
-    DBG() << "csv_connection::import_parameters_from_xml(QDomNode &e) called";
-
     // check for annotations
     QDomNodeList anns = e.toElement().elementsByTagName("LL:Annotation");
 
@@ -871,7 +867,6 @@ void csv_connection::import_parameters_from_xml(QDomNode &e)
             pythonscript_connection * pyConn = dynamic_cast<pythonscript_connection *> (this->generator);
             CHECK_CAST(pyConn)
             // extract data for connection generator
-            DBG() << "Calling pyConn->read_metadata_xml (metaData)";
             pyConn->read_metadata_xml (metaData);
             // prevent regeneration
             //pyConn->setUnchanged(true);
@@ -1415,7 +1410,6 @@ void csv_connection::generateFilename(void)
     case synapseObject:
     {
         // This is the usual
-        DBG() << "csv_connection parent is a synapseObject";
         // Test this->src and this->dst first
         if (!this->srcPop.isNull()) {
             this->srcName = this->srcPop->name;
@@ -1437,7 +1431,6 @@ void csv_connection::generateFilename(void)
     }
     case inputObject:
     {
-        DBG() << "csv_connection parent is an inputObject (genericInput)";
         QSharedPointer<genericInput> par = qSharedPointerCast <genericInput> (this->parent);
         this->srcName = par->getSrcName();
         this->dstName = par->getDestName();
@@ -1712,7 +1705,6 @@ pythonscript_connection::pythonscript_connection(QSharedPointer <population> src
     this->scriptValidates = false;
     this->hasWeight = false;
     this->hasDelay = false;
-    DBG() << "Setting src and dst for this pythonscript_connection...";
     this->srcPop = src;
     this->dstPop = dst;
     this->connection_target = conn_targ;
@@ -2203,8 +2195,6 @@ void pythonscript_connection::write_node_xml(QXmlStreamWriter &)
 
 void pythonscript_connection::write_metadata_xml(QXmlStreamWriter* xmlOut)
 {
-    DBG() << "pythonscript_connection::write_metadata_xml(QXmlStreamWriter* xmlOut) Called";
-
     // write out the settings for this generator
     xmlOut->writeStartElement("SpineCreator");
 

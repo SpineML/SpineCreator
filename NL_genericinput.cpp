@@ -705,10 +705,12 @@ void genericInput::read_meta_data (QDomNode meta, cursorType cursorPos)
 }
 
 // Reads metadata in the old format, reading from a separate metadata.xml file.
-#define __DEBUG_READ_META 1
+//#define __DEBUG_READ_META 1
 void genericInput::read_meta_data(QDomDocument * meta, cursorType cursorPos)
 {
+#ifdef __DEBUG_READ_META
     DBG() << "Called to read meta data from metadata.xml file.";
+#endif
     // skip if a special input for a projection
     if (this->projInput) {
 #ifdef __DEBUG_READ_META
