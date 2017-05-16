@@ -2004,9 +2004,6 @@ void viewELExptPanelHandler::run()
             al << "-r"; // Add the -r option for rebuilding components
         } // else don't rebuild
 
-        QProcess * simulator = new QProcess;
-        simulator->setProcessEnvironment(env);
-
 #ifndef Q_OS_WIN
         DBG() << "(Unix) Starting with path: " << path << " arg list: " << al;
         simulator->start(path,al);
