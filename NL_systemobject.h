@@ -125,6 +125,9 @@ public:
      * QString to hold the annotation data for this object
      */
     QString annotation;
+
+    // Maybe have QMap<QString,QString> annotationTexts here, plus
+    // virtual methods for saving the data to the network.
 };
 
 #endif // SYSTEMOBJECT_H
