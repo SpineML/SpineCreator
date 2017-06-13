@@ -181,9 +181,11 @@ protected:
 private:
 
     /*!
-     * Part of readFromXML.
+     * Part of readFromXML. projectObject* data is passed so that
+     * data->getCursorPos() can be used to offset the positions if
+     * necessary.
      */
-    void readAnnotationXML (QDomElement& e);
+    void readAnnotationXML (QDomElement& e, projectObject* data);
 
     /*!
      * Part of readFromXML.

@@ -1645,7 +1645,7 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
     // load annotation metadata for the *projection* (a projection may
     // also incorporate an InputType (with annotation) and a Synapse
     // containing a ConnectionList (with annotation).
-    this->readAnnotationXML (e);
+    this->readAnnotationXML (e, data); // pass data and use that to offset projections
 
     // Now read the XML for each synapse in the projection.
     this->readSynapsesXML (e, data, thisSharedPointer);
@@ -1752,12 +1752,14 @@ void projection::readFromXML(QDomElement  &e, QDomDocument *, QDomDocument * met
 #endif
 }
 
-void projection::readAnnotationXML (QDomElement& e)
+void projection::readAnnotationXML (QDomElement& e, projectObject* data)
 {
     QDomNode annInst = e.firstChild();
     while (!(annInst.toElement().tagName() == "LL:Annotation") && !annInst.isNull()) {
         annInst = annInst.nextSibling();
     }
+
+    cursorType curs = data->getCursorPos();
 
     if (annInst.toElement().tagName() == "LL:Annotation") {
         QDomNode metaNode;
@@ -1782,7 +1784,8 @@ void projection::readAnnotationXML (QDomElement& e)
                 }
 
                 if (metaData.toElement().tagName() == "start") {
-                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat(), metaData.toElement().attribute("y","").toFloat());
+                    this->start = QPointF(metaData.toElement().attribute("x","").toFloat()+curs.x,
+                                          metaData.toElement().attribute("y","").toFloat()+curs.y);
                 }
 
                 // find the curves tag
@@ -1795,13 +1798,16 @@ void projection::readAnnotationXML (QDomElement& e)
                         bezierCurve newCurve;
                         while (!vals.isNull()) {
                             if (vals.toElement().tagName() == "C1") {
-                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C1 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             if (vals.toElement().tagName() == "C2") {
-                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.C2 = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                      vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
                             if (vals.toElement().tagName() == "end") {
-                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat(), vals.toElement().attribute("ypos").toFloat());
+                                newCurve.end = QPointF(vals.toElement().attribute("xpos").toFloat()+curs.x,
+                                                       vals.toElement().attribute("ypos").toFloat()+curs.y);
                             }
 
                             vals = vals.nextSibling();
