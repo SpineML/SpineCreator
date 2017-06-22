@@ -39,7 +39,11 @@
   #define RETINA_SUPPORT 1.0
 #else
   #ifdef Q_OS_MAC
-  #define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
+    #ifndef NO_HIDPI
+    #define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
+    #else
+    #define RETINA_SUPPORT 1.0
+    #endif
   #else
   #define RETINA_SUPPORT 1.0
   #endif

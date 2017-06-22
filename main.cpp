@@ -40,7 +40,9 @@ int main(int argc, char *argv[])
     w.show();
     // only available on 5.2+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 2, 0)
+#ifndef NO_HIDPI
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps,true);
+#endif
 #endif
 
     return a.exec();

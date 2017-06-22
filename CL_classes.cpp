@@ -2818,6 +2818,7 @@ void MathInLine::validateMathSetup(QString& testequation, QStringList& FuncList)
     FuncList.push_back("randomExponential");
     FuncList.push_back("rand");
     FuncList.push_back("mod");
+    FuncList.push_back("BRAHMS_STOP");
 
     // not strictly functions...
     FuncList.push_back("t");

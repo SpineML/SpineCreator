@@ -1458,13 +1458,17 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                     connect(this, SIGNAL(deleteProperties()), delInput, SLOT(deleteLater()));
                     delInput->setMaximumWidth(28);
                     delInput->setMaximumHeight(28);
+#ifndef NO_HIDPI
                     delInput->setIcon(QIcon(":/icons/toolbar/delShad.png"));
+#endif
                     delInput->setFlat(true);
                     delInput->setToolTip("Delete");
                     delInput->setFocusPolicy(Qt::NoFocus);
                     if (componentData->inputs[input]->projInput == true) {
                         delInput->setEnabled(false);
+#ifndef NO_HIDPI
                         delInput->setIcon(QIcon(":/icons/toolbar/icons/colico.png"));
+#endif
                         delInput->setToolTip("Can't delete projection essential inputs");
                     }
                     inputLay->addWidget(delInput);
@@ -1562,10 +1566,7 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
         currButton = new QPushButton("Random");
         currButton->setMaximumWidth(80);
         currButton->setMaximumHeight(28);
-        //delInput->setIcon(QIcon(":/icons/toolbar/delShad.png"));
-        //delInput->setFlat(true);
         currButton->setToolTip("Values drawn from a statistical distribution");
-        //delInput->setFocusPolicy(Qt::NoFocus);
         currButton->setProperty("action","updateType");
         currButton->setProperty("newType","Statistical");
         buttons->addWidget(currButton);
@@ -1587,10 +1588,7 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
             currButton = new QPushButton("List");
             currButton->setMaximumWidth(80);
             currButton->setMaximumHeight(28);
-            //delInput->setIcon(QIcon(":/icons/toolbar/delShad.png"));
-            //delInput->setFlat(true);
             currButton->setToolTip("A complete list of values for each instance");
-            //delInput->setFocusPolicy(Qt::NoFocus);
             currButton->setProperty("action","updateType");
             currButton->setProperty("newType","Explicit");
             buttons->addWidget(currButton);
@@ -1639,7 +1637,9 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
             QPushButton * goBack = new QPushButton;
             goBack->setMaximumWidth(28);
             goBack->setMaximumHeight(28);
+#ifndef NO_HIDPI
             goBack->setIcon(QIcon(":/icons/toolbar/delShad.png"));
+#endif
             //goBack->setFlat(true);
             goBack->setToolTip("Select different value type");
             goBack->setFocusPolicy(Qt::NoFocus);
@@ -1673,9 +1673,11 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
 
         // add drop down to choose the distribution from
         QComboBox * distribution = new QComboBox;
+#ifndef NO_HIDPI
         distribution->addItem(QIcon(":/icons/toolbar/delShad.png"),"None");
         distribution->addItem(QIcon(":/icons/toolbar/delShad.png"),"Uniform");
         distribution->addItem(QIcon(":/icons/toolbar/delShad.png"),"Normal");
+#endif
         //distribution->addItem("None");
         distribution->setMaximumWidth(45);
         distribution->setCurrentIndex(currPar->value[0]);
@@ -1807,7 +1809,9 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
             QPushButton * goBack = new QPushButton;
             goBack->setMaximumWidth(28);
             goBack->setMaximumHeight(28);
+#ifndef NO_HIDPI
             goBack->setIcon(QIcon(":/icons/toolbar/delShad.png"));
+#endif
             goBack->setFlat(true);
             goBack->setToolTip("Select different value type");
             goBack->setFocusPolicy(Qt::NoFocus);
@@ -1854,7 +1858,9 @@ void nl_rootlayout::drawSingleParam(QFormLayout * varLayout, ParameterInstance *
             QPushButton * goBack = new QPushButton;
             goBack->setMaximumWidth(28);
             goBack->setMaximumHeight(28);
+#ifndef NO_HIDPI
             goBack->setIcon(QIcon(":/icons/toolbar/delShad.png"));
+#endif
             goBack->setFlat(true);
             goBack->setToolTip("Select different value type");
             goBack->setFocusPolicy(Qt::NoFocus);

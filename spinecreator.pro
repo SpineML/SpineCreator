@@ -162,6 +162,9 @@ macx {
     INCLUDEPATH += /System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7 -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6
     INCLUDEPATH += /opt/local/include /opt/local/include/graphviz
     DEPENDPATH +=  /opt/local/lib/graphviz
+    # on no hidpi screens we have a problem with icons causing crashes, this needs a proper fix, but for now this DEFINE
+    # fixes the issue
+    #DEFINES += NO_HIDPI
 }
 linux {
     QMAKE_CXXFLAGS += -Wall
