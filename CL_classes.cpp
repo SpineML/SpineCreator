@@ -3550,8 +3550,8 @@ QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {
                 if (currRecvPort->mode == AnalogRecvPort || currRecvPort->mode == AnalogReducePort) {
 
                     // check the send port source dims against the recv port
-
-                    if (currSendPort->variable->Type() == COMPONENT_ALIAS || currSendPort->variable->dims->toString() == currRecvPort->dims->toString()) {
+                    if (currSendPort->variable->Type() == COMPONENT_ALIAS
+                        || currSendPort->variable->dims->toString() == currRecvPort->dims->toString()) {
                         // if they match then add to the list of possible pairings
                         QString portPair = currSendPort->name + "->" + currRecvPort->name;
                         portPairs.push_back(portPair);
@@ -3573,11 +3573,9 @@ QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {
                 EventPort * currRecvPort = currInput->dstCmpt->component->EventPortList[k];
 
                 if (currRecvPort->mode == EventRecvPort) {
-
                     // event ports have no dimensions so always match
                     QString portPair = currSendPort->name + "->" + currRecvPort->name;
                     portPairs.push_back(portPair);
-
                 }
             }
         }
@@ -3597,7 +3595,17 @@ QStringList ComponentInstance::getPortMatches(int index, bool isOutput) {
                 if (currRecvPort->mode == ImpulseRecvPort) {
 
                     // check the send port source dims against the recv port
-                    if (currSendPort->parameter->Type() == COMPONENT_ALIAS || currSendPort->parameter->dims->toString() == currRecvPort->dims->toString()) {
+#if 0
+                    if (currSendPort->parameter->Type() == COMPONENT_ALIAS) {
+                        DBG() << "(IMP) currSendPort->parameter->Type() is COMPONENT_ALIAS";
+                    } else {
+                        DBG() << "(IMP) currSendPort->parameter->Type() is " << currSendPort->parameter->Type();
+                    }
+                    DBG() << "(IMP) currSendPort->parameter->dims->toString(): " << currSendPort->parameter->dims->toString();
+                    DBG() << "(IMP) currRecvPort->dims->toString(): " << currRecvPort->dims->toString();
+#endif
+                    if (currSendPort->parameter->Type() == COMPONENT_ALIAS
+                        || currSendPort->parameter->dims->toString() == currRecvPort->dims->toString()) {
                         // if they match then add to the list of possible pairings
                         QString portPair = currSendPort->name + "->" + currRecvPort->name;
                         portPairs.push_back(portPair);

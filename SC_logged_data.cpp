@@ -578,8 +578,8 @@ bool logData::plotRaster(QCustomPlot * plot, QMdiSubWindow* msw, QList < QVarian
         }
     }
 
-    if (colData.size() != 2) {
-        qDebug() << "Not 2 cols";
+    if (colData.size() != 2 && colData.size() != 3) {
+        qDebug() << "Not 2 cols (spike log) or 3 cols (impulse log)";
         return false;
     }
 

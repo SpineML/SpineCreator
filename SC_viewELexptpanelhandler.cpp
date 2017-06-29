@@ -1270,11 +1270,14 @@ void viewELExptPanelHandler::setOutputComponent()
 {
     // input text
     QString text = ((QLineEdit *) sender())->text();
+    // DBG() << "Input text: " << text;
     QSharedPointer <ComponentInstance> src = (QSharedPointer <ComponentInstance>)0;
 
     // find source:
     for (int i = 0; i < data->populations.size(); ++i) {
+        // DBG() << "Popn name: " << data->populations[i]->neuronType->getXMLName();
         if (data->populations[i]->neuronType->getXMLName() == text) {
+            // DBG() << "Got src";
             src = data->populations[i]->neuronType;
         }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
@@ -1292,8 +1295,10 @@ void viewELExptPanelHandler::setOutputComponent()
     exptOutput * out = (exptOutput *) sender()->property("ptr").value<void *>();
 
     if (src != (QSharedPointer <ComponentInstance>)0) {
+        // DBG() << "src not a match for sent ComponentInstance";
         // if no change
         if (out->source == src) {
+            // DBG() << "No change; out->source == src; return";
             return;
         }
         // else...
@@ -1310,6 +1315,7 @@ void viewELExptPanelHandler::setOutputComponent()
 
         redrawExpt();
     } else {
+        // DBG() << "src matches sent ComponentInstance";
         out->set = false;
         QPalette p = ((QLineEdit *) sender())->palette();
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 200, 200) );

@@ -477,19 +477,22 @@ void experiment::purgeBadPointer(QSharedPointer<Component> ptr, QSharedPointer<C
             // port
             bool portFound = false;
             if (in->portIsAnalog) {
-                for (int j = 0; j < newPtr->AnalogPortList.size(); ++j)
+                for (int j = 0; j < newPtr->AnalogPortList.size(); ++j) {
                     if (newPtr->AnalogPortList[j]->name == in->portName && (newPtr->AnalogPortList[j]->mode == AnalogRecvPort || newPtr->AnalogPortList[j]->mode == AnalogReducePort)) {
                         portFound = true;
                     }
+                }
             } else {
-                for (int j = 0; j < newPtr->EventPortList.size(); ++j)
-                    if (newPtr->EventPortList[j]->name == in->portName && newPtr->EventPortList[j]->mode == EventRecvPort){
+                for (int j = 0; j < newPtr->EventPortList.size(); ++j) {
+                    if (newPtr->EventPortList[j]->name == in->portName && newPtr->EventPortList[j]->mode == EventRecvPort) {
                         portFound = true;
                     }
-                for (int j = 0; j < newPtr->ImpulsePortList.size(); ++j)
-                    if (newPtr->ImpulsePortList[j]->name == in->portName && newPtr->ImpulsePortList[j]->mode == ImpulseRecvPort){
+                }
+                for (int j = 0; j < newPtr->ImpulsePortList.size(); ++j) {
+                    if (newPtr->ImpulsePortList[j]->name == in->portName && newPtr->ImpulsePortList[j]->mode == ImpulseRecvPort) {
                         portFound = true;
                     }
+                }
             }
 
             // if not found
@@ -519,19 +522,22 @@ void experiment::purgeBadPointer(QSharedPointer<Component> ptr, QSharedPointer<C
             // port
             bool portFound = false;
             if (out->portIsAnalog) {
-                for (int j = 0; j < newPtr->AnalogPortList.size(); ++j)
+                for (int j = 0; j < newPtr->AnalogPortList.size(); ++j) {
                     if (newPtr->AnalogPortList[j]->name == out->portName && newPtr->AnalogPortList[j]->mode == AnalogSendPort) {
                         portFound = true;
                     }
+                }
             } else {
-                for (int j = 0; j < newPtr->EventPortList.size(); ++j)
+                for (int j = 0; j < newPtr->EventPortList.size(); ++j) {
                     if (newPtr->EventPortList[j]->name == out->portName && newPtr->EventPortList[j]->mode== EventSendPort){
                         portFound = true;
                     }
-                for (int j = 0; j < newPtr->ImpulsePortList.size(); ++j)
+                }
+                for (int j = 0; j < newPtr->ImpulsePortList.size(); ++j) {
                     if (newPtr->ImpulsePortList[j]->name == out->portName && newPtr->ImpulsePortList[j]->mode == ImpulseSendPort){
                         portFound = true;
                     }
+                }
             }
 
             // if not found
@@ -1197,57 +1203,87 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
     for (int i = 0; i < data->populations.size(); ++i) {
         portsExist = false;
         for (int p = 0; p < data->populations[i]->neuronType->component->AnalogPortList.size(); ++p) {
-            if (data->populations[i]->neuronType->component->AnalogPortList[p]->mode== AnalogSendPort) {
+            if (data->populations[i]->neuronType->component->AnalogPortList[p]->mode == AnalogSendPort) {
                 portsExist = true;
                 break;
             }
         }
         if (!portsExist) {
             for (int p = 0; p < data->populations[i]->neuronType->component->EventPortList.size(); ++p) {
-                if (data->populations[i]->neuronType->component->EventPortList[p]->mode== EventSendPort) {
+                if (data->populations[i]->neuronType->component->EventPortList[p]->mode == EventSendPort) {
                     portsExist = true;
                     break;
                 }
             }
         }
-        if (portsExist)
+
+        // A neuron body may have impulse ports, as well as analog or event ports.
+        if (!portsExist) {
+            for (int p = 0; p < data->populations[i]->neuronType->component->ImpulsePortList.size(); ++p) {
+                if (data->populations[i]->neuronType->component->ImpulsePortList[p]->mode == ImpulseSendPort) {
+                    portsExist = true;
+                    break;
+                }
+            }
+        }
+
+        if (portsExist) {
             elementList << data->populations[i]->neuronType->getXMLName();
+        }
         for (int j = 0; j < data->populations[i]->projections.size(); ++j) {
             for (int k = 0; k < data->populations[i]->projections[j]->synapses.size(); ++k) {
                 portsExist = false;
                 for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                    if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->AnalogPortList[p]->mode == AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
                     for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->EventPortList.size(); ++p) {
-                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->EventPortList[p]->mode== EventSendPort) {
+                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->EventPortList[p]->mode == EventSendPort) {
+                            portsExist = true;
+                            break;
+                        }
+                    }
+                }
+                if (!portsExist) {
+                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->ImpulsePortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->component->ImpulsePortList[p]->mode == ImpulseSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
                 if (portsExist) {
+                    // DBG() << "Adding WU to elementList: " << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
                     elementList << data->populations[i]->projections[j]->synapses[k]->weightUpdateCmpt->getXMLName();
                 }
                 portsExist = false;
                 for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList.size(); ++p) {
-                    if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode== AnalogSendPort) {
+                    if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->AnalogPortList[p]->mode == AnalogSendPort) {
                         portsExist = true;
                         break;
                     }
                 }
                 if (!portsExist) {
                     for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->EventPortList.size(); ++p) {
-                        if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->EventPortList[p]->mode== EventSendPort) {
+                        if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->EventPortList[p]->mode == EventSendPort) {
+                            portsExist = true;
+                            break;
+                        }
+                    }
+                }
+                if (!portsExist) {
+                    for (int p = 0; p < data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->ImpulsePortList.size(); ++p) {
+                        if (data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->component->ImpulsePortList[p]->mode == ImpulseSendPort) {
                             portsExist = true;
                             break;
                         }
                     }
                 }
                 if (portsExist) {
+                    // DBG() << "Adding PS to elementList: " << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
                     elementList << data->populations[i]->projections[j]->synapses[k]->postSynapseCmpt->getXMLName();
                 }
             }
@@ -1306,17 +1342,20 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             QModelIndex ind = portBox->model()->index(currentRow,0);
             portBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
             ++currentRow;
-             for (int i = 0; i < this->source->component->AnalogPortList.size(); ++i) {
+            for (int i = 0; i < this->source->component->AnalogPortList.size(); ++i) {
                 if (this->source->component->AnalogPortList[i]->mode == AnalogSendPort) {
+                    // DBG() << "portBox->currentIndex: " << portBox->currentIndex() << " currentRow: " << currentRow;
                     portBox->addItem(this->source->component->AnalogPortList[i]->name,
                                      qVariantFromValue((void *) this->source->component->AnalogPortList[i]));
+                    // DBG() << "after addItem portBox->currentIndex: " << portBox->currentIndex() << " currentRow: " << currentRow;
                     if (portName.isEmpty()) {
                         portBox->setCurrentIndex(1);
                         this->portName = this->source->component->AnalogPortList[i]->name;
                         this->portIsAnalog = true;
                     } else {
-                        if (this->portName == this->source->component->AnalogPortList[i]->name)
-                           portBox->setCurrentIndex(currentRow);
+                        if (this->portName == this->source->component->AnalogPortList[i]->name) {
+                            portBox->setCurrentIndex(currentRow);
+                        }
                     }
                     ++currentRow;
                 }
@@ -1324,18 +1363,46 @@ QVBoxLayout * exptOutput::drawOutput(nl_rootdata * data, viewELExptPanelHandler 
             portBox->addItem("EventPorts");
             ind = portBox->model()->index(currentRow,0);
             portBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
+            ++currentRow;
             for (int i = 0; i < this->source->component->EventPortList.size(); ++i) {
                 if (this->source->component->EventPortList[i]->mode == EventSendPort) {
+                    // DBG() << "portBox->currentIndex: " << portBox->currentIndex() << " currentRow: " << currentRow;
                     portBox->addItem(this->source->component->EventPortList[i]->name,
                                      qVariantFromValue((void *) this->source->component->EventPortList[i]));
+                    // DBG() << "after addItem portBox->currentIndex: " << portBox->currentIndex() << " currentRow: " << currentRow;
                     if (!(portBox->currentIndex() == 1)) {
                         if (portName.isEmpty()) {
                             portBox->setCurrentIndex(2);
                             this->portName = this->source->component->EventPortList[i]->name;
                             this->portIsAnalog = false;
                         } else {
-                            if (this->portName == this->source->component->EventPortList[i]->name)
-                               portBox->setCurrentIndex(currentRow+1);
+                            if (this->portName == this->source->component->EventPortList[i]->name) {
+                                portBox->setCurrentIndex(currentRow);
+                            }
+                        }
+                    }
+                    ++currentRow;
+                }
+            }
+            portBox->addItem("ImpulsePorts");
+            ind = portBox->model()->index(currentRow,0);
+            portBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
+            ++currentRow;
+            for (int i = 0; i < this->source->component->ImpulsePortList.size(); ++i) {
+                if (this->source->component->ImpulsePortList[i]->mode == ImpulseSendPort) {
+                    DBG() << "portBox->currentIndex: " << portBox->currentIndex() << " currentRow: " << currentRow;
+                    portBox->addItem(this->source->component->ImpulsePortList[i]->name,
+                                     qVariantFromValue((void *) this->source->component->ImpulsePortList[i]));
+                    DBG() << "after addItem portBox->currentIndex: " << portBox->currentIndex() << " currentRow: " << currentRow;
+                    if (!(portBox->currentIndex() == 1) && !(portBox->currentIndex() == 2)) {
+                        if (portName.isEmpty()) {
+                            portBox->setCurrentIndex(3);
+                            this->portName = this->source->component->ImpulsePortList[i]->name;
+                            this->portIsAnalog = false;
+                        } else {
+                            if (this->portName == this->source->component->ImpulsePortList[i]->name) {
+                                portBox->setCurrentIndex(currentRow);
+                            }
                         }
                     }
                     ++currentRow;
@@ -2927,6 +2994,7 @@ Port * findPortInComponent(QString portName, QSharedPointer <ComponentInstance> 
 
 Port * findOutputPortInComponent(QString portName, QSharedPointer <ComponentInstance> Synapse)
 {
+    // DBG() << "Searching for port " << portName << " in component " << Synapse->component->getXMLName();
     // find port in Synapse:
     for (int i = 0; i < Synapse->component->AnalogPortList.size(); ++i) {
         if (Synapse->component->AnalogPortList[i]->name == portName && \
@@ -2938,6 +3006,12 @@ Port * findOutputPortInComponent(QString portName, QSharedPointer <ComponentInst
         if (Synapse->component->EventPortList[i]->name == portName && \
                 Synapse->component->EventPortList[i]->mode == EventSendPort) {
             return Synapse->component->EventPortList[i];
+        }
+    }
+    for (int i = 0; i < Synapse->component->ImpulsePortList.size(); ++i) {
+        if (Synapse->component->ImpulsePortList[i]->name == portName && \
+                Synapse->component->ImpulsePortList[i]->mode == ImpulseSendPort) {
+            return Synapse->component->ImpulsePortList[i];
         }
     }
     return NULL;
