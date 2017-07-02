@@ -274,7 +274,6 @@ void GLWidget::resizeGL(int, int)
 
 void GLWidget::paintEvent(QPaintEvent * event)
 {
-
 #ifdef Q_OS_MAC2
     makeCurrent();
     //QPixmap pix((this->width()*RETINA_SUPPORT), (this->height()*RETINA_SUPPORT))
@@ -308,7 +307,7 @@ void GLWidget::paintEvent(QPaintEvent * event)
     font.setPointSizeF(GLscale/18.0f);
 #endif
     font.setStyleHint(QFont::TypeWriter);
-    painter.setPen(QColor(0,0,0,255));
+    painter.setPen(QCOL_BLACK);
     painter.setFont(font);
 
     // if grid then draw it up:

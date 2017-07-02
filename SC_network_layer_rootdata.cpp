@@ -427,7 +427,7 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
                 for (int i = 5; i > 1; --i) {
                     QPen pen(QColor(0,0,0,30/i));
                     pen.setWidthF(float(i*2));
-                    painter->setPen(pen); // HERE!!
+                    painter->setPen(pen);
                     col->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
                     // only draw handles if we aren't using multiple selection
                     if (selList.size() == 1) {
@@ -441,10 +441,24 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
                 QSharedPointer<genericInput> input = qSharedPointerDynamicCast<genericInput> (selList[i]);
 
                 for (int i = 5; i > 1; --i) {
-                    QPen pen(QColor(0,0,0,30/i));
-                    pen.setWidthF(float(i*2));
-                    painter->setPen(pen);
+                    QPen shadowPen = painter->pen();
+                    shadowPen.setColor(QColor(0,0,0,30/i));
+                    shadowPen.setWidthF(float(i*2));
+                    painter->setPen(shadowPen);
+
+                    // Calling this results in the shadowing being
+                    // drawn in the colour of the generic input, NOT
+                    // in the colour set in shadowPen, above, so I've
+                    // commented out for now. I can't work out where
+                    // the additional re-draws are occuring, although
+                    // I HAVE noticed that the system is doing many
+                    // redraws on selection of a generic input (and
+                    // ifdeffing this code out doesn't prevent all
+                    // those re-draws)
+#if 0
                     input->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
+#endif
+
                     // only draw handles if we aren't using multiple selection
                     if (selList.size() == 1) {
                         input->drawHandles(painter, GLscale, viewX, viewY, width, height);
@@ -454,8 +468,7 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
         }
     }
 
-    // cursor
-    painter->setPen(QColor(0,0,0,255));
+    painter->setPen(QCOL_BLACK);
 
     float x = ((this->cursor.x+viewX)*GLscale+float(width))/2;
     float y = ((-this->cursor.y+viewY)*GLscale+float(height))/2;
@@ -2214,7 +2227,6 @@ void nl_rootdata::undoOrRedoPerformed(int)
     // update file list for components
     emit setWindowTitle();
     emit updatePanel(this);
-    DBG() << "Here";
 }
 
 void nl_rootdata::copyParsToClipboard()

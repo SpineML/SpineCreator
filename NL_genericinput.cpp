@@ -164,10 +164,48 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
     if (this->curves.size() > 0) {
 
         // The generic input colour:
-        QColor colour = QColor(0,255,0,255);
+        QColor colour = QCOL_BASICBLUE;
+
+        // Switch based on syn type, if possible.
+        QString ctype("");
+
+        // No connectionTypeStr, so use type
+        if (this->conn != (connection*)0) {
+            switch (this->conn->type) {
+            case AlltoAll:
+                colour = QCOL_BLUE1;
+                break;
+            case OnetoOne:
+                colour = QCOL_RED1;
+                break;
+            case FixedProb:
+                colour = QCOL_GREEN1;
+                break;
+            case CSV:
+                // if it has a Script Annotation, then need to colour it later based on this information:
+                if (this->conn->hasGenerator()) {
+                    // Make colour vary based on md5sum of the text in ctype:
+                    csv_connection* cn = (csv_connection*)this->synapses[0]->connectionType;
+                    ctype += cn->generator->scriptText;
+                    QString result(QCryptographicHash::hash(ctype.toStdString().c_str(),
+                                                            QCryptographicHash::Md5).toHex());
+                    QByteArray r2(result.toStdString().c_str(),2);
+                    bool ok = false;
+                    // Vary the hue in the colour
+                    colour.setHsl(r2.toInt(&ok, 16),0xff,0x40);
+                } else {
+                    colour = QCOL_GREEN3;
+                }
+                break;
+            case Python:
+            case CSA:
+            default:
+                colour = QCOL_BLACK;
+                break;
+            }
+        }
 
         QPen oldPen = painter->pen();
-
         QPointF start;
         QPointF end;
 
@@ -194,9 +232,9 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                     temp.setLength(0.6);
                     start = temp.p2();
                 }
-            }
-            else
+            } else {
                 start = this->start;
+            }
 
             if (destination != NULL) {
                 if (destination->type == projectionObject) {
@@ -217,9 +255,9 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                     temp.setLength(0.55);
                     end = temp.p2();
                 }
-            }
-            else
+            } else {
                 end = this->curves.back().end;
+            }
 
             // set pen width
             QPen pen2 = painter->pen();
@@ -231,19 +269,18 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             path.moveTo(this->transformPoint(start));
 
-
             for (int i = 0; i < this->curves.size(); ++i) {
-                if (this->curves.size()-1 == i)
+                if (this->curves.size()-1 == i) {
                     path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(end));
-                else
+                } else {
                     path.cubicTo(this->transformPoint(this->curves[i].C1), this->transformPoint(this->curves[i].C2), this->transformPoint(this->curves[i].end));
+                }
             }
 
             // draw start and end markers
-
             QPolygonF arrow_head;
             QPainterPath endPoint;
-            //calculate arrow head polygon
+            // calculate arrow head polygon
             QPointF end_point = path.pointAtPercent(1.0);
             QPointF temp_end_point = path.pointAtPercent(0.995);
             QLineF line = QLineF(end_point, temp_end_point).unitVector();
@@ -292,10 +329,11 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             QPen linePen = painter->pen();
             linePen.setWidthF(scale*linePen.widthF()*dpi_ratio);
             if (style == saveNetworkImageDrawStyle) {
-                // Wider lines and ensure colour is set for image output:
+                // Wider lines for image output:
                 linePen.setWidthF(linePen.widthF()*2);
-                linePen.setColor(colour);
             }
+
+            linePen.setColor(colour);
             painter->setPen(linePen);
 
             QPainterPath path;
@@ -316,44 +354,14 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                 }
             }
 
-            // only draw number of synapses for Projections
-            if (this->type == projectionObject) {
-                QPen pen = painter->pen();
-                QVector<qreal> dash;
-                dash.push_back(4);
-                for (int syn = 1; syn < this->synapses.size(); ++syn) {
-                    dash.push_back(2.0);
-                    dash.push_back(1.0);
-                }
-                if (synapses.size() > 1) {
-                    dash.push_back(2.0);
-                    dash.push_back(1.0);
-                    dash.push_back(2.0);
-                    pen.setWidthF((pen.widthF()+1.0) * 1.5);
-                } else {
-                    dash.push_back(0.0);
-                }
-                dash.push_back(100000.0);
-                dash.push_back(0.0);
-
-                pen.setDashPattern(dash);
-                painter->setPen(pen);
-            }
-
             // Draw the line before the end marker
             painter->drawPath(path);
 
             // Now draw the end marker
-            if (this->type == projectionObject) {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),4,4);
-                painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,0,255,255));
-            } else {
-                endPoint.addEllipse(this->transformPoint(this->curves.back().end),
-                                    0.02*dpi_ratio*GLscale,0.02*dpi_ratio*GLscale);
-                painter->drawPath(endPoint);
-                painter->fillPath(endPoint, QColor(0,210,0,255));
-            }
+            endPoint.addEllipse(this->transformPoint(this->curves.back().end),
+                                0.015*dpi_ratio*GLscale,0.015*dpi_ratio*GLscale);
+            painter->drawPath(endPoint);
+            painter->fillPath(endPoint, QCOL_GREEN2);
 
             painter->setPen(oldPen);
 
