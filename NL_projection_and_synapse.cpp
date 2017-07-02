@@ -467,35 +467,6 @@ drawStyle projection::style()
     return this->projDrawStyle;
 }
 
-/*!
- * Colour definitions used in projection::draw. These were chosen
- * using Hue/Saturation/Lightness/Alpha with Saturation 255, Alpha
- * 255, lightness 106 and the Hue varied.
- */
-//@{
-#define QCOL_BASICBLUE  QColor(0x00,0x00,0xff,0xff)
-
-#define QCOL_MAGENTA1   QColor(0xd3,0x00,0xbf,0xff)
-#define QCOL_PURPLE1    QColor(0xa6,0x00,0xd3,0xff)
-#define QCOL_PURPLE2    QColor(0x49,0x00,0xd3,0xff)
-#define QCOL_BLUE1      QColor(0x00,0x09,0xd3,0xff)
-#define QCOL_BLUE2      QColor(0x00,0x81,0xd3,0xff)
-#define QCOL_CYAN1      QColor(0x00,0xc8,0xd3,0xff)
-
-#define QCOL_GREEN1     QColor(0x00,0xd3,0x50,0xff)
-#define QCOL_GREEN2     QColor(0x07,0xd3,0x00,0xff)
-#define QCOL_GREEN3     QColor(0x7a,0xd3,0x00,0xff)
-#define QCOL_GREEN4     QColor(0x00,0xff,0x00,0xff)
-#define QCOL_ORANGE1    QColor(0xd3,0x83,0x00,0xff)
-#define QCOL_RED1       QColor(0xd3,0x26,0x00,0xff)
-#define QCOL_RED2       QColor(0xd3,0x00,0x00,0xff)
-#define QCOL_RED3       QColor(0xff,0x00,0x00,0x64)
-
-#define QCOL_GREY1      QColor(0xc8,0xc8,0xc8,0xff)
-#define QCOL_GREY2      QColor(0x3e,0x3e,0x3e,0xff)
-#define QCOL_BLACK      QColor(0x00,0x00,0x00,0xff)
-
-
 //@}
 
 /*!
@@ -658,8 +629,7 @@ void projection::draw(QPainter *painter, float GLscale,
                 QLineF temp = QLineF(QPointF(destination->x, destination->y), this->curves.back().C2);
                 temp.setLength(0.501);
                 end = temp.p2();
-            }
-            else {
+            } else {
                 end = this->curves.back().end;
             }
 
@@ -672,7 +642,6 @@ void projection::draw(QPainter *painter, float GLscale,
             QPainterPath path;
 
             path.moveTo(this->transformPoint(start));
-
 
             for (int i = 0; i < this->curves.size(); ++i) {
                 if (this->curves.size()-1 == i) {
@@ -1447,7 +1416,6 @@ QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, floa
 void projection::setAutoHandles(QSharedPointer <population> pop1,
                                 QSharedPointer <population> pop2, QPointF end)
 {
-
     // line for drawing handles
     QPainterPath startToEnd;
     QPointF oldEnd;
@@ -2152,7 +2120,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                     newInput->srcPort = e2.attribute("src_port");
                     newInput->dstPort = e2.attribute("dst_port");
 
-
                     // get connectivity
                     QDomNodeList type = e2.elementsByTagName("AllToAllConnection");
                     if (type.count() == 1) {
@@ -2243,7 +2210,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 // match inputs if not specified:
                 newInput->dstCmpt->matchPorts();
 
-
                 // read in the postsynapse output
                 newInput = QSharedPointer<genericInput> (new genericInput);
                 newInput->srcCmpt = this->synapses[t]->postSynapseCmpt;
@@ -2263,7 +2229,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
 
                 // add to src output list
                 this->synapses[t]->postSynapseCmpt->outputs.push_back(newInput);
-
             }
 
             // synapse inputs
@@ -2387,7 +2352,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
                 newInput->destination = thisSharedPointer;
 
                 newInput->srcCmpt->outputs.push_back(newInput);
-
             }
             n = n.nextSibling();
         }
@@ -2432,7 +2396,6 @@ void projection::read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, proj
     }
 }
 
-
 QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *, QSharedPointer <systemObject> > &objectMap)
 {
     // create a new, identical, projection
@@ -2471,7 +2434,6 @@ QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *
     objectMap.insert(this, newProj);
 
     return qSharedPointerCast <systemObject> (newProj);
-
 }
 
 void projection::remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> > objectMap)
