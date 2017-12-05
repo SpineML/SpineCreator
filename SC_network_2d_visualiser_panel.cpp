@@ -35,6 +35,8 @@
   #endif
 #endif
 
+#define CHANGED_TIME 10
+
 #ifdef Q_OS_MAC2
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
@@ -44,7 +46,7 @@ GLWidget::GLWidget(QWidget *parent):QWidget(parent)
 
 {
     // variable for making sure we don't redraw the openGL when we don't need to
-    changed = 100;
+    changed = CHANGED_TIME;
 
     currSelType = 0;
     currSelInd = 0;
@@ -73,7 +75,7 @@ GLWidget::~GLWidget()
 
 void GLWidget::redrawGLview()
 {
-    changed = 45;
+    changed = CHANGED_TIME;
 }
 
 
@@ -124,7 +126,7 @@ void GLWidget::mousePressEvent(QMouseEvent* event)
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-    changed = 100;
+    changed = CHANGED_TIME;
     this->button = Qt::NoButton;
     setCursor(Qt::ArrowCursor);
     // convert the incoming x and y into the openGL coordinates
@@ -165,13 +167,14 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event)
 
 void GLWidget::wheelEvent(QWheelEvent* event)
 {
-    changed = 100;
+    changed = CHANGED_TIME;
     float val = float(event->delta()) / 320.0;
 
     val = pow(2.0f,val);
     if (event->orientation() == Qt::Vertical) {
         this->targGLscale *= (val);
-#ifndef Q_OS_MAC
+#ifdef Q_OS_LINUX
+
         float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/GLscale;
         float yGL = -float((event->y()*RETINA_SUPPORT)-(this->height()*RETINA_SUPPORT)/2)*2.0/GLscale;
         // aim the scrolling at the current cursor location (goes bad on osx)
@@ -191,7 +194,7 @@ void GLWidget::wheelEvent(QWheelEvent* event)
 
 void GLWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    changed = 100;
+    changed = CHANGED_TIME;
 
     // convert mouse event into openGL coordinates
     float xGL = float((event->x()*RETINA_SUPPORT)-(this->width()*RETINA_SUPPORT)/2)*2.0/(GLscale)-viewX;
@@ -230,7 +233,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event)
 
 void GLWidget::keyPressEvent(QKeyEvent * event)
 {
-    changed = 100;
+    changed = CHANGED_TIME;
 
     if (event->type() == QEvent::KeyPress) {
         if (event->key() == Qt::Key_Control) {
@@ -247,7 +250,7 @@ void GLWidget::keyPressEvent(QKeyEvent * event)
 
 void GLWidget::keyReleaseEvent(QKeyEvent * event)
 {
-    changed = 100;
+    changed = CHANGED_TIME;
 
     if (event->type() == QEvent::KeyRelease) {
         if (event->key() == Qt::Key_Control) {
@@ -389,7 +392,7 @@ void GLWidget::finishConnect()
     this->connectMode = false;
     this->setMouseTracking(false);
 
-    changed = 100;
+    changed = CHANGED_TIME;
 }
 
 void GLWidget::saveImage()

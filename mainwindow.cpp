@@ -408,7 +408,7 @@ MainWindow(QWidget *parent) :
 
     this->createActions();
 
-    timer->start(16);
+    timer->start(30);
 
     // force nice startup
     // Construct the menus
