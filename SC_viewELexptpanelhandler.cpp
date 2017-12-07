@@ -1836,6 +1836,24 @@ void viewELExptPanelHandler::run()
             return;
         }
     }
+//#else
+    if (simName != "BRAHMS") {
+        if (!the_script.exists()) {
+            // Error - convert_script file doesn't exist
+            this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' does not exist.");
+            return;
+        } else {
+            // Path exists, check it's a file and is executable
+            // NB: In QT 5.x this would be QFileDevice::ExeOwner etc
+            if (the_script.permissions() & (QFile::ExeOwner|QFile::ExeGroup|QFile::ExeOther)) {
+                // Probably Ok - we have execute permission of some kind.
+            } else {
+                // Error - no execute permission on script
+                this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' is not executable.");
+                return;
+            }
+        }
+    }
 #endif
 
     // The convert_script takes the working directory as a script argument
@@ -1843,10 +1861,12 @@ void viewELExptPanelHandler::run()
     settings.endGroup();
     wk_dir_string = QDir::toNativeSeparators(wk_dir_string);
 #ifdef Q_OS_WIN
-    // on windows using Ubuntu BASH we must convert the path
-    wk_dir_string = wk_dir_string.replace("\\","/");
-    wk_dir_string = wk_dir_string.replace("C:","/mnt/c");
-    wk_dir_string = wk_dir_string.replace("D:","/mnt/d");
+    if (simName == "BRAHMS") {
+        // on windows using Ubuntu BASH we must convert the path
+        wk_dir_string = wk_dir_string.replace("\\","/");
+        wk_dir_string = wk_dir_string.replace("C:","/mnt/c");
+        wk_dir_string = wk_dir_string.replace("D:","/mnt/d");
+    }
 #endif
     QDir wk_dir(wk_dir_string);
 
@@ -1981,19 +2001,46 @@ void viewELExptPanelHandler::run()
     {
         QStringList al;
 #ifdef Q_OS_WIN
-        out_dir_name = wk_dir.absolutePath() + "/temp";
-        // on windows using Ubuntu BASH we must convert the path
-        modelpath = modelpath.replace("\\","/");
-        modelpath = modelpath.replace("C:","/mnt/c");
-        modelpath = modelpath.replace("D:","/mnt/d");
-        path = QString("cmd.exe /R ") + QString('"') + QString("c:\\WINDOWS\\sysnative\\bash.exe -c '") + path + \
-                QString(" -m ") + modelpath + \
-                QString(" -w ") + wk_dir.absolutePath() + \
-                QString(" -o ") + out_dir_name + \
-                QString(" -e ") + QString("%1").arg(currentExptNum) + \
-                QString("'") + QString('"') \
-                ;
+        //bool isPython = false;
+        if (simName == "BRAHMS") {
+            out_dir_name = wk_dir.absolutePath() + "/temp";
+            // on windows using Ubuntu BASH we must convert the path
+            modelpath = modelpath.replace("\\","/");
+            modelpath = modelpath.replace("C:","/mnt/c");
+            modelpath = modelpath.replace("D:","/mnt/d");
+            path = QString("cmd.exe /R ") + QString('"') + QString("c:\\WINDOWS\\sysnative\\bash.exe -c '") + path + \
+                    QString(" -m ") + modelpath + \
+                    QString(" -w ") + wk_dir.absolutePath() + \
+                    QString(" -o ") + out_dir_name + \
+                    QString(" -e ") + QString("%1").arg(currentExptNum) + \
+                    QString("'") + QString('"') \
+                    ;
+        } else {
+            if (path.contains("python.exe")) {
+                //isPython = true;
+                QStringList pathbits = path.split("python.exe ");
+                qDebug() << pathbits;
+                if (pathbits.size() > 1) {
+                    path = pathbits[0] + QString("python.exe");
+                    al << QDir::toNativeSeparators(pathbits[1]);
+                }
+            }
+            al << "-m" << QDir::toNativeSeparators(modelpath)                          // path to input model
+               << "-w" << QDir::toNativeSeparators(wk_dir.absolutePath())              // path to simulator dir
+               << "-o" << QDir::toNativeSeparators(out_dir_name)                    // Output dir
+               << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
+        }
 #else
+        // handle python convert_scripts...
+        if (path.contains("python")) {
+            //isPython = true;
+            QStringList pathbits = path.split("python ");
+            qDebug() << pathbits;
+            if (pathbits.size() > 1) {
+                path = pathbits[0] + QString("python");
+                al << QDir::toNativeSeparators(pathbits[1]);
+            }
+        }
         al << "-m" << modelpath                          // path to input model
            << "-w" << wk_dir.absolutePath()              // path to SpineML_2_BRAHMS dir
            << "-o" << out_dir_name                       // Output dir
@@ -2014,8 +2061,13 @@ void viewELExptPanelHandler::run()
         DBG() << "(Unix) Starting with path: " << path << " arg list: " << al;
         simulator->start(path,al);
 #else
-        DBG() << "(Windows) Starting with path: " << path;
-        simulator->start(path);
+        if (simName == "BRAHMS") {
+            DBG() << "(Windows (BRAHMS)) Starting with path: " << path;
+            simulator->start(path);
+        } else {
+            DBG() << "(Windows) Starting with path: " << path << " arg list: " << al;
+            simulator->start(path,al);
+        }
 #endif
     }
 
@@ -2038,10 +2090,19 @@ void viewELExptPanelHandler::run()
 #endif
 
 #ifdef Q_OS_WIN
-    settings.beginGroup("simulators/" + simName);
-    out_dir_name  = settings.value("working_dir").toString() + QDir::separator() + "temp";
-    settings.endGroup();
-    this->logpath = out_dir_name + QDir::separator() + "log";
+    if (simName == "BRAHMS") {
+        settings.beginGroup("simulators/" + simName);
+        out_dir_name  = settings.value("working_dir").toString() + QDir::separator() + "temp";
+        settings.endGroup();
+        this->logpath = out_dir_name + QDir::separator() + "log";
+    } else {
+        if (!simulator->waitForStarted(1000)) {
+            // Error - simulator failed to start. It would be great to get
+            // the output to show in the window. It may exist in wk_dir.absolutePath() / temp/run/out.log and err.log
+            this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
+            return;
+        }
+    }
 #endif
 
     connect(simulator, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(simulatorFinished(int, QProcess::ExitStatus)));
@@ -2143,10 +2204,26 @@ void viewELExptPanelHandler::checkForSimTime() {
             }
         }
 #ifdef Q_OS_WIN
+    experiment * currentExperiment;
+    // find currentExperiment
+    for (int i = 0; i < data->experiments.size(); ++i) {
+        if (data->experiments[i]->selected) {
+            currentExperiment = data->experiments[i];
+            //currentExptNum = i;
+            break;
+        }
+    }
+
+    if (currentExperiment == NULL) {
+        return;
+    }
+
     // check if we have finished...
-    if (simTimeCurr > this->simTimeMax*1000-0.2) {
-        Sleep(2000);
-        this->simulatorFinished(0,QProcess::NormalExit);
+    if (currentExperiment->setup.simType == "BRAHMS") {
+        if (simTimeCurr > this->simTimeMax*1000-0.2) {
+            Sleep(2000);
+            this->simulatorFinished(0,QProcess::NormalExit);
+        }
     }
 #endif
         simTimeFile.close();
@@ -2200,7 +2277,13 @@ void viewELExptPanelHandler::simulatorFinished(int, QProcess::ExitStatus status)
     // Update the view of the logfiles
     QDir logs(sender()->property("logpath").toString());
 #else
-    QDir logs(this->logpath);
+
+    QDir logs;
+    if (currentExperiment->setup.simType == "BRAHMS") {
+        logs = QDir(QString(this->logpath));
+    } else {
+        logs = QDir(sender()->property("logpath").toString());
+    }
 #endif
 
     QStringList filter;
