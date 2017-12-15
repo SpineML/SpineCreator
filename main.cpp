@@ -29,10 +29,12 @@
 // http://stackoverflow.com/questions/27378143/qt-5-produce-random-attribute-order-in-xml
 extern Q_CORE_EXPORT QBasicAtomicInt qt_qhash_seed;
 
+
 int main(int argc, char *argv[])
 {
     // stop qt 5 salting the hash table and giving undeterministic xml attributes. Grrr...
-    qt_qhash_seed.store(12345);
+    //qt_qhash_seed.store(12345);
+    qSetGlobalQHashSeed(12345);
 
     QApplication a(argc, argv);
     a.setAttribute(Qt::AA_DontCreateNativeWidgetSiblings, true);
