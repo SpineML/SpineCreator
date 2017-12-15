@@ -183,7 +183,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
                 break;
             case CSV:
                 // if it has a Script Annotation, then need to colour it later based on this information:
-                if (this->conn->hasGenerator()) {
+                if (this->synapses.size()>0 && this->conn->hasGenerator()) {
                     // Make colour vary based on md5sum of the text in ctype:
                     csv_connection* cn = (csv_connection*)this->synapses[0]->connectionType;
                     ctype += cn->generator->scriptText;

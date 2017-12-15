@@ -32,7 +32,12 @@ extern Q_CORE_EXPORT QBasicAtomicInt qt_qhash_seed;
 int main(int argc, char *argv[])
 {
     // stop qt 5 salting the hash table and giving undeterministic xml attributes. Grrr...
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+    qSetGlobalQHashSeed(12345);
+#else
     qt_qhash_seed.store(12345);
+#endif
+
 
     QApplication a(argc, argv);
     a.setAttribute(Qt::AA_DontCreateNativeWidgetSiblings, true);
