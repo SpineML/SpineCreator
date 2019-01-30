@@ -81,18 +81,40 @@ MainWindow(QWidget *parent) :
     // initialise GUI
     ui->setupUi(this);
 
-    // initialise Python
+    // Initialise Python. To run numba cuda code, it's going to be
+    // necessary to set this up with a user-specifiable path to python
+    // and/or modules.
+
+    // The path determined from anaconda/ipython:
+    // ['', '/home/seb/anaconda3/bin', '/home/seb/anaconda3/lib/python37.zip', '/home/seb/anaconda3/lib/python3.7', '/home/seb/anaconda3/lib/python3.7/lib-dynload', '/home/seb/anaconda3/lib/python3.7/site-packages', '/home/seb/anaconda3/lib/python3.7/site-packages/IPython/extensions', '/home/seb/.ipython']
+
+
+    Py_SetProgramName(L"/home/seb/anaconda3/bin/python");
+    Py_SetPythonHome(L"/home/seb/anaconda3/bin:/home/seb/anaconda3/lib/python37.zip:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages");
     Py_Initialize();
 
-   QSettings settings;
+    qDebug() << "Python interpreter: " << (wchar_t*)Py_GetProgramName();
+    qDebug() << "Py_GetPrefix(): " << (wchar_t*)Py_GetPrefix();
+    qDebug() << "Py_GetExecPrefix(): " << (wchar_t*)Py_GetExecPrefix();
+    qDebug() << "Py_GetPath(): " << (wchar_t*)Py_GetPath();
+    qDebug() << "Py_GetProgramFullPath(): " << (wchar_t*)Py_GetProgramFullPath();
 
-   // clear all QSettings keys (for testing initial setup)
-   /*QStringList keys = settings.allKeys();
-   foreach (QString key, keys) {
-       qDebug() << key;
-       settings.remove(key);
-   }*/
-   //exit(0);
+
+    QSettings settings; // probably get Python path from this and
+                        // Py_SetProgramName therefrom. That will mean
+                        // de-initialising and then re-initialising
+                        // the python system when the setting is
+                        // changed.
+
+#if 0
+    // clear all QSettings keys (for testing initial setup)
+    QStringList keys = settings.allKeys();
+    foreach (QString key, keys) {
+        qDebug() << key;
+        settings.remove(key);
+    }
+    exit(0);
+#endif
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
   #ifdef Q_OS_MAC2

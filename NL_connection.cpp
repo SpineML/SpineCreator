@@ -2568,8 +2568,8 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
         if (PyTuple_Check(element)) {
             // if the tuple has enough items for a src index and dst index
             if (PyTuple_Size(element) > 1) {
-                outUnPacked.connections[i].src = PyInt_AsLong(PyTuple_GetItem(element,0));
-                outUnPacked.connections[i].dst = PyInt_AsLong(PyTuple_GetItem(element,1));
+                outUnPacked.connections[i].src = PyLong_AsLong(PyTuple_GetItem(element,0));
+                outUnPacked.connections[i].dst = PyLong_AsLong(PyTuple_GetItem(element,1));
             }
             // if we have a delay as well
             if (PyTuple_Size(element) > 2 && hasDelay) {
@@ -2612,10 +2612,10 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
         errs.append("ERROR in PyRun_String ");
 
         if (errtype) {
-            errs.append(PyString_AsString(errtype) + QString("(errtype). "));
+            errs.append(PyBytes_AsString(errtype) + QString("(errtype). "));
         }
         if (errval) {
-            errs.append(PyString_AsString(errval) + QString("(errval). "));
+            errs.append(PyBytes_AsString(errval) + QString("(errval). "));
         }
         if (errtrace) {
             PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;
@@ -2715,7 +2715,7 @@ void pythonscript_connection::generate_connections()
         PyErr_Fetch(&(errtype), &(errval), &(errtrace));
 
         if (errval) {
-            pythonErrors += PyString_AsString(errval);
+            pythonErrors += PyBytes_AsString(errval);
         }
         if (errtrace) {
             PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;

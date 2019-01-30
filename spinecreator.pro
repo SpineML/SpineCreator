@@ -152,14 +152,14 @@ win32 {
     DEFINES += WIN_HIDPI_FIX
 }
 linux-g++ {
-    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
-    INCLUDEPATH += /usr/include/python2.7
+    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -L/home/seb/anaconda3/lib -lpython3.7m
+    INCLUDEPATH += /home/seb/anaconda3/include/python3.7m
     INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
     DEPENDPATH += /usr/lib/graphviz
 }
 linux-g++-64 {
-    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
-    INCLUDEPATH += /usr/include/python2.7
+    LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -L/home/seb/anaconda3/lib -lpython3.7m
+    INCLUDEPATH += /home/seb/anaconda3/include/python3.7m
     INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
     DEPENDPATH += /usr/lib/graphviz
 }
