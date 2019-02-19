@@ -134,7 +134,8 @@ MainWindow(QWidget *parent) :
     QString currFileName = settings.value("files/currentFileName", "").toString();
 
     if (currFileName.size() != 0) {
-        qDebug() << "oops - program crashed. Handle? (could be multiple programs open - but that could be a problem too...)";
+        DBG() << "currFileName: " << currFileName;
+        qDebug() << "oops - a previous program crashed. Handle this? (could be multiple programs open - but that could be a problem too...)";
     }
 
     // This really means "is *SpineML_2_BRAHMS* present?".

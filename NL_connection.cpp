@@ -2592,24 +2592,25 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
  * \return
  * A simple function to take a string and make it into a Python function which can then be called
  */
-PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
+PyObject* createPyFunc(PyObject* pymod, QString text, QString &errs)
 {
     // get the default dict, so we have access to the built in modules
-    PyObject * main = PyImport_AddModule("__main__");
-    PyObject *pGlobal = PyModule_GetDict(main);
+    PyObject* main = PyImport_AddModule ("__main__");
+    PyObject* pGlobal = PyModule_GetDict (main);
 
-    PyModule_AddStringConstant(pymod, "__file__", "");
+    PyModule_AddStringConstant (pymod, "__file__", "");
 
-    //Get the dictionary object from my module so I can pass this to PyRun_String
-    PyObject * pLocal = PyModule_GetDict(pymod);
+    // Get the dictionary object from my module so I can pass this to PyRun_String
+    PyObject* pLocal = PyModule_GetDict (pymod);
 
-    //Define my function in the newly created module
-    PyObject * pValue = PyRun_String((char *) text.toStdString().c_str(), Py_file_input, pGlobal, pLocal);
+    // Define my function in the newly created module
+    PyObject * pValue = PyRun_String ((char*)text.toStdString().c_str(), Py_file_input, pGlobal, pLocal);
     if (!pValue) {
         PyObject * errtype, * errval, * errtrace;
         PyErr_Fetch(&(errtype), &(errval), &(errtrace));
 
         errs.append("ERROR in PyRun_String ");
+        cerr << "Error in PyRun_String()" << endl;
 
         if (errtype) {
             errs.append(PyBytes_AsString(errtype) + QString("(errtype). "));
@@ -2628,8 +2629,8 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
     }
     Py_DECREF(pValue);
 
-    //Get a pointer to the function I just defined
-    return PyObject_GetAttrString(pymod, "connectionFunc");
+    // Get a pointer to the function I just defined
+    return PyObject_GetAttrString (pymod, "connectionFunc");
 }
 
 /*!
@@ -2681,14 +2682,15 @@ void pythonscript_connection::generate_connections()
         return;
     }
 
-    //Create a new module object
-    PyObject *pymod = PyModule_New("mymod");
+    // Create a new module object
+    PyObject* pymod = PyModule_New ("mymod");
 
     // add the function to Python, and get a PyObject for it
-    PyObject * pyFunc = createPyFunc(pymod, this->scriptText, this->pythonErrors);
+    PyObject* pyFunc = createPyFunc (pymod, this->scriptText, this->pythonErrors);
 
     // check that function creation worked
     if (!pyFunc) {
+        cerr << "createPyFunc returned null" << endl;
         if (pythonErrors.isEmpty()) {
             pythonErrors = "Python Error: Script function is not named connectionFunc.";
         }
@@ -2700,8 +2702,9 @@ void pythonscript_connection::generate_connections()
         return;
     }
 
-    //Call my function
-    PyObject * output = PyObject_CallObject(pyFunc, argsPy);
+    // Call my function
+    DBG() << "Calling the function";
+    PyObject * output = PyObject_CallObject (pyFunc, argsPy);
     Py_XDECREF(argsPy);
     Py_XDECREF(srcPy);
     Py_XDECREF(dstPy);
@@ -2726,9 +2729,10 @@ void pythonscript_connection::generate_connections()
         }
         return;
     }
+    DBG() << "Got output from function";
 
     // unpack the output into C++ forms
-    outputUnPackaged unpacked = extractOutput(output, this->hasDelay, this->hasWeight);
+    outputUnPackaged unpacked = extractOutput (output, this->hasDelay, this->hasWeight);
 
     // transfer the unpacked output to the local storage location for connections
     if (this->connection_target != NULL) {
@@ -2766,6 +2770,7 @@ void pythonscript_connection::generate_connections()
         this->connection_target->setNumRows(unpacked.connections.size());
 
     } else {
+        DBG() << "connection_target is null";
         this->connections = unpacked.connections;
         (*this->conns) = unpacked.connections;
     }
@@ -2776,6 +2781,8 @@ void pythonscript_connection::generate_connections()
     // if we get to the end then that's good enough
     this->scriptValidates = true;
     this->setUnchanged(true);
+
+    DBG() << "Returning";
 }
 
 connection * pythonscript_connection::newFromExisting()
