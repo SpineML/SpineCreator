@@ -1539,6 +1539,31 @@ void csv_connection::setData(const QModelIndex & index, float value)
     f.close();
 }
 
+void
+csv_connection::setupDataStream (QFile& f, QDataStream& ds)
+{
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
+    if (!f.open( QIODevice::ReadWrite)) {
+        QMessageBox msgBox;
+        msgBox.setText("csv_connection::setupDataStream(QFile&): Could not open temporary file "
+                       + this->uuidFilename + " for Explicit Connection");
+        msgBox.exec();
+        return;
+    }
+    // get a datastream to serialise the data
+    f.seek(f.size());
+    ds.setDevice(&f);
+    return;
+}
+
+void
+csv_connection::shutdownDataStream (QFile& f)
+{
+    f.flush();
+    f.close();
+}
+
 void csv_connection::setData(int row, int col, float value)
 {
     QFile f;
@@ -2845,19 +2870,19 @@ void pythonscript_connection::generate_connections()
             }
         }
 
-        // This loop can take a long time:
+        // Transfer the connection to the local file copy
+        QFile f;
+        QDataStream ds;
+        this->connection_target->setupDataStream (f, ds);
         for (int i = 0; i < unpacked.connections.size(); ++i) {
-
-            // transfer connection. This is very one-by-oney
-            this->connection_target->setData(i, 0, unpacked.connections[i].src);
-            this->connection_target->setData(i, 1, unpacked.connections[i].dst);
+            ds << (qint32)unpacked.connections[i].src
+               << (qint32)unpacked.connections[i].dst;
             if (unpacked.connections[0].metric != NO_DELAY) {
-                this->connection_target->setData(i, 2, unpacked.connections[i].metric);
+                ds << (float)unpacked.connections[i].metric;
             }
-            this->connection_target->setNumRows(i);
         }
+        this->connection_target->shutdownDataStream (f);
         DBG() << "Transferred connection data in " << subtimer.restart() << " ms";
-
         this->connection_target->setNumRows(unpacked.connections.size());
 
     } else {
