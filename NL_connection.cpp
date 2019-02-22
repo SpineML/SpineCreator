@@ -23,8 +23,6 @@
 ****************************************************************************/
 
 
-#include <cmath>
-
 #ifdef _DEBUG
   #undef _DEBUG
   #include <Python.h>
@@ -33,9 +31,18 @@
   #include <Python.h>
 #endif
 
+#include <frameobject.h>
+#if 0
+static PyObject*
+get_caller_info (PyObject* self, PyObject* args)
+{
+    PyCodeObject* code = PyEval_GetFrame()->f_code;
+    return Py_BuildValue("(OO)", code->co_filename, code->co_name);
+}
+#endif
 
+#include <cmath>
 #include <QUuid>
-
 #include <QSettings>
 
 #include "NL_connection.h"
@@ -2553,9 +2560,11 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
     // create the structure to hold the unpacked output
     outputUnPackaged outUnPacked;
     if (PyList_Size(output) < 1) {
+        DBG() << "PyList_Size(output) < 1 (it's " << PyList_Size(output) << ")";
         outUnPacked.weights.push_back(-234.56);
         return outUnPacked;
     }
+    DBG() << "PyList_Size(output) = " << PyList_Size(output);
     outUnPacked.connections.resize(PyList_Size(output));
     if (outUnPacked.connections.size()>0) {
         outUnPacked.connections[0].metric = NO_DELAY;
@@ -2581,6 +2590,28 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
             } else {
                 outUnPacked.weights.clear();
             }
+        } else {
+            // Perhaps we got a list of lists, as returned from a nparray.tolist()?
+            DBG() << "Element " << i << " was not a tuple!";
+            if (PyList_Check(element)) {
+                if (PyList_Size(element) > 1) {
+                    outUnPacked.connections[i].src = PyLong_AsLong(PyList_GetItem(element,0));
+                    outUnPacked.connections[i].dst = PyLong_AsLong(PyList_GetItem(element,1));
+                }
+                // if we have a delay as well
+                if (PyList_Size(element) > 2 && hasDelay) {
+                    outUnPacked.connections[i].metric = PyFloat_AsDouble(PyList_GetItem(element,2));
+                }
+                // if we have a weight as well
+                if (PyList_Size(element) > 3 && hasWeight) {
+                    outUnPacked.weights[i] = PyFloat_AsDouble(PyList_GetItem(element,3));
+                } else {
+                    outUnPacked.weights.clear();
+                }
+            } else {
+                DBG() << "Element " << i << " was not a tuple OR a list!";
+            }
+
         }
     }
     return outUnPacked;
@@ -2704,7 +2735,7 @@ void pythonscript_connection::generate_connections()
 
     // Call my function
     DBG() << "Calling the function";
-    PyObject * output = PyObject_CallObject (pyFunc, argsPy);
+    PyObject* output = PyObject_CallObject (pyFunc, argsPy);
     Py_XDECREF(argsPy);
     Py_XDECREF(srcPy);
     Py_XDECREF(dstPy);
@@ -2713,20 +2744,67 @@ void pythonscript_connection::generate_connections()
     Py_XDECREF(pymod);
 
     if (!output) {
-        this->pythonErrors = "Python Error: ";
-        PyObject * errtype, * errval, * errtrace;
-        PyErr_Fetch(&(errtype), &(errval), &(errtrace));
 
-        if (errval) {
-            pythonErrors += PyBytes_AsString(errval);
-        }
-        if (errtrace) {
-            PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;
+        this->pythonErrors = "Python Error:";
+
+        PyObject *pyExcType;
+        PyObject *pyExcValue;
+        PyObject *pyExcTraceback;
+        PyErr_Fetch(&pyExcType, &pyExcValue, &pyExcTraceback);
+        PyErr_NormalizeException(&pyExcType, &pyExcValue, &pyExcTraceback);
+
+        PyObject* str_exc_type = PyObject_Repr(pyExcType);
+        PyObject* pyStr = PyUnicode_AsEncodedString(str_exc_type, "utf-8", "Error ~");
+        pythonErrors += "\nException type: ";
+        pythonErrors += PyBytes_AS_STRING(pyStr);
+
+        PyObject* str_exc_value = PyObject_Repr(pyExcValue);
+        PyObject* pyExcValueStr = PyUnicode_AsEncodedString(str_exc_value, "utf-8", "Error ~");
+        pythonErrors += "\nException value: ";
+        pythonErrors += PyBytes_AsString(pyExcValueStr);
+
+        if (pyExcTraceback) {
+            PyTracebackObject* errtraceObj = (PyTracebackObject*)pyExcTraceback;
+
+            // First display the first error - the error in the connectionFunc script
+            PyObject* tfn = errtraceObj->tb_frame->f_code->co_filename;
+            PyObject* tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
+            QString e1 = QString (PyBytes_AsString(tfnStr));
+            if (e1 == "<string>") {
+                pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of the connection script");
+            } else {
+                pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of ") + e1;
+            }
+
+            // Now display information from the trace stack, using
+            // frameobject.h, which, incidently is not a guaranteed
+            // Python/C API, meaning it may change and this may break
+            // with a future version of Python. Ok for now on Python
+            // 3.
             while (errtraceObj->tb_next) {
                 errtraceObj = errtraceObj->tb_next;
+                pythonErrors += QString("\nError on line: ")
+                    + QString::number(errtraceObj->tb_lineno)
+                    + QString(" of ")
+                    + QString (PyBytes_AsString(PyUnicode_AsEncodedString(errtraceObj->tb_frame->f_code->co_filename, "utf-8", "Error ~")))
+                    + QString(", function ")
+                    + QString (PyBytes_AsString(PyUnicode_AsEncodedString(errtraceObj->tb_frame->f_code->co_name, "utf-8", "Error ~")));
             }
-            pythonErrors += QString("Error found on line:") + QString::number(errtraceObj->tb_lineno);
+
+            Py_XDECREF(tfn);
+            Py_XDECREF(tfnStr);
         }
+
+        Py_XDECREF(pyExcType);
+        Py_XDECREF(pyExcValue);
+        Py_XDECREF(pyExcTraceback);
+
+        Py_XDECREF(str_exc_type);
+        Py_XDECREF(pyStr);
+
+        Py_XDECREF(str_exc_value);
+        Py_XDECREF(pyExcValueStr);
+
         return;
     }
     DBG() << "Got output from function";
