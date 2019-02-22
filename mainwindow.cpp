@@ -90,7 +90,7 @@ MainWindow(QWidget *parent) :
 
 
     Py_SetProgramName(L"/home/seb/anaconda3/bin/python");
-    Py_SetPythonHome(L"/home/seb/anaconda3/bin:/home/seb/anaconda3/lib/python37.zip:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages");
+    Py_SetPythonHome(L"/home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda");
     Py_Initialize();
 
     qDebug() << "Python interpreter: " << (wchar_t*)Py_GetProgramName();
