@@ -2557,6 +2557,9 @@ struct outputUnPackaged
  */
 outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
 {
+    // Need array header for this: PyArrayObject* pa = (PyArrayObject*)0;
+    QTime qtimer;
+    qtimer.start();
     // create the structure to hold the unpacked output
     outputUnPackaged outUnPacked;
     if (PyList_Size(output) < 1) {
@@ -2592,7 +2595,6 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
             }
         } else {
             // Perhaps we got a list of lists, as returned from a nparray.tolist()?
-            DBG() << "Element " << i << " was not a tuple!";
             if (PyList_Check(element)) {
                 if (PyList_Size(element) > 1) {
                     outUnPacked.connections[i].src = PyLong_AsLong(PyList_GetItem(element,0));
@@ -2614,6 +2616,7 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
 
         }
     }
+    DBG() << "Extracted output in " << qtimer.elapsed() << " ms"; // 106 ms for 1.5 million connections total
     return outUnPacked;
 }
 
@@ -2671,6 +2674,8 @@ PyObject* createPyFunc(PyObject* pymod, QString text, QString &errs)
  */
 void pythonscript_connection::generate_connections()
 {
+    QTime qtimer;
+    qtimer.start();
     conns->clear();
 
     this->pythonErrors.clear();
@@ -2733,9 +2738,11 @@ void pythonscript_connection::generate_connections()
         return;
     }
 
+    DBG() << "Set up the python function in " << qtimer.restart() << " ms";
     // Call my function
     DBG() << "Calling the function";
     PyObject* output = PyObject_CallObject (pyFunc, argsPy);
+    DBG() << "Script call returned in " << qtimer.restart() << " ms";
     Py_XDECREF(argsPy);
     Py_XDECREF(srcPy);
     Py_XDECREF(dstPy);
@@ -2807,10 +2814,12 @@ void pythonscript_connection::generate_connections()
 
         return;
     }
-    DBG() << "Got output from function";
 
+    DBG() << "Checked exceptions in " << qtimer.restart() << " ms";
     // unpack the output into C++ forms
     outputUnPackaged unpacked = extractOutput (output, this->hasDelay, this->hasWeight);
+
+    DBG() << "Unpacked output in " << qtimer.restart() << " ms";
 
     // transfer the unpacked output to the local storage location for connections
     if (this->connection_target != NULL) {
@@ -2818,9 +2827,11 @@ void pythonscript_connection::generate_connections()
         DBG() << "pythonscript_connection::generate_connections: setting src/dst popn names in connection_target";
         this->connection_target->setSrcName (this->srcPop->name);
         this->connection_target->setDstName (this->dstPop->name);
-
+        QTime subtimer;
+        subtimer.start();
         // remove existing connections
         this->connection_target->clearData();
+        DBG() << "Cleared target data in " << subtimer.restart() << " ms";
 
         // if no connections are returned
         if (unpacked.connections.size() > 0) {
@@ -2834,9 +2845,10 @@ void pythonscript_connection::generate_connections()
             }
         }
 
+        // This loop can take a long time:
         for (int i = 0; i < unpacked.connections.size(); ++i) {
 
-            // transfer connection
+            // transfer connection. This is very one-by-oney
             this->connection_target->setData(i, 0, unpacked.connections[i].src);
             this->connection_target->setData(i, 1, unpacked.connections[i].dst);
             if (unpacked.connections[0].metric != NO_DELAY) {
@@ -2844,6 +2856,7 @@ void pythonscript_connection::generate_connections()
             }
             this->connection_target->setNumRows(i);
         }
+        DBG() << "Transferred connection data in " << subtimer.restart() << " ms";
 
         this->connection_target->setNumRows(unpacked.connections.size());
 
