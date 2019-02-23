@@ -84,21 +84,20 @@ MainWindow(QWidget *parent) :
     // Initialise Python. To run numba cuda code, it's going to be
     // necessary to set this up with a user-specifiable path to python
     // and/or modules.
-
+    //
     // The path determined from anaconda/ipython:
     // ['', '/home/seb/anaconda3/bin', '/home/seb/anaconda3/lib/python37.zip', '/home/seb/anaconda3/lib/python3.7', '/home/seb/anaconda3/lib/python3.7/lib-dynload', '/home/seb/anaconda3/lib/python3.7/site-packages', '/home/seb/anaconda3/lib/python3.7/site-packages/IPython/extensions', '/home/seb/.ipython']
-
-
     Py_SetProgramName(L"/home/seb/anaconda3/bin/python");
     Py_SetPythonHome(L"/home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda");
     Py_Initialize();
 
-    qDebug() << "Python interpreter: " << (wchar_t*)Py_GetProgramName();
-    qDebug() << "Py_GetPrefix(): " << (wchar_t*)Py_GetPrefix();
-    qDebug() << "Py_GetExecPrefix(): " << (wchar_t*)Py_GetExecPrefix();
-    qDebug() << "Py_GetPath(): " << (wchar_t*)Py_GetPath();
-    qDebug() << "Py_GetProgramFullPath(): " << (wchar_t*)Py_GetProgramFullPath();
-
+#ifdef DEBUG
+    DBG() << "Python interpreter: " << (wchar_t*)Py_GetProgramName();
+    DBG() << "Py_GetPrefix(): " << (wchar_t*)Py_GetPrefix();
+    DBG() << "Py_GetExecPrefix(): " << (wchar_t*)Py_GetExecPrefix();
+    DBG() << "Py_GetPath(): " << (wchar_t*)Py_GetPath();
+    DBG() << "Py_GetProgramFullPath(): " << (wchar_t*)Py_GetProgramFullPath();
+#endif
 
     QSettings settings; // probably get Python path from this and
                         // Py_SetProgramName therefrom. That will mean
@@ -134,8 +133,7 @@ MainWindow(QWidget *parent) :
     QString currFileName = settings.value("files/currentFileName", "").toString();
 
     if (currFileName.size() != 0) {
-        DBG() << "currFileName: " << currFileName;
-        qDebug() << "oops - a previous program crashed. Handle this? (could be multiple programs open - but that could be a problem too...)";
+        DBG() << "oops - a previous instance of SpineCreator seems to have crashed (currFileName: " << currFileName << ")";
     }
 
     // This really means "is *SpineML_2_BRAHMS* present?".
