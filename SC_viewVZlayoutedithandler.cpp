@@ -48,10 +48,10 @@ viewVZLayoutEditHandler::viewVZLayoutEditHandler(nl_rootdata * data, viewNLstruc
     QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
     panelLayout->addWidget(this->viewVZ->errors);
     panelLayout->addStretch();
-
 }
 
-void clearLayout(QLayout *layout, QString type) {
+void clearLayout(QLayout *layout, QString type)
+{
     QLayoutItem *item;
     int passedItems = 0;
     while((item = layout->itemAt(passedItems))) {
@@ -87,11 +87,13 @@ void clearLayout(QLayout *layout, QString type) {
     }
 }
 
-void viewVZLayoutEditHandler::selectAll() {
+void viewVZLayoutEditHandler::selectAll()
+{
     setAllSelectState(true);
 }
 
-void viewVZLayoutEditHandler::deselectAll() {
+void viewVZLayoutEditHandler::deselectAll()
+{
     setAllSelectState(false);
 }
 
@@ -99,16 +101,14 @@ void viewVZLayoutEditHandler::deselectAll() {
  * \brief viewVZLayoutEditHandler::saveTreeState
  * Save the expanded state of the QTreeWidget
  */
-void viewVZLayoutEditHandler::saveTreeState(void)
+void viewVZLayoutEditHandler::saveTreeState (void)
 {
     QStringList List;
 
-    // prepare list
-    // PS: getPersistentIndexList() function is a simple `return this->persistentIndexList()` from TreeModel model class
-    foreach (QModelIndex index, this->viewVZ->sysModel->getPersistentIndexList())
-    {
-        if (this->viewVZ->treeView->isExpanded(index))
-        {
+    // prepare list. Note: getPersistentIndexList() function is a simple
+    // `return this->persistentIndexList()` from TreeModel model class
+    foreach (QModelIndex index, this->viewVZ->sysModel->getPersistentIndexList()) {
+        if (this->viewVZ->treeView->isExpanded(index)) {
             List << index.data(Qt::DisplayRole).toString();
         }
     }
@@ -125,12 +125,10 @@ void viewVZLayoutEditHandler::restoreTreeState(void)
 {
     QStringList List = this->data->currProject->treeWidgetState;
 
-    foreach (QString item, List)
-    {
+    foreach (QString item, List) {
         // search `item` text in model
         QModelIndexList Items = this->viewVZ->sysModel->match(this->viewVZ->sysModel->index(0, 0), Qt::DisplayRole, QVariant::fromValue(item));
-        if (!Items.isEmpty())
-        {
+        if (!Items.isEmpty()) {
             foreach (QModelIndex index, Items) {
                 // first level in QTreeWidget
                 this->viewVZ->treeView->setExpanded(index, true);
@@ -150,44 +148,32 @@ void viewVZLayoutEditHandler::restoreTreeState(void)
     }
 }
 
-void viewVZLayoutEditHandler::setAllSelectState(bool selectState) {
-
+void viewVZLayoutEditHandler::setAllSelectState(bool selectState)
+{
     for (int i = 0; i < data->populations.size(); ++i) {
 
-        QSharedPointer <population> currPop = (QSharedPointer <population>) data->populations[i];
-
         // populations
+        QSharedPointer <population> currPop = (QSharedPointer <population>) data->populations[i];
         currPop->isVisualised = selectState;
 
         // population generic outputs:
-
         for (int output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
-
             QSharedPointer<genericInput> currOutput = data->populations[i]->neuronType->outputs[output];
-
             // add output if is not a projection input
             if (!currOutput->projInput) {
                 currOutput->isVisualised = selectState;
             }
-
         }
 
         // projections
         for (int j = 0; j < currPop->projections.size(); ++j) {
-
             QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[j];
-
             // synapses
             for (int k = 0; k < currProj->synapses.size(); ++k) {
-
                 QSharedPointer <synapse> currTarg = (QSharedPointer <synapse>) currProj->synapses[k];
-
                 currTarg->isVisualised = selectState;
-
             }
-
         }
-
     }
 
     // apply changes
@@ -195,11 +181,10 @@ void viewVZLayoutEditHandler::setAllSelectState(bool selectState) {
 
     // update treeview
     viewVZ->treeView->reset();
-
 }
 
-void viewVZLayoutEditHandler::initGlobal() {
-
+void viewVZLayoutEditHandler::initGlobal()
+{
     // the treeView:
     viewVZ->treeView = new QTreeView;
     viewVZ->treeView->setMaximumHeight(300);
@@ -334,12 +319,10 @@ void viewVZLayoutEditHandler::initGlobal() {
     viewVZ->toolbar->layout()->addWidget(ortho);
 
     ((QHBoxLayout *)viewVZ->toolbar->layout())->addStretch();
-
-
 }
 
-void viewVZLayoutEditHandler::initPopulation() {
-
+void viewVZLayoutEditHandler::initPopulation()
+{
     QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
 
     ////// SIZE
@@ -533,38 +516,20 @@ void viewVZLayoutEditHandler::initPopulation() {
     connect(this, SIGNAL(setSeed(int)), seed, SLOT(setValue(int)));
 
     extraBox->addStretch();
-
 }
 
-void viewVZLayoutEditHandler::initConnection() {
-
+void viewVZLayoutEditHandler::initConnection()
+{
     // draw up the panel for a connection
     QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
 
-    //QSettings settings;
-    //bool devMode = settings.value("dev_mode_on", "false").toBool();
-
-    connectionComboBox = this->addDropBox(panelLayout, "Connectivity", "will_be_overriden");
+    this->connectionComboBox = this->addDropBox(panelLayout, "Connectivity", "will_be_overriden");
     this->updateConnectionList();
-    /*connectionComboBox->addItem("All to All");
-    connectionComboBox->addItem("One to One");
-    connectionComboBox->addItem("Fixed Probability");
-    connectionComboBox->addItem("Explicit List");
-    connectionComboBox->addItem("Distance Based Probability");
-    connectionComboBox->addItem("Kernel");
-    // add python scripts
-    QSettings settings;
-    settings.beginGroup("pythonscripts");
-    QStringList scripts = settings.childKeys();
-    connectionComboBox->addItems(scripts);
-    settings.endGroup();
-    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));*/
 
     // connect for hide
-    connect(this, SIGNAL(hideAll()), connectionComboBox, SLOT(hide()));
+    connect(this, SIGNAL(hideAll()), this->connectionComboBox, SLOT(hide()));
     // connect for show
-    connect(this, SIGNAL(showConnection()), connectionComboBox, SLOT(show()));
-
+    connect(this, SIGNAL(showConnection()), this->connectionComboBox, SLOT(show()));
 
     // SIZE COMBOBOX FOR KERNEL
     kernelComboBox = new QComboBox;
@@ -582,26 +547,33 @@ void viewVZLayoutEditHandler::initConnection() {
     connect(this, SIGNAL(hideAll()), kernelComboBox, SLOT(hide()));
 }
 
-void viewVZLayoutEditHandler::updateConnectionList() {
+void viewVZLayoutEditHandler::updateConnectionList()
+{
+    disconnect(this->connectionComboBox,0,0,0);
+    this->connectionComboBox->clear();
+    this->connectionComboBox->addItem("All to All");
+    this->connectionComboBox->addItem("One to One");
+    this->connectionComboBox->addItem("Fixed Probability");
+    this->connectionComboBox->addItem("Explicit List");
 
-    disconnect(connectionComboBox,0,0,0);
-    connectionComboBox->clear();
-    connectionComboBox->addItem("All to All");
-    connectionComboBox->addItem("One to One");
-    connectionComboBox->addItem("Fixed Probability");
-    connectionComboBox->addItem("Explicit List");
-    //connectionComboBox->addItem("Python Script");
     // add python scripts
     QSettings settings;
     settings.beginGroup("pythonscripts");
     QStringList scripts = settings.childKeys();
-    connectionComboBox->addItems(scripts);
+    this->connectionComboBox->addItems(scripts);
     settings.endGroup();
-    connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
+
+    // When the connection box is changed,
+    // nl_rootdata::updateComponentType (see
+    // SC_network_layer_rootdata.cpp) is called. This changes the
+    // connection for a new one. If it's a Python connection, then the
+    // parameters are re-drawn in
+    // pythonscript_connection::drawLayout() (see NL_connection.cpp)
+    connect(this->connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
 }
 
-void viewVZLayoutEditHandler::updateLayoutList(nl_rootdata * data) {
-
+void viewVZLayoutEditHandler::updateLayoutList(nl_rootdata * data)
+{
     if (this->viewVZ->OpenGLWidget) {
         // upadte the layout list
         layoutComboBox->clear();
@@ -612,19 +584,20 @@ void viewVZLayoutEditHandler::updateLayoutList(nl_rootdata * data) {
 
             // safe way of updating the layout list index]
             if (viewVZ->currObject) {
-                if (viewVZ->currObject->type == populationObject)
-                    if ((qSharedPointerDynamicCast <population> (viewVZ->currObject))->layoutType->component == data->catalogLayout[i])
+                if (viewVZ->currObject->type == populationObject) {
+                    if ((qSharedPointerDynamicCast <population> (viewVZ->currObject))->layoutType->component == data->catalogLayout[i]) {
                         layoutComboBox->setCurrentIndex(i);
+                    }
+                }
             }
         }
     }
 
     connect(layoutComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
-
 }
 
-QComboBox* viewVZLayoutEditHandler::addDropBox(QVBoxLayout * layout, QString name, QString type) {
-
+QComboBox* viewVZLayoutEditHandler::addDropBox(QVBoxLayout * layout, QString name, QString type)
+{
     QHBoxLayout * box = new QHBoxLayout();
     layout->addLayout(box);
     box->addWidget(new QLabel("<b>" + name + ":</b>"));
@@ -649,41 +622,34 @@ QComboBox* viewVZLayoutEditHandler::addDropBox(QVBoxLayout * layout, QString nam
         connect(this, SIGNAL(showPopulation()), editButton, SLOT(show()));
     }
     return select;
-
 }
 
-QFrame * viewVZLayoutEditHandler::getDivider() {
-
+QFrame * viewVZLayoutEditHandler::getDivider()
+{
     QFrame * div1 = new QFrame();
     div1->setFrameShape(QFrame::HLine);
     connect(this, SIGNAL(deleteProperties()), div1, SLOT(deleteLater()));
     return div1;
-
 }
 
-void viewVZLayoutEditHandler::togglePlay() {
-
+void viewVZLayoutEditHandler::togglePlay()
+{
     if (playBack.isActive()) {
-
         playBack.stop();
         QPushButton * but = (QPushButton *) sender();
         QCommonStyle style;
         but->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
-
     } else {
-
         playBack.setInterval(playBackTimeStep);
         playBack.start();
         QPushButton * but = (QPushButton *) sender();
         QCommonStyle style;
         but->setIcon(style.standardIcon(QStyle::SP_MediaPause));
-
     }
-
 }
 
-void viewVZLayoutEditHandler::playBackTimeout() {
-
+void viewVZLayoutEditHandler::playBackTimeout()
+{
     if (timeSlider->value() < timeSlider->maximum()) {
         timeSlider->setValue(timeSlider->value()+1);
         viewVZ->OpenGLWidget->updateLogDataTime(timeSlider->value());
@@ -692,15 +658,15 @@ void viewVZLayoutEditHandler::playBackTimeout() {
         QCommonStyle style;
         playButton->setIcon(style.standardIcon(QStyle::SP_MediaPlay));
     }
-
 }
 
-void viewVZLayoutEditHandler::setPlayTimeStep(int tstep) {
+void viewVZLayoutEditHandler::setPlayTimeStep(int tstep)
+{
     this->playBackTimeStep = tstep;
 }
 
-void viewVZLayoutEditHandler::clearAll() {
-
+void viewVZLayoutEditHandler::clearAll()
+{
     if (!this->viewVZ->panel->layout()) {
         qDebug() << "wtf - search for #14634";
         return;
@@ -711,21 +677,19 @@ void viewVZLayoutEditHandler::clearAll() {
     clearLayout(this->viewVZ->panel->layout(), "body");
     clearLayout(this->viewVZ->panel->layout(), "select");
     clearLayout(this->viewVZ->panel->layout(), "par");
-
 }
 
-void viewVZLayoutEditHandler::redrawFromObject(QString name) {
-
-
+void viewVZLayoutEditHandler::redrawFromObject(QString name)
+{
     // incorrect input - unless we just want a refresh...
     if (name != "" && name != "comboboxOSXfix") {
-
         this->viewVZ->currObject = this->data->getObjectFromName(name);
     }
 
     if (this->viewVZ->currObject == (QSharedPointer<systemObject>)0) {
-        // oops, this shouldn't happen
-        //cerr << "OOPS - looked up a name for an object that wasn't there: " << name.toStdString() << "\n";
+        // This shouldn't happen
+        // cerr << "OOPS - looked up a name for an object that wasn't there: "
+        // << name.toStdString() << "\n";
         return;
     }
 
@@ -734,7 +698,9 @@ void viewVZLayoutEditHandler::redrawFromObject(QString name) {
         // don't clear layout
         redrawHeaders();
 #else
-        // clear layout (note this used to have a "mode" argument, but that's no longer used and hence this does the same as the Q_OS_MAC case above.
+        // clear layout (note this used to have a "mode" argument, but
+        // that's no longer used and hence this does the same as the
+        // Q_OS_MAC case above.
         redrawHeaders();
 #endif
     } else {
@@ -770,14 +736,8 @@ void viewVZLayoutEditHandler::redrawHeaders()
     }
 }
 
-
-void viewVZLayoutEditHandler::redrawProperties() {
-
-    /*if(!data->isValidPointer(this->viewVZ->currObject)) {
-        this->viewVZ->currObject = (QSharedPointer<systemObject>)0;
-        return;
-    } NOT NEEDED ANYMORE */
-
+void viewVZLayoutEditHandler::redrawProperties()
+{
     if (this->viewVZ->currObject->type == populationObject) {
 
         // draw up the panel for a population
@@ -787,7 +747,6 @@ void viewVZLayoutEditHandler::redrawProperties() {
         emit showPopulation();
 
         // configure widgets (disconnect where they have 'valueChanged' signals
-
         sizeSpin->disconnect(this->viewVZ->OpenGLWidget);
         xSpin->disconnect(this->viewVZ->OpenGLWidget);
         ySpin->disconnect(this->viewVZ->OpenGLWidget);
@@ -805,7 +764,6 @@ void viewVZLayoutEditHandler::redrawProperties() {
         emit setSeed(currLayout->seed);
 
         updateLayoutList(data);
-
     }
 
     if (this->viewVZ->currObject->type == inputObject) {
@@ -815,7 +773,7 @@ void viewVZLayoutEditHandler::redrawProperties() {
         // show widgets
         emit showConnection();
 
-        connectionComboBox->setProperty("type", "input");
+        this->connectionComboBox->setProperty("type", "input");
 
         if (input->source->type != populationObject || input->destination->type != populationObject) {
             qDebug() << "We are visualising an input not between two pops";
@@ -827,18 +785,17 @@ void viewVZLayoutEditHandler::redrawProperties() {
 
         // disable 1-2-1 for unequal population sizes
         if (src->numNeurons != dst->numNeurons) {
-            QModelIndex ind = connectionComboBox->model()->index(1,0);
-            connectionComboBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
+            QModelIndex ind = this->connectionComboBox->model()->index(1,0);
+            this->connectionComboBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
         } else {
-            QModelIndex ind = connectionComboBox->model()->index(1,0);
-            connectionComboBox->model()->setData(ind, QVariant(1), Qt::UserRole-1);
+            QModelIndex ind = this->connectionComboBox->model()->index(1,0);
+            this->connectionComboBox->model()->setData(ind, QVariant(1), Qt::UserRole-1);
         }
 
         // set index
-        connectionComboBox->disconnect(data);
-        connectionComboBox->setCurrentIndex(input->conn->getIndex());
-        connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
-
+        this->connectionComboBox->disconnect(data);
+        this->connectionComboBox->setCurrentIndex(input->conn->getIndex());
+        connect(this->connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
     }
 
     if (this->viewVZ->currObject->type == synapseObject) {
@@ -849,31 +806,29 @@ void viewVZLayoutEditHandler::redrawProperties() {
         // show widgets
         emit showConnection();
 
-        connectionComboBox->setProperty("type", "conn");
+        this->connectionComboBox->setProperty("type", "conn");
 
         QSharedPointer <population> src = qSharedPointerDynamicCast <population> (syn->proj->source);
         QSharedPointer <population> dst = qSharedPointerDynamicCast <population> (syn->proj->destination);
 
         // disable 1-2-1 for unequal population sizes
         if (src->numNeurons != dst->numNeurons) {
-            QModelIndex ind = connectionComboBox->model()->index(1,0);
-            connectionComboBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
+            QModelIndex ind = this->connectionComboBox->model()->index(1,0);
+            this->connectionComboBox->model()->setData(ind, QVariant(0), Qt::UserRole-1);
         } else {
-            QModelIndex ind = connectionComboBox->model()->index(1,0);
-            connectionComboBox->model()->setData(ind, QVariant(1), Qt::UserRole-1);
+            QModelIndex ind = this->connectionComboBox->model()->index(1,0);
+            this->connectionComboBox->model()->setData(ind, QVariant(1), Qt::UserRole-1);
         }
 
         // set index
-        connectionComboBox->disconnect(data);
-        connectionComboBox->setCurrentIndex(syn->connectionType->getIndex());
-        connect(connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
-
+        this->connectionComboBox->disconnect(data);
+        this->connectionComboBox->setCurrentIndex(syn->connectionType->getIndex());
+        connect(this->connectionComboBox, SIGNAL(activated(int)), data, SLOT(updateComponentType(int)));
     }
-
 }
 
-void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelection) {
-
+void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelection)
+{
     // look up the selected item
     QModelIndexList indices = top.indexes();
     TreeItem *item = static_cast<TreeItem*>(indices[0].internalPointer());
@@ -891,7 +846,6 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
         }
 
         // population generic outputs:
-
         for (int output = 0; output < data->populations[i]->neuronType->outputs.size(); ++output) {
 
             QSharedPointer<genericInput> currOutput = data->populations[i]->neuronType->outputs[output];
@@ -899,10 +853,10 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
             // add output if is not a projection input
             if (!currOutput->projInput) {
                 if("Output from " + currOutput->source->getName() + " to " + currOutput->destination->getName() + " port " + currOutput->dstPort + " " + QString::number(output) == item->name) {
-                    viewVZ->currObject = currOutput; found = true;
+                    viewVZ->currObject = currOutput;
+                    found = true;
                 }
             }
-
         }
 
         // projections
@@ -910,27 +864,29 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
 
             QSharedPointer <projection> currProj = (QSharedPointer <projection>) currPop->projections[j];
 
-            if (currProj->getName() == item->name)
-                viewVZ->currObject = currProj; found = true;
+            if (currProj->getName() == item->name) {
+                viewVZ->currObject = currProj;
+                // 20190301: Just moved this found=true; inside the if
+                // clause, think it was an error that it was outside
+                // before I added the if clause scope identifiers
+                // (Seb)
+                found = true;
+            }
 
             // synapses
             for (int k = 0; k < currProj->synapses.size(); ++k) {
-
                 QSharedPointer <synapse> currTarg = (QSharedPointer <synapse>) currProj->synapses[k];
-
                 if (currProj->getName() + ": Synapse " + QString::number(k) == item->name) {
-                    viewVZ->currObject = currTarg; found = true;
+                    viewVZ->currObject = currTarg;
+                    found = true;
                 }
-
             }
-
         }
-
     }
 
     // sanity
     if (!found) {
-        qDebug() << "Tried to select a Visualiser object in NL and failed: " << item->name;
+        DBG() << "Tried to select a Visualiser object in NL and failed: " << item->name;
     }
 
     // set the selection in data to our new selection
@@ -938,11 +894,10 @@ void viewVZLayoutEditHandler::selectionChanged(QItemSelection top, QItemSelectio
     data->selList.push_back(viewVZ->currObject);
 
     this->redrawHeaders();
-
 }
 
-void viewVZLayoutEditHandler::redrawLayoutEdit() {
-
+void viewVZLayoutEditHandler::redrawLayoutEdit()
+{
     // use deleteLater
     emit hideAll();
     emit hideTree();
@@ -957,12 +912,14 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     this->viewVZ->editLayout = QSharedPointer<NineMLLayout> (new NineMLLayout(pop->layoutType->component));
 
     // check if 'none'
-    if (viewVZ->editLayout->name == "none")
+    if (viewVZ->editLayout->name == "none") {
         viewVZ->editLayout->name = "New Layout";
+    }
 
     // we must always have a regime
-    if (this->viewVZ->editLayout->RegimeList.size() == 0)
+    if (this->viewVZ->editLayout->RegimeList.size() == 0) {
         this->viewVZ->editLayout->RegimeList.push_back(new RegimeSpace());
+    }
 
     // check we have x, y, z and numNeurons
     bool isX = false;
@@ -970,24 +927,40 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     bool isZ = false;
     bool isNumNeurons = false;
     for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
-        if (this->viewVZ->editLayout->StateVariableList[i]->name == "x")
+        if (this->viewVZ->editLayout->StateVariableList[i]->name == "x") {
             isX = true;
-        if (this->viewVZ->editLayout->StateVariableList[i]->name == "y")
+        }
+        if (this->viewVZ->editLayout->StateVariableList[i]->name == "y") {
             isY = true;
-        if (this->viewVZ->editLayout->StateVariableList[i]->name == "z")
+        }
+        if (this->viewVZ->editLayout->StateVariableList[i]->name == "z") {
             isZ = true;
+        }
     }
 
     for (int i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
-        if (this->viewVZ->editLayout->ParameterList[i]->name == "numNeurons")
+        if (this->viewVZ->editLayout->ParameterList[i]->name == "numNeurons") {
             isNumNeurons = true;
+        }
     }
 
     // add x, y, z and numNeurons if they are not present
-    if (!isX) {viewVZ->editLayout->StateVariableList.push_back(new StateVariable); viewVZ->editLayout->StateVariableList.back()->name = "x";}
-    if (!isY) {viewVZ->editLayout->StateVariableList.push_back(new StateVariable); viewVZ->editLayout->StateVariableList.back()->name = "y";}
-    if (!isZ) {viewVZ->editLayout->StateVariableList.push_back(new StateVariable); viewVZ->editLayout->StateVariableList.back()->name = "z";}
-    if (!isNumNeurons) {viewVZ->editLayout->ParameterList.push_back(new Parameter); viewVZ->editLayout->ParameterList.back()->name = "numNeurons";}
+    if (!isX) {
+        viewVZ->editLayout->StateVariableList.push_back(new StateVariable);
+        viewVZ->editLayout->StateVariableList.back()->name = "x";
+    }
+    if (!isY) {
+        viewVZ->editLayout->StateVariableList.push_back(new StateVariable);
+        viewVZ->editLayout->StateVariableList.back()->name = "y";
+    }
+    if (!isZ) {
+        viewVZ->editLayout->StateVariableList.push_back(new StateVariable);
+        viewVZ->editLayout->StateVariableList.back()->name = "z";
+    }
+    if (!isNumNeurons) {
+        viewVZ->editLayout->ParameterList.push_back(new Parameter);
+        viewVZ->editLayout->ParameterList.back()->name = "numNeurons";
+    }
 
     // validate it:
     QStringList err;
@@ -1000,14 +973,12 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     }
 
     // draw in the new objects
-
     QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
 
     QVBoxLayout * editLayout = new QVBoxLayout;
     editLayout->setProperty("wtype", "body");
 
     editLayout->setContentsMargins(10,0,0,0);
-    //editLayout->setSpacing(20);
 
     // add parameters and statevariables:
 
@@ -1016,22 +987,21 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     varLayout->setContentsMargins(0,0,0,0);
     varLayout->setSpacing(0);
     editLayout->addLayout(varLayout);
-
     varLayout->addWidget(new QLabel("<b>Parameters:</b> numNeurons,"));
 
     QLineEdit * parameters = new QLineEdit;
-
     QString parsString;
-
     // add comma separated parameters to parsString
     for (int i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
-        if (this->viewVZ->editLayout->ParameterList[i]->name != "numNeurons")
+        if (this->viewVZ->editLayout->ParameterList[i]->name != "numNeurons") {
             parsString += this->viewVZ->editLayout->ParameterList[i]->name + ",";
+        }
     }
 
     // take off trailing comma
-    if (parsString.size() > 0)
+    if (parsString.size() > 0) {
         parsString.chop(1);
+    }
 
     parameters->setText(parsString);
 
@@ -1054,13 +1024,15 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
 
     // add comma separated parameters to parsString
     for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
-        if (this->viewVZ->editLayout->StateVariableList[i]->name != "x" && this->viewVZ->editLayout->StateVariableList[i]->name != "y" && this->viewVZ->editLayout->StateVariableList[i]->name != "z")
+        if (this->viewVZ->editLayout->StateVariableList[i]->name != "x" && this->viewVZ->editLayout->StateVariableList[i]->name != "y" && this->viewVZ->editLayout->StateVariableList[i]->name != "z") {
             stateVarsString += this->viewVZ->editLayout->StateVariableList[i]->name + ",";
+        }
     }
 
     // take off trailing comma
-    if (stateVarsString.size() > 0)
+    if (stateVarsString.size() > 0) {
         stateVarsString.chop(1);
+    }
 
     stateVars->setText(stateVarsString);
 
@@ -1073,27 +1045,19 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     aliasLayout->setContentsMargins(0,0,0,0);
     aliasLayout->setSpacing(0);
     editLayout->addLayout(aliasLayout);
-
     aliasLayout->addWidget(new QLabel("<b>Aliases:</b>"));
-
     // make sure all is aligned
     aliasLayout->addStretch();
-
     QPushButton * aliases = new QPushButton("Edit");
     aliases->setMaximumWidth(70);
-
     aliasLayout->addWidget(aliases);
 
     // join up
     QObject::connect(aliases, SIGNAL(clicked()), this, SLOT(editAliases()));
 
-
     // ADD REGIMES
-
     for (int i = 0; i < this->viewVZ->editLayout->RegimeList.size(); ++i) {
-
         editLayout->addLayout(this->drawRegime(this->viewVZ->editLayout->RegimeList[i]));
-
     }
 
     panelLayout->insertLayout(0,editLayout);
@@ -1101,42 +1065,37 @@ void viewVZLayoutEditHandler::redrawLayoutEdit() {
     // add a title:
     QHBoxLayout * topBar = new QHBoxLayout;
     topBar->setProperty("wtype", "body");
-
     QLabel * title = new QLabel("<b>Editing: " + this->viewVZ->editLayout->name + "</b>");
     topBar->addWidget(title);
 
     QPushButton * preview = new QPushButton("Preview");
     preview->setMaximumWidth(70);
-    // connect up:
     QObject::connect(preview, SIGNAL(clicked()), this, SLOT(previewEditedLayout()));
     topBar->addWidget(preview);
 
     QPushButton * discard = new QPushButton("Discard");
     discard->setMaximumWidth(70);
-    // connect up:
     QObject::connect(discard, SIGNAL(clicked()), this, SLOT(discardEditedLayout()));
     topBar->addWidget(discard);
 
     QPushButton * save = new QPushButton("Save");
     save->setMaximumWidth(70);
-    // connect up:
     QObject::connect(save, SIGNAL(clicked()), this, SLOT(saveEditedLayout()));
     topBar->addWidget(save);
 
     panelLayout->insertLayout(0,topBar);
 
     this->viewVZ->errors->show();
-
-
 }
 
-void viewVZLayoutEditHandler::drawDeletables() {
-
-    if (this->viewVZ->currObject == NULL)
+void viewVZLayoutEditHandler::drawDeletables()
+{
+    if (this->viewVZ->currObject == NULL) {
         return;
+    }
 
     // get a handle to the layout for drawing
-   QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
+    QVBoxLayout * panelLayout = (QVBoxLayout *) this->viewVZ->panel->layout();
 
     if (this->viewVZ->currObject->type == populationObject) {
 
@@ -1181,16 +1140,24 @@ void viewVZLayoutEditHandler::drawDeletables() {
                     ParameterInstance * currPar;
                     if (j == 0) {
                         name = currLayout->ParameterList[l]->name;
-                        if (name == "numNeurons" && currLayout->type == NineMLLayoutType) continue;
+                        if (name == "numNeurons" && currLayout->type == NineMLLayoutType) {
+                            continue;
+                        }
                         value = currLayout->ParameterList[l]->value[0];
                         currPar = (ParameterInstance *) currLayout->ParameterList[l];
                     }
                     if (j == 1) {
                         name = currLayout->StateVariableList[l]->name;
                         value = currLayout->StateVariableList[l]->value[0];
-                        if (name == "x" && currLayout->type == NineMLLayoutType) continue;
-                        if (name == "y" && currLayout->type == NineMLLayoutType) continue;
-                        if (name == "z" && currLayout->type == NineMLLayoutType) continue;
+                        if (name == "x" && currLayout->type == NineMLLayoutType) {
+                            continue;
+                        }
+                        if (name == "y" && currLayout->type == NineMLLayoutType) {
+                            continue;
+                        }
+                        if (name == "z" && currLayout->type == NineMLLayoutType) {
+                            continue;
+                        }
                         currPar = (ParameterInstance *) currLayout->StateVariableList[l];
                     }
 
@@ -1202,13 +1169,12 @@ void viewVZLayoutEditHandler::drawDeletables() {
                     parSpin->setSuffix(" ");
                     parSpin->setFocusPolicy(Qt::StrongFocus);
                     parSpin->installEventFilter(new FilterOutUndoRedoEvents);
-
-
-
-                    if (j == 0)
+                    if (j == 0) {
                         parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
-                    if (j == 1)
+                    }
+                    if (j == 1) {
                         parSpin->setProperty("ptr", qVariantFromValue((void *) currPar));
+                    }
 
                     varLayout->addRow(name, parSpin);
                     connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1, QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
@@ -1226,11 +1192,10 @@ void viewVZLayoutEditHandler::drawDeletables() {
         }
     }
 
-
-    if (this->viewVZ->currObject->type == synapseObject || this->viewVZ->currObject->type == inputObject) {
+    if (this->viewVZ->currObject->type == synapseObject
+        || this->viewVZ->currObject->type == inputObject) {
 
         // for now we only handle discrete tables, so leave this blank
-
         // HACK - quick table:
         connection * currConn;
         if (this->viewVZ->currObject->type == synapseObject) {
@@ -1244,7 +1209,7 @@ void viewVZLayoutEditHandler::drawDeletables() {
         // change display options based on type of connection
         if (currConn->type != CSV || ((csv_connection *) currConn)->generator != NULL) {
 
-            panelLayout->insertWidget(panelLayout->count() - 2, getDivider(),2);
+            panelLayout->insertWidget(panelLayout->count()-2, getDivider(), 2);
 
             // select src & dst to show
             QHBoxLayout * hlay = new QHBoxLayout;
@@ -1262,7 +1227,6 @@ void viewVZLayoutEditHandler::drawDeletables() {
             connect(index, SIGNAL(valueChanged(int)), viewVZ->OpenGLWidget, SLOT (selectedNrnChanged(int)));
             connect(this, SIGNAL(deleteProperties()), index, SLOT(deleteLater()));
             hlay->addWidget(index);
-
             hlay->addWidget(new QLabel(" from population "));
             connect(this, SIGNAL(deleteProperties()), hlay->itemAt(2)->widget(), SLOT(deleteLater()));
 
@@ -1277,39 +1241,36 @@ void viewVZLayoutEditHandler::drawDeletables() {
             connect(from, SIGNAL(currentIndexChanged(int)), viewVZ->OpenGLWidget, SLOT (selectedNrnChanged(int)));
             connect(this, SIGNAL(deleteProperties()), from, SLOT(deleteLater()));
             hlay->addWidget(from);
-
             panelLayout->insertLayout(panelLayout->count() - 2, hlay,2);
-
             panelLayout->insertWidget(panelLayout->count() - 2, getDivider(),2);
-
         }
 
-        if (currConn->type == FixedProb || currConn->type == AlltoAll || currConn->type == OnetoOne || currConn->type == CSV) {
+        if (currConn->type == FixedProb || currConn->type == AlltoAll
+            || currConn->type == OnetoOne || currConn->type == CSV) {
             // draw up probability changer
             DBG() << "draw up probability changer";
             QLayout * lay = currConn->drawLayout(this->data, this, NULL);
             panelLayout->insertLayout(panelLayout->count() - 2, lay, 2);
         }
 
+#if 0
         if (currConn->type == Python) {
             // add the text edit to the main layout
             //panelLayout->insertWidget(panelLayout->count() -2, scriptEdit, 2);
         }
-
+#endif
         this->viewVZ->OpenGLWidget->setConnType(currConn->type);
     }
-
 }
 
-void viewVZLayoutEditHandler::disableButton() {
-
+void viewVZLayoutEditHandler::disableButton()
+{
     QPushButton * button = (QPushButton *) sender()->property("buttonToDisable").value<void *>();
     button->setEnabled(false);
-
 }
 
-QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
-
+QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime)
+{
     QHBoxLayout * regimeSurround = new QHBoxLayout();
     regimeSurround->setContentsMargins(0,0,0,0);
 
@@ -1337,7 +1298,6 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
 
     QHBoxLayout * regTitle = new QHBoxLayout;
     regimeLay->addLayout(regTitle);
-
     regTitle->addWidget(new QLabel("<b>Transforms</b>"));
 
     // add a bar under the title:
@@ -1349,7 +1309,9 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
     // draw transforms up in order
     QVector < int > order;
     for (int j = 0; j < srcRegime->TransformList.size(); ++j) {
-        if (srcRegime->TransformList[j]->order > (int) order.size()) order.resize(srcRegime->TransformList[j]->order);
+        if (srcRegime->TransformList[j]->order > (int) order.size()) {
+            order.resize(srcRegime->TransformList[j]->order);
+        }
         order[srcRegime->TransformList[j]->order-1] = j;
     }
 
@@ -1359,11 +1321,10 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
     regimeLay->addLayout(transformsLayout);
 
     for (int j = 0; j < order.size(); ++j) {
-
         // send a pointer to the container as a QVariant
         QVariant transContainer = QVariant(qVariantFromValue((void *) srcRegime));
-        transformsLayout->addLayout(this->drawTransform(transContainer, srcRegime->TransformList[order[j]]));
-
+        transformsLayout->addLayout(this->drawTransform(transContainer,
+                                                        srcRegime->TransformList[order[j]]));
     }
 
     // add new
@@ -1388,23 +1349,18 @@ QHBoxLayout * viewVZLayoutEditHandler::drawRegime(RegimeSpace * srcRegime) {
     regimeLay->addWidget(bar3);
 
     // add the OnConditions
-
     QVBoxLayout * oncondsLayout = new QVBoxLayout();
     oncondsLayout->setContentsMargins(0,10,0,0);
     oncondsLayout->setSpacing(10);
     regimeLay->addLayout(oncondsLayout);
 
-
     return regimeSurround;
-
 }
 
-void viewVZLayoutEditHandler::changeTypeOfTransition(QString type) {
-
+void viewVZLayoutEditHandler::changeTypeOfTransition(QString type)
+{
     QComboBox * src = (QComboBox *) sender();
-
     Transform * trans = (Transform *) src->property("ptr").value<void *>();
-
     QSharedPointer<NineMLLayout> lay = this->viewVZ->editLayout;
 
     // find pointer to new variable
@@ -1416,30 +1372,23 @@ void viewVZLayoutEditHandler::changeTypeOfTransition(QString type) {
             found = true;
         }
     }
-    if (!found) return; // OOPS HERE - SORT OUT
+    if (!found) {
+        return; // OOPS HERE - SORT OUT
+    }
 
     trans->variableName = type;
     trans->variable = var;
-
 }
 
-void viewVZLayoutEditHandler::changeTransitionMaths() {
-
-
+void viewVZLayoutEditHandler::changeTransitionMaths()
+{
     QLineEdit * src = (QLineEdit *) sender();
-
     Transform * trans = (Transform *) src->property("ptr").value<void *>();
-
     QSharedPointer<NineMLLayout> lay = this->viewVZ->editLayout;
-
     QString maths = src->text();
-
     trans->maths->equation = maths;
-
     QStringList errs;
-
     trans->maths->validateMathInLine(lay.data(), &errs);
-
     viewVZeditDisplayErrors(errs);
 
     if (errs.size() > 0) {
@@ -1451,29 +1400,25 @@ void viewVZLayoutEditHandler::changeTransitionMaths() {
         p.setColor( QPalette::Normal, QPalette::Base, QColor(255, 255, 255) );
         src->setPalette(p);
     }
-
-
 }
 
-QHBoxLayout * viewVZLayoutEditHandler::drawTransform(QVariant transContainer, Transform * srcTrans) {
-
+QHBoxLayout * viewVZLayoutEditHandler::drawTransform(QVariant transContainer, Transform * srcTrans)
+{
     QHBoxLayout * transLay = new QHBoxLayout();
     transLay->setContentsMargins(0,0,0,0);
     transLay->setSpacing(1);
 
     // add axis list
     QComboBox * trans = new QComboBox;
-
     trans->setProperty("ptr", qVariantFromValue((void *) srcTrans));
     trans->setProperty("typeCBox", "stateVar");
 
     // load in the options, and set the current one
     for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
-
         trans->addItem(this->viewVZ->editLayout->StateVariableList[i]->name);
-        if (this->viewVZ->editLayout->StateVariableList[i]->name == srcTrans->variable->name)
+        if (this->viewVZ->editLayout->StateVariableList[i]->name == srcTrans->variable->name) {
             trans->setCurrentIndex(i);
-
+        }
     }
 
     trans->setMaximumWidth(70);
@@ -1540,17 +1485,14 @@ QHBoxLayout * viewVZLayoutEditHandler::drawTransform(QVariant transContainer, Tr
     transLay->addWidget(del);
 
     return transLay;
-
 }
 
 
 
-void viewVZLayoutEditHandler::transformOrderDown() {
-
+void viewVZLayoutEditHandler::transformOrderDown()
+{
     QComboBox * src = (QComboBox *) sender();
-
     Transform * trans = (Transform *) src->property("ptr").value<void *>();
-
     QHBoxLayout * parentLayout = (QHBoxLayout *) src->property("parentLayout").value<void *>();
     QVBoxLayout * regimeLayout = (QVBoxLayout *) parentLayout->parent();
 
@@ -1559,7 +1501,6 @@ void viewVZLayoutEditHandler::transformOrderDown() {
         RegimeSpace * regime = (RegimeSpace *) src->property("regptr").value<void *>();
 
         if (trans->order != 1) {
-
             // move the layout:
             regimeLayout->takeAt(trans->order-1);
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
@@ -1571,7 +1512,6 @@ void viewVZLayoutEditHandler::transformOrderDown() {
                     regime->TransformList[i]->order = trans->order;
             }
             --(trans->order);
-
         }
     }
 
@@ -1580,30 +1520,25 @@ void viewVZLayoutEditHandler::transformOrderDown() {
         OnConditionSpace * oncond = (OnConditionSpace *) src->property("regptr").value<void *>();
 
         if (trans->order != 1) {
-
             // move the layout:
-            /*QLayoutItem * temp;
-            temp = */regimeLayout->takeAt(trans->order-1);
+            regimeLayout->takeAt(trans->order-1);
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
             regimeLayout->insertLayout(trans->order-2, parentLayout);
 
             // change the order:
-            for (int i = 0; i < oncond->TransformList.size(); ++i){
-
-                if (oncond->TransformList[i]->order == trans->order-1)
+            for (int i = 0; i < oncond->TransformList.size(); ++i) {
+                if (oncond->TransformList[i]->order == trans->order-1) {
                     oncond->TransformList[i]->order = trans->order;
+                }
             }
             --(trans->order);
-
         }
     }
-
 }
 
-void viewVZLayoutEditHandler::transformOrderUp() {
-
+void viewVZLayoutEditHandler::transformOrderUp()
+{
     QComboBox * src = (QComboBox *) sender();
-
     Transform * trans = (Transform *) src->property("ptr").value<void *>();
     QHBoxLayout * parentLayout = (QHBoxLayout *) src->property("parentLayout").value<void *>();
     QVBoxLayout * regimeLayout = (QVBoxLayout *) parentLayout->parent();
@@ -1613,20 +1548,16 @@ void viewVZLayoutEditHandler::transformOrderUp() {
         RegimeSpace * regime = (RegimeSpace *) src->property("regptr").value<void *>();
 
         if (trans->order != (int) regime->TransformList.size()) {
-
             // move the layout:
-            /*QLayoutItem * temp;
-            temp = */regimeLayout->takeAt(trans->order-1);
+            regimeLayout->takeAt(trans->order-1);
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
             regimeLayout->insertLayout(trans->order, parentLayout);
-
             // change the order:
             for (int i = 0; i < regime->TransformList.size(); ++i){
                 if (regime->TransformList[i]->order == trans->order+1)
                     regime->TransformList[i]->order = trans->order;
             }
             ++trans->order;
-
         }
     }
 
@@ -1635,29 +1566,23 @@ void viewVZLayoutEditHandler::transformOrderUp() {
         OnConditionSpace * oncond = (OnConditionSpace *) src->property("regptr").value<void *>();
 
         if (trans->order != (int) oncond->TransformList.size()) {
-
             // move the layout:
-            /*QLayoutItem * temp;
-            temp = */regimeLayout->takeAt(trans->order-1);
+            regimeLayout->takeAt(trans->order-1);
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
             regimeLayout->insertLayout(trans->order, parentLayout);
-
             // change the order:
             for (int i = 0; i < oncond->TransformList.size(); ++i){
                 if (oncond->TransformList[i]->order == trans->order+1)
                     oncond->TransformList[i]->order = trans->order;
             }
             ++trans->order;
-
         }
     }
-
 }
 
-void viewVZLayoutEditHandler::deleteTransform() {
-
+void viewVZLayoutEditHandler::deleteTransform()
+{
     QComboBox * src = (QComboBox *) sender();
-
     Transform * trans = (Transform *) src->property("ptr").value<void *>();
     QHBoxLayout * parentLayout = (QHBoxLayout *) src->property("parentLayout").value<void *>();
     QVBoxLayout * regimeLayout = (QVBoxLayout *) parentLayout->parent();
@@ -1671,16 +1596,17 @@ void viewVZLayoutEditHandler::deleteTransform() {
 
         // apply to regime
         for (int i = 0; i < regime->TransformList.size(); ++i) {
-            if (regime->TransformList[i]->order == -100)
+            if (regime->TransformList[i]->order == -100) {
                 regime->TransformList.erase(regime->TransformList.begin()+i, regime->TransformList.begin()+i+1);
+            }
         }
 
         // redo order
         for (int i = 0; i < regime->TransformList.size(); ++i) {
-            if (regime->TransformList[i]->order > removedOrder)
+            if (regime->TransformList[i]->order > removedOrder) {
                 --(regime->TransformList[i]->order);
+            }
         }
-
     }
 
     // remove the transform itself:
@@ -1689,25 +1615,24 @@ void viewVZLayoutEditHandler::deleteTransform() {
     // now remove the widgets and source layout
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
-        if (item->widget())
+        if (item->widget()) {
             item->widget()->deleteLater();
-        if (item->layout())
+        }
+        if (item->layout()) {
             item->layout()->deleteLater();
+        }
     }
     parentLayout->deleteLater();
-
 }
 
-void viewVZLayoutEditHandler::addTransform() {
-
+void viewVZLayoutEditHandler::addTransform()
+{
     QPushButton * src = (QPushButton *) sender();
-
     QVBoxLayout * parentLayout = (QVBoxLayout *) src->property("parentLayout").value<void *>();
 
     if (parentLayout->property("container") == "regime") {
 
         RegimeSpace * regime = (RegimeSpace *) src->property("ptr").value<void *>();
-
         QSharedPointer<NineMLLayout> lay = this->viewVZ->editLayout;
 
         // add the transform to the transform list for the regime:
@@ -1727,27 +1652,26 @@ void viewVZLayoutEditHandler::addTransform() {
         // send a pointer to the container as a QVariant
         QVariant transContainer = qVariantFromValue((void *) regime);
         parentLayout->insertLayout(regime->TransformList.size()-1, this->drawTransform(transContainer, regime->TransformList.back()));
-
     }
-
 }
 
-void recursiveDeleteLater(QLayout * parentLayout) {
-
+void recursiveDeleteLater(QLayout * parentLayout)
+{
     QLayoutItem * item;
     while ((item = parentLayout->takeAt(0))) {
-        if (item->widget())
+        if (item->widget()) {
             item->widget()->deleteLater();
-        if (item->layout())
+        }
+        if (item->layout()) {
             recursiveDeleteLater(item->layout());
+        }
         delete item;
     }
     parentLayout->deleteLater();
-
 }
 
-void viewVZLayoutEditHandler::updateStateVariableRefs(QLayout * lay) {
-
+void viewVZLayoutEditHandler::updateStateVariableRefs(QLayout * lay)
+{
     QLayoutItem * item;
 
     for (int i = 0; i < (int) lay->count(); ++i) {
@@ -1776,22 +1700,19 @@ void viewVZLayoutEditHandler::updateStateVariableRefs(QLayout * lay) {
                     for (int j = 0; j < this->viewVZ->editLayout->StateVariableList.size(); ++j) {
 
                         tempCBox->addItem(this->viewVZ->editLayout->StateVariableList[j]->name);
-                        if (this->viewVZ->editLayout->StateVariableList[j]->name == srcTr->variable->name)
+                        if (this->viewVZ->editLayout->StateVariableList[j]->name == srcTr->variable->name) {
                             tempCBox->setCurrentIndex(j);
-
+                        }
                     }
                 }
             }
         }
-
     }
-
 }
 
-void viewVZLayoutEditHandler::updateParameters() {
-
+void viewVZLayoutEditHandler::updateParameters()
+{
     QLineEdit * src = (QLineEdit *) sender();
-
     QString text = src->text();
 
     // clear whitespace
@@ -1802,9 +1723,10 @@ void viewVZLayoutEditHandler::updateParameters() {
 
     // remove empty tokens:
     for (int i=0; i < (int) pars.size(); ++i) {
-        if (pars[i].size() == 0){
+        if (pars[i].size() == 0) {
             pars.removeAt(i);
-            --i;}
+            --i;
+        }
     }
 
     pars.push_back("numNeurons");
@@ -1814,12 +1736,9 @@ void viewVZLayoutEditHandler::updateParameters() {
     pars.removeDuplicates();
 
     QStringList errs;
-    if (num != pars.count())
-    {
-
+    if (num != pars.count()) {
         errs.push_back("Duplicate parameters found, removing...");
         this->viewVZeditDisplayErrors(errs);
-
     }
 
     if (errs.size() > 0) {
@@ -1836,7 +1755,6 @@ void viewVZLayoutEditHandler::updateParameters() {
     for (int i = 0; i < this->viewVZ->editLayout->ParameterList.size(); ++i) {
 
         bool found = false;
-
         for (int j = 0; j < (int) pars.size(); ++j) {
             if (pars[j] == this->viewVZ->editLayout->ParameterList[i]->name) {
                 found = true;
@@ -1849,7 +1767,6 @@ void viewVZLayoutEditHandler::updateParameters() {
             this->viewVZ->editLayout->ParameterList.erase(this->viewVZ->editLayout->ParameterList.begin()+i, this->viewVZ->editLayout->ParameterList.begin()+i+1);
             --i;
         }
-
     }
 
     // now add left over pars
@@ -1857,13 +1774,11 @@ void viewVZLayoutEditHandler::updateParameters() {
         this->viewVZ->editLayout->ParameterList.push_back(new Parameter);
         this->viewVZ->editLayout->ParameterList.back()->name = pars[j];
     }
-
 }
 
-void viewVZLayoutEditHandler::updateStateVariables() {
-
+void viewVZLayoutEditHandler::updateStateVariables()
+{
     QLineEdit * src = (QLineEdit *) sender();
-
     QString text = src->text();
 
     // clear whitespace
@@ -1874,9 +1789,10 @@ void viewVZLayoutEditHandler::updateStateVariables() {
 
     // remove empty tokens:
     for (int i=0; i < (int) pars.size(); ++i) {
-        if (pars[i].size() == 0){
+        if (pars[i].size() == 0) {
             pars.removeAt(i);
-            --i;}
+            --i;
+        }
     }
 
     pars.push_back("x");
@@ -1888,8 +1804,7 @@ void viewVZLayoutEditHandler::updateStateVariables() {
     pars.removeDuplicates();
 
     QStringList errs;
-    if (num != pars.count())
-    {
+    if (num != pars.count()) {
         errs.push_back("Duplicate parameters found, removing...");
         this->viewVZeditDisplayErrors(errs);
     }
@@ -1908,7 +1823,6 @@ void viewVZLayoutEditHandler::updateStateVariables() {
     for (int i = 0; i < this->viewVZ->editLayout->StateVariableList.size(); ++i) {
 
         bool found = false;
-
         for (int j = 0; j < (int) pars.size(); ++j) {
             if (pars[j] == this->viewVZ->editLayout->StateVariableList[i]->name) {
                 found = true;
@@ -1921,7 +1835,6 @@ void viewVZLayoutEditHandler::updateStateVariables() {
             this->viewVZ->editLayout->StateVariableList.erase(this->viewVZ->editLayout->StateVariableList.begin()+i, this->viewVZ->editLayout->StateVariableList.begin()+i+1);
             --i;
         }
-
     }
 
     // now add left over pars
@@ -1932,18 +1845,16 @@ void viewVZLayoutEditHandler::updateStateVariables() {
 
     // and redo the state vars
     updateStateVariableRefs(this->viewVZ->panel->layout());
-
 }
 
-void viewVZLayoutEditHandler::editAliases() {
-
+void viewVZLayoutEditHandler::editAliases()
+{
     LayoutAliasEditDialog editor(this->viewVZ->editLayout);
     editor.exec();
-
 }
 
-void viewVZLayoutEditHandler::discardEditedLayout() {
-
+void viewVZLayoutEditHandler::discardEditedLayout()
+{
     // remove the edited version from memory
     this->viewVZ->editLayout.clear();
 
@@ -1960,11 +1871,10 @@ void viewVZLayoutEditHandler::discardEditedLayout() {
 
     // remove error box
     this->viewVZ->errors->hide();
-
 }
 
-void viewVZLayoutEditHandler::saveEditedLayout() {
-
+void viewVZLayoutEditHandler::saveEditedLayout()
+{
     // dialog for new name:
     bool ok;
     QString text = QInputDialog::getText((QWidget *)this->parent(), tr("Enter new layout name"),
@@ -1990,7 +1900,6 @@ void viewVZLayoutEditHandler::saveEditedLayout() {
             // save new
             data->catalogLayout.push_back(this->viewVZ->editLayout);
         }
-
     }
 
     // clear existing elements:
@@ -2006,11 +1915,10 @@ void viewVZLayoutEditHandler::saveEditedLayout() {
 
     // remove error box
     this->viewVZ->errors->hide();
-
 }
 
-void viewVZLayoutEditHandler::previewEditedLayout() {
-
+void viewVZLayoutEditHandler::previewEditedLayout()
+{
     // validate it:
     QStringList err;
     err = this->viewVZ->editLayout->validateComponent();
@@ -2024,12 +1932,10 @@ void viewVZLayoutEditHandler::previewEditedLayout() {
     // no errors, show preview dialog:
     layoutEditPreviewDialog previewDialog(this->viewVZ->editLayout, this->viewVZ->OpenGLWidget);
     previewDialog.exec();
-
-
 }
 
-void viewVZLayoutEditHandler::viewVZeditDisplayErrors(QStringList errs) {
-
+void viewVZLayoutEditHandler::viewVZeditDisplayErrors(QStringList errs)
+{
     QString errString;
 
     if (errs.size() > 0) {
@@ -2043,5 +1949,4 @@ void viewVZLayoutEditHandler::viewVZeditDisplayErrors(QStringList errs) {
     }
 
     this->viewVZ->errors->setText(errString);
-
 }
