@@ -517,6 +517,7 @@ public slots:
      * parameters. Is a slot so it can be triggered by events.
      */
     void configureFromScript(QString);
+    void configureFromScript(QString script, const QMap<QString, double>& mparams);
 
     void regenerateConnections();
 

@@ -723,6 +723,16 @@ changeConnection:: changeConnection(nl_rootdata * data, QSharedPointer<systemObj
         this->scriptName = scripts.at(scriptIndex);
         index = none;
         settings.endGroup();
+
+        settings.beginGroup ("connParams");
+        QStringList params = settings.childKeys();
+        if (!params.isEmpty()) {
+            foreach (QString param, params) {
+                // So write into a map in the updateConnection class.
+                this->mparams[param] = settings.value(param, 1.0).toDouble();
+            }
+        }
+        settings.endGroup();
     }
 }
 
@@ -882,10 +892,12 @@ void changeConnection::redo()
             newConnSyn->connectionType->setParent (oldConn->parent);
             ((csv_connection *)newConnSyn->connectionType)->generator = new pythonscript_connection(qSharedPointerDynamicCast<population> (newConnSyn->proj->source), qSharedPointerDynamicCast<population> (newConnSyn->proj->destination), (csv_connection *)newConnSyn->connectionType);
             // setup the generator:
-            ((pythonscript_connection *) ((csv_connection *)newConnSyn->connectionType)->generator)->scriptText = script;
-            ((pythonscript_connection *) ((csv_connection *)newConnSyn->connectionType)->generator)->scriptName = scriptName;
-            ((pythonscript_connection *) ((csv_connection *)newConnSyn->connectionType)->generator)->configureFromScript(script);
-            settings.endGroup();
+            pythonscript_connection* pygen = (pythonscript_connection *) ((csv_connection *) newConnSyn->connectionType)->generator;
+            pygen->scriptText = script;
+            pygen->scriptName = scriptName;
+            // Need the version of configureFromScript which takes mparams as an arg here:
+            pygen->configureFromScript(script, this->mparams);
+            settings.endGroup(); // pythonscripts
         }
 
     } else {

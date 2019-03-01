@@ -265,6 +265,7 @@ private:
     QSharedPointer<systemObject> newConn;
     int index;
     QString scriptName;
+    QMap<QString, double> mparams;
     connection * oldConn;
     bool isUndone;
 };

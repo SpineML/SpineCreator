@@ -1903,9 +1903,7 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
             connect(weightTarget, SIGNAL(currentIndexChanged(int)), this, SLOT(enableGen(int)));
             // add to the HBoxLayout
             buttons->addWidget(weightTarget);
-
         }
-
 
         // clean up the interface by adding an expanding spacer to the end of the line
         buttons->addStretch();
@@ -1987,11 +1985,11 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                         maxCols = this->parPos[i].y();
                     }
                 }
-            }
+            } // else parNames has no position
         }
         // then add the items that do not have locations
         for (int i = 0; i < this->parNames.size(); ++i) {
-            // if we have a position
+            // if we have NO position
             if (this->parPos[i].x() == -1) {
                 bool inserted = false;
                 int row = 0;
@@ -2027,8 +2025,12 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                             val->setMinimum(-100000000.0);
                             val->setDecimals(5);
                             val->setMinimumWidth(120);
-                            val->setValue(this->parValues[i]);
-                            val->setProperty("par_name", this->parNames[i]);
+                            if (i < this->parValues.length()) {
+                                val->setValue(this->parValues[i]);
+                            }
+                            if (i < this->parNames.length()) {
+                                val->setProperty("par_name", this->parNames[i]);
+                            }
                             val->setProperty("action", "changePythonScriptPar");
                             val->setProperty("ptr", qVariantFromValue((void *) this));
                             val->setFocusPolicy(Qt::StrongFocus);
@@ -2054,7 +2056,7 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                     // increment the row
                     ++row;
                 }
-            }
+            } // else parNames[i] HAS position
         }
     }
 
@@ -2157,6 +2159,63 @@ void pythonscript_connection::configureFromScript(QString script)
                 // add with just the name specified
                 this->parNames.push_back(bits.last().replace(" ", ""));
                 this->parValues.push_back(0);
+                this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
+            }
+        }
+        if (lines[i].contains("#HASDELAY")) {
+            this->hasDelay = true;
+        }
+        if (lines[i].contains("#HASWEIGHT")) {
+            this->hasWeight = true;
+        }
+    }
+    // clear the last par vals
+    this->lastGeneratedParValues.clear();
+    this->lastGeneratedParValues.resize(this->parValues.size());
+    this->lastGeneratedParValues.fill(0);
+}
+
+void pythonscript_connection::configureFromScript(QString script, const QMap<QString, double>& mparams)
+{
+    // add the script to the class variable
+    this->scriptText = script;
+    // store old pars
+    // QStringList oldNames = this->parNames; // Wasn't used
+    // QVector <double> oldValues = this->parValues; // Wasn't used
+    // clear previous pars
+    this->parNames.clear();
+    this->parValues.clear();
+    this->parPos.clear();
+    this->hasWeight = false;
+    this->hasDelay = false;
+    // parse the script for parameter lines
+    QStringList lines = script.split("\n");
+    for (int i = 0; i < lines.size(); ++i) {
+        // find a par tag
+        if (lines[i].contains("#PARNAME=")) {
+            DBG() << "Adding param from #PARNAME=";
+            QStringList bits = lines[i].split("#PARNAME=");
+            // check if the end bit has location info
+            if (bits.last().contains("#LOC=")) {
+                DBG() << "Adding locn from #LOC=";
+                // we have position info - so extract it
+                QStringList posbits = bits.last().split("#LOC=");
+                // pos are separated by commas, so split again
+                QStringList posvals = posbits.last().split(",");
+                if (posvals.size() == 2) {
+                    // correct formatting, add the position to the list
+                    this->parNames.push_back(posbits.first().replace(" ", ""));
+                    // If mparams doesn't contain a value for the
+                    // param name in parNames.back(), then it should
+                    // construct a default double, presumably 0.0:
+                    this->parValues.push_back(mparams[parNames.back()]);
+                    this->parPos.push_back(QPoint(posvals[0].toInt(), posvals[1].toInt()));
+                }
+            } else {
+                // add with just the name specified
+                DBG() << "Adding parName with just name" << bits.last().replace(" ", "") << " and value 0";
+                this->parNames.push_back(bits.last().replace(" ", ""));
+                this->parValues.push_back(mparams[parNames.back()]);
                 this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
             }
         }
@@ -2815,12 +2874,23 @@ void pythonscript_connection::generate_connections()
             // 3.
             while (errtraceObj->tb_next) {
                 errtraceObj = errtraceObj->tb_next;
+
+                PyObject* _tfn = errtraceObj->tb_frame->f_code->co_filename;
+                PyObject* _tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
+                PyObject* _tn = errtraceObj->tb_frame->f_code->co_name;
+                PyObject* _tnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
+
                 pythonErrors += QString("\nError on line: ")
                     + QString::number(errtraceObj->tb_lineno)
                     + QString(" of ")
-                    + QString (PyBytes_AsString(PyUnicode_AsEncodedString(errtraceObj->tb_frame->f_code->co_filename, "utf-8", "Error ~")))
+                    + QString (PyBytes_AsString(_tfnStr))
                     + QString(", function ")
-                    + QString (PyBytes_AsString(PyUnicode_AsEncodedString(errtraceObj->tb_frame->f_code->co_name, "utf-8", "Error ~")));
+                    + QString (PyBytes_AsString(_tnStr));
+
+                Py_XDECREF(_tfn);
+                Py_XDECREF(_tfnStr);
+                Py_XDECREF(_tn);
+                Py_XDECREF(_tnStr);
             }
 
             Py_XDECREF(tfn);

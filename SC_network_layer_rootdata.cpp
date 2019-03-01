@@ -1302,17 +1302,38 @@ void nl_rootdata::updatePortMap(QString var)
     }
 }
 
+// This callback is called when the connection list is changed - i.e. when you
+// change from one Python connectionFunc() script to another.
 void nl_rootdata::updateComponentType(int index)
 {
     QSharedPointer<systemObject> ptr; // A "this" object.
     // get ptr
-    if (selList.size() == 1) {
-        ptr = selList[0];
+    if (this->selList.size() == 1) {
+        ptr = this->selList[0];
     }
 
     if (ptr.isNull()) {
         return;
     }
+
+    // sender() is a QObject and is the connection list box. Get its
+    // parent, then get child QDoubleSpinBoxes to make up a list of
+    // parameters/values to use during the update.
+    QList<QDoubleSpinBox*> sbs = sender()->parent()->findChildren<QDoubleSpinBox*>();
+    // Now place this information into QSettings, so that it can be
+    // retrieved during the SC_undocommands code.
+    QSettings settings;
+    settings.beginGroup ("connParams");
+    foreach (QDoubleSpinBox* sb, sbs) {
+        // get property par_name and value and place these in QSettings.
+        QString par_name = sb->property ("par_name").toString();
+        if (!par_name.isEmpty()) {
+            double par_value = sb->value();
+            settings.setValue (par_name, par_value);
+            DBG() << "Stored parameter " << par_name << " (value " << par_value << ") in QSettings";
+        }
+    }
+    settings.endGroup();
 
     // get type of change
     QString type = sender()->property("type").toString();
