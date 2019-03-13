@@ -223,7 +223,6 @@ void glConnectionWidget::allowRepaint()
 
 void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 {
-
     // avoid repainting too fast
     if (this->repaintAllowed == false) {
         return;
@@ -304,7 +303,12 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             // draw with a level of detail dependant on the number on neurons we must draw
             int LoD = round(250.0f/float(locations[0].size())*pow(2,float(quality)));
             // put some bounds on
-            if (LoD < 4) LoD = 4; if (LoD > 32) LoD = 32;
+            if (LoD < 4) {
+                LoD = 4;
+            }
+            if (LoD > 32) {
+                LoD = 32;
+            }
             this->drawNeuron(0.5, LoD, LoD, QColor(100,100,100,255));
 
             glPopMatrix();
@@ -342,22 +346,27 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 
             // draw with a level of detail dependant on the number on neurons we must draw
             // put some bounds on
-            if (LoD < 4) LoD = 4; if (LoD > 32) LoD = 32;
-            if (imageSaveMode)
+            if (LoD < 4) {
+                LoD = 4;
+            }
+            if (LoD > 32) {
+                LoD = 32;
+            }
+            if (imageSaveMode) {
                 LoD = 64;
+            }
 
             // check we haven't broken stuff
             if (popColours[locNum].size() > currPop->layoutType->locations.size()) {
-
                 popColours[locNum].clear();
                 popLogs[locNum] = NULL;
-
             }
 
             if (popColours[locNum].size() > 0) {
                 this->drawNeuron(0.5, LoD, LoD, popColours[locNum][i]);
-            } else
+            } else {
                 this->drawNeuron(0.5, LoD, LoD, QColor(100 + 0.5*currPop->colour.red(),100 + 0.5*currPop->colour.green(),100 + 0.5*currPop->colour.blue(),255));
+            }
 
             glPopMatrix();
         }
@@ -370,9 +379,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
         glDisable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
 
-        //qDebug() << "Doing conns!";
-
-        //Synapse * currTarg = selectedConns[targNum];
+        DBG() << "Doing conns!";
 
         QSharedPointer <population> src;
         QSharedPointer <population> dst;
@@ -485,17 +492,19 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             if (selectedConns[targNum] == selectedObject) {
                 for (int i = 0; i < connections[targNum].size(); ++i) {
 
-                    if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
-                        glLineWidth(1.0*lineScaleFactor);
+                    if (connections[targNum][i].src < src->layoutType->locations.size()
+                        && connections[targNum][i].dst < dst->layoutType->locations.size()) {
 
+                        // Default line width/colour
+                        glLineWidth(1.0*lineScaleFactor);
                         glColor4f(0.0f, 0.0f, 0.0f, 0.1f);
 
                         // find if selected
                         bool isSelected = false;
 
+                        // Not sure what this code block does
                         for (int j = 0; j < (int) selection.count(); ++j) {
-                            if (i == (int) selection[j].row())
-                            {
+                            if (i == (int)selection[j].row()) {
                                 glLineWidth(2.0f*lineScaleFactor);
                                 glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
                                 isSelected = true;
@@ -513,10 +522,13 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                             }
                         }
 
-                        if (((int) connections[targNum][i].src == selectedIndex && selectedType == 1) \
-                                || ((int) connections[targNum][i].dst == selectedIndex && selectedType == 2)) {
+                        // This selects the colour of the connections between neural populations in Python/CSV
+                        if (((int) connections[targNum][i].src == selectedIndex && selectedType == 1)
+                            || ((int) connections[targNum][i].dst == selectedIndex && selectedType == 2)) {
                             glLineWidth(1.5f*lineScaleFactor);
-                            glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
+                            // Scale colour on connections[targNum][i].metric
+                            DBG() << "connections["<<targNum<<"][i="<<i<<"].metric = " << connections[targNum][i].metric;
+                            glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
                             isSelected = true;
                         }
 
