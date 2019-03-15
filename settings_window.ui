@@ -192,7 +192,7 @@ restart required)</string>
              <item>
               <widget class="QLineEdit" name="pythonpath">
                <property name="toolTip">
-                <string>Enter the full path to your python program. Leave blank to use your default, system-installed python.</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter the full path to your python program. Leave blank to use your default, system-installed python. Useful if you use an Anaconda or other non-system python installation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
              </item>
@@ -224,7 +224,7 @@ restart required)</string>
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>15</height>
+                 <height>18</height>
                 </size>
                </property>
                <property name="maximumSize">
@@ -238,6 +238,9 @@ restart required)</string>
                  <width>0</width>
                  <height>0</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Optionally enter a colon-separated list of directories that should be set up as if it were your PYTHONHOME environment variable. SpineCreator will pass this to Py_SetPythonHome() on startup. Leave blank if you're using your standard, system-installed python.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="acceptRichText">
                 <bool>false</bool>

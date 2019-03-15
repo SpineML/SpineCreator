@@ -30,7 +30,6 @@ settings_window::settings_window(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::settings_window)
 {
-
     edited = false;
 
     ui->setupUi(this);
@@ -41,11 +40,10 @@ settings_window::settings_window(QWidget *parent) :
 #ifdef Q_OS_LINUX
     this->setWindowTitle("Options");
 #else
-#ifndef Q_OS_OSX
+# ifndef Q_OS_OSX
     this->setWindowTitle("Settings");
+# endif
 #endif
-#endif
-
 
     connect(ui->addEnv, SIGNAL(clicked()), this, SLOT(addEnvVar()));
 

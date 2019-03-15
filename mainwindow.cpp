@@ -85,34 +85,65 @@ MainWindow(QWidget *parent) :
     // necessary to set this up with a user-specifiable path to python
     // and/or modules.
     //
-    QSettings settings;
+    {
+        QSettings pysettings;
 
-    QString py_programname = settings.value("python/programname","").toString();
-    wchar_t * py_programname_wc;
-    py_programname_wc = new wchar_t[py_programname.length() + 1];
-    py_programname.toWCharArray (py_programname_wc);
-    py_programname_wc[py_programname.length()] = 0;
+        // Check the python/initialisation setting. If it's "true",
+        // then Py_Initialise() must have failed, in which case reset
+        // the python settings for programname and pythonhome to empty
+        // values.
+        QString python_init = pysettings.value ("python/initialisation", "false").toString();
 
-    QString py_pythonhome = settings.value("python/pythonhome","").toString();
-    wchar_t * py_pythonhome_wc;
-    py_pythonhome_wc = new wchar_t[py_pythonhome.length() + 1];
-    py_pythonhome.toWCharArray (py_pythonhome_wc);
-    py_pythonhome_wc[py_pythonhome.length()] = 0;
+        if (python_init == "true") {
+            // then Py_Initialise failed
+            pysettings.setValue ("python/programname", "");
+            pysettings.setValue ("python/pythonhome", "");
+            DBG() << "Reset python path/home settings as Py_Initialise crashed.";
 
-    // NEXT JOB: Get the UI to write the values entered into QSettings
-    // and then inform user they need to restart SpineCreator.
-    if (!py_programname.isEmpty()) {
-        //Py_SetProgramName(L"/home/seb/anaconda3/bin/python");
-        Py_SetProgramName (py_programname_wc);
-    }
-    delete py_programname_wc;
+        } else {
+            // Py_Initialise was ok last time
+            QString py_programname = pysettings.value("python/programname","").toString();
+            wchar_t * py_programname_wc;
+            py_programname_wc = new wchar_t[py_programname.length() + 1];
+            py_programname.toWCharArray (py_programname_wc);
+            py_programname_wc[py_programname.length()] = 0;
 
-    if (!py_pythonhome.isEmpty()) {
-        //Py_SetPythonHome(L"/home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda");
-        Py_SetPythonHome(py_pythonhome_wc);
-    }
-    delete py_pythonhome_wc;
+            if (!py_programname.isEmpty()) {
+                // When using Anaconda, set to /home/seb/anaconda3/bin/python
+                Py_SetProgramName (py_programname_wc);
+                DBG() << "Setting user-specified path to the python binary. Warning: SpineCreator may crash if this setting causes Py_Initialise() to fail. In this case, when SpineCreator re-starts it will erase the content of python path and home.";
+            }
+            delete py_programname_wc;
+
+            QString py_pythonhome = pysettings.value("python/pythonhome","").toString();
+            wchar_t * py_pythonhome_wc;
+            py_pythonhome_wc = new wchar_t[py_pythonhome.length() + 1];
+            py_pythonhome.toWCharArray (py_pythonhome_wc);
+            py_pythonhome_wc[py_pythonhome.length()] = 0;
+
+            if (!py_pythonhome.isEmpty()) {
+                // Seb's value for pythonhome to use Anaconda in home
+                // directory with Numba CUDA:
+                // /home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda
+                // NB: If python home is set to garbage, it will cause
+                // Py_Initialize() to abort the program. Hence the
+                // python_init scheme to check and see if we've
+                // initialised and crashed on a previous attempt.
+                Py_SetPythonHome(py_pythonhome_wc);
+                DBG() << "Setting user-specified PYTHONHOME. Warning: SpineCreator may crash if this setting causes Py_Initialise() to fail. In this case, when SpineCreator re-starts it will erase the content of python path and home.";
+            }
+            delete py_pythonhome_wc;
+        }
+
+        pysettings.setValue ("python/initialisation", "true");
+    } // ensure pysettings goes out of scope before Py_Initialize()
+
     Py_Initialize();
+
+    { // New scope to reset python/initialisation to "false"
+        QSettings pysettings2;
+        pysettings2.setValue ("python/initialisation", "false");
+    }
 
 #ifdef DEBUG
     DBG() << "Python interpreter: " << (wchar_t*)Py_GetProgramName();
@@ -121,6 +152,8 @@ MainWindow(QWidget *parent) :
     DBG() << "Py_GetPath(): " << (wchar_t*)Py_GetPath();
     DBG() << "Py_GetProgramFullPath(): " << (wchar_t*)Py_GetProgramFullPath();
 #endif
+
+    QSettings settings;
 
 #if 0
     // clear all QSettings keys (for testing initial setup)
