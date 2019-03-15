@@ -528,7 +528,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                             glLineWidth(1.5f*lineScaleFactor);
                             // Scale colour on connections[targNum][i].metric
                             DBG() << "connections["<<targNum<<"][i="<<i<<"].metric = " << connections[targNum][i].metric;
-                            glColor4f(1.0f, 1.0f, 0.0f, 1.0f); // Yellow
+                            glColor4f(0.0f, 1.0f, 0.0f, 1.0f); // Green
                             isSelected = true;
                         }
 
