@@ -85,10 +85,33 @@ MainWindow(QWidget *parent) :
     // necessary to set this up with a user-specifiable path to python
     // and/or modules.
     //
-    // The path determined from anaconda/ipython:
-    // ['', '/home/seb/anaconda3/bin', '/home/seb/anaconda3/lib/python37.zip', '/home/seb/anaconda3/lib/python3.7', '/home/seb/anaconda3/lib/python3.7/lib-dynload', '/home/seb/anaconda3/lib/python3.7/site-packages', '/home/seb/anaconda3/lib/python3.7/site-packages/IPython/extensions', '/home/seb/.ipython']
-    Py_SetProgramName(L"/home/seb/anaconda3/bin/python");
-    Py_SetPythonHome(L"/home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda");
+    QSettings settings;
+
+    QString py_programname = settings.value("python/programname","").toString();
+    wchar_t * py_programname_wc;
+    py_programname_wc = new wchar_t[py_programname.length() + 1];
+    py_programname.toWCharArray (py_programname_wc);
+    py_programname_wc[py_programname.length()] = 0;
+
+    QString py_pythonhome = settings.value("python/pythonhome","").toString();
+    wchar_t * py_pythonhome_wc;
+    py_pythonhome_wc = new wchar_t[py_pythonhome.length() + 1];
+    py_pythonhome.toWCharArray (py_pythonhome_wc);
+    py_pythonhome_wc[py_pythonhome.length()] = 0;
+
+    // NEXT JOB: Get the UI to write the values entered into QSettings
+    // and then inform user they need to restart SpineCreator.
+    if (!py_programname.isEmpty()) {
+        //Py_SetProgramName(L"/home/seb/anaconda3/bin/python");
+        Py_SetProgramName (py_programname_wc);
+    }
+    delete py_programname_wc;
+
+    if (!py_pythonhome.isEmpty()) {
+        //Py_SetPythonHome(L"/home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda");
+        Py_SetPythonHome(py_pythonhome_wc);
+    }
+    delete py_pythonhome_wc;
     Py_Initialize();
 
 #ifdef DEBUG
@@ -98,12 +121,6 @@ MainWindow(QWidget *parent) :
     DBG() << "Py_GetPath(): " << (wchar_t*)Py_GetPath();
     DBG() << "Py_GetProgramFullPath(): " << (wchar_t*)Py_GetProgramFullPath();
 #endif
-
-    QSettings settings; // probably get Python path from this and
-                        // Py_SetProgramName therefrom. That will mean
-                        // de-initialising and then re-initialising
-                        // the python system when the setting is
-                        // changed.
 
 #if 0
     // clear all QSettings keys (for testing initial setup)
@@ -117,9 +134,7 @@ MainWindow(QWidget *parent) :
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
   #ifdef Q_OS_MAC2
-
    settings.setValue("dpi",this->windowHandle()->devicePixelRatio());
-
   #endif
 #endif
 

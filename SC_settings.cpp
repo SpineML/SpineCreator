@@ -97,7 +97,17 @@ settings_window::settings_window(QWidget *parent) :
     // change dev stuff box
     bool devMode = settings.value("dev_mode_on", "false").toBool();
     ui->dev_mode_check->setChecked(devMode);
+
     connect(ui->dev_mode_check, SIGNAL(toggled(bool)), this, SLOT(setDevMode(bool)));
+
+    // Fill Python program path and PYTHONHOME text boxes
+    this->ui->pythonpath->setText(settings.value("python/programname", "").toString());
+    connect(this->ui->pythonpath,
+            SIGNAL(editingFinished()), this, SLOT(changePythonPath()));
+
+    this->ui->pythonhome->setPlainText(settings.value("python/pythonhome", "").toString());
+    connect(this->ui->pythonhome,
+            SIGNAL(textChanged()), this, SLOT(changePythonHome()));
 
     // populate script list
     this->ui->scriptList->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -568,6 +578,24 @@ void settings_window::close()
 {
     this->applyChanges();
     delete this;
+}
+
+void settings_window::changePythonPath (void)
+{
+    QLineEdit * edit = qobject_cast<QLineEdit *> (sender());
+    CHECK_CAST(edit);
+    QSettings settings;
+    settings.setValue("python/programname", edit->text());
+    this->ui->lbl_restartrequest->setText("Python path changed. Please re-start SpineCreator to use the new Python environment.");
+}
+
+void settings_window::changePythonHome (void)
+{
+    QTextEdit * edit = qobject_cast<QTextEdit *> (sender());
+    CHECK_CAST(edit);
+    QSettings settings;
+    settings.setValue("python/pythonhome", edit->toPlainText());
+    this->ui->lbl_restartrequest->setText("PYTHONHOME changed. Please re-start SpineCreator to use the new Python environment.");
 }
 
 // SYNTAX HIGHLIGHTING

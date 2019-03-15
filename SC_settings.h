@@ -80,6 +80,8 @@ public slots:
     void applyChanges();
     void cancelChanges();
     void changeScript();
+    void changePythonPath (void);
+    void changePythonHome (void);
     void changedEnvVar(QString);
     void saveAsBinaryToggled(bool);
     void setGLDetailLevel(int);
