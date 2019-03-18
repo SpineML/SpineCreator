@@ -103,23 +103,37 @@ MainWindow(QWidget *parent) :
         } else {
             // Py_Initialise was ok last time
             QString py_programname = pysettings.value("python/programname","").toString();
-            wchar_t * py_programname_wc;
-            py_programname_wc = new wchar_t[py_programname.length() + 1];
-            py_programname.toWCharArray (py_programname_wc);
-            py_programname_wc[py_programname.length()] = 0;
 
+#if PY_MAJOR_VERSION == 2
+            // Python 2.x API requires chars when calling
+            // Py_SetProgramName() etc, Python 3.x requires wchars.
+            char* py_programname_ca;
+            py_programname_ca = new char[py_programname.length() + 1];
+            memcpy (py_programname_ca, py_programname.toStdString().c_str(), py_programname.length());
+#elif PY_MAJOR_VERSION > 2
+            wchar_t* py_programname_ca;
+            py_programname_ca = new wchar_t[py_programname.length() + 1];
+            py_programname.toWCharArray (py_programname_ca);
+#endif
+            py_programname_ca[py_programname.length()] = 0;
             if (!py_programname.isEmpty()) {
                 // When using Anaconda, set to /home/seb/anaconda3/bin/python
-                Py_SetProgramName (py_programname_wc);
+                Py_SetProgramName (py_programname_ca);
                 DBG() << "Setting user-specified path to the python binary. Warning: SpineCreator may crash if this setting causes Py_Initialise() to fail. In this case, when SpineCreator re-starts it will erase the content of python path and home.";
             }
-            delete py_programname_wc;
+            delete py_programname_ca;
 
             QString py_pythonhome = pysettings.value("python/pythonhome","").toString();
-            wchar_t * py_pythonhome_wc;
-            py_pythonhome_wc = new wchar_t[py_pythonhome.length() + 1];
-            py_pythonhome.toWCharArray (py_pythonhome_wc);
-            py_pythonhome_wc[py_pythonhome.length()] = 0;
+#if PY_MAJOR_VERSION == 2
+            char* py_pythonhome_ca;
+            py_pythonhome_ca = new char[py_pythonhome.length() + 1];
+            memcpy (py_pythonhome_ca, py_pythonhome.toStdString().c_str(), py_pythonhome.length());
+#elif PY_MAJOR_VERSION >= 3
+            wchar_t* py_pythonhome_ca;
+            py_pythonhome_ca = new wchar_t[py_pythonhome.length() + 1];
+            py_pythonhome.toWCharArray (py_pythonhome_ca);
+#endif
+            py_pythonhome_ca[py_pythonhome.length()] = 0;
 
             if (!py_pythonhome.isEmpty()) {
                 // Seb's value for pythonhome to use Anaconda in home
@@ -129,10 +143,10 @@ MainWindow(QWidget *parent) :
                 // Py_Initialize() to abort the program. Hence the
                 // python_init scheme to check and see if we've
                 // initialised and crashed on a previous attempt.
-                Py_SetPythonHome(py_pythonhome_wc);
+                Py_SetPythonHome(py_pythonhome_ca);
                 DBG() << "Setting user-specified PYTHONHOME. Warning: SpineCreator may crash if this setting causes Py_Initialise() to fail. In this case, when SpineCreator re-starts it will erase the content of python path and home.";
             }
-            delete py_pythonhome_wc;
+            delete py_pythonhome_ca;
         }
 
         pysettings.setValue ("python/initialisation", "true");
