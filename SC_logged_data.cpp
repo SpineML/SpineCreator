@@ -203,6 +203,7 @@ QVector < double > logData::getRow(int rowNum)
         case TYPE_STRING:
             return rowData;
         } // end switch (columns[0].type)
+        break;
     }
     case CSVFormat:
     case SSVFormat:

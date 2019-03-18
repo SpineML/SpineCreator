@@ -2009,24 +2009,25 @@ Trigger::~Trigger()
     delete maths;
 }
 
-StateVariable::StateVariable(StateVariable *data) : Parameter(data){
-    //name = data->name;
-    //delete dims;
-    //dims->fromString(data->dims->toString());
+StateVariable::StateVariable(StateVariable *data)
+    : Parameter(data)
+{
 }
 
 StateVariable::~StateVariable()
 {
-    //delete dims;
 }
 
-StateVariableInstance::StateVariableInstance(StateVariable *data) : ParameterInstance(data){
+StateVariableInstance::StateVariableInstance(StateVariable *data)
+    : ParameterInstance(data)
+{
     name = data->name;
     dims->fromString(data->dims->toString());
     currType = Undefined;
 }
 
-StateVariableInstance::StateVariableInstance(StateVariableInstance *data) : ParameterInstance(data)
+StateVariableInstance::StateVariableInstance(StateVariableInstance *data)
+    : ParameterInstance(data)
 {
     value = data->value;
     indices = data->indices;
@@ -2037,9 +2038,6 @@ StateVariableInstance::StateVariableInstance(StateVariableInstance *data) : Para
 
 Alias::Alias(Alias *data) : StateVariable(data)
 {
-    //name = data->name;
-    //delete dims;
-    //dims->fromString(data->dims->toString());
     maths = new MathInLine(data->maths);
 }
 
@@ -3252,9 +3250,14 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
     } // else no LL:Annotation for this ComponentInstance
 
     type = NineMLComponentType;
+
+    // If this ComponentInstance is a weight update, then one of the
+    // properties will be the weight, w.
     QDomNodeList nList = n.toElement().elementsByTagName("Property");
 
     for (int j = 0; j < nList.count(); ++j) {
+
+        // FIXME: This shadows the argument QDomNode& n
         QDomNode n = nList.item(j);
 
         // extract value and dimensions from node
@@ -3294,15 +3297,8 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
                     this->ParameterList[i]->currType = ExplicitList;
                     // now use the Parameter or StateVariable method to read the data in
                     QDomNode n2 = propVal.item(0);
-                    this->ParameterList[i]->readExplicitListNodeData(n2);
-                    /*
-                    QDomNodeList propValInst = n.toElement().elementsByTagName("Value");
-                    for (int ind = 0; ind < (int) propValInst.count(); ++ind) {
-                        this->ParameterList[i]->indices.push_back(propValInst.item(ind).toElement().attribute("index").toInt());
-                        this->ParameterList[i]->value.push_back(propValInst.item(ind).toElement().attribute("value").toFloat());
-//                        this->ParameterList[i]->dims = new dim(propUnit.item(0).toElement().text());
-                    }
-                    */
+                    // Here's where we'll be reading the weights
+                    this->ParameterList[i]->readExplicitListNodeData(n2); // ParameterInstance::readExplicitListNodeData()
                 }
             }
         }
@@ -3672,8 +3668,9 @@ void ComponentInstance::migrateComponent(QSharedPointer<Component> newComponent)
 
 void ComponentInstance::copyParsFrom(QSharedPointer <ComponentInstance> data) {
 
-    if (this->component->name == "none")
+    if (this->component->name == "none") {
         return;
+    }
 
     // add new list - copying across as needed
     for (int i = 0; i < data->ParameterList.size(); ++i) {
@@ -3700,5 +3697,44 @@ void ComponentInstance::copyParsFrom(QSharedPointer <ComponentInstance> data) {
             }
         }
     }
+}
 
+//Accessing dims: this->ParameterList[j]->dims->toString()
+ParameterInstance*
+ComponentInstance::getWeightsParameter (void)
+{
+    ParameterInstance* weightParam = (ParameterInstance*)0;
+
+    // tests if this ComponentInstance is an instance of a
+    // LL:WeightUpdate or WeightUpdate component.
+    if (this->component->type == "weight_update"
+        && this->ParameterList.size() > 0) {
+
+        DBG() "**I'm a weight update!**";
+        // QVector <ParameterInstance*> ParameterList;
+        int jw = 0; // Do we have a Parameter called w?
+        for (int j = 0; j < this->ParameterList.size(); ++j) {
+            DBG() << "ParameterList[" << j << "] name is " << this->ParameterList[j]->name;
+            if (this->ParameterList[j]->name == "w") {
+                jw = j;
+            }
+        }
+        // If there was a parameter called "w" at a position higher
+        // than 0, use that, otherwise just use the first Property in
+        // the list.
+        weightParam = this->ParameterList[jw];
+        DBG() << "value has size " << weightParam->value.size(); // QVector<double>
+        DBG() << "value[0]: " << weightParam->value[0] << " indices[0]: " << weightParam->indices[0];
+        //DBG() << "value[1000]: " << weightParam->value[1000] << " indices[1000]: " << weightParam->indices[1000];
+        //unsigned int lastindex = weightParam->value.size()-1;
+        //DBG() << "value[lastindex]: " << weightParam->value[lastindex] << " indices[lastindex]: " << weightParam->indices[lastindex];
+        // Need each index. Have to get that from the
+        // connections. Perhaps return weightParam pointer and use
+        // that.
+
+    } else {
+        DBG() << "Not a weight update";
+    }
+
+    return weightParam;
 }
