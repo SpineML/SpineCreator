@@ -1252,14 +1252,18 @@ void csv_connection::sortData (void)
     this->setAllData (clist);*/
 }
 
-bool csv_connection::sorttwo (conn a, conn b) {
+bool csv_connection::sorttwo (conn a, conn b)
+{
     if (a.src < b.src) { return true; }
     if (a.src == b.src && a.dst < b.dst) { return true; }
     return false;
 }
 
+// Note that the connection file contains src, dst and delay. The
+// weights may be held in a separate file (an explicitDataBinaryFile).
 void csv_connection::getAllData(QVector<conn>& conns)
 {
+    //DBG() << "csv_connection::getAllData called";
     conns.clear();
 
     QFile f;
@@ -1271,6 +1275,7 @@ void csv_connection::getAllData(QVector<conn>& conns)
 
     QDataStream access(&f);
 
+    //DBG() << "There are " << this->getNumRows() << " rows and " << this->getNumCols() << " cols";
     conns.resize(this->getNumRows());
     int counter = 0;
 
@@ -2641,6 +2646,7 @@ struct outputUnPackaged
  */
 outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
 {
+    DBG() << "extractOutput called";
     // Need array header for this: PyArrayObject* pa = (PyArrayObject*)0;
     QTime qtimer;
     qtimer.start();
@@ -2687,11 +2693,13 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
                 // if we have a delay as well
                 if (PyList_Size(element) > 2 && hasDelay) {
                     outUnPacked.connections[i].metric = PyFloat_AsDouble(PyList_GetItem(element,2));
-                }
+                } // else no delay
+
                 // if we have a weight as well
                 if (PyList_Size(element) > 3 && hasWeight) {
                     outUnPacked.weights[i] = PyFloat_AsDouble(PyList_GetItem(element,3));
                 } else {
+                    DBG() << "No weight. PyList_Size(element) = " << PyList_Size(element) << " and hasWeight = " << hasWeight;
                     outUnPacked.weights.clear();
                 }
             } else {

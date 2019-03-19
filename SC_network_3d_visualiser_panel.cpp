@@ -44,6 +44,8 @@
   #define RETINA_SUPPORT 1.0
   #endif
 #endif
+#include <limits>
+
 
 glConnectionWidget::glConnectionWidget(nl_rootdata * data, QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
@@ -235,8 +237,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
     }
 
     // don't try and repaint a hidden widget!
-    if (!this->isVisible())
+    if (!this->isVisible()) {
         return;
+    }
 
     // get rid of old stuff
     if (imageSaveMode) {
@@ -247,8 +250,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
         qglClearColor(qtCol.light());
     }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    //glClearColor(0.0,0.0,0.0,1.0);
 
     // setup
     glEnable(GL_BLEND);
@@ -265,10 +266,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
     GLfloat pos0[4] = {-1,-1, 10,0};
     glLightfv(GL_LIGHT0, GL_POSITION, pos0);
 
-    /*glEnable(GL_LIGHT1);
-    GLfloat pos1[4] = {0,0,-1,0};
-    glLightfv(GL_LIGHT1, GL_POSITION, pos1);*/
-
     // setup the view
     this->setupView();
 
@@ -280,9 +277,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
         float maxLen;
         maxLen = imageSaveHeight > imageSaveWidth ? imageSaveHeight : imageSaveWidth;
         lineScaleFactor = (1.0/1000.0*maxLen);
-    } else
+    } else {
         lineScaleFactor = 1.0;
-
+    }
 
     // add some neurons!
 
@@ -365,7 +362,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             if (popColours[locNum].size() > 0) {
                 this->drawNeuron(0.5, LoD, LoD, popColours[locNum][i]);
             } else {
-                this->drawNeuron(0.5, LoD, LoD, QColor(100 + 0.5*currPop->colour.red(),100 + 0.5*currPop->colour.green(),100 + 0.5*currPop->colour.blue(),255));
+                this->drawNeuron(0.5, LoD, LoD, QColor(100 + 0.5*currPop->colour.red(),
+                                                       100 + 0.5*currPop->colour.green(),
+                                                       100 + 0.5*currPop->colour.blue(),255));
             }
 
             glPopMatrix();
@@ -379,11 +378,10 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
         glDisable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
 
-        DBG() << "Doing conns!";
-
         QSharedPointer <population> src;
         QSharedPointer <population> dst;
         connection * conn;
+        QSharedPointer<ComponentInstance> wu;
 
         if (selectedConns[targNum]->type == synapseObject) {
             QSharedPointer <synapse> currTarg = qSharedPointerDynamicCast <synapse> (selectedConns[targNum]);
@@ -391,6 +389,13 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             conn = currTarg->connectionType;
             src = currTarg->proj->source;
             dst = currTarg->proj->destination;
+
+            // Get access to weights, too. For ComponentInstance, see
+            // CL_classes.h. A ComponentInstance contains a
+            // ParameterInstance, which should contain the weight
+            // data.
+            wu = currTarg->weightUpdateCmpt;
+
         } else {
             QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (selectedConns[targNum]);
             CHECK_CAST(currIn)
@@ -458,27 +463,40 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             connGenerationMutex->lock();
             for (int i = 0; i < connections[targNum].size(); ++i) {
 
-                if (connections[targNum][i].src < src->layoutType->locations.size() && connections[targNum][i].dst < dst->layoutType->locations.size()) {
-                    glLineWidth(1.0*lineScaleFactor);
+                if (connections[targNum][i].src < src->layoutType->locations.size()
+                    && connections[targNum][i].dst < dst->layoutType->locations.size()) {
 
+                    glLineWidth(1.0*lineScaleFactor);
                     glColor4f(0.0f, 0.0f, 0.0f, 0.1f);
 
                     // draw in
                     glBegin(GL_TRIANGLES);
                     if (src->isVisualised && dst->isVisualised) {
-                        glVertex3f(src->layoutType->locations[connections[targNum][i].src].x+srcX, src->layoutType->locations[connections[targNum][i].src].y+srcY, src->layoutType->locations[connections[targNum][i].src].z+srcZ);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ+0.05);
+                        glVertex3f(src->layoutType->locations[connections[targNum][i].src].x+srcX,
+                                   src->layoutType->locations[connections[targNum][i].src].y+srcY,
+                                   src->layoutType->locations[connections[targNum][i].src].z+srcZ);
+                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX,
+                                   dst->layoutType->locations[connections[targNum][i].dst].y+dstY,
+                                   dst->layoutType->locations[connections[targNum][i].dst].z+dstZ);
+                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX,
+                                   dst->layoutType->locations[connections[targNum][i].dst].y+dstY,
+                                   dst->layoutType->locations[connections[targNum][i].dst].z+dstZ+0.05);
                     }
                     if (src->isVisualised && !dst->isVisualised) {
-                        glVertex3f(src->layoutType->locations[connections[targNum][i].src].x, src->layoutType->locations[connections[targNum][i].src].y, src->layoutType->locations[connections[targNum][i].src].z);
+                        glVertex3f(src->layoutType->locations[connections[targNum][i].src].x,
+                                   src->layoutType->locations[connections[targNum][i].src].y,
+                                   src->layoutType->locations[connections[targNum][i].src].z);
                         glVertex3f(dstX, dstY, dstZ);
                         glVertex3f(dstX, dstY, dstZ+0.01);
                     }
                     if (!src->isVisualised && dst->isVisualised) {
                         glVertex3f(src->loc3.x, src->loc3.y, src->loc3.z);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z);
-                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z+0.01);
+                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x,
+                                   dst->layoutType->locations[connections[targNum][i].dst].y,
+                                   dst->layoutType->locations[connections[targNum][i].dst].z);
+                        glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x,
+                                   dst->layoutType->locations[connections[targNum][i].dst].y,
+                                   dst->layoutType->locations[connections[targNum][i].dst].z+0.01);
                     }
                     glEnd();
 
@@ -490,6 +508,57 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             // draw selected connections on top
             glDisable(GL_DEPTH_TEST);
             if (selectedConns[targNum] == selectedObject) {
+
+                ParameterInstance* theweights = (ParameterInstance*)0;
+                if (selectedConns[targNum]->type == synapseObject) {
+                    // Then get the weights from the synapseObject's
+                    // weightUpdateCmpt.  Returns non-null pointer if
+                    // ComponentInstance is a weight update (tag is
+                    // LL:WeightUpdate or just WeightUpdate), and has
+                    // a Property. Most weight updates have single
+                    // property, but if >1 choose the one called "w"
+                    theweights = wu->getWeightsParameter();
+                }
+
+                // If we have weights, then we have to find the max and min weights for the connection
+                double maxweight = std::numeric_limits<double>::min();
+                double minweight = std::numeric_limits<double>::max();
+                double m = 0;
+                double c = 0;
+                if (theweights != (ParameterInstance*)0) {
+                    //DBG() << "Redetermining minweight/maxweight...";
+#pragma omp parallel for
+                    for (int i = 0; i < connections[targNum].size(); ++i) {
+
+                        if (connections[targNum][i].src < src->layoutType->locations.size()
+                            && connections[targNum][i].dst < dst->layoutType->locations.size()) {
+
+                            if (((int) connections[targNum][i].src == selectedIndex && selectedType == 1)
+                                || ((int) connections[targNum][i].dst == selectedIndex && selectedType == 2)) {
+
+                                if (theweights != (ParameterInstance*)0 && i < theweights->value.size()) {
+
+                                    double myweight = theweights->value[i];
+                                    if (myweight > maxweight) {
+                                        //DBG() << "Setting maxweight to " << myweight;
+                                        maxweight = myweight;
+                                    }
+                                    if (myweight < minweight) {
+                                        //DBG() << "Setting minweight to " << myweight;
+                                        minweight = myweight;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // Compute a linear scaling from minweight to maxweight
+                    double rise = 1.0;
+                    double run = maxweight - minweight;
+                    m = rise/run;
+                    c = 1.0 - m * maxweight;
+                    //DBG() << "minweight: " << minweight << " maxweight: " << maxweight << " m: " << m << " c: " << c;
+                }
+
                 for (int i = 0; i < connections[targNum].size(); ++i) {
 
                     if (connections[targNum][i].src < src->layoutType->locations.size()
@@ -501,8 +570,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 
                         // find if selected
                         bool isSelected = false;
-
-                        // Not sure what this code block does
                         for (int j = 0; j < (int) selection.count(); ++j) {
                             if (i == (int)selection[j].row()) {
                                 glLineWidth(2.0f*lineScaleFactor);
@@ -521,33 +588,75 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                                 isSelected = true;
                             }
                         }
-
+                        float normweight = 1.0f;
                         // This selects the colour of the connections between neural populations in Python/CSV
                         if (((int) connections[targNum][i].src == selectedIndex && selectedType == 1)
                             || ((int) connections[targNum][i].dst == selectedIndex && selectedType == 2)) {
+
+                            if (theweights != (ParameterInstance*)0) {
+                                //DBG() << "i=" << i << " and theweights->value.size()=" << theweights->value.size();
+                                if (i < theweights->value.size()) {
+                                    double myweight = theweights->value[i];
+                                    //DBG() << "Weight for this connection line is " << myweight << " m is " << m << " and c is " << c;
+                                    normweight = static_cast<float>(m * myweight + c);
+                                    //DBG() << "normalised weight is " << normweight;
+                                }
+                            }
                             glLineWidth(1.5f*lineScaleFactor);
-                            // Scale colour on connections[targNum][i].metric
-                            DBG() << "connections["<<targNum<<"][i="<<i<<"].metric = " << connections[targNum][i].metric;
-                            glColor4f(0.0f, 1.0f, 0.0f, 1.0f); // Green
+
+                            // Scale colour on the weight. Perhaps use
+                            // two colour maps depending on whether
+                            // the minimum weight was >=0 or <0?  NB:
+                            // Be sure to set the colour in the next
+                            // call to drawNeuron()...
+                            glColor4f(normweight, 0.0f, 1.0f-normweight, 1.0f); // Blue to Red. Or blue to yellow?
+
                             isSelected = true;
                         }
 
                         if (isSelected) {
+                            // Determine starting and final locations of connection lines
+                            float strtX = 0.0f, strtY = 0.0f, strtZ = 0.0f;
+                            float finX = 0.0f, finY = 0.0f, finZ = 0.0f;
+                            if (src->isVisualised && dst->isVisualised) {
+                                strtX = src->layoutType->locations[connections[targNum][i].src].x+srcX;
+                                strtY = src->layoutType->locations[connections[targNum][i].src].y+srcY;
+                                strtZ = src->layoutType->locations[connections[targNum][i].src].z+srcZ;
+                                finX = dst->layoutType->locations[connections[targNum][i].dst].x+dstX;
+                                finY = dst->layoutType->locations[connections[targNum][i].dst].y+dstY;
+                                finZ = dst->layoutType->locations[connections[targNum][i].dst].z+dstZ;
+
+                            } else if (src->isVisualised && !dst->isVisualised) {
+                                strtX = src->layoutType->locations[connections[targNum][i].src].x;
+                                strtY = src->layoutType->locations[connections[targNum][i].src].y;
+                                strtZ = src->layoutType->locations[connections[targNum][i].src].z;
+                                finX = dstX;
+                                finY = dstY;
+                                finZ = dstZ;
+
+                            } else if (!src->isVisualised && dst->isVisualised) {
+                                strtX = src->loc3.x;
+                                strtY = src->loc3.y;
+                                strtZ = src->loc3.z;
+                                finX = dst->layoutType->locations[connections[targNum][i].dst].x;
+                                finY = dst->layoutType->locations[connections[targNum][i].dst].y;
+                                finZ = dst->layoutType->locations[connections[targNum][i].dst].z;
+                            }
+
                             // draw in
                             glBegin(GL_LINES);
-                            if (src->isVisualised && dst->isVisualised) {
-                                glVertex3f(src->layoutType->locations[connections[targNum][i].src].x+srcX, src->layoutType->locations[connections[targNum][i].src].y+srcY, src->layoutType->locations[connections[targNum][i].src].z+srcZ);
-                                glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x+dstX, dst->layoutType->locations[connections[targNum][i].dst].y+dstY, dst->layoutType->locations[connections[targNum][i].dst].z+dstZ);
-                            }
-                            if (src->isVisualised && !dst->isVisualised) {
-                                glVertex3f(src->layoutType->locations[connections[targNum][i].src].x, src->layoutType->locations[connections[targNum][i].src].y, src->layoutType->locations[connections[targNum][i].src].z);
-                                glVertex3f(dstX, dstY, dstZ);
-                            }
-                            if (!src->isVisualised && dst->isVisualised) {
-                                glVertex3f(src->loc3.x, src->loc3.y, src->loc3.z);
-                                glVertex3f(dst->layoutType->locations[connections[targNum][i].dst].x, dst->layoutType->locations[connections[targNum][i].dst].y, dst->layoutType->locations[connections[targNum][i].dst].z);
-                            }
+                            glVertex3f (strtX, strtY, strtZ);
+                            glVertex3f (finX, finY, finZ);
                             glEnd();
+
+                            // Also draw spheres at end of lines to help identify weight map better
+                            // Want to translate to finX, finY, finZ then draw the sphere...
+                            glPushMatrix();
+                            glTranslatef (finX, finY, finZ);
+                            this->drawNeuron (0.5, LoD, LoD, QColor(int(255 * (normweight)),
+                                                                    0,
+                                                                    int(255 * (1.0f-normweight)), 155)); // Not fully opaque
+                            glPopMatrix();
                         }
 
                     } else {
@@ -831,8 +940,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 void glConnectionWidget::drawNeuron(GLfloat r, int rings, int segments, QColor col)
 {
     // draw a sphere to represent a neuron
-    int i, j;
-    for(i = 0; i <= rings; i++) {
+    for (int i = 0; i <= rings; i++) {
         double rings0 = M_PI * (-0.5 + (double) (i - 1) / rings);
         double z0  = sin(rings0);
         double zr0 =  cos(rings0);
@@ -842,7 +950,7 @@ void glConnectionWidget::drawNeuron(GLfloat r, int rings, int segments, QColor c
         double zr1 = cos(rings1);
 
         glBegin(GL_QUAD_STRIP);
-        for(j = 0; j <= segments; j++) {
+        for (int j = 0; j <= segments; j++) {
             double segment = 2 * M_PI * (double) (j - 1) / segments;
             double x = cos(segment);
             double y = sin(segment);
@@ -1038,9 +1146,17 @@ void glConnectionWidget::setupView()
 
 void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection)
 {
+#define SHOULD_RESET_NRN_INDEX 1 // For now...
+#ifdef SHOULD_RESET_NRN_INDEX // Probably need to check if
+                              // selectedIndex is off the end of the
+                              // population here, but otherwise, keep
+                              // the same selected index. Can be
+                              // useful when comparing two similar
+                              // sized populations
     // reset nrn index etc...
     selectedType = 1;
     selectedIndex = 0;
+#endif
 
     // cancel current selection
     selectedObject.clear();
@@ -1537,7 +1653,10 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
     // check for logs:
     experiment* currentExperiment = data->main->getCurrentExpt();
     if (currentExperiment != (experiment*)0) {
-        addLogs(&data->main->viewGV[currentExperiment]->properties->vLogData);
+        viewGVstruct* vgvs = data->main->viewGV[currentExperiment];
+        if (vgvs != (viewGVstruct*)0) {
+            addLogs(&vgvs->properties->vLogData);
+        }
     }
 
     // force redraw!
@@ -1617,8 +1736,10 @@ void glConnectionWidget::selectedNrnChanged(int index)
     QString type = sender()->property("type").toString();
 
     if (type == "index") {
+        // Then the index box must have called this slot
         selectedIndex = index;
     } else if (type == "from") {
+        // In this case, the source/destination combo box must be the sender
         selectedType = index+1;
     }
 

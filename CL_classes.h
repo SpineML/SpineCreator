@@ -245,6 +245,7 @@ class ParameterInstance
 public:
     QString name;
     dim * dims;
+    // value and indices might be better as a QMap
     QVector < double > value;
     QVector < int > indices;
     ParameterType currType;
@@ -716,6 +717,17 @@ public:
     void migrateComponent(QSharedPointer<Component> newComponent);
     void addInput(QSharedPointer <ComponentInstance>, bool = false);
     void copyParsFrom(QSharedPointer <ComponentInstance> data);
+
+    /*!
+     * This function first tests if this ComponentInstance is an
+     * instance of a LL:WeightUpdate or WeightUpdate component. If
+     * not, it returns a null pointer.
+     *
+     * If SO, then it then finds the Property "w" (or the first
+     * Property if there is none called "w") and returns its
+     * ParameterInstance*
+     */
+    ParameterInstance* getWeightsParameter (void);
 };
 
 #endif // NINEML_STRUCTS_H

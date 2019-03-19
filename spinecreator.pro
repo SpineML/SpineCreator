@@ -179,6 +179,9 @@ macx {
 }
 linux {
     QMAKE_CXXFLAGS += -Wall
+    # To enable OpenMP code (search pragma omp in source):
+    QMAKE_CXXFLAGS += -Wno-unknown-pragmas -march=native -O3 -fopenmp
+    LIBS += -fopenmp
 
     # Installation stuff for Linux. Important for debian builds
     documentation.path = /usr/share/man/man1

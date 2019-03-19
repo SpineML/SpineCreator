@@ -1218,6 +1218,10 @@ void viewVZLayoutEditHandler::drawDeletables()
             hlay->addWidget(new QLabel("Show connections of index "));
             connect(this, SIGNAL(deleteProperties()), hlay->itemAt(0)->widget(), SLOT(deleteLater()));
 
+            // FIXME: Need a way of retaining the index and
+            // source/destination information in the UI when switching
+            // between populations/connections
+            DBG() << "Set up neuron boxes";
             QSpinBox *index = new QSpinBox;
             index->setRange(0, 10000000);
             index->setMaximumWidth(60);
