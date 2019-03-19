@@ -3257,21 +3257,21 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 
     for (int j = 0; j < nList.count(); ++j) {
 
-        // FIXME: This shadows the argument QDomNode& n
-        QDomNode n = nList.item(j);
+        // ln for "list node"
+        QDomNode ln = nList.item(j);
 
         // extract value and dimensions from node
         for (int i = 0; i < this->ParameterList.size(); ++i) {
-            if (n.toElement().attribute("name") == this->ParameterList[i]->name) {
+            if (ln.toElement().attribute("name") == this->ParameterList[i]->name) {
 
-                QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
+                QDomNodeList propVal = ln.toElement().elementsByTagName("FixedValue");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = FixedValue;
                     this->ParameterList[i]->value.resize(1);
                     this->ParameterList[i]->value.fill(0);
                     this->ParameterList[i]->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
                 }
-                propVal = n.toElement().elementsByTagName("UniformDistribution");
+                propVal = ln.toElement().elementsByTagName("UniformDistribution");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = Statistical;
                     this->ParameterList[i]->value.resize(4);
@@ -3281,7 +3281,7 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
                     this->ParameterList[i]->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
                     this->ParameterList[i]->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
                 }
-                propVal = n.toElement().elementsByTagName("NormalDistribution");
+                propVal = ln.toElement().elementsByTagName("NormalDistribution");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = Statistical;
                     this->ParameterList[i]->value.resize(4);
@@ -3292,7 +3292,7 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
                     this->ParameterList[i]->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
                 }
 
-                propVal = n.toElement().elementsByTagName("ValueList");
+                propVal = ln.toElement().elementsByTagName("ValueList");
                 if (propVal.size() == 1) {
                     this->ParameterList[i]->currType = ExplicitList;
                     // now use the Parameter or StateVariable method to read the data in
@@ -3699,7 +3699,6 @@ void ComponentInstance::copyParsFrom(QSharedPointer <ComponentInstance> data) {
     }
 }
 
-//Accessing dims: this->ParameterList[j]->dims->toString()
 ParameterInstance*
 ComponentInstance::getWeightsParameter (void)
 {
@@ -3707,34 +3706,24 @@ ComponentInstance::getWeightsParameter (void)
 
     // tests if this ComponentInstance is an instance of a
     // LL:WeightUpdate or WeightUpdate component.
-    if (this->component->type == "weight_update"
-        && this->ParameterList.size() > 0) {
+    if (this->component->type == "weight_update" && this->ParameterList.size() > 0) {
 
-        DBG() "**I'm a weight update!**";
-        // QVector <ParameterInstance*> ParameterList;
-        int jw = 0; // Do we have a Parameter called w?
+        // Do we have a Parameter called w?
+        int jw = 0;
         for (int j = 0; j < this->ParameterList.size(); ++j) {
-            DBG() << "ParameterList[" << j << "] name is " << this->ParameterList[j]->name;
+            //DBG() << "ParameterList[" << j << "] name is " << this->ParameterList[j]->name;
             if (this->ParameterList[j]->name == "w") {
                 jw = j;
             }
         }
+
         // If there was a parameter called "w" at a position higher
         // than 0, use that, otherwise just use the first Property in
         // the list.
         weightParam = this->ParameterList[jw];
-        DBG() << "value has size " << weightParam->value.size(); // QVector<double>
-        DBG() << "value[0]: " << weightParam->value[0] << " indices[0]: " << weightParam->indices[0];
-        //DBG() << "value[1000]: " << weightParam->value[1000] << " indices[1000]: " << weightParam->indices[1000];
-        //unsigned int lastindex = weightParam->value.size()-1;
-        //DBG() << "value[lastindex]: " << weightParam->value[lastindex] << " indices[lastindex]: " << weightParam->indices[lastindex];
-        // Need each index. Have to get that from the
-        // connections. Perhaps return weightParam pointer and use
-        // that.
+        //DBG() << "value[0]: " << weightParam->value[0] << " indices[0]: " << weightParam->indices[0];
 
-    } else {
-        DBG() << "Not a weight update";
-    }
+    } // else not a weight update
 
     return weightParam;
 }
