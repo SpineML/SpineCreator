@@ -2693,9 +2693,8 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
                 // if we have a delay as well
                 if (PyList_Size(element) > 2 && hasDelay) {
                     outUnPacked.connections[i].metric = PyFloat_AsDouble(PyList_GetItem(element,2));
-                } else {
-                    DBG() << "No delay. PyList_Size(element) = " << PyList_Size(element) << " and hasDelay = " << hasDelay;
-                }
+                } // else no delay
+
                 // if we have a weight as well
                 if (PyList_Size(element) > 3 && hasWeight) {
                     outUnPacked.weights[i] = PyFloat_AsDouble(PyList_GetItem(element,3));
