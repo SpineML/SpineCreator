@@ -461,13 +461,21 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             }
 
             connGenerationMutex->lock();
-            for (int i = 0; i < connections[targNum].size(); ++i) {
+
+            // Only render a few thousand of the black connections lines max
+            int inc = 1;
+            int connectionsToSkip = 1000; // FIXME: Make this a UI parameter
+            if (connections[targNum].size() > connectionsToSkip) {
+                // Compute inc based on number of connections:
+                inc = (int) connections[targNum].size()/connectionsToSkip;
+            }
+            for (int i = 0; i < connections[targNum].size(); i+=inc) {
 
                 if (connections[targNum][i].src < src->layoutType->locations.size()
                     && connections[targNum][i].dst < dst->layoutType->locations.size()) {
 
-                    glLineWidth(1.0*lineScaleFactor);
-                    glColor4f(0.0f, 0.0f, 0.0f, 0.1f);
+                    glLineWidth(2.0*lineScaleFactor);
+                    glColor4f(0.0f, 0.0f, 0.0f, 0.3f);
 
                     // draw in
                     glBegin(GL_TRIANGLES);
@@ -652,7 +660,12 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                             // Also draw spheres at end of lines to help identify weight map better
                             // Want to translate to finX, finY, finZ then draw the sphere...
                             glPushMatrix();
-                            glTranslatef (finX, finY, finZ);
+                            // if source:
+                            if (selectedType == 1) {
+                                glTranslatef (finX, finY, finZ);
+                            } else if (selectedType == 2) {
+                                glTranslatef (strtX, strtY, strtZ);
+                            }
                             this->drawNeuron (0.5, LoD, LoD, QColor(int(255 * (normweight)),
                                                                     0,
                                                                     int(255 * (1.0f-normweight)), 155)); // Not fully opaque
