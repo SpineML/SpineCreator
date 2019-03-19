@@ -1652,7 +1652,10 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
     // check for logs:
     experiment* currentExperiment = data->main->getCurrentExpt();
     if (currentExperiment != (experiment*)0) {
-        addLogs(&data->main->viewGV[currentExperiment]->properties->vLogData);
+        viewGVstruct* vgvs = data->main->viewGV[currentExperiment];
+        if (vgvs != (viewGVstruct*)0) {
+            addLogs(&vgvs->properties->vLogData);
+        }
     }
 
     // force redraw!
