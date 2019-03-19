@@ -378,8 +378,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
         glDisable(GL_LIGHTING);
         glEnable(GL_DEPTH_TEST);
 
-        DBG() << "Doing conns!";
-
         QSharedPointer <population> src;
         QSharedPointer <population> dst;
         connection * conn;
@@ -389,7 +387,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             QSharedPointer <synapse> currTarg = qSharedPointerDynamicCast <synapse> (selectedConns[targNum]);
             CHECK_CAST(currTarg)
             conn = currTarg->connectionType;
-            DBG() << "Set conn (type==synapseObject)"; // And synapses have weight update components
             src = currTarg->proj->source;
             dst = currTarg->proj->destination;
 
@@ -403,7 +400,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
             QSharedPointer<genericInput> currIn = qSharedPointerDynamicCast<genericInput> (selectedConns[targNum]);
             CHECK_CAST(currIn)
             conn = currIn->conn;
-            DBG() << "Set conn (type!=synapseObject)";
             src = qSharedPointerDynamicCast <population> (currIn->source);
             CHECK_CAST(src)
             dst = qSharedPointerDynamicCast <population> (currIn->destination);
@@ -442,7 +438,6 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 
         // check we have the current version of the connectivity
         if (conn->type == CSV) {
-            DBG() << "conn->type is CSV";
             csv_connection * csv_conn = dynamic_cast<csv_connection *> (conn);
             CHECK_CAST(csv_conn)
             if (csv_conn->generator) {
@@ -531,7 +526,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                 double m = 0;
                 double c = 0;
                 if (theweights != (ParameterInstance*)0) {
-                    DBG() << "Redetermining minweight/maxweight...";
+                    //DBG() << "Redetermining minweight/maxweight...";
 #pragma omp parallel for
                     for (int i = 0; i < connections[targNum].size(); ++i) {
 
@@ -561,7 +556,7 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                     double run = maxweight - minweight;
                     m = rise/run;
                     c = 1.0 - m * maxweight;
-                    DBG() << "minweight: " << minweight << " maxweight: " << maxweight << " m: " << m << " c: " << c;
+                    //DBG() << "minweight: " << minweight << " maxweight: " << maxweight << " m: " << m << " c: " << c;
                 }
 
                 for (int i = 0; i < connections[targNum].size(); ++i) {
@@ -608,9 +603,14 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                                 }
                             }
                             glLineWidth(1.5f*lineScaleFactor);
-                            // Scale colour on the weight
 
-                            glColor4f(1.0f-normweight, normweight, 0.0f, 1.0f); // Red to Green? Or blue to yellow?
+                            // Scale colour on the weight. Perhaps use
+                            // two colour maps depending on whether
+                            // the minimum weight was >=0 or <0?  NB:
+                            // Be sure to set the colour in the next
+                            // call to drawNeuron()...
+                            glColor4f(normweight, 0.0f, 1.0f-normweight, 1.0f); // Blue to Red. Or blue to yellow?
+
                             isSelected = true;
                         }
 
@@ -653,9 +653,9 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                             // Want to translate to finX, finY, finZ then draw the sphere...
                             glPushMatrix();
                             glTranslatef (finX, finY, finZ);
-                            this->drawNeuron (0.5, LoD, LoD, QColor(int(255 * (1.0f-normweight)),
-                                                                    int(255 * (normweight)),
-                                                                    0, 155)); // Not fully opaque
+                            this->drawNeuron (0.5, LoD, LoD, QColor(int(255 * (normweight)),
+                                                                    0,
+                                                                    int(255 * (1.0f-normweight)), 155)); // Not fully opaque
                             glPopMatrix();
                         }
 
@@ -1146,9 +1146,16 @@ void glConnectionWidget::setupView()
 
 void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection)
 {
+#ifdef SHOULD_RESET_NRN_INDEX // Probably need to check if
+                              // selectedIndex is off the end of the
+                              // population here, but otherwise, keep
+                              // the same selected index. Can be
+                              // useful when comparing two similar
+                              // sized populations
     // reset nrn index etc...
     selectedType = 1;
     selectedIndex = 0;
+#endif
 
     // cancel current selection
     selectedObject.clear();
@@ -1725,8 +1732,10 @@ void glConnectionWidget::selectedNrnChanged(int index)
     QString type = sender()->property("type").toString();
 
     if (type == "index") {
+        // Then the index box must have called this slot
         selectedIndex = index;
     } else if (type == "from") {
+        // In this case, the source/destination combo box must be the sender
         selectedType = index+1;
     }
 
