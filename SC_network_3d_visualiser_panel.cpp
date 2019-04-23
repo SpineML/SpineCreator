@@ -1159,6 +1159,7 @@ void glConnectionWidget::setupView()
 
 void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection)
 {
+#define SHOULD_RESET_NRN_INDEX 1 // For now...
 #ifdef SHOULD_RESET_NRN_INDEX // Probably need to check if
                               // selectedIndex is off the end of the
                               // population here, but otherwise, keep
