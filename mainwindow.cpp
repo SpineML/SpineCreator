@@ -353,6 +353,7 @@ MainWindow(QWidget *parent) :
     ui->caption->setMinimumSize(ui->caption->size()*RETINA_SUPPORT);
     ui->caption->move(ui->caption->pos()*RETINA_SUPPORT);
 
+    ui->info_area->setMinimumSize(ui->info_area->minimumSize()*RETINA_SUPPORT);
 
 #endif
 
@@ -1712,6 +1713,8 @@ void MainWindow::export_project(const QString& filePath)
     nf << "*.proj";
     QStringList l = d.entryList(nf, QDir::Files);
 
+    // seperators or something means this does not work on Windows - disable for that OS
+#ifndef Q_OS_WIN
     QStringList::const_iterator iter = l.constBegin();
     while (iter != l.constEnd()) {
         QString testPath = d.path() + QDir::separator() + *iter;
@@ -1737,6 +1740,7 @@ void MainWindow::export_project(const QString& filePath)
         }
         ++iter;
     }
+#endif
 
     QDir project_dir(filePath);
     QSettings settings;

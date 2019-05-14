@@ -2063,7 +2063,7 @@ void viewELExptPanelHandler::run()
 #else
         if (simName == "BRAHMS") {
             DBG() << "(Windows (BRAHMS)) Starting with path: " << path;
-            simulator->start(path);
+            simulator->execute(path);
         } else {
             DBG() << "(Windows) Starting with path: " << path << " arg list: " << al;
             simulator->start(path,al);
