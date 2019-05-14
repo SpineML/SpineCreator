@@ -150,6 +150,7 @@ win32:debug {
 }
 win32 {
     DEFINES += WIN_HIDPI_FIX
+    DEFINES +=_hypot=hypot
 }
 linux-g++ {
     # Replace -lpython2.7 in LIBS with this to link against a non-standard Python: -L/home/seb/anaconda3/lib -lpython3.7m

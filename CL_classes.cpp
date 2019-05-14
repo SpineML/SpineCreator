@@ -3305,16 +3305,16 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 
         // extract value and dimensions from node
         for (int i = 0; i < this->StateVariableList.size(); ++i) {
-            if (n.toElement().attribute("name") == this->StateVariableList[i]->name) {
+            if (ln.toElement().attribute("name") == this->StateVariableList[i]->name) {
 
-                QDomNodeList propVal = n.toElement().elementsByTagName("FixedValue");
+                QDomNodeList propVal = ln.toElement().elementsByTagName("FixedValue");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = FixedValue;
                     this->StateVariableList[i]->value.resize(1);
                     this->StateVariableList[i]->value.fill(0);
                     this->StateVariableList[i]->value[0] = propVal.item(0).toElement().attribute("value").toFloat();
                 }
-                propVal = n.toElement().elementsByTagName("UniformDistribution");
+                propVal = ln.toElement().elementsByTagName("UniformDistribution");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = Statistical;
                     this->StateVariableList[i]->value.resize(4);
@@ -3324,7 +3324,7 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
                     this->StateVariableList[i]->value[2] = propVal.item(0).toElement().attribute("maximum").toFloat();
                     this->StateVariableList[i]->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
                 }
-                propVal = n.toElement().elementsByTagName("NormalDistribution");
+                propVal = ln.toElement().elementsByTagName("NormalDistribution");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = Statistical;
                     this->StateVariableList[i]->value.resize(4);
@@ -3335,7 +3335,7 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
                     this->StateVariableList[i]->value[3] = propVal.item(0).toElement().attribute("seed").toFloat();
                 }
 
-                propVal = n.toElement().elementsByTagName("ValueList");
+                propVal = ln.toElement().elementsByTagName("ValueList");
                 if (propVal.size() == 1) {
                     this->StateVariableList[i]->currType = ExplicitList;
                     // now use the Parameter or StateVariable method to read the data in
