@@ -23,8 +23,6 @@
 ****************************************************************************/
 
 
-#include <cmath>
-
 #ifdef _DEBUG
   #undef _DEBUG
   #include <Python.h>
@@ -33,9 +31,18 @@
   #include <Python.h>
 #endif
 
+#include <frameobject.h>
+#if 0
+static PyObject*
+get_caller_info (PyObject* self, PyObject* args)
+{
+    PyCodeObject* code = PyEval_GetFrame()->f_code;
+    return Py_BuildValue("(OO)", code->co_filename, code->co_name);
+}
+#endif
 
+#include <cmath>
 #include <QUuid>
-
 #include <QSettings>
 
 #include "NL_connection.h"
@@ -1245,14 +1252,18 @@ void csv_connection::sortData (void)
     this->setAllData (clist);*/
 }
 
-bool csv_connection::sorttwo (conn a, conn b) {
+bool csv_connection::sorttwo (conn a, conn b)
+{
     if (a.src < b.src) { return true; }
     if (a.src == b.src && a.dst < b.dst) { return true; }
     return false;
 }
 
+// Note that the connection file contains src, dst and delay. The
+// weights may be held in a separate file (an explicitDataBinaryFile).
 void csv_connection::getAllData(QVector<conn>& conns)
 {
+    //DBG() << "csv_connection::getAllData called";
     conns.clear();
 
     QFile f;
@@ -1264,6 +1275,7 @@ void csv_connection::getAllData(QVector<conn>& conns)
 
     QDataStream access(&f);
 
+    //DBG() << "There are " << this->getNumRows() << " rows and " << this->getNumCols() << " cols";
     conns.resize(this->getNumRows());
     int counter = 0;
 
@@ -1528,6 +1540,31 @@ void csv_connection::setData(const QModelIndex & index, float value)
     } else {
         access << (float) value;
     }
+    f.flush();
+    f.close();
+}
+
+void
+csv_connection::setupDataStream (QFile& f, QDataStream& ds)
+{
+    QDir lib_dir = this->getLibDir();
+    f.setFileName(lib_dir.absoluteFilePath(this->uuidFilename));
+    if (!f.open( QIODevice::ReadWrite)) {
+        QMessageBox msgBox;
+        msgBox.setText("csv_connection::setupDataStream(QFile&): Could not open temporary file "
+                       + this->uuidFilename + " for Explicit Connection");
+        msgBox.exec();
+        return;
+    }
+    // get a datastream to serialise the data
+    f.seek(f.size());
+    ds.setDevice(&f);
+    return;
+}
+
+void
+csv_connection::shutdownDataStream (QFile& f)
+{
     f.flush();
     f.close();
 }
@@ -1871,9 +1908,7 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
             connect(weightTarget, SIGNAL(currentIndexChanged(int)), this, SLOT(enableGen(int)));
             // add to the HBoxLayout
             buttons->addWidget(weightTarget);
-
         }
-
 
         // clean up the interface by adding an expanding spacer to the end of the line
         buttons->addStretch();
@@ -1955,11 +1990,11 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                         maxCols = this->parPos[i].y();
                     }
                 }
-            }
+            } // else parNames has no position
         }
         // then add the items that do not have locations
         for (int i = 0; i < this->parNames.size(); ++i) {
-            // if we have a position
+            // if we have NO position
             if (this->parPos[i].x() == -1) {
                 bool inserted = false;
                 int row = 0;
@@ -1995,8 +2030,12 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                             val->setMinimum(-100000000.0);
                             val->setDecimals(5);
                             val->setMinimumWidth(120);
-                            val->setValue(this->parValues[i]);
-                            val->setProperty("par_name", this->parNames[i]);
+                            if (i < this->parValues.length()) {
+                                val->setValue(this->parValues[i]);
+                            }
+                            if (i < this->parNames.length()) {
+                                val->setProperty("par_name", this->parNames[i]);
+                            }
                             val->setProperty("action", "changePythonScriptPar");
                             val->setProperty("ptr", qVariantFromValue((void *) this));
                             val->setFocusPolicy(Qt::StrongFocus);
@@ -2022,7 +2061,7 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                     // increment the row
                     ++row;
                 }
-            }
+            } // else parNames[i] HAS position
         }
     }
 
@@ -2125,6 +2164,63 @@ void pythonscript_connection::configureFromScript(QString script)
                 // add with just the name specified
                 this->parNames.push_back(bits.last().replace(" ", ""));
                 this->parValues.push_back(0);
+                this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
+            }
+        }
+        if (lines[i].contains("#HASDELAY")) {
+            this->hasDelay = true;
+        }
+        if (lines[i].contains("#HASWEIGHT")) {
+            this->hasWeight = true;
+        }
+    }
+    // clear the last par vals
+    this->lastGeneratedParValues.clear();
+    this->lastGeneratedParValues.resize(this->parValues.size());
+    this->lastGeneratedParValues.fill(0);
+}
+
+void pythonscript_connection::configureFromScript(QString script, const QMap<QString, double>& mparams)
+{
+    // add the script to the class variable
+    this->scriptText = script;
+    // store old pars
+    // QStringList oldNames = this->parNames; // Wasn't used
+    // QVector <double> oldValues = this->parValues; // Wasn't used
+    // clear previous pars
+    this->parNames.clear();
+    this->parValues.clear();
+    this->parPos.clear();
+    this->hasWeight = false;
+    this->hasDelay = false;
+    // parse the script for parameter lines
+    QStringList lines = script.split("\n");
+    for (int i = 0; i < lines.size(); ++i) {
+        // find a par tag
+        if (lines[i].contains("#PARNAME=")) {
+            DBG() << "Adding param from #PARNAME=";
+            QStringList bits = lines[i].split("#PARNAME=");
+            // check if the end bit has location info
+            if (bits.last().contains("#LOC=")) {
+                DBG() << "Adding locn from #LOC=";
+                // we have position info - so extract it
+                QStringList posbits = bits.last().split("#LOC=");
+                // pos are separated by commas, so split again
+                QStringList posvals = posbits.last().split(",");
+                if (posvals.size() == 2) {
+                    // correct formatting, add the position to the list
+                    this->parNames.push_back(posbits.first().replace(" ", ""));
+                    // If mparams doesn't contain a value for the
+                    // param name in parNames.back(), then it should
+                    // construct a default double, presumably 0.0:
+                    this->parValues.push_back(mparams[parNames.back()]);
+                    this->parPos.push_back(QPoint(posvals[0].toInt(), posvals[1].toInt()));
+                }
+            } else {
+                // add with just the name specified
+                DBG() << "Adding parName with just name" << bits.last().replace(" ", "") << " and value 0";
+                this->parNames.push_back(bits.last().replace(" ", ""));
+                this->parValues.push_back(mparams[parNames.back()]);
                 this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
             }
         }
@@ -2550,12 +2646,18 @@ struct outputUnPackaged
  */
 outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
 {
+    DBG() << "extractOutput called";
+    // Need array header for this: PyArrayObject* pa = (PyArrayObject*)0;
+    QTime qtimer;
+    qtimer.start();
     // create the structure to hold the unpacked output
     outputUnPackaged outUnPacked;
     if (PyList_Size(output) < 1) {
+        DBG() << "PyList_Size(output) < 1 (it's " << PyList_Size(output) << ")";
         outUnPacked.weights.push_back(-234.56);
         return outUnPacked;
     }
+    DBG() << "PyList_Size(output) = " << PyList_Size(output);
     outUnPacked.connections.resize(PyList_Size(output));
     if (outUnPacked.connections.size()>0) {
         outUnPacked.connections[0].metric = NO_DELAY;
@@ -2568,8 +2670,8 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
         if (PyTuple_Check(element)) {
             // if the tuple has enough items for a src index and dst index
             if (PyTuple_Size(element) > 1) {
-                outUnPacked.connections[i].src = PyInt_AsLong(PyTuple_GetItem(element,0));
-                outUnPacked.connections[i].dst = PyInt_AsLong(PyTuple_GetItem(element,1));
+                outUnPacked.connections[i].src = PyLong_AsLong(PyTuple_GetItem(element,0));
+                outUnPacked.connections[i].dst = PyLong_AsLong(PyTuple_GetItem(element,1));
             }
             // if we have a delay as well
             if (PyTuple_Size(element) > 2 && hasDelay) {
@@ -2581,8 +2683,32 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
             } else {
                 outUnPacked.weights.clear();
             }
+        } else {
+            // Perhaps we got a list of lists, as returned from a nparray.tolist()?
+            if (PyList_Check(element)) {
+                if (PyList_Size(element) > 1) {
+                    outUnPacked.connections[i].src = PyLong_AsLong(PyList_GetItem(element,0));
+                    outUnPacked.connections[i].dst = PyLong_AsLong(PyList_GetItem(element,1));
+                }
+                // if we have a delay as well
+                if (PyList_Size(element) > 2 && hasDelay) {
+                    outUnPacked.connections[i].metric = PyFloat_AsDouble(PyList_GetItem(element,2));
+                } // else no delay
+
+                // if we have a weight as well
+                if (PyList_Size(element) > 3 && hasWeight) {
+                    outUnPacked.weights[i] = PyFloat_AsDouble(PyList_GetItem(element,3));
+                } else {
+                    DBG() << "No weight. PyList_Size(element) = " << PyList_Size(element) << " and hasWeight = " << hasWeight;
+                    outUnPacked.weights.clear();
+                }
+            } else {
+                DBG() << "Element " << i << " was not a tuple OR a list!";
+            }
+
         }
     }
+    DBG() << "Extracted output in " << qtimer.elapsed() << " ms"; // 106 ms for 1.5 million connections total
     return outUnPacked;
 }
 
@@ -2592,30 +2718,31 @@ outputUnPackaged extractOutput(PyObject * output, bool hasDelay, bool hasWeight)
  * \return
  * A simple function to take a string and make it into a Python function which can then be called
  */
-PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
+PyObject* createPyFunc(PyObject* pymod, QString text, QString &errs)
 {
     // get the default dict, so we have access to the built in modules
-    PyObject * main = PyImport_AddModule("__main__");
-    PyObject *pGlobal = PyModule_GetDict(main);
+    PyObject* main = PyImport_AddModule ("__main__");
+    PyObject* pGlobal = PyModule_GetDict (main);
 
-    PyModule_AddStringConstant(pymod, "__file__", "");
+    PyModule_AddStringConstant (pymod, "__file__", "");
 
-    //Get the dictionary object from my module so I can pass this to PyRun_String
-    PyObject * pLocal = PyModule_GetDict(pymod);
+    // Get the dictionary object from my module so I can pass this to PyRun_String
+    PyObject* pLocal = PyModule_GetDict (pymod);
 
-    //Define my function in the newly created module
-    PyObject * pValue = PyRun_String((char *) text.toStdString().c_str(), Py_file_input, pGlobal, pLocal);
+    // Define my function in the newly created module
+    PyObject * pValue = PyRun_String ((char*)text.toStdString().c_str(), Py_file_input, pGlobal, pLocal);
     if (!pValue) {
         PyObject * errtype, * errval, * errtrace;
         PyErr_Fetch(&(errtype), &(errval), &(errtrace));
 
         errs.append("ERROR in PyRun_String ");
+        cerr << "Error in PyRun_String()" << endl;
 
         if (errtype) {
-            errs.append(PyString_AsString(errtype) + QString("(errtype). "));
+            errs.append(PyBytes_AsString(errtype) + QString("(errtype). "));
         }
         if (errval) {
-            errs.append(PyString_AsString(errval) + QString("(errval). "));
+            errs.append(PyBytes_AsString(errval) + QString("(errval). "));
         }
         if (errtrace) {
             PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;
@@ -2628,8 +2755,8 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
     }
     Py_DECREF(pValue);
 
-    //Get a pointer to the function I just defined
-    return PyObject_GetAttrString(pymod, "connectionFunc");
+    // Get a pointer to the function I just defined
+    return PyObject_GetAttrString (pymod, "connectionFunc");
 }
 
 /*!
@@ -2639,6 +2766,8 @@ PyObject * createPyFunc(PyObject * pymod, QString text, QString &errs)
  */
 void pythonscript_connection::generate_connections()
 {
+    QTime qtimer;
+    qtimer.start();
     conns->clear();
 
     this->pythonErrors.clear();
@@ -2681,14 +2810,15 @@ void pythonscript_connection::generate_connections()
         return;
     }
 
-    //Create a new module object
-    PyObject *pymod = PyModule_New("mymod");
+    // Create a new module object
+    PyObject* pymod = PyModule_New ("mymod");
 
     // add the function to Python, and get a PyObject for it
-    PyObject * pyFunc = createPyFunc(pymod, this->scriptText, this->pythonErrors);
+    PyObject* pyFunc = createPyFunc (pymod, this->scriptText, this->pythonErrors);
 
     // check that function creation worked
     if (!pyFunc) {
+        cerr << "createPyFunc returned null" << endl;
         if (pythonErrors.isEmpty()) {
             pythonErrors = "Python Error: Script function is not named connectionFunc.";
         }
@@ -2700,8 +2830,11 @@ void pythonscript_connection::generate_connections()
         return;
     }
 
-    //Call my function
-    PyObject * output = PyObject_CallObject(pyFunc, argsPy);
+    DBG() << "Set up the python function in " << qtimer.restart() << " ms";
+    // Call my function
+    DBG() << "Calling the function";
+    PyObject* output = PyObject_CallObject (pyFunc, argsPy);
+    DBG() << "Script call returned in " << qtimer.restart() << " ms";
     Py_XDECREF(argsPy);
     Py_XDECREF(srcPy);
     Py_XDECREF(dstPy);
@@ -2710,25 +2843,86 @@ void pythonscript_connection::generate_connections()
     Py_XDECREF(pymod);
 
     if (!output) {
-        this->pythonErrors = "Python Error: ";
-        PyObject * errtype, * errval, * errtrace;
-        PyErr_Fetch(&(errtype), &(errval), &(errtrace));
 
-        if (errval) {
-            pythonErrors += PyString_AsString(errval);
-        }
-        if (errtrace) {
-            PyTracebackObject * errtraceObj = (PyTracebackObject *) errtrace;
+        this->pythonErrors = "Python Error:";
+
+        PyObject *pyExcType;
+        PyObject *pyExcValue;
+        PyObject *pyExcTraceback;
+        PyErr_Fetch(&pyExcType, &pyExcValue, &pyExcTraceback);
+        PyErr_NormalizeException(&pyExcType, &pyExcValue, &pyExcTraceback);
+
+        PyObject* str_exc_type = PyObject_Repr(pyExcType);
+        PyObject* pyStr = PyUnicode_AsEncodedString(str_exc_type, "utf-8", "Error ~");
+        pythonErrors += "\nException type: ";
+        pythonErrors += PyBytes_AS_STRING(pyStr);
+
+        PyObject* str_exc_value = PyObject_Repr(pyExcValue);
+        PyObject* pyExcValueStr = PyUnicode_AsEncodedString(str_exc_value, "utf-8", "Error ~");
+        pythonErrors += "\nException value: ";
+        pythonErrors += PyBytes_AsString(pyExcValueStr);
+
+        if (pyExcTraceback) {
+            PyTracebackObject* errtraceObj = (PyTracebackObject*)pyExcTraceback;
+
+            // First display the first error - the error in the connectionFunc script
+            PyObject* tfn = errtraceObj->tb_frame->f_code->co_filename;
+            PyObject* tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
+            QString e1 = QString (PyBytes_AsString(tfnStr));
+            if (e1 == "<string>") {
+                pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of the connection script");
+            } else {
+                pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of ") + e1;
+            }
+
+            // Now display information from the trace stack, using
+            // frameobject.h, which, incidently is not a guaranteed
+            // Python/C API, meaning it may change and this may break
+            // with a future version of Python. Ok for now on Python
+            // 3.
             while (errtraceObj->tb_next) {
                 errtraceObj = errtraceObj->tb_next;
+
+                PyObject* _tfn = errtraceObj->tb_frame->f_code->co_filename;
+                PyObject* _tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
+                PyObject* _tn = errtraceObj->tb_frame->f_code->co_name;
+                PyObject* _tnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
+
+                pythonErrors += QString("\nError on line: ")
+                    + QString::number(errtraceObj->tb_lineno)
+                    + QString(" of ")
+                    + QString (PyBytes_AsString(_tfnStr))
+                    + QString(", function ")
+                    + QString (PyBytes_AsString(_tnStr));
+
+                Py_XDECREF(_tfn);
+                Py_XDECREF(_tfnStr);
+                Py_XDECREF(_tn);
+                Py_XDECREF(_tnStr);
             }
-            pythonErrors += QString("Error found on line:") + QString::number(errtraceObj->tb_lineno);
+
+            Py_XDECREF(tfn);
+            Py_XDECREF(tfnStr);
         }
+
+        Py_XDECREF(pyExcType);
+        Py_XDECREF(pyExcValue);
+        Py_XDECREF(pyExcTraceback);
+
+        Py_XDECREF(str_exc_type);
+        Py_XDECREF(pyStr);
+
+        Py_XDECREF(str_exc_value);
+        Py_XDECREF(pyExcValueStr);
+
         return;
     }
 
+    DBG() << "Checked exceptions in " << qtimer.restart() << " ms";
     // unpack the output into C++ forms
-    outputUnPackaged unpacked = extractOutput(output, this->hasDelay, this->hasWeight);
+    outputUnPackaged unpacked = extractOutput (output, this->hasDelay, this->hasWeight);
+
+    DBG() << "Unpacked output in " << qtimer.restart() << " ms";
 
     // transfer the unpacked output to the local storage location for connections
     if (this->connection_target != NULL) {
@@ -2736,9 +2930,11 @@ void pythonscript_connection::generate_connections()
         DBG() << "pythonscript_connection::generate_connections: setting src/dst popn names in connection_target";
         this->connection_target->setSrcName (this->srcPop->name);
         this->connection_target->setDstName (this->dstPop->name);
-
+        QTime subtimer;
+        subtimer.start();
         // remove existing connections
         this->connection_target->clearData();
+        DBG() << "Cleared target data in " << subtimer.restart() << " ms";
 
         // if no connections are returned
         if (unpacked.connections.size() > 0) {
@@ -2752,20 +2948,23 @@ void pythonscript_connection::generate_connections()
             }
         }
 
+        // Transfer the connection to the local file copy
+        QFile f;
+        QDataStream ds;
+        this->connection_target->setupDataStream (f, ds);
         for (int i = 0; i < unpacked.connections.size(); ++i) {
-
-            // transfer connection
-            this->connection_target->setData(i, 0, unpacked.connections[i].src);
-            this->connection_target->setData(i, 1, unpacked.connections[i].dst);
+            ds << (qint32)unpacked.connections[i].src
+               << (qint32)unpacked.connections[i].dst;
             if (unpacked.connections[0].metric != NO_DELAY) {
-                this->connection_target->setData(i, 2, unpacked.connections[i].metric);
+                ds << (float)unpacked.connections[i].metric;
             }
-            this->connection_target->setNumRows(i);
         }
-
+        this->connection_target->shutdownDataStream (f);
+        DBG() << "Transferred connection data in " << subtimer.restart() << " ms";
         this->connection_target->setNumRows(unpacked.connections.size());
 
     } else {
+        DBG() << "connection_target is null";
         this->connections = unpacked.connections;
         (*this->conns) = unpacked.connections;
     }
@@ -2776,6 +2975,8 @@ void pythonscript_connection::generate_connections()
     // if we get to the end then that's good enough
     this->scriptValidates = true;
     this->setUnchanged(true);
+
+    DBG() << "Returning";
 }
 
 connection * pythonscript_connection::newFromExisting()

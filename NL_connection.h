@@ -307,6 +307,11 @@ public:
      */
     void updateDataForNumCols (int num);
 
+    //! Setup, and return a datastream for the given QFile object.
+    void setupDataStream (QFile& f, QDataStream& ds);
+    //! Shutdown the datastream/QFile.
+    void shutdownDataStream (QFile& f);
+
     void setData (const QModelIndex& index, float value);
     void setData (int, int, float);
 
@@ -512,6 +517,7 @@ public slots:
      * parameters. Is a slot so it can be triggered by events.
      */
     void configureFromScript(QString);
+    void configureFromScript(QString script, const QMap<QString, double>& mparams);
 
     void regenerateConnections();
 

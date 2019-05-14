@@ -152,14 +152,20 @@ win32 {
     DEFINES += WIN_HIDPI_FIX
 }
 linux-g++ {
+    # Replace -lpython2.7 in LIBS with this to link against a non-standard Python: -L/home/seb/anaconda3/lib -lpython3.7m
     LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
     INCLUDEPATH += /usr/include/python2.7
+    # OR:
+    #INCLUDEPATH += /home/seb/anaconda3/include/python3.7m
     INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
     DEPENDPATH += /usr/lib/graphviz
 }
 linux-g++-64 {
+    # for non-standard python replace -lpython2.7 with: -L/home/seb/anaconda3/lib -lpython3.7m
     LIBS += -L/usr/lib/graphviz -L/opt/graphviz/lib -lGLU -lpython2.7
     INCLUDEPATH += /usr/include/python2.7
+    # OR
+    #INCLUDEPATH += /home/seb/anaconda3/include/python3.7m
     INCLUDEPATH += /usr/include/graphviz /opt/graphviz/include
     DEPENDPATH += /usr/lib/graphviz
 }
@@ -173,6 +179,9 @@ macx {
 }
 linux {
     QMAKE_CXXFLAGS += -Wall
+    # To enable OpenMP code (search pragma omp in source):
+    QMAKE_CXXFLAGS += -Wno-unknown-pragmas -march=native -O3 -fopenmp
+    LIBS += -fopenmp
 
     # Installation stuff for Linux. Important for debian builds
     documentation.path = /usr/share/man/man1

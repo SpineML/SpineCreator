@@ -3955,8 +3955,6 @@ void TVGraph::paintEvent(QPaintEvent *)
 
                 QVector < float > curr;
 
-                ++col;
-
                 bool copy = false;
                 // move current index to new vector
                 for (int i = 0; i < vals.size(); i+=2) {
@@ -3978,6 +3976,8 @@ void TVGraph::paintEvent(QPaintEvent *)
                 }
 
                 painter.setPen(cols[col]);
+
+                ++col;
 
                 // create a path using the values
                 QPainterPath path;

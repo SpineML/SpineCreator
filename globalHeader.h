@@ -160,7 +160,20 @@ struct loc {
 struct conn {
     int src;
     int dst;
-    float metric;
+    float metric;  // Used as delay. This data structure reflects the
+                   // connection list file, which contains only src,
+                   // dst and delay. The *weight* is stored in a
+                   // separate file, assocated with the weight update
+                   // for the connection. If it's a csv list of
+                   // connections with weights, then the weights will
+                   // be found in an explicitDataBinaryFile. HOWEVER,
+                   // at the time of writing, SpineCreator code never
+                   // reads those weights in, because it never needed
+                   // to. I would like these weights so that the
+                   // connection patterns can be colour coded using
+                   // the weights, so first I need new code to read
+                   // the weights, possibly storing them in this
+                   // structure in a float weight attribute.
 };
 
 // Used to store the cursor position in the network view

@@ -22,6 +22,14 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
+#ifdef _DEBUG
+  #undef _DEBUG
+  #include <Python.h>
+  #define _DEBUG
+#else
+  #include <Python.h>
+#endif
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "SC_settings.h"
@@ -40,14 +48,6 @@
 #include "SC_projectobject.h"
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QStandardPaths>
-#endif
-
-#ifdef _DEBUG
-  #undef _DEBUG
-  #include <Python.h>
-  #define _DEBUG
-#else
-  #include <Python.h>
 #endif
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -81,24 +81,107 @@ MainWindow(QWidget *parent) :
     // initialise GUI
     ui->setupUi(this);
 
-    // initialise Python
+    // Initialise Python. To run numba cuda code, it's going to be
+    // necessary to set this up with a user-specifiable path to python
+    // and/or modules.
+    //
+    {
+        QSettings pysettings;
+
+        // Check the python/initialisation setting. If it's "true",
+        // then Py_Initialise() must have failed, in which case reset
+        // the python settings for programname and pythonhome to empty
+        // values.
+        QString python_init = pysettings.value ("python/initialisation", "false").toString();
+
+        if (python_init == "true") {
+            // then Py_Initialise failed
+            pysettings.setValue ("python/programname", "");
+            pysettings.setValue ("python/pythonhome", "");
+            DBG() << "Reset python path/home settings as Py_Initialise crashed.";
+
+        } else {
+            // Py_Initialise was ok last time
+            QString py_programname = pysettings.value("python/programname","").toString();
+
+#if PY_MAJOR_VERSION == 2
+            // Python 2.x API requires chars when calling
+            // Py_SetProgramName() etc, Python 3.x requires wchars.
+            char* py_programname_ca;
+            py_programname_ca = new char[py_programname.length() + 1];
+            memcpy (py_programname_ca, py_programname.toStdString().c_str(), py_programname.length());
+#elif PY_MAJOR_VERSION > 2
+            wchar_t* py_programname_ca;
+            py_programname_ca = new wchar_t[py_programname.length() + 1];
+            py_programname.toWCharArray (py_programname_ca);
+#endif
+            py_programname_ca[py_programname.length()] = 0;
+            if (!py_programname.isEmpty()) {
+                // When using Anaconda, set to /home/seb/anaconda3/bin/python
+                Py_SetProgramName (py_programname_ca);
+                DBG() << "Setting user-specified path to the python binary. Warning: SpineCreator may crash if this setting causes Py_Initialise() to fail. In this case, when SpineCreator re-starts it will erase the content of python path and home.";
+            }
+            delete py_programname_ca;
+
+            QString py_pythonhome = pysettings.value("python/pythonhome","").toString();
+#if PY_MAJOR_VERSION == 2
+            char* py_pythonhome_ca;
+            py_pythonhome_ca = new char[py_pythonhome.length() + 1];
+            memcpy (py_pythonhome_ca, py_pythonhome.toStdString().c_str(), py_pythonhome.length());
+#elif PY_MAJOR_VERSION >= 3
+            wchar_t* py_pythonhome_ca;
+            py_pythonhome_ca = new wchar_t[py_pythonhome.length() + 1];
+            py_pythonhome.toWCharArray (py_pythonhome_ca);
+#endif
+            py_pythonhome_ca[py_pythonhome.length()] = 0;
+
+            if (!py_pythonhome.isEmpty()) {
+                // Seb's value for pythonhome to use Anaconda in home
+                // directory with Numba CUDA:
+                // /home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda
+                // NB: If python home is set to garbage, it will cause
+                // Py_Initialize() to abort the program. Hence the
+                // python_init scheme to check and see if we've
+                // initialised and crashed on a previous attempt.
+                Py_SetPythonHome(py_pythonhome_ca);
+                DBG() << "Setting user-specified PYTHONHOME. Warning: SpineCreator may crash if this setting causes Py_Initialise() to fail. In this case, when SpineCreator re-starts it will erase the content of python path and home.";
+            }
+            delete py_pythonhome_ca;
+        }
+
+        pysettings.setValue ("python/initialisation", "true");
+    } // ensure pysettings goes out of scope before Py_Initialize()
+
     Py_Initialize();
 
-   QSettings settings;
+    { // New scope to reset python/initialisation to "false"
+        QSettings pysettings2;
+        pysettings2.setValue ("python/initialisation", "false");
+    }
 
-   // clear all QSettings keys (for testing initial setup)
-   /*QStringList keys = settings.allKeys();
-   foreach (QString key, keys) {
-       qDebug() << key;
-       settings.remove(key);
-   }*/
-   //exit(0);
+#ifdef DEBUG
+    DBG() << "Python interpreter: " << (wchar_t*)Py_GetProgramName();
+    DBG() << "Py_GetPrefix(): " << (wchar_t*)Py_GetPrefix();
+    DBG() << "Py_GetExecPrefix(): " << (wchar_t*)Py_GetExecPrefix();
+    DBG() << "Py_GetPath(): " << (wchar_t*)Py_GetPath();
+    DBG() << "Py_GetProgramFullPath(): " << (wchar_t*)Py_GetProgramFullPath();
+#endif
+
+    QSettings settings;
+
+#if 0
+    // clear all QSettings keys (for testing initial setup)
+    QStringList keys = settings.allKeys();
+    foreach (QString key, keys) {
+        qDebug() << key;
+        settings.remove(key);
+    }
+    exit(0);
+#endif
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
   #ifdef Q_OS_MAC2
-
    settings.setValue("dpi",this->windowHandle()->devicePixelRatio());
-
   #endif
 #endif
 
@@ -112,7 +195,7 @@ MainWindow(QWidget *parent) :
     QString currFileName = settings.value("files/currentFileName", "").toString();
 
     if (currFileName.size() != 0) {
-        qDebug() << "oops - program crashed. Handle? (could be multiple programs open - but that could be a problem too...)";
+        DBG() << "oops - a previous instance of SpineCreator seems to have crashed (currFileName: " << currFileName << ")";
     }
 
     // This really means "is *SpineML_2_BRAHMS* present?".
