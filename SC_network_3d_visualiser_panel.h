@@ -43,26 +43,25 @@ private:
     int seed;
     int a_RNG;
     int c_RNG;
-
 };
 
-struct popLocs {
-
+struct popLocs
+{
     QVector < loc > locations;
     QString name;
     float x;
     float y;
     float z;
-
 };
 
-struct loc3f {
+struct loc3f
+{
     float x;
     float y;
     float z;
 };
 
-class glConnectionWidget : public QGLWidget
+class glConnectionWidget : public QGLWidget // changes to QOpenGLWidget
 {
     Q_OBJECT
 public:
@@ -127,7 +126,7 @@ signals:
     void getNeuronLocationsSrc(QVector < QVector <loc> > *, QVector < QColor > *, QString name = "");
     void updatePanel(QString);
     void setSelectionbyName(QString);
-    
+
 public slots:
     void redraw();
     void redraw(int);
@@ -152,7 +151,7 @@ public slots:
 
 protected:
     void initializeGL();
-    void paintEvent(QPaintEvent *);
+    void paintEvent(QPaintEvent *); // Might become paintGL.
     void resizeGL(int width, int height);
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *);

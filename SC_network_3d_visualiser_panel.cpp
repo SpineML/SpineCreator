@@ -47,7 +47,8 @@
 #include <limits>
 
 
-glConnectionWidget::glConnectionWidget(nl_rootdata * data, QWidget *parent) : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
+glConnectionWidget::glConnectionWidget(nl_rootdata * data, QWidget *parent)
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
 {
     model = (QAbstractTableModel *)0;
     pos = QPointF(0,0);
@@ -223,6 +224,11 @@ void glConnectionWidget::allowRepaint()
     this->repaintAllowed = true;
 }
 
+// The code in paintEvent needs splitting up into a "recompute all"
+// function, which sets up the vertex buffer objects and recomputes
+// all the posititions, and then a render function, which just
+// renders. This'll make it fast & easy to change colours of neurons
+// etc.
 void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 {
     // avoid repainting too fast
@@ -955,11 +961,11 @@ void glConnectionWidget::drawNeuron(GLfloat r, int rings, int segments, QColor c
     // draw a sphere to represent a neuron
     for (int i = 0; i <= rings; i++) {
         double rings0 = M_PI * (-0.5 + (double) (i - 1) / rings);
-        double z0  = sin(rings0);
+        double z0  = sin(rings0)-1;
         double zr0 =  cos(rings0);
 
         double rings1 = M_PI * (-0.5 + (double) i / rings);
-        double z1 = sin(rings1);
+        double z1 = sin(rings1)-1;
         double zr1 = cos(rings1);
 
         glBegin(GL_QUAD_STRIP);
