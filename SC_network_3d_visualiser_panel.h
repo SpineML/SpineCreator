@@ -86,7 +86,9 @@ public:
     void refreshAll();
 
 private:
+    //! Contains OpenGL calls
     void drawNeuron(GLfloat, int, int, QColor);
+    //! Contains OpenGL calls
     void setupView();
     QString currentObjectName;
     QAbstractTableModel * model;
@@ -152,6 +154,7 @@ public slots:
 
 protected:
     void initializeGL();
+    //! Contains OpenGL calls
     void paintEvent(QPaintEvent *); // Might become paintGL.
     void resizeGL(int width, int height);
     void mousePressEvent(QMouseEvent *event);
