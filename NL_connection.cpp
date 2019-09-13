@@ -2855,24 +2855,39 @@ void pythonscript_connection::generate_connections()
         PyObject* str_exc_type = PyObject_Repr(pyExcType);
         PyObject* pyStr = PyUnicode_AsEncodedString(str_exc_type, "utf-8", "Error ~");
         pythonErrors += "\nException type: ";
-        pythonErrors += PyBytes_AS_STRING(pyStr);
-
+        if (pyStr != (PyObject*)0) {
+            pythonErrors += PyBytes_AS_STRING(pyStr);
+        } else {
+            pythonErrors += "unknown";
+        }
         PyObject* str_exc_value = PyObject_Repr(pyExcValue);
         PyObject* pyExcValueStr = PyUnicode_AsEncodedString(str_exc_value, "utf-8", "Error ~");
         pythonErrors += "\nException value: ";
-        pythonErrors += PyBytes_AsString(pyExcValueStr);
+        if (pyExcValueStr != (PyObject*)0) {
+            pythonErrors += PyBytes_AsString(pyExcValueStr);
+        } else {
+            pythonErrors += "unkown";
+        }
 
         if (pyExcTraceback) {
             PyTracebackObject* errtraceObj = (PyTracebackObject*)pyExcTraceback;
 
             // First display the first error - the error in the connectionFunc script
             PyObject* tfn = errtraceObj->tb_frame->f_code->co_filename;
-            PyObject* tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
-            QString e1 = QString (PyBytes_AsString(tfnStr));
-            if (e1 == "<string>") {
-                pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of the connection script");
-            } else {
-                pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of ") + e1;
+            if (tfn != (PyObject*)0) {
+                PyObject* tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
+                QString e1;
+                if (tfnStr != (PyObject*)0) {
+                    e1 = QString (PyBytes_AsString(tfnStr));
+                } else {
+                    e1 = "<string>";
+                }
+                if (e1 == "<string>") {
+                    pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of the connection script");
+                } else {
+                    pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno) + QString(" of ") + e1;
+                }
+                Py_XDECREF(tfnStr);
             }
 
             // Now display information from the trace stack, using
@@ -2888,12 +2903,14 @@ void pythonscript_connection::generate_connections()
                 PyObject* _tn = errtraceObj->tb_frame->f_code->co_name;
                 PyObject* _tnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
 
-                pythonErrors += QString("\nError on line: ")
-                    + QString::number(errtraceObj->tb_lineno)
-                    + QString(" of ")
-                    + QString (PyBytes_AsString(_tfnStr))
-                    + QString(", function ")
-                    + QString (PyBytes_AsString(_tnStr));
+                pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno);
+
+                if (_tfnStr != (PyObject*)0) {
+                    pythonErrors += QString(" of ") + QString (PyBytes_AsString(_tfnStr)) + QString(", ");
+                }
+                if (_tnStr != (PyObject*)0) {
+                    pythonErrors += QString("function ") + QString (PyBytes_AsString(_tnStr));
+                }
 
                 Py_XDECREF(_tfn);
                 Py_XDECREF(_tfnStr);
@@ -2902,7 +2919,6 @@ void pythonscript_connection::generate_connections()
             }
 
             Py_XDECREF(tfn);
-            Py_XDECREF(tfnStr);
         }
 
         Py_XDECREF(pyExcType);
