@@ -49,7 +49,13 @@ python. In my case, this is '/home/seb/anaconda3/bin/python'
 In the box for 'Python home' put the right contents for PYTHONHOME for
 your installed python. For my Anaconda installation, it's:
 
-/home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:/home/seb/anaconda3/lib/python3.7/site-packages:/home/seb/anaconda3/lib/python3.7/site-packages/numba:/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda
+```
+/home/seb/anaconda3:/home/seb/anaconda3/bin:/home/seb/anaconda3/lib:
+/home/seb/anaconda3/lib/python3.7:/home/seb/anaconda3/lib/python3.7/lib-dynload:
+/home/seb/anaconda3/lib/python3.7/site-packages:
+/home/seb/anaconda3/lib/python3.7/site-packages/numba:
+/home/seb/anaconda3/lib/python3.7/site-packages/numba/cuda
+```
 
 You can see there are some site packages listed there. Google up how
 to find out what your PYTHONHOME is set to when you run your installed
