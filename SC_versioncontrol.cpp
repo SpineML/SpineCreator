@@ -157,18 +157,18 @@ bool versionControl::removeFromMercurial(QString file) {
 bool versionControl::commitMercurial(QString message) {
 
     // different OS require different tricks for multi-line messages
-#ifdef Q_OS_LINUX
-    QString moo = "commit -m \"$(echo -e '" + message + "')\"";
+#if defined Q_OS_LINUX
+    QString moo =       "commit -m \"$(echo -e '" + message + "')\"";
     qDebug() << moo;
     return runMercurial("commit -m \"" + message + "\"");
-#endif
-#ifdef Q_OS_MAC
+#elif defined Q_OS_MAC
+    return runMercurial("commit -m \"$(echo -e '" + message + "')\"");
+#elif defined Q_OS_WIN
+    return runMercurial("commit -m \"" + message + "\"");
+#else
+    // Assume Unix-like
     return runMercurial("commit -m \"$(echo -e '" + message + "')\"");
 #endif
-#ifdef Q_OS_WIN
-    return runMercurial("commit -m \"" + message + "\"");
-#endif
-
 }
 
 // remove a file from the repository

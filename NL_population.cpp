@@ -116,7 +116,7 @@ population::readFromXML (QDomElement  &e, QDomDocument *, QDomDocument * meta,
     this->right = this->x+this->size/(2.0)*this->aspect_ratio;
     this->top = this->y+this->size/2.0;
     this->bottom = this->y-this->size/2.0;
-    this->name = name;
+    //this->name = name; // Don't self-assign name
     this->neuronTypeName = "none";
     this->numNeurons = 1;
     this->colour = QColor(0,0,0,255);
