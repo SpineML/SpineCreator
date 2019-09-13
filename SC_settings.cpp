@@ -592,7 +592,11 @@ void settings_window::changePythonHome (void)
     QTextEdit * edit = qobject_cast<QTextEdit *> (sender());
     CHECK_CAST(edit);
     QSettings settings;
-    settings.setValue("python/pythonhome", edit->toPlainText());
+    QString phtext = edit->toPlainText();
+    // For some reason, the text from edit->toPlainText() gets a space at the start, even when
+    // pasting in text with no leading space. So, chomp off any leading/trailing whitespace with
+    // QString::trimmed()
+    settings.setValue("python/pythonhome", phtext.trimmed());
     this->ui->lbl_restartrequest->setText("PYTHONHOME changed. Please re-start SpineCreator to use the new Python environment.");
 }
 
