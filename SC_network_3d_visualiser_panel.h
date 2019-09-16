@@ -29,6 +29,12 @@
 #include "globalHeader.h"
 #include "SC_logged_data.h"
 
+#include <QOpenGLFunctions_4_5_Core>
+#include <QOpenGLWidget>
+#include <QOpenGLContext>
+
+#include "NeuronScene.h"
+
 class RNG
 {
 public:
@@ -55,24 +61,22 @@ struct popLocs
     float z;
 };
 
-struct loc3f
-{
-    float x;
-    float y;
-    float z;
-};
-
-class glConnectionWidget : public QGLWidget // changes to QOpenGLWidget
+class glConnectionWidget : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 {
     Q_OBJECT
 public:
-    explicit glConnectionWidget(nl_rootdata * data, QWidget *parent = 0);
-    QVector <QSharedPointer <population> > selectedPops;
-    QVector < popLocs> pops;
-    QVector <QSharedPointer<systemObject> > selectedConns;
-    QVector < QVector < loc > > locations; // temp readded
-    QVector < QColor > cols;
-    QVector < QVector < conn > > connections;
+    explicit glConnectionWidget (nl_rootdata * data, QWidget *parent = 0);
+    ~glConnectionWidget ();
+    QVector<QSharedPointer<population> > selectedPops;
+    QVector<popLocs> pops;
+    QVector<QSharedPointer<systemObject> > selectedConns;
+
+    // 2D sheet of locations
+    QVector<QVector<loc> > locations; // temp readded
+
+    QVector<QColor> cols;
+    QVector<QVector<conn> > connections;
+
     void setConnectionsModel(QAbstractTableModel *);
     QAbstractTableModel * getConnectionsModel();
     void getConnections();
@@ -81,15 +85,11 @@ public:
     int seed;
     bool popIndicesShown;
     void clear();
-    QPixmap renderImage(int, int);
-    void addLogs(QVector<logData *> *logs);
+    QPixmap renderImage (int, int);
+    void addLogs (QVector<logData*>* logs);
     void refreshAll();
 
 private:
-    //! Contains OpenGL calls
-    void drawNeuron(GLfloat, int, int, QColor);
-    //! Contains OpenGL calls
-    void setupView();
     QString currentObjectName;
     QAbstractTableModel * model;
     QAbstractItemModel * sysModel;
@@ -102,8 +102,8 @@ private:
     Qt::MouseButton button;
     connectionType currProjectionType;
     RNG random;
-    nl_rootdata * data;
-    loc3f loc3Offset;
+    nl_rootdata* data;
+    loc loc3Offset;
     QSharedPointer<systemObject> selectedObject;
     int selectedIndex;
     int selectedType;
@@ -112,35 +112,35 @@ private:
     bool imageSaveMode;
     int imageSaveWidth;
     int imageSaveHeight;
-    QVector < QVector < QColor > > popColours;
-    QVector < logData * > popLogs;
+    QVector<QVector<QColor> > popColours;
+    QVector<logData*> popLogs;
     int currentLogTime;
     int newLogTime;
     QTimer timer;
     bool orthoView;
-    bool repaintAllowed;
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
     QImage renderQImage(int w, int h);
 #endif
 
 signals:
     void currElement(int type, int index);
-    //void reDraw(QPainter*, float, float, float, int, int);
-    void getNeuronLocationsSrc(QVector < QVector <loc> > *, QVector < QColor > *, QString name = "");
+    void getNeuronLocationsSrc (QVector<QVector<loc> >* locn,
+                                QVector<QColor>* colr,
+                                QString name = "");
     void updatePanel(QString);
     void setSelectionbyName(QString);
 
 public slots:
-    void redraw();
-    void redraw(int);
-    void selectionChanged(QItemSelection top, QItemSelection);
+    void redraw ();
+    void redraw (int);
+    void selectionChanged (QItemSelection top, QItemSelection);
     void parsChangedPopulation(double);
     void parsChangedPopulation(int);
     void parsChangedPopulation();
     void parsChangedProjection();
     void parsChangedProjections();
     void typeChanged(int);
-    void drawLocations(QVector <loc> locs);
+    void drawLocations (QVector<loc> locs);
     void clearLocations();
     void connectionDataChanged(QModelIndex, QModelIndex);
     void connectionSelectionChanged(QItemSelection,QItemSelection);
@@ -150,18 +150,54 @@ public slots:
     void updateLogDataTime(int index);
     void updateLogData();
     void toggleOrthoView(bool);
-    void allowRepaint();
 
 protected:
-    void initializeGL();
-    //! Contains OpenGL calls
-    void paintEvent(QPaintEvent *); // Might become paintGL.
-    void resizeGL(int width, int height);
+    //! GL rendering methods
+    //@{
+    void initializeGL() override; // This is an override
+    //! Arrange stuff in memory ready for painting
+    void __paintEvent(QPaintEvent* evnt); // Should call paintGL at end
+    //! Paint stuff
+    void paintGL() override;
+    //! called when view is resized
+    void resizeGL(int width, int height) override;
+
+    //! Set up the "model" where "model" in this context means the
+    //! vertices that make up the triangles which the graphics system
+    //! will render. So in here, we compute spheres, lines and so on.
+    void setupModel (void);
+
+    //! Compute the current view of the model - perform the relevant
+    //! translations and so on. Updates whenever the user moves the
+    //! scene using mouse interaction events.
+    void setPerspective (int w, int h);
+    //@}
+
+    //! UI interaction methods
+    //@{
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
+    //@}
 
+private:
+    //! GL rendering member attributes
+    //@{
+    QOpenGLContext* context;
+    QOpenGLShaderProgram* shaderProg;
+    //! Current rotational state of the neuron view model
+    QQuaternion rotation;
+    //! Mouse presses and rotations
+    QVector2D mousePressPosition;
+    QVector2D mousePosition;
+    QVector3D rotationAxis;
+    //! Projection matrix for the neuron view model
+    QMatrix4x4 projMatrix;
+    //! The "neuron scene" - a scene of spheres representing neurons,
+    //! and lines representing axonal connections between the neurons.
+    NeuronScene* nscene;
+    //@}
 };
 
 #endif // GLCONNECTIONWIDGET_H

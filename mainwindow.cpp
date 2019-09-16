@@ -48,6 +48,7 @@
 #include "SC_projectobject.h"
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <QStandardPaths>
+#include <QSurfaceFormat>
 #endif
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
@@ -1357,9 +1358,20 @@ void MainWindow::initViewVZ()
 
     frame->layout()->addWidget(line2);
 
-    // this is a placeholder for the main widget which will show the 3D view of the populations and connections
-    this->viewVZ.OpenGLWidget = new glConnectionWidget(&this->data);
-    frame->layout()->addWidget(this->viewVZ.OpenGLWidget);
+    // this is a placeholder for the main widget which will show the
+    // 3D view of the populations and connections
+    this->viewVZ.OpenGLWidget = new glConnectionWidget (&this->data);
+
+    // Set the "surface format" for the OpenGLWidget
+    QSurfaceFormat format;
+    format.setDepthBufferSize(24);
+    format.setStencilBufferSize(8);
+    format.setVersion(3, 2);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    // must be called before the widget or its parent window gets shown:
+    this->viewVZ.OpenGLWidget->setFormat(format);
+
+    frame->layout()->addWidget (this->viewVZ.OpenGLWidget);
 
     this->viewVZhandler = new viewVZLayoutEditHandler(&data, &this->viewNL, &this->viewVZ, this);
 

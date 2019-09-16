@@ -25,64 +25,124 @@
 #include "SC_network_3d_visualiser_panel.h"
 #include "SC_connectionmodel.h"
 #include "SC_systemmodel.h"
-#ifdef Q_OS_MAC
-#include "glu.h"
-#else
-#include "GL/glu.h"
+
+#if 0 // Qt OpenGL includes should automatically handle GL includes.
+# ifdef Q_OS_MAC
+#  include "glu.h"
+# else
+#  include "GL/glu.h"
+# endif
 #endif
+
 #include "SC_python_connection_generate_dialog.h"
 #include "mainwindow.h"
+
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
-#include <QOpenGLFramebufferObject>
+# include <QOpenGLFramebufferObject>
 #endif
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-  #define RETINA_SUPPORT 1.0
+# define RETINA_SUPPORT 1.0
 #else
-  #ifndef Q_OS_GLN
-  #define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
-  #else
-  #define RETINA_SUPPORT 1.0
-  #endif
+# ifndef Q_OS_GLN
+#  define RETINA_SUPPORT this->windowHandle()->devicePixelRatio()
+# else
+#  define RETINA_SUPPORT 1.0
+# endif
 #endif
+
 #include <limits>
 
 
-glConnectionWidget::glConnectionWidget(nl_rootdata * data, QWidget *parent)
-    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent)
+glConnectionWidget::glConnectionWidget(nl_rootdata* _data, QWidget *parent)
+    : QOpenGLWidget(parent)
 {
     model = (QAbstractTableModel *)0;
     pos = QPointF(0,0);
     zoomFactor = 1.0;
-    this->data = data;
-    setAutoFillBackground(false);
+    this->data = _data;
+    setAutoFillBackground (false);
     popIndicesShown = false;
     selectedIndex = 0;
     selectedType = 1;
     connGenerationMutex = new QMutex;
     imageSaveMode = false;
 
-    connect(&timer, SIGNAL(timeout()), this, SLOT(updateLogData()));
+    connect (&timer, SIGNAL(timeout()), this, SLOT(updateLogData()));
 
     timer.start(50);
     newLogTime = 0;
     currentLogTime = 0;
 
     orthoView = false;
-    repaintAllowed = true;
 }
 
-void glConnectionWidget::initializeGL()
+glConnectionWidget::~glConnectionWidget()
 {
-    glEnable(GL_MULTISAMPLE);
+    if (this->shaderProg != (QOpenGLShaderProgram*)0) {
+        delete this->shaderProg;
+    }
+    if (this->nscene != (NeuronScene*)0) {
+        delete this->nscene;
+    }
 }
 
-void glConnectionWidget::toggleOrthoView(bool toggle)
+void
+glConnectionWidget::initializeGL()
 {
-    orthoView = toggle;
+    // NB: Before this, have to make sure that when creating the
+    // glConnectionWidget, I set a QSurfaceFormat.
+    initializeOpenGLFunctions();
+
+    glClearColor (0.8f, 0.7f, 0.8f, 1.0f);
+
+    // initialize shaders
+    this->shaderProg = new QOpenGLShaderProgram();
+
+    // Add shaders from files, making it easier to read/modify the shader code
+    if (!this->shaderProg->addShaderFromSourceFile (QOpenGLShader::Vertex,
+                                                    "/home/seb/src/SpineCreator/vshader.glsl")) {
+        close();
+    }
+    if (!this->shaderProg->addShaderFromSourceFile (QOpenGLShader::Fragment,
+                                                    "/home/seb/src/SpineCreator/fshader.glsl")) {
+        close();
+    }
+
+    if (!this->shaderProg->link()) {
+        close();
+    }
+
+    if (!this->shaderProg->bind()) { // bind Shader (Do not release until VAO is created)
+        close();
+    }
+
+    // Enable depth buffer
+    glEnable(GL_DEPTH_TEST);
+
+    // Enable back face culling. That means you can't rotate the object with a rotn matrix though.
+    //glEnable(GL_CULL_FACE);
+
+    // Do we create the scene here? Probably not, as we may not actually HAVE a scene yet
+    // Create the scene. This creates several spherelayers, each containing VAO and VBOs
+    this->nscene = new NeuronScene (this->shaderProg);
+
+    // Now VAOs were created in scene object, release shaderProg
+    this->shaderProg->release();
+
+    // Set the perspective
+    this->setPerspective (this->width(), this->height());
+}
+
+void
+glConnectionWidget::toggleOrthoView (bool toggle)
+{
+    this->orthoView = toggle;
     this->repaint();
 }
 
-void glConnectionWidget::clear()
+void
+glConnectionWidget::clear()
 {
     selectedPops.clear();
     popColours.clear();
@@ -95,12 +155,13 @@ void glConnectionWidget::clear()
 }
 
 // This builds a list of possible logs from the populations in the network.
-void glConnectionWidget::addLogs(QVector < logData * > * logs)
+void
+glConnectionWidget::addLogs (QVector<logData*>* logs)
 {
     // for each population
     for (int i = 0; i < selectedPops.size(); ++i) {
 
-        QSharedPointer <population> pop = selectedPops[i];
+        QSharedPointer<population> pop = selectedPops[i];
 
         // for each analog output port
         for (int j = 0; j < pop->neuronType->component->AnalogPortList.size(); ++j) {
@@ -124,12 +185,14 @@ void glConnectionWidget::addLogs(QVector < logData * > * logs)
     }
 }
 
-void glConnectionWidget::updateLogDataTime(int index)
+void
+glConnectionWidget::updateLogDataTime(int index)
 {
     newLogTime = index;
 }
 
-void glConnectionWidget::updateLogData()
+void
+glConnectionWidget::updateLogData()
 {
     if (newLogTime == currentLogTime)
         return;
@@ -177,14 +240,16 @@ void glConnectionWidget::updateLogData()
     this->repaint();
 }
 
-void glConnectionWidget::resizeGL(int, int)
+void
+glConnectionWidget::resizeGL (int w, int h)
 {
-    // setup the view
-    this->repaint();
+    this->setPerspective (w, h);
 }
 
-void glConnectionWidget::redraw()
+void
+glConnectionWidget::redraw()
 {
+    DBG() << "Called";
     // refetch layout of current selection
     if (selectedObject != NULL) {
         if (selectedObject->type == populationObject) {
@@ -195,11 +260,14 @@ void glConnectionWidget::redraw()
             currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
         }
     }
+    DBG() << "Calling repaint(). Probably needs to be something else";
     this->repaint();
 }
 
-void glConnectionWidget::redraw(int)
+void
+glConnectionWidget::redraw(int)
 {
+    DBG() << "redraw(int) called";
     // we haven't updated the underlying data yet - but we want to show spinbox changes
     // get spinbox ptrs:
     QObject * temp = (QObject *) sender()->property("xptr").value<void *>();
@@ -219,17 +287,49 @@ void glConnectionWidget::redraw(int)
     this->repaint();
 }
 
-void glConnectionWidget::allowRepaint()
+void
+glConnectionWidget::paintGL()
 {
-    this->repaintAllowed = true;
+    DBG() << "paintGL called";
+
+    // Put the render code in here. Here's what's in shapewindow.cpp
+    // in my working example, but I'll probbaly distribute this out
+    // amoungst paintGL etc.
+    const qreal retinaScale = devicePixelRatio();
+    glViewport (0, 0, this->width() * retinaScale, this->height() * retinaScale);
+
+    // Set the perspective from the width/height
+    this->setPerspective (this->width(), this->height());
+
+    // Calculate model view transformation
+    QMatrix4x4 rotmat;
+    rotmat.translate (0.0, 0.0, -3.50); // send backwards into distance
+    rotmat.rotate (this->rotation);
+
+    // Bind shader program...
+    this->shaderProg->bind();
+
+    // Set modelview-projection matrix
+    this->shaderProg->setUniformValue ("mvp_matrix", this->projMatrix* rotmat);
+
+    // Clear color buffer and **also depth buffer**
+    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    this->nscene->render();
+
+    // ...and release the shaderProg
+    this->shaderProg->release();
 }
 
+// AVOID overriding paintEvent. The code goes in paintGL.
+#if 0
 // The code in paintEvent needs splitting up into a "recompute all"
 // function, which sets up the vertex buffer objects and recomputes
 // all the posititions, and then a render function, which just
 // renders. This'll make it fast & easy to change colours of neurons
 // etc.
-void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
+void
+glConnectionWidget::paintEvent (QPaintEvent* /*event*/)
 {
     // avoid repainting too fast
     if (this->repaintAllowed == false) {
@@ -237,8 +337,8 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
     } else {
         this->repaintAllowed = false;
         QTimer * timer = new QTimer(this);
-        timer->setSingleShot(true);
-        connect(timer, SIGNAL(timeout()), this, SLOT(allowRepaint()));
+        timer->setSingleShot (true);
+        connect (timer, SIGNAL(timeout()), this, SLOT(allowRepaint()));
         timer->start(5);
     }
 
@@ -934,11 +1034,13 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
                     //painter.drawText(QRect(winX-(1.0-winZ)*220-20,imageSaveHeight-winY-(1.0-winZ)*220-10,40,20),QString::number(float(i)));
                 } else {
                     if (orthoView) {
-                        painter.drawText(QRect(winX-(1.0-winZ)*220-10.0/zoomVal-10,this->height()-winY-(1.0-winZ)*220-10.0/zoomVal-10,40,20),QString::number(float(i)));
+                        painter.drawText(QRect(winX-(1.0-winZ)*220-10.0/zoomVal-10,
+                                               this->height()-winY-(1.0-winZ)*220-10.0/zoomVal-10,40,20),
+                                         QString::number(float(i)));
                     } else {
-                        painter.drawText(QRect(winX-(1.0-winZ)*300-10.0/zoomVal,this->height()-winY-(1.0-winZ)*300-10.0/zoomVal,40,20),QString::number(float(i)));
-                        //painter.drawText(QRect(winX-(1.0-winZ)*600,this->height()-winY-(1.0-winZ)*600,40,20),QString::number(float(i)));
-                        //painter.drawText(QRect((winX-(1.0-winZ)*220-20),this->height()-(winY-(1.0-winZ)*220+50),40,20),QString::number(float(i)));
+                        painter.drawText(QRect(winX-(1.0-winZ)*300-10.0/zoomVal,
+                                               this->height()-winY-(1.0-winZ)*300-10.0/zoomVal,40,20),
+                                         QString::number(float(i)));
                     }
                 }
                 glPopMatrix();
@@ -955,52 +1057,67 @@ void glConnectionWidget::paintEvent(QPaintEvent * /*event*/)
 
     glPopMatrix();
 }
+#endif // Old paintEvent implementation
 
-void glConnectionWidget::drawNeuron(GLfloat r, int rings, int segments, QColor col)
+void
+glConnectionWidget::setupModel (void)
 {
-    // draw a sphere to represent a neuron
-    for (int i = 0; i <= rings; i++) {
-        double rings0 = M_PI * (-0.5 + (double) (i - 1) / rings);
-        double z0  = sin(rings0)-1;
-        double zr0 =  cos(rings0);
+    DBG() << "Called";
+    // This modifies this->nscene; a NeuronScene object which contains
+    // some number of SphereLayer objects and then I guess the lines
+    // between them. Currently, these are LinesLayer and SphereLayer
+    // objects. These are very closely linked to conn and population
+    // objects and could potentially be members of those classes -
+    // they need to obtain information from those classes in order to
+    // render the locations of the spheres and their colours.
+}
 
-        double rings1 = M_PI * (-0.5 + (double) i / rings);
-        double z1 = sin(rings1)-1;
-        double zr1 = cos(rings1);
+void
+glConnectionWidget::setPerspective (int w, int h)
+{
+    DBG() << "Called. imageSaveMode: " << imageSaveMode << ", orthoView: " << orthoView;
 
-        glBegin(GL_QUAD_STRIP);
-        for (int j = 0; j <= segments; j++) {
-            double segment = 2 * M_PI * (double) (j - 1) / segments;
-            double x = cos(segment);
-            double y = sin(segment);
+#ifdef NEED_IMAGE_SAVEMODE // Perhaps QOpenGLWidget not ideal for image saving?
+    if (this->imageSaveMode) {
+        w = this->imageSaveWidth;
+        h = this->imageSaveHeight;
+    } else {
+        // Do nothing, use passed-in w and h
+    }
+#endif
+    // Reset projection
+    this->projMatrix.setToIdentity();
 
-            glNormal3f(x * zr0, y * zr0, z0);
-            glColor4f(col.redF(), col.greenF(), col.blueF(), col.alphaF());
-            glVertex3f(x * zr0*r, y * zr0*r, z0*r);
-            glNormal3f(x * zr1, y * zr1, z1);
-            glColor4f(col.redF(), col.greenF(), col.blueF(), col.alphaF());
-            glVertex3f(x * zr1*r, y * zr1*r, z1*r);
-        }
-        glEnd();
+    const float zNear = 1.0, zFar = 100000.0, fov = 60.0;
+    if (!this->orthoView) {
+        // Set perspective projection
+        float aspect = float(w) / float(h ? h : 1);
+        this->projMatrix.perspective (fov, aspect, zNear, zFar);
+    } else {
+        // or orthographic like this:
+        float scale = this->zoomFactor * 10.0f;
+        float aspect = float(h) / float(w ? w : 1);
+        this->projMatrix.ortho (-scale, scale, -scale*aspect, scale*aspect, -100, zFar);
     }
 }
 
-void glConnectionWidget::setupView()
+// Becomes two fns: setupModel() and then setPerspective(). The former
+// creates spheres and so on. The latter computes a orthographic or
+// perspective projection view. Most of the setupView() code
+#if 0
+void
+glConnectionWidget::setupView()
 {
-    int width;
-    int height;
-
-    if (imageSaveMode) {
-        width = imageSaveWidth;
-        height = imageSaveHeight;
+    DBG() << "Called";
+    if (this->imageSaveMode) {
+        this->width = this->imageSaveWidth;
+        this->height = this->imageSaveHeight;
     } else {
-        width = this->width()*RETINA_SUPPORT;
-        height = this->height()*RETINA_SUPPORT;
+        this->width = this->width()*RETINA_SUPPORT;
+        this->height = this->height()*RETINA_SUPPORT;
     }
-
-    glViewport(0, 0, width, height);
-
-    glMatrixMode(GL_PROJECTION);
+    glViewport (0, 0, this-width, this->height);
+    glMatrixMode (GL_PROJECTION);
     glLoadIdentity();
 
     // move view
@@ -1015,6 +1132,7 @@ void glConnectionWidget::setupView()
     // preview mode
     if (locations.size() > 0) {
 
+        // Find the maximum extents of the locations.
         loc maxes;
         loc mins;
 
@@ -1049,10 +1167,9 @@ void glConnectionWidget::setupView()
         lengths.y = maxes.y - mins.y;
         lengths.z = maxes.z - mins.z;
 
-        //int maxDir = 0;
         float maxLen = lengths.x;
-        if (lengths.y > maxLen) {maxLen = lengths.y; /*maxDir = 1;*/}
-        if (lengths.z > maxLen) {maxLen = lengths.z; /*maxDir = 2;*/}
+        if (lengths.y > maxLen) { maxLen = lengths.y; }
+        if (lengths.z > maxLen) { maxLen = lengths.z; }
 
         // scale based on max length
         glTranslatef(0,0,-maxLen*1.3);
@@ -1070,10 +1187,9 @@ void glConnectionWidget::setupView()
 
         glTranslatef(-centres.x,-centres.y,-centres.z);
 
-
         glMatrixMode(GL_MODELVIEW);
 
-        return;
+        return; // Case that there is location data
 
     } else if (selectedPops.size() > 0) {
 
@@ -1162,8 +1278,10 @@ void glConnectionWidget::setupView()
 
     glMatrixMode(GL_MODELVIEW);
 }
+#endif
 
-void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection)
+void
+glConnectionWidget::selectionChanged (QItemSelection top, QItemSelection)
 {
 #define SHOULD_RESET_NRN_INDEX 1 // For now...
 #ifdef SHOULD_RESET_NRN_INDEX // Probably need to check if
@@ -1215,7 +1333,7 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection)
         // projections
         for (int j = 0; j < currPop->projections.size(); ++j) {
 
-            QSharedPointer <projection> currProj = qSharedPointerDynamicCast<projection> (currPop->projections[j]);
+            QSharedPointer<projection> currProj = qSharedPointerDynamicCast<projection> (currPop->projections[j]);
             CHECK_CAST(currProj)
 
             if (currProj->getName() == item->name) {
@@ -1238,7 +1356,8 @@ void glConnectionWidget::selectionChanged(QItemSelection top, QItemSelection)
     this->repaint();
 }
 
-void glConnectionWidget::typeChanged(int)
+void
+glConnectionWidget::typeChanged(int)
 {
     QString type = sender()->property("type").toString();
 
@@ -1265,7 +1384,8 @@ void glConnectionWidget::typeChanged(int)
     this->repaint();
 }
 
-void glConnectionWidget::parsChangedPopulation(int value)
+void
+glConnectionWidget::parsChangedPopulation(int value)
 {
     // if the selected population is in the list (i.e. checked) then refetch locations
     for (int i = 0; i < selectedPops.size(); ++i) {
@@ -1289,7 +1409,8 @@ void glConnectionWidget::parsChangedPopulation(int value)
     this->repaint();
 }
 
-void glConnectionWidget::parsChangedPopulation(double)
+void
+glConnectionWidget::parsChangedPopulation(double)
 {
     // if the selected population is in the list (i.e. checked) then refetch locations
     for (int i = 0; i < selectedPops.size(); ++i) {
@@ -1309,7 +1430,8 @@ void glConnectionWidget::parsChangedPopulation(double)
     this->repaint();
 }
 
-void glConnectionWidget::parsChangedPopulation()
+void
+glConnectionWidget::parsChangedPopulation()
 {
     // if the selected population is in the list (i.e. checked) then refetch locations
     for (int i = 0; i < selectedPops.size(); ++i) {
@@ -1329,7 +1451,8 @@ void glConnectionWidget::parsChangedPopulation()
     this->repaint();
 }
 
-void glConnectionWidget::parsChangedProjections()
+void
+glConnectionWidget::parsChangedProjections()
 {
     this->refreshAll();
 
@@ -1366,7 +1489,8 @@ void glConnectionWidget::parsChangedProjections()
     repaint();
 }
 
-void glConnectionWidget::parsChangedProjection()
+void
+glConnectionWidget::parsChangedProjection()
 {
     // can only be the current selection
     if (selectedObject->type == synapseObject || selectedObject->type == inputObject) {
@@ -1421,8 +1545,10 @@ void glConnectionWidget::parsChangedProjection()
 }
 
 // after switching views, check we haven't broken anything!
-void glConnectionWidget::refreshAll()
+void
+glConnectionWidget::refreshAll()
 {
+    DBG() << "Called";
     // check on populations
     for (int i = 0; i < selectedPops.size(); ++i) {
 
@@ -1463,12 +1589,14 @@ void glConnectionWidget::refreshAll()
     }
 }
 
-void glConnectionWidget::setConnType(connectionType cType)
+void
+glConnectionWidget::setConnType(connectionType cType)
 {
     this->currProjectionType = cType;
 }
 
-void glConnectionWidget::drawLocations(QVector <loc> locs)
+void
+glConnectionWidget::drawLocations(QVector <loc> locs)
 {
     // redraw based on a set of location passed in (used for layout previews)
     for (int i = 0; i < locations.size(); ++i) {
@@ -1479,7 +1607,8 @@ void glConnectionWidget::drawLocations(QVector <loc> locs)
     this->repaint();
 }
 
-void glConnectionWidget::clearLocations()
+void
+glConnectionWidget::clearLocations()
 {
     // clear the set of location passed in (used for layout previews)
     for (int i = 0; i < locations.size(); ++i) {
@@ -1488,17 +1617,20 @@ void glConnectionWidget::clearLocations()
     locations.clear();
 }
 
-void glConnectionWidget::setConnectionsModel(QAbstractTableModel * modelIn)
+void
+glConnectionWidget::setConnectionsModel(QAbstractTableModel * modelIn)
 {
     model = modelIn;
 }
 
-QAbstractTableModel * glConnectionWidget::getConnectionsModel()
+QAbstractTableModel *
+glConnectionWidget::getConnectionsModel()
 {
     return model;
 }
 
-void glConnectionWidget::getConnections()
+void
+glConnectionWidget::getConnections()
 {
     if (selectedObject != NULL) {
         if (selectedObject->type == synapseObject) {
@@ -1519,7 +1651,8 @@ void glConnectionWidget::getConnections()
     this->repaint();
 }
 
-void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
+void
+glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
 {
     // this is fired when an item is checked or unchecked
 
@@ -1682,13 +1815,15 @@ void glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
     this->repaint();
 }
 
-void glConnectionWidget::connectionDataChanged(QModelIndex, QModelIndex)
+void
+glConnectionWidget::connectionDataChanged(QModelIndex, QModelIndex)
 {
     // refetch the connections:
     this->getConnections();
 }
 
-void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection)
+void
+glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection)
 {
     this->selectedIndex = 0;
     this->selectedType = 4;
@@ -1696,42 +1831,79 @@ void glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelecti
     this->repaint();
 }
 
-void glConnectionWidget::mousePressEvent(QMouseEvent *event)
+void
+glConnectionWidget::mousePressEvent (QMouseEvent *event)
 {
-    setCursor(Qt::ClosedHandCursor);
+    setCursor (Qt::ClosedHandCursor);
     button = event->button();
-    origPos = event->globalPos();
-    origPos.setX(origPos.x() - pos.x()*100/zoomFactor);
-    origPos.setY(origPos.y() + pos.y()*100/zoomFactor);
-    origRot = event->globalPos();
-    origRot.setX(origRot.x() - rot.x()*2);
-    origRot.setY(origRot.y() - rot.y()*2);
+
+    mousePressPosition = QVector2D(event->localPos());
+
+    this->origPos = event->globalPos();
+    this->origPos.setX (this->origPos.x() - this->pos.x()*100/this->zoomFactor);
+    this->origPos.setY (this->origPos.y() + this->pos.y()*100/this->zoomFactor);
+
+    this->origRot = event->globalPos();
+    this->origRot.setX (this->origRot.x() - this->rot.x()*2);
+    this->origRot.setY (this->origRot.y() - this->rot.y()*2);
 }
 
-void glConnectionWidget::mouseReleaseEvent(QMouseEvent *)
+void
+glConnectionWidget::mouseReleaseEvent (QMouseEvent *)
 {
-    setCursor(Qt::ArrowCursor);
+    setCursor (Qt::ArrowCursor);
 }
 
-void glConnectionWidget::mouseMoveEvent(QMouseEvent *event)
+void
+glConnectionWidget::mouseMoveEvent (QMouseEvent *event)
 {
+    QVector3D n;
+    // Different translate/rotate
     if (button == Qt::LeftButton) {
         if ((QApplication::keyboardModifiers() & Qt::ShiftModifier)) {
-            rot.setX(-(origRot.x() - event->globalPos().x())*0.5);
-            rot.setY(-(origRot.y() - event->globalPos().y())*0.5);
+            // Rotate
+            DBG() << "keymods";
+            this->rot.setX(-(this->origRot.x() - event->globalPos().x())*0.5);
+            this->rot.setY(-(this->origRot.y() - event->globalPos().y())*0.5);
+            n = QVector3D(this->rot.y(), this->rot.x(), 0.0).normalized();
+
         } else {
-            pos.setX(-(origPos.x() - event->globalPos().x())*0.01*zoomFactor);
-            pos.setY((origPos.y() - event->globalPos().y())*0.01*zoomFactor);
+            // Translate?
+            DBG() << "Left button";
+            pos.setX(-(this->origPos.x() - event->globalPos().x())*0.01*this->zoomFactor);
+            pos.setY((this->origPos.y() - event->globalPos().y())*0.01*this->zoomFactor);
+            n = QVector3D(this->pos.y(), this->pos.x(), 0.0).normalized();
+
         }
     }
-    if (button == Qt::RightButton) {
-        rot.setX(-(origRot.x() - event->globalPos().x())*0.5);
-        rot.setY(-(origRot.y() - event->globalPos().y())*0.5);
+    if (button == Qt::RightButton)
+        DBG() << "Right button";{
+        this->rot.setX(-(this->origRot.x() - event->globalPos().x())*0.5);
+        this->rot.setY(-(this->origRot.y() - event->globalPos().y())*0.5);
+        n = QVector3D(this->rot.y(), this->rot.x(), 0.0).normalized();
     }
-    this->repaint();
+
+    // Mouse release position - mouse press position - as from example opengl
+    QVector2D diff = (QVector2D(event->localPos()) - mousePressPosition)/100;
+
+    // Calculate new rotation axis as weighted sum
+    this->rotationAxis = (this->rotationAxis + n).normalized();
+
+    qDebug() << "rotationAxis: " << this->rotationAxis;
+
+    // Update rotation - figure out the maths of this. In shapewindow, it's done in a timer.
+    float rotangle = diff.length();
+    this->rotation = QQuaternion::fromAxisAndAngle(this->rotationAxis, rotangle) * this->rotation;
+
+    this->setPerspective (this->width(), this->height());
+
+    this->repaint(); // Shouldn't need this if we schedule repaints/renders on a timed basis
+    // or?
+    //this->paintGL();
 }
 
-void glConnectionWidget::wheelEvent(QWheelEvent *event)
+void
+glConnectionWidget::wheelEvent(QWheelEvent *event)
 {
     float val = float(event->delta()) / 320.0;
     val = pow(2.0f,val);
@@ -1740,17 +1912,21 @@ void glConnectionWidget::wheelEvent(QWheelEvent *event)
         if (this->zoomFactor < 0.00001) {
             zoomFactor = 1;
         }
+        // FIXME: Set rotation?
+        this->setPerspective (this->width(), this->height());
         this->repaint();
     }
 }
 
-void glConnectionWidget::setPopIndicesShown(bool checkState)
+void
+glConnectionWidget::setPopIndicesShown(bool checkState)
 {
     popIndicesShown = checkState;
     this->repaint();
 }
 
-void glConnectionWidget::selectedNrnChanged(int index)
+void
+glConnectionWidget::selectedNrnChanged(int index)
 {
     QString type = sender()->property("type").toString();
 
@@ -1766,32 +1942,40 @@ void glConnectionWidget::selectedNrnChanged(int index)
 }
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
-QImage glConnectionWidget:: renderQImage(int w, int h)
+QImage
+glConnectionWidget:: renderQImage (int w_img, int h_img)
 {
     // Set the rendering engine to the size of the image to render
     // Also set the format so that the depth buffer will work
     QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::Depth);
-    QOpenGLFramebufferObject qfb(w,h,format);
+    format.setAttachment (QOpenGLFramebufferObject::Depth);
+    QOpenGLFramebufferObject qfb (w_img, h_img, format);
     qfb.bind();
-    // If the frame buffer does not work then return an empty image
-    if(!qfb.isValid()) return(QImage());
-    resizeGL(w,h);
-    // Draw the scene to the buffer
-    glEnable(GL_MULTISAMPLE);
+
+    // If the frame buffer does not work then return an empty image...
+    if(!qfb.isValid()) {
+        return(QImage());
+    }
+
+    // ...otherwise, draw the scene to the buffer and return image
+    this->resizeGL (w_img, h_img);
+    glEnable (GL_MULTISAMPLE);
     this->repaint();
     qfb.release();
-    resizeGL(width(),height());
-    return(qfb.toImage());
+    this->resizeGL (this->width(), this->height());
+    return (qfb.toImage());
 }
 #endif
 
-QPixmap glConnectionWidget::renderImage(int width, int height)
+QPixmap
+glConnectionWidget::renderImage (int width, int height)
 {
     QPixmap pix;
-    imageSaveHeight = height;
-    imageSaveWidth = width;
-    imageSaveMode = true;
+    this->imageSaveHeight = height;
+    this->imageSaveWidth = width;
+    this->imageSaveMode = true;
+
+#if 0 // FIXME if this is for returning PNGs of the screen, needs to be updated to new OpenGL
 
 // renderPixmap is broken in Qt > 5.0 - this fix doesn't currently work correctly, but is better than nothing
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
@@ -1801,9 +1985,9 @@ QPixmap glConnectionWidget::renderImage(int width, int height)
         qDebug() << "renderQimage returned a dud";
     }
 
-    pix = QPixmap::fromImage(img);
+    pix = QPixmap::fromImage (img);
 #else
-    pix = this->renderPixmap(width, height);
+    pix = this->renderPixmap (width, height);
 #endif
 
     QPainter painter(&pix);
@@ -1856,6 +2040,7 @@ QPixmap glConnectionWidget::renderImage(int width, int height)
     }
 
     glPopMatrix();
-    imageSaveMode = false;
+#endif
+    this->imageSaveMode = false;
     return pix;
 }
