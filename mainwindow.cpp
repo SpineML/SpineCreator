@@ -101,6 +101,23 @@ MainWindow(QWidget *parent) :
             pysettings.setValue ("python/pythonhome", "");
             DBG() << "Reset python path/home settings as Py_Initialise crashed.";
 
+            // Most minimal possible? Solution? Maybe go through some possible values?
+            QString py_pythonhome("/home/seb/anaconda3");
+#if PY_MAJOR_VERSION == 2
+            char* py_pythonhome_ca;
+            py_pythonhome_ca = new char[py_pythonhome.length() + 1];
+            memcpy (py_pythonhome_ca, py_pythonhome.toStdString().c_str(), py_pythonhome.length());
+#elif PY_MAJOR_VERSION >= 3
+            wchar_t* py_pythonhome_ca;
+            py_pythonhome_ca = new wchar_t[py_pythonhome.length() + 1];
+            py_pythonhome.toWCharArray (py_pythonhome_ca);
+#endif
+            py_pythonhome_ca[py_pythonhome.length()] = 0;
+            if (!py_pythonhome.isEmpty()) {
+                Py_SetPythonHome(py_pythonhome_ca);
+                DBG() << "Setting minimal? PYTHONHOME (though user specific)";
+            }
+
         } else {
             // Py_Initialise was ok last time
             QString py_programname = pysettings.value("python/programname","").toString();
