@@ -1,15 +1,14 @@
 #include "NeuronScene.h"
 #include <iostream>
-
 using std::cout;
 using std::endl;
+#include <vector>
 using std::vector;
 
-NeuronScene::NeuronScene (QOpenGLShaderProgram *program)
+NeuronScene::NeuronScene (QOpenGLShaderProgram *program, QOpenGLFunctions* fns)
 {
-    // This call is critical:
-    initializeOpenGLFunctions();
     this->shaderProgram = program;
+    this->f = fns;
     this->initialize();
 }
 
@@ -46,13 +45,13 @@ NeuronScene::render (void)
     // for each SphereLayer in this->layers, call render
     vector<SphereLayer*>::iterator sli = this->layers.begin();
     while (sli != this->layers.end()) {
-        (*sli)->render();
+        (*sli)->render (this->f);
         ++sli;
     }
     // Now render each set of lines
     vector<LinesLayer*>::iterator lli = this->lines.begin();
     while (lli != this->lines.end()) {
-        (*lli)->render();
+        (*lli)->render (this->f);
         ++lli;
     }
 }

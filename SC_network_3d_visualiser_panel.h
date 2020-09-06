@@ -29,7 +29,6 @@
 #include "globalHeader.h"
 #include "SC_logged_data.h"
 
-#include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLWidget>
 #include <QOpenGLContext>
 
@@ -61,7 +60,7 @@ struct popLocs
     float z;
 };
 
-class glConnectionWidget : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
+class glConnectionWidget : public QOpenGLWidget
 {
     Q_OBJECT
 public:
@@ -152,9 +151,8 @@ public slots:
     void toggleOrthoView(bool);
 
 protected:
-    //! GL rendering methods
-    //@{
-    void initializeGL() override; // This is an override
+    // GL rendering methods
+    void initializeGL() override;
     //! Arrange stuff in memory ready for painting
     void __paintEvent(QPaintEvent* evnt); // Should call paintGL at end
     //! Paint stuff
@@ -171,20 +169,15 @@ protected:
     //! translations and so on. Updates whenever the user moves the
     //! scene using mouse interaction events.
     void setPerspective (int w, int h);
-    //@}
 
-    //! UI interaction methods
-    //@{
+    // UI interaction methods
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
-    //@}
 
 private:
-    //! GL rendering member attributes
-    //@{
-    QOpenGLContext* context;
+    //! A Qt version of the shader program
     QOpenGLShaderProgram* shaderProg;
     //! Current rotational state of the neuron view model
     QQuaternion rotation;
@@ -197,7 +190,6 @@ private:
     //! The "neuron scene" - a scene of spheres representing neurons,
     //! and lines representing axonal connections between the neurons.
     NeuronScene* nscene;
-    //@}
 };
 
 #endif // GLCONNECTIONWIDGET_H

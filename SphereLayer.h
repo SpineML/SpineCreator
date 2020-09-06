@@ -2,7 +2,7 @@
 #define SPHERELAYER_H_
 
 #include <QtGui/QOpenGLShaderProgram>
-#include <QOpenGLFunctions_4_5_Core>
+#include <QOpenGLFunctions>
 #include <QtGui/QOpenGLBuffer>
 #include <QtGui/QOpenGLVertexArrayObject>
 
@@ -26,39 +26,31 @@ struct coord
 
 // Contains the CPU based computations of a layer of spheres as
 // triangle vertices. Contains the VBOs for the layer of spheres.
-class SphereLayer : protected QOpenGLFunctions_4_5_Core
+class SphereLayer
 {
 public:
     SphereLayer (QOpenGLShaderProgram *program);
     SphereLayer (QOpenGLShaderProgram *program, unsigned int sl, float zpos);
     ~SphereLayer();
 
-    /*!
-     * Do the CPU part of the initialisation - compute vertices etc.
-     */
+    //! Do the CPU part of the initialisation - compute vertices etc.
     void initialize();
 
-    /*!
-     * Render the sphere layer.
-     */
-    void render();
+    //! Render the sphere layer.
+    void render (QOpenGLFunctions* f);
 
-    //! Sphere layer attributes
-    //@{
+    // Sphere layer attributes
     unsigned int sidelen = 150;
     float zposition = 0.0f;
-    //@}
 
-    //! Sphere attributes (hardcoded for now)
-    //@{
+    //! Number of rings in a sphere
     int rings = 6;
-    VBOint segments = 8; // number of segments in a ring
-    float r = 0.04f;  // sphere radius
-    //@}
+    //! number of segments in one of the sphere rings
+    VBOint segments = 8;
+    //! sphere radius
+    float r = 0.04f;
 
-    /*!
-     * A list of the centre coordinates of each sphere in the layer.
-     */
+    //! A list of the centre coordinates of each sphere in the layer.
     vector<coord> sphereCentres;
 
 private:
@@ -78,9 +70,8 @@ private:
 
     QOpenGLVertexArrayObject vao;
 
-    // Sphere calculation - calculate location of triangle vertices
-    // for the sphere. The sphere will be made up of two "caps" of
-    // triangles, and a series of rings.
+    //! Sphere calculation - calculate location of triangle vertices for the sphere. The
+    //! sphere will be made up of two "caps" of triangles, and a series of rings.
     void computeSphere (vector<float> positionOffset, VBOint& idx);
 
     void vertex_push (const float& x, const float& y, const float& z, vector<float>& vp);

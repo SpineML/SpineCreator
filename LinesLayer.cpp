@@ -12,8 +12,6 @@ LinesLayer::LinesLayer(QOpenGLShaderProgram *program, SphereLayer* sph1, SphereL
     , nvbo(QOpenGLBuffer::VertexBuffer)
     , cvbo(QOpenGLBuffer::VertexBuffer)
 {
-    // This call is critical when using a separate "layer" class like this
-    initializeOpenGLFunctions();
     this->shaderProgram = program;
     this->sphereLayer1 = sph1;
     this->sphereLayer2 = sph2;
@@ -125,12 +123,12 @@ LinesLayer::setupVBO (QOpenGLBuffer& buf, vector<float>& dat, const char* arrayn
 }
 
 void
-LinesLayer::render(void)
+LinesLayer::render(QOpenGLFunctions* f)
 {
     this->vao.bind();
     // Make lines thick? large glLineWidth seems to make no difference.
-    glLineWidth (1.0f);
-    glDrawElements (GL_LINES, this->indices.size(), VBO_ENUM_TYPE, 0);
+    f->glLineWidth (1.0f);
+    f->glDrawElements (GL_LINES, this->indices.size(), VBO_ENUM_TYPE, 0);
     this->vao.release();
 }
 

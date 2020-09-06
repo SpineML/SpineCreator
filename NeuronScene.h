@@ -2,7 +2,7 @@
 #define _NEURONSCENE_H_
 
 #include <QtGui/QOpenGLShaderProgram>
-#include <QOpenGLFunctions_4_5_Core>
+#include <QOpenGLFunctions>
 #include <QtGui/QOpenGLBuffer>
 #include <QtGui/QOpenGLVertexArrayObject>
 
@@ -13,10 +13,10 @@ using std::vector;
 #include "LinesLayer.h"
 
 // Contains a scene made up of several spherelayers.
-class NeuronScene : protected QOpenGLFunctions_4_5_Core
+class NeuronScene
 {
 public:
-    NeuronScene (QOpenGLShaderProgram *program);
+    NeuronScene (QOpenGLShaderProgram *program, QOpenGLFunctions* fns);
     ~NeuronScene();
 
     void initialize (void);
@@ -35,6 +35,8 @@ public:
 private:
     //! The scene holds the shaderProgram
     QOpenGLShaderProgram* shaderProgram;
+    //! The scene holds a pointer to the OpenGL functions, which come from the QOpenGLContext.
+    QOpenGLFunctions* f;
 };
 
 #endif // _NEURONSCENE_H_

@@ -12,8 +12,6 @@ SphereLayer::SphereLayer(QOpenGLShaderProgram *program)
     , nvbo(QOpenGLBuffer::VertexBuffer)
     , cvbo(QOpenGLBuffer::VertexBuffer)
 {
-    // This call is critical when using a separate "layer" class like this
-    initializeOpenGLFunctions();
     this->shaderProgram = program;
     this->initialize();
 }
@@ -24,8 +22,6 @@ SphereLayer::SphereLayer(QOpenGLShaderProgram *program, unsigned int sl, float z
     , nvbo(QOpenGLBuffer::VertexBuffer)
     , cvbo(QOpenGLBuffer::VertexBuffer)
 {
-    // This call is critical when using a separate "layer" class like this
-    initializeOpenGLFunctions();
     this->shaderProgram = program;
     this->sidelen = sl;
     this->zposition = zpos;
@@ -258,10 +254,10 @@ void SphereLayer::setupVBO (QOpenGLBuffer& buf, vector<float>& dat, const char* 
     this->shaderProgram->setAttributeBuffer (arrayname, GL_FLOAT, 0, 3);
 }
 
-void SphereLayer::render(void)
+void SphereLayer::render (QOpenGLFunctions* f)
 {
     this->vao.bind();
-    glDrawElements (GL_TRIANGLES, this->indices.size(), VBO_ENUM_TYPE, 0);
+    f->glDrawElements (GL_TRIANGLES, this->indices.size(), VBO_ENUM_TYPE, 0);
     this->vao.release();
 }
 
