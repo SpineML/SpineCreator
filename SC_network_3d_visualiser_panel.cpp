@@ -1004,7 +1004,7 @@ glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
 
         // This computes the difference betwen v0 and v1, the 2 mouse positions in the
         // world space. Note the swap between x and y
-        if (this->rotateModMode) {
+        if ((QApplication::keyboardModifiers() & Qt::ShiftModifier)) {
             // Sort of "rotate the page" mode.
             mouseMoveWorld[2] = -((v1[1]/v1[3]) - (v0[1]/v0[3])) + ((v1[0]/v1[3]) - (v0[0]/v0[3]));
         } else {
