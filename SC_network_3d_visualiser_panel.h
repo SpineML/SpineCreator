@@ -93,11 +93,12 @@ private:
     QAbstractTableModel * model;
     QAbstractItemModel * sysModel;
     QModelIndexList selection;
-    float zoomFactor;
+#if 0
     QPointF pos;
     QPointF rot;
     QPointF origPos;
     QPointF origRot;
+#endif
     Qt::MouseButton button;
     connectionType currProjectionType;
     RNG random;
@@ -157,17 +158,15 @@ protected:
     void __paintEvent(QPaintEvent* evnt); // Should call paintGL at end
     //! Paint stuff
     void paintGL() override;
-    //! called when view is resized
-    void resizeGL(int width, int height) override;
 
-    //! Set up the "model" where "model" in this context means the
-    //! vertices that make up the triangles which the graphics system
-    //! will render. So in here, we compute spheres, lines and so on.
+    //! Set up the "model" where "model" in this context means the vertices that make up
+    //! the triangles which the graphics system will render. So in here, we compute
+    //! spheres, lines and so on.
     void setupModel (void);
 
-    //! Compute the current view of the model - perform the relevant
-    //! translations and so on. Updates whenever the user moves the
-    //! scene using mouse interaction events.
+    //! Compute the current view of the model - perform the relevant translations and so
+    //! on. Updates whenever the user moves the scene using mouse interaction
+    //! events. Call this when the window is resized, too.
     void setPerspective (int w, int h);
 
     // UI interaction methods
@@ -181,14 +180,37 @@ private:
     QOpenGLShaderProgram* shaderProg;
     //! Current rotational state of the neuron view model
     QQuaternion rotation;
-    //! Mouse presses and rotations
+    //! A stored rotation
+    QQuaternion savedRotation;
+    //! The scene *translation*
+    QVector3D scenetrans = QVector3D(0,0,-10);
+    //! The default scene *translation*
+    QVector3D scenetrans_default = QVector3D(0,0,-10);
+    //! How big should the steps in scene translation be when scrolling?
+    float scenetrans_stepsize = 0.1;
+    //! When true, cursor movements induce rotation of scene
+    bool rotateMode = false;
+    //! When true, rotations about the third axis are possible.
+    bool rotateModMode = false;
+    //! When true, cursor movements induce translation of scene
+    bool translateMode = false;
+    //! Screen coordinates of the position of the last mouse press
     QVector2D mousePressPosition;
-    QVector2D mousePosition;
+    //! Current mouse position. Could be a QPointF.
+    QVector2D cursorpos;
+    //! The current rotation axis. World frame?
     QVector3D rotationAxis;
+
     //! Projection matrix for the neuron view model
     QMatrix4x4 projMatrix;
-    //! The "neuron scene" - a scene of spheres representing neurons,
-    //! and lines representing axonal connections between the neurons.
+    //! The inverse projection
+    QMatrix4x4 invproj;
+    //! The scene transformation
+    QMatrix4x4 sceneMatrix;
+    //! The inverse scene transformation
+    QMatrix4x4 invscene;
+    //! The "neuron scene" - a scene of spheres representing neurons, and lines
+    //! representing axonal connections between the neurons.
     NeuronScene* nscene;
 };
 
