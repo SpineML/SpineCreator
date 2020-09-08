@@ -11,6 +11,8 @@
 #include <vector>
 using std::vector;
 
+#include "globalHeader.h" // for struct loc
+
 // Contains the CPU based computations of a layer of liness as
 // triangle vertices. Contains the VBOs for the layer of liness.
 class LinesLayer
@@ -45,7 +47,7 @@ private:
     QOpenGLVertexArrayObject vao;
 
     //! Compute location of three vertices for a triangle that makes up a line.
-    void computeLine (const coord& s1, const coord& s2, VBOint& idx);
+    void computeLine (const loc& s1, const loc& s2, VBOint& idx);
 
     void vertex_push (const float& x, const float& y, const float& z, vector<float>& vp);
 

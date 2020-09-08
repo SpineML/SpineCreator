@@ -32,10 +32,11 @@ LinesLayer::~LinesLayer()
     if (this->cvbo.isCreated()) {
         this->cvbo.destroy();
     }
+    this->vao.destroy();
 }
 
 void
-LinesLayer::computeLine (const coord& s1, const coord& s2, VBOint& idx)
+LinesLayer::computeLine (const loc& s1, const loc& s2, VBOint& idx)
 {
     float dx = (s2.x - s1.x);
     float dy = (s2.y - s1.y);
@@ -62,9 +63,9 @@ LinesLayer::initialize (void)
     VBOint idx = 0;
 
     // For each sphere in sphereLayer1, draw lines to all spheres in sphereLayer2
-    vector<coord>::const_iterator spl1 = this->sphereLayer1->sphereCentres.begin();
+    vector<loc>::const_iterator spl1 = this->sphereLayer1->sphereCentres.begin();
     while (spl1 != this->sphereLayer1->sphereCentres.end()) {
-        vector<coord>::const_iterator spl2 = this->sphereLayer2->sphereCentres.begin();
+        vector<loc>::const_iterator spl2 = this->sphereLayer2->sphereCentres.begin();
         while (spl2 != this->sphereLayer2->sphereCentres.end()) {
             // Draw triangle from *spl1 to *spl2
             this->computeLine (*spl1, *spl2, idx);
@@ -125,6 +126,7 @@ LinesLayer::setupVBO (QOpenGLBuffer& buf, vector<float>& dat, const char* arrayn
 void
 LinesLayer::render(QOpenGLFunctions* f)
 {
+    if (!this->vao.isCreated()) { return; }
     this->vao.bind();
     // Make lines thick? large glLineWidth seems to make no difference.
     f->glLineWidth (1.0f);
