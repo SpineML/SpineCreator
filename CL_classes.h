@@ -668,11 +668,12 @@ public:
 
 
 /*!
- * \brief The ComponentRootInstance class is a virtual class  that represents an instance of the data that is described by a
- * whole component or layout.
- * Put another way when the properties of a whole component are read from the network layer this is the data that is used to
- * instanciate the instances which match the description of the underlying parameter and state variable objects.
+ * \brief The ComponentRootInstance class is a virtual class that represents an instance
+ * of the data that is described by a whole component or layout.
  *
+ * Put another way when the properties of a whole component are read from the network
+ * layer this is the data that is used to instanciate the instances which match the
+ * description of the underlying parameter and state variable objects.
  */
 class ComponentRootInstance
 {
@@ -684,9 +685,8 @@ public:
     ComponentRootInstance(){}
     virtual ~ComponentRootInstance(){}
     /*!
-     * The annotation. Read with
-     * ComponentInstance::import_parameters_from_xml, which may be
-     * passed an option NOT to read annotation information.
+     * The annotation. Read with ComponentInstance::import_parameters_from_xml, which
+     * may be passed an option NOT to read annotation information.
      */
     QString annotation;
 };
