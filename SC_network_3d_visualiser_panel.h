@@ -66,8 +66,10 @@ class glConnectionWidget : public QOpenGLWidget
 public:
     explicit glConnectionWidget (nl_rootdata * data, QWidget *parent = 0);
     ~glConnectionWidget ();
+    //! Populations selected for visualization
     QVector<QSharedPointer<population> > selectedPops;
     QVector<popLocs> pops;
+    //! Connections selected for visualization
     QVector<QSharedPointer<systemObject> > selectedConns;
 
     // 2D sheet of locations
@@ -93,12 +95,6 @@ private:
     QAbstractTableModel * model;
     QAbstractItemModel * sysModel;
     QModelIndexList selection;
-#if 0
-    QPointF pos;
-    QPointF rot;
-    QPointF origPos;
-    QPointF origRot;
-#endif
     Qt::MouseButton button;
     connectionType currProjectionType;
     RNG random;
@@ -131,15 +127,28 @@ signals:
     void setSelectionbyName(QString);
 
 public slots:
-    void redraw ();
+    //! Called when 3D location spinboxes are changes (for x,y,z positions). Subcalls
+    //! redraw(void)
     void redraw (int);
+    void redraw();
+
+    //! Called when the populations/projections selected for visualization changed
     void selectionChanged (QItemSelection top, QItemSelection);
+
+    //! Parameters changed for the population. E.g. the number of neurons was modified
     void parsChangedPopulation(double);
+    //! Parameters changed for the population. E.g. the number of neurons was modified
     void parsChangedPopulation(int);
+    //! Parameters changed for the population. E.g. the number of neurons was modified
     void parsChangedPopulation();
+
+    //! Parameters changed a projection. E.g. as a result of num of neurons in pop. changing
     void parsChangedProjection();
+    //! Parameters changed for projections. E.g. as a result of num of neurons in pop. changing
     void parsChangedProjections();
+
     void typeChanged(int);
+
     void drawLocations (QVector<loc> locs);
     void clearLocations();
     void connectionDataChanged(QModelIndex, QModelIndex);
@@ -149,15 +158,18 @@ public slots:
     void selectedNrnChanged(int);
     void updateLogDataTime(int index);
     void updateLogData();
+
     void toggleOrthoView(bool);
 
 protected:
     // GL rendering methods
     void initializeGL() override;
-    //! Arrange stuff in memory ready for painting
-    void __paintEvent(QPaintEvent* evnt); // Should call paintGL at end
     //! Paint stuff
     void paintGL() override;
+#if 0
+    //! Resize override
+    void resizeGL() override;
+#endif
 
     //! Set up the "model" where "model" in this context means the vertices that make up
     //! the triangles which the graphics system will render. So in here, we compute

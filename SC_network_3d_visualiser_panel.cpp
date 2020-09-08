@@ -123,12 +123,28 @@ glConnectionWidget::initializeGL()
     // Create the scene. This creates several spherelayers, each containing VAO and VBOs
     this->nscene = new NeuronScene (this->shaderProg, f);
 
+    // No point setting up model in initializeGL
+    //DBG() << "setupModel() in initializeGL() function";
+    //this->setupModel();
+
     // Now VAOs were created in scene object, release shaderProg
     this->shaderProg->release();
 
     // Set the perspective
     this->setPerspective (this->width(), this->height());
+
+    // Thought I might need to change this
+    //this->setUpdateBehavior (QOpenGLWidget::PartialUpdate);
+    //DBG() << "Update behaviour: " << this->updateBehavior();
 }
+
+#if 0
+void
+glConnectionWidget::resizeGL()
+{
+    this->setPerspective (this->width(), this->height());
+}
+#endif
 
 void
 glConnectionWidget::toggleOrthoView (bool toggle)
@@ -232,7 +248,6 @@ glConnectionWidget::updateLogData()
         }
     }
 
-    // redraw!
     this->repaint();
 }
 
@@ -274,13 +289,15 @@ glConnectionWidget::redraw(int)
     loc3Offset.y = ySpin->value();
     loc3Offset.z = zSpin->value();
 
+//    this->setupModel();
+    this->paintGL();
     this->repaint();
 }
 
 void
 glConnectionWidget::paintGL()
 {
-    DBG() << "paintGL called";
+    //DBG() << "paintGL called";
 
     QOpenGLFunctions *f = this->context()->functions();
 
@@ -301,7 +318,7 @@ glConnectionWidget::paintGL()
     // model->world for each HexGridVisual.
     sceneview.translate (this->scenetrans); // send backwards into distance
     // And this rotation completes the transition from model to world
-    DBG() << "rotating sceneview by " << this->rotation;
+    //DBG() << "rotating sceneview by " << this->rotation;
     sceneview.rotate (this->rotation);
 
     // Bind shader program...
@@ -326,18 +343,41 @@ glConnectionWidget::setupModel (void)
 {
     DBG() << "Called";
     // This modifies this->nscene; a NeuronScene object which contains
-    // some number of SphereLayer objects and then I guess the lines
+    // some number of SphereLayer objects and then the lines
     // between them. Currently, these are LinesLayer and SphereLayer
     // objects. These are very closely linked to conn and population
     // objects and could potentially be members of those classes -
     // they need to obtain information from those classes in order to
     // render the locations of the spheres and their colours.
+
+    if (this->locations.size() > 0) {
+        DBG() << "FIXME FIXME: Do something about this->locations";
+    }
+
+    // I'll do a complete reset and rebuild whenever anything changes.
+    this->nscene->reset();
+
+    // Create spheres in a SphereLayer for each population & add to NeuronScene.
+    for (int locNum = 0; locNum < this->selectedPops.size(); ++locNum) {
+        QSharedPointer<population> currPop = selectedPops[locNum];
+        SphereLayer* sl = this->nscene->createSphereLayer();
+        DBG() << "Adding spheres for population: " << currPop->name;
+        for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+            if (!i) { DBG() << "Adding at least one sphere!"; }
+            sl->addSphere({currPop->layoutType->locations[i].x,
+                           currPop->layoutType->locations[i].y,
+                           currPop->layoutType->locations[i].z},
+                           0.25f,
+                           {0.6f,0.1f,0.1f});
+        }
+        sl->postInit();
+    }
 }
 
 void
 glConnectionWidget::setPerspective (int w, int h)
 {
-    DBG() << "Called. imageSaveMode: " << imageSaveMode << ", orthoView: " << orthoView;
+    //DBG() << "Called. imageSaveMode: " << imageSaveMode << ", orthoView: " << orthoView;
 
 #ifdef NEED_IMAGE_SAVEMODE // Perhaps QOpenGLWidget not ideal for image saving?
     if (this->imageSaveMode) {
@@ -437,6 +477,7 @@ glConnectionWidget::selectionChanged (QItemSelection top, QItemSelection)
         }
     }
 
+    DBG() << "Maybe setupModel? 10";
     this->repaint();
 }
 
@@ -465,6 +506,7 @@ glConnectionWidget::typeChanged(int)
         // find the locations of the src and dst:
     }
 
+    DBG() << "Maybe setupModel? 9";
     this->repaint();
 }
 
@@ -490,28 +532,14 @@ glConnectionWidget::parsChangedPopulation(int value)
         }
     }
 
-    this->repaint();
+//    this->setupModel();
+    this->paintGL();
 }
 
 void
 glConnectionWidget::parsChangedPopulation(double)
 {
-    // if the selected population is in the list (i.e. checked) then refetch locations
-    for (int i = 0; i < selectedPops.size(); ++i) {
-        if (selectedObject == selectedPops[i]) {
-
-            QSharedPointer <population> currPop = qSharedPointerDynamicCast <population> (selectedObject);
-            QString errs;
-            currPop->layoutType->locations.clear();
-            currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
-            // display all errors
-            if (!errs.isEmpty()) {
-                //this->data->statusBarUpdate(errs,2000);
-            }
-        }
-    }
-
-    this->repaint();
+    this->parsChangedPopulation();
 }
 
 void
@@ -531,7 +559,7 @@ glConnectionWidget::parsChangedPopulation()
             }
         }
     }
-
+    DBG() << "Maybe setupModel? 7";
     this->repaint();
 }
 
@@ -570,7 +598,8 @@ glConnectionWidget::parsChangedProjections()
         }
     }
 
-    repaint();
+//    this->setupModel();
+    this->paintGL();
 }
 
 void
@@ -624,7 +653,9 @@ glConnectionWidget::parsChangedProjection()
             }
         }
 
-        repaint();
+        DBG() << "Maybe setupModel? 5";
+
+        this->repaint();
     }
 }
 
@@ -682,11 +713,9 @@ glConnectionWidget::setConnType(connectionType cType)
 void
 glConnectionWidget::drawLocations(QVector <loc> locs)
 {
-    // redraw based on a set of location passed in (used for layout previews)
-    for (int i = 0; i < locations.size(); ++i) {
-        locations[i].clear();
-    }
-    locations.clear();
+    // redraw based on a set of location passed in (used for layout previews). Called
+    // from a slot
+    this->clearLocations();
     this->locations.push_back(locs);
     this->repaint();
 }
@@ -695,9 +724,7 @@ void
 glConnectionWidget::clearLocations()
 {
     // clear the set of location passed in (used for layout previews)
-    for (int i = 0; i < locations.size(); ++i) {
-        locations[i].clear();
-    }
+    for (int i = 0; i < locations.size(); ++i) { locations[i].clear(); }
     locations.clear();
 }
 
@@ -716,6 +743,7 @@ glConnectionWidget::getConnectionsModel()
 void
 glConnectionWidget::getConnections()
 {
+    DBG() << "Called";
     if (selectedObject != NULL) {
         if (selectedObject->type == synapseObject) {
 
@@ -732,12 +760,14 @@ glConnectionWidget::getConnections()
         }
     }
 
+    DBG() << "Maybe setupModel? 4";
     this->repaint();
 }
 
 void
 glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
 {
+    DBG() << "Called";
     // this is fired when an item is checked or unchecked
 
     for (int i = 0; i < data->populations.size(); ++i) {
@@ -895,8 +925,9 @@ glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
         }
     }
 
-    // force redraw!
-    this->repaint();
+    DBG() << "calling setupModel()";
+    this->setupModel();
+    this->paintGL();
 }
 
 void
@@ -912,6 +943,7 @@ glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection)
     this->selectedIndex = 0;
     this->selectedType = 4;
     this->selection = ((QItemSelectionModel *) sender())->selectedIndexes();
+    DBG() << "Maybe setupModel? 2";
     this->repaint();
 }
 
@@ -960,7 +992,7 @@ glConnectionWidget::mouseReleaseEvent (QMouseEvent* event)
 void
 glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
 {
-    DBG() << "glConnectionWidget::mouseMoveEvent rotateMode: " << (this->rotateMode == true ? "true" : "false");
+    //DBG() << "glConnectionWidget::mouseMoveEvent rotateMode: " << (this->rotateMode == true ? "true" : "false");
 
     // Mouse release position - mouse press position - as from example opengl
     this->cursorpos = QVector2D(event->localPos());
@@ -981,7 +1013,7 @@ glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
         p1_coord[1] -= this->height()/2.0;
         p1_coord[1] /= this->height()/2.0;
 
-        DBG() << "Rotating based on mouse move from " << p0_coord << " to " << p1_coord;
+        //DBG() << "Rotating based on mouse move from " << p0_coord << " to " << p1_coord;
 
         // DON'T update mousePressPosition until user releases button.
         // this->mousePressPosition = this->cursorpos;
@@ -1104,6 +1136,8 @@ glConnectionWidget::selectedNrnChanged(int index)
         // In this case, the source/destination combo box must be the sender
         selectedType = index+1;
     }
+
+    DBG() << "Maybe setupModel? 3";
 
     this->repaint();
 }

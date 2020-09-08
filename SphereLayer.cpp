@@ -6,51 +6,112 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-SphereLayer::SphereLayer(QOpenGLShaderProgram *program)
+SphereLayer::SphereLayer(QOpenGLShaderProgram* program)
     : ivbo(QOpenGLBuffer::IndexBuffer)
     , pvbo(QOpenGLBuffer::VertexBuffer)
     , nvbo(QOpenGLBuffer::VertexBuffer)
     , cvbo(QOpenGLBuffer::VertexBuffer)
 {
+    DBG() << "SphereLayer(QOpenGLShaderProgram*)";
     this->shaderProgram = program;
-    this->initialize();
 }
 
-SphereLayer::SphereLayer(QOpenGLShaderProgram *program, unsigned int sl, float zpos)
+SphereLayer::SphereLayer(QOpenGLShaderProgram* program, unsigned int sl, float zpos)
     : ivbo(QOpenGLBuffer::IndexBuffer)
     , pvbo(QOpenGLBuffer::VertexBuffer)
     , nvbo(QOpenGLBuffer::VertexBuffer)
     , cvbo(QOpenGLBuffer::VertexBuffer)
 {
+    DBG() << "SphereLayer(QOpenGLShaderProgram*, uint, float)";
     this->shaderProgram = program;
     this->sidelen = sl;
     this->zposition = zpos;
-    this->initialize();
+    this->computeSphereGrid();
+    this->postInit();
 }
 
 SphereLayer::~SphereLayer()
 {
-    if (this->ivbo.isCreated()) {
-        this->ivbo.destroy();
+    DBG() << "SphereLayer destructor";
+    QOpenGLContext* ccon = QOpenGLContext::currentContext();
+    DBG() << " (deconstructor) " << ccon;
+
+    if (this->postInitDone == true) {
+        if (this->vao.isCreated()) { this->vao.destroy(); }
+        if (this->numSpheres > 0) {
+            this->sphereCentres.clear();
+            if (this->ivbo.isCreated()) { this->ivbo.destroy(); }
+            if (this->pvbo.isCreated()) { this->pvbo.destroy(); }
+            if (this->nvbo.isCreated()) { this->nvbo.destroy(); }
+            if (this->cvbo.isCreated()) { this->cvbo.destroy(); }
+        }
     }
-    if (this->pvbo.isCreated()) {
-        this->pvbo.destroy();
+}
+
+void SphereLayer::setupVBO (QOpenGLBuffer& buf, vector<float>& dat, const char* arrayname)
+{
+    if (buf.create() == false) {
+        cout << "VBO create failed" << endl;
     }
-    if (this->nvbo.isCreated()) {
-        this->nvbo.destroy();
+    buf.setUsagePattern (QOpenGLBuffer::StaticDraw);
+    if (buf.bind() == false) {
+        cout << "VBO bind failed" << endl;
     }
-    if (this->cvbo.isCreated()) {
-        this->cvbo.destroy();
+    buf.allocate (dat.data(), dat.size() * sizeof(float));
+    // Because array attributes are disabled by default in OpenGL 4:
+    this->shaderProgram->enableAttributeArray (arrayname);
+    this->shaderProgram->setAttributeBuffer (arrayname, GL_FLOAT, 0, 3);
+}
+
+void SphereLayer::postInit()
+{
+    QOpenGLContext* ccon = QOpenGLContext::currentContext();
+    DBG() << ccon;
+
+    this->vao.create();
+    this->vao.bind();
+    if (this->vao.isCreated() == false) {
+        cout << "Uh oh, couldn't bind vao" << endl;
     }
+
+    // Index buffer - slightly different from process to setupVBO
+    // (because no setAttributeBuffer call)
+    if (this->ivbo.create() == false) {
+        cout << "ivbo create failed" << endl;
+    }
+    this->ivbo.setUsagePattern (QOpenGLBuffer::StaticDraw);
+    if (this->ivbo.bind() == false) {
+        cout << "ivbo bind failed" << endl;
+    }
+    int sz = this->indices.size() * sizeof(VBOint);
+    this->ivbo.allocate (this->indices.data(), sz);
+    this->shaderProgram->setAttributeBuffer("ebo", VBO_ENUM_TYPE, 0, 1);
+    this->shaderProgram->enableAttributeArray("ebo");
+
+    // Binds data from the "C++ world" to the OpenGL shader world for
+    // "position", "normalin" and "color"
+    this->setupVBO (this->pvbo, this->vertexPositions, "position");
+    this->setupVBO (this->nvbo, this->vertexNormals, "normalin");
+    this->setupVBO (this->cvbo, this->vertexColors, "color");
+
+    // Release (unbind) all
+    // this->ivbo.release(); // but causes problem to release this..
+    this->pvbo.release();
+    this->nvbo.release();
+    this->cvbo.release();
+
+    this->vao.release();
+
+    this->postInitDone = true;
 }
 
 // pi as a single precision float; used in computeSphere()
 #define M_PI_F 3.14159265f
 
-void SphereLayer::computeSphere (vector<float> positionOffset, VBOint& idx)
+void SphereLayer::computeSphere (vector<float> positionOffset, VBOint& idx, const vector<float>& colour)
 {
     // For each computed sphere, save the coordinate of the centre of the sphere.
-    this->sphereCentres.push_back (coord (positionOffset[0], positionOffset[1], positionOffset[2]));
+    this->sphereCentres.push_back (loc (positionOffset[0], positionOffset[1], positionOffset[2]));
 
     // First cap, draw as a triangle fan, but record indices so that
     // we only need a single call to glDrawElements. NB: each cap is a
@@ -85,11 +146,15 @@ void SphereLayer::computeSphere (vector<float> positionOffset, VBOint& idx)
 
         this->vertex_push (x1 + positionOffset[0], y1 + positionOffset[1], z1 + positionOffset[2], this->vertexPositions);
         this->vertex_push (_x1, _y1, _z1, this->vertexNormals);
+#ifdef BEACHBALL
         if (j%2) {
             this->vertex_push (1.0f, 0.2f, 0.0f, this->vertexColors);
         } else {
             this->vertex_push (0.0f, 0.2f, 1.0f, this->vertexColors);
         }
+#else
+        this->vertex_push (colour[0], colour[1], colour[2], this->vertexColors);
+#endif
 
         if (!firstseg) {
             this->indices.push_back (capMiddle);
@@ -130,12 +195,15 @@ void SphereLayer::computeSphere (vector<float> positionOffset, VBOint& idx)
             // The vertex normal of a vertex that makes up a sphere is
             // just a normal vector in the direction of the vertex.
             this->vertex_push (_x0, _y0, _z0, this->vertexNormals);
+#ifdef BEACHBALL
             if (j%2) {
                 this->vertex_push (1.0f, 0.2f, 0.0f, this->vertexColors);
             } else {
                 this->vertex_push (0.0f, 0.2f, 1.0f, this->vertexColors);
             }
-
+#else
+            this->vertex_push (colour[0], colour[1], colour[2], this->vertexColors);
+#endif
             if (j == (segments - 1)) {
                 // Last vertex is back to the start
                 this->indices.push_back (ringStartIdx++);
@@ -186,7 +254,15 @@ void SphereLayer::computeSphere (vector<float> positionOffset, VBOint& idx)
     //cout << "Number of vertexPositions coords: " << (this->vertexPositions.size()/3) << endl;
 }
 
-void SphereLayer::initialize (void)
+void SphereLayer::addSphere (const vector<float>& posn, const float radius, const vector<float>& colour)
+{
+    this->r = radius;
+    DBG() << "Add sphere at position (" << posn[0] << "," << posn[1] << "," << posn[2] << ")";
+    this->computeSphere (posn, this->idx_int, colour);
+    this->numSpheres++;
+}
+
+void SphereLayer::computeSphereGrid (void)
 {
     // Spacing is set up here. Probably need to have a constructor
     // which passes in spacing, dims or even specific locations of
@@ -199,69 +275,25 @@ void SphereLayer::initialize (void)
     for (unsigned int a = 0; a < this->sidelen; a++) {
         po[0] = -2.5f;
         for (unsigned int b = 0; b < this->sidelen; b++) {
-            this->computeSphere (po, idx);
+            this->computeSphere (po, idx, {0.2f, 0.2f, 0.5f});
             po[0] += spacing;
         }
         po[1] += spacing;
     }
     cout << "After compute sphere " << (this->sidelen*this->sidelen) << " times, we have "
          << (this->vertexPositions.size()/3) << " vertex coordinates" << endl;
-
-    this->vao.create();
-    this->vao.bind();
-
-    // Index buffer - slightly different from process to setupVBO
-    // (because no setAttributeBuffer call)
-    if (this->ivbo.create() == false) {
-        cout << "ivbo create failed" << endl;
-    }
-    this->ivbo.setUsagePattern (QOpenGLBuffer::StaticDraw);
-    if (this->ivbo.bind() == false) {
-        cout << "ivbo bind failed" << endl;
-    }
-    int sz = this->indices.size() * sizeof(VBOint);
-    this->ivbo.allocate (this->indices.data(), sz);
-    this->shaderProgram->setAttributeBuffer("ebo", VBO_ENUM_TYPE, 0, 1);
-    this->shaderProgram->enableAttributeArray("ebo");
-
-    // Binds data from the "C++ world" to the OpenGL shader world for
-    // "position", "normalin" and "color"
-    this->setupVBO (this->pvbo, this->vertexPositions, "position");
-    this->setupVBO (this->nvbo, this->vertexNormals, "normalin");
-    this->setupVBO (this->cvbo, this->vertexColors, "color");
-
-    // Release (unbind) all
-    // this->ivbo.release(); // but causes problem to release this..
-    this->pvbo.release();
-    this->nvbo.release();
-    this->cvbo.release();
-
-    this->vao.release();
-}
-
-void SphereLayer::setupVBO (QOpenGLBuffer& buf, vector<float>& dat, const char* arrayname)
-{
-    if (buf.create() == false) {
-        cout << "VBO create failed" << endl;
-    }
-    buf.setUsagePattern (QOpenGLBuffer::StaticDraw);
-    if (buf.bind() == false) {
-        cout << "VBO bind failed" << endl;
-    }
-    buf.allocate (dat.data(), dat.size() * sizeof(float));
-    // Because array attributes are disabled by default in OpenGL 4:
-    this->shaderProgram->enableAttributeArray (arrayname);
-    this->shaderProgram->setAttributeBuffer (arrayname, GL_FLOAT, 0, 3);
 }
 
 void SphereLayer::render (QOpenGLFunctions* f)
 {
+    if (this->numSpheres == 0) { return; }
     this->vao.bind();
+    //DBG() << "glDrawElements for " << this->indices.size() << " sphere indices";
     f->glDrawElements (GL_TRIANGLES, this->indices.size(), VBO_ENUM_TYPE, 0);
     this->vao.release();
 }
 
-void SphereLayer::vertex_push (const float& x, const float& y, const float& z, vector<float>& vp)
+void SphereLayer::vertex_push (const float& x, const float& y, const float& z, vector<float>& vp) const
 {
     vp.push_back (x);
     vp.push_back (y);

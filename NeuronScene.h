@@ -7,7 +7,6 @@
 #include <QtGui/QOpenGLVertexArrayObject>
 
 #include <vector>
-using std::vector;
 
 #include "SphereLayer.h"
 #include "LinesLayer.h"
@@ -19,13 +18,20 @@ public:
     NeuronScene (QOpenGLShaderProgram *program, QOpenGLFunctions* fns);
     ~NeuronScene();
 
-    void initialize (void);
-    void render (void);
+    //! Deallocate any lines/spheres
+    void reset();
+
+    void initialize();
+
+    void render();
+
+    //! Allocate memory for a new, empty sphere layer.
+    SphereLayer* createSphereLayer();
 
     //! The sphere layers.
-    vector<SphereLayer*> layers;
+    std::vector<SphereLayer*> layers;
     //! The connection layers
-    vector<LinesLayer*> lines;
+    std::vector<LinesLayer*> lines;
 
     //! Sphere attributes common to each spherelayer.
     int rings = 6;
