@@ -45,8 +45,31 @@ public:
     //! sphere radius
     float r = 0.04f;
 
+    //! Something like Spheres1, Spheres2 etc. Or perhaps use Pop name.
+    std::string layerName;
+
     //! A list of the centre coordinates of each sphere in the layer.
     std::vector<loc> sphereCentres;
+
+    //! The model-specific view matrix, used to shift just this layer of spheres wrt to the world
+    QMatrix4x4 viewmatrix;
+    //! The current 3D offset stored in viewmatrix
+    QVector3D offset;
+
+    //! Setter for offset, also updates viewmatrix.
+    void setOffset (const QVector3D& _offset)
+    {
+        this->offset = _offset;
+        this->viewmatrix.setToIdentity();
+        this->viewmatrix.translate (this->offset);
+    }
+
+    //! Shift the offset, also updates viewmatrix.
+    void shiftOffset (const QVector3D& _offset)
+    {
+        this->offset += _offset;
+        this->viewmatrix.translate (this->offset);
+    }
 
 private:
     // Compute positions and colours of vertices for the sphere and
@@ -65,9 +88,9 @@ private:
     std::vector<float> vertexColors;
 
     QOpenGLShaderProgram* shaderProgram;
-
+public:
     QOpenGLVertexArrayObject vao;
-
+private:
     //! How many spheres in this layer?
     size_t numSpheres = 0;
 

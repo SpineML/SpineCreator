@@ -4,15 +4,18 @@ using std::cout;
 using std::endl;
 #include <vector>
 using std::vector;
+#include <algorithm>
 
 NeuronScene::NeuronScene (QOpenGLShaderProgram *program, QOpenGLFunctions* fns)
 {
+    DBG() << "Construct";
     this->shaderProgram = program;
     this->f = fns;
 }
 
 NeuronScene::~NeuronScene()
 {
+    DBG() << "Deconstruct";
     this->reset();
 }
 
@@ -20,15 +23,9 @@ void
 NeuronScene::reset()
 {
     DBG() << "NeuronScene: reset (clear this->layers and this->lines)";
-    vector<SphereLayer*>::iterator sli = this->layers.begin();
-    while (sli != this->layers.end()) {
-        delete ((*sli++));
-    }
+    std::for_each (this->layers.rbegin(), this->layers.rend(), [](const SphereLayer* sli) { delete sli; });
     this->layers.clear();
-    vector<LinesLayer*>::iterator lli = this->lines.begin();
-    while (lli != this->lines.end()) {
-        delete ((*lli++));
-    }
+    std::for_each (this->lines.rbegin(), this->lines.rend(), [](const LinesLayer* lli) { delete lli; });
     this->lines.clear();
 }
 
@@ -37,7 +34,9 @@ NeuronScene::createSphereLayer()
 {
     DBG() << "NeuronScene: create a new sphere layer";
     SphereLayer* l1 = new SphereLayer(this->shaderProgram);
+    size_t sz_b4 = this->layers.size();
     this->layers.push_back (l1);
+    DBG() << "Sphere layer went from size " << sz_b4 << " to " << this->layers.size();
     // Return SphereLayer to caller, ready for them to add spheres to it.
     return l1;
 }
@@ -62,18 +61,7 @@ NeuronScene::initialize()
 void
 NeuronScene::render()
 {
-    // for each SphereLayer in this->layers, call render
-    vector<SphereLayer*>::iterator sli = this->layers.begin();
-    while (sli != this->layers.end()) {
-        //DBG() << "NeuronScene: Render some spheres...";
-        (*sli)->render (this->f);
-        ++sli;
-    }
-    // Now render each set of lines
-    vector<LinesLayer*>::iterator lli = this->lines.begin();
-    while (lli != this->lines.end()) {
-        //DBG() << "NeuronScene: Render some lines...";
-        (*lli)->render (this->f);
-        ++lli;
-    }
+    DBG() << "NeuronScene: Render " << this->layers.size() << " layers in context " << QOpenGLContext::currentContext();
+    std::for_each (this->layers.begin(), this->layers.end(), [this](SphereLayer* sli) { sli->render(f); });
+    std::for_each (this->lines.begin(), this->lines.end(), [this](LinesLayer* lli) { lli->render(f); });
 }

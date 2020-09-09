@@ -88,7 +88,7 @@ struct viewVZstruct {
     csv_connectionModel * connMod;
     QTableView * connTable;
     QWidget * panel;
-    glConnectionWidget * OpenGLWidget;
+    glConnectionWidget * OpenGLWidget; // The OpenGL drawing of the neural network - spheres, lines etc
     QTreeView * treeView;
     QLabel * mathOut;
     QSharedPointer<NineMLLayout> layout;

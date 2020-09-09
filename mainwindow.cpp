@@ -2557,13 +2557,13 @@ void MainWindow::viewNLshow()
 
 void MainWindow::viewVZshow()
 {
-
     if (viewVZ.OpenGLWidget == NULL) {
         initViewVZ();
         connectViewVZ();
     }
 
     // correct issues due to editing
+    DBG() << "Calling viewVZ.OpenGLWidget->refreshAll()";
     viewVZ.OpenGLWidget->refreshAll();
 
     // reset all view buttons to 'inactive' look
@@ -2596,22 +2596,34 @@ void MainWindow::viewVZshow()
     // clear away old stuff
     this->viewVZ.currObject = (QSharedPointer<systemObject>)0;
     this->viewVZhandler->clearAll();
+    DBG() << "Calling viewVZ.OpenGLWidget->clear()";
     this->viewVZ.OpenGLWidget->clear();
 
     // configure TreeView
     if (!(viewVZ.sysModel == NULL)) {
         delete viewVZ.sysModel;
     }
-    viewVZ.sysModel = new systemmodel(&data);
-    viewVZ.treeView->setModel(viewVZ.sysModel);
-    // connect for function
-    connect(viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), viewVZhandler, SLOT(selectionChanged(QItemSelection,QItemSelection)));
-    connect(viewVZ.treeView->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this->viewVZ.OpenGLWidget, SLOT(selectionChanged(QItemSelection,QItemSelection)));
+    this->viewVZ.sysModel = new systemmodel(&data);
+    this->viewVZ.treeView->setModel(viewVZ.sysModel);
 
+    // connect slots to signals
+    connect (this->viewVZ.treeView->selectionModel(),
+             SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+             viewVZhandler,
+             SLOT(selectionChanged(QItemSelection,QItemSelection)));
 
-    connect(viewVZ.sysModel, SIGNAL(dataChanged(QModelIndex,QModelIndex)), this->viewVZ.OpenGLWidget, SLOT(sysSelectionChanged(QModelIndex,QModelIndex)));
+    connect(this->viewVZ.treeView->selectionModel(),
+            SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
+            this->viewVZ.OpenGLWidget,
+            SLOT(selectionChanged(QItemSelection,QItemSelection)));
 
-    // ok, there are three possibilities. Current base selection is a population, or a projection, or nothing is selected / there is nothing to select
+    connect(this->viewVZ.sysModel,
+            SIGNAL(dataChanged(QModelIndex,QModelIndex)),
+            this->viewVZ.OpenGLWidget,
+            SLOT(sysSelectionChanged(QModelIndex,QModelIndex)));
+
+    // ok, there are three possibilities. Current base selection is a population, or a
+    // projection, or nothing is selected / there is nothing to select
 
     // menus
     ui->menuBar->clear();
@@ -2631,6 +2643,7 @@ void MainWindow::viewVZshow()
     // put the tree state back
     viewVZhandler->restoreTreeState();
 
+    DBG() << "Direct call to sysSelectionChainged()";
     viewVZ.OpenGLWidget->sysSelectionChanged(QModelIndex(), QModelIndex());
 
     QApplication::processEvents( QEventLoop::ExcludeUserInputEvents );

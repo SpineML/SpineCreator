@@ -25,15 +25,6 @@
 #include "SC_network_3d_visualiser_panel.h"
 #include "SC_connectionmodel.h"
 #include "SC_systemmodel.h"
-
-#if 0 // Qt OpenGL includes should automatically handle GL includes.
-# ifdef Q_OS_MAC
-#  include "glu.h"
-# else
-#  include "GL/glu.h"
-# endif
-#endif
-
 #include "SC_python_connection_generate_dialog.h"
 #include "mainwindow.h"
 
@@ -52,7 +43,6 @@
 #endif
 
 #include <limits>
-
 
 glConnectionWidget::glConnectionWidget(nl_rootdata* _data, QWidget *parent)
     : QOpenGLWidget(parent)
@@ -89,23 +79,25 @@ void
 glConnectionWidget::initializeGL()
 {
     if (this->context()->isValid()) {
-        qDebug() << "Context is valid.";
+        DBG() << "Context is valid.";
     } else {
-        qDebug() << "Context is INvalid.";
+        DBG() << "Context is INvalid.";
     }
     QOpenGLFunctions *f = this->context()->functions();
     f->glClearColor (0.8f, 0.7f, 0.8f, 1.0f);
 
     // initialize shaders
-    this->shaderProg = new QOpenGLShaderProgram();
+    this->shaderProg = new QOpenGLShaderProgram(this);
 
     // Add shaders from files, making it easier to read/modify the shader code
     if (!this->shaderProg->addShaderFromSourceFile (QOpenGLShader::Vertex,
                                                     "/home/seb/src/SpineCreator/vshader.glsl")) {
+        DBG() << "Failed to open vertex shader glsl";
         close();
     }
     if (!this->shaderProg->addShaderFromSourceFile (QOpenGLShader::Fragment,
                                                     "/home/seb/src/SpineCreator/fshader.glsl")) {
+        DBG() << "Failed to open fragment shader glsl";
         close();
     }
 
@@ -124,13 +116,12 @@ glConnectionWidget::initializeGL()
     this->nscene = new NeuronScene (this->shaderProg, f);
 
     // No point setting up model in initializeGL
-    //DBG() << "setupModel() in initializeGL() function";
-    //this->setupModel();
+    this->setupModelRequired = true;
 
-    // Now VAOs were created in scene object, release shaderProg
+    // Now VAOs were created in scene objects, release shaderProg
     this->shaderProg->release();
 
-    // Set the perspective
+    // Set the perspective. Might need retina factor here.
     this->setPerspective (this->width(), this->height());
 
     // Thought I might need to change this
@@ -138,19 +129,56 @@ glConnectionWidget::initializeGL()
     //DBG() << "Update behaviour: " << this->updateBehavior();
 }
 
-#if 0
 void
-glConnectionWidget::resizeGL()
+glConnectionWidget::resizeGL (int w, int h)
 {
-    this->setPerspective (this->width(), this->height());
+    this->setPerspective (w, h);
 }
-#endif
+
+void
+glConnectionWidget::paintGL()
+{
+    //DBG() << "paintGL called " << QOpenGLContext::currentContext() << " or this->: " << this->context();
+
+    if (this->setupModelRequired == true) {
+        DBG() << "Calling setupModel " << QOpenGLContext::currentContext();
+        this->setupModel();
+    } else {
+        DBG() << "No need to setupModel " << QOpenGLContext::currentContext();
+    }
+
+    QOpenGLFunctions *f = this->context()->functions();
+    // rotmat is the translation/rotation for the entire scene.
+    //
+    // Calculate model view transformation - transforming from "model space" to "worldspace".
+    QMatrix4x4 sceneview;
+    // This line translates from model space to world space.
+    sceneview.translate (this->scenetrans); // send backwards into distance
+    // And this rotation completes the transition from model to world
+    //DBG() << "rotating sceneview by " << this->rotation;
+    sceneview.rotate (this->rotation);
+
+    // Bind shader program...
+    this->shaderProg->bind();
+
+    // Clear color buffer and **also depth buffer**
+    f->glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Set modelview-projection matrix. Don't have a viewmatrix to postmultiply (projMatrix * sceneview).
+    this->shaderProg->setUniformValue ("mvp_matrix", this->projMatrix * sceneview);
+
+    // Call the NeuronScene's render method
+    this->nscene->render();
+
+    // Finally, release the shaderProg
+    this->shaderProg->release();
+}
 
 void
 glConnectionWidget::toggleOrthoView (bool toggle)
 {
     this->orthoView = toggle;
-    this->repaint();
+    this->update();
 }
 
 void
@@ -206,8 +234,7 @@ glConnectionWidget::updateLogDataTime(int index)
 void
 glConnectionWidget::updateLogData()
 {
-    if (newLogTime == currentLogTime)
-        return;
+    if (newLogTime == currentLogTime) { return; }
 
     currentLogTime = newLogTime;
 
@@ -215,17 +242,14 @@ glConnectionWidget::updateLogData()
     for (int i = 0; i < popLogs.size(); ++i) {
 
         // skip where there is no log
-        if (popLogs[i] == NULL)
-            continue;
+        if (popLogs[i] == NULL) { continue; }
 
         // get a row
         QVector < double > logValues = popLogs[i]->getRow(currentLogTime);
 
         // data not usable
-        if (logValues.size() == 0)
-            continue;
-        if ((int) logValues.size() > selectedPops[i]->numNeurons)
-            continue;
+        if (logValues.size() == 0) { continue; }
+        if ((int) logValues.size() > selectedPops[i]->numNeurons) { continue; }
 
         // resize container
         QColor col(0,0,0,255);
@@ -248,7 +272,7 @@ glConnectionWidget::updateLogData()
         }
     }
 
-    this->repaint();
+    this->update();
 }
 
 void
@@ -265,8 +289,7 @@ glConnectionWidget::redraw()
             currPop->layoutType->generateLayout(currPop->numNeurons,&currPop->layoutType->locations,errs);
         }
     }
-    DBG() << "Calling repaint() (QOpenGLWidget::repaint)";
-    this->repaint();
+    this->update();
 }
 
 void
@@ -289,59 +312,16 @@ glConnectionWidget::redraw(int)
     loc3Offset.y = ySpin->value();
     loc3Offset.z = zSpin->value();
 
-//    this->setupModel();
-    this->paintGL();
-    this->repaint();
+//    this->setupModelRequired = true;
+    this->update();
 }
 
-void
-glConnectionWidget::paintGL()
-{
-    //DBG() << "paintGL called";
-
-    QOpenGLFunctions *f = this->context()->functions();
-
-    // Put the render code in here. Here's what's in shapewindow.cpp
-    // in my working example, but I'll probbaly distribute this out
-    // amoungst paintGL etc.
-    const qreal retinaScale = devicePixelRatio();
-    f->glViewport (0, 0, this->width() * retinaScale, this->height() * retinaScale);
-
-    // Set the perspective from the width/height
-    this->setPerspective (this->width(), this->height());
-
-    // rotmat is the translation/rotation for the entire scene.
-    //
-    // Calculate model view transformation - transforming from "model space" to "worldspace".
-    QMatrix4x4 sceneview;
-    // This line translates from model space to world space. In future may need one
-    // model->world for each HexGridVisual.
-    sceneview.translate (this->scenetrans); // send backwards into distance
-    // And this rotation completes the transition from model to world
-    //DBG() << "rotating sceneview by " << this->rotation;
-    sceneview.rotate (this->rotation);
-
-    // Bind shader program...
-    this->shaderProg->bind();
-
-    // Set modelview-projection matrix. Don't have a viewmatrix to postmultiply (projMatrix * sceneview).
-    this->shaderProg->setUniformValue ("mvp_matrix", this->projMatrix * sceneview);
-
-    // Clear color buffer and **also depth buffer**
-    f->glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Call the NeuronScene's render method
-    this->nscene->render();
-
-    // Finally, release the shaderProg
-    this->shaderProg->release();
-}
-
-
+// Only call via paintGL, to ensure QOpenGLContext is correct.
 void
 glConnectionWidget::setupModel (void)
 {
-    DBG() << "Called";
+    DBG() << "called " << QOpenGLContext::currentContext();
+
     // This modifies this->nscene; a NeuronScene object which contains
     // some number of SphereLayer objects and then the lines
     // between them. Currently, these are LinesLayer and SphereLayer
@@ -355,7 +335,9 @@ glConnectionWidget::setupModel (void)
     }
 
     // I'll do a complete reset and rebuild whenever anything changes.
+    DBG() << "Before nscene reset " << QOpenGLContext::currentContext();
     this->nscene->reset();
+    DBG() << "AFTER nscene reset " << QOpenGLContext::currentContext();
 
     // Create spheres in a SphereLayer for each population & add to NeuronScene.
     for (int locNum = 0; locNum < this->selectedPops.size(); ++locNum) {
@@ -366,12 +348,13 @@ glConnectionWidget::setupModel (void)
             if (!i) { DBG() << "Adding at least one sphere!"; }
             sl->addSphere({currPop->layoutType->locations[i].x,
                            currPop->layoutType->locations[i].y,
-                           currPop->layoutType->locations[i].z},
+                           currPop->layoutType->locations[i].z + 1.0*locNum},
                            0.25f,
                            {0.6f,0.1f,0.1f});
         }
         sl->postInit();
     }
+    this->setupModelRequired = false;
 }
 
 void
@@ -478,7 +461,7 @@ glConnectionWidget::selectionChanged (QItemSelection top, QItemSelection)
     }
 
     DBG() << "Maybe setupModel? 10";
-    this->repaint();
+    this->update();
 }
 
 void
@@ -507,7 +490,7 @@ glConnectionWidget::typeChanged(int)
     }
 
     DBG() << "Maybe setupModel? 9";
-    this->repaint();
+    this->update();
 }
 
 void
@@ -533,7 +516,7 @@ glConnectionWidget::parsChangedPopulation(int value)
     }
 
 //    this->setupModel();
-    this->paintGL();
+    this->update();
 }
 
 void
@@ -560,7 +543,7 @@ glConnectionWidget::parsChangedPopulation()
         }
     }
     DBG() << "Maybe setupModel? 7";
-    this->repaint();
+    this->update();
 }
 
 void
@@ -599,7 +582,7 @@ glConnectionWidget::parsChangedProjections()
     }
 
 //    this->setupModel();
-    this->paintGL();
+    this->update();
 }
 
 void
@@ -655,7 +638,7 @@ glConnectionWidget::parsChangedProjection()
 
         DBG() << "Maybe setupModel? 5";
 
-        this->repaint();
+        this->update();
     }
 }
 
@@ -717,7 +700,7 @@ glConnectionWidget::drawLocations(QVector <loc> locs)
     // from a slot
     this->clearLocations();
     this->locations.push_back(locs);
-    this->repaint();
+    this->update();
 }
 
 void
@@ -761,14 +744,14 @@ glConnectionWidget::getConnections()
     }
 
     DBG() << "Maybe setupModel? 4";
-    this->repaint();
+    this->update();
 }
 
 void
 glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
 {
-    DBG() << "Called";
-    // this is fired when an item is checked or unchecked
+    DBG() << "Called. " << QOpenGLContext::currentContext();
+    // this is fired when an item is checked or unchecked.
 
     for (int i = 0; i < data->populations.size(); ++i) {
 
@@ -925,9 +908,9 @@ glConnectionWidget::sysSelectionChanged(QModelIndex, QModelIndex)
         }
     }
 
-    DBG() << "calling setupModel()";
-    this->setupModel();
-    this->paintGL();
+    this->setupModelRequired = true;
+    this->update();
+    DBG() << "update() done, now return. " << QOpenGLContext::currentContext();
 }
 
 void
@@ -944,7 +927,7 @@ glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection)
     this->selectedType = 4;
     this->selection = ((QItemSelectionModel *) sender())->selectedIndexes();
     DBG() << "Maybe setupModel? 2";
-    this->repaint();
+    this->update();
 }
 
 void
@@ -1060,7 +1043,7 @@ glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
         this->rotation = this->savedRotation;
         this->rotation = QQuaternion::fromAxisAndAngle(this->rotationAxis, rotamount) * this->rotation;
 
-        this->repaint();
+        this->update();
 
     } else if (this->translateMode) { // allow only rotate OR translate for a single mouse movement
 
@@ -1101,7 +1084,7 @@ glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
         this->scenetrans[0] += mouseMoveWorld[0];
         this->scenetrans[1] -= mouseMoveWorld[1];
 
-        this->repaint(); // Shouldn't need this if we schedule repaints/renders on a timed basis
+        this->update(); // Shouldn't need this if we schedule repaints/renders on a timed basis
     }
 }
 
@@ -1113,7 +1096,7 @@ glConnectionWidget::wheelEvent(QWheelEvent *event)
         // Change sceneTrans to zoom in & out
         this->scenetrans[2] += val * this->scenetrans_stepsize;
         this->setPerspective (this->width(), this->height());
-        this->repaint();
+        this->update();
     }
 }
 
@@ -1121,7 +1104,7 @@ void
 glConnectionWidget::setPopIndicesShown(bool checkState)
 {
     popIndicesShown = checkState;
-    this->repaint();
+    this->update();
 }
 
 void
@@ -1139,7 +1122,7 @@ glConnectionWidget::selectedNrnChanged(int index)
 
     DBG() << "Maybe setupModel? 3";
 
-    this->repaint();
+    this->update();
 }
 
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
@@ -1161,7 +1144,7 @@ glConnectionWidget:: renderQImage (int w_img, int h_img)
     // ...otherwise, draw the scene to the buffer and return image
     this->setPerspective (w_img, h_img);
     glEnable (GL_MULTISAMPLE);
-    this->repaint();
+    this->update();
     qfb.release();
     this->setPerspective (this->width(), this->height());
     return (qfb.toImage());

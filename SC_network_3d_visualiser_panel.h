@@ -88,6 +88,7 @@ public:
     void clear();
     QPixmap renderImage (int, int);
     void addLogs (QVector<logData*>* logs);
+    //! after switching views, carry out a number of checks on the populations etc
     void refreshAll();
 
 private:
@@ -162,24 +163,25 @@ public slots:
     void toggleOrthoView(bool);
 
 protected:
-    // GL rendering methods
+    //! GL rendering setup
     void initializeGL() override;
     //! Paint stuff
     void paintGL() override;
-#if 0
-    //! Resize override
-    void resizeGL() override;
-#endif
+    //! Resize override. Just calls setPerspective.
+    void resizeGL (int w, int h) override;
+
+    //! Compute the current view of the model - perform the relevant translations and so
+    //! on. Updates whenever the user moves the scene using mouse interaction
+    //! events. Call this when the window is resized, too.
+    void setPerspective (int w, int h);
 
     //! Set up the "model" where "model" in this context means the vertices that make up
     //! the triangles which the graphics system will render. So in here, we compute
     //! spheres, lines and so on.
     void setupModel (void);
 
-    //! Compute the current view of the model - perform the relevant translations and so
-    //! on. Updates whenever the user moves the scene using mouse interaction
-    //! events. Call this when the window is resized, too.
-    void setPerspective (int w, int h);
+    //! Set true if the model should be set up on the next paintGL call
+    bool setupModelRequired = false;
 
     // UI interaction methods
     void mousePressEvent(QMouseEvent *event);
@@ -221,7 +223,7 @@ private:
     QMatrix4x4 invscene;
     //! The "neuron scene" - a scene of spheres representing neurons, and lines
     //! representing axonal connections between the neurons.
-    NeuronScene* nscene;
+    NeuronScene* nscene = (NeuronScene*)0;
 };
 
 #endif // GLCONNECTIONWIDGET_H
