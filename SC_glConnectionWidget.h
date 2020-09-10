@@ -19,8 +19,8 @@
 **                                                                        **
 ****************************************************************************
 **           Author: Alex Cope                                            **
-**  Modern OpenGL updates, 2019: Seb James                                **
-**  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
+**  Modern OpenGL updates, 2019-2020: Seb James                           **
+**  Website/Contact: github                                               **
 ****************************************************************************/
 
 #ifndef GLCONNECTIONWIDGET_H

@@ -432,7 +432,7 @@ void viewVZLayoutEditHandler::initPopulation()
     // connect for set value
     connect(this, SIGNAL(setPopulationZ(int)), zSpin, SLOT(setValue(int)));
 
-    // connect up
+    // connect up the location pointers. These will update viewmatrices for each neuron layer. They'll necessitate changes to lines, too.
     connect(xSpin, SIGNAL(editingFinished()), this->data, SLOT (setLoc3()));
     connect(xSpin, SIGNAL(valueChanged(int)), this->viewVZ->OpenGLWidget, SLOT (redraw(int)));
     connect(ySpin, SIGNAL(editingFinished()), this->data, SLOT (setLoc3()));
@@ -1507,6 +1507,7 @@ void viewVZLayoutEditHandler::transformOrderDown()
         if (trans->order != 1) {
             // move the layout:
             regimeLayout->takeAt(trans->order-1);
+            DBG() << "WHOOP WHOOP 1";
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
             regimeLayout->insertLayout(trans->order-2, parentLayout);
 
@@ -1526,6 +1527,7 @@ void viewVZLayoutEditHandler::transformOrderDown()
         if (trans->order != 1) {
             // move the layout:
             regimeLayout->takeAt(trans->order-1);
+            DBG() << "WHOOP WHOOP 2";
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
             regimeLayout->insertLayout(trans->order-2, parentLayout);
 
@@ -1554,6 +1556,7 @@ void viewVZLayoutEditHandler::transformOrderUp()
         if (trans->order != (int) regime->TransformList.size()) {
             // move the layout:
             regimeLayout->takeAt(trans->order-1);
+            DBG() << "WHOOP WHOOP 3";
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
             regimeLayout->insertLayout(trans->order, parentLayout);
             // change the order:
@@ -1572,6 +1575,7 @@ void viewVZLayoutEditHandler::transformOrderUp()
         if (trans->order != (int) oncond->TransformList.size()) {
             // move the layout:
             regimeLayout->takeAt(trans->order-1);
+            DBG() << "WHOOP WHOOP 4";
             parentLayout->setParent(NULL); // sorts out parent reassignment clash
             regimeLayout->insertLayout(trans->order, parentLayout);
             // change the order:

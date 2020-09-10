@@ -6,28 +6,6 @@ using std::endl;
 using std::vector;
 #include <algorithm>
 
-NeuronScene::NeuronScene (QOpenGLShaderProgram *program, QOpenGLFunctions* fns)
-{
-    DBG() << "Construct";
-    this->shaderProgram = program;
-    this->f = fns;
-}
-
-NeuronScene::~NeuronScene()
-{
-    DBG() << "Deconstruct";
-    this->reset();
-}
-
-void
-NeuronScene::reset()
-{
-    DBG() << "NeuronScene: reset (clear this->layers and this->lines)";
-    std::for_each (this->layers.rbegin(), this->layers.rend(), [](const SphereLayer* sli) { delete sli; });
-    this->layers.clear();
-    std::for_each (this->lines.rbegin(), this->lines.rend(), [](const LinesLayer* lli) { delete lli; });
-    this->lines.clear();
-}
 
 SphereLayer*
 NeuronScene::createSphereLayer()
@@ -39,23 +17,6 @@ NeuronScene::createSphereLayer()
     DBG() << "Sphere layer went from size " << sz_b4 << " to " << this->layers.size();
     // Return SphereLayer to caller, ready for them to add spheres to it.
     return l1;
-}
-
-void
-NeuronScene::initialize()
-{
-#if 0
-    // Some times, create a layer, with parameters (sidelength and z position)
-    SphereLayer* l1 = new SphereLayer(this->shaderProgram, 50, 0);
-    this->layers.push_back (l1);
-    // Then:
-    SphereLayer* l2 = new SphereLayer(this->shaderProgram, 50, 0.3);
-    this->layers.push_back (l2);
-
-    // Now do the lines using the two layers of spheres
-    LinesLayer* ll1 = new LinesLayer(this->shaderProgram, l1, l2);
-    this->lines.push_back (ll1);
-#endif
 }
 
 void

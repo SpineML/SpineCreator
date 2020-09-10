@@ -25,7 +25,7 @@
 #include "SC_export_network_image.h"
 #include "ui_export_network_image.h"
 #include "SC_network_layer_rootdata.h"
-#include "SC_network_3d_visualiser_panel.h"
+#include "SC_glConnectionWidget.h"
 
 saveNetworkImageDialog::saveNetworkImageDialog(nl_rootdata * data, QString fileName, QWidget *parent) :
     QDialog(parent),

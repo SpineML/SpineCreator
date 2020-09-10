@@ -62,9 +62,8 @@ SOURCES += main.cpp \
     SC_viewVZlayoutedithandler.cpp \
     SC_layout_cinterpreter.cpp \
     SC_network_2d_visualiser_panel.cpp \
-    SC_network_3d_visualiser_panel.cpp \
+    SC_glConnectionWidget.cpp \
     SphereLayer.cpp \
-    NeuronScene.cpp \
     LinesLayer.cpp
 
 HEADERS += mainwindow.h \
@@ -114,7 +113,7 @@ HEADERS += mainwindow.h \
     SC_viewVZlayoutedithandler.h \
     SC_layout_cinterpreter.h \
     SC_network_2d_visualiser_panel.h \
-    SC_network_3d_visualiser_panel.h \
+    SC_glConnectionWidget.h \
     SphereLayer.h \
     NeuronScene.h \
     LinesLayer.h

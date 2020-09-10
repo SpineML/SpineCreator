@@ -28,7 +28,7 @@
 #include <QDialog>
 #include "globalHeader.h"
 #include "CL_layout_classes.h"
-#include "SC_network_3d_visualiser_panel.h"
+#include "SC_glConnectionWidget.h"
 
 class layoutEditPreviewDialog : public QDialog
 {

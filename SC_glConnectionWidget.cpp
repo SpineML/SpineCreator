@@ -22,7 +22,7 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-#include "SC_network_3d_visualiser_panel.h"
+#include "SC_glConnectionWidget.h"
 #include "SC_connectionmodel.h"
 #include "SC_systemmodel.h"
 #include "SC_python_connection_generate_dialog.h"
@@ -44,7 +44,7 @@
 
 #include <limits>
 
-glConnectionWidget::glConnectionWidget(nl_rootdata* _data, QWidget *parent)
+glConnectionWidget::glConnectionWidget (nl_rootdata* _data, QWidget* parent)
     : QOpenGLWidget(parent)
 {
     model = (QAbstractTableModel *)0;
@@ -79,7 +79,7 @@ void
 glConnectionWidget::initializeGL()
 {
     if (this->context()->isValid()) {
-        DBG() << "Context is valid.";
+        DBG() << "Context is valid and is:" << this->context() << " cf " << QOpenGLContext::currentContext();
     } else {
         DBG() << "Context is INvalid.";
     }
@@ -115,7 +115,7 @@ glConnectionWidget::initializeGL()
     // Create the scene. This creates several spherelayers, each containing VAO and VBOs
     this->nscene = new NeuronScene (this->shaderProg, f);
 
-    // No point setting up model in initializeGL
+    // No point setting up model in initializeGL, but mark that we will need to compute our lines and spheres
     this->setupModelRequired = true;
 
     // Now VAOs were created in scene objects, release shaderProg

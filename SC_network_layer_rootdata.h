@@ -33,7 +33,7 @@
 #include "SC_network_layer_rootlayout.h"
 #include "SC_network_2d_visualiser_panel.h"
 #include "SC_connectionmodel.h"
-#include "SC_network_3d_visualiser_panel.h"
+//#include "SC_glConnectionWidget.h"
 #include "NL_systemobject.h"
 #include "SC_valuelistdialog.h"
 

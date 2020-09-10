@@ -24,7 +24,7 @@
 
 #include "SC_viewELexptpanelhandler.h"
 #include "SC_connectionmodel.h"
-#include "SC_network_3d_visualiser_panel.h"
+#include "SC_glConnectionWidget.h"
 #include "SC_network_layer_rootdata.h"
 #include "SC_network_layer_rootlayout.h"
 #include "SC_layout_aliaseditdialog.h"
@@ -36,7 +36,6 @@
 #include "SC_undocommands.h"
 #include "qmessageboxresizable.h"
 #include <QTimer>
-
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   #define RETINA_SUPPORT 1.0
@@ -2349,6 +2348,7 @@ void viewELExptPanelHandler::simulatorStandardError()
     simulatorStdOutText = simulatorStdOutText + QString().fromUtf8(data);
 }
 
+#ifdef NEW_EXPERIMENT_VIEW // Was part of Alex's experimental work on expt interface
 void viewELExptPanelHandler::mouseMove(float xGL, float yGL)
 {
     // move viewpoint
@@ -2446,3 +2446,4 @@ void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLSca
         this->redraw();
     }
 }
+#endif

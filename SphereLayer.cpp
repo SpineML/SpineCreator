@@ -2,188 +2,10 @@
 #include "SphereLayer.h"
 #include <iostream>
 
-using std::cout;
-using std::endl;
-using std::vector;
-
-SphereLayer::SphereLayer(QOpenGLShaderProgram* program)
-    : ivbo(QOpenGLBuffer::IndexBuffer)
-    , pvbo(QOpenGLBuffer::VertexBuffer)
-    , nvbo(QOpenGLBuffer::VertexBuffer)
-    , cvbo(QOpenGLBuffer::VertexBuffer)
-{
-    DBG() << "SphereLayer(QOpenGLShaderProgram*)";
-    this->shaderProgram = program;
-}
-
-SphereLayer::SphereLayer(QOpenGLShaderProgram* program, unsigned int sl, float zpos)
-    : ivbo(QOpenGLBuffer::IndexBuffer)
-    , pvbo(QOpenGLBuffer::VertexBuffer)
-    , nvbo(QOpenGLBuffer::VertexBuffer)
-    , cvbo(QOpenGLBuffer::VertexBuffer)
-{
-    DBG() << "SphereLayer(QOpenGLShaderProgram*, uint, float)";
-    this->shaderProgram = program;
-    this->sidelen = sl;
-    this->zposition = zpos;
-    this->computeSphereGrid();
-    this->postInit();
-}
-
-SphereLayer::~SphereLayer()
-{
-    DBG() << "SphereLayer destructor. Context: " << QOpenGLContext::currentContext();
-
-    if (this->postInitDone == false) {
-        DBG() << "Nothing was allocated, so just return.";
-        return;
-    }
-
-    // 0. clear sphereCentres and any other CPU-side member attributes
-    this->sphereCentres.clear();
-    // 1. bind vertex array object
-    this->vao.bind();
-    // 2. Release all vertex buffer objects
-#if 0
-    this->cvbo.release();
-    this->nvbo.release();
-    this->pvbo.release();
-#endif
-    this->ivbo.release();
-    // 3. Destroy all vertex buffers
-    this->cvbo.destroy();
-    this->nvbo.destroy();
-    this->pvbo.destroy();
-    DBG() << "Destroy index vertex buffer object: " << &this->ivbo;
-    this->ivbo.destroy();
-
-    // 4. Release vertex array object
-    this->vao.release();
-    // 5. Destroy vertex array object
-    DBG() << "Destroy vertex array object: " << this->vao.objectId();
-    this->vao.destroy();
-
-#if 0
-    if (this->vao.isCreated()) {
-        DBG() << "Destroy vertex array object: " << this->vao.objectId();
-        this->vao.destroy();
-    }
-    if (this->numSpheres > 0) {
-        this->sphereCentres.clear();
-        if (this->ivbo.isCreated()) {
-            DBG() << "Destroy index vertex buffer object: " << &this->ivbo;
-            this->ivbo.destroy();
-        }
-        // Note that pvbo, nvbo cvbo are all set to QOpenGLBuffer::StaticDraw
-        if (this->pvbo.isCreated()) {
-            //this->shaderProgram->disableAttributeArray("position");
-            DBG() << "Destroy position vertex buffer object: " << &this->pvbo;
-            this->pvbo.destroy();
-        }
-        if (this->nvbo.isCreated()) {
-            //this->shaderProgram->disableAttributeArray("normalin");
-            DBG() << "Destroy normals vertex buffer object: " << &this->nvbo;
-            this->nvbo.destroy();
-        }
-        if (this->cvbo.isCreated()) {
-            //this->shaderProgram->disableAttributeArray("color");
-            DBG() << "Destroy colours vertex buffer object: " << &this->cvbo;
-            this->cvbo.destroy();
-        }
-    }
-#endif
-}
-
-void SphereLayer::setupVBO (QOpenGLBuffer& buf, vector<float>& dat, const char* arrayname)
-{
-    if (buf.create() == false) {
-        cout << "VBO create failed" << endl;
-    }
-    buf.setUsagePattern (QOpenGLBuffer::StaticDraw);
-    if (buf.bind() == false) {
-        cout << "VBO bind failed" << endl;
-    }
-    buf.allocate (dat.data(), dat.size() * sizeof(float));
-
-    // We have the same shaderProgram for all SphereLayers, but for different
-    // spherelayers we have different vertex array objects. How does rendering know to
-    // switch between vertex array objects when rendering? Because at each call to
-    // render, the vao is bound. So, I prolly need to bind each vertex buffer object
-    // too, at the start of the render call.
-
-    // Because array attributes are disabled by default in OpenGL 4:
-    this->shaderProgram->enableAttributeArray (arrayname); // Called many times. Is this a problem?
-    this->shaderProgram->setAttributeBuffer (arrayname, GL_FLOAT, 0, 3);
-}
-
-void SphereLayer::postInit()
-{
-    QOpenGLContext* ccon = QOpenGLContext::currentContext();
-    DBG() << "SphereLayer::postInit: " << ccon;
-
-    this->vao.create(); // Creates VAO on OpenGL server
-    this->vao.bind();
-    if (this->vao.isCreated() == false) {
-        cout << "Uh oh, couldn't bind vao" << endl;
-    }
-    DBG() << "Created Vertex Array Object " << this->vao.objectId();
-
-    // Index buffer - slightly different from process to setupVBO
-    // (because no setAttributeBuffer call)
-    if (this->ivbo.create() == false) {
-        cout << "ivbo create failed" << endl;
-    }
-    DBG() << "Created index vertex buffer object: " << &this->ivbo;
-    this->ivbo.setUsagePattern (QOpenGLBuffer::StaticDraw);
-    if (this->ivbo.bind() == false) {
-        cout << "ivbo bind failed" << endl;
-    }
-    int sz = this->indices.size() * sizeof(VBOint);
-    this->ivbo.allocate (this->indices.data(), sz);
-    // setAttributeArray or setAttributeBuffer??? I've used _Array_ in setupVBO and _Buffer_ here. ?!?!
-    // In working morph code, for indices, I call glBindBuffer/glBufferData(GL_ELEMENT_ARRAY_BUFFER,...)
-    // and for setupVBO, I call glBindBuffer/glBufferData(GL_ARRAY_BUFFER,...)
-    //
-    // setAttrubteBuffer works on the currently bound buffer; whereas setAttributeArray
-    // copies in the data at the same time.
-    this->shaderProgram->setAttributeBuffer("ebo", VBO_ENUM_TYPE, 0, 1);
-    this->shaderProgram->enableAttributeArray("ebo");
-
-    // Binds data from the "C++ world" to the OpenGL shader world for
-    // "position", "normalin" and "color" on the currently bound vertex array object
-    this->setupVBO (this->pvbo, this->vertexPositions, "position");
-    this->setupVBO (this->nvbo, this->vertexNormals, "normalin");
-    this->setupVBO (this->cvbo, this->vertexColors, "color");
-
-    // Release (unbind) all vertex buffer objects. Correct place for this?
-    // this->ivbo.release(); // but causes problem to release this..
-    // FIXME: Should I release pvbo etc?
-#if 1
-    this->pvbo.release();
-    this->nvbo.release();
-    this->cvbo.release();
-#endif
-    this->vao.release();
-
-    this->postInitDone = true;
-}
-
-void SphereLayer::render (QOpenGLFunctions* f)
-{
-    if (this->numSpheres == 0) { return; }
-    // The same shaderProgram is used to render each SphereLayer. For it to know what to
-    // render, we must bind the relevant vertex array object, which "knows" where the
-    // vertex buffer objects are.
-    this->vao.bind();
-    DBG() << "Render " << this->numSpheres << " spheres (" << this->indices.size() << " vertices) Context: " << QOpenGLContext::currentContext();
-    f->glDrawElements (GL_TRIANGLES, this->indices.size(), VBO_ENUM_TYPE, 0);
-    this->vao.release();
-}
-
 // pi as a single precision float; used in computeSphere()
 #define M_PI_F 3.14159265f
 
-void SphereLayer::computeSphere (vector<float> positionOffset, VBOint& idx, const vector<float>& colour)
+void SphereLayer::computeSphere (std::vector<float> positionOffset, VBOint& idx, const std::vector<float>& colour)
 {
     // For each computed sphere, save the coordinate of the centre of the sphere.
     this->sphereCentres.push_back (loc (positionOffset[0], positionOffset[1], positionOffset[2]));
@@ -329,14 +151,6 @@ void SphereLayer::computeSphere (vector<float> positionOffset, VBOint& idx, cons
     //cout << "Number of vertexPositions coords: " << (this->vertexPositions.size()/3) << endl;
 }
 
-void SphereLayer::addSphere (const vector<float>& posn, const float radius, const vector<float>& colour)
-{
-    this->r = radius;
-    DBG() << "Add sphere at position (" << posn[0] << "," << posn[1] << "," << posn[2] << ")";
-    this->computeSphere (posn, this->idx_int, colour);
-    this->numSpheres++;
-}
-
 void SphereLayer::computeSphereGrid (void)
 {
     // Spacing is set up here. Probably need to have a constructor
@@ -344,7 +158,7 @@ void SphereLayer::computeSphereGrid (void)
     // each sphere (neuron)
     float spacing = 0.1f;
 
-    vector<float> po = {{ -(this->sidelen/2.0f*spacing), -(this->sidelen/2.0f*spacing), this->zposition }};
+    std::vector<float> po = {{ -(this->sidelen/2.0f*spacing), -(this->sidelen/2.0f*spacing), this->zposition }};
     VBOint idx = 0;
 
     for (unsigned int a = 0; a < this->sidelen; a++) {
@@ -359,7 +173,7 @@ void SphereLayer::computeSphereGrid (void)
          << (this->vertexPositions.size()/3) << " vertex coordinates" << endl;
 }
 
-void SphereLayer::vertex_push (const float& x, const float& y, const float& z, vector<float>& vp) const
+void SphereLayer::vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp) const
 {
     vp.push_back (x);
     vp.push_back (y);

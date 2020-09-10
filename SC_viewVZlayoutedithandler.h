@@ -32,7 +32,7 @@ struct viewVZstruct;
 
 #include "CL_classes.h"
 #include "SC_connectionmodel.h"
-#include "SC_network_3d_visualiser_panel.h"
+#include "SC_glConnectionWidget.h"
 #include "SC_network_layer_rootdata.h"
 #include "SC_network_layer_rootlayout.h"
 #include "SC_layout_aliaseditdialog.h"

@@ -18,24 +18,157 @@ typedef GLuint VBOint;
 class SphereLayer
 {
 public:
-    SphereLayer (QOpenGLShaderProgram *program);
-    SphereLayer (QOpenGLShaderProgram *program, unsigned int sl, float zpos);
-    ~SphereLayer();
+    SphereLayer (QOpenGLShaderProgram *program)
+    : ivbo(QOpenGLBuffer::IndexBuffer)
+    , pvbo(QOpenGLBuffer::VertexBuffer)
+    , nvbo(QOpenGLBuffer::VertexBuffer)
+    , cvbo(QOpenGLBuffer::VertexBuffer)
+    {
+        DBG() << "SphereLayer(QOpenGLShaderProgram*)";
+        this->shaderProgram = program;
+    }
+
+    SphereLayer (QOpenGLShaderProgram *program, unsigned int sl, float zpos)
+    : ivbo(QOpenGLBuffer::IndexBuffer)
+    , pvbo(QOpenGLBuffer::VertexBuffer)
+    , nvbo(QOpenGLBuffer::VertexBuffer)
+    , cvbo(QOpenGLBuffer::VertexBuffer)
+    {
+        DBG() << "SphereLayer(QOpenGLShaderProgram*, uint, float)";
+        this->shaderProgram = program;
+        this->sidelen = sl;
+        this->zposition = zpos;
+        this->computeSphereGrid();
+        this->postInit();
+    }
+
+    ~SphereLayer()
+    {
+        DBG() << "SphereLayer destructor. Context: " << QOpenGLContext::currentContext();
+
+        if (this->postInitDone == false) {
+            DBG() << "Nothing was allocated, so just return.";
+            return;
+        }
+        // 0. clear sphereCentres and any other CPU-side member attributes
+        this->sphereCentres.clear();
+        // 1. bind vertex array object
+        // this->vao.bind();
+        // 2. Release all vertex buffer objects
+        //this->cvbo.release();
+        //this->nvbo.release();
+        //this->pvbo.release();
+        this->ivbo.release();
+        // 3. Destroy all vertex buffers
+        this->cvbo.destroy();
+        this->nvbo.destroy();
+        this->pvbo.destroy();
+        DBG() << "Destroy index vertex buffer object: " << &this->ivbo;
+        this->ivbo.destroy();
+        // 4. Release vertex array object
+        // this->vao.release();
+        // 5. Destroy vertex array object
+        DBG() << "Destroy vertex array object: " << this->vao.objectId();
+        this->vao.destroy();
+    }
 
     //! Do the CPU part of the initialisation - compute vertices etc for a whole square grid of spheres
     void computeSphereGrid();
 
     //! Compute vertices for, and add a sphere to the SphereLayer model
-    void addSphere (const std::vector<float>& posn, const float radius, const std::vector<float>& colour);
-
+    void addSphere (const std::vector<float>& posn, const float radius, const std::vector<float>& colour)
+    {
+        this->r = radius;
+        DBG() << "Add sphere at position (" << posn[0] << "," << posn[1] << "," << posn[2] << ")";
+        this->computeSphere (posn, this->idx_int, colour);
+        this->numSpheres++;
+    }
     //! Once all spheres have been added, complete the initialization of the model
-    void postInit();
+    void postInit()
+    {
+        QOpenGLContext* ccon = QOpenGLContext::currentContext();
+        DBG() << "SphereLayer::postInit: " << ccon;
+
+        this->vao.create(); // Creates VAO on OpenGL server
+        this->vao.bind();
+        if (this->vao.isCreated() == false) {
+            cout << "Uh oh, couldn't bind vao" << endl;
+        }
+        DBG() << "Created Vertex Array Object " << this->vao.objectId();
+
+        // Index buffer - slightly different from process to setupVBO
+        // (because no setAttributeBuffer call)
+        if (this->ivbo.create() == false) {
+            cout << "ivbo create failed" << endl;
+        }
+        DBG() << "Created index vertex buffer object: " << &this->ivbo;
+        this->ivbo.setUsagePattern (QOpenGLBuffer::StaticDraw); // StaticDraw or DynamicDraw? No
+                                                                // output at all with DynamicDraw
+        if (this->ivbo.bind() == false) {
+            cout << "ivbo bind failed" << endl;
+        }
+        int sz = this->indices.size() * sizeof(VBOint);
+        this->ivbo.allocate (this->indices.data(), sz);
+        // setAttributeArray or setAttributeBuffer??? I've used _Array_ in setupVBO and _Buffer_ here. ?!?!
+        // In working morph code, for indices, I call glBindBuffer/glBufferData(GL_ELEMENT_ARRAY_BUFFER,...)
+        // and for setupVBO, I call glBindBuffer/glBufferData(GL_ARRAY_BUFFER,...)
+        //
+        // setAttributeBuffer works on the currently bound buffer; whereas setAttributeArray
+        // copies in the data at the same time.
+        this->shaderProgram->setAttributeBuffer("ebo", VBO_ENUM_TYPE, 0, 1);
+        this->shaderProgram->enableAttributeArray("ebo");
+
+        /*
+         *
+         */
+
+        // Qt Equivalent of "glGenBuffers (numVBO, vbos)??
+
+        // index buffer to be bound as a GL_ELEMENT_ARRAY_BUFFER and GL_STATIC_DRAW, binding
+        // CPU-side indices.data() to vbos[]
+
+        // other buffers to be bound as GL_ARRAY_BUFFER and GL_STATIC_DRAW
+
+        /*
+         *
+         */
+
+        // Binds data from the "C++ world" to the OpenGL shader world for
+        // "position", "normalin" and "color" on the currently bound vertex array object
+        this->setupVBO (this->pvbo, this->vertexPositions, "position");
+        this->setupVBO (this->nvbo, this->vertexNormals, "normalin");
+        this->setupVBO (this->cvbo, this->vertexColors, "color");
+
+        // Release (unbind) all vertex buffer objects. Correct place for this?
+        // this->ivbo.release(); // but causes problem to release this..
+        // FIXME: Should I release pvbo etc?
+#if 1
+        this->pvbo.release();
+        this->nvbo.release();
+        this->cvbo.release();
+#endif
+        this->vao.release();
+
+        this->postInitDone = true;
+    }
 
     //! Render the sphere layer.
-    void render (QOpenGLFunctions* f);
+    void render (QOpenGLFunctions* f)
+    {
+        if (this->numSpheres == 0) { return; }
+        // The same shaderProgram is used to render each SphereLayer. For it to know what to
+        // render, we must bind the relevant vertex array object, which "knows" where the
+        // vertex buffer objects are.
+        this->vao.bind();
+        DBG() << "Render " << this->numSpheres << " spheres (" << this->indices.size()
+              << " vertices) Context: " << QOpenGLContext::currentContext();
+        f->glDrawElements (GL_TRIANGLES, this->indices.size(), VBO_ENUM_TYPE, 0);
+        this->vao.release();
+    }
 
-    // Sphere layer attributes
+    //! Number of spheres along a side of the square grid. Used in computeSphereGrid()
     unsigned int sidelen = 150;
+    //! The z coordinate of the sphere layer grid. Used in computeSphereGrid()
     float zposition = 0.0f;
 
     //! Number of rings in a sphere
@@ -44,9 +177,6 @@ public:
     VBOint segments = 12;
     //! sphere radius
     float r = 0.04f;
-
-    //! Something like Spheres1, Spheres2 etc. Or perhaps use Pop name.
-    std::string layerName;
 
     //! A list of the centre coordinates of each sphere in the layer.
     std::vector<loc> sphereCentres;
@@ -72,23 +202,23 @@ public:
     }
 
 private:
-    // Compute positions and colours of vertices for the sphere and
-    // store in these:
-    QOpenGLBuffer ivbo;           // Indices Vertex Buffer Object
-    QOpenGLBuffer pvbo;           // positions Vertex Buffer Object
-    QOpenGLBuffer nvbo;           // normals Vertex Buffer Object
-    QOpenGLBuffer cvbo;           // colors Vertex Buffer Object
+    // Compute positions and colours of vertices for the sphere and store in these:
+    QOpenGLBuffer ivbo; //! Indices Vertex Buffer Object
+    QOpenGLBuffer pvbo; //! positions Vertex Buffer Object
+    QOpenGLBuffer nvbo; //! normals Vertex Buffer Object
+    QOpenGLBuffer cvbo; //! colors Vertex Buffer Object
 
-    // Temporary, internal index
+    // A temporary, internal index
     VBOint idx_int;
 
+    // CPU-side data. Holds the vertices that make up spheres as computed by this class.
     std::vector<VBOint> indices;
     std::vector<float> vertexPositions;
     std::vector<float> vertexNormals;
     std::vector<float> vertexColors;
 
     QOpenGLShaderProgram* shaderProgram;
-public:
+public: // Temporarily:
     QOpenGLVertexArrayObject vao;
 private:
     //! How many spheres in this layer?
@@ -99,12 +229,36 @@ private:
 
     //! Sphere calculation - calculate location of triangle vertices for the sphere. The
     //! sphere will be made up of two "caps" of triangles, and a series of rings.
-    //void computeSphere (std::vector<float> positionOffset, VBOint& idx);
     void computeSphere (std::vector<float> positionOffset, VBOint& idx, const std::vector<float>& colour);
 
-    void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp) const;
+    void setupVBO (QOpenGLBuffer& buf, std::vector<float>& dat, const char* arrayname)
+    {
+        if (buf.create() == false) { std::cout << "VBO create failed" << std::endl; }
+        buf.setUsagePattern (QOpenGLBuffer::StaticDraw);
+        if (buf.bind() == false) { std::cout << "VBO bind failed" << std::endl; }
+        buf.allocate (dat.data(), dat.size() * sizeof(float));
+        // We have the same shaderProgram for all SphereLayers, but for different
+        // spherelayers we have different vertex array objects. How does rendering know to
+        // switch between vertex array objects when rendering? Because at each call to
+        // render, the vao is bound. So, I prolly need to bind each vertex buffer object
+        // too, at the start of the render call.
+        //
+        // Because array attributes are disabled by default in OpenGL 4:
+        this->shaderProgram->enableAttributeArray (arrayname); // Called many times. Is this a problem?
+        this->shaderProgram->setAttributeBuffer (arrayname, GL_FLOAT, 0, 3);
+    }
 
-    void setupVBO (QOpenGLBuffer& buf, std::vector<float>& dat, const char* arrayname);
+    void setupVBO (QOpenGLBuffer& buf, std::vector<float>& dat, unsigned int bufferAttribPosition)
+    {
+        if (buf.create() == false) { std::cout << "VBO create failed" << std::endl; }
+        buf.setUsagePattern (QOpenGLBuffer::StaticDraw);
+        if (buf.bind() == false) { std::cout << "VBO bind failed" << std::endl; }
+        buf.allocate (dat.data(), dat.size() * sizeof(float));
+        this->shaderProgram->enableAttributeArray (bufferAttribPosition);
+        this->shaderProgram->setAttributeBuffer (bufferAttribPosition, GL_FLOAT, 0, 3);
+    }
+
+    void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp) const;
 };
 
 #endif // SPHERELAYER_H_

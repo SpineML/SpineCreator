@@ -1297,20 +1297,24 @@ void MainWindow::connectViewCL()
 
 void MainWindow::initViewVZ()
 {
-    // adding VIEWVZ (populations and projections) ####################################################################################
+    DBG() << "Start";
+
+
+    // adding VIEWVZ (populations and projections) ###################################################
     this->viewVZ.layout = QSharedPointer<NineMLLayout> (new NineMLLayout(this->data.catalogLayout[0]));
 
     this->viewVZ.sysModel = NULL;
 
-    // add splitter
-    QSplitter * splitter = new QSplitter();
-    // add a frame
-    QFrame * frame = new QFrame();
+    // A QSplitter contains a QFrame for the main view of the neuron model (to the left), and panel (QScrollArea) to the right.
+    QSplitter* splitter = new QSplitter();
+
+    // The QFrame contains a toolbar (grey, top) and the main GL content. It's the LEFT side of the splitter
+    QFrame* frame = new QFrame();
 
     this->viewVZ.errors = new QLabel;
 
     // add the splitter to the main layout, spanning 2 rows and set margins
-    ((QGridLayout *) this->ui->centralWidget->layout())->addWidget(splitter, 0, ((QGridLayout *) this->ui->centralWidget->layout())->columnCount(),4,1);
+    ((QGridLayout*) this->ui->centralWidget->layout())->addWidget(splitter, 0, ((QGridLayout *) this->ui->centralWidget->layout())->columnCount(),4,1);
     splitter->resize(this->ui->view1->size());
     splitter->setContentsMargins(0,0,0,0);
     splitter->setHandleWidth(0);
@@ -1321,27 +1325,28 @@ void MainWindow::initViewVZ()
     // add the frame for the body of the view
     splitter->addWidget(frame);
 
-    // add the panel
-    QScrollArea *panel = new QScrollArea();
-    panel->setLineWidth(1);
-    panel->setFrameStyle(1);
+    // add the 'panel' - a scrollarea. This will be the RIGHT side of the splitter.
+    QScrollArea* panelScrollArea = new QScrollArea();
+    panelScrollArea->setLineWidth(1);
+    panelScrollArea->setFrameStyle(1);
 
-    QWidget * panelContent = new QWidget;
-    panel->setWidget(panelContent);
-    panel->setWidgetResizable(true);
-    panel->setMaximumWidth(600*RETINA_SUPPORT);
+    // A QWidget becomes the content of the QScrollArea
+    QWidget* panelScrollAreaWidget = new QWidget;
+    panelScrollArea->setWidget(panelScrollAreaWidget);
+    panelScrollArea->setWidgetResizable(true);
+    panelScrollArea->setMaximumWidth(600*RETINA_SUPPORT);
 
-    panelContent->setLayout(new QVBoxLayout());
+    panelScrollAreaWidget->setLayout(new QVBoxLayout());
 
-    this->viewVZ.panel = panelContent;
+    this->viewVZ.panel = panelScrollAreaWidget;
 
     // add the panel to the splitter
-    splitter->addWidget(panel);
+    splitter->addWidget (panelScrollArea);
 
-    // add some more stuff
-    QGridLayout * v2lay = new QGridLayout;
-    if (frame->layout())
-        delete frame->layout();
+    // add some more stuff to the frame - the body of the neuron model view i.e. the
+    // left panel. Give it a gridlayout so it can have a toolbar and a main bit.
+    QGridLayout* v2lay = new QGridLayout;
+    if (frame->layout()) { delete frame->layout(); }
     frame->setLayout(v2lay);
 
     frame->layout()->setContentsMargins(0,0,0,0);
@@ -1349,56 +1354,69 @@ void MainWindow::initViewVZ()
     frame->setContentsMargins(0,0,0,0);
 
     // add and set up the toolbar
-    QFrame * toolbar = new QFrame(this->ui->toolbar_3);
+    QFrame* toolbar = new QFrame(this->ui->toolbar_3);
     toolbar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     toolbar->setMinimumSize(this->ui->topleft->size());
     toolbar->setMinimumHeight(27*RETINA_SUPPORT);
     toolbar->setMaximumHeight(27*RETINA_SUPPORT);
     toolbar->setStyleSheet(this->toolbarStyleSheet);
-    if (toolbar->layout())
-        delete toolbar->layout();
+    if (toolbar->layout()) { delete toolbar->layout(); }
     toolbar->setLayout(new QHBoxLayout);
     toolbar->layout()->setContentsMargins(0,0,0,0);
     toolbar->layout()->setSpacing(0);
     toolbar->setLineWidth(0);
     toolbar->setFrameStyle(0);
 
-    // add toolbar to the frame and struct
+    // add dark grey toolbar to the frame
     frame->layout()->addWidget(toolbar);
+
+    // ALSO add a pointer to the toolbar to the viewVZ struct
     viewVZ.toolbar = toolbar;
 
+    // Add a line between the dark grey toolbar and the "neuron model view window"
     QFrame* line2 = new QFrame();
-    //line->setObjectName(QString::fromUtf8("line"));
     line2->setMaximumHeight(1);
     line2->setFrameShape(QFrame::HLine);
     line2->setFrameShadow(QFrame::Plain);
-
     frame->layout()->addWidget(line2);
 
     // this is a placeholder for the main widget which will show the
     // 3D view of the populations and connections
     this->viewVZ.OpenGLWidget = new glConnectionWidget (&this->data);
+    DBG() << "Called new glConnectionWidget";
 
+#if 0 // It may not be necessary to set all this.
     // Set the "surface format" for the OpenGLWidget
     QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    format.setStencilBufferSize(8);
-    format.setVersion(3, 2);
-    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setDepthBufferSize (24);
+    format.setStencilBufferSize (8);
+    format.setVersion (4, 1);
+    format.setProfile (QSurfaceFormat::CoreProfile);
+    format.setRenderableType (QSurfaceFormat::OpenGL);
+    format.setOptions (QSurfaceFormat::DebugContext | QSurfaceFormat::ResetNotification);
     // must be called before the widget or its parent window gets shown:
     this->viewVZ.OpenGLWidget->setFormat(format);
+#endif
 
+    // Add the glConnectionWidget to the frame.
     frame->layout()->addWidget (this->viewVZ.OpenGLWidget);
 
+    // Create the "viewVZhandler"
     this->viewVZhandler = new viewVZLayoutEditHandler(&data, &this->viewNL, &this->viewVZ, this);
 
-    // try to divide the splitter up nicely
+    DBG() << "About to copy QSplitter* splitter to viewVZ.view";
     this->viewVZ.view = splitter;
+
+#if 0
+    // try to divide the splitter up nicely
     QList <int> sizes;
     sizes.push_back(3);
     sizes.push_back(1);
     sizes.push_back(1);
     splitter->setSizes(sizes);
+#endif
+
+    DBG() << "End (return)";
 }
 
 void MainWindow::connectViewVZ()

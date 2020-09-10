@@ -104,7 +104,8 @@ void nl_rootdata::redrawViews()
     // redraw experiments
     main->viewELhandler->redraw();
 
-    if ( main->viewVZ.OpenGLWidget != NULL) {
+    if (main->viewVZ.OpenGLWidget != NULL) {
+        DBG() << "About to cause a redraw of our OpenGLWidget from nl_rootdata - SOURCE OF CONTEXT CHANGE?";
         // redraw viz
         main->viewVZ.OpenGLWidget->refreshAll();
         // clear away old stuff

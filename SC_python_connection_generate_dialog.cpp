@@ -26,7 +26,7 @@
 #include "ui_generate_dialog.h"
 #include "NL_population.h"
 #include "NL_connection.h"
-#include "SC_network_3d_visualiser_panel.h"
+#include "SC_glConnectionWidget.h"
 
 
 generate_dialog::generate_dialog(pythonscript_connection * currConn, QSharedPointer <population> src, QSharedPointer <population> dst, QVector < conn > &conns, QMutex * mutex, QWidget *parent) :
