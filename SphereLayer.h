@@ -209,7 +209,7 @@ private:
     QOpenGLBuffer cvbo; //! colors Vertex Buffer Object
 
     // A temporary, internal index
-    VBOint idx_int;
+    VBOint idx_int = 0;
 
     // CPU-side data. Holds the vertices that make up spheres as computed by this class.
     std::vector<VBOint> indices;

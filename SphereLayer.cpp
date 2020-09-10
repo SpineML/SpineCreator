@@ -131,6 +131,7 @@ void SphereLayer::computeSphere (std::vector<float> positionOffset, VBOint& idx,
     this->vertex_push (0.0f, 0.0f, 1.0f, this->vertexNormals);
     this->vertex_push (1.0f, 1.0f, 1.0f, this->vertexColors); // White
     capMiddle = idx++;
+    DBG() << "Last vertex index for this sphere is: " << idx;
     firstseg = true;
     // No more vertices to push, just do the indices for the bottom cap
     ringStartIdx = lastRingStartIdx;
