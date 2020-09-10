@@ -89,7 +89,7 @@ void nl_rootdata::redrawViews()
 {
     // redraw the network
     reDrawAll();
-    redrawGLview();
+    redrawNetView();
 
     // redraw the component file list
     main->viewCL.fileList->disconnect();
@@ -345,7 +345,7 @@ void nl_rootdata::reDrawPanel()
 
 void nl_rootdata::callRedrawGLview()
 {
-    emit redrawGLview();
+    emit redrawNetView();
 }
 
 void nl_rootdata::saveImage(QString fileName)
@@ -362,17 +362,17 @@ void nl_rootdata::reDrawAll()
     emit updatePanel(this);
 }
 
-void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
+void nl_rootdata::reDrawAll(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, drawStyle style)
 {
     if (style == standardDrawStyle) {
         for (int i = 0; i < selList.size(); ++i) {
             if (selList[i]->type == populationObject) {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (selList[i]);
 
-                float left = ((pop->getLeft()+viewX)*GLscale+float(width))/2;
-                float right = ((pop->getRight()+viewX)*GLscale+float(width))/2;
-                float top = ((-pop->getTop()+viewY)*GLscale+float(height))/2;
-                float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
+                float left = ((pop->getLeft()+viewX)*_scale+float(width))/2;
+                float right = ((pop->getRight()+viewX)*_scale+float(width))/2;
+                float top = ((-pop->getTop()+viewY)*_scale+float(height))/2;
+                float bottom = ((-pop->getBottom()+viewY)*_scale+float(height))/2;
 
                 if (pop->isSpikeSource) {
                     // Shadow the spike source.
@@ -380,7 +380,7 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
                         QPen pen(QColor(0,0,0,50/i));
                         pen.setWidthF(float(i*2));
                         painter->setPen(pen);
-                        painter->drawEllipse(QPointF((right+left)/2.0, (top+bottom)/2.0),0.5*GLscale/2.0,0.5*GLscale/2.0);
+                        painter->drawEllipse(QPointF((right+left)/2.0, (top+bottom)/2.0),0.5*_scale/2.0,0.5*_scale/2.0);
                     }
 
                 } else {
@@ -392,7 +392,7 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
                         pen.setWidthF(float(i*2));
                         painter->setPen(pen);
                         QRectF rectangle(left, top, right-left, bottom-top);
-                        painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
+                        painter->drawRoundedRect(rectangle,0.05*_scale,0.05*_scale);
                     }
                 }
             }
@@ -401,10 +401,10 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
 
     // populations
     for (int i = 0; i < this->populations.size(); ++i) {
-        this->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, style);
+        this->populations[i]->draw(painter, _scale, viewX, viewY, width, height, this->popImage, style);
     }
     for (int i = 0; i < this->populations.size(); ++i) {
-        this->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
+        this->populations[i]->drawSynapses(painter, _scale, viewX, viewY, width, height, style);
     }
     for (int i = 0; i < this->populations.size(); ++i) {
         QPen pen(QColor(100,0,0,100));
@@ -414,7 +414,7 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
         pen.setWidthF(float(1)/dpi);
 
         painter->setPen(pen);
-        this->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
+        this->populations[i]->drawInputs(painter, _scale, viewX, viewY, width, height, style);
     }
 
     // selected object
@@ -429,10 +429,10 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
                     QPen pen(QColor(0,0,0,30/i));
                     pen.setWidthF(float(i*2));
                     painter->setPen(pen);
-                    col->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
+                    col->draw(painter, _scale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
                     // only draw handles if we aren't using multiple selection
                     if (selList.size() == 1) {
-                        col->drawHandles(painter, GLscale, viewX, viewY, width, height);
+                        col->drawHandles(painter, _scale, viewX, viewY, width, height);
                     }
                 }
             }
@@ -457,12 +457,12 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
                     // ifdeffing this code out doesn't prevent all
                     // those re-draws)
 #if 0
-                    input->draw(painter, GLscale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
+                    input->draw(painter, _scale, viewX, viewY, width, height, this->popImage, standardDrawStyle);
 #endif
 
                     // only draw handles if we aren't using multiple selection
                     if (selList.size() == 1) {
-                        input->drawHandles(painter, GLscale, viewX, viewY, width, height);
+                        input->drawHandles(painter, _scale, viewX, viewY, width, height);
                     }
                 }
             }
@@ -471,8 +471,8 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
 
     painter->setPen(QCOL_BLACK);
 
-    float x = ((this->cursor.x+viewX)*GLscale+float(width))/2;
-    float y = ((-this->cursor.y+viewY)*GLscale+float(height))/2;
+    float x = ((this->cursor.x+viewX)*_scale+float(width))/2;
+    float y = ((-this->cursor.y+viewY)*_scale+float(height))/2;
 
     QPointF point(x,y);
     painter->drawEllipse(point,10,10);
@@ -490,13 +490,13 @@ void nl_rootdata::reDrawAll(QPainter *painter, float GLscale, float viewX, float
         QRectF dragSelectionScreen;
         // top left conversion
         QPointF point = dragSelection.topLeft();
-        point.setX(((point.x()+viewX)*GLscale+width)/2);
-        point.setY(((-point.y()+viewY)*GLscale+height)/2);
+        point.setX(((point.x()+viewX)*_scale+width)/2);
+        point.setY(((-point.y()+viewY)*_scale+height)/2);
         dragSelectionScreen.setTopLeft(point);
         // bottom right conversion
         point = dragSelection.bottomRight();
-        point.setX(((point.x()+viewX)*GLscale+width)/2);
-        point.setY(((-point.y()+viewY)*GLscale+height)/2);
+        point.setX(((point.x()+viewX)*_scale+width)/2);
+        point.setY(((-point.y()+viewY)*_scale+height)/2);
         dragSelectionScreen.setBottomRight(point);
         // make sure the rect is not inverted (i.e. non-negative with & height) so draws correctly
         dragSelectionScreen = dragSelectionScreen.normalized();
@@ -521,7 +521,7 @@ void destroyDom(QDomNode &node)
     }
 }
 
-void nl_rootdata::onRightMouseDown(float xGL, float yGL, float GLscale)
+void nl_rootdata::onRightMouseDown(float _x, float _y, float _scale)
 {
     qDebug() << "onRightMouseDown";
 
@@ -530,21 +530,21 @@ void nl_rootdata::onRightMouseDown(float xGL, float yGL, float GLscale)
         if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {
             // try to delete control point, if that fails then add one!
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
-            if (!proj->deleteControlPoint(xGL, yGL, GLscale)) {
-                proj->insertControlPoint(xGL, yGL, GLscale);
+            if (!proj->deleteControlPoint(_x, _y, _scale)) {
+                proj->insertControlPoint(_x, _y, _scale);
             }
         }
     }
     // log the co-ordinates for drag select
-    this->dragListStart = QPointF(xGL, yGL);
+    this->dragListStart = QPointF(_x, _y);
 }
 
-void nl_rootdata::dragSelect(float xGL, float yGL)
+void nl_rootdata::dragSelect(float _x, float _y)
 {
     bool addSelection = (QApplication::keyboardModifiers() & Qt::ShiftModifier);
 
     // setup the QRect for the selection
-    this->dragSelection = QRectF(this->dragListStart, QPointF(xGL, yGL));
+    this->dragSelection = QRectF(this->dragListStart, QPointF(_x, _y));
 
     QVector <QSharedPointer<systemObject> > oldSel = selList;
 
@@ -680,7 +680,7 @@ void nl_rootdata::endDragSelection()
 }
 
 #ifdef NEED_MOUSE_UP_LOGIC
-void rootData::onLeftMouseUp (float xGL, float yGL, float GLscale)
+void rootData::onLeftMouseUp (float _x, float _y, float _scale)
 {
     // All selection logic is in onLeftMouseDown(), so currently, this
     // method is a no-op.
@@ -758,14 +758,14 @@ void nl_rootdata::populationMoved(const QVector <QSharedPointer<population> >& p
     this->currProject->undoStack->push(parentCmd);
 }
 
-void nl_rootdata::onNewSelections (float xGL, float yGL)
+void nl_rootdata::onNewSelections (float _x, float _y)
 {
     //DBGMOUSE() << " emitting updatePanel";
     emit updatePanel(this);
     for (int i = 0; i < this->selList.size(); ++i) {
         // register locations relative to cursor:
         //DBGMOUSE() << "Setting a location offset...";
-        this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
+        this->selList[i]->setLocationOffsetRelTo(_x, _y);
     }
 }
 
@@ -798,20 +798,20 @@ void nl_rootdata::deleteFromSelList (const QVector <QSharedPointer<systemObject>
 }
 
 // When the "left" mouse goes down, select what's underneath, if anything.
-void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown)
+void nl_rootdata::onLeftMouseDown(float _x, float _y, float _scale, bool shiftDown)
 {
     //DBGMOUSE() << " called, shift is " << (shiftDown ? "Down" : "Up");
 
     // Record the position of the selection.
-    this->lastLeftMouseDownPos.setX(xGL);
-    this->lastLeftMouseDownPos.setY(yGL);
+    this->lastLeftMouseDownPos.setX(_x);
+    this->lastLeftMouseDownPos.setY(_y);
 
     // Before finding selections, see if user has an already selected
     // projection/input and if so, if user has clicked on a handle.
     if (!this->selList.empty() && this->selList.size() == 1) {
         if (this->selList[0]->type == projectionObject || this->selList[0]->type == inputObject) {
             QSharedPointer <projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
-            if ( proj->selectControlPoint(xGL, yGL, GLscale) ) {
+            if ( proj->selectControlPoint(_x, _y, _scale) ) {
                 return;
             } // else no handle on the inputObject/projectionObject was selected
         } // else the previously selected object was not an input or projection
@@ -821,7 +821,7 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
     // down click. Will be added to this->selList after the logic in
     // this method.
     QVector <QSharedPointer<systemObject> > newlySelectedList;
-    this->findSelection (xGL, yGL, GLscale, newlySelectedList);
+    this->findSelection (_x, _y, _scale, newlySelectedList);
 
     // Possibilities:
     // 1. Nothing previously selected, user clicked on new object, shift OR no shift -> new selection
@@ -838,16 +838,16 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
         //DBGMOUSE() << "Nothing prev. selected...";
         if (newlySelectedList.empty()) {
             // Nothing selected now, do nothing but show the cursor.
-            DBG() << "Show cursor at position " << xGL << "," << yGL;
-            cursor.x = xGL;
-            cursor.y = yGL;
+            DBG() << "Show cursor at position " << _x << "," << _y;
+            cursor.x = _x;
+            cursor.y = _y;
             emit updatePanel(this);
         } else {
             // Have new selection, selList is empty, swap the contents
             // of newlySelectedList into selList.
             //DBGMOUSE() << "New selection, swap new selection into selList.";
             this->selList.swap (newlySelectedList);
-            this->onNewSelections(xGL, yGL);
+            this->onNewSelections(_x, _y);
         }
 
     } else { // We have a previous selection.
@@ -858,17 +858,17 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
             if (shiftDown) {
                 // User still has shift down; do nothing. Show cursor?
                 //DBGMOUSE() << "User has shift down. Show cursor.";
-                cursor.x = xGL;
-                cursor.y = yGL;
+                cursor.x = _x;
+                cursor.y = _y;
                 // If we selected nothing, then just this:
                 emit updatePanel(this);
             } else {
                 // Clear selection and show cursor:
                 //DBGMOUSE() << "User doesn't have shift down, so clear selection and show cursor.";
-                this->cursor.x = xGL;
-                this->cursor.y = yGL;
+                this->cursor.x = _x;
+                this->cursor.y = _y;
                 this->selList.clear();
-                this->onNewSelections(xGL, yGL);
+                this->onNewSelections(_x, _y);
             }
         } else {
             // Have new selection
@@ -900,18 +900,18 @@ void nl_rootdata::onLeftMouseDown(float xGL, float yGL, float GLscale, bool shif
                 // Or maybe:?
                 for (int i = 0; i < selList.size(); ++i) {
                     // register locations relative to cursor:
-                    this->selList[i]->setLocationOffsetRelTo(xGL, yGL);
+                    this->selList[i]->setLocationOffsetRelTo(_x, _y);
                 }
                 this->selectionMoved = false;
 #endif
             }
             // As we selected something do this:
-            this->onNewSelections(xGL, yGL);
+            this->onNewSelections(_x, _y);
         }
     }
 }
 
-void nl_rootdata::findSelection (float xGL, float yGL, float GLscale, QVector <QSharedPointer<systemObject> >& newlySelectedList)
+void nl_rootdata::findSelection (float _x, float _y, float _scale, QVector <QSharedPointer<systemObject> >& newlySelectedList)
 {
     // Now look at populations and their inputs.
     for (int i = 0; i < this->populations.size(); ++i) {
@@ -919,7 +919,7 @@ void nl_rootdata::findSelection (float xGL, float yGL, float GLscale, QVector <Q
         // check population inputs:
         for (int j = 0; j < this->populations[i]->neuronType->inputs.size(); ++j) {
             // find if an edge of the input is hit
-            if (this->populations[i]->neuronType->inputs[j]->is_clicked(xGL, yGL, GLscale)) {
+            if (this->populations[i]->neuronType->inputs[j]->is_clicked(_x, _y, _scale)) {
                 // add the input to the selection list
                 newlySelectedList.push_back(this->populations[i]->neuronType->inputs[j]);
                 // selection complete, move on
@@ -931,7 +931,7 @@ void nl_rootdata::findSelection (float xGL, float yGL, float GLscale, QVector <Q
         for (int j = 0; j < this->populations[i]->projections.size(); ++j) {
 
             // find if an edge of the projection is hit
-            if (this->populations[i]->projections[j]->is_clicked(xGL, yGL, GLscale)) {
+            if (this->populations[i]->projections[j]->is_clicked(_x, _y, _scale)) {
                 // add to selection list
                 newlySelectedList.push_back(this->populations[i]->projections[j]);
                 // selection complete, move on
@@ -946,7 +946,7 @@ void nl_rootdata::findSelection (float xGL, float yGL, float GLscale, QVector <Q
                 for (int l = 0; l < col->weightUpdateCmpt->inputs.size(); ++l) {
 
                     // find if an edge of the input is hit
-                    if (col->weightUpdateCmpt->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
+                    if (col->weightUpdateCmpt->inputs[l]->is_clicked(_x, _y, _scale)) {
                         //  add to selection list
                         newlySelectedList.push_back(col->weightUpdateCmpt->inputs[l]);
                         // selection complete, move on
@@ -956,7 +956,7 @@ void nl_rootdata::findSelection (float xGL, float yGL, float GLscale, QVector <Q
 
                 for (int l = 0; l < col->postSynapseCmpt->inputs.size(); ++l) {
                     // find if an edge of the input is hit
-                    if (col->postSynapseCmpt->inputs[l]->is_clicked(xGL, yGL, GLscale)) {
+                    if (col->postSynapseCmpt->inputs[l]->is_clicked(_x, _y, _scale)) {
                         //  add to selection list
                         newlySelectedList.push_back(col->postSynapseCmpt->inputs[l]);
                         // selection complete, move on
@@ -967,7 +967,7 @@ void nl_rootdata::findSelection (float xGL, float yGL, float GLscale, QVector <Q
         } // for-loop over projections
 
         // select if under the cursor - no two objects should overlap!
-        if (this->populations[i]->is_clicked(xGL, yGL, GLscale)) {
+        if (this->populations[i]->is_clicked(_x, _y, _scale)) {
             //  add to selection list
             newlySelectedList.push_back(this->populations[i]);
             // selection complete, move on
@@ -1027,7 +1027,7 @@ void nl_rootdata::addPopulation()
         this->currProject->undoStack->push(new addPopulationCmd(this, pop));
 
         emit updatePanel(this);
-        emit redrawGLview();
+        emit redrawNetView();
     }
 }
 
@@ -1048,11 +1048,11 @@ void nl_rootdata::addSpikeSource()
         this->currProject->undoStack->push(new addPopulationCmd(this, pop));
 
         emit updatePanel(this);
-        emit redrawGLview();
+        emit redrawNetView();
     }
 }
 
-void nl_rootdata::addBezierOrProjection(float xGL, float yGL)
+void nl_rootdata::addBezierOrProjection(float _x, float _y)
 {
     if (this->selList.size() == 1) {
         if (this->selList[0]->type == projectionObject) {
@@ -1068,7 +1068,7 @@ void nl_rootdata::addBezierOrProjection(float xGL, float yGL)
                 if (this->populations[i]->isSpikeSource) continue;
 
                 QPainterPath box;
-                if (this->populations[i]->addToPath(&box)->contains(QPointF(xGL,yGL))) {
+                if (this->populations[i]->addToPath(&box)->contains(QPointF(_x,_y))) {
 
                     // we have a collision, so fix up the connection and return:
                     QSharedPointer <population> dest = this->populations[i];
@@ -1102,7 +1102,7 @@ void nl_rootdata::addBezierOrProjection(float xGL, float yGL)
     }
 }
 
-void nl_rootdata::startAddBezier(float xGL, float yGL)
+void nl_rootdata::startAddBezier(float _x, float _y)
 {
     if (this->selList.size() == 1) {
         if (this->selList[0]->type == populationObject) {
@@ -1137,7 +1137,7 @@ void nl_rootdata::startAddBezier(float xGL, float yGL)
 
             // if we are a self selection
             QPainterPath * tempPP = new QPainterPath;
-            if (pop->addToPath(tempPP)->contains(QPointF(xGL, yGL))) {
+            if (pop->addToPath(tempPP)->contains(QPointF(_x, _y))) {
 
                 // self selection
                 col->start = QPointF(pop->getRight(), pop->getBottom() + 0.3*pop->size);
@@ -1153,7 +1153,7 @@ void nl_rootdata::startAddBezier(float xGL, float yGL)
                     // ignore spike sources
                     if (this->populations[i]->isSpikeSource) continue;
                     QPainterPath * tempPP = new QPainterPath;
-                    if (this->populations[i]->addToPath(tempPP)->contains(QPointF(xGL, yGL))) {
+                    if (this->populations[i]->addToPath(tempPP)->contains(QPointF(_x, _y))) {
                         selPop = i;
                     }
                     delete tempPP;
@@ -1166,7 +1166,7 @@ void nl_rootdata::startAddBezier(float xGL, float yGL)
                     if (col->curves.size() == 1) {
                         // if first curve then setup start point
                         // find where on the population box we should start the col
-                        QPointF boxEdge = col->findBoxEdge(pop, xGL, yGL);
+                        QPointF boxEdge = col->findBoxEdge(pop, _x, _y);
                         col->start = boxEdge;
 
                         // add end point
@@ -1181,20 +1181,20 @@ void nl_rootdata::startAddBezier(float xGL, float yGL)
                     }
 
                     // set up handles
-                    col->setAutoHandles(pop, dest, QPointF(xGL,yGL));
+                    col->setAutoHandles(pop, dest, QPointF(_x,_y));
 
                 } else {
 
                     if (col->curves.size() == 1) {
                         // if first curve then setup start point
                         // find where on the population box we should start the col
-                        QPointF boxEdge = col->findBoxEdge(pop, xGL, yGL);
+                        QPointF boxEdge = col->findBoxEdge(pop, _x, _y);
                         col->start = boxEdge;
                     }
                     // setup end point
-                    col->curves.back().end = QPointF(xGL, yGL);
+                    col->curves.back().end = QPointF(_x, _y);
                     // set up handles
-                    col->setAutoHandles(pop, pop, QPointF(xGL,yGL));
+                    col->setAutoHandles(pop, pop, QPointF(_x,_y));
                 }
 
             }
@@ -1217,32 +1217,32 @@ void nl_rootdata::abortProjection()
     }
 }
 
-void nl_rootdata::mouseMoveGL(float xGL, float yGL)
+void nl_rootdata::mouseMoveNetView(float _x, float _y)
 {
     selectionMoved = true;
-    //DBGMOUSE() << "pos = " << xGL << " " << yGL;
+    //DBGMOUSE() << "pos = " << _x << " " << _y;
 
     if (this->selList.empty()) {
         // move viewpoint only, then return.
-        CHECK_CAST(dynamic_cast<GLWidget *>(sender()))
-        GLWidget * source = (GLWidget *) sender();
-        source->move(xGL+source->viewX-cursor.x,yGL-source->viewY-cursor.y);
+        CHECK_CAST(dynamic_cast<NetViewWidget *>(sender()))
+        NetViewWidget * source = (NetViewWidget *) sender();
+        source->move(_x+source->viewX-cursor.x,_y-source->viewY-cursor.y);
         return;
     }
 
     // revised move code for multiple objects
 
     // if grid is on, snap to grid
-    CHECK_CAST(dynamic_cast<GLWidget *>(sender()))
-    GLWidget * source = (GLWidget *) sender();
+    CHECK_CAST(dynamic_cast<NetViewWidget *>(sender()))
+    NetViewWidget * source = (NetViewWidget *) sender();
     if (source->gridSelect) {
-        xGL = round(xGL/source->gridScale)*source->gridScale;
-        yGL = round(yGL/source->gridScale)*source->gridScale;
+        _x = round(_x/source->gridScale)*source->gridScale;
+        _y = round(_y/source->gridScale)*source->gridScale;
     }
 
     if (selList.size() > 1) {
         for (int i = 0; i < selList.size(); ++i) {
-            selList[i]->move(xGL, yGL);
+            selList[i]->move(_x, _y);
         }
     } else {
         // if only one thing
@@ -1254,10 +1254,10 @@ void nl_rootdata::mouseMoveGL(float xGL, float yGL)
             // avoid collisions
             for (int i = 0; i < populations.size(); ++i) {
                 if (populations[i]->getName() != pop->getName()) {
-                    if (populations[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->topBound(yGL)-0.01)) collision = true;
-                    if (populations[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->topBound(yGL)-0.01)) collision = true;
-                    if (populations[i]->within_bounds(pop->leftBound(xGL)+0.01, pop->bottomBound(yGL)+0.01)) collision = true;
-                    if (populations[i]->within_bounds(pop->rightBound(xGL)-0.01, pop->bottomBound(yGL)+0.01)) collision = true;
+                    if (populations[i]->within_bounds(pop->leftBound(_x)+0.01, pop->topBound(_y)-0.01)) collision = true;
+                    if (populations[i]->within_bounds(pop->rightBound(_x)-0.01, pop->topBound(_y)-0.01)) collision = true;
+                    if (populations[i]->within_bounds(pop->leftBound(_x)+0.01, pop->bottomBound(_y)+0.01)) collision = true;
+                    if (populations[i]->within_bounds(pop->rightBound(_x)-0.01, pop->bottomBound(_y)+0.01)) collision = true;
                 }
             }
 
@@ -1267,20 +1267,20 @@ void nl_rootdata::mouseMoveGL(float xGL, float yGL)
             }
 
             if (!collision) {
-                selList[0]->move(xGL, yGL);
+                selList[0]->move(_x, _y);
             }
 
         } else if (this->selList[0]->type == projectionObject) {
             // not a population in this case...
             QSharedPointer<projection> proj = qSharedPointerDynamicCast <projection> (selList[0]);
             CHECK_CAST(proj)
-            proj->moveSelectedControlPoint(xGL, yGL);
+            proj->moveSelectedControlPoint(_x, _y);
 
         } else if (this->selList[0]->type == inputObject) {
             // not a population in this case either
             QSharedPointer<genericInput> in = qSharedPointerDynamicCast <genericInput> (selList[0]);
             CHECK_CAST(in)
-            in->moveSelectedControlPoint(xGL, yGL);
+            in->moveSelectedControlPoint(_x, _y);
         }
     }
 }
@@ -1426,7 +1426,7 @@ void nl_rootdata::updateComponentType(int index, QSharedPointer<systemObject> pt
     }
 
     // redraw GL view
-    emit redrawGLview();
+    emit redrawNetView();
     emit updatePanelView2("comboboxOSXfix");
 }
 
@@ -1446,7 +1446,7 @@ nl_rootdata::updateConnection (QSharedPointer<systemObject> existingConn, bool g
 
     this->currProject->undoStack->push(new globalConnectionDelayChange(this, existingConn, globalDelay));
 
-    emit redrawGLview();
+    emit redrawNetView();
     emit updatePanelView2("comboboxOSXfix");
 }
 
@@ -1710,7 +1710,7 @@ void nl_rootdata::renamePopulation()
     }
 
     // redraw view
-    emit redrawGLview();
+    emit redrawNetView();
 }
 
 
@@ -1830,7 +1830,7 @@ void nl_rootdata::selectColour()
     currSel->colour = this->getColor(currSel->colour);
 
     // redraw GL
-    emit redrawGLview();
+    emit redrawNetView();
 }
 
 void nl_rootdata::getNeuronLocationsSrc(QVector <QVector <loc> > *locations,QVector <QColor> * cols, QString name)
@@ -2188,7 +2188,7 @@ void nl_rootdata::addgenericInput()
 
         // redraw panel
         emit updatePanel(this);
-        emit redrawGLview();
+        emit redrawNetView();
 
     } else {
         // src not found - set the LineEdit background red-ish
@@ -2244,7 +2244,7 @@ void nl_rootdata::setCaptionOut(QString model_name)
 
 void nl_rootdata::undoOrRedoPerformed(int)
 {
-    emit redrawGLview();
+    emit redrawNetView();
     setCaptionOut(this->currProject->name);
     // update file list for components
     emit setWindowTitle();
@@ -2390,5 +2390,5 @@ void nl_rootdata::pasteSelectionFromClipboard()
     this->selList = this->clipboardObjects;
 
     emit reDrawAll();
-    emit redrawGLview();
+    emit redrawNetView();
 }

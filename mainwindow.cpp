@@ -466,7 +466,7 @@ MainWindow(QWidget *parent) :
 #endif
     QObject::connect(ui->viewport, SIGNAL(itemWasMoved()), &(data), SLOT(itemWasMoved()));
     QObject::connect(ui->viewport, SIGNAL(onRightMouseDown(float,float,float)), &(data), SLOT(onRightMouseDown(float,float,float)));
-    QObject::connect(ui->viewport, SIGNAL(mouseMove(float,float)), &(data), SLOT(mouseMoveGL(float,float)));
+    QObject::connect(ui->viewport, SIGNAL(mouseMove(float,float)), &(data), SLOT(mouseMoveNetView(float,float)));
     QObject::connect(ui->viewport, SIGNAL(drawSynapse(float,float)), &(data), SLOT(startAddBezier(float,float)));
     QObject::connect(ui->viewport, SIGNAL(addBezierOrProjection(float,float)), &(data), SLOT(addBezierOrProjection(float,float)));
     QObject::connect(ui->viewport, SIGNAL(abortProjection()), &(data), SLOT(abortProjection()));
@@ -476,8 +476,7 @@ MainWindow(QWidget *parent) :
     QObject::connect(ui->viewport, SIGNAL(endDragSelect()), &(data), SLOT(endDragSelection()));
 
     QObject::connect(&(data), SIGNAL(finishDrawingSynapse()), ui->viewport, SLOT(finishConnect()));
-    QObject::connect(&(data), SIGNAL(redrawGLview()), ui->viewport, SLOT(redrawGLview()));
-    //QObject::connect(&(data), SIGNAL(redrawGLview()), viewVZ.OpenGLWidget, SLOT(redraw()));
+    QObject::connect(&(data), SIGNAL(redrawNetView()), ui->viewport, SLOT(redrawNetView()));
     QObject::connect(&(data), SIGNAL(setCaption(QString)), this, SLOT(setCaption(QString)));
     QObject::connect(&(data), SIGNAL(setWindowTitle()), this, SLOT(updateTitle()));
 

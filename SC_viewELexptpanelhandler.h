@@ -91,9 +91,7 @@ private:
     QPointF cursor;
 
     QSharedPointer<systemObject> currSystemObject;
-#if 0
-    GLWidget* gl;
-#endif
+
     QTimer simTimeChecker;
     QString simTimeFileName;
     QString simCancelFileName;
@@ -181,35 +179,6 @@ public slots:
     void simulatorStandardOutput();
     void simulatorStandardError();
     void checkForSimTime();
-
-#if 0
-    /*!
-     * \brief Called when the mouse moves on the model view
-     * \param xGL
-     * \param yGL
-     */
-    void mouseMove(float xGL, float yGL);
-
-    /*!
-     * \brief Redraw the model
-     * \param painter
-     * \param GLscale
-     * \param viewX
-     * \param viewY
-     * \param width
-     * \param height
-     * \param style
-     */
-    void reDrawModel(QPainter* painter,float GLscale, float viewX, float viewY, int width, int height, drawStyle style);
-
-    /*!
-     * \brief selectByMouseDown
-     * \param xGL
-     * \param yGL
-     * \param GLScale
-     */
-    void selectByMouseDown(float xGL, float yGL, float GLScale);
-#endif
 };
 
 #endif // VIEWVISEXPTPANELHANDLER_H

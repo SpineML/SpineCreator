@@ -50,9 +50,9 @@ public:
     bool within_bounds(float x, float y);
     bool is_clicked(float, float, float );
     void animate(QSharedPointer<population> thisSharedPointer);
-    void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style);
-    void drawSynapses(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style);
-    void drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style);
+    void draw(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, QImage image, drawStyle style);
+    void drawSynapses(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, drawStyle style);
+    void drawInputs(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, drawStyle style);
     float leftBound(float pos = 0);
     float rightBound(float pos = 0);
     float topBound(float pos = 0);
@@ -108,7 +108,7 @@ public:
 private:
 
     trans tempTrans;
-    void setupTrans(float GLscale, float viewX, float viewY, int width, int height);
+    void setupTrans(float _scale, float viewX, float viewY, int width, int height);
     QPointF transformPoint(QPointF point);
 };
 

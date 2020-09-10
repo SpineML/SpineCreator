@@ -47,8 +47,6 @@
   #endif
 #endif
 
-#define NEW_EXPERIMENT_VIEW11
-
 viewELExptPanelHandler::viewELExptPanelHandler(QObject *parent) :
     QObject(parent)
 {
@@ -66,25 +64,6 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, nl_rootdat
     this->exptChanges = new QVBoxLayout;
     this->cursor = QPointF(0,0);
 
-    // visual experiments test code - all looks good but not right now...
-#ifdef NEW_EXPERIMENT_VIEW
-    gl = new GLWidget;
-    connect(gl, SIGNAL(reDraw(QPainter*,float,float,float,int,int,drawStyle)),this,SLOT(reDrawModel(QPainter*,float,float,float,int,int,drawStyle)));
-    connect(gl, SIGNAL(mouseMove(float,float)), this, SLOT(mouseMove(float,float)));
-    connect(gl, SIGNAL(onLeftMouseDown(float,float,float, bool)), this, SLOT(selectByMouseDown(float,float,float)));
-
-    ((QHBoxLayout *) this->viewEL->expt->layout())->addWidget(gl);
-
-    ((QHBoxLayout *) this->viewEL->expt->layout())->setContentsMargins(0,0,0,0);
-
-    // for animation
-    QTimer *timer = new QTimer( this );
-    // this creates a Qt timer event
-    connect( timer, SIGNAL(timeout()), this->gl, SLOT(animate()) );
-    // launch the timer
-    timer->start(16);
-#endif
-
     this->exptSetup->setContentsMargins(14*RETINA_SUPPORT,14*RETINA_SUPPORT,14*RETINA_SUPPORT,14*RETINA_SUPPORT);
     this->exptInputs->setContentsMargins(4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT);
     this->exptOutputs->setContentsMargins(4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT,4*RETINA_SUPPORT);
@@ -92,7 +71,7 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, nl_rootdat
 
     // add panel to expts
     ((QHBoxLayout *) this->viewEL->expt->layout())->addLayout(this->exptSetup);
-#ifndef NEW_EXPERIMENT_VIEW
+
     // add divider
     QFrame* lineA = new QFrame();
     lineA->setMaximumWidth(1*RETINA_SUPPORT);
@@ -123,7 +102,6 @@ viewELExptPanelHandler::viewELExptPanelHandler(viewELstruct * viewEL, nl_rootdat
     // add panel to expts
     ((QHBoxLayout *) this->viewEL->expt->layout())->addLayout(this->exptChanges);
 
-#endif
     // panel is part of struct viewELstruct and is a QWidget:
     this->viewEL->panel->setStyleSheet("QWidget { background-color: white; }");
 
@@ -344,61 +322,6 @@ void viewELExptPanelHandler::redrawExpt()
     }
     this->redrawPanel();
 
-
-#ifdef NEW_EXPERIMENT_VIEW
-    // if pointer is not valid it is either NULL or the selected object was deleted
-    if (this->data->isValidPointer(this->currSystemObject) == false) {
-        // no selection, so draw up the simulator parameters to the panel
-        this->redrawSimulatorParams(currentExperiment);
-    }
-
-    // we are referencing a valid and not deleted object
-    if (this->data->isValidPointer(this->currSystemObject) == true) {
-        // check if we have a POPULATION
-        if (this->currSystemObject->type == populationObject) {
-            // ok, this is a population - draw up the population panel
-            // cast to a population
-            QSharedPointer <population> pop = (QSharedPointer <population>) this->currSystemObject;
-            // set up some fonts to use
-            QFont titleFont("Helvetica [Cronyx]", 16);
-            QFont sub1Font("Helvetica [Cronyx]", 14);
-            QFont sub2Font("Helvetica [Cronyx]", 12);
-            // write out some details about this population
-            // the name
-            QLabel * name;
-            name = new QLabel("<b>" + pop->name + "</b>");
-            name->setFont(titleFont);
-            exptSetup->addWidget(name);
-            // the size
-            QLabel * size;
-            size = new QLabel("Size = " + QString::number(pop->size));
-            size->setFont(sub1Font);
-            exptSetup->addWidget(size);
-            // check if we have a Component on the population
-            if (pop->neuronType->component->name != "none") {
-                // the component
-                QLabel * comp;
-                comp = new QLabel("Component is '" + pop->neuronType->component->name + "'");
-                comp->setFont(sub1Font);
-                exptSetup->addWidget(comp);
-                // First put up the input ports that we can send inputs to.
-                // Then put up the loggable output ports.
-                // Then allow variable overrides.
-            } else {
-                // no Component, so say that is the issue
-                QLabel * comp;
-                comp = new QLabel(tr("No component selected"));
-                comp->setFont(sub1Font);
-                exptSetup->addWidget(comp);
-            }
-        }
-    }
-
-    // add a stretch to force the content to the top
-    exptSetup->addStretch();
-
-#else
-
     // redraw SIMULATOR PARAMETERS
     redrawSimulatorParams(currentExperiment);
 
@@ -428,8 +351,6 @@ void viewELExptPanelHandler::redrawExpt()
     connect(addIn, SIGNAL(clicked()), this, SLOT(addInput()));
 
     formIn->addWidget(addIn);
-
-
 
     // redraw MODEL OUTPUTS
 
@@ -546,7 +467,6 @@ void viewELExptPanelHandler::redrawExpt()
         scroll->horizontalScrollBar()->setValue(horiz_scroll);
         scroll->verticalScrollBar()->setValue(vert_scroll);
     }
-#endif
 }
 
 void viewELExptPanelHandler::redrawPanel()
@@ -2347,103 +2267,3 @@ void viewELExptPanelHandler::simulatorStandardError()
     QByteArray data = ((QProcess *) sender())->readAllStandardError();
     simulatorStdOutText = simulatorStdOutText + QString().fromUtf8(data);
 }
-
-#ifdef NEW_EXPERIMENT_VIEW // Was part of Alex's experimental work on expt interface
-void viewELExptPanelHandler::mouseMove(float xGL, float yGL)
-{
-    // move viewpoint
-    // first get a pointer the the GLWidget
-    GLWidget * source = (GLWidget *) sender();
-    // now update the widget location to the new offset
-    source->move(xGL+source->viewX-cursor.x(),yGL-source->viewY-cursor.y());
-}
-
-void viewELExptPanelHandler::reDrawModel(QPainter* painter,float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
-{
-    // draw the populations
-    for (int i = 0; i < this->data->populations.size(); ++i) {
-        this->data->populations[i]->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, style);
-    }
-
-    // draw the synapses
-    for (int i = 0; i < this->data->populations.size(); ++i) {
-        this->data->populations[i]->drawSynapses(painter, GLscale, viewX, viewY, width, height, style);
-    }
-
-    // draw the generic inputs
-    for (int i = 0; i < this->data->populations.size(); ++i) {
-        QPen pen(QColor(100,0,0,100));
-        pen.setWidthF(float(1));
-        painter->setPen(pen);
-        this->data->populations[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, style);
-    }
-
-    // redraw selected object to highlight, if it is not deleted pointer:
-    if (this->currSystemObject->type == populationObject) {
-        QSharedPointer <population> pop = qSharedPointerDynamicCast <population> (this->currSystemObject);
-
-        float left = ((pop->getLeft()+viewX)*GLscale+float(width))/2;
-        float right = ((pop->getRight()+viewX)*GLscale+float(width))/2;
-        float top = ((-pop->getTop()+viewY)*GLscale+float(height))/2;
-        float bottom = ((-pop->getBottom()+viewY)*GLscale+float(height))/2;
-
-        if (pop->isSpikeSource) {
-            for (int i = 5; i > 1; --i) {
-                QPen pen(QColor(0,0,0,50/i));
-                pen.setWidthF(float(i*2));
-                painter->setPen(pen);
-                painter->drawEllipse(QPointF((right+left)/2.0, (top+bottom)/2.0),0.5*GLscale/2.0,0.5*GLscale/2.0);
-            }
-
-        } else {
-
-            for (int i = 5; i > 1; --i) {
-                QPen pen(QColor(0,0,0,50/i));
-                pen.setWidthF(float(i*2));
-                painter->setPen(pen);
-                QRectF rectangle(left, top, right-left, bottom-top);
-                painter->drawRect(rectangle);
-            }
-        }
-    }
-
-    if (this->currSystemObject->type == projectionObject) {
-        QSharedPointer <projection> col = qSharedPointerDynamicCast <projection> (this->currSystemObject);
-        for (int i = 5; i > 1; --i) {
-            QPen pen(QColor(0,0,0,30/i));
-            pen.setWidthF(float(i*2));
-            painter->setPen(pen);
-            col->draw(painter, GLscale, viewX, viewY, width, height, this->data->popImage, standardDrawStyle);
-        }
-    }
-
-}
-
-void viewELExptPanelHandler::selectByMouseDown(float xGL, float yGL, float GLScale)
-{
-    // store the location selected for use when dragging around the viewport
-    this->cursor = QPointF(xGL,yGL);
-
-    // A list of things which have been selected with this left mouse
-    // down click. Will be added to this->selList after the logic in
-    // this method.
-    QVector <QSharedPointer<systemObject> > newlySelectedList;
-    this->data->findSelection (xGL, yGL, GLScale, newlySelectedList);
-
-    // if we have an object selected
-    if (newlySelectedList.size() == 1) {
-        // we have selected a new object - set the current selection to this object if it is a Population or a Projection
-        if (newlySelectedList[0]->type == populationObject || newlySelectedList[0]->type == projectionObject) {
-            this->currSystemObject = newlySelectedList[0];
-            // update the UI
-            gl->redrawGLview();
-            this->redraw();
-        }
-    } else {
-        this->currSystemObject.clear();
-        // update the UI
-        gl->redrawGLview();
-        this->redraw();
-    }
-}
-#endif

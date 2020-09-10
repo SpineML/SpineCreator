@@ -216,7 +216,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    GLWidget *glWidget;
+    NetViewWidget *nvWidget;
     void createActions();
     bool unsaved_changes;
 #ifdef Q_OS_MAC111

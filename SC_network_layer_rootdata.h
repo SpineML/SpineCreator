@@ -85,7 +85,7 @@ public:
     /*!
      * Find the object selected by the mouse (called by onLeftMouseDown)
      */
-    void findSelection (float xGL, float yGL, float GLscale, QVector <QSharedPointer<systemObject> >& newlySelectedList);
+    void findSelection (float xGL, float yGL, float _scale, QVector <QSharedPointer<systemObject> >& newlySelectedList);
 
     /*!
      * Function to be called when a GenericInput or Synapse's internal
@@ -139,7 +139,7 @@ signals:
     void statusBarUpdate(QString, int);
     void updatePanel(nl_rootdata *);
     void updatePanelView2(QString);
-    void redrawGLview();
+    void redrawNetView();
     void setCaption(QString);
     void setWindowTitle();
     void itemsSelected(QString);
@@ -147,7 +147,7 @@ signals:
 public slots:
     void saveImage(QString);
     void reDrawAll(QPainter *, float, float, float, int, int, drawStyle style);
-    void onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown);
+    void onLeftMouseDown(float _x, float _y, float myscale, bool shiftDown);
 
     /*
      * \brief React to an item having been moved
@@ -161,8 +161,8 @@ public slots:
      */
     void itemWasMoved();
 
-    void onRightMouseDown(float xGL, float yGL, float GLscale);
-    void mouseMoveGL(float, float);
+    void onRightMouseDown(float _x, float _y, float myscale);
+    void mouseMoveNetView(float, float);
     void updatePortMap(QString);
     void updateComponentType(int index); // index is the menu index, I think.
     void updatePar();
@@ -180,13 +180,13 @@ public slots:
     void selectColour();
     void getNeuronLocationsSrc(QVector < QVector <loc> >*, QVector <QColor> *, QString name);
 #ifdef NEED_MOUSE_UP_LOGIC
-    void onLeftMouseUp(float xGL, float yGL, float GLscale);
+    void onLeftMouseUp(float _x, float _y, float _scale);
 #endif
     void setSelectionbyName(QString);
     void addgenericInput();
     void delgenericInput();
     void editConnections();
-    void dragSelect(float xGL, float yGL);
+    void dragSelect(float _x, float _y);
     void endDragSelection();
     void setCaptionOut(QString);
     void setModelTitle(QString);
@@ -274,7 +274,7 @@ private:
     /*!
      * Action to take when a mouse down event has changed selected objects.
      */
-    void onNewSelections (float xGL, float yGL);
+    void onNewSelections (float _x, float _y);
 
     /*!
      * \brief selListContains finds out if this->selList contains any of the members of objectList.
@@ -303,7 +303,7 @@ private:
      * This helps determine the position of an item BEFORE it was moved. it's
      * used for "undo move item position" - you need to know where the
      * item used to be so that you can restore it back to that
-     * position. These are the "xGL,yGL" coordinates.
+     * position. These are the "_x,_y" coordinates.
      *
      * Note that this is the last position of the *mouse*. It's used to get
      * the last position of the object by working out the

@@ -133,9 +133,9 @@ public:
     void setStyle(drawStyle style);
     drawStyle style();
 
-    virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
-    void drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style);
-    void drawHandles(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height);
+    virtual void draw(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
+    void drawInputs(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, QImage, drawStyle style);
+    void drawHandles(QPainter *painter, float _scale, float viewX, float viewY, int width, int height);
     void moveEdge(int, float, float);
     virtual void write_model_meta_xml(QXmlStreamWriter* xmlOut);
 
@@ -147,13 +147,13 @@ public:
     void read_inputs_from_xml(QDomElement  &e, QDomDocument * meta, projectObject *data, QSharedPointer<projection>);
 
     void print();
-    QPointF findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL);
+    QPointF findBoxEdge(QSharedPointer <population> pop, float _x, float _y);
     void setAutoHandles(QSharedPointer <population> pop1, QSharedPointer <population>pop2, QPointF end);
     void animate(QSharedPointer<systemObject> movingObj, QPointF delta, QSharedPointer<projection> thisSharedPointer);
-    virtual void moveSelectedControlPoint(float xGL, float yGL);
-    bool selectControlPoint(float xGL, float yGL, float GLscale);
-    bool deleteControlPoint(float xGL, float yGL, float GLscale);
-    void insertControlPoint(float xGL, float yGL, float GLscale);
+    virtual void moveSelectedControlPoint(float _x, float _y);
+    bool selectControlPoint(float _x, float _y, float _scale);
+    bool deleteControlPoint(float _x, float _y, float _scale);
+    void insertControlPoint(float _x, float _y, float _scale);
     QPointF currentLocation();
     QPointF selectedControlPointLocation();
 
@@ -166,7 +166,7 @@ public:
     void remapSharedPointers(QMap <systemObject *, QSharedPointer <systemObject> >);
 
     trans tempTrans;
-    void setupTrans(float GLscale, float viewX, float viewY, int width, int height);
+    void setupTrans(float _scale, float viewX, float viewY, int width, int height);
     QPointF transformPoint(QPointF point);
     QPainterPath makeIntersectionLine(int first, int last);
 
@@ -211,12 +211,12 @@ private:
      * projections::draw.
      */
     void drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, QPen& labelPen,
-                    const float GLscale, const float scale);
+                    const float _scale, const float scale);
 
     /*!
      * produce an arrow head.
      */
-    QPolygonF makeArrowHead (QPainterPath& path, const float GLscale);
+    QPolygonF makeArrowHead (QPainterPath& path, const float _scale);
 
     /*!
      * Using this->curves, find a suitable label position for the

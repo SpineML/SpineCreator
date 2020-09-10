@@ -56,12 +56,12 @@ public:
     int getDestSize();
     //@}
 
-    virtual void draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
+    virtual void draw(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, QImage , drawStyle style);
 
     void delAll(nl_rootdata *);
 
     void animate(QSharedPointer<systemObject>movingObj, QPointF delta);
-    void moveSelectedControlPoint(float xGL, float yGL);
+    void moveSelectedControlPoint(float _x, float _y);
     void write_model_meta_xml(QXmlStreamWriter* xmlOut) ;
 
     /*!

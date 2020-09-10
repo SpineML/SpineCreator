@@ -35,7 +35,7 @@ class connection;
 class csv_connection;
 class csv_connectionModel;
 class glConnectionWidget;
-class GLWidget;
+class NetViewWidget;
 class MainWindow;
 class population;
 class projection;
@@ -214,7 +214,7 @@ enum drawStyle {
 };
 
 struct trans {
-    float GLscale;
+    float scale;
     float viewX;
     float viewY;
     float width;

@@ -22,8 +22,8 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-#ifndef GLWIDGET_H
-#define GLWIDGET_H
+#ifndef NETVIEWWIDGET_H
+#define NETVIEWWIDGET_H
 
 #include "globalHeader.h"
 
@@ -31,18 +31,14 @@
 #define GL_MULTISAMPLE 0x809D
 #endif
 
-#ifdef Q_OS_MAC2
-class GLWidget : public QGLWidget
-#else
-class GLWidget : public QWidget
-#endif
+class NetViewWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit GLWidget(QWidget *parent = 0);
-    ~GLWidget();
-    void move(GLfloat, GLfloat);
+    explicit NetViewWidget(QWidget *parent = 0);
+    ~NetViewWidget();
+    void move(float, float);
 
     int changed;
     float viewX;
@@ -56,17 +52,17 @@ public:
 signals:
     void currElement(int type, int index);
     void reDraw(QPainter*, float, float, float, int, int, drawStyle);
-    void onLeftMouseDown(float xGL, float yGL, float GLscale, bool shiftDown);
-    void onRightMouseDown(float xGL, float yGL, float GLscale);
-    void mouseMove(float xGL, float yGL);
-    void drawSynapse(float xGL, float yGL);
-    void addBezierOrProjection(float xGL, float yGL);
+    void onLeftMouseDown(float _x, float _y, float _myScale, bool shiftDown);
+    void onRightMouseDown(float _x, float _y, float _myScale);
+    void mouseMove(float _x, float _y);
+    void drawSynapse(float _x, float _y);
+    void addBezierOrProjection(float _x, float _y);
     void abortProjection();
 #ifdef NEED_MOUSE_UP_LOGIC
-    void onLeftMouseUp(float xGL, float yGL, float GLscale);
+    void onLeftMouseUp(float _x, float _y, float _myScale);
 #endif
     void itemWasMoved();
-    void dragSelect(float xGL, float yGL);
+    void dragSelect(float _x, float _y);
     void endDragSelect();
 
 public slots:
@@ -75,7 +71,7 @@ public slots:
     void zoomIn();
     void startConnect();
     void finishConnect();
-    void redrawGLview();
+    void redrawNetView();
     void saveImage();
 
 protected:
@@ -92,8 +88,8 @@ protected:
 private:
     int currSelType;
     int currSelInd;
-    float GLscale;
-    float targGLscale;
+    float myScale;
+    float targmyScale;
     bool connectMode;
     // on some windows laptops we can't RMB drag, so this allows SHIFT-LMB dragging
     bool LMB_drag;
@@ -106,4 +102,4 @@ private:
     bool itemMoving;
 };
 
-#endif // GLWIDGET_H
+#endif // NETVIEWWIDGET_H

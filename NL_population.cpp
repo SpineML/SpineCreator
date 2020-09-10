@@ -639,9 +639,9 @@ void population::animate(QSharedPointer<population>thisSharedPointer)
     }
 }
 
-void population::setupTrans(float GLscale, float viewX, float viewY, int width, int height)
+void population::setupTrans(float _scale, float viewX, float viewY, int width, int height)
 {
-    this->tempTrans.GLscale = GLscale;
+    this->tempTrans.scale = _scale;
     this->tempTrans.viewX = viewX;
     this->tempTrans.viewY = viewY;
     this->tempTrans.width = float(width);
@@ -650,16 +650,16 @@ void population::setupTrans(float GLscale, float viewX, float viewY, int width, 
 
 QPointF population::transformPoint(QPointF point)
 {
-    point.setX(((point.x()+this->tempTrans.viewX)*this->tempTrans.GLscale+this->tempTrans.width)/2);
-    point.setY(((-point.y()+this->tempTrans.viewY)*this->tempTrans.GLscale+this->tempTrans.height)/2);
+    point.setX(((point.x()+this->tempTrans.viewX)*this->tempTrans.scale+this->tempTrans.width)/2);
+    point.setY(((-point.y()+this->tempTrans.viewY)*this->tempTrans.scale+this->tempTrans.height)/2);
     return point;
 }
 
-void population::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage image, drawStyle style)
+void population::draw(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, QImage image, drawStyle style)
 {
-    float scale = GLscale/(200.0*RETINA_SUPPORT);
+    float scale = _scale/(200.0*RETINA_SUPPORT);
 
-    this->setupTrans(GLscale, viewX, viewY, width, height);
+    this->setupTrans(_scale, viewX, viewY, width, height);
 
     if (this->isSpikeSource) {
         style = spikeSourceDrawStyle;
@@ -673,11 +673,11 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         QPen pen = painter->pen();
         pen.setWidthF((pen.widthF()+1.0)*2*scale);
         painter->setPen(pen);
-        painter->drawEllipse(transformPoint(QPointF(this->x, this->y)),0.5*GLscale/2.0,0.5*GLscale/2.0);
+        painter->drawEllipse(transformPoint(QPointF(this->x, this->y)),0.5*_scale/2.0,0.5*_scale/2.0);
         painter->setPen(oldPen);
         QFont oldFont = painter->font();
         QFont font = painter->font();
-        font.setPointSizeF(GLscale/10.0);
+        font.setPointSizeF(_scale/10.0);
         painter->setFont(font);
         // print label
         QStringList text = this->name.split(" ");
@@ -699,7 +699,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         // draw circle
         QPen oldPen = painter->pen();
         QPen pen = painter->pen();
-        pen.setWidthF((pen.widthF()+1.0));//*GLscale/100.0
+        pen.setWidthF((pen.widthF()+1.0));//*_scale/100.0
         pen.setColor(QColor(200,200,200,0));
         painter->setPen(pen);
         QBrush brush;
@@ -709,10 +709,10 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         brush.setColor(col);
         QBrush oldBrush = painter->brush();
         painter->setBrush(brush);
-        painter->drawEllipse(transformPoint(QPointF(this->x, this->y)),0.5*GLscale/2.0,0.5*GLscale/2.0);
+        painter->drawEllipse(transformPoint(QPointF(this->x, this->y)),0.5*_scale/2.0,0.5*_scale/2.0);
         QFont oldFont = painter->font();
         QFont font = painter->font();
-        font.setPointSizeF(GLscale/10.0);
+        font.setPointSizeF(_scale/10.0);
         painter->setFont(font);
         // print label
         pen.setColor(QColor(0,0,0,255));
@@ -722,7 +722,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
         painter->setBrush(oldBrush);
         painter->setPen(oldPen);
         QImage ssimage(":/images/ssBig.png");
-        QRectF imRect(transformPoint(QPointF(this->x, this->y))-QPointF(0.4*GLscale/2.0,0.4*GLscale/2.0),QSizeF(0.4*GLscale,0.4*GLscale));
+        QRectF imRect(transformPoint(QPointF(this->x, this->y))-QPointF(0.4*_scale/2.0,0.4*_scale/2.0),QSizeF(0.4*_scale,0.4*_scale));
         painter->drawImage(imRect, ssimage);
         return;
         break;
@@ -736,10 +736,10 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     }
 
     // transform the co-ordinates manually (using the qt transformation leads to blurry fonts!)
-    float left = ((this->left+viewX)*GLscale+float(width))/2;
-    float right = ((this->right+viewX)*GLscale+float(width))/2;
-    float top = ((-this->top+viewY)*GLscale+float(height))/2;
-    float bottom = ((-this->bottom+viewY)*GLscale+float(height))/2;
+    float left = ((this->left+viewX)*_scale+float(width))/2;
+    float right = ((this->right+viewX)*_scale+float(width))/2;
+    float top = ((-this->top+viewY)*_scale+float(height))/2;
+    float bottom = ((-this->bottom+viewY)*_scale+float(height))/2;
 
     QRectF rectangle(left, top, right-left, bottom-top);
 
@@ -748,7 +748,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     QColor col(this->colour);
     col.setAlpha(100);
     QPainterPath path;
-    path.addRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
+    path.addRoundedRect(rectangle,0.05*_scale,0.05*_scale);
 
     painter->fillPath(path, col);
 
@@ -756,7 +756,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
 
     // Draw a dark grey border around the population
     painter->setPen(QColor(200,200,200,255));
-    painter->drawRoundedRect(rectangle,0.05*GLscale,0.05*GLscale);
+    painter->drawRoundedRect(rectangle,0.05*_scale,0.05*_scale);
     painter->setPen(QColor(0,0,0,255));
 
     QString displayed_name = this->name;
@@ -777,11 +777,11 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     QFont font = painter->font();
 
     QString text = displayed_name + "\n" + QString::number(this->numNeurons);// + "\n" + displayed_comp_name;
-    font.setPointSizeF(1.5*GLscale/(20.0*RETINA_SUPPORT));
+    font.setPointSizeF(1.5*_scale/(20.0*RETINA_SUPPORT));
     painter->setFont(font);
     painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignTop, text);
 
-    font.setPointSizeF(1.3*GLscale/(20.0*RETINA_SUPPORT));
+    font.setPointSizeF(1.3*_scale/(20.0*RETINA_SUPPORT));
     painter->setFont(font);
     painter->setPen(QColor(60,60,60,255));
     painter->drawText(rectangleInner, Qt::AlignRight|Qt::AlignBottom, displayed_comp_name);
@@ -789,7 +789,7 @@ void population::draw(QPainter *painter, float GLscale, float viewX, float viewY
     painter->setFont(oldFont);
 }
 
-void population::drawSynapses(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
+void population::drawSynapses(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, drawStyle style)
 {
     QPen oldPen = painter->pen();
     QPen pen(QColor(0,0,255,255));
@@ -804,12 +804,12 @@ void population::drawSynapses(QPainter *painter, float GLscale, float viewX, flo
 
     // draw projections
     for (int i = 0; i < this->projections.size(); ++i) {
-        this->projections[i]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
+        this->projections[i]->draw(painter, _scale, viewX, viewY, width, height, ignored, style);
     }
     painter->setPen(oldPen);
 }
 
-void population::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, drawStyle style)
+void population::drawInputs(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, drawStyle style)
 {
     painter->setPen(QColor(0,210,0,255));
 
@@ -818,12 +818,12 @@ void population::drawInputs(QPainter *painter, float GLscale, float viewX, float
 
     // draw neuron inputs
     for (int i = 0; i < this->neuronType->inputs.size(); ++i) {
-        this->neuronType->inputs[i]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
+        this->neuronType->inputs[i]->draw(painter, _scale, viewX, viewY, width, height, ignored, style);
     }
 
     // draw projection inputs
     for (int i = 0; i < this->projections.size(); ++i) {
-        this->projections[i]->drawInputs(painter, GLscale, viewX, viewY, width, height, ignored, style);
+        this->projections[i]->drawInputs(painter, _scale, viewX, viewY, width, height, ignored, style);
     }
     painter->setPen(QColor(0,0,0,255));
 }

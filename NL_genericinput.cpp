@@ -150,16 +150,16 @@ void genericInput::delAll(nl_rootdata *)
     this->disconnect();
 }
 
-void genericInput::draw(QPainter *painter, float GLscale, float viewX, float viewY, int width, int height, QImage, drawStyle style)
+void genericInput::draw(QPainter *painter, float _scale, float viewX, float viewY, int width, int height, QImage, drawStyle style)
 {
-    float scale = GLscale/200.0;
+    float scale = _scale/200.0;
     // Enforce a lower limit to scale:
     if (scale < 0.4f) {
         scale = 0.4f;
     }
 
     // setup for drawing curves
-    this->setupTrans(GLscale, viewX, viewY, width, height);
+    this->setupTrans(_scale, viewX, viewY, width, height);
 
     if (this->curves.size() > 0) {
 
@@ -261,7 +261,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             // set pen width
             QPen pen2 = painter->pen();
-            pen2.setWidthF((pen2.widthF()+1.0)*GLscale/100.0);
+            pen2.setWidthF((pen2.widthF()+1.0)*_scale/100.0);
             pen2.setColor(colour);
             painter->setPen(pen2);
 
@@ -285,9 +285,9 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
             QPointF temp_end_point = path.pointAtPercent(0.995);
             QLineF line = QLineF(end_point, temp_end_point).unitVector();
             QLineF line2 = QLineF(line.p2(), line.p1());
-            line2.setLength(line2.length()+0.05*GLscale/2.0);
+            line2.setLength(line2.length()+0.05*_scale/2.0);
             end_point = line2.p2();
-            line.setLength(0.1*GLscale/2.0);
+            line.setLength(0.1*_scale/2.0);
             QPointF t = line.p2() - line.p1();
             QLineF normal = line.normalVector();
             normal.setLength(normal.length()*0.8);
@@ -359,7 +359,7 @@ void genericInput::draw(QPainter *painter, float GLscale, float viewX, float vie
 
             // Now draw the end marker
             endPoint.addEllipse(this->transformPoint(this->curves.back().end),
-                                0.015*dpi_ratio*GLscale,0.015*dpi_ratio*GLscale);
+                                0.015*dpi_ratio*_scale,0.015*dpi_ratio*_scale);
             painter->drawPath(endPoint);
             painter->fillPath(endPoint, QCOL_GREEN2);
 
@@ -485,10 +485,10 @@ void genericInput::animate(QSharedPointer<systemObject> movingObj, QPointF delta
     }
 }
 
-void genericInput::moveSelectedControlPoint(float xGL, float yGL)
+void genericInput::moveSelectedControlPoint(float _x, float _y)
 {
     // convert to QPointF
-    QPointF cursor(xGL, yGL);
+    QPointF cursor(_x, _y);
     // move start
     if (this->selectedControlPoint.start) {
         // work out closest point on edge of source object

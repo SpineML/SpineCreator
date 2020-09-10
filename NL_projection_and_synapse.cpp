@@ -283,7 +283,7 @@ projection::projection()
     this->currTarg = 0;
     this->start = QPointF(0,0);
 
-    this->tempTrans.GLscale = 100;
+    this->tempTrans.scale = 100;
     this->tempTrans.height = 1;
     this->tempTrans.width = 1;
     this->tempTrans.viewX = 0;
@@ -485,11 +485,11 @@ drawStyle projection::style()
 
 //@}
 
-void projection::draw(QPainter *painter, float GLscale,
+void projection::draw(QPainter *painter, float _scale,
                       float viewX, float viewY, int width, int height, QImage, drawStyle style)
 {
-    // GLscale = 200 * scale from the UI
-    float scale = GLscale/200.0;
+    // _scale = 200 * scale from the UI
+    float scale = _scale/200.0;
     // Enforce a lower limit to scale, to ensure we don't try to draw
     // lines too small for the UI to draw them.
     if (scale < 0.4f) {
@@ -497,7 +497,7 @@ void projection::draw(QPainter *painter, float GLscale,
     }
 
     // setup for drawing curves
-    this->setupTrans(GLscale, viewX, viewY, width, height);
+    this->setupTrans(_scale, viewX, viewY, width, height);
 
     bool saveNetworkImage = false;
 
@@ -657,7 +657,7 @@ void projection::draw(QPainter *painter, float GLscale,
 
             // draw start and end markers
             QPainterPath endPoint;
-            endPoint.addPolygon(this->makeArrowHead(path, GLscale));
+            endPoint.addPolygon(this->makeArrowHead(path, _scale));
             painter->fillPath(endPoint, colour);
 
             // Show number of synapses with dashes
@@ -777,17 +777,17 @@ void projection::draw(QPainter *painter, float GLscale,
             if (style == standardDrawStyle) {
                 // Connections marked by user as "inhibitory" get a little circle.
                 endPoint.addEllipse(this->transformPoint(this->curves.back().end),
-                                    0.025*dpi_ratio*GLscale,0.025*dpi_ratio*GLscale);
+                                    0.025*dpi_ratio*_scale,0.025*dpi_ratio*_scale);
                 painter->drawPath(endPoint);
                 painter->fillPath(endPoint, colour);
 
             } else if (style == standardDrawStyleExcitatory) {
-                endPoint.addPolygon(this->makeArrowHead(path, GLscale));
+                endPoint.addPolygon(this->makeArrowHead(path, _scale));
                 painter->fillPath(endPoint, colour);
             }
 
             if (this->showLabel) {
-                this->drawLabel(painter, linePen, pointerLinePen, labelPen, GLscale, scale);
+                this->drawLabel(painter, linePen, pointerLinePen, labelPen, _scale, scale);
             }
 
             painter->setPen(oldPen);
@@ -799,7 +799,7 @@ void projection::draw(QPainter *painter, float GLscale,
 }
 
 QPolygonF
-projection::makeArrowHead (QPainterPath& path, const float GLscale)
+projection::makeArrowHead (QPainterPath& path, const float _scale)
 {
     QPolygonF arrow_head;
     //calculate arrow head polygon
@@ -807,9 +807,9 @@ projection::makeArrowHead (QPainterPath& path, const float GLscale)
     QPointF temp_end_point = path.pointAtPercent(0.995);
     QLineF line = QLineF(end_point, temp_end_point).unitVector();
     QLineF line2 = QLineF(line.p2(), line.p1());
-    line2.setLength(line2.length()+0.05*GLscale/2.0);
+    line2.setLength(line2.length()+0.05*_scale/2.0);
     end_point = line2.p2();
-    line.setLength(0.1*GLscale);
+    line.setLength(0.1*_scale);
     QPointF t = line.p2() - line.p1();
     QLineF normal = line.normalVector();
     normal.setLength(normal.length()*0.8);
@@ -853,7 +853,7 @@ projection::multipleConnTypes(void)
 
 void
 projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, QPen& labelPen,
-                       const float GLscale, const float scale)
+                       const float _scale, const float scale)
 {
     // Are all synapse connection types the same? If so we
     // don't need to list them all.
@@ -883,7 +883,7 @@ projection::drawLabel (QPainter* painter, QPen& linePen, QPen& pointerLinePen, Q
         // Set a suitable font for the projection labels
         QFont oldFont = painter->font();
         QFont font = painter->font();
-        font.setPointSizeF(1.6*GLscale/20.0);
+        font.setPointSizeF(1.6*_scale/20.0);
         painter->setFont(font);
 
         // Call getLabelPos for the position of the label and
@@ -1021,24 +1021,24 @@ projection::getLabelPos (QFont& f, int syn, const QString& text, const float sca
     return labelPos;
 }
 
-void projection::drawInputs(QPainter *painter, float GLscale, float viewX, float viewY,
+void projection::drawInputs(QPainter *painter, float _scale, float viewX, float viewY,
                             int width, int height, QImage ignored, drawStyle style)
 {
     if (this->destination != (QSharedPointer <population>)0) {
         for (int i = 0; i < this->synapses.size(); ++i) {
             for (int j = 0; j < this->synapses[i]->weightUpdateCmpt->inputs.size(); ++j) {
-                this->synapses[i]->weightUpdateCmpt->inputs[j]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
+                this->synapses[i]->weightUpdateCmpt->inputs[j]->draw(painter, _scale, viewX, viewY, width, height, ignored, style);
             }
             for (int j = 0; j < this->synapses[i]->postSynapseCmpt->inputs.size(); ++j) {
-                this->synapses[i]->postSynapseCmpt->inputs[j]->draw(painter, GLscale, viewX, viewY, width, height, ignored, style);
+                this->synapses[i]->postSynapseCmpt->inputs[j]->draw(painter, _scale, viewX, viewY, width, height, ignored, style);
             }
         }
     }
 }
 
-void projection::setupTrans(float GLscale, float viewX, float viewY, int width, int height)
+void projection::setupTrans(float _scale, float viewX, float viewY, int width, int height)
 {
-    this->tempTrans.GLscale = GLscale;
+    this->tempTrans.scale = _scale;
     this->tempTrans.viewX = viewX;
     this->tempTrans.viewY = viewY;
     this->tempTrans.width = float(width);
@@ -1047,16 +1047,16 @@ void projection::setupTrans(float GLscale, float viewX, float viewY, int width, 
 
 QPointF projection::transformPoint(QPointF point)
 {
-    point.setX(((point.x()+this->tempTrans.viewX)*this->tempTrans.GLscale+this->tempTrans.width)/2);
-    point.setY(((-point.y()+this->tempTrans.viewY)*this->tempTrans.GLscale+this->tempTrans.height)/2);
+    point.setX(((point.x()+this->tempTrans.viewX)*this->tempTrans.scale+this->tempTrans.width)/2);
+    point.setY(((-point.y()+this->tempTrans.viewY)*this->tempTrans.scale+this->tempTrans.height)/2);
     return point;
 }
 
-void projection::drawHandles(QPainter *painter, float GLscale,
+void projection::drawHandles(QPainter *painter, float _scale,
                              float viewX, float viewY, int width, int height)
 {
     if (curves.size()>0) {
-        this->setupTrans(GLscale, viewX, viewY, width, height);
+        this->setupTrans(_scale, viewX, viewY, width, height);
 
         QPainterPath path;
         QPainterPath lines;
@@ -1161,29 +1161,29 @@ QPainterPath projection::makeIntersectionLine(int first, int last)
     return colPath;
 }
 
-bool projection::is_clicked(float xGL, float yGL, float GLscale)
+bool projection::is_clicked(float _x, float _y, float _scale)
 {
     // do an intersection using a QPainterPath to see if we meet:
     QPainterPath colPath = this->makeIntersectionLine(0, this->curves.size());
 
     // intersect with the cursor
-    if (colPath.intersects(QRectF(xGL-10.0/GLscale, yGL-10.0/GLscale, 20.0/GLscale, 20.0/GLscale))) {
+    if (colPath.intersects(QRectF(_x-10.0/_scale, _y-10.0/_scale, 20.0/_scale, 20.0/_scale))) {
         return true;
     }
 
     return false;
 }
 
-bool projection::selectControlPoint(float xGL, float yGL, float GLscale)
+bool projection::selectControlPoint(float _x, float _y, float _scale)
 {
-    QPointF cursor(xGL, yGL);
+    QPointF cursor(_x, _y);
 
     QSettings settings;
     float dpi_ratio = settings.value("dpi", 1.0).toFloat();
 
     // test start:
     QPainterPath test;
-    test.addEllipse(this->start, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
+    test.addEllipse(this->start, 10.0/_scale*dpi_ratio, 10.0/_scale*dpi_ratio);
     if (test.contains(cursor)) {
         this->selectedControlPoint.start = true;
         // NB: What happends to selectedControlPoint.ind here?
@@ -1193,7 +1193,7 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale)
     // now check all the bezierCurves in turn:
     for (int i = 0; i < this->curves.size(); ++i) {
         QPainterPath testEnd;
-        testEnd.addEllipse(this->curves[i].end, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
+        testEnd.addEllipse(this->curves[i].end, 10.0/_scale*dpi_ratio, 10.0/_scale*dpi_ratio);
         if (testEnd.contains(cursor)) {
             this->selectedControlPoint.start = false;
             this->selectedControlPoint.type = p_end;
@@ -1201,7 +1201,7 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale)
             return true;
         }
         QPainterPath testC1;
-        testC1.addEllipse(this->curves[i].C1, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
+        testC1.addEllipse(this->curves[i].C1, 10.0/_scale*dpi_ratio, 10.0/_scale*dpi_ratio);
         if (testC1.contains(cursor)) {
             this->selectedControlPoint.start = false;
             this->selectedControlPoint.type = C1;
@@ -1209,7 +1209,7 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale)
             return true;
         }
         QPainterPath testC2;
-        testC2.addEllipse(this->curves[i].C2, 10.0/GLscale*dpi_ratio, 10.0/GLscale*dpi_ratio);
+        testC2.addEllipse(this->curves[i].C2, 10.0/_scale*dpi_ratio, 10.0/_scale*dpi_ratio);
         if (testC2.contains(cursor)) {
             this->selectedControlPoint.start = false;
             this->selectedControlPoint.type = C2;
@@ -1221,10 +1221,10 @@ bool projection::selectControlPoint(float xGL, float yGL, float GLscale)
     return false;
 }
 
-bool projection::deleteControlPoint(float xGL, float yGL, float GLscale)
+bool projection::deleteControlPoint(float _x, float _y, float _scale)
 {
     // check if we are over a control point
-    if (this->selectControlPoint(xGL, yGL, GLscale)) {
+    if (this->selectControlPoint(_x, _y, _scale)) {
 
         // then remove it if it is not the first or last, or a C1 or C2
         if (!this->selectedControlPoint.start && this->selectedControlPoint.type != C1 \
@@ -1245,10 +1245,10 @@ bool projection::deleteControlPoint(float xGL, float yGL, float GLscale)
     return false;
 }
 
-void projection::moveSelectedControlPoint(float xGL, float yGL)
+void projection::moveSelectedControlPoint(float _x, float _y)
 {
     // convert to QPointF
-    QPointF cursor(xGL, yGL);
+    QPointF cursor(_x, _y);
 
     // move start
     if (this->selectedControlPoint.start) {
@@ -1344,10 +1344,10 @@ void projection::moveSelectedControlPoint(float xGL, float yGL)
     }
 }
 
-void projection::insertControlPoint(float xGL, float yGL, float GLscale)
+void projection::insertControlPoint(float _x, float _y, float _scale)
 {
     // convert to QPointF
-    QPointF cursor(xGL, yGL);
+    QPointF cursor(_x, _y);
 
     // do an intersection using a QPainterPath to see if, and where, we meet:
 
@@ -1355,7 +1355,7 @@ void projection::insertControlPoint(float xGL, float yGL, float GLscale)
         QPainterPath segPath = this->makeIntersectionLine(i, i+1);
 
         // intersect with the cursor
-        if (segPath.intersects(QRectF(xGL-10.0/GLscale, yGL-10.0/GLscale, 20.0/GLscale, 20.0/GLscale))) {
+        if (segPath.intersects(QRectF(_x-10.0/_scale, _y-10.0/_scale, 20.0/_scale, 20.0/_scale))) {
 
             // add a segment at cursor
             // move the old C1 to the new bezierCurve:
@@ -1376,7 +1376,7 @@ void projection::insertControlPoint(float xGL, float yGL, float GLscale)
     }
 }
 
-QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, float yGL)
+QPointF projection::findBoxEdge(QSharedPointer <population> pop, float _x, float _y)
 {
     float newX;
     float newY;
@@ -1384,7 +1384,7 @@ QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, floa
     // if spike source do differently
     if (pop->isSpikeSource) {
 
-        QLineF temp = QLineF(QPointF(pop->x, pop->y), QPointF(xGL, yGL));
+        QLineF temp = QLineF(QPointF(pop->x, pop->y), QPointF(_x, _y));
         // move source
         temp.setLength(0.501);
         newX = temp.p2().x();
@@ -1396,8 +1396,8 @@ QPointF projection::findBoxEdge(QSharedPointer <population> pop, float xGL, floa
         box = *pop->addToPath(&box);
         QPainterPath line;
         line.moveTo(pop->targx, pop->targy);
-        line.lineTo(xGL, yGL);
-        line.lineTo(xGL+0.01, yGL+0.01);
+        line.lineTo(_x, _y);
+        line.lineTo(_x+0.01, _y+0.01);
         QPainterPath overlap = line & box;
         if (overlap.isEmpty()) {
             DBG() << "oops! Collision not found";
@@ -2410,7 +2410,7 @@ QSharedPointer < systemObject > projection::newFromExisting(QMap <systemObject *
     newProj->start = this->start;
     newProj->curves = this->curves;
 
-    newProj->tempTrans.GLscale = this->tempTrans.GLscale;
+    newProj->tempTrans.scale = this->tempTrans.scale;
     newProj->tempTrans.height = this->tempTrans.height;
     newProj->tempTrans.width = this->tempTrans.width;
     newProj->tempTrans.viewX = this->tempTrans.viewX;
