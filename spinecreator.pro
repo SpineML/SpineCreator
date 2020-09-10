@@ -61,10 +61,10 @@ SOURCES += main.cpp \
     SC_viewGVpropertieslayout.cpp \
     SC_viewVZlayoutedithandler.cpp \
     SC_layout_cinterpreter.cpp \
-    SC_network_2d_visualiser_panel.cpp \
     SC_glConnectionWidget.cpp \
     SphereLayer.cpp \
-    LinesLayer.cpp
+    LinesLayer.cpp \
+    SC_NetViewWidget.cpp
 
 HEADERS += mainwindow.h \
     globalHeader.h \
@@ -112,11 +112,11 @@ HEADERS += mainwindow.h \
     SC_viewGVpropertieslayout.h \
     SC_viewVZlayoutedithandler.h \
     SC_layout_cinterpreter.h \
-    SC_network_2d_visualiser_panel.h \
     SC_glConnectionWidget.h \
     SphereLayer.h \
     NeuronScene.h \
-    LinesLayer.h
+    LinesLayer.h \
+    SC_NetViewWidget.h
 
 FORMS += mainwindow.ui \
     valuelistdialog.ui \

@@ -22,7 +22,7 @@
 **  Website/Contact: http://bimpa.group.shef.ac.uk/                       **
 ****************************************************************************/
 
-#include "SC_network_2d_visualiser_panel.h"
+#include "SC_NetViewWidget.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   #define RETINA_SUPPORT 1.0
