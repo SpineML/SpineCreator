@@ -1,4 +1,4 @@
-#version 450
+#version 410
 in VERTEX
 {
     vec4 normal;
