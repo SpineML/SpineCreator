@@ -116,8 +116,6 @@ private:
     //!
     QModelIndexList selection;
     //!
-    Qt::MouseButton button;
-    //!
     connectionType currProjectionType;
 #if 0
     //! Don't think we need this.
@@ -253,7 +251,7 @@ private:
     //! The default scene *translation*
     QVector3D scenetrans_default = QVector3D(0,0,-10);
     //! How big should the steps in scene translation be when scrolling?
-    float scenetrans_stepsize = 0.1;
+    float scenetrans_stepsize = 0.001;
     //! When true, cursor movements induce rotation of scene
     bool rotateMode = false;
     //! When true, cursor movements induce translation of scene
