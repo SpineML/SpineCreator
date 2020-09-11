@@ -24,7 +24,6 @@ public:
     , nvbo(QOpenGLBuffer::VertexBuffer)
     , cvbo(QOpenGLBuffer::VertexBuffer)
     {
-        DBG() << "SphereLayer(QOpenGLShaderProgram*)";
         this->shaderProgram = program;
     }
 
@@ -34,7 +33,6 @@ public:
     , nvbo(QOpenGLBuffer::VertexBuffer)
     , cvbo(QOpenGLBuffer::VertexBuffer)
     {
-        DBG() << "SphereLayer(QOpenGLShaderProgram*, uint, float)";
         this->shaderProgram = program;
         this->sidelen = sl;
         this->zposition = zpos;
@@ -44,8 +42,6 @@ public:
 
     ~SphereLayer()
     {
-        DBG() << "SphereLayer destructor. Context: " << QOpenGLContext::currentContext();
-
         if (this->postInitDone == false) {
             DBG() << "Nothing was allocated, so just return.";
             return;
@@ -86,69 +82,31 @@ public:
     //! Once all spheres have been added, complete the initialization of the model
     void postInit()
     {
-        QOpenGLContext* ccon = QOpenGLContext::currentContext();
-        DBG() << "SphereLayer::postInit: " << ccon;
-
         this->vao.create(); // Creates VAO on OpenGL server
         this->vao.bind();
-        if (this->vao.isCreated() == false) {
-            cout << "Uh oh, couldn't bind vao" << endl;
-        }
-        DBG() << "Created Vertex Array Object " << this->vao.objectId();
-
-        // Index buffer - slightly different from process to setupVBO
-        // (because no setAttributeBuffer call)
-        if (this->ivbo.create() == false) {
-            cout << "ivbo create failed" << endl;
-        }
-        DBG() << "Created index vertex buffer object: " << &this->ivbo;
-        this->ivbo.setUsagePattern (QOpenGLBuffer::StaticDraw); // StaticDraw or DynamicDraw? No
-                                                                // output at all with DynamicDraw
-        if (this->ivbo.bind() == false) {
-            cout << "ivbo bind failed" << endl;
-        }
+        if (this->vao.isCreated() == false) { cout << "Uh oh, couldn't bind vao" << endl; }
+        // Index buffer setup is slightly different from that setupVBO
+        if (this->ivbo.create() == false) { cout << "ivbo create failed" << endl; }
+        this->ivbo.setUsagePattern (QOpenGLBuffer::StaticDraw);
+        if (this->ivbo.bind() == false) { cout << "ivbo bind failed" << endl; }
         int sz = this->indices.size() * sizeof(VBOint);
         this->ivbo.allocate (this->indices.data(), sz);
-        // setAttributeArray or setAttributeBuffer??? I've used _Array_ in setupVBO and _Buffer_ here. ?!?!
-        // In working morph code, for indices, I call glBindBuffer/glBufferData(GL_ELEMENT_ARRAY_BUFFER,...)
-        // and for setupVBO, I call glBindBuffer/glBufferData(GL_ARRAY_BUFFER,...)
-        //
-        // setAttributeBuffer works on the currently bound buffer; whereas setAttributeArray
-        // copies in the data at the same time.
         this->shaderProgram->setAttributeBuffer("ebo", VBO_ENUM_TYPE, 0, 1);
         this->shaderProgram->enableAttributeArray("ebo");
-
-        /*
-         *
-         */
-
-        // Qt Equivalent of "glGenBuffers (numVBO, vbos)??
-
-        // index buffer to be bound as a GL_ELEMENT_ARRAY_BUFFER and GL_STATIC_DRAW, binding
-        // CPU-side indices.data() to vbos[]
-
-        // other buffers to be bound as GL_ARRAY_BUFFER and GL_STATIC_DRAW
-
-        /*
-         *
-         */
-
-        // Binds data from the "C++ world" to the OpenGL shader world for
-        // "position", "normalin" and "color" on the currently bound vertex array object
+        // Binds data from the "C++ world" to the OpenGL shader world for "position",
+        // "normalin" and "color" on the currently bound vertex array object
         this->setupVBO (this->pvbo, this->vertexPositions, "position");
         this->setupVBO (this->nvbo, this->vertexNormals, "normalin");
         this->setupVBO (this->cvbo, this->vertexColors, "color");
 
+#if 1   // Releasing pvbo etc here seems to work and is how I do it in morphologica.
         // Release (unbind) all vertex buffer objects. Correct place for this?
         // this->ivbo.release(); // but causes problem to release this..
-        // FIXME: Should I release pvbo etc?
-#if 1
         this->pvbo.release();
         this->nvbo.release();
         this->cvbo.release();
 #endif
         this->vao.release();
-
         this->postInitDone = true;
     }
 
@@ -160,8 +118,6 @@ public:
         // render, we must bind the relevant vertex array object, which "knows" where the
         // vertex buffer objects are.
         this->vao.bind();
-        DBG() << "Render " << this->numSpheres << " spheres (" << this->indices.size()
-              << " vertices) Context: " << QOpenGLContext::currentContext();
         f->glDrawElements (GL_TRIANGLES, this->indices.size(), VBO_ENUM_TYPE, 0);
         this->vao.release();
     }
@@ -246,16 +202,6 @@ private:
         // Because array attributes are disabled by default in OpenGL 4:
         this->shaderProgram->enableAttributeArray (arrayname); // Called many times. Is this a problem?
         this->shaderProgram->setAttributeBuffer (arrayname, GL_FLOAT, 0, 3);
-    }
-
-    void setupVBO (QOpenGLBuffer& buf, std::vector<float>& dat, unsigned int bufferAttribPosition)
-    {
-        if (buf.create() == false) { std::cout << "VBO create failed" << std::endl; }
-        buf.setUsagePattern (QOpenGLBuffer::StaticDraw);
-        if (buf.bind() == false) { std::cout << "VBO bind failed" << std::endl; }
-        buf.allocate (dat.data(), dat.size() * sizeof(float));
-        this->shaderProgram->enableAttributeArray (bufferAttribPosition);
-        this->shaderProgram->setAttributeBuffer (bufferAttribPosition, GL_FLOAT, 0, 3);
     }
 
     void vertex_push (const float& x, const float& y, const float& z, std::vector<float>& vp) const;

@@ -55,34 +55,22 @@ glConnectionWidget::glConnectionWidget (nl_rootdata* _data, QWidget* parent)
     selectedType = 1;
     connGenerationMutex = new QMutex;
     imageSaveMode = false;
-
     connect (&timer, SIGNAL(timeout()), this, SLOT(updateLogData()));
-
     timer.start(50);
     newLogTime = 0;
     currentLogTime = 0;
-
-    orthoView = false;
+    orthoView = false; // Currently unused anyway.
 }
 
 glConnectionWidget::~glConnectionWidget()
 {
-    if (this->shaderProg != (QOpenGLShaderProgram*)0) {
-        delete this->shaderProg;
-    }
-    if (this->nscene != (NeuronScene*)0) {
-        delete this->nscene;
-    }
+    if (this->shaderProg != (QOpenGLShaderProgram*)0) { delete this->shaderProg; }
+    if (this->nscene != (NeuronScene*)0) { delete this->nscene; }
 }
 
 void
 glConnectionWidget::initializeGL()
 {
-    if (this->context()->isValid()) {
-        DBG() << "Context is valid and is:" << this->context() << " cf " << QOpenGLContext::currentContext();
-    } else {
-        DBG() << "Context is INvalid.";
-    }
     QOpenGLFunctions *f = this->context()->functions();
     f->glClearColor (0.8f, 0.7f, 0.8f, 1.0f);
 
@@ -123,10 +111,6 @@ glConnectionWidget::initializeGL()
 
     // Set the perspective. Might need retina factor here.
     this->setPerspective (this->width(), this->height());
-
-    // Thought I might need to change this
-    //this->setUpdateBehavior (QOpenGLWidget::PartialUpdate);
-    //DBG() << "Update behaviour: " << this->updateBehavior();
 }
 
 void
@@ -138,14 +122,10 @@ glConnectionWidget::resizeGL (int w, int h)
 void
 glConnectionWidget::paintGL()
 {
-    //DBG() << "paintGL called " << QOpenGLContext::currentContext() << " or this->: " << this->context();
-
     if (this->setupModelRequired == true) {
         DBG() << "Calling setupModel " << QOpenGLContext::currentContext();
         this->setupModel();
-    } else {
-        DBG() << "No need to setupModel " << QOpenGLContext::currentContext();
-    }
+    } // no need to set up model
 
     QOpenGLFunctions *f = this->context()->functions();
     // rotmat is the translation/rotation for the entire scene.
@@ -177,8 +157,11 @@ glConnectionWidget::paintGL()
 void
 glConnectionWidget::toggleOrthoView (bool toggle)
 {
+    DBG() << "INFO: No orthographic projection is available.";
+#if 0
     this->orthoView = toggle;
     this->update();
+#endif
 }
 
 void
@@ -192,6 +175,8 @@ glConnectionWidget::clear()
     selectedIndex = 0;
     selectedType = 1;
     model = (QAbstractTableModel *)0;
+    // Maybe also
+    this->nscene->reset();
 }
 
 // This builds a list of possible logs from the populations in the network.
@@ -223,12 +208,6 @@ glConnectionWidget::addLogs (QVector<logData*>* logs)
             }
         }
     }
-}
-
-void
-glConnectionWidget::updateLogDataTime(int index)
-{
-    newLogTime = index;
 }
 
 void
