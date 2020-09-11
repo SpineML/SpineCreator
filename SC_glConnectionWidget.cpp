@@ -139,9 +139,9 @@ glConnectionWidget::paintGL()
     // Clear color buffer and **also depth buffer**
     f->glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // Set modelview-projection matrix. Don't have a viewmatrix to postmultiply (projMatrix * sceneview).
-    this->shaderProg->setUniformValue ("mvp_matrix", this->projMatrix * sceneview);
+    //this->shaderProg->setUniformValue ("mvp_matrix", this->projMatrix * sceneview);
     // Call the NeuronScene's render method
-    this->nscene->render();
+    this->nscene->render(this->projMatrix * sceneview);
     // Finally, release the shaderProg
     this->shaderProg->release();
 }
@@ -283,8 +283,28 @@ glConnectionWidget::redraw(int)
     loc3Offset.y = ySpin->value();
     loc3Offset.z = zSpin->value();
 
-//    this->setupModelRequired = true;
+    // Use loc3Offset to update the current population's location, then update
+    qSharedPointerDynamicCast<population>(selectedObject)->loc3 = loc3Offset;
+    // Then that would be reflected during render
+
     this->update();
+}
+
+void
+glConnectionWidget::updateModel (void)
+{
+    // Create spheres in a SphereLayer for each population & add to NeuronScene.
+    for (int locNum = 0; locNum < this->selectedPops.size(); ++locNum) {
+        QSharedPointer<population> currPop = selectedPops[locNum];
+        SphereLayer* sl = this->nscene->createSphereLayer();
+        loc mean_location(0.0f, 0.0f, 0.0f);
+        for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+            mean_location += currPop->layoutType->locations[i];
+        }
+        mean_location /= currPop->layoutType->locations.size();
+        mean_location.z += locNum;
+        sl->setOffset (mean_location + currPop->loc3);
+    }
 }
 
 // Only call via paintGL, to ensure QOpenGLContext is correct.
@@ -315,14 +335,27 @@ glConnectionWidget::setupModel (void)
         QSharedPointer<population> currPop = selectedPops[locNum];
         SphereLayer* sl = this->nscene->createSphereLayer();
         DBG() << "Adding spheres for population: " << currPop->name;
+        loc mean_location(0.0f, 0.0f, 0.0f);
+
+        vector<float> pcolour (3, 0.0f);
+        pcolour[0] = currPop->colour.redF();
+        pcolour[1] = currPop->colour.blueF();
+        pcolour[2] = currPop->colour.greenF();
+
         for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
             if (!i) { DBG() << "Adding at least one sphere!"; }
+            mean_location += currPop->layoutType->locations[i];
             sl->addSphere({currPop->layoutType->locations[i].x,
                            currPop->layoutType->locations[i].y,
-                           currPop->layoutType->locations[i].z + 1.0*locNum},
+                           currPop->layoutType->locations[i].z},
                            0.25f,
-                           {0.6f,0.1f,0.1f});
+                           pcolour);
         }
+        // Set x/y offsets for the layer. Start with the mean of x and y
+        mean_location /= currPop->layoutType->locations.size();// prob. don't want to compute mean_location here.
+        // Actually, much better; then sphere layer can access currPop's loc3 and colour.
+        sl->pop = currPop;
+
         sl->postInit();
     }
     this->setupModelRequired = false;

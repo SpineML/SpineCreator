@@ -5,8 +5,8 @@
 #include <QOpenGLFunctions>
 #include <QtGui/QOpenGLBuffer>
 #include <QtGui/QOpenGLVertexArrayObject>
-
 #include "globalHeader.h"
+#include "NL_population.h"
 
 #include <vector>
 
@@ -117,6 +117,7 @@ public:
         // The same shaderProgram is used to render each SphereLayer. For it to know what to
         // render, we must bind the relevant vertex array object, which "knows" where the
         // vertex buffer objects are.
+        this->setOffset(this->pop->loc3);
         this->vao.bind();
         f->glDrawElements (GL_TRIANGLES, this->indices.size(), VBO_ENUM_TYPE, 0);
         this->vao.release();
@@ -137,24 +138,36 @@ public:
     //! A list of the centre coordinates of each sphere in the layer.
     std::vector<loc> sphereCentres;
 
-    //! The model-specific view matrix, used to shift just this layer of spheres wrt to the world
-    QMatrix4x4 viewmatrix;
-    //! The current 3D offset stored in viewmatrix
+    //! The model-specific matrix, used to shift just this layer of spheres wrt itself
+    QMatrix4x4 modelmatrix;
+    //! The current 3D offset stored in modelmatrix
     QVector3D offset;
 
-    //! Setter for offset, also updates viewmatrix.
+    //! The population which this SphereLayer is visualizing.
+    QSharedPointer<population> pop;
+
+    //! Setter for offset, also updates modelmatrix.
+    void setOffset (const loc& _offset)
+    {
+        this->offset[0] = _offset.x;
+        this->offset[1] = _offset.y;
+        this->offset[2] = _offset.z;
+        this->modelmatrix.setToIdentity();
+        this->modelmatrix.translate (this->offset);
+    }
+
     void setOffset (const QVector3D& _offset)
     {
         this->offset = _offset;
-        this->viewmatrix.setToIdentity();
-        this->viewmatrix.translate (this->offset);
+        this->modelmatrix.setToIdentity();
+        this->modelmatrix.translate (this->offset);
     }
 
-    //! Shift the offset, also updates viewmatrix.
+    //! Shift the offset, also updates modelmatrix.
     void shiftOffset (const QVector3D& _offset)
     {
         this->offset += _offset;
-        this->viewmatrix.translate (this->offset);
+        this->modelmatrix.translate (this->offset);
     }
 
 private:

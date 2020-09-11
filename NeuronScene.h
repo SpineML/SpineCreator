@@ -39,9 +39,14 @@ public:
         this->lines.clear();
     }
 
-    void render()
+    void render (const QMatrix4x4& projView)
     {
-        std::for_each (this->layers.begin(), this->layers.end(), [this](SphereLayer* sli) { sli->render(f); });
+        std::for_each (this->layers.begin(), this->layers.end(),
+                       [this,projView](SphereLayer* sli) {
+                           QMatrix4x4 mvp = projView * sli->modelmatrix;
+                           shaderProgram->setUniformValue ("mvp_matrix", mvp);
+                           sli->render(f);
+                       });
         std::for_each (this->lines.begin(), this->lines.end(), [this](LinesLayer* lli) { lli->render(f); });
     }
 

@@ -160,6 +160,27 @@ struct loc {
     float x;
     float y;
     float z;
+    loc operator+ (const loc& l) const
+    {
+        loc lrtn;
+        lrtn.x = this->x + l.x;
+        lrtn.y = this->y + l.y;
+        lrtn.z = this->z + l.z;
+        return lrtn;
+    }
+    void operator+= (const loc& l)
+    {
+        this->x += l.x;
+        this->y += l.y;
+        this->z += l.z;
+    }
+    template<typename T>
+    void operator/= (const T& f)
+    {
+        this->x /= static_cast<float>(f);
+        this->y /= static_cast<float>(f);
+        this->z /= static_cast<float>(f);
+    }
 };
 
 struct conn {

@@ -88,22 +88,43 @@ public:
 
     QColor colour;
 
-//private:
-    float x;
-    float y;
-    float targx;
-    float targy;
-    float animspeed;
-    float left;
-    float right;
-    float top;
-    float bottom;
-    float size;
-    float aspect_ratio;
-    bool isVisualised;
-    loc loc3;
+    /*
+     * 2D network view attributes
+     */
 
+    //! Position in 2D layout.
+    float x;
+    //! Position in 2D layout.
+    float y;
+    //! A target x position of the rectangle. Used to animate the rectangle there?
+    float targx;
+    //! A target y position of the rectangle. Used to animate the rectangle there?
+    float targy;
+    //! How fast to animate the population rectangle movement.
+    float animspeed;
+    //! Location of the left of the population's rectangle
+    float left;
+    //! Location of the top of the population's rectangle
+    float right;
+    //! Location of the right of the population's rectangle
+    float top;
+    //! Location of the bottom of the population's rectangle
+    float bottom;
+    //! Some "size" of the rectangle
+    float size;
+    //! The aspect ratio of the rectangle. Right?
+    float aspect_ratio;
+    //! Spike sources are special - they have their own icon, rather than a rectangle.
     bool isSpikeSource;
+
+    /*
+     * Attributes related to the 3D visualisation
+     */
+
+    //! If true, then part of the (3D) visualization.
+    bool isVisualised;
+    //! A 3D offset of the entire population. Used when visualizing the population in 3D. Saved to XML, so persistent.
+    loc loc3;
 
 private:
 

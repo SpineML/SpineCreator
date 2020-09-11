@@ -123,7 +123,7 @@ private:
 #endif
     //! This points to the SpineML model which is being (partially) visualised.
     nl_rootdata* data;
-    //! Another spatial offset...
+    //! Another spatial offset. This is used temporarily to capture the x/y/z offset for a currently selected population
     loc loc3Offset;
     //! A selected object. Selected by what?
     QSharedPointer<systemObject> selectedObject;
@@ -222,6 +222,9 @@ protected:
     //! on. Updates whenever the user moves the scene using mouse interaction
     //! events. Call this when the window is resized, too.
     void setPerspective (int w, int h);
+
+    //! After neurons have moved, update the model. Don't need to fully modify the spheres model.
+    void updateModel (void);
 
     //! Set up the "model" where "model" in this context means the vertices that make up
     //! the triangles which the graphics system will render. So in here, we compute
