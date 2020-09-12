@@ -184,10 +184,10 @@ protected:
     bool setupModelRequired = false;
 
     // UI interaction methods
-    void mousePressEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *);
-    void mouseMoveEvent(QMouseEvent *event);
-    void wheelEvent(QWheelEvent *event);
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
 private:
     //! A Qt version of the shader program
