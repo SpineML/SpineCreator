@@ -34,6 +34,8 @@
 
 #include "NeuronScene.h"
 
+#if 0
+//! Homemade random number generator
 class RNG
 {
 public:
@@ -44,13 +46,14 @@ public:
         float seed2 = seed/2147483648.0;
         return seed2;
     }
-
 private:
     int seed;
     int a_RNG;
     int c_RNG;
 };
+#endif
 
+//! Local population locations class, used to help lay out the visualization
 struct popLocs
 {
     QVector < loc > locations;
@@ -60,6 +63,15 @@ struct popLocs
     float z;
 };
 
+/*!
+ * A visualization widget for neurons and projections
+ *
+ * glConnectionWidget shows a 3D model of (selected) neuron populations and projections.
+ *
+ * Originally written in OpenGL 2 code, it has now (Sept. 2020) been rewritten in OpenGL
+ * 4.1, with the vertices of the neuron models being computed on the CPU and then GLSL
+ * shaders doing the graphics heavy lifting.
+ */
 class glConnectionWidget : public QOpenGLWidget
 {
     Q_OBJECT
@@ -68,18 +80,21 @@ public:
     ~glConnectionWidget ();
     //! Populations selected for visualization
     QVector<QSharedPointer<population> > selectedPops;
+    //! The relative location of each population within the visualization is additional information for the model.
     QVector<popLocs> pops;
     //! Connections selected for visualization
     QVector<QSharedPointer<systemObject> > selectedConns;
-
-    // 2D sheet of locations
+    //! 2D sheet of locations. Related to the x/y/z spinboxes in the right hand "panel", I think.
     QVector<QVector<loc> > locations; // temp readded
-
+#if 0
     QVector<QColor> cols;
+#endif
+    //! A container of connections. This exists here because the connections can be modified by this user interface (I think).
     QVector<QVector<conn> > connections;
 
     void setConnectionsModel(QAbstractTableModel *);
     QAbstractTableModel * getConnectionsModel();
+
     void getConnections();
     void setConnType(connectionType cType);
     float prob;
@@ -92,39 +107,68 @@ public:
     void refreshAll();
 
 private:
+    //!
     QString currentObjectName;
-    QAbstractTableModel * model;
-    QAbstractItemModel * sysModel;
+    //! This is a 'connection model', I think
+    QAbstractTableModel* model;
+    //!
+    QAbstractItemModel* sysModel;
+    //!
     QModelIndexList selection;
-    Qt::MouseButton button;
+    //!
     connectionType currProjectionType;
+#if 0
+    //! Don't think we need this.
     RNG random;
+#endif
+    //! This points to the SpineML model which is being (partially) visualised.
     nl_rootdata* data;
+    //! Another spatial offset. This is used temporarily to capture the x/y/z offset for a currently selected population
     loc loc3Offset;
+    //! A selected object. Selected by what?
     QSharedPointer<systemObject> selectedObject;
+    //! Indexes the currently selected neuron in a population. Probably.
     int selectedIndex;
+    //!
     int selectedType;
-    QString last_distance_based_equation;
+    //!
+    //QString last_distance_based_equation;
+    //!
     QMutex * connGenerationMutex;
+    //! Are we in 'save the image mode'?
     bool imageSaveMode;
+    //! Width, in pixels of the image to save
     int imageSaveWidth;
+    //! Height, in pixels of the image to save
     int imageSaveHeight;
+    //! Holds the colour information for the different neuron populations. These are the
+    //! colours that the user set in the network view of the SpineCreator interface.
     QVector<QVector<QColor> > popColours;
+    //! Holds information about the activity of populations whilst the simulation was
+    //! running. I think. Allows for animations to be made.
     QVector<logData*> popLogs;
+    //! Used to make sure not to collect too much data from the logs
     int currentLogTime;
+    //! Used to make sure not to collect too much data from the logs
     int newLogTime;
+    //! A timer used to update log information. Every 50 ms (hardcoded) updateLogData() is called
     QTimer timer;
+    //! A switch between orthographic and normal projections. May avoid coding this.
     bool orthoView;
 #if QT_VERSION > QT_VERSION_CHECK(5, 0, 0)
     QImage renderQImage(int w, int h);
 #endif
 
 signals:
+    //! Possibly unused
     void currElement(int type, int index);
+    //! Get information about the source neurons of the currently selected neuron. At a guess.
     void getNeuronLocationsSrc (QVector<QVector<loc> >* locn,
                                 QVector<QColor>* colr,
                                 QString name = "");
+    //! Possibly unused
     void updatePanel(QString);
+    //! Possibly used
     void setSelectionbyName(QString);
 
 public slots:
@@ -157,10 +201,14 @@ public slots:
     void sysSelectionChanged(QModelIndex, QModelIndex);
     void setPopIndicesShown(bool);
     void selectedNrnChanged(int);
-    void updateLogDataTime(int index);
+    //! Called by external code to update the log data time. This occurs when the "time
+    //! slider" is moved, requesting a view of the simulation and its actvity at a
+    //! specific index
+    void updateLogDataTime(int index) { this->newLogTime = index; }
+    //! Update information from the Simulator log to show in the "playback" for the visualization.
     void updateLogData();
-
-    void toggleOrthoView(bool);
+    //! Self-explanatory
+    void toggleOrthoView (bool);
 
 protected:
     //! GL rendering setup
@@ -175,12 +223,17 @@ protected:
     //! events. Call this when the window is resized, too.
     void setPerspective (int w, int h);
 
+    //! After neurons have moved, update the model. Don't need to fully modify the spheres model.
+    void updateModel (void);
+
     //! Set up the "model" where "model" in this context means the vertices that make up
     //! the triangles which the graphics system will render. So in here, we compute
     //! spheres, lines and so on.
     void setupModel (void);
 
-    //! Set true if the model should be set up on the next paintGL call
+    //! Set true if the model should be set up on the next paintGL call. This ensures
+    //! that when the CPU-side work of setting the model up is called, the correct GL
+    //! context is current.
     bool setupModelRequired = false;
 
     // UI interaction methods
@@ -190,7 +243,7 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
 
 private:
-    //! A Qt version of the shader program
+    //! A Qt wrapper referring to the GLSL shader program
     QOpenGLShaderProgram* shaderProg;
     //! Current rotational state of the neuron view model
     QQuaternion rotation;
@@ -201,7 +254,7 @@ private:
     //! The default scene *translation*
     QVector3D scenetrans_default = QVector3D(0,0,-10);
     //! How big should the steps in scene translation be when scrolling?
-    float scenetrans_stepsize = 0.1;
+    float scenetrans_stepsize = 0.001;
     //! When true, cursor movements induce rotation of scene
     bool rotateMode = false;
     //! When true, cursor movements induce translation of scene
@@ -212,7 +265,6 @@ private:
     QVector2D cursorpos;
     //! The current rotation axis. World frame?
     QVector3D rotationAxis;
-
     //! Projection matrix for the neuron view model
     QMatrix4x4 projMatrix;
     //! The inverse projection
@@ -222,7 +274,8 @@ private:
     //! The inverse scene transformation
     QMatrix4x4 invscene;
     //! The "neuron scene" - a scene of spheres representing neurons, and lines
-    //! representing axonal connections between the neurons.
+    //! representing axonal connections between the neurons. This is the container for
+    //! the CPU-side information about the objects that will be rendered by OpenGL.
     NeuronScene* nscene = (NeuronScene*)0;
 };
 

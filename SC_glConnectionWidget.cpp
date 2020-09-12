@@ -55,34 +55,22 @@ glConnectionWidget::glConnectionWidget (nl_rootdata* _data, QWidget* parent)
     selectedType = 1;
     connGenerationMutex = new QMutex;
     imageSaveMode = false;
-
     connect (&timer, SIGNAL(timeout()), this, SLOT(updateLogData()));
-
     timer.start(50);
     newLogTime = 0;
     currentLogTime = 0;
-
-    orthoView = false;
+    orthoView = false; // Currently unused anyway.
 }
 
 glConnectionWidget::~glConnectionWidget()
 {
-    if (this->shaderProg != (QOpenGLShaderProgram*)0) {
-        delete this->shaderProg;
-    }
-    if (this->nscene != (NeuronScene*)0) {
-        delete this->nscene;
-    }
+    if (this->shaderProg != (QOpenGLShaderProgram*)0) { delete this->shaderProg; }
+    if (this->nscene != (NeuronScene*)0) { delete this->nscene; }
 }
 
 void
 glConnectionWidget::initializeGL()
 {
-    if (this->context()->isValid()) {
-        DBG() << "Context is valid and is:" << this->context() << " cf " << QOpenGLContext::currentContext();
-    } else {
-        DBG() << "Context is INvalid.";
-    }
     QOpenGLFunctions *f = this->context()->functions();
     f->glClearColor (0.8f, 0.7f, 0.8f, 1.0f);
 
@@ -108,9 +96,6 @@ glConnectionWidget::initializeGL()
     // Enable depth buffer
     f->glEnable(GL_DEPTH_TEST);
 
-    // Enable back face culling. That means you can't rotate the object with a rotn matrix though.
-    //f->glEnable(GL_CULL_FACE);
-
     // Do we create the scene here? Probably not, as we may not actually HAVE a scene yet
     // Create the scene. This creates several spherelayers, each containing VAO and VBOs
     this->nscene = new NeuronScene (this->shaderProg, f);
@@ -123,10 +108,6 @@ glConnectionWidget::initializeGL()
 
     // Set the perspective. Might need retina factor here.
     this->setPerspective (this->width(), this->height());
-
-    // Thought I might need to change this
-    //this->setUpdateBehavior (QOpenGLWidget::PartialUpdate);
-    //DBG() << "Update behaviour: " << this->updateBehavior();
 }
 
 void
@@ -138,38 +119,29 @@ glConnectionWidget::resizeGL (int w, int h)
 void
 glConnectionWidget::paintGL()
 {
-    //DBG() << "paintGL called " << QOpenGLContext::currentContext() << " or this->: " << this->context();
-
     if (this->setupModelRequired == true) {
-        DBG() << "Calling setupModel " << QOpenGLContext::currentContext();
+        DBG() << "Calling setupModel in context " << QOpenGLContext::currentContext();
         this->setupModel();
-    } else {
-        DBG() << "No need to setupModel " << QOpenGLContext::currentContext();
-    }
+    } // no need to set up model
 
     QOpenGLFunctions *f = this->context()->functions();
-    // rotmat is the translation/rotation for the entire scene.
-    //
+    f->glViewport (0, 0, this->width(), this->height());
+    this->setPerspective (this->width(), this->height());
     // Calculate model view transformation - transforming from "model space" to "worldspace".
     QMatrix4x4 sceneview;
     // This line translates from model space to world space.
+    DBG() << "Translating by " << this->scenetrans;
     sceneview.translate (this->scenetrans); // send backwards into distance
     // And this rotation completes the transition from model to world
-    //DBG() << "rotating sceneview by " << this->rotation;
     sceneview.rotate (this->rotation);
-
     // Bind shader program...
     this->shaderProg->bind();
-
     // Clear color buffer and **also depth buffer**
     f->glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     // Set modelview-projection matrix. Don't have a viewmatrix to postmultiply (projMatrix * sceneview).
-    this->shaderProg->setUniformValue ("mvp_matrix", this->projMatrix * sceneview);
-
+    //this->shaderProg->setUniformValue ("mvp_matrix", this->projMatrix * sceneview);
     // Call the NeuronScene's render method
-    this->nscene->render();
-
+    this->nscene->render(this->projMatrix * sceneview);
     // Finally, release the shaderProg
     this->shaderProg->release();
 }
@@ -177,8 +149,11 @@ glConnectionWidget::paintGL()
 void
 glConnectionWidget::toggleOrthoView (bool toggle)
 {
+    DBG() << "INFO: No orthographic projection is available.";
+#if 0
     this->orthoView = toggle;
     this->update();
+#endif
 }
 
 void
@@ -192,6 +167,8 @@ glConnectionWidget::clear()
     selectedIndex = 0;
     selectedType = 1;
     model = (QAbstractTableModel *)0;
+    // Maybe also
+    this->nscene->reset();
 }
 
 // This builds a list of possible logs from the populations in the network.
@@ -223,12 +200,6 @@ glConnectionWidget::addLogs (QVector<logData*>* logs)
             }
         }
     }
-}
-
-void
-glConnectionWidget::updateLogDataTime(int index)
-{
-    newLogTime = index;
 }
 
 void
@@ -312,8 +283,28 @@ glConnectionWidget::redraw(int)
     loc3Offset.y = ySpin->value();
     loc3Offset.z = zSpin->value();
 
-//    this->setupModelRequired = true;
+    // Use loc3Offset to update the current population's location, then update
+    qSharedPointerDynamicCast<population>(selectedObject)->loc3 = loc3Offset;
+    // Then that would be reflected during render
+
     this->update();
+}
+
+void
+glConnectionWidget::updateModel (void)
+{
+    // Create spheres in a SphereLayer for each population & add to NeuronScene.
+    for (int locNum = 0; locNum < this->selectedPops.size(); ++locNum) {
+        QSharedPointer<population> currPop = selectedPops[locNum];
+        SphereLayer* sl = this->nscene->createSphereLayer();
+        loc mean_location(0.0f, 0.0f, 0.0f);
+        for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
+            mean_location += currPop->layoutType->locations[i];
+        }
+        mean_location /= currPop->layoutType->locations.size();
+        mean_location.z += locNum;
+        sl->setOffset (mean_location + currPop->loc3);
+    }
 }
 
 // Only call via paintGL, to ensure QOpenGLContext is correct.
@@ -344,14 +335,27 @@ glConnectionWidget::setupModel (void)
         QSharedPointer<population> currPop = selectedPops[locNum];
         SphereLayer* sl = this->nscene->createSphereLayer();
         DBG() << "Adding spheres for population: " << currPop->name;
+        loc mean_location(0.0f, 0.0f, 0.0f);
+
+        vector<float> pcolour (3, 0.0f);
+        pcolour[0] = currPop->colour.redF();
+        pcolour[1] = currPop->colour.blueF();
+        pcolour[2] = currPop->colour.greenF();
+
         for (int i = 0; i < currPop->layoutType->locations.size(); ++i) {
             if (!i) { DBG() << "Adding at least one sphere!"; }
+            mean_location += currPop->layoutType->locations[i];
             sl->addSphere({currPop->layoutType->locations[i].x,
                            currPop->layoutType->locations[i].y,
-                           currPop->layoutType->locations[i].z + 1.0*locNum},
+                           currPop->layoutType->locations[i].z},
                            0.25f,
-                           {0.6f,0.1f,0.1f});
+                           pcolour);
         }
+        // Set x/y offsets for the layer. Start with the mean of x and y
+        mean_location /= currPop->layoutType->locations.size();// prob. don't want to compute mean_location here.
+        // Actually, much better; then sphere layer can access currPop's loc3 and colour.
+        sl->pop = currPop;
+
         sl->postInit();
     }
     this->setupModelRequired = false;
@@ -373,12 +377,13 @@ glConnectionWidget::setPerspective (int w, int h)
     // Reset projection
     this->projMatrix.setToIdentity();
 
-    const float zNear = 1.0, zFar = 100000.0, fov = 60.0;
+    const float zNear = 1.0, zFar = 100000.0, fov = 30.0;
     if (!this->orthoView) {
         // Set perspective projection
         float aspect = float(w) / float(h ? h : 1);
         this->projMatrix.perspective (fov, aspect, zNear, zFar);
     } else {
+        DBG() << "FIXME FIXME: ORTHOVIEW WON'T WORK!";
         // or orthographic like this:
         // FIXME: this needs re-thinking, because zoomFactor is no longer used
         float scale = 10.0f; // this->zoomFactor * 10.0f;
@@ -933,26 +938,25 @@ glConnectionWidget::connectionSelectionChanged(QItemSelection, QItemSelection)
 void
 glConnectionWidget::mousePressEvent (QMouseEvent* event)
 {
-    DBG() << "glConnectionWidget::mousePressEvent";
     setCursor (Qt::ClosedHandCursor);
-    button = event->button();
-
     // Can access modifiers like this:
     // if ((QApplication::keyboardModifiers() & Qt::ShiftModifier)) {
-
-    mousePressPosition = QVector2D(event->localPos()); // event->localPos vs event->globalPos?
-
+    mousePressPosition = QVector2D(event->localPos()); // localPos is pixels within the window
     this->mousePressPosition = QVector2D(event->localPos());
     // Save the rotation at the start of the mouse movement
     this->savedRotation = this->rotation;
+    DBG() << " initial rotation: " << this->savedRotation;
     // Get the scene's rotation at the start of the mouse movement:
     this->sceneMatrix.setToIdentity();
     this->sceneMatrix.rotate (this->savedRotation);
     this->invscene = this->sceneMatrix.inverted();
 
+    Qt::MouseButton button = event->button();
     if (button == Qt::LeftButton) {
+        // If the left button is down, then rotate the scene
         this->rotateMode = true;
     } else if (button == Qt::RightButton) {
+        // If the left button is down, then translate the scene in x/y
         this->translateMode = true;
     }
 }
@@ -960,11 +964,8 @@ glConnectionWidget::mousePressEvent (QMouseEvent* event)
 void
 glConnectionWidget::mouseReleaseEvent (QMouseEvent* event)
 {
-    DBG() << "glConnectionWidget::mouseReleaseEvent";
     setCursor (Qt::ArrowCursor);
-
-    button = event->button();
-
+    Qt::MouseButton button = event->button();
     if (button == Qt::LeftButton) {
         this->rotateMode = false;
     } else if (button == Qt::RightButton) {
@@ -975,10 +976,9 @@ glConnectionWidget::mouseReleaseEvent (QMouseEvent* event)
 void
 glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
 {
-    //DBG() << "glConnectionWidget::mouseMoveEvent rotateMode: " << (this->rotateMode == true ? "true" : "false");
-
     // Mouse release position - mouse press position - as from example opengl
     this->cursorpos = QVector2D(event->localPos());
+    DBG() << "cursorpos = " << this->cursorpos;
 
     QVector3D mouseMoveWorld = { 0.0f, 0.0f, 0.0f };
 
@@ -995,28 +995,23 @@ glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
         p1_coord[0] /= this->width()/2.0;
         p1_coord[1] -= this->height()/2.0;
         p1_coord[1] /= this->height()/2.0;
-
-        //DBG() << "Rotating based on mouse move from " << p0_coord << " to " << p1_coord;
-
-        // DON'T update mousePressPosition until user releases button.
-        // this->mousePressPosition = this->cursorpos;
+        DBG() << "Rotating based on mouse move from " << p0_coord << " to " << p1_coord;
+        // NB: DON'T update this->mousePressPosition until user releases button (see mouseReleaseButton())
 
         // Add the depth at which the object lies.  Use forward projection to determine
-        // the correct z coordinate for the inverse projection. This assumes only one
-        // object.
+        // the correct z coordinate for the inverse projection. This assumes only one object.
         QVector4D point =  { 0.0f, 0.0f, this->scenetrans.z(), 1.0f };
-        QVector4D pp = this->projMatrix * point;
+        QVector4D pp = this->projMatrix.map(point);
         float coord_z = pp[2]/pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
+        DBG() << "(Rotate) scenetrans.z: " << this->scenetrans.z()
+              << "; z position of object, coord_z: " << coord_z;
 
         // Construct two points for the start and end of the mouse movement
         QVector4D p0 = { p0_coord[0], p0_coord[1], coord_z, 1.0f };
         QVector4D p1 = { p1_coord[0], p1_coord[1], coord_z, 1.0f };
-
-        // Apply the inverse projection to get two points in the world frame of
-        // reference for the mouse movement
+        // Apply inverse projection to get 2 points (in the world frame) for the mouse movement
         QVector4D v0 = this->invproj * p0;
         QVector4D v1 = this->invproj * p1;
-
         // This computes the difference betwen v0 and v1, the 2 mouse positions in the
         // world space. Note the swap between x and y
         if ((QApplication::keyboardModifiers() & Qt::ShiftModifier)) {
@@ -1024,24 +1019,22 @@ glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
             mouseMoveWorld[2] = -((v1[1]/v1[3]) - (v0[1]/v0[3])) + ((v1[0]/v1[3]) - (v0[0]/v0[3]));
         } else {
             mouseMoveWorld[1] = +((v1[0]/v1[3]) - (v0[0]/v0[3])); // Odd, to get sensible-ish behaviour, had to make this +() not -().
-            mouseMoveWorld[0] = +((v1[1]/v1[3]) - (v0[1]/v0[3]));
+            mouseMoveWorld[0] = +((v1[1]/v1[3]) - (v0[1]/v0[3])); // had to make this +() not -(), as well. What's different? Sign of z probably.
         }
-
         // Rotation axis is perpendicular to the mouse position difference vector
         // BUT we have to project into the model frame to determine how to rotate the model!
-        float rotamount = mouseMoveWorld.length() * 70.0;
+        float rotamount = mouseMoveWorld.length() * 100.0 * std::abs(coord_z); // Bit arbitrary. Should change with depth?
         // Calculate new rotation axis as weighted sum
         this->rotationAxis = (mouseMoveWorld * rotamount);
         this->rotationAxis.normalize();
-
         // Now inverse apply the rotation of the scene to the rotation axis
         // (Vector<float,3>), so that we rotate the model the right way.
-        QVector4D tmp_4D = this->invscene * this->rotationAxis;
+        //QVector4D tmp_4D = this->invscene * this->rotationAxis; // or:
+        QVector4D tmp_4D = this->invscene.map (this->rotationAxis);
         this->rotationAxis = tmp_4D.toVector3D();
-
-        // Update rotation from the saved position.
+        // Update rotation starting from the saved position.
         this->rotation = this->savedRotation;
-        this->rotation = QQuaternion::fromAxisAndAngle(this->rotationAxis, rotamount) * this->rotation;
+        this->rotation *= QQuaternion::fromAxisAndAngle(this->rotationAxis, rotamount);
 
         this->update();
 
@@ -1065,25 +1058,40 @@ glConnectionWidget::mouseMoveEvent (QMouseEvent* event)
         // the correct z coordinate for the inverse projection. This assumes only one
         // object.
         QVector4D point =  { 0.0f, 0.0f, this->scenetrans.z(), 1.0f };
-        QVector4D pp = this->projMatrix * point;
+        QVector4D pp = this->projMatrix.map (point);
         float coord_z = pp[2]/pp[3]; // divide by pp[3] is divide by/normalise by 'w'.
+        DBG() << "(Translate) scenetrans.z: " << this->scenetrans.z()
+              << "; z position of object, coord_z: " << coord_z;
 
         // Construct two points for the start and end of the mouse movement
         QVector4D p0 = { p0_coord[0], p0_coord[1], coord_z, 1.0f };
         QVector4D p1 = { p1_coord[0], p1_coord[1], coord_z, 1.0f };
         // Apply the inverse projection to get two points in the world frame of reference:
-        QVector4D v0 = this->invproj * p0;
+        QVector4D v0 = this->invproj.map (p0); // QMatrix.map (p0) seems to be equivalent to QMatrix * p0
         QVector4D v1 = this->invproj * p1;
         // This computes the difference betwen v0 and v1, the 2 mouse positions in the world
         mouseMoveWorld[0] = (v1[0]/v1[3]) - (v0[0]/v0[3]);
         mouseMoveWorld[1] = (v1[1]/v1[3]) - (v0[1]/v0[3]);
         //mouseMoveWorld.z = (v1[2]/v1[3]) - (v0[2]/v0[3]);// unmodified
 
-        // This is "translate the scene" mode. Could also have a "translate one
-        // HexGridVisual" mode, to adjust relative positions.
+#define APPLY_PERSPECTIVE_FACTOR 1
+#if defined TRANSFORMTOMOUSEMOVESCENE
+        // Now need "mouseMoveAtModel" to translate the scene by the right amount. I
+        // thought coord_z was supposed to do this...
+        QVector3D mouseMoveScene = mouseMoveWorld * (std::abs(coord_z));
+        this->scenetrans[0] += mouseMoveScene[0];
+        this->scenetrans[1] -= mouseMoveScene[1];
+#elif defined APPLY_PERSPECTIVE_FACTOR
+        // This seems a bit cludgy, but it works for now
+        float factor = 4.0f;
+        float perspFactor = (std::abs(scenetrans.z()) - factor)/factor; // FIXME: Make this->zNear. Nope.
+        this->scenetrans[0] += mouseMoveWorld[0] * perspFactor;
+        this->scenetrans[1] -= mouseMoveWorld[1] * perspFactor;
+#else
+        // Original
         this->scenetrans[0] += mouseMoveWorld[0];
         this->scenetrans[1] -= mouseMoveWorld[1];
-
+#endif
         this->update(); // Shouldn't need this if we schedule repaints/renders on a timed basis
     }
 }
@@ -1092,10 +1100,15 @@ void
 glConnectionWidget::wheelEvent(QWheelEvent *event)
 {
     float val = float(event->delta()) / 32.0;
+    DBG() << "val= " << val;
     if (event->orientation() == Qt::Vertical) {
         // Change sceneTrans to zoom in & out
-        this->scenetrans[2] += val * this->scenetrans_stepsize;
-        this->setPerspective (this->width(), this->height());
+        float distFactor = this->scenetrans[2]*this->scenetrans[2];
+        distFactor = (distFactor > 1e5 ? 1e5 : distFactor);
+        distFactor = (distFactor < 1 ? 1 : distFactor);
+        DBG() << "distFactor: " << distFactor;
+        this->scenetrans[2] += val * this->scenetrans_stepsize * distFactor;
+        this->scenetrans[2] = (this->scenetrans[2] > -1.0f ? -1.0f : this->scenetrans[2]);
         this->update();
     }
 }
