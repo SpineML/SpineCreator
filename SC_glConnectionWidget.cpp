@@ -74,6 +74,9 @@ glConnectionWidget::initializeGL()
     QOpenGLFunctions *f = this->context()->functions();
     f->glClearColor (0.8f, 0.7f, 0.8f, 1.0f);
 
+    DBG() << "GL VERSION: " << (const char*)f->glGetString(GL_VERSION);
+    DBG() << "GL EXTENSIONS: " << (const char*)f->glGetString(GL_EXTENSIONS);
+
     // initialize shaders
     this->shaderProg = new QOpenGLShaderProgram(this);
 
