@@ -24,7 +24,8 @@
 
 #include "SC_settings.h"
 #include "ui_settings_window.h"
-#include "QSettings"
+#include <QSettings>
+#include <QInputDialog>
 
 settings_window::settings_window(QWidget *parent) :
     QDialog(parent),

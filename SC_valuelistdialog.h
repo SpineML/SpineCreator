@@ -26,6 +26,7 @@
 #define VALUELISTDIALOG_H
 
 #include <QDialog>
+#include <QInputDialog>
 #include "globalHeader.h"
 #include "CL_classes.h"
 #include "SC_vectormodel.h"

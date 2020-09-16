@@ -1384,18 +1384,16 @@ void MainWindow::initViewVZ()
     this->viewVZ.OpenGLWidget = new glConnectionWidget (&this->data);
     DBG() << "Called new glConnectionWidget";
 
-#if 0 // It may not be necessary to set all this.
-    // Set the "surface format" for the OpenGLWidget
+    // Set the "surface format" for the OpenGLWidget. Here, we can set the OpenGL version
     QSurfaceFormat format;
-    format.setDepthBufferSize (24);
-    format.setStencilBufferSize (8);
+    //format.setDepthBufferSize (24);
+    //format.setStencilBufferSize (8);
     format.setVersion (4, 1);
     format.setProfile (QSurfaceFormat::CoreProfile);
-    format.setRenderableType (QSurfaceFormat::OpenGL);
-    format.setOptions (QSurfaceFormat::DebugContext | QSurfaceFormat::ResetNotification);
+    //format.setRenderableType (QSurfaceFormat::OpenGL);
+    //format.setOptions (QSurfaceFormat::DebugContext | QSurfaceFormat::ResetNotification);
     // must be called before the widget or its parent window gets shown:
     this->viewVZ.OpenGLWidget->setFormat(format);
-#endif
 
     // Add the glConnectionWidget to the frame.
     frame->layout()->addWidget (this->viewVZ.OpenGLWidget);

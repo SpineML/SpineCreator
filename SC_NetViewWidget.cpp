@@ -23,6 +23,7 @@
 ****************************************************************************/
 
 #include "SC_NetViewWidget.h"
+#include <QApplication>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
   #define RETINA_SUPPORT 1.0
