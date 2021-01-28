@@ -729,7 +729,7 @@ changeConnection:: changeConnection(nl_rootdata * data, QSharedPointer<systemObj
         if (!params.isEmpty()) {
             foreach (QString param, params) {
                 // So write into a map in the updateConnection class.
-                this->mparams[param] = settings.value(param, 1.0).toDouble();
+                this->mparams[param] = settings.value(param, "").toString();
             }
         }
         settings.endGroup();
@@ -1139,6 +1139,7 @@ void updateConnProb::redo()
 undoUpdatePythonConnectionScriptPar::undoUpdatePythonConnectionScriptPar(nl_rootdata * data, pythonscript_connection * ptr, float new_val, QString par_name, QUndoCommand *parent) :
     QUndoCommand(parent)
 {
+    this->isText = false;
     this->value = new_val;
     this->par_name = par_name;
     int index = -1;
@@ -1156,6 +1157,28 @@ undoUpdatePythonConnectionScriptPar::undoUpdatePythonConnectionScriptPar(nl_root
     firstRedo = true;
 }
 
+undoUpdatePythonConnectionScriptPar::undoUpdatePythonConnectionScriptPar(nl_rootdata * data, pythonscript_connection * ptr, QString new_text, QString par_name, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->isText = true;
+    this->text = new_text;
+    this->par_name = par_name;
+    int index = -1;
+    for (int i = 0; i < ptr->parNames.size();++i) {
+        if (ptr->parNames[i] == par_name) {
+            index = i;
+        }
+    }
+    if (index != -1) {
+        if (isText) this->oldText = ptr->parText[index];
+        else this->oldValue = ptr->parValues[index];
+    }
+    this->ptr = ptr;
+    this->data = data;
+    this->setText("set " + this->ptr->name + " parameter to " + QString::number(value));
+    firstRedo = true;
+}
+
 void undoUpdatePythonConnectionScriptPar::undo()
 {
     int index = -1;
@@ -1165,7 +1188,8 @@ void undoUpdatePythonConnectionScriptPar::undo()
         }
     }
     if (index != -1) {
-        ptr->parValues[index] = this->oldValue;
+        if (isText) ptr->parText[index] = this->oldText;
+        else ptr->parValues[index] = this->oldValue;
     }
     data->setTitle();
 }
@@ -1179,7 +1203,8 @@ void undoUpdatePythonConnectionScriptPar::redo()
         }
     }
     if (index != -1) {
-        ptr->parValues[index] = this->value;
+        if (isText) ptr->parText[index] = this->text;
+        else ptr->parValues[index] = this->value;
     }
     firstRedo = false;
     data->setTitle();

@@ -1776,6 +1776,7 @@ QString pythonscript_connection::getTypeStr(void)
 
 QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEditHandler * viewVZhandler, nl_rootlayout * rootLay)
 {
+
     // refetch the script text
     QSettings settings;
     // enter group of scripts
@@ -1958,37 +1959,69 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                         connect(rootLay, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
                     }
                     parBox->addWidget(name);
-                    QDoubleSpinBox * val = new QDoubleSpinBox;
-                    val->setMaximum(100000000.0);
-                    val->setMinimum(-100000000.0);
-                    val->setDecimals(5);
-                    val->setMinimumWidth(120);
-                    val->setValue(this->parValues[i]);
-                    val->setProperty("par_name", this->parNames[i]);
-                    val->setProperty("action", "changePythonScriptPar");
-                    val->setProperty("ptr", qVariantFromValue((void *) this));
-                    val->setFocusPolicy(Qt::StrongFocus);
-                    val->installEventFilter(new FilterOutUndoRedoEvents);
-                    if (viewVZhandler) {
-                        // add the delete signal
-                        connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                    if (this->parNames[i].endsWith("_string")) {
+                        QLineEdit * val = new QLineEdit;
+                        val->setMinimumWidth(120);
+                        val->setText(this->parText[i]);
+                        val->setProperty("par_name", this->parNames[i]);
+                        val->setProperty("action", "changePythonScriptPar");
+                        val->setProperty("ptr", qVariantFromValue((void *) this));
+                        val->setFocusPolicy(Qt::StrongFocus);
+                        val->installEventFilter(new FilterOutUndoRedoEvents);
+                        if (viewVZhandler) {
+                            // add the delete signal
+                            connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                        }
+                        if (rootLay) {
+                            // add the delete signal
+                            connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                        }
+                        // add the change signal
+                        connect(val, SIGNAL(textEdited(QString)), data, SLOT(updatePar()));
+                        // enable the generator button
+                        //connect(val, SIGNAL(textEdited(QString)), this, SLOT(enableGen(double)));
+                        parBox->addWidget(val);
+                        parBox->addStretch();
+                        // now add this to the grid
+                        grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
+                        // get our grid width
+                        if (this->parPos[i].y()>maxCols) {
+                            maxCols = this->parPos[i].y();
+                        }
+                    } else {
+                        QDoubleSpinBox * val = new QDoubleSpinBox;
+                        val->setMaximum(100000000.0);
+                        val->setMinimum(-100000000.0);
+                        val->setDecimals(5);
+                        val->setMinimumWidth(120);
+                        val->setValue(this->parValues[i]);
+                        val->setProperty("par_name", this->parNames[i]);
+                        val->setProperty("action", "changePythonScriptPar");
+                        val->setProperty("ptr", qVariantFromValue((void *) this));
+                        val->setFocusPolicy(Qt::StrongFocus);
+                        val->installEventFilter(new FilterOutUndoRedoEvents);
+                        if (viewVZhandler) {
+                            // add the delete signal
+                            connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                        }
+                        if (rootLay) {
+                            // add the delete signal
+                            connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                        }
+                        // add the change signal
+                        connect(val, SIGNAL(valueChanged(double)), data, SLOT(updatePar()));
+                        // enable the generator button
+                        connect(val, SIGNAL(valueChanged(double)), this, SLOT(enableGen(double)));
+                        parBox->addWidget(val);
+                        parBox->addStretch();
+                        // now add this to the grid
+                        grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
+                        // get our grid width
+                        if (this->parPos[i].y()>maxCols) {
+                            maxCols = this->parPos[i].y();
+                        }
                     }
-                    if (rootLay) {
-                        // add the delete signal
-                        connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
-                    }
-                    // add the change signal
-                    connect(val, SIGNAL(valueChanged(double)), data, SLOT(updatePar()));
-                    // enable the generator button
-                    connect(val, SIGNAL(valueChanged(double)), this, SLOT(enableGen(double)));
-                    parBox->addWidget(val);
-                    parBox->addStretch();
-                    // now add this to the grid
-                    grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
-                    // get our grid width
-                    if (this->parPos[i].y()>maxCols) {
-                        maxCols = this->parPos[i].y();
-                    }
+
                 }
             } // else parNames has no position
         }
@@ -2025,37 +2058,68 @@ QLayout * pythonscript_connection::drawLayout(nl_rootdata * data, viewVZLayoutEd
                                 connect(rootLay, SIGNAL(deleteProperties()), name, SLOT(deleteLater()));
                             }
                             parBox->addWidget(name);
-                            QDoubleSpinBox * val = new QDoubleSpinBox;
-                            val->setMaximum(100000000.0);
-                            val->setMinimum(-100000000.0);
-                            val->setDecimals(5);
-                            val->setMinimumWidth(120);
-                            if (i < this->parValues.length()) {
-                                val->setValue(this->parValues[i]);
+                            if (this->parNames[i].endsWith("_string")) {
+                                QLineEdit * val = new QLineEdit;
+                                val->setMinimumWidth(120);
+                                if (i < this->parText.length()) {
+                                    val->setText(this->parText[i]);
+                                }
+                                if (i < this->parNames.length()) {
+                                    val->setProperty("par_name", this->parNames[i]);
+                                }
+                                val->setProperty("action", "changePythonScriptPar");
+                                val->setProperty("ptr", qVariantFromValue((void *) this));
+                                val->setFocusPolicy(Qt::StrongFocus);
+                                val->installEventFilter(new FilterOutUndoRedoEvents);
+                                if (viewVZhandler) {
+                                    // add the delete signal
+                                    connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                                }
+                                if (rootLay) {
+                                    // add the delete signal
+                                    connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                                }
+                                // add the change signal
+                                connect(val, SIGNAL(valueChanged(double)), data, SLOT(updatePar()));
+                                // enable the generator button
+                                connect(val, SIGNAL(valueChanged(double)), this, SLOT(enableGen(double)));
+                                parBox->addWidget(val);
+                                parBox->addStretch();
+                                // now add this to the grid
+                                grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
+                            } else {
+                                QDoubleSpinBox * val = new QDoubleSpinBox;
+                                val->setMaximum(100000000.0);
+                                val->setMinimum(-100000000.0);
+                                val->setDecimals(5);
+                                val->setMinimumWidth(120);
+                                if (i < this->parValues.length()) {
+                                    val->setValue(this->parValues[i]);
+                                }
+                                if (i < this->parNames.length()) {
+                                    val->setProperty("par_name", this->parNames[i]);
+                                }
+                                val->setProperty("action", "changePythonScriptPar");
+                                val->setProperty("ptr", qVariantFromValue((void *) this));
+                                val->setFocusPolicy(Qt::StrongFocus);
+                                val->installEventFilter(new FilterOutUndoRedoEvents);
+                                if (viewVZhandler) {
+                                    // add the delete signal
+                                    connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                                }
+                                if (rootLay) {
+                                    // add the delete signal
+                                    connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
+                                }
+                                // add the change signal
+                                connect(val, SIGNAL(valueChanged(double)), data, SLOT(updatePar()));
+                                // enable the generator button
+                                connect(val, SIGNAL(valueChanged(double)), this, SLOT(enableGen(double)));
+                                parBox->addWidget(val);
+                                parBox->addStretch();
+                                // now add this to the grid
+                                grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
                             }
-                            if (i < this->parNames.length()) {
-                                val->setProperty("par_name", this->parNames[i]);
-                            }
-                            val->setProperty("action", "changePythonScriptPar");
-                            val->setProperty("ptr", qVariantFromValue((void *) this));
-                            val->setFocusPolicy(Qt::StrongFocus);
-                            val->installEventFilter(new FilterOutUndoRedoEvents);
-                            if (viewVZhandler) {
-                                // add the delete signal
-                                connect(viewVZhandler, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
-                            }
-                            if (rootLay) {
-                                // add the delete signal
-                                connect(rootLay, SIGNAL(deleteProperties()), val, SLOT(deleteLater()));
-                            }
-                            // add the change signal
-                            connect(val, SIGNAL(valueChanged(double)), data, SLOT(updatePar()));
-                            // enable the generator button
-                            connect(val, SIGNAL(valueChanged(double)), this, SLOT(enableGen(double)));
-                            parBox->addWidget(val);
-                            parBox->addStretch();
-                            // now add this to the grid
-                            grid->addLayout(parBox,this->parPos[i].x(), this->parPos[i].y(),1,1);
                         }
                     }
                     // increment the row
@@ -2138,6 +2202,7 @@ void pythonscript_connection::configureFromScript(QString script)
     QVector <double> oldValues = this->parValues;
     // clear previous pars
     this->parNames.clear();
+    this->parText.clear();
     this->parValues.clear();
     this->parPos.clear();
     this->hasWeight = false;
@@ -2158,12 +2223,14 @@ void pythonscript_connection::configureFromScript(QString script)
                     // correct formatting, add the position to the list
                     this->parNames.push_back(posbits.first().replace(" ", ""));
                     this->parValues.push_back(0);
+                    this->parText.push_back("");
                     this->parPos.push_back(QPoint(posvals[0].toInt(), posvals[1].toInt()));
                 }
             } else {
                 // add with just the name specified
                 this->parNames.push_back(bits.last().replace(" ", ""));
                 this->parValues.push_back(0);
+                this->parText.push_back("");
                 this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
             }
         }
@@ -2180,7 +2247,7 @@ void pythonscript_connection::configureFromScript(QString script)
     this->lastGeneratedParValues.fill(0);
 }
 
-void pythonscript_connection::configureFromScript(QString script, const QMap<QString, double>& mparams)
+void pythonscript_connection::configureFromScript(QString script, const QMap<QString, QString>& mparams)
 {
     // add the script to the class variable
     this->scriptText = script;
@@ -2190,6 +2257,7 @@ void pythonscript_connection::configureFromScript(QString script, const QMap<QSt
     // clear previous pars
     this->parNames.clear();
     this->parValues.clear();
+    this->parText.clear();
     this->parPos.clear();
     this->hasWeight = false;
     this->hasDelay = false;
@@ -2213,14 +2281,16 @@ void pythonscript_connection::configureFromScript(QString script, const QMap<QSt
                     // If mparams doesn't contain a value for the
                     // param name in parNames.back(), then it should
                     // construct a default double, presumably 0.0:
-                    this->parValues.push_back(mparams[parNames.back()]);
+                    this->parValues.push_back(mparams[parNames.back()].toDouble());
+                    this->parText.push_back(mparams[parNames.back()]);
                     this->parPos.push_back(QPoint(posvals[0].toInt(), posvals[1].toInt()));
                 }
             } else {
                 // add with just the name specified
                 DBG() << "Adding parName with just name" << bits.last().replace(" ", "") << " and value 0";
                 this->parNames.push_back(bits.last().replace(" ", ""));
-                this->parValues.push_back(mparams[parNames.back()]);
+                this->parValues.push_back(mparams[parNames.back()].toDouble());
+                this->parText.push_back(mparams[parNames.back()]);
                 this->parPos.push_back(QPoint(-1,-1)); // -1,-1 indicates no fixed position - the par will be placed where it fits
             }
         }
@@ -2303,7 +2373,11 @@ void pythonscript_connection::write_metadata_xml(QXmlStreamWriter* xmlOut)
 
     // parameter values for the script
     for (int i = 0; i < this->parNames.size(); ++i) {
-        xmlOut->writeAttribute(this->parNames[i], QString::number(this->parValues[i]));
+        if (this->parNames[i].endsWith("_string")) {
+            xmlOut->writeAttribute(this->parNames[i], this->parText[i]);
+        } else {
+            xmlOut->writeAttribute(this->parNames[i], QString::number(this->parValues[i]));
+        }
     }
 
     // write out configuration information
@@ -2339,7 +2413,11 @@ void pythonscript_connection::read_metadata_xml(QDomNode &e)
 
             // load the parameters from the metadata
             for (int i = 0; i < this->parNames.size(); ++i) {
-                this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
+                if (parNames[i].endsWith("_string")) {
+                    this->parText[i] = node.toElement().attribute(this->parNames[i], "");
+                } else {
+                    this->parValues[i] = node.toElement().attribute(this->parNames[i], "0").toDouble();
+                }
             }
         }
 
@@ -2798,7 +2876,11 @@ void pythonscript_connection::generate_connections()
 
     // convert the parameters into Python Objects and add them to the tuple
     for (int i = 0; i < this->parNames.size(); ++i) {
-        PyTuple_SetItem(argsPy,i+2,PyFloat_FromDouble(parValues[i]));
+        if (this->parNames[i].endsWith("_string")) {
+            PyTuple_SetItem(argsPy,i+2,PyUnicode_FromString(parText[i].toStdString().c_str()));
+        } else {
+            PyTuple_SetItem(argsPy,i+2,PyFloat_FromDouble(parValues[i]));
+        }
     }
 
     // check the tuple is sound
@@ -3018,6 +3100,7 @@ connection * pythonscript_connection::newFromExisting()
     // copy script pars
     c->parNames = this->parNames;
     c->parValues = this->parValues;
+    c->parText = this->parText;
     c->parPos = this->parPos;
 
     return c;

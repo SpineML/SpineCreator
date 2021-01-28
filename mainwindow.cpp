@@ -81,6 +81,9 @@ MainWindow(QWidget *parent) :
     // initialise GUI
     ui->setupUi(this);
 
+#define PYTHON_NO_DEBUG
+#ifdef PYTHON_NO_DEBUG
+
     // Initialise Python. To run numba cuda code, it's going to be
     // necessary to set this up with a user-specifiable path to python
     // and/or modules.
@@ -158,6 +161,7 @@ MainWindow(QWidget *parent) :
         QSettings pysettings2;
         pysettings2.setValue ("python/initialisation", "false");
     }
+#endif
 
 #ifdef DEBUG
     DBG() << "Python interpreter: " << (wchar_t*)Py_GetProgramName();

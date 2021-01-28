@@ -27,7 +27,7 @@
 
 // Special define for setting the dpi scaling on windows, as there
 // does not seem to be a working API interface for getting it yet...
-#define WIN_DPI_SCALING 1.75
+#define WIN_DPI_SCALING 1.5
 
 #include "globalHeader.h"
 

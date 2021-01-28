@@ -2839,6 +2839,7 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data)
     // check indices
     if (indices != "all") {
         QStringList inds = indices.split(",");
+        this->externalOutput.size = inds.size();
         for (int i = 0; i < inds.size(); ++i) {
             if (source->component->type == "neuron_body") {
                 QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (source->owner);
@@ -2863,6 +2864,19 @@ void exptOutput::writeXML(QXmlStreamWriter * writer, projectObject * data)
                     return;
                 }
             }
+        }
+    } else {
+        // set output size
+        if (source->component->type == "neuron_body") {
+            QSharedPointer <population> pop = qSharedPointerDynamicCast<population> (source->owner);
+            CHECK_CAST(pop)
+            this->externalOutput.size = pop->numNeurons;
+        }
+        if (source->component->type == "postsynapse") {
+            QSharedPointer <projection> proj = qSharedPointerDynamicCast<projection> (source->owner);
+            CHECK_CAST(proj)
+            QSharedPointer <population> pop = proj->destination;
+            this->externalOutput.size = pop->numNeurons;
         }
     }
 

@@ -265,7 +265,7 @@ private:
     QSharedPointer<systemObject> newConn;
     int index;
     QString scriptName;
-    QMap<QString, double> mparams;
+    QMap<QString, QString> mparams;
     connection * oldConn;
     bool isUndone;
 };
@@ -360,6 +360,7 @@ class undoUpdatePythonConnectionScriptPar: public QUndoCommand
 {
 public:
     undoUpdatePythonConnectionScriptPar(nl_rootdata * data, pythonscript_connection * ptr, float new_val, QString par_name, QUndoCommand *parent = 0);
+    undoUpdatePythonConnectionScriptPar(nl_rootdata * data, pythonscript_connection * ptr, QString new_text, QString par_name, QUndoCommand *parent = 0);
     void undo();
     void redo();
 
@@ -369,8 +370,11 @@ private:
     pythonscript_connection * ptr;
     float oldValue;
     float value;
+    QString text;
+    QString oldText;
     QString par_name;
     bool firstRedo;
+    bool isText;
 };
 
 class undoUpdatePythonConnectionScriptProp: public QUndoCommand

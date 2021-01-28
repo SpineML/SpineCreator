@@ -1501,11 +1501,18 @@ void nl_rootdata::updatePar()
         // Update the parameter value
         pythonscript_connection * conn = (pythonscript_connection *) sender()->property("ptr").value<void *>();
         CHECK_CAST(dynamic_cast<pythonscript_connection *>(conn))
-        float par_value = ((QDoubleSpinBox *) sender())->value();
-        QString par_name = ((QDoubleSpinBox *) sender())->property("par_name").toString();
-        CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
-        // only add undo if value has changed
-        this->currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
+        QString par_name = sender()->property("par_name").toString();
+        if (par_name.endsWith("_string")) {
+            CHECK_CAST(dynamic_cast<QLineEdit *>(sender()))
+            QString par_text = ((QLineEdit *) sender())->text();
+            // only add undo if value has changed
+            this->currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_text, par_name));
+        } else {
+            float par_value = ((QDoubleSpinBox *) sender())->value();
+            CHECK_CAST(dynamic_cast<QDoubleSpinBox *>(sender()))
+            // only add undo if value has changed
+            this->currProject->undoStack->push(new undoUpdatePythonConnectionScriptPar(this, conn, par_value, par_name));
+        }
     }
 
     if (action == "changePythonScriptProp") {

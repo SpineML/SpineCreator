@@ -475,6 +475,7 @@ public:
     QString scriptName;
     QStringList parNames;
     QVector <double> parValues;
+    QVector <QString> parText;
     QVector <double> lastGeneratedParValues;
     QVector < QPoint > parPos;
 
@@ -517,7 +518,7 @@ public slots:
      * parameters. Is a slot so it can be triggered by events.
      */
     void configureFromScript(QString);
-    void configureFromScript(QString script, const QMap<QString, double>& mparams);
+    void configureFromScript(QString script, const QMap<QString, QString>& mparams);
 
     void regenerateConnections();
 

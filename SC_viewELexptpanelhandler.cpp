@@ -2004,17 +2004,17 @@ void viewELExptPanelHandler::run()
         //bool isPython = false;
         if (simName == "BRAHMS") {
             out_dir_name = wk_dir.absolutePath() + "/temp";
-            // on windows using Ubuntu BASH we must convert the path
-            modelpath = modelpath.replace("\\","/");
-            modelpath = modelpath.replace("C:","/mnt/c");
-            modelpath = modelpath.replace("D:","/mnt/d");
-            path = QString("cmd.exe /R ") + QString('"') + QString("c:\\WINDOWS\\sysnative\\bash.exe -c '") + path + \
-                    QString(" -m ") + modelpath + \
-                    QString(" -w ") + wk_dir.absolutePath() + \
-                    QString(" -o ") + out_dir_name + \
-                    QString(" -e ") + QString("%1").arg(currentExptNum) + \
-                    QString("'") + QString('"') \
-                    ;
+             // on windows using Ubuntu BASH we must convert the path
+             modelpath = modelpath.replace("\\","/");
+             modelpath = modelpath.replace("C:","/mnt/c");
+             modelpath = modelpath.replace("D:","/mnt/d");
+             path =  QString("c:\\WINDOWS\\sysnative\\bash.exe -c ") + QString('"') + path + \
+                     QString(" -m ") + modelpath + \
+                     QString(" -w ") + wk_dir.absolutePath() + \
+                     QString(" -o ") + out_dir_name + \
+                     QString(" -e ") + QString("%1").arg(currentExptNum) + \
+                     QString('"') \
+                     ;
         } else {
             if (path.contains("python.exe")) {
                 //isPython = true;
@@ -2073,7 +2073,7 @@ void viewELExptPanelHandler::run()
 
     // Wait a couple of seconds for the process to start
 #ifndef Q_OS_WIN
-    if (!simulator->waitForStarted(1000)) {
+    if (!simulator->waitForStarted(10000)) {
         // Error - simulator failed to start. It would be great to get
         // the output to show in the window. It may exist in wk_dir.absolutePath() / temp/run/out.log and err.log
         this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
