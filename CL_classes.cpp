@@ -3259,10 +3259,10 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
     // fetch LL:Annotation, but only a direct child of this ComponentInstance.
     QDomElement a = n.toElement().firstChildElement("LL:Annotation");
     if (!a.isNull()) {
-        QDomNodeList scAnns = n.toElement().elementsByTagName("Implementation");
+        QDomNodeList scAnns = a.toElement().elementsByTagName("Implementation");
         if (scAnns.length() == 1) {
             metaData = scAnns.at(0).cloneNode();
-            n.removeChild(scAnns.at(0));
+            a.removeChild(scAnns.at(0));
         }
         QTextStream temp(&this->annotation);
         a.save(temp,1);
