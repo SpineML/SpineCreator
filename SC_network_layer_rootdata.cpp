@@ -1466,6 +1466,14 @@ void nl_rootdata::updatePar()
         this->currProject->undoStack->push(new updateParType(this, par, newType));
     }
 
+    if (action == "changeDType") {
+        ComponentInstance * cmp = (ComponentInstance *) sender()->property("ptr").value<void *>();
+        CHECK_CAST(dynamic_cast<ComponentInstance *>(cmp))
+        QString newDType = ((QLineEdit *) sender())->text();
+        this->currProject->undoStack->push(new updateDType(this, cmp, newDType));
+        qDebug() << "MOOOOOO";
+    }
+
     // launch the list editor dialog
     if (action == "editList") {
         ParameterInstance * par = (ParameterInstance *) sender()->property("ptr").value<void *>();

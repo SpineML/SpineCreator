@@ -719,13 +719,13 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
     // Have now finished writing attributes into the PostSynapse/WeightUpdate
 
     // Add Annotations element:
+    xmlOut.writeStartElement("LL:Annotation");
     if (!this->annotation.isEmpty()) {
         // old annotations
         this->annotation.replace("\n", "");
         this->annotation.replace("<LL:Annotation>", "");
         this->annotation.replace("</LL:Annotation>", "");
         if (!this->annotation.isEmpty()) {
-            xmlOut.writeStartElement("LL:Annotation");
             QXmlStreamReader reader(this->annotation);
             while (!reader.atEnd()) {
                 if (reader.tokenType() != QXmlStreamReader::StartDocument
@@ -734,9 +734,17 @@ void ComponentRootInstance::write_node_xml(QXmlStreamWriter &xmlOut)
                 }
                 reader.readNext();
             }
-            xmlOut.writeEndElement(); // "LL:Annotation"
         }
     }
+    // add annotations
+    xmlOut.writeStartElement("Implementation");
+
+    // this->animspeed;
+    xmlOut.writeEmptyElement("dataType");
+    xmlOut.writeAttribute("value", this->dataType);
+
+    xmlOut.writeEndElement(); // "Implementation"
+    xmlOut.writeEndElement(); // "LL:Annotation"
 
     // Add any parameter or state variable properties that exist
     if (this->ParameterList.size()+this->StateVariableList.size() > 0) {
@@ -2619,6 +2627,7 @@ ComponentInstance::ComponentInstance(QSharedPointer<Component>data)
         ParameterList[i] = new ParameterInstance(data->ParameterList[i]);
     }
     this->component = data;
+    this->dataType = "double";
 }
 
 // duplicate
@@ -2648,6 +2657,7 @@ ComponentInstance::ComponentInstance(QSharedPointer <ComponentInstance>data, boo
 
     // copy component reference
     this->component = data->component;
+    this->dataType = data->dataType;
 }
 
 void ComponentInstance::remapPointers(QMap <systemObject *, QSharedPointer <systemObject> > pointerMap)
@@ -2736,6 +2746,8 @@ void ComponentInstance::copyFrom(QSharedPointer <ComponentInstance>src, QSharedP
     }
 
     this->component = data;
+
+    this->dataType = src->dataType;
 
     // lastly, match up input ports
     this->matchPorts();
@@ -3242,9 +3254,16 @@ QStringList Component::validateComponent()
 
 void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 {
+    QDomNode metaData;
+
     // fetch LL:Annotation, but only a direct child of this ComponentInstance.
     QDomElement a = n.toElement().firstChildElement("LL:Annotation");
     if (!a.isNull()) {
+        QDomNodeList scAnns = n.toElement().elementsByTagName("Implementation");
+        if (scAnns.length() == 1) {
+            metaData = scAnns.at(0).cloneNode();
+            n.removeChild(scAnns.at(0));
+        }
         QTextStream temp(&this->annotation);
         a.save(temp,1);
     } // else no LL:Annotation for this ComponentInstance
@@ -3353,6 +3372,26 @@ void ComponentInstance::import_parameters_from_xml(QDomNode &n)
 
             }
         }
+    }
+
+    QDomNode m;
+    if (!metaData.isNull()) {
+        m = metaData.firstChild();
+    }
+
+    while( !m.isNull() )
+    {
+        if (m.isComment()) {
+            m = m.nextSibling();
+            continue;
+        }
+
+        QDomElement e2 = m.toElement();
+        if( e2.tagName() == "dataType" ) {
+            this->dataType = QString::fromStdString(e2.attribute("value", "").toStdString());
+        }
+
+        m = m.nextSibling();
     }
 }
 

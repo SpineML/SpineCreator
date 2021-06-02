@@ -689,6 +689,7 @@ public:
      * passed an option NOT to read annotation information.
      */
     QString annotation;
+    QString dataType;
 };
 
 /*!

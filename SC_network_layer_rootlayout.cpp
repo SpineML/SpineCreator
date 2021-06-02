@@ -1236,6 +1236,34 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
         // don't draw stuff if the component doesn't validate
         if (skipTab) continue;
 
+        // draw the datatype box
+        if (!connectionBool && type != "layout") {
+            QFormLayout * varLayout = new QFormLayout();
+            tabLayout->insertLayout(tabLayout->count() - 2, varLayout);
+            connect(this, SIGNAL(deleteProperties()), varLayout, SLOT(deleteLater()));
+
+            QString name_str = "Data type:";
+
+            QHBoxLayout * buttons = new QHBoxLayout;
+            connect(this, SIGNAL(deleteProperties()), buttons, SLOT(deleteLater()));
+            buttons->setSpacing(20);
+
+            QLineEdit *parText = new QLineEdit;
+            //parText->setProperty("valToChange", "0");
+            parText->setProperty("ptr", qVariantFromValue((void *) type9ml.data()));
+            parText->setProperty("action","changeDType");
+            connect(this, SIGNAL(deleteProperties()), parText, SLOT(deleteLater()));
+            parText->installEventFilter(new FilterOutUndoRedoEvents);
+            parText->setFocusPolicy(Qt::StrongFocus);
+            parText->setText(type9ml->dataType);
+
+            buttons->addWidget(parText);
+
+            varLayout->addRow(name_str, buttons);
+            connect(this, SIGNAL(deleteProperties()), varLayout->itemAt(varLayout->rowCount()-1,QFormLayout::LabelRole)->widget(), SLOT(deleteLater()));
+            connect(parText, SIGNAL(editingFinished()), data, SLOT (updatePar()));
+        }
+
         for (int j = 0; j < 2; ++j) {
 
             // configure:
@@ -1315,6 +1343,8 @@ void nl_rootlayout::drawParamsLayout(nl_rootdata * data) {
                     }
 
                 }
+
+
                 ///
                 if (connectionBool) {
                     switch (conn->type) {

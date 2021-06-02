@@ -132,10 +132,10 @@ win32:
 
 win32:release {
     DEFINES += _MATH_DEFINES_DEFINED
-    LIBS += "-LC:\Program Files (x86)\Graphviz2.38\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
-    INCLUDEPATH += "C:\Program Files (x86)\Graphviz2.38\include"
+    LIBS += "-LC:\Program Files\Graphviz\bin" "-LC:\Python27\libs" -lopengl32 -lpython27 -lglu32
+    INCLUDEPATH += "C:\Program Files\Graphviz\include"
     INCLUDEPATH += "C:\Python27\include"
-    DEPENDPATH += "C:\Program Files (x86)\Graphviz2.38\bin"
+    DEPENDPATH += "C:\Program Files\Graphviz\bin"
     DEPENDPATH += "C:\Python27\libs"
     DEPENDPATH += "C:\Python27"
 }

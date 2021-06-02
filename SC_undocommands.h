@@ -409,6 +409,21 @@ private:
     QVector <double> oldValues;
 };
 
+class updateDType : public QUndoCommand
+{
+public:
+    updateDType(nl_rootdata * data, ComponentInstance * ptr, QString newDType, QUndoCommand *parent = 0);
+    void undo();
+    void redo();
+
+private:
+    // these references are needed for the redo and undo
+    nl_rootdata * data;
+    ComponentInstance * ptr;
+    QString oldType;
+    QString newType;
+};
+
 class updateTitle : public QUndoCommand
 {
 public:

@@ -1292,6 +1292,31 @@ void updateParType::redo()
     data->reDrawAll();
 }
 
+// ######## CHANGE DATA TYPE #################
+
+updateDType::updateDType(nl_rootdata * data, ComponentInstance * ptr, QString newDType, QUndoCommand *parent) :
+    QUndoCommand(parent)
+{
+    this->oldType = ptr->dataType;
+    this->newType = newDType;
+    this->ptr = ptr;
+    this->data = data;
+    this->setText("set data type");
+}
+
+void updateDType::undo()
+{
+    ptr->dataType = oldType;
+    data->reDrawAll();
+}
+
+void updateDType::redo()
+{
+    ptr->dataType = newType;
+    data->reDrawAll();
+}
+
+
 // ######## CHANGE TITLE #################
 
 updateTitle::updateTitle(QSharedPointer <population> ptr, QString newName, QString oldName, QUndoCommand *parent) :
