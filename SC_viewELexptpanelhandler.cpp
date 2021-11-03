@@ -1863,6 +1863,10 @@ void viewELExptPanelHandler::run()
 #ifdef Q_OS_WIN
     if (simName == "BRAHMS") {
         // on windows using Ubuntu BASH we must convert the path
+        path = path.replace("\\","/");
+        path.replace("C:","/mnt/c/");
+        path.replace("D:","/mnt/d/");
+        path.replace(" ","\\ ");
         wk_dir_string = wk_dir_string.replace("\\","/");
         wk_dir_string = wk_dir_string.replace("C:","/mnt/c");
         wk_dir_string = wk_dir_string.replace("D:","/mnt/d");
@@ -2001,16 +2005,18 @@ void viewELExptPanelHandler::run()
     {
         QStringList al;
 #ifdef Q_OS_WIN
-        //bool isPython = false;
         if (simName == "BRAHMS") {
-            out_dir_name = wk_dir.absolutePath() + "/temp";
+	     QString wdirwin = wk_dir.absolutePath();
+	     wdirwin = wdirwin.replace(" ", "\\ ");
+             out_dir_name = wdirwin + "/temp";
              // on windows using Ubuntu BASH we must convert the path
              modelpath = modelpath.replace("\\","/");
              modelpath = modelpath.replace("C:","/mnt/c");
              modelpath = modelpath.replace("D:","/mnt/d");
+             modelpath = modelpath.replace(" ","\\ ");
              path =  QString("c:\\WINDOWS\\sysnative\\bash.exe -c ") + QString('"') + path + \
                      QString(" -m ") + modelpath + \
-                     QString(" -w ") + wk_dir.absolutePath() + \
+                     QString(" -w ") + wdirwin + \
                      QString(" -o ") + out_dir_name + \
                      QString(" -e ") + QString("%1").arg(currentExptNum) + \
                      QString('"') \
@@ -2025,10 +2031,14 @@ void viewELExptPanelHandler::run()
                     al << QDir::toNativeSeparators(pathbits[1]);
                 }
             }
-            al << "-m" << QDir::toNativeSeparators(modelpath)                          // path to input model
-               << "-w" << QDir::toNativeSeparators(wk_dir.absolutePath())              // path to simulator dir
-               << "-o" << QDir::toNativeSeparators(out_dir_name)                    // Output dir
-               << "-e" << QString("%1").arg(currentExptNum); // The experiment to execute
+            QString wdirwin = QDir::toNativeSeparators(wk_dir.absolutePath());
+            wdirwin = wdirwin.replace(" ", "\\ ");
+            QString odirwin = QDir::toNativeSeparators(out_dir_name);
+            odirwin = odirwin.replace(" ", "\\ ");
+            al << "-m" << QDir::toNativeSeparators(modelpath) // path to input model
+               << "-w" << wdirwin                             // path to simulator dir
+               << "-o" << odirwin                             // Output dir
+               << "-e" << QString("%1").arg(currentExptNum);  // The experiment to execute
         }
 #else
         // handle python convert_scripts...
@@ -2062,7 +2072,7 @@ void viewELExptPanelHandler::run()
         simulator->start(path,al);
 #else
         if (simName == "BRAHMS") {
-            DBG() << "(Windows (BRAHMS)) Starting with path: " << path;
+            std::cout << "(Windows (BRAHMS)) Starting with path: " << path.toStdString() << std::endl;
             simulator->execute(path);
         } else {
             DBG() << "(Windows) Starting with path: " << path << " arg list: " << al;
@@ -2099,6 +2109,7 @@ void viewELExptPanelHandler::run()
         if (!simulator->waitForStarted(1000)) {
             // Error - simulator failed to start. It would be great to get
             // the output to show in the window. It may exist in wk_dir.absolutePath() / temp/run/out.log and err.log
+            std::cout << "seems like the simulator failed to start...\n";
             this->cleanUpPostRun("Simulator Error", "The simulator '" + path + "' failed to start.");
             return;
         }
@@ -2116,6 +2127,7 @@ void viewELExptPanelHandler::run()
     this->simTimeFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "time.txt");
     QFile::remove(simTimeFileName);
     this->simCancelFileName = QDir::toNativeSeparators(out_dir_name + QDir::separator() + "model" + QDir::separator() + "stop.txt");
+    DBG() << "Starting simTimeChecker to check on simulation progress";
     simTimeChecker.start(17);
 }
 
