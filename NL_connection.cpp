@@ -2955,7 +2955,11 @@ void pythonscript_connection::generate_connections()
             PyTracebackObject* errtraceObj = (PyTracebackObject*)pyExcTraceback;
 
             // First display the first error - the error in the connectionFunc script
+#if PY_MAJOR_VERSION<3 || ( PY_VER_MAJOR >= 3 && PY_VER_MINOR < 11)
             PyObject* tfn = errtraceObj->tb_frame->f_code->co_filename;
+#else // Python version is 3.11+
+            PyObject* tfn = PyFrame_GetCode(errtraceObj->tb_frame)->co_filename;
+#endif
             if (tfn != (PyObject*)0) {
                 PyObject* tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
                 QString e1;
@@ -2980,9 +2984,14 @@ void pythonscript_connection::generate_connections()
             while (errtraceObj->tb_next) {
                 errtraceObj = errtraceObj->tb_next;
 
+#if PY_MAJOR_VERSION<3 || (PY_VER_MAJOR == 3 && PY_VER_MINOR < 11)
                 PyObject* _tfn = errtraceObj->tb_frame->f_code->co_filename;
-                PyObject* _tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
                 PyObject* _tn = errtraceObj->tb_frame->f_code->co_name;
+#else // Python version is 3.11+
+                PyObject* _tfn = PyFrame_GetCode(errtraceObj->tb_frame)->co_filename;
+                PyObject* _tn = PyFrame_GetCode(errtraceObj->tb_frame)->co_name;
+#endif
+                PyObject* _tfnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
                 PyObject* _tnStr = PyUnicode_AsEncodedString(tfn, "utf-8", "Error ~");
 
                 pythonErrors += QString("\nError on line: ") + QString::number(errtraceObj->tb_lineno);
