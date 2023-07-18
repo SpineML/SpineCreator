@@ -2955,7 +2955,7 @@ void pythonscript_connection::generate_connections()
             PyTracebackObject* errtraceObj = (PyTracebackObject*)pyExcTraceback;
 
             // First display the first error - the error in the connectionFunc script
-#if PY_MAJOR_VERSION<3 || ( PY_VER_MAJOR >= 3 && PY_VER_MINOR < 11)
+#if PY_MAJOR_VERSION<3 || ( PY_VER_MAJOR == 3 && PY_VER_MINOR < 11)
             PyObject* tfn = errtraceObj->tb_frame->f_code->co_filename;
 #else // Python version is 3.11+
             PyObject* tfn = PyFrame_GetCode(errtraceObj->tb_frame)->co_filename;
